@@ -1,6 +1,10 @@
 import { haversine } from './world.js';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js';
 
 let nextServiceId = 1;
+
+// Global canton manager shared across all services
+const cantonManager = new CantonManager();
 
 export class ServiceStop {
   constructor(stationId, type, depTime, arrTime) {
@@ -42,6 +46,16 @@ export class ActiveService {
     this.isReturnLeg = false;
     this.returnStops = [];
 
+    // Simulation state for strict segment-based route following
+    this._state = {
+      index: 0,
+      progress: 0,
+      legKey: null,
+      cachedRoute: null,
+    };
+    this._routeAnalysis = null;
+    this._cantonAssignments = null;
+
     this.train = {
       id: this.id,
       name: this.name,
@@ -54,6 +68,7 @@ export class ActiveService {
       stoppedAt: null,
       incident: null,
       breakdown: null,
+      blockedBy: false,
       accel: 3.0,
       decel: 4.0,
     };
@@ -121,6 +136,8 @@ export class ActiveService {
           this.revenueCollected = false;
           this.delay = Math.max(0, timeOfDay - firstDep);
           this.train.delay = this.delay;
+          // Reset simulation state for new movement leg
+          this._resetState();
         }
       }
       return;
@@ -137,81 +154,439 @@ export class ActiveService {
           this.completeService(economy);
         } else {
           this.state = 'moving';
+          // Reset simulation state for next leg
+          this._resetState();
         }
       }
     }
   }
 
-  // Called every 0.5s - handles smooth train movement
+  /**
+   * Reset simulation state when starting a new movement leg.
+   */
+  _resetState() {
+    this._state.index = 0;
+    this._state.progress = 0;
+    this._state.legKey = null;
+    this._state.cachedRoute = null;
+    this._routeAnalysis = null;
+    this._cantonAssignments = null;
+  }
+
+  /**
+   * Initialize simulation state for the current route leg.
+   * Computes route analysis and creates canton assignments.
+   */
+  _initializeState(route, legKey) {
+    this._state.legKey = legKey;
+    this._state.cachedRoute = route;
+    this._state.progress = 0;
+
+    // Find closest point on route to current position
+    if (this.position && route.length > 1) {
+      let minDist = Infinity;
+      let bestIdx = 0;
+      for (let i = 0; i < route.length; i++) {
+        const d = haversineDistance(this.position.lat, this.position.lon, route[i].lat, route[i].lon);
+        if (d < minDist) { minDist = d; bestIdx = i; }
+      }
+      this._state.index = Math.min(bestIdx, route.length - 2);
+    } else {
+      this._state.index = 0;
+    }
+
+    // Pre-analyze route for precise distance and time calculations
+    const trainMaxSpeed = this.rame ? this.rame.maxSpeed : this.train.maxSpeed;
+    this._routeAnalysis = analyzeRoute(route, trainMaxSpeed);
+
+    // Create canton assignments for block signaling
+    this._cantonAssignments = cantonManager.createRouteCantons(route);
+
+    // Occupy initial canton
+    if (this._cantonAssignments.length > 0) {
+      const initialCanton = cantonManager.getCantonForSegment(
+        this._cantonAssignments, this._state.index
+      );
+      if (initialCanton) {
+        cantonManager.occupy(initialCanton.cantonId, this.id);
+      }
+    }
+  }
+
+  /**
+   * Called every 0.5s - handles smooth train movement with strict route following.
+   *
+   * Movement rules:
+   * 1. Follow route array sequentially, segment by segment
+   * 2. effectiveSpeed = min(train.maxSpeed, segment.maxSpeed)
+   * 3. Canton check: if next block occupied -> brake/stop
+   * 4. Update progress via interpolation between two points
+   * 5. On segment switch: release previous canton, reserve next
+   * 6. Delay computed continuously during movement
+   */
   moveUpdate(dt, timeOfDay, allServices) {
     if (!this.active || this.state !== 'moving') return;
 
     const target = this.getTargetStation();
     if (!target) return;
 
-    const incident = this.train.incident;
-    let lineMaxSpeed = this.getLineSpeedAtPosition();
-    let rameMaxSpeed = this.rame ? this.rame.maxSpeed : this.train.maxSpeed;
-
-    if (incident?.effect === 'stop') { this.speed = 0; this.train.speed = 0; return; }
-    if (incident?.effect === 'slow') lineMaxSpeed = Math.min(lineMaxSpeed, incident.speedLimit || 30);
-
-    const worksLimit = this.getWorksSpeedLimit();
-    if (worksLimit === 0) { this.speed = 0; this.train.speed = 0; this.train.state = 'travaux'; return; }
-    if (worksLimit !== null) lineMaxSpeed = Math.min(lineMaxSpeed, worksLimit);
-
-    let maxSpd = Math.min(rameMaxSpeed, lineMaxSpeed);
-
-    // --- CANTONNEMENT / BLOCK SIGNALING ---
-    const blockLimit = this.getBlockSignalLimit(allServices || []);
-    if (blockLimit !== null) {
-      maxSpd = Math.min(maxSpd, blockLimit);
-      this.train.blockedBy = blockLimit === 0;
-    } else {
-      this.train.blockedBy = false;
+    // Get current route and ensure simulation state is initialized
+    const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
+    if (this._state.legKey !== legKey) {
+      const freshRoute = this.getCurrentRoute();
+      if (freshRoute && freshRoute.length >= 2) {
+        this._initializeState(freshRoute, legKey);
+      }
     }
 
-    const from = this.position;
-    const to = { lat: target.lat, lon: target.lon };
-    const dist = haversine(from.lat, from.lon, to.lat, to.lon);
+    const route = this._state.cachedRoute;
+
+    // Fallback: no ORM route available - direct movement toward target
+    if (!route || route.length < 2) {
+      this._moveDirectToTarget(dt, timeOfDay, target);
+      return;
+    }
+
+    // Check if we've reached end of route
+    if (this._state.index >= route.length - 1) {
+      cantonManager.releaseAll(this.id);
+      this.arriveAtStation(target, timeOfDay, this._economy);
+      return;
+    }
+
+    // --- SPEED ENFORCEMENT ---
+    const segIdx = this._state.index;
+    const from = route[segIdx];
+    const to = route[segIdx + 1];
+    const segDistance = haversineDistance(from.lat, from.lon, to.lat, to.lon);
+
+    if (segDistance <= 0) {
+      this._state.index++;
+      this._state.progress = 0;
+      return;
+    }
+
+    // Infrastructure speed limit from ORM data
+    let segMaxSpeed = to.maxSpeed || from.maxSpeed || 160;
+    // Train physical speed limit
+    const rameMaxSpeed = this.rame ? this.rame.maxSpeed : this.train.maxSpeed;
+
+    // Incident effects
+    const incident = this.train.incident;
+    if (incident?.effect === 'stop') {
+      this.speed = 0;
+      this.train.speed = 0;
+      this._updateContinuousDelay(timeOfDay);
+      return;
+    }
+    if (incident?.effect === 'slow') {
+      segMaxSpeed = Math.min(segMaxSpeed, incident.speedLimit || 30);
+    }
+
+    // Works speed limit
+    const worksLimit = this.getWorksSpeedLimit();
+    if (worksLimit === 0) {
+      this.speed = 0;
+      this.train.speed = 0;
+      this.train.state = 'travaux';
+      this._updateContinuousDelay(timeOfDay);
+      return;
+    }
+    if (worksLimit !== null) segMaxSpeed = Math.min(segMaxSpeed, worksLimit);
+
+    // CRITICAL: effectiveSpeed = min(train speed, infrastructure speed)
+    let effectiveMaxSpeed = Math.min(rameMaxSpeed, segMaxSpeed);
+
+    // --- CANTONNEMENT (BLOCK SIGNALING) ---
+    if (this._cantonAssignments && this._cantonAssignments.length > 0) {
+      const signalAspect = cantonManager.getSignalAspect(
+        this._cantonAssignments, segIdx, this.id
+      );
+      if (signalAspect !== null) {
+        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, signalAspect);
+        this.train.blockedBy = signalAspect === 0;
+      } else {
+        this.train.blockedBy = false;
+      }
+    } else {
+      // Fallback: proximity-based block check for routes without canton data
+      const blockLimit = this._proximityBlockCheck(allServices);
+      if (blockLimit !== null) {
+        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, blockLimit);
+        this.train.blockedBy = blockLimit === 0;
+      } else {
+        this.train.blockedBy = false;
+      }
+    }
+
+    // --- ACCELERATION / DECELERATION PHYSICS ---
+    const accelDelta = this.train.accel * dt;
+    const decelDelta = this.train.decel * dt;
+
+    // Braking distance check for approaching end of route
+    const remainingDist = this._getRemainingDistance(route);
+    const brakeDist = (this.speed * this.speed) / (2 * this.train.decel * 3600);
+
+    if (remainingDist < brakeDist + 0.5 && this.speed > 10) {
+      this.speed = Math.max(10, this.speed - decelDelta);
+    } else if (effectiveMaxSpeed === 0) {
+      this.speed = Math.max(0, this.speed - decelDelta);
+    } else if (this.speed < effectiveMaxSpeed) {
+      this.speed = Math.min(effectiveMaxSpeed, this.speed + accelDelta);
+    } else if (this.speed > effectiveMaxSpeed) {
+      this.speed = Math.max(effectiveMaxSpeed, this.speed - decelDelta);
+    }
+
+    // Distance traveled this tick: speed (km/h) * dt (seconds) / 3600
+    const stepKm = this.speed * dt / 3600;
+
+    if (stepKm <= 0) {
+      this.train.speed = 0;
+      this.train.state = 'stopped';
+      this._updateContinuousDelay(timeOfDay);
+      return;
+    }
+
+    // --- STRICT ROUTE FOLLOWING: advance segment by segment ---
+    let remaining = stepKm;
+
+    while (remaining > 0 && this._state.index < route.length - 1) {
+      const idx = this._state.index;
+      const segFrom = route[idx];
+      const segTo = route[idx + 1];
+      const segDist = haversineDistance(segFrom.lat, segFrom.lon, segTo.lat, segTo.lon);
+
+      if (segDist <= 0) {
+        this._state.index++;
+        this._state.progress = 0;
+        continue;
+      }
+
+      const remainingInSeg = (1 - this._state.progress) * segDist;
+
+      if (remaining >= remainingInSeg) {
+        // Complete this segment
+        remaining -= remainingInSeg;
+
+        // Canton transition on segment switch
+        if (this._cantonAssignments) {
+          const prevCanton = cantonManager.getCantonForSegment(this._cantonAssignments, idx);
+          const nextCanton = cantonManager.getCantonForSegment(this._cantonAssignments, idx + 1);
+
+          if (nextCanton && (!prevCanton || nextCanton.cantonId !== prevCanton.cantonId)) {
+            if (!cantonManager.isAvailable(nextCanton.cantonId, this.id)) {
+              // Canton blocked: stop at boundary
+              this._state.progress = 1.0;
+              this.position.lat = segTo.lat;
+              this.position.lon = segTo.lon;
+              this.train.blockedBy = true;
+              remaining = 0;
+              break;
+            }
+            // Reserve and occupy next canton, release previous
+            cantonManager.occupy(nextCanton.cantonId, this.id);
+            if (prevCanton) {
+              cantonManager.release(prevCanton.cantonId, this.id);
+            }
+          }
+        }
+
+        this._state.index++;
+        this._state.progress = 0;
+      } else {
+        // Partial segment: advance progress
+        this._state.progress += remaining / segDist;
+        remaining = 0;
+      }
+    }
+
+    // --- POSITION UPDATE via interpolation ---
+    if (this._state.index < route.length - 1) {
+      const idx = this._state.index;
+      const segFrom = route[idx];
+      const segTo = route[idx + 1];
+      const p = this._state.progress;
+      this.position.lat = segFrom.lat + (segTo.lat - segFrom.lat) * p;
+      this.position.lon = segFrom.lon + (segTo.lon - segFrom.lon) * p;
+    } else {
+      // Reached end of route
+      const lastPt = route[route.length - 1];
+      this.position.lat = lastPt.lat;
+      this.position.lon = lastPt.lon;
+      cantonManager.releaseAll(this.id);
+      this.arriveAtStation(target, timeOfDay, this._economy);
+      return;
+    }
+
+    this.totalDistance += stepKm;
+    this.train.speed = Math.round(this.speed);
+    this.train.totalKm = this.totalDistance;
+    this.train.state = this.speed > 0 ? 'moving' : 'stopped';
+
+    // --- REAL-TIME DELAY ---
+    this._updateContinuousDelay(timeOfDay);
+  }
+
+  /**
+   * Compute remaining distance from current position to end of route.
+   */
+  _getRemainingDistance(route) {
+    const idx = this._state.index;
+    if (idx >= route.length - 1) return 0;
+
+    // Remaining in current segment
+    const from = route[idx];
+    const to = route[idx + 1];
+    const segDist = haversineDistance(from.lat, from.lon, to.lat, to.lon);
+    let dist = (1 - this._state.progress) * segDist;
+
+    // Sum remaining segments
+    for (let i = idx + 1; i < route.length - 1; i++) {
+      dist += haversineDistance(route[i].lat, route[i].lon, route[i + 1].lat, route[i + 1].lon);
+    }
+    return dist;
+  }
+
+  /**
+   * Continuous delay computation during movement.
+   * Delay increases when:
+   *  - speed < maxSpeed (infrastructure/incident constraints)
+   *  - waiting for canton (blocked, speed = 0)
+   */
+  _updateContinuousDelay(timeOfDay) {
+    if (!this._routeAnalysis || this._routeAnalysis.segments.length === 0) return;
+
+    const stops = this.getCurrentStops();
+    if (this.currentStopIndex <= 0 || this.currentStopIndex > stops.length) return;
+
+    const prevStop = stops[this.currentStopIndex - 1];
+    if (!prevStop) return;
+
+    const scheduledDepartureTime = prevStop.departureTime || 0;
+    const segments = this._routeAnalysis.segments;
+
+    // Compute scheduled elapsed time at current position
+    let scheduledElapsed = 0;
+    for (let i = 0; i < this._state.index && i < segments.length; i++) {
+      scheduledElapsed += segments[i].timeMinutes;
+    }
+    if (this._state.index < segments.length) {
+      scheduledElapsed += segments[this._state.index].timeMinutes * this._state.progress;
+    }
+
+    // Actual elapsed time in minutes
+    const actualElapsed = timeOfDay - scheduledDepartureTime;
+
+    this.delay = Math.max(0, actualElapsed - scheduledElapsed);
+    this.train.delay = Math.round(this.delay);
+  }
+
+  /**
+   * Fallback movement toward target station when no ORM route is available.
+   */
+  _moveDirectToTarget(dt, timeOfDay, target) {
+    const dist = haversineDistance(this.position.lat, this.position.lon, target.lat, target.lon);
 
     if (dist < 0.3) {
       this.arriveAtStation(target, timeOfDay, this._economy);
       return;
     }
 
-    // Acceleration/deceleration: accel km/h per second, dt in seconds
+    const rameMaxSpeed = this.rame ? this.rame.maxSpeed : this.train.maxSpeed;
     const accelDelta = this.train.accel * dt;
     const decelDelta = this.train.decel * dt;
-
     const brakeDist = (this.speed * this.speed) / (2 * this.train.decel * 3600);
+
     if (dist < brakeDist + 1 && this.speed > 10) {
       this.speed = Math.max(10, this.speed - decelDelta);
-    } else if (maxSpd === 0) {
-      this.speed = Math.max(0, this.speed - decelDelta);
-    } else if (this.speed < maxSpd) {
-      this.speed = Math.min(maxSpd, this.speed + accelDelta);
-    } else if (this.speed > maxSpd) {
-      this.speed = Math.max(maxSpd, this.speed - decelDelta);
+    } else if (this.speed < rameMaxSpeed) {
+      this.speed = Math.min(rameMaxSpeed, this.speed + accelDelta);
+    } else if (this.speed > rameMaxSpeed) {
+      this.speed = Math.max(rameMaxSpeed, this.speed - decelDelta);
     }
 
-    // Distance traveled this tick: speed (km/h) * dt (seconds) / 3600
     const stepKm = this.speed * dt / 3600;
     if (dist > 0 && stepKm > 0) {
-      const route = this.getCurrentRoute();
-      if (route && route.length > 1) {
-        this.advanceAlongRoute(stepKm, route);
-      } else {
-        const fraction = Math.min(stepKm / dist, 1);
-        this.position.lat += (to.lat - from.lat) * fraction;
-        this.position.lon += (to.lon - from.lon) * fraction;
-      }
+      const fraction = Math.min(stepKm / dist, 1);
+      this.position.lat += (target.lat - this.position.lat) * fraction;
+      this.position.lon += (target.lon - this.position.lon) * fraction;
       this.totalDistance += stepKm;
     }
 
     this.train.speed = Math.round(this.speed);
     this.train.totalKm = this.totalDistance;
     this.train.state = this.speed > 0 ? 'moving' : 'stopped';
+    this.train.blockedBy = false;
+  }
+
+  /**
+   * Proximity-based block check fallback (when canton data unavailable).
+   */
+  _proximityBlockCheck(allServices) {
+    if (!this.position || !allServices) return null;
+
+    const route = this._state.cachedRoute || this.getCurrentRoute();
+    if (!route || route.length < 2) return null;
+
+    const myProgress = this._getRouteProgressKm(this.position, route);
+    let nearestAheadDist = Infinity;
+    let nearestAheadSpeed = 0;
+
+    for (const other of allServices) {
+      if (other.id === this.id || !other.position || other.state === 'waiting') continue;
+
+      const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
+      if (rawDist > 30) continue;
+
+      // Check if other train is on our route
+      const closestPt = route.reduce((best, pt) => {
+        const d = haversineDistance(other.position.lat, other.position.lon, pt.lat, pt.lon);
+        return d < best.d ? { d, pt } : best;
+      }, { d: Infinity, pt: null });
+
+      if (closestPt.d > 1.5) continue;
+
+      const otherProgress = this._getRouteProgressKm(other.position, route);
+      const ahead = this.isReturnLeg ? otherProgress < myProgress : otherProgress > myProgress;
+
+      if (ahead) {
+        const dist = Math.abs(otherProgress - myProgress);
+        if (dist < nearestAheadDist) {
+          nearestAheadDist = dist;
+          nearestAheadSpeed = other.speed || 0;
+        }
+      }
+    }
+
+    if (nearestAheadDist === Infinity) return null;
+
+    const lineSpeed = this.getLineSpeedAtPosition();
+    let blockLength;
+    if (lineSpeed <= 80) blockLength = 0.6;
+    else if (lineSpeed <= 160) blockLength = 1.0;
+    else if (lineSpeed <= 200) blockLength = 1.5;
+    else blockLength = 2.5;
+
+    if (nearestAheadDist < blockLength) return 0;
+    if (nearestAheadDist < blockLength * 2) return Math.min(nearestAheadSpeed, 30);
+    if (nearestAheadDist < blockLength * 3) return nearestAheadSpeed;
+
+    return null;
+  }
+
+  _getRouteProgressKm(pos, route) {
+    if (!pos || !route || route.length < 2) return 0;
+    let minDist = Infinity;
+    let bestIdx = 0;
+    for (let i = 0; i < route.length; i++) {
+      const d = haversineDistance(pos.lat, pos.lon, route[i].lat, route[i].lon);
+      if (d < minDist) { minDist = d; bestIdx = i; }
+    }
+    let progress = 0;
+    for (let i = 0; i < bestIdx && i < route.length - 1; i++) {
+      progress += haversineDistance(route[i].lat, route[i].lon, route[i + 1].lat, route[i + 1].lon);
+    }
+    return progress;
   }
 
   // Legacy compatibility
@@ -231,7 +606,19 @@ export class ActiveService {
     return this.routes[idx] || null;
   }
 
+  /**
+   * Get infrastructure speed limit at current position.
+   * Uses segment data from _state for precision when available.
+   */
   getLineSpeedAtPosition() {
+    // Use segment data from simulation state if available
+    if (this._state.cachedRoute && this._state.index < this._state.cachedRoute.length - 1) {
+      const route = this._state.cachedRoute;
+      const idx = this._state.index;
+      return route[idx + 1].maxSpeed || route[idx].maxSpeed || 160;
+    }
+
+    // Fallback: find nearest point on route
     const route = this.getCurrentRoute();
     if (!route || route.length === 0) return 300;
 
@@ -239,7 +626,7 @@ export class ActiveService {
     let bestSpeed = 160;
     for (const pt of route) {
       if (!this.position) break;
-      const d = haversine(this.position.lat, this.position.lon, pt.lat, pt.lon);
+      const d = haversineDistance(this.position.lat, this.position.lon, pt.lat, pt.lon);
       if (d < minDist) {
         minDist = d;
         bestSpeed = pt.maxSpeed || 160;
@@ -272,137 +659,33 @@ export class ActiveService {
     return null;
   }
 
-  getRouteProgress(pos, route) {
-    if (!pos || !route || route.length < 2) return 0;
-    let minDist = Infinity;
-    let bestIdx = 0;
-    for (let i = 0; i < route.length; i++) {
-      const d = haversine(pos.lat, pos.lon, route[i].lat, route[i].lon);
-      if (d < minDist) { minDist = d; bestIdx = i; }
-    }
-    let progress = 0;
-    for (let i = 0; i < bestIdx && i < route.length - 1; i++) {
-      progress += haversine(route[i].lat, route[i].lon, route[i + 1].lat, route[i + 1].lon);
-    }
-    return progress;
-  }
-
-  getBlockSignalLimit(allServices) {
-    if (!this.position || this.state !== 'moving') return null;
-
-    const route = this.getCurrentRoute();
-    if (!route || route.length < 2) return null;
-
-    const lineSpeed = this.getLineSpeedAtPosition();
-    let blockLength;
-    if (lineSpeed <= 80) blockLength = 0.6;
-    else if (lineSpeed <= 160) blockLength = 1.0;
-    else if (lineSpeed <= 200) blockLength = 1.5;
-    else blockLength = 2.5;
-
-    const myProgress = this.getRouteProgress(this.position, route);
-    let nearestAheadDist = Infinity;
-    let nearestAheadSpeed = 0;
-
-    for (const other of allServices) {
-      if (other.id === this.id) continue;
-      if (!other.position || other.state === 'waiting') continue;
-
-      const rawDist = haversine(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
-      if (rawDist > 30) continue;
-
-      const otherOnRoute = this.getRouteProgress(other.position, route);
-      const closestPt = route.reduce((best, pt) => {
-        const d = haversine(other.position.lat, other.position.lon, pt.lat, pt.lon);
-        return d < best.d ? { d, pt } : best;
-      }, { d: Infinity, pt: null });
-
-      if (closestPt.d > 1.5) continue;
-
-      let ahead;
-      if (this.isReturnLeg) {
-        ahead = otherOnRoute < myProgress;
-      } else {
-        ahead = otherOnRoute > myProgress;
-      }
-
-      if (ahead) {
-        const dist = Math.abs(otherOnRoute - myProgress);
-        if (dist < nearestAheadDist) {
-          nearestAheadDist = dist;
-          nearestAheadSpeed = other.speed || 0;
-        }
-      }
-    }
-
-    if (nearestAheadDist === Infinity) return null;
-
-    if (nearestAheadDist < blockLength) {
-      return 0;
-    } else if (nearestAheadDist < blockLength * 2) {
-      return Math.min(nearestAheadSpeed, 30);
-    } else if (nearestAheadDist < blockLength * 3) {
-      return nearestAheadSpeed;
-    }
-
-    return null;
-  }
-
-  advanceAlongRoute(stepKm, route) {
-    if (!this.position || !route || route.length < 2) return;
-
-    let closestIdx = 0;
-    let closestDist = Infinity;
-    for (let i = 0; i < route.length; i++) {
-      const d = haversine(this.position.lat, this.position.lon, route[i].lat, route[i].lon);
-      if (d < closestDist) { closestDist = d; closestIdx = i; }
-    }
-
-    let remaining = stepKm;
-    let idx = closestIdx;
-
-    while (remaining > 0 && idx < route.length - 1) {
-      const nextIdx = idx + 1;
-      if (nextIdx >= route.length) break;
-
-      const segDist = haversine(route[idx].lat, route[idx].lon, route[nextIdx].lat, route[nextIdx].lon);
-      if (segDist <= 0) { idx = nextIdx; continue; }
-
-      if (remaining >= segDist) {
-        remaining -= segDist;
-        idx = nextIdx;
-      } else {
-        const frac = remaining / segDist;
-        this.position.lat = route[idx].lat + (route[nextIdx].lat - route[idx].lat) * frac;
-        this.position.lon = route[idx].lon + (route[nextIdx].lon - route[idx].lon) * frac;
-        remaining = 0;
-      }
-    }
-
-    if (remaining > 0 && idx >= 0 && idx < route.length) {
-      this.position.lat = route[idx].lat;
-      this.position.lon = route[idx].lon;
-    }
-  }
-
   arriveAtStation(station, timeOfDay, economy) {
     const stops = this.getCurrentStops();
     const stop = stops[this.currentStopIndex];
-    const expectedTime = stop.arrivalTime;
-    this.delay = Math.max(0, timeOfDay - expectedTime);
-    this.train.delay = this.delay;
+    const expectedTime = stop?.arrivalTime;
+    if (expectedTime != null) {
+      this.delay = Math.max(0, timeOfDay - expectedTime);
+    }
+    this.train.delay = Math.round(this.delay);
     this.position = { lat: station.lat, lon: station.lon };
     this.speed = 0;
     this.train.speed = 0;
     this.train.stoppedAt = station;
+    this.train.blockedBy = false;
 
-    if (stop.type === 'arret') {
+    // Release all cantons for this train on arrival
+    cantonManager.releaseAll(this.id);
+
+    if (stop?.type === 'arret') {
       this.state = 'stopped_at_station';
     } else {
       this.state = 'moving';
     }
 
     this.currentStopIndex++;
+
+    // Reset simulation state for next leg
+    this._resetState();
 
     if (this.currentStopIndex >= stops.length) {
       this.completeService(economy);
@@ -415,6 +698,10 @@ export class ActiveService {
       this.revenueCollected = true;
     }
 
+    // Release all cantons
+    cantonManager.releaseAll(this.id);
+    this._resetState();
+
     if (this.roundTrip && !this.isReturnLeg) {
       this.isReturnLeg = true;
       this.returnStops = this.buildReturnStops();
@@ -423,6 +710,7 @@ export class ActiveService {
       this.speed = 0;
       this.train.speed = 0;
       this.train.state = 'waiting';
+      this.train.blockedBy = false;
       return;
     }
 
@@ -431,6 +719,7 @@ export class ActiveService {
     this.speed = 0;
     this.train.speed = 0;
     this.train.state = 'waiting';
+    this.train.blockedBy = false;
     this.completed = true;
     this.completedDate = this._currentDate || '';
     this.isReturnLeg = false;
@@ -483,6 +772,9 @@ export class ScheduleCreator {
   }
 
   removeService(id) {
+    // Release cantons for removed service
+    const svc = this.services.find(s => s.id === id);
+    if (svc) cantonManager.releaseAll(svc.id);
     this.services = this.services.filter(s => s.id !== id);
   }
 
