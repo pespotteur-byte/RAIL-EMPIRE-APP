@@ -1,0 +1,86 @@
+let nextRameId = 1;
+
+export class Rame {
+  constructor(data) {
+    this.id = data.id || `rame-${nextRameId++}`;
+    this.name = data.name || 'Sans nom';
+    this.elements = data.elements || []; // array of RollingStockItem ids
+    this.elementDetails = data.elementDetails || []; // cached details
+  }
+
+  get totalLength() {
+    return this.elementDetails.reduce((s, e) => s + (e.length || 0), 0);
+  }
+
+  get totalTonnage() {
+    return this.elementDetails.reduce((s, e) => s + (e.tonnage || 0), 0);
+  }
+
+  get totalCapacity() {
+    return this.elementDetails.reduce((s, e) => s + (e.passengerCapacity || 0), 0);
+  }
+
+  get totalFreightCapacity() {
+    return this.elementDetails.reduce((s, e) => s + (e.freightCapacity || 0), 0);
+  }
+
+  get maxSpeed() {
+    if (this.elementDetails.length === 0) return 0;
+    return Math.min(...this.elementDetails.map(e => e.maxSpeed || 400));
+  }
+
+  get traction() {
+    const tractors = this.elementDetails.filter(e =>
+      e.category === 'locomotive' || e.category === 'automotrice'
+    );
+    if (tractors.length === 0) return 'none';
+    const tractions = [...new Set(tractors.map(t => t.traction))];
+    return tractions.join('+');
+  }
+
+  get isValid() {
+    return this.totalLength <= 750 && this.elementDetails.length > 0;
+  }
+}
+
+export class RameManager {
+  constructor() {
+    this.rames = [];
+  }
+
+  add(data) {
+    const rame = new Rame(data);
+    this.rames.push(rame);
+    return rame;
+  }
+
+  remove(id) {
+    this.rames = this.rames.filter(r => r.id !== id);
+  }
+
+  getById(id) {
+    return this.rames.find(r => r.id === id);
+  }
+
+  getAll() {
+    return this.rames;
+  }
+
+  toSave() {
+    return this.rames.map(r => ({
+      id: r.id,
+      name: r.name,
+      elements: r.elements,
+      elementDetails: r.elementDetails,
+    }));
+  }
+
+  loadFromSave(arr) {
+    this.rames = [];
+    for (const d of arr) {
+      this.rames.push(new Rame(d));
+      const num = parseInt(d.id?.split('-')[1] || '0');
+      if (num >= nextRameId) nextRameId = num + 1;
+    }
+  }
+}
