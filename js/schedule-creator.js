@@ -1,4 +1,3 @@
-import { haversine } from './world.js';
 import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js';
 
 let nextServiceId = 1;
@@ -449,6 +448,9 @@ export class ActiveService {
 
   /**
    * Continuous delay computation during movement.
+   * Uses per-segment time fractions mapped to scheduled stop times
+   * for accurate delay even on routes with varying speed limits.
+   *
    * Delay increases when:
    *  - speed < maxSpeed (infrastructure/incident constraints)
    *  - waiting for canton (blocked, speed = 0)
@@ -463,21 +465,31 @@ export class ActiveService {
     if (!prevStop) return;
 
     const scheduledDepartureTime = prevStop.departureTime || 0;
+    const nextStop = stops[this.currentStopIndex];
+    const scheduledArrivalTime = nextStop?.arrivalTime ||
+      (scheduledDepartureTime + this._routeAnalysis.estimatedTimeMinutes);
+
     const segments = this._routeAnalysis.segments;
 
-    // Compute scheduled elapsed time at current position
-    let scheduledElapsed = 0;
+    // Compute time-based progress fraction using per-segment ideal times
+    let elapsedSegTime = 0;
+    let totalSegTime = 0;
+    for (const seg of segments) totalSegTime += seg.timeMinutes;
+
     for (let i = 0; i < this._state.index && i < segments.length; i++) {
-      scheduledElapsed += segments[i].timeMinutes;
+      elapsedSegTime += segments[i].timeMinutes;
     }
     if (this._state.index < segments.length) {
-      scheduledElapsed += segments[this._state.index].timeMinutes * this._state.progress;
+      elapsedSegTime += segments[this._state.index].timeMinutes * this._state.progress;
     }
 
-    // Actual elapsed time in minutes
-    const actualElapsed = timeOfDay - scheduledDepartureTime;
+    const timeFraction = totalSegTime > 0 ? elapsedSegTime / totalSegTime : 0;
 
-    this.delay = Math.max(0, actualElapsed - scheduledElapsed);
+    // Map to schedule window for accurate delay
+    const totalScheduledTime = scheduledArrivalTime - scheduledDepartureTime;
+    const expectedTimeAtPosition = scheduledDepartureTime + totalScheduledTime * timeFraction;
+
+    this.delay = Math.max(0, timeOfDay - expectedTimeAtPosition);
     this.train.delay = Math.round(this.delay);
   }
 
