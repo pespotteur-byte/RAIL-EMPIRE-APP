@@ -166,6 +166,8 @@ export class UI {
     document.getElementById('station-lon').value = lon.toFixed(6);
     document.getElementById('station-name').value = '';
     document.getElementById('station-platforms').value = '4';
+    const loadingEl = document.getElementById('station-loading');
+    if (loadingEl) loadingEl.classList.add('hidden');
     document.getElementById('modal-station')?.classList.remove('hidden');
   }
 

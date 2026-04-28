@@ -211,6 +211,7 @@ header {
 /* MODALS */
 .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .modal.hidden { display: none; }
+.hidden { display: none !important; }
 .modal-content { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; position: relative; }
 .modal-wide { max-width: 700px; }
 .modal-close { position: absolute; top: 8px; right: 12px; background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; }
