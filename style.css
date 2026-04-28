@@ -61,9 +61,11 @@ header {
 .clock { color: var(--orange); font-weight: 700; font-size: 14px; }
 .date { color: var(--text3); font-size: 11px; }
 
-/* ALERT BANNER */
-.alert-banner { background: var(--red); color: #fff; padding: 4px 12px; font-size: 11px; font-weight: 600; text-align: center; }
+/* ALERT BANNERS - Dual system */
+.alert-banner { padding: 4px 12px; font-size: 11px; font-weight: 600; text-align: center; }
 .alert-banner.hidden { display: none; }
+.alert-banner-interruptions { background: #7B1E1E; color: #fff; }
+.alert-banner-slowdowns { background: #FFE135; color: #1a1a1a; }
 
 /* GAME BODY */
 .game-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -104,9 +106,9 @@ header {
 .tab-content { display: none; flex: 1; overflow-y: auto; }
 .tab-content.active { display: block; }
 
-/* TRAIN LIST */
-.trains-list { padding: 6px; }
-.train-item { background: var(--bg3); border: 1px solid #475569; border-radius: 5px; padding: 6px 8px; margin-bottom: 4px; font-size: 11px; }
+/* TRAIN LIST - Horizontal scrolling */
+.trains-list { padding: 6px; display: flex; overflow-x: auto; gap: 6px; flex-wrap: nowrap; }
+.train-item { background: var(--bg3); border: 1px solid #475569; border-radius: 5px; padding: 6px 8px; font-size: 11px; min-width: 220px; flex-shrink: 0; }
 .train-header { display: flex; align-items: center; gap: 6px; }
 .train-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .train-name { font-weight: 600; flex: 1; }

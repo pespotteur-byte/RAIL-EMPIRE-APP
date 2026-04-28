@@ -172,13 +172,30 @@ export class UI {
   async saveStation() {
     const name = document.getElementById('station-name').value.trim();
     if (!name) return alert('Nom requis');
-    const lat = parseFloat(document.getElementById('station-lat').value);
-    const lon = parseFloat(document.getElementById('station-lon').value);
+    let lat = parseFloat(document.getElementById('station-lat').value);
+    let lon = parseFloat(document.getElementById('station-lon').value);
     const type = document.getElementById('station-type').value;
     const platforms = parseInt(document.getElementById('station-platforms').value) || 4;
 
-    const station = this.game.world.addStation({ name, lat, lon, type, platforms });
     const orm = this.game.orm;
+
+    // Snap station to nearest railway node
+    const loadingEl = document.getElementById('station-loading');
+    if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Accrochage au reseau ferroviaire...'; }
+    try {
+      const snapped = await orm.snapToRailway(lat, lon, 2);
+      if (snapped) {
+        lat = snapped.lat;
+        lon = snapped.lon;
+        console.log(`Station snapped to railway: ${snapped.dist.toFixed(3)} km offset`);
+      } else {
+        console.warn(`No railway node within 2km for station "${name}"`);
+      }
+    } catch (e) {
+      console.warn('Railway snapping failed:', e);
+    }
+
+    const station = this.game.world.addStation({ name, lat, lon, type, platforms });
     station.country = orm.getCountryAtPoint(lat, lon);
     station.facilities = [type];
 
@@ -276,12 +293,15 @@ export class UI {
   saveStock() {
     const name = document.getElementById('stock-name').value.trim();
     if (!name) return alert('Nom requis');
+    const tonnage = parseInt(document.getElementById('stock-tonnage').value) || 80;
     this.game.rollingStock.add({
       name,
       category: document.getElementById('stock-category').value,
       traction: document.getElementById('stock-traction').value,
       maxSpeed: parseInt(document.getElementById('stock-speed').value) || 160,
-      tonnage: parseInt(document.getElementById('stock-tonnage').value) || 80,
+      tonnage,
+      mass: parseInt(document.getElementById('stock-mass')?.value) || tonnage,
+      power: parseInt(document.getElementById('stock-power')?.value) || 0,
       passengerCapacity: parseInt(document.getElementById('stock-capacity').value) || 0,
       freightCapacity: parseInt(document.getElementById('stock-freight-cap').value) || 0,
       length: parseFloat(document.getElementById('stock-length').value) || 20,
@@ -306,7 +326,7 @@ export class UI {
         <div class="card-info">
           <b>Cat:</b> ${item.category} | <b>Tract:</b> ${item.traction}<br>
           <b>Vmax:</b> ${item.maxSpeed} km/h | <b>Long:</b> ${item.length}m<br>
-          <b>Tonnage:</b> ${item.tonnage}t | <b>Places:</b> ${item.passengerCapacity} | <b>Fret:</b> ${item.freightCapacity}t
+          <b>Tonnage:</b> ${item.tonnage}t | <b>Masse:</b> ${item.mass}t${item.power ? ` | <b>P:</b> ${item.power}kW` : ''} | <b>Places:</b> ${item.passengerCapacity} | <b>Fret:</b> ${item.freightCapacity}t
         </div>
         <div class="card-actions">
           <button class="btn-sm danger" onclick="game.ui.deleteStock('${item.id}')">Supprimer</button>
@@ -410,6 +430,7 @@ export class UI {
       elementDetails: this.currentRameElements.map(e => ({
         name: e.name, category: e.category, traction: e.traction,
         maxSpeed: e.maxSpeed, tonnage: e.tonnage,
+        mass: e.mass || e.tonnage, power: e.power || 0,
         passengerCapacity: e.passengerCapacity, freightCapacity: e.freightCapacity,
         length: e.length, imageData: e.imageData,
       })),
@@ -606,7 +627,11 @@ export class UI {
 
     let arrTimeMin, depTimeMin;
     if (this.schedStops.length === 0) {
-      arrTimeMin = 8 * 60;
+      // Use current Paris time as default departure, user can change it
+      const pt = this.game.engine.getParisTime();
+      const currentMin = pt.hours * 60 + pt.minutes;
+      // Round up to next 5 minutes
+      arrTimeMin = Math.ceil(currentMin / 5) * 5;
       depTimeMin = arrTimeMin;
     } else {
       const prevStop = this.schedStops[this.schedStops.length - 1];
@@ -685,8 +710,11 @@ export class UI {
           <select onchange="game.ui.updateSchedStop(${i}, 'type', this.value)">
             <option value="arret" ${stop.type === 'arret' ? 'selected' : ''}>Arret</option>
             <option value="passage" ${stop.type === 'passage' ? 'selected' : ''}>Passage</option>
+            <option value="waypoint" ${stop.type === 'waypoint' ? 'selected' : ''}>Waypoint</option>
           </select>
-          ${stop.type === 'passage' ? `
+          ${stop.type === 'waypoint' ? `
+            <span style="font-size:9px;color:var(--text3);font-style:italic">via</span>
+          ` : stop.type === 'passage' ? `
             <label style="font-size:9px;color:var(--text3)">Pass:</label>
             <input type="text" value="${stop.arrTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">
           ` : `
@@ -705,7 +733,7 @@ export class UI {
     const stop = this.schedStops[index];
     if (field === 'type') {
       stop.type = value;
-      if (value === 'passage') {
+      if (value === 'passage' || value === 'waypoint') {
         stop.depTimeMin = stop.arrTimeMin;
         stop.depTimeStr = stop.arrTimeStr;
       } else if (stop.depTimeMin <= stop.arrTimeMin) {
@@ -766,7 +794,7 @@ export class UI {
       curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
       curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
 
-      if (curStop.type === 'passage') {
+      if (curStop.type === 'passage' || curStop.type === 'waypoint') {
         curStop.depTimeMin = curStop.arrTimeMin;
         curStop.depTimeStr = curStop.arrTimeStr;
       } else {
@@ -793,6 +821,7 @@ export class UI {
 
     const rame = this.game.rameManager.getById(rameId);
     const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
+    const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
     const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 10;
 
     const routes = [];
@@ -831,7 +860,7 @@ export class UI {
     }
 
     this.game.scheduleCreator.addService({
-      name, rameId, stops, routes, roundTrip, terminusWait, totalDistance: Math.round(totalDist),
+      name, rameId, stops, routes, roundTrip, multiDepartures, terminusWait, totalDistance: Math.round(totalDist),
     }, rame, this.game.world);
 
     document.getElementById('modal-schedule')?.classList.add('hidden');
@@ -1058,7 +1087,7 @@ export class UI {
               <span class="incident-icon">${inc.icon || '⚠'}</span>
               <div>
                 <div class="incident-name">${inc.name}</div>
-                <div class="incident-desc">${inc.trackName || 'Zone inconnue'} - ${inc.effect === 'stop' ? '<span style="color:#ef4444">Interruption</span>' : '<span style="color:#f59e0b">Ralenti ' + (inc.speedLimit || 30) + ' km/h</span>'}</div>
+                <div class="incident-desc">${inc.trackName || 'Zone inconnue'} - ${inc.effect === 'stop' ? '<span style="color:#7B1E1E;font-weight:700">Interruption</span>' : '<span style="color:#FFE135;font-weight:700">Ralenti ' + (inc.speedLimit || 30) + ' km/h</span>'}</div>
                 <div class="incident-time">${Math.ceil(inc.remaining)} min restantes</div>
               </div>
             </div>
@@ -1171,12 +1200,19 @@ export class UI {
   updateTrainsList(services) {
     const container = document.getElementById('trains-list');
     if (!container) return;
-    if (services.length === 0) {
+
+    // Show only active trains (moving or stopped at station)
+    const activeTrains = services.filter(svc =>
+      svc.state === 'moving' || svc.state === 'stopped_at_station' ||
+      (svc.train && svc.train.speed > 0)
+    );
+
+    if (activeTrains.length === 0) {
       container.innerHTML = '<p style="color:var(--text3);font-size:11px;text-align:center;padding:10px">Aucun train en service. Creez un trajet dans "Horaires".</p>';
       return;
     }
 
-    container.innerHTML = services.map(svc => {
+    container.innerHTML = activeTrains.map(svc => {
       const t = svc.train;
       const stateLabel = t.breakdown ? 'En panne' :
         t.blockedBy ? 'Bloque (cantonnement)' :
@@ -1242,29 +1278,62 @@ export class UI {
   }
 
   updateAlertBanner() {
-    const banner = document.getElementById('alert-banner');
-    if (!banner) return;
+    const bannerInterruptions = document.getElementById('alert-banner-interruptions');
+    const bannerSlowdowns = document.getElementById('alert-banner-slowdowns');
+    const legacyBanner = document.getElementById('alert-banner');
 
     const incidents = this.game.incidentManager.getActiveIncidents();
     const dateStr = this.game.engine.getParisDate();
     const timeOfDay = this.game.engine.getParisTime().hours * 60 + this.game.engine.getParisTime().minutes;
     const activeWorks = this.game.worksManager.getActive(dateStr, timeOfDay);
 
-    const alerts = [];
+    const interruptions = [];
+    const slowdowns = [];
+
     for (const inc of incidents) {
       const zone = inc.trackName || 'Zone inconnue';
-      const effectLabel = inc.effect === 'stop' ? '🔴 INTERRUPTION' : `🟡 Ralenti ${inc.speedLimit} km/h`;
-      alerts.push(`${inc.icon} ${inc.name} - ${zone} - ${effectLabel} (${Math.ceil(inc.remaining)} min)`);
+      const label = `${inc.icon} ${inc.name} - ${zone} (${Math.ceil(inc.remaining)} min)`;
+      if (inc.effect === 'stop') {
+        interruptions.push(label);
+      } else {
+        slowdowns.push(`${label} - ${inc.speedLimit} km/h`);
+      }
     }
     for (const w of activeWorks) {
-      alerts.push(`TRAVAUX: ${w.name} EN COURS`);
+      if (w.impact === 'stop') {
+        interruptions.push(`TRAVAUX: ${w.name} EN COURS`);
+      } else {
+        slowdowns.push(`TRAVAUX: ${w.name} EN COURS - ${w.speedLimit || 40} km/h`);
+      }
     }
 
-    if (alerts.length > 0) {
-      banner.textContent = alerts.join(' | ');
-      banner.classList.remove('hidden');
-    } else {
-      banner.classList.add('hidden');
+    // Update dual banners
+    if (bannerInterruptions) {
+      if (interruptions.length > 0) {
+        bannerInterruptions.textContent = interruptions.join(' | ');
+        bannerInterruptions.classList.remove('hidden');
+      } else {
+        bannerInterruptions.classList.add('hidden');
+      }
+    }
+    if (bannerSlowdowns) {
+      if (slowdowns.length > 0) {
+        bannerSlowdowns.textContent = slowdowns.join(' | ');
+        bannerSlowdowns.classList.remove('hidden');
+      } else {
+        bannerSlowdowns.classList.add('hidden');
+      }
+    }
+
+    // Legacy single banner fallback
+    if (legacyBanner && !bannerInterruptions) {
+      const all = [...interruptions, ...slowdowns];
+      if (all.length > 0) {
+        legacyBanner.textContent = all.join(' | ');
+        legacyBanner.classList.remove('hidden');
+      } else {
+        legacyBanner.classList.add('hidden');
+      }
     }
   }
 }

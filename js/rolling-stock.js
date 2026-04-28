@@ -8,6 +8,9 @@ export class RollingStockItem {
     this.traction = data.traction || 'none';
     this.maxSpeed = data.maxSpeed || 160;
     this.tonnage = data.tonnage || 80;
+    // Physics: separate mass from capacity
+    this.mass = data.mass || data.tonnage || 80; // tonnes (empty mass for wagons, total mass for locos)
+    this.power = data.power || 0; // kW (only for locomotives/automotrices)
     this.passengerCapacity = data.passengerCapacity || 0;
     this.freightCapacity = data.freightCapacity || 0;
     this.length = data.length || 20;
@@ -46,6 +49,8 @@ export class RollingStockManager {
       traction: i.traction,
       maxSpeed: i.maxSpeed,
       tonnage: i.tonnage,
+      mass: i.mass,
+      power: i.power,
       passengerCapacity: i.passengerCapacity,
       freightCapacity: i.freightCapacity,
       length: i.length,

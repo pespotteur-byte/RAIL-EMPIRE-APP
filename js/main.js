@@ -189,11 +189,40 @@ class RailEmpire {
     if (s.works) this.worksManager.loadFromSave(s.works);
     if (s.freightContracts) this.freightManager.loadFromSave(s.freightContracts);
     if (s.ormRoutes) this.orm.loadFromSave(s.ormRoutes);
+
+    // Fast-forward simulation based on elapsed time since save
+    if (s.saveTime) {
+      const elapsed = (Date.now() - s.saveTime) / 1000; // seconds
+      if (elapsed > 0 && elapsed < 86400) { // max 24h fast-forward
+        console.log(`Fast-forwarding simulation by ${Math.round(elapsed)}s`);
+        this._fastForward(elapsed);
+      }
+    }
+  }
+
+  _fastForward(elapsedSeconds) {
+    const stepDt = 1; // simulate 1-second steps
+    const activeServices = this.scheduleCreator.getActiveServices();
+    const pt = this.engine.getParisTime();
+    let timeOfDay = pt.hours * 60 + pt.minutes;
+
+    let remaining = elapsedSeconds;
+    while (remaining > 0) {
+      const dt = Math.min(stepDt, remaining);
+      for (const svc of activeServices) {
+        svc.moveUpdate(dt, timeOfDay, activeServices);
+      }
+      remaining -= dt;
+      timeOfDay += (dt / 60);
+      if (timeOfDay >= 1440) timeOfDay -= 1440;
+    }
+    console.log(`Fast-forward complete. Simulated ${Math.round(elapsedSeconds)}s of game time.`);
   }
 
   saveState() {
     const state = {
       companyName: this.account.companyName,
+      saveTime: Date.now(),
       economy: this.economy.toSave(),
       world: this.world.toSave(),
       rollingStock: this.rollingStock.toSave(),

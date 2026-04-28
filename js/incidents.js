@@ -131,19 +131,11 @@ export class IncidentManager {
     }
     this.activeIncidents = this.activeIncidents.filter(i => i.active);
 
-    // Apply active incidents to all trains on affected tracks
+    // Incidents are visual/UI only - do NOT apply speed limits or blocking to trains
+    // Clear any legacy incident flags on trains
     for (const svc of services) {
       if (!svc.train) continue;
-      const inc = this.getIncidentForService(svc);
-      if (inc) {
-        svc.train.incident = inc;
-      } else if (svc.train.incident && !svc.train.breakdown) {
-        svc.train.incident = null;
-      }
-    }
-
-    if (depotManager) {
-      this.processBreakdownRepairs(services, depotManager, timeOfDay);
+      if (svc.train.incident) svc.train.incident = null;
     }
 
     // Generate new random incidents on tracks
@@ -161,23 +153,11 @@ export class IncidentManager {
         incident.startTime = timeOfDay;
         this.activeIncidents.push(incident);
 
-        // Set track flags for visual rendering
+        // Set track flags for visual rendering only
         track.incidentActive = true;
         track.incidentEffect = type.effect;
         track.incidentSpeedLimit = type.speedLimit;
         track.incidentName = type.name;
-
-        // If breakdown type, mark any train currently on this track
-        if (type.id === 'breakdown') {
-          for (const svc of services) {
-            if (!svc.train || svc.train.breakdown) continue;
-            const onTrack = this.isServiceOnTrack(svc, track);
-            if (onTrack) {
-              svc.train.breakdown = { needsRepair: false, repairTime: 0 };
-              break;
-            }
-          }
-        }
       }
     }
   }

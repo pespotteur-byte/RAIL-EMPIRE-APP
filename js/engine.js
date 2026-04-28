@@ -6,7 +6,7 @@ export class SimulationEngine {
     this.onMoveTick = null;
     this.currentDate = null;
     this.lastMoveTime = 0;
-    this.moveInterval = 500; // 0.5 seconds
+    this.moveInterval = 100; // 0.1 seconds for smooth movement
   }
 
   getParisTime() {

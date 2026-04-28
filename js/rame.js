@@ -38,6 +38,25 @@ export class Rame {
     return tractions.join('+');
   }
 
+  // Physics: total empty mass (tonnes)
+  get totalMass() {
+    return this.elementDetails.reduce((s, e) => s + (e.mass || e.tonnage || 0), 0);
+  }
+
+  // Physics: total power (kW) from traction units
+  get totalPower() {
+    return this.elementDetails
+      .filter(e => e.category === 'locomotive' || e.category === 'automotrice')
+      .reduce((s, e) => s + (e.power || 0), 0);
+  }
+
+  // Physics: total mass including payload estimate
+  getTotalMassWithPayload(loadFactor = 0.7) {
+    const passengerMass = this.totalCapacity * loadFactor * 0.08; // ~80kg per passenger
+    const freightMass = this.totalFreightCapacity * loadFactor;
+    return this.totalMass + passengerMass + freightMass;
+  }
+
   get isValid() {
     return this.totalLength <= 750 && this.elementDetails.length > 0;
   }

@@ -94,13 +94,29 @@ export class ORMClient {
     return { nodes, edges };
   }
 
-  findNearestNode(graph, lat, lon) {
+  findNearestNode(graph, lat, lon, maxDistKm = Infinity) {
     let best = null, bestDist = Infinity;
     for (const [, node] of graph.nodes) {
       const d = haversine(lat, lon, node.lat, node.lon);
-      if (d < bestDist) { bestDist = d; best = node; }
+      if (d < bestDist && d <= maxDistKm) { bestDist = d; best = node; }
     }
-    return best;
+    return best ? { node: best, dist: bestDist } : null;
+  }
+
+  /**
+   * Snap a lat/lon to the nearest railway node.
+   * Returns { lat, lon, dist } or null if no node within maxDistKm.
+   */
+  async snapToRailway(lat, lon, maxDistKm = 2) {
+    const padding = Math.max(0.05, maxDistKm * 0.015);
+    const ways = await this.fetchArea(
+      lat - padding, lon - padding, lat + padding, lon + padding
+    );
+    if (ways.length === 0) return null;
+    const graph = this.buildGraph(ways);
+    const result = this.findNearestNode(graph, lat, lon, maxDistKm);
+    if (!result) return null;
+    return { lat: result.node.lat, lon: result.node.lon, dist: result.dist };
   }
 
   dijkstra(graph, startKey, endKey) {
@@ -176,28 +192,68 @@ export class ORMClient {
     }
 
     const graph = this.buildGraph(allWays);
-    const startNode = this.findNearestNode(graph, fromLat, fromLon);
-    const endNode = this.findNearestNode(graph, toLat, toLon);
+    const startResult = this.findNearestNode(graph, fromLat, fromLon, 5);
+    const endResult = this.findNearestNode(graph, toLat, toLon, 5);
 
-    if (!startNode || !endNode) {
-      console.warn('ORM: No nearby railway nodes found');
+    if (!startResult || !endResult) {
+      console.warn('ORM: No nearby railway nodes found within 5km');
+      // Only fallback if absolutely no ORM data
+      if (allWays.length === 0) {
+        const fallback = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
+        this.routeCache.set(cacheKey, fallback);
+        return fallback;
+      }
+      // Try with larger search area
+      const extraPadding = padding * 2;
+      const extraWays = await this.fetchArea(
+        Math.min(fromLat, toLat) - extraPadding,
+        Math.min(fromLon, toLon) - extraPadding,
+        Math.max(fromLat, toLat) + extraPadding,
+        Math.max(fromLon, toLon) + extraPadding
+      );
+      const extraGraph = this.buildGraph(extraWays);
+      const startRetry = this.findNearestNode(extraGraph, fromLat, fromLon, 10);
+      const endRetry = this.findNearestNode(extraGraph, toLat, toLon, 10);
+      if (!startRetry || !endRetry) {
+        console.warn('ORM: Still no nodes after expanded search');
+        const fallback = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
+        this.routeCache.set(cacheKey, fallback);
+        return fallback;
+      }
+      const retryPath = this.dijkstra(extraGraph, startRetry.node.key, endRetry.node.key);
+      if (retryPath && retryPath.length > 0) {
+        this.routeCache.set(cacheKey, retryPath);
+        return retryPath;
+      }
       const fallback = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
       this.routeCache.set(cacheKey, fallback);
       return fallback;
     }
 
-    const startDist = haversine(fromLat, fromLon, startNode.lat, startNode.lon);
-    const endDist = haversine(toLat, toLon, endNode.lat, endNode.lon);
-    if (startDist > 5 || endDist > 5) {
-      console.warn(`ORM: Nearest nodes too far (start: ${startDist.toFixed(1)}km, end: ${endDist.toFixed(1)}km)`);
-      const fallback = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
-      this.routeCache.set(cacheKey, fallback);
-      return fallback;
-    }
+    const startNode = startResult.node;
+    const endNode = endResult.node;
 
     const path = this.dijkstra(graph, startNode.key, endNode.key);
     if (!path || path.length === 0) {
-      console.warn('ORM: Dijkstra found no path');
+      console.warn('ORM: Dijkstra found no path, trying expanded area');
+      // Try expanded area for big stations or complex junctions
+      const extraPadding = padding * 2;
+      const extraWays = await this.fetchArea(
+        Math.min(fromLat, toLat) - extraPadding,
+        Math.min(fromLon, toLon) - extraPadding,
+        Math.max(fromLat, toLat) + extraPadding,
+        Math.max(fromLon, toLon) + extraPadding
+      );
+      const extraGraph = this.buildGraph(extraWays);
+      const s2 = this.findNearestNode(extraGraph, fromLat, fromLon, 10);
+      const e2 = this.findNearestNode(extraGraph, toLat, toLon, 10);
+      if (s2 && e2) {
+        const retryPath = this.dijkstra(extraGraph, s2.node.key, e2.node.key);
+        if (retryPath && retryPath.length > 0) {
+          this.routeCache.set(cacheKey, retryPath);
+          return retryPath;
+        }
+      }
       const fallback = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
       this.routeCache.set(cacheKey, fallback);
       return fallback;

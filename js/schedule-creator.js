@@ -26,9 +26,11 @@ export class ActiveService {
     this.routes = data.routes || [];
     this.world = world;
     this.roundTrip = data.roundTrip || false;
+    this.multiDepartures = data.multiDepartures || 1;
     this.terminusWait = data.terminusWait || 10;
     this.totalDistance = data.totalDistance || 0;
     this.active = data.active !== false;
+    this._tripCount = 0;
 
     this.currentStopIndex = 0;
     this.state = 'waiting';
@@ -55,6 +57,24 @@ export class ActiveService {
     this._routeAnalysis = null;
     this._cantonAssignments = null;
 
+    // Mass-based physics: compute accel/decel from rame properties
+    let accel = 3.0; // default km/h/s
+    let decel = 4.0;
+    if (rame) {
+      const totalMass = rame.getTotalMassWithPayload ? rame.getTotalMassWithPayload(0.7) : (rame.totalMass || rame.totalTonnage || 400);
+      const totalPower = rame.totalPower || 0;
+      if (totalPower > 0 && totalMass > 0) {
+        // F = P/v (at low speed, use 30 km/h reference), a = F/m
+        // accel in km/h/s: a_m/s² * 3.6
+        const forceKN = totalPower / (30 / 3.6); // force at 30 km/h in kN
+        accel = Math.min(5.0, Math.max(0.5, (forceKN / totalMass) * 3.6));
+      }
+      // Heavier trains decelerate slightly slower
+      if (totalMass > 0) {
+        decel = Math.min(5.0, Math.max(2.0, 1600 / totalMass));
+      }
+    }
+
     this.train = {
       id: this.id,
       name: this.name,
@@ -68,8 +88,8 @@ export class ActiveService {
       incident: null,
       breakdown: null,
       blockedBy: false,
-      accel: 3.0,
-      decel: 4.0,
+      accel,
+      decel,
     };
 
     if (this.stops.length > 0 && world) {
@@ -148,7 +168,7 @@ export class ActiveService {
       if (!stop) { this.state = 'moving'; return; }
 
       const depTime = stop.departureTime;
-      if (stop.type === 'passage' || timeOfDay >= depTime) {
+      if (stop.type === 'passage' || stop.type === 'waypoint' || timeOfDay >= depTime) {
         if (this.currentStopIndex >= stops.length) {
           this.completeService(economy);
         } else {
@@ -322,12 +342,19 @@ export class ActiveService {
     const accelDelta = this.train.accel * dt;
     const decelDelta = this.train.decel * dt;
 
-    // Braking distance check for approaching end of route
+    // Check if next stop is a waypoint (no braking needed)
+    const nextStop = this.getNextStop();
+    const isNextWaypoint = nextStop?.type === 'waypoint';
+
+    // Braking distance check for approaching end of route (skip for waypoints)
     const remainingDist = this._getRemainingDistance(route);
+    // brakingDistance = speed² / (2 * deceleration), convert km/h to km/s²
     const brakeDist = (this.speed * this.speed) / (2 * this.train.decel * 3600);
 
-    if (remainingDist < brakeDist + 0.5 && this.speed > 10) {
-      this.speed = Math.max(10, this.speed - decelDelta);
+    if (!isNextWaypoint && remainingDist < brakeDist + 0.3 && remainingDist > 0.01) {
+      // Progressive deceleration: no forced minimum speed
+      const targetSpeed = Math.sqrt(Math.max(0, 2 * this.train.decel * 3600 * remainingDist));
+      this.speed = Math.max(0, Math.min(this.speed, targetSpeed));
     } else if (effectiveMaxSpeed === 0) {
       this.speed = Math.max(0, this.speed - decelDelta);
     } else if (this.speed < effectiveMaxSpeed) {
@@ -509,8 +536,9 @@ export class ActiveService {
     const decelDelta = this.train.decel * dt;
     const brakeDist = (this.speed * this.speed) / (2 * this.train.decel * 3600);
 
-    if (dist < brakeDist + 1 && this.speed > 10) {
-      this.speed = Math.max(10, this.speed - decelDelta);
+    if (dist < brakeDist + 0.5 && dist > 0.01) {
+      const targetSpeed = Math.sqrt(Math.max(0, 2 * this.train.decel * 3600 * dist));
+      this.speed = Math.max(0, Math.min(this.speed, targetSpeed));
     } else if (this.speed < rameMaxSpeed) {
       this.speed = Math.min(rameMaxSpeed, this.speed + accelDelta);
     } else if (this.speed > rameMaxSpeed) {
@@ -690,6 +718,9 @@ export class ActiveService {
 
     if (stop?.type === 'arret') {
       this.state = 'stopped_at_station';
+    } else if (stop?.type === 'waypoint') {
+      // Waypoints: don't stop, don't brake, continue moving
+      this.state = 'moving';
     } else {
       this.state = 'moving';
     }
@@ -723,6 +754,27 @@ export class ActiveService {
       this.train.speed = 0;
       this.train.state = 'waiting';
       this.train.blockedBy = false;
+      this._tripCount = (this._tripCount || 0) + 1;
+      return;
+    }
+
+    // Check for multi round-trip (additional departures)
+    if (this.roundTrip && this.isReturnLeg && this.multiDepartures && this._tripCount < this.multiDepartures) {
+      this.isReturnLeg = false;
+      this.currentStopIndex = 0;
+      this.state = 'waiting';
+      this.speed = 0;
+      this.train.speed = 0;
+      this.train.state = 'waiting';
+      this.train.blockedBy = false;
+      this.revenueCollected = false;
+      if (this.stops.length > 0 && this.world) {
+        const firstStation = this.world.getStationById(this.stops[0].stationId);
+        if (firstStation) {
+          this.position = { lat: firstStation.lat, lon: firstStation.lon };
+          this.train.stoppedAt = firstStation;
+        }
+      }
       return;
     }
 
@@ -736,6 +788,7 @@ export class ActiveService {
     this.completedDate = this._currentDate || '';
     this.isReturnLeg = false;
     this.revenueCollected = false;
+    this._tripCount = 0;
 
     if (this.stops.length > 0 && this.world) {
       const firstStation = this.world.getStationById(this.stops[0].stationId);
@@ -807,6 +860,7 @@ export class ScheduleCreator {
       })),
       routes: s.routes,
       roundTrip: s.roundTrip,
+      multiDepartures: s.multiDepartures,
       terminusWait: s.terminusWait,
       totalDistance: s.totalDistance,
       active: s.active,

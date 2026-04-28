@@ -8,6 +8,9 @@ export class Renderer {
     this.hoveredStation = null;
     this.logicalWidth = 0;
     this.logicalHeight = 0;
+    this._minimapCache = null;
+    this._lastMinimapDraw = 0;
+    this._minimapInterval = 50; // ~20 FPS throttle
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
@@ -62,10 +65,10 @@ export class Renderer {
                           (track.incidentActive && track.incidentEffect === 'slow');
 
       if (hasInterruption) {
-        trackColor = '#ef4444'; // Red for interruptions
+        trackColor = '#7B1E1E'; // Bordeaux for interruptions
         trackWidth = 4;
       } else if (hasSlowdown) {
-        trackColor = '#f59e0b'; // Orange/yellow for slowdowns
+        trackColor = '#FFE135'; // Banana yellow for slowdowns
         trackWidth = 3.5;
       } else {
         trackColor = track.maxSpeed >= 250 ? '#3b82f6' :
@@ -107,7 +110,7 @@ export class Renderer {
         const label = track.incidentActive ? (track.incidentName || 'Incident') :
                       track.worksActive ? 'Travaux' : '';
         if (label) {
-          ctx.fillStyle = hasInterruption ? '#ef4444' : '#f59e0b';
+          ctx.fillStyle = hasInterruption ? '#7B1E1E' : '#FFE135';
           ctx.font = 'bold 10px sans-serif';
           ctx.fillText(`⚠ ${label}`, mp.x + 5, mp.y - 5);
         }
@@ -170,6 +173,8 @@ export class Renderer {
   drawServices(ctx, world, services) {
     for (const svc of services) {
       if (!svc.position) continue;
+      // Only render active trains (moving or stopped at station)
+      if (svc.state === 'waiting' && svc.train.speed === 0 && !svc.train.stoppedAt) continue;
 
       const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
       if (p.x < -30 || p.x > this.logicalWidth + 30 || p.y < -30 || p.y > this.logicalHeight + 30) continue;
@@ -202,7 +207,7 @@ export class Renderer {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      if (svc.train.incident || svc.train.breakdown) {
+      if (svc.train.breakdown) {
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(p.x + 10, p.y - 10, 4, 0, Math.PI * 2);
@@ -234,6 +239,17 @@ export class Renderer {
   }
 
   drawMinimap(ctx, w, h, world, services) {
+    const now = performance.now();
+    // Throttle minimap rendering to ~20 FPS
+    if (now - this._lastMinimapDraw < this._minimapInterval) {
+      // Draw cached minimap if available
+      if (this._minimapCache) {
+        ctx.putImageData(this._minimapCache.data, this._minimapCache.x, this._minimapCache.y);
+      }
+      return;
+    }
+    this._lastMinimapDraw = now;
+
     const mw = 150, mh = 110;
     const mx = w - mw - 8, my = 8;
 
@@ -261,6 +277,7 @@ export class Renderer {
       y: my + ((maxLat - lat) / (maxLat - minLat)) * mh,
     });
 
+    // Simplified tracks (no labels)
     for (const track of world.tracks) {
       const stA = world.getStationById(track.stationA);
       const stB = world.getStationById(track.stationB);
@@ -275,6 +292,7 @@ export class Renderer {
       ctx.stroke();
     }
 
+    // Simplified station dots (no labels)
     for (const st of world.stations) {
       const p = projMini(st.lat, st.lon);
       ctx.fillStyle = '#3b82f6';
@@ -283,14 +301,25 @@ export class Renderer {
       ctx.fill();
     }
 
+    // Active train dots only
     for (const svc of services) {
-      if (!svc.position) continue;
+      if (!svc.position || svc.state === 'waiting') continue;
       const p = projMini(svc.position.lat, svc.position.lon);
-      ctx.fillStyle = svc.state === 'waiting' ? '#475569' : svc.train.color;
+      ctx.fillStyle = svc.train.color || '#22d3ee';
       ctx.beginPath();
       ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Cache the minimap region
+    try {
+      const dpr = window.devicePixelRatio || 1;
+      this._minimapCache = {
+        data: ctx.getImageData(mx * dpr, my * dpr, mw * dpr, mh * dpr),
+        x: mx * dpr,
+        y: my * dpr,
+      };
+    } catch (e) { /* security restriction on getImageData */ }
   }
 
   getStationAt(x, y, stations) {
