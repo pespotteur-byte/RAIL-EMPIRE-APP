@@ -160,7 +160,7 @@ class RailEmpire {
       rames: this.rameManager.toSave(),
       schedules: this.scheduleCreator.toSave(),
       depots: this.depotManager.toSave(),
-      incidentTypes: this.incidentManager.getCustomTypes(),
+      activeIncidents: this.incidentManager.getActiveIncidentsSave(),
       works: this.worksManager.toSave(),
       freightContracts: this.freightManager.toSave(),
       ormRoutes: this.orm.toSave(),
@@ -185,7 +185,7 @@ class RailEmpire {
     if (s.rames) this.rameManager.loadFromSave(s.rames);
     if (s.schedules) this.scheduleCreator.loadFromSave(s.schedules, this.rameManager, this.world);
     if (s.depots) this.depotManager.loadFromSave(s.depots);
-    if (s.incidentTypes) this.incidentManager.loadCustomTypes(s.incidentTypes);
+    if (s.activeIncidents) this.incidentManager.loadFromSave(s.activeIncidents, this.world);
     if (s.works) this.worksManager.loadFromSave(s.works);
     if (s.freightContracts) this.freightManager.loadFromSave(s.freightContracts);
     if (s.ormRoutes) this.orm.loadFromSave(s.ormRoutes);
@@ -229,7 +229,7 @@ class RailEmpire {
       rames: this.rameManager.toSave(),
       schedules: this.scheduleCreator.toSave(),
       depots: this.depotManager.toSave(),
-      incidentTypes: this.incidentManager.getCustomTypes(),
+      activeIncidents: this.incidentManager.getActiveIncidentsSave(),
       works: this.worksManager.toSave(),
       freightContracts: this.freightManager.toSave(),
       ormRoutes: this.orm.toSave(),

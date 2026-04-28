@@ -17,24 +17,22 @@ export class PlannedWorks {
   isActiveAt(dateStr, timeOfDay) {
     if (!this.startDate || !this.endDate) return false;
 
+    // Check if current date is within the overall works period
+    if (dateStr < this.startDate || dateStr > this.endDate) return false;
+
+    // Check daily active hours
     const [sh, sm] = this.startTime.split(':').map(Number);
     const [eh, em] = this.endTime.split(':').map(Number);
     const startMinutes = sh * 60 + (sm || 0);
     const endMinutes = eh * 60 + (em || 0);
 
-    if (dateStr > this.startDate && dateStr < this.endDate) return true;
-
-    if (dateStr === this.startDate && dateStr === this.endDate) {
-      if (startMinutes <= endMinutes) {
-        return timeOfDay >= startMinutes && timeOfDay <= endMinutes;
-      }
+    if (startMinutes <= endMinutes) {
+      // Same-day window (e.g. 08:00 - 18:00)
+      return timeOfDay >= startMinutes && timeOfDay <= endMinutes;
+    } else {
+      // Overnight window (e.g. 22:00 - 05:00)
       return timeOfDay >= startMinutes || timeOfDay <= endMinutes;
     }
-
-    if (dateStr === this.startDate) return timeOfDay >= startMinutes;
-    if (dateStr === this.endDate) return timeOfDay <= endMinutes;
-
-    return false;
   }
 
   getDateRange() {

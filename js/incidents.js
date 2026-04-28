@@ -1,193 +1,145 @@
 let nextIncId = 1;
 
-const DEFAULT_TYPES = [
-  { id: 'breakdown', name: 'Panne mecanique', icon: '🔧', effect: 'stop', minDuration: 15, maxDuration: 60, probability: 0.005 },
-  { id: 'signal_failure', name: 'Signalisation HS', icon: '🚦', effect: 'slow', speedLimit: 30, minDuration: 15, maxDuration: 60, probability: 0.003 },
-  { id: 'track_blocked', name: 'Voie bloquee', icon: '🚫', effect: 'stop', minDuration: 20, maxDuration: 90, probability: 0.002 },
-  { id: 'weather', name: 'Intemperies', icon: '🌧', effect: 'slow', speedLimit: 80, minDuration: 30, maxDuration: 120, probability: 0.004 },
-];
-
 export class Incident {
-  constructor(type, track) {
-    this.id = `inc-${nextIncId++}`;
-    this.type = type;
-    this.trackId = track?.id || null;
-    this.trackName = track?.name || '';
-    this.stationA = track?.stationA || null;
-    this.stationB = track?.stationB || null;
-    this.startTime = 0;
-    this.duration = type.minDuration + Math.random() * (type.maxDuration - type.minDuration);
-    this.remaining = this.duration;
-    this.active = true;
-    this.effect = type.effect;
-    this.speedLimit = type.speedLimit || 0;
-    this.name = type.name;
-    this.icon = type.icon || '⚠';
+  constructor(data, track) {
+    this.id = data.id || `inc-${nextIncId++}`;
+    this.name = data.name || 'Incident';
+    this.trackId = track?.id || data.trackId || null;
+    this.trackName = track?.name || data.trackName || '';
+    this.stationA = track?.stationA || data.stationA || null;
+    this.stationB = track?.stationB || data.stationB || null;
+    this.effect = data.effect || 'slow';
+    this.speedLimit = data.speedLimit || 0;
+    this.icon = data.icon || '⚠';
+    this.radiusKm = data.radiusKm || 10;
+    this.centerLat = data.centerLat || 0;
+    this.centerLon = data.centerLon || 0;
+    this.duration = data.duration || 60;
+    this.remaining = data.remaining ?? this.duration;
+    this.active = data.active !== false;
+    this.startTime = data.startTime || 0;
+    this.playerCreated = true;
   }
 }
 
 export class IncidentManager {
   constructor() {
-    this.incidentTypes = [...DEFAULT_TYPES];
-    this.customTypes = [];
     this.activeIncidents = [];
     this.lastCheck = -1;
-    this.breakdownQueue = [];
   }
 
-  addCustomType(data) {
-    const type = {
-      id: `custom-${Date.now()}`,
-      name: data.name || 'Incident',
-      icon: '⚠',
-      effect: data.impact === 'stop' ? 'stop' : 'slow',
-      speedLimit: data.speedLimit || 30,
-      minDuration: data.minDuration || 15,
-      maxDuration: data.maxDuration || 60,
-      probability: data.probability || 0.01,
-      custom: true,
-    };
-    this.customTypes.push(type);
-    return type;
-  }
+  createIncident(data, world) {
+    const track = world?.tracks?.find(t => t.id === data.trackId);
+    const inc = new Incident(data, track);
 
-  updateCustomType(id, data) {
-    const type = this.customTypes.find(t => t.id === id);
-    if (!type) return;
-    if (data.name) type.name = data.name;
-    if (data.impact) type.effect = data.impact === 'stop' ? 'stop' : 'slow';
-    if (data.speedLimit) type.speedLimit = data.speedLimit;
-    if (data.minDuration) type.minDuration = data.minDuration;
-    if (data.maxDuration) type.maxDuration = data.maxDuration;
-    if (data.probability !== undefined) type.probability = data.probability;
-  }
-
-  removeCustomType(id) {
-    this.customTypes = this.customTypes.filter(t => t.id !== id);
-  }
-
-  getAllTypes() {
-    return [...this.incidentTypes, ...this.customTypes];
-  }
-
-  getCustomTypes() {
-    return this.customTypes.map(t => ({
-      id: t.id, name: t.name, effect: t.effect,
-      speedLimit: t.speedLimit, minDuration: t.minDuration,
-      maxDuration: t.maxDuration, probability: t.probability,
-    }));
-  }
-
-  loadCustomTypes(arr) {
-    this.customTypes = arr.map(t => ({ ...t, icon: '⚠', custom: true }));
-  }
-
-  // Check if a service is on a track affected by an incident
-  getIncidentForService(svc) {
-    if (!svc || !svc.position || svc.state !== 'moving') return null;
-
-    for (const inc of this.activeIncidents) {
-      if (!inc.active || !inc.trackId) continue;
-
-      // Check if service is currently on this track
-      const currentStops = svc.getCurrentStops();
-      if (!currentStops || svc.currentStopIndex < 1) continue;
-
-      const prevStop = currentStops[svc.currentStopIndex - 1];
-      const nextStop = currentStops[svc.currentStopIndex];
-      if (!prevStop || !nextStop) continue;
-
-      const onTrack =
-        (prevStop.stationId === inc.stationA && nextStop.stationId === inc.stationB) ||
-        (prevStop.stationId === inc.stationB && nextStop.stationId === inc.stationA);
-
-      if (onTrack) {
-        return { effect: inc.effect, speedLimit: inc.speedLimit, name: inc.name };
+    if (track) {
+      const stA = world.getStationById(track.stationA);
+      const stB = world.getStationById(track.stationB);
+      if (stA && stB) {
+        inc.centerLat = (stA.lat + stB.lat) / 2;
+        inc.centerLon = (stA.lon + stB.lon) / 2;
       }
     }
-    return null;
+
+    this.activeIncidents.push(inc);
+
+    // Mark affected tracks within radius (visual only)
+    if (world) this._markAffectedTracks(inc, world);
+
+    return inc;
+  }
+
+  _markAffectedTracks(inc, world) {
+    if (!inc.centerLat || !inc.centerLon) {
+      // Single track mode
+      const track = world.tracks.find(t => t.id === inc.trackId);
+      if (track) {
+        track.incidentActive = true;
+        track.incidentEffect = inc.effect;
+        track.incidentSpeedLimit = inc.speedLimit;
+        track.incidentName = inc.name;
+      }
+      return;
+    }
+
+    // Mark all tracks within radius
+    for (const track of world.tracks) {
+      const stA = world.getStationById(track.stationA);
+      const stB = world.getStationById(track.stationB);
+      if (!stA || !stB) continue;
+
+      const midLat = (stA.lat + stB.lat) / 2;
+      const midLon = (stA.lon + stB.lon) / 2;
+      const dist = this._haversine(inc.centerLat, inc.centerLon, midLat, midLon);
+
+      if (dist <= inc.radiusKm) {
+        track.incidentActive = true;
+        track.incidentEffect = inc.effect;
+        track.incidentSpeedLimit = inc.speedLimit;
+        track.incidentName = inc.name;
+        if (!track._incidentIds) track._incidentIds = [];
+        track._incidentIds.push(inc.id);
+      }
+    }
+  }
+
+  _haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  removeIncident(id, world) {
+    const inc = this.activeIncidents.find(i => i.id === id);
+    if (inc) {
+      inc.active = false;
+      this._clearTrackFlags(inc, world);
+    }
+    this.activeIncidents = this.activeIncidents.filter(i => i.id !== id);
+  }
+
+  _clearTrackFlags(inc, world) {
+    if (!world) return;
+    for (const track of world.tracks) {
+      if (track._incidentIds) {
+        track._incidentIds = track._incidentIds.filter(iid => iid !== inc.id);
+        if (track._incidentIds.length === 0) {
+          track.incidentActive = false;
+          track.incidentEffect = null;
+          track.incidentSpeedLimit = null;
+          track.incidentName = null;
+        }
+      } else if (track.incidentActive && track.id === inc.trackId) {
+        track.incidentActive = false;
+        track.incidentEffect = null;
+        track.incidentSpeedLimit = null;
+        track.incidentName = null;
+      }
+    }
   }
 
   update(timeOfDay, services, depotManager, world) {
     if (timeOfDay === this.lastCheck) return;
     this.lastCheck = timeOfDay;
 
-    // Update remaining time for active incidents
+    // Update remaining time
     for (const inc of this.activeIncidents) {
       inc.remaining -= 1;
       if (inc.remaining <= 0) {
         inc.active = false;
-        // Clear track incident flags
-        if (world && inc.trackId) {
-          const track = world.tracks.find(t => t.id === inc.trackId);
-          if (track) {
-            track.incidentActive = false;
-            track.incidentEffect = null;
-            track.incidentSpeedLimit = null;
-            track.incidentName = null;
-          }
-        }
+        this._clearTrackFlags(inc, world);
       }
     }
     this.activeIncidents = this.activeIncidents.filter(i => i.active);
 
-    // Incidents are visual/UI only - do NOT apply speed limits or blocking to trains
-    // Clear any legacy incident flags on trains
+    // Incidents are visual/UI only
     for (const svc of services) {
       if (!svc.train) continue;
       if (svc.train.incident) svc.train.incident = null;
-    }
-
-    // Generate new random incidents on tracks
-    if (!world || !world.tracks || world.tracks.length === 0) return;
-
-    const allTypes = this.getAllTypes();
-    for (const type of allTypes) {
-      if (Math.random() < type.probability) {
-        // Pick a random track that doesn't already have an incident
-        const availableTracks = world.tracks.filter(t => !t.incidentActive && !t.worksActive);
-        if (availableTracks.length === 0) continue;
-
-        const track = availableTracks[Math.floor(Math.random() * availableTracks.length)];
-        const incident = new Incident(type, track);
-        incident.startTime = timeOfDay;
-        this.activeIncidents.push(incident);
-
-        // Set track flags for visual rendering only
-        track.incidentActive = true;
-        track.incidentEffect = type.effect;
-        track.incidentSpeedLimit = type.speedLimit;
-        track.incidentName = type.name;
-      }
-    }
-  }
-
-  isServiceOnTrack(svc, track) {
-    if (!svc || svc.state !== 'moving') return false;
-    const stops = svc.getCurrentStops();
-    if (!stops || svc.currentStopIndex < 1) return false;
-    const prev = stops[svc.currentStopIndex - 1];
-    const next = stops[svc.currentStopIndex];
-    if (!prev || !next) return false;
-    return (prev.stationId === track.stationA && next.stationId === track.stationB) ||
-           (prev.stationId === track.stationB && next.stationId === track.stationA);
-  }
-
-  processBreakdownRepairs(services, depotManager, timeOfDay) {
-    for (const svc of services) {
-      if (svc.train?.breakdown?.needsRepair) {
-        const station = svc.train.stoppedAt;
-        if (!station) continue;
-
-        const depots = depotManager.getByStation(station.id);
-        if (depots.length > 0) {
-          svc.train.breakdown.repairTime -= 1;
-          if (svc.train.breakdown.repairTime <= 0) {
-            svc.train.breakdown = null;
-            svc.state = 'waiting';
-          }
-        }
-      }
     }
   }
 
@@ -195,7 +147,41 @@ export class IncidentManager {
     return this.activeIncidents;
   }
 
-  getBreakdownQueue() {
-    return this.breakdownQueue;
+  // No pre-included types - backward compat stubs
+  getCustomTypes() { return []; }
+  loadCustomTypes() {}
+  getAllTypes() { return []; }
+
+  getActiveIncidentsSave() {
+    return this.activeIncidents.map(inc => ({
+      id: inc.id,
+      name: inc.name,
+      trackId: inc.trackId,
+      trackName: inc.trackName,
+      stationA: inc.stationA,
+      stationB: inc.stationB,
+      effect: inc.effect,
+      speedLimit: inc.speedLimit,
+      icon: inc.icon,
+      radiusKm: inc.radiusKm,
+      centerLat: inc.centerLat,
+      centerLon: inc.centerLon,
+      duration: inc.duration,
+      remaining: inc.remaining,
+      active: inc.active,
+      startTime: inc.startTime,
+    }));
+  }
+
+  loadFromSave(arr, world) {
+    this.activeIncidents = [];
+    if (!arr) return;
+    for (const d of arr) {
+      const inc = new Incident(d);
+      this.activeIncidents.push(inc);
+      const num = parseInt(d.id?.split('-')[1] || '0');
+      if (num >= nextIncId) nextIncId = num + 1;
+      if (world) this._markAffectedTracks(inc, world);
+    }
   }
 }

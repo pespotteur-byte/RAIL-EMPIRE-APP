@@ -9,7 +9,8 @@ export class UI {
     this.currentRameElements = [];
     this.editingRameId = null;
     this.stationCreationMode = false;
-    this.schedMapTileMap = null;
+    this.schedMapCenter = null;
+    this.schedMapScale = null;
   }
 
   setupAll() {
@@ -507,119 +508,129 @@ export class UI {
     const ctx = canvas.getContext('2d');
     const world = this.game.world;
 
-    if (!this.schedMapTileMap) {
-      const { TileMap } = window._TileMapClass || {};
-      this.schedMapZoom = 7.5;
-      this.schedMapCenter = { lat: 49.75, lon: 2.7 };
+    // Center on France by default, or on stations if available
+    if (!this.schedMapCenter) {
+      if (world.stations.length > 0) {
+        let sumLat = 0, sumLon = 0;
+        for (const st of world.stations) { sumLat += st.lat; sumLon += st.lon; }
+        this.schedMapCenter = { lat: sumLat / world.stations.length, lon: sumLon / world.stations.length };
+      } else {
+        this.schedMapCenter = { lat: 46.8, lon: 2.3 }; // center of France
+      }
     }
+    if (!this.schedMapScale) {
+      // degrees per pixel - smaller = more zoomed in
+      this.schedMapScale = world.stations.length > 1 ? 0.02 : 0.04;
+    }
+
+    const project = (lat, lon) => {
+      const cx = this.schedMapCenter.lon;
+      const cy = this.schedMapCenter.lat;
+      const scale = this.schedMapScale;
+      const x = (lon - cx) / scale + canvas.width / 2;
+      const y = (cy - lat) / scale + canvas.height / 2;
+      return { x, y };
+    };
 
     const drawMap = () => {
       ctx.fillStyle = '#0a0a1a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Draw tracks
       for (const track of world.tracks) {
         const a = world.getStationById(track.stationA);
         const b = world.getStationById(track.stationB);
         if (!a || !b) continue;
-        const pa = this.miniProject(a, canvas);
-        const pb = this.miniProject(b, canvas);
+        const pa = project(a.lat, a.lon);
+        const pb = project(b.lat, b.lon);
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
       }
 
+      // Draw stations
       for (const st of world.stations) {
-        const p = this.miniProject(st, canvas);
+        const p = project(st.lat, st.lon);
+        if (p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) continue;
         const isSelected = this.schedStops.some(s => s.stationId === st.id);
         ctx.fillStyle = isSelected ? '#fbbf24' : '#3b82f6';
         ctx.beginPath();
         ctx.arc(p.x, p.y, isSelected ? 6 : 4, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#94a3b8';
-        ctx.font = '9px sans-serif';
-        ctx.fillText(st.name, p.x + 7, p.y + 3);
+        ctx.font = '10px sans-serif';
+        ctx.fillText(st.name, p.x + 8, p.y + 4);
       }
 
+      // Draw route lines between selected stops
       for (let i = 0; i < this.schedStops.length - 1; i++) {
         const sa = world.getStationById(this.schedStops[i].stationId);
         const sb = world.getStationById(this.schedStops[i + 1].stationId);
         if (!sa || !sb) continue;
-        const pa = this.miniProject(sa, canvas);
-        const pb = this.miniProject(sb, canvas);
+        const pa = project(sa.lat, sa.lon);
+        const pb = project(sb.lat, sb.lon);
         ctx.strokeStyle = '#fbbf24';
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      }
+
+      // Draw stop order numbers
+      for (let i = 0; i < this.schedStops.length; i++) {
+        const st = world.getStationById(this.schedStops[i].stationId);
+        if (!st) continue;
+        const p = project(st.lat, st.lon);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(String(i + 1), p.x - 3, p.y - 8);
       }
     };
 
     drawMap();
 
-    let schedDrag = false, schedDragStart = null;
+    let schedDrag = false, schedDragStart = null, totalDragDist = 0;
 
-    canvas.onmousedown = (e) => { schedDrag = true; schedDragStart = { x: e.offsetX, y: e.offsetY }; };
+    canvas.onmousedown = (e) => {
+      schedDrag = true;
+      schedDragStart = { x: e.offsetX, y: e.offsetY };
+      totalDragDist = 0;
+    };
+
     canvas.onmousemove = (e) => {
       if (schedDrag && schedDragStart) {
         const dx = e.offsetX - schedDragStart.x;
         const dy = e.offsetY - schedDragStart.y;
-        if (this.schedMapCenter) {
-          const latRange = this.getMinimapLatRange();
-          this.schedMapCenter.lat += dy * (latRange.range / canvas.height);
-          this.schedMapCenter.lon -= dx * (latRange.lonRange / canvas.width);
-        }
+        totalDragDist += Math.abs(dx) + Math.abs(dy);
+        this.schedMapCenter.lon -= dx * this.schedMapScale;
+        this.schedMapCenter.lat += dy * this.schedMapScale;
         schedDragStart = { x: e.offsetX, y: e.offsetY };
         drawMap();
       }
     };
+
     canvas.onmouseup = (e) => {
-      if (!schedDrag || (schedDragStart && Math.abs(e.offsetX - schedDragStart.x) < 3 && Math.abs(e.offsetY - schedDragStart.y) < 3)) {
+      if (totalDragDist < 5) {
+        // Click - find nearest station
         const x = e.offsetX, y = e.offsetY;
         let closest = null, minDist = Infinity;
         for (const st of world.stations) {
-          const p = this.miniProject(st, canvas);
+          const p = project(st.lat, st.lon);
           const d = Math.hypot(p.x - x, p.y - y);
-          if (d < minDist && d < 15) { minDist = d; closest = st; }
+          if (d < minDist && d < 20) { minDist = d; closest = st; }
         }
         if (closest) this.addSchedStop(closest);
       }
       schedDrag = false;
+      schedDragStart = null;
     };
 
     canvas.onwheel = (e) => {
       e.preventDefault();
-      this.schedMapZoom = Math.max(3, Math.min(15, (this.schedMapZoom || 7.5) + (e.deltaY < 0 ? 0.5 : -0.5)));
+      const factor = e.deltaY > 0 ? 1.2 : 0.83;
+      this.schedMapScale = Math.max(0.002, Math.min(0.2, this.schedMapScale * factor));
       drawMap();
     };
 
     this._drawSchedMap = drawMap;
-  }
-
-  getMinimapLatRange() {
-    const world = this.game.world;
-    if (world.stations.length === 0) return { min: 45, max: 52, range: 7, minLon: -2, maxLon: 6, lonRange: 8 };
-    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
-    for (const st of world.stations) {
-      minLat = Math.min(minLat, st.lat); maxLat = Math.max(maxLat, st.lat);
-      minLon = Math.min(minLon, st.lon); maxLon = Math.max(maxLon, st.lon);
-    }
-    const padLat = Math.max((maxLat - minLat) * 0.2, 1);
-    const padLon = Math.max((maxLon - minLon) * 0.2, 1);
-    return {
-      min: minLat - padLat, max: maxLat + padLat, range: maxLat - minLat + 2 * padLat,
-      minLon: minLon - padLon, maxLon: maxLon + padLon, lonRange: maxLon - minLon + 2 * padLon,
-    };
-  }
-
-  miniProject(station, canvas) {
-    const r = this.getMinimapLatRange();
-    const zoom = this.schedMapZoom || 7.5;
-    const zoomFactor = Math.pow(2, zoom - 7.5);
-    const cx = this.schedMapCenter?.lon ?? ((r.minLon + r.maxLon) / 2);
-    const cy = this.schedMapCenter?.lat ?? ((r.min + r.max) / 2);
-    const visLonRange = r.lonRange / zoomFactor;
-    const visLatRange = r.range / zoomFactor;
-    const x = ((station.lon - cx) / visLonRange + 0.5) * canvas.width;
-    const y = ((cy - station.lat) / visLatRange + 0.5) * canvas.height;
-    return { x, y };
   }
 
   async addSchedStop(station) {
@@ -992,19 +1003,25 @@ export class UI {
   // --- INCIDENTS ---
   setupIncidentPage() {
     document.getElementById('btn-add-incident-type')?.addEventListener('click', () => {
-      this.editingIncidentId = null;
       document.getElementById('inc-name').value = '';
-      document.getElementById('inc-dur-min').value = '15';
-      document.getElementById('inc-dur-max').value = '60';
       document.getElementById('inc-impact').value = 'slow';
       document.getElementById('inc-speed-limit').value = '30';
-      document.getElementById('inc-probability').value = '0.01';
+      document.getElementById('inc-radius').value = '10';
+      document.getElementById('inc-duration').value = '60';
+      document.getElementById('inc-speed-group').style.display = 'block';
+      // Populate track selector
+      const select = document.getElementById('inc-track');
+      if (select) {
+        select.innerHTML = this.game.world.tracks.map(t =>
+          `<option value="${t.id}">${t.name || t.id}</option>`
+        ).join('');
+      }
       document.getElementById('modal-incident')?.classList.remove('hidden');
     });
     document.getElementById('inc-impact')?.addEventListener('change', (e) => {
       document.getElementById('inc-speed-group').style.display = e.target.value === 'slow' ? 'block' : 'none';
     });
-    document.getElementById('btn-save-incident-type')?.addEventListener('click', () => this.saveIncidentType());
+    document.getElementById('btn-save-incident')?.addEventListener('click', () => this.saveIncident());
     document.getElementById('btn-add-works')?.addEventListener('click', () => this.openWorksModal());
     document.getElementById('works-impact')?.addEventListener('change', (e) => {
       document.getElementById('works-speed-group').style.display = e.target.value === 'slow' ? 'block' : 'none';
@@ -1012,38 +1029,29 @@ export class UI {
     document.getElementById('btn-save-works')?.addEventListener('click', () => this.saveWorks());
   }
 
-  saveIncidentType() {
-    const data = {
-      name: document.getElementById('inc-name').value.trim() || 'Incident',
-      impact: document.getElementById('inc-impact').value,
-      speedLimit: parseInt(document.getElementById('inc-speed-limit').value) || 30,
-      minDuration: parseInt(document.getElementById('inc-dur-min').value) || 15,
-      maxDuration: parseInt(document.getElementById('inc-dur-max').value) || 60,
-      probability: parseFloat(document.getElementById('inc-probability').value) || 0.01,
-    };
+  saveIncident() {
+    const name = document.getElementById('inc-name').value.trim() || 'Incident';
+    const trackId = document.getElementById('inc-track').value;
+    const effect = document.getElementById('inc-impact').value;
+    const speedLimit = parseInt(document.getElementById('inc-speed-limit').value) || 30;
+    const radiusKm = parseInt(document.getElementById('inc-radius').value) || 10;
+    const duration = parseInt(document.getElementById('inc-duration').value) || 60;
 
-    if (this.editingIncidentId) {
-      this.game.incidentManager.updateCustomType(this.editingIncidentId, data);
-    } else {
-      this.game.incidentManager.addCustomType(data);
-    }
-    this.editingIncidentId = null;
+    const pt = this.game.engine.getParisTime();
+    const timeOfDay = pt.hours * 60 + pt.minutes;
+
+    this.game.incidentManager.createIncident({
+      name,
+      trackId,
+      effect,
+      speedLimit: effect === 'stop' ? 0 : speedLimit,
+      radiusKm: Math.min(radiusKm, 50),
+      duration,
+      startTime: timeOfDay,
+    }, this.game.world);
+
     document.getElementById('modal-incident')?.classList.add('hidden');
     this.renderIncidentsPage();
-  }
-
-  editIncidentType(id) {
-    const type = this.game.incidentManager.customTypes.find(t => t.id === id);
-    if (!type) return;
-    this.editingIncidentId = id;
-    document.getElementById('inc-name').value = type.name;
-    document.getElementById('inc-dur-min').value = type.minDuration;
-    document.getElementById('inc-dur-max').value = type.maxDuration;
-    document.getElementById('inc-impact').value = type.effect === 'stop' ? 'stop' : 'slow';
-    document.getElementById('inc-speed-limit').value = type.speedLimit || 30;
-    document.getElementById('inc-probability').value = type.probability;
-    document.getElementById('inc-speed-group').style.display = type.effect === 'slow' ? 'block' : 'none';
-    document.getElementById('modal-incident')?.classList.remove('hidden');
   }
 
   openWorksModal() {
@@ -1077,7 +1085,6 @@ export class UI {
 
   renderIncidentsPage() {
     const activeList = document.getElementById('active-incidents-list');
-    const typesList = document.getElementById('incident-types-list');
     const worksList = document.getElementById('planned-works-list');
 
     const active = this.game.incidentManager.getActiveIncidents();
@@ -1087,37 +1094,14 @@ export class UI {
         : active.map(inc => `
             <div class="incident-item">
               <span class="incident-icon">${inc.icon || '⚠'}</span>
-              <div>
+              <div style="flex:1">
                 <div class="incident-name">${inc.name}</div>
-                <div class="incident-desc">${inc.trackName || 'Zone inconnue'} - ${inc.effect === 'stop' ? '<span style="color:#7B1E1E;font-weight:700">Interruption</span>' : '<span style="color:#FFE135;font-weight:700">Ralenti ' + (inc.speedLimit || 30) + ' km/h</span>'}</div>
+                <div class="incident-desc">${inc.trackName || 'Zone'} (rayon ${inc.radiusKm || 10}km) - ${inc.effect === 'stop' ? '<span style="color:#7B1E1E;font-weight:700">Interruption</span>' : '<span style="color:#FFE135;font-weight:700">Ralenti ' + (inc.speedLimit || 30) + ' km/h</span>'}</div>
                 <div class="incident-time">${Math.ceil(inc.remaining)} min restantes</div>
               </div>
+              <button class="btn-sm danger" onclick="game.ui.deleteIncident('${inc.id}')" title="Supprimer">x</button>
             </div>
           `).join('');
-    }
-
-    const breakdown = this.game.incidentManager.getBreakdownQueue();
-    if (activeList && breakdown.length > 0) {
-      activeList.innerHTML += '<h4 style="margin-top:10px;color:var(--red)">Rames en panne (depot requis)</h4>' +
-        breakdown.map(b => `<div class="incident-item"><span class="incident-icon">!</span><div>${b.serviceName}</div></div>`).join('');
-    }
-
-    const allTypes = this.game.incidentManager.getAllTypes();
-    if (typesList) {
-      typesList.innerHTML = allTypes.map(t => `
-        <div class="card">
-          <div class="card-title">${t.icon || '!'} ${t.name}</div>
-          <div class="card-info">
-            <b>Impact:</b> ${t.effect === 'stop' ? 'Interruption' : 'Ralenti ' + t.speedLimit + ' km/h'}<br>
-            <b>Duree:</b> ${t.minDuration}-${t.maxDuration} min<br>
-            <b>Proba/h:</b> ${(t.probability * 100).toFixed(1)}%
-          </div>
-          ${t.custom ? `<div class="card-actions">
-            <button class="btn-sm" onclick="game.ui.editIncidentType('${t.id}')">Modifier</button>
-            <button class="btn-sm danger" onclick="game.ui.deleteIncidentType('${t.id}')">Supprimer</button>
-          </div>` : ''}
-        </div>
-      `).join('');
     }
 
     const works = this.game.worksManager.getAll();
@@ -1130,6 +1114,7 @@ export class UI {
               <div class="works-item">
                 <span class="works-name">${w.name}</span> - ${track ? track.name : w.trackId}<br>
                 ${w.getDateRange()}<br>
+                <span style="font-size:10px;color:var(--text3)">Actif chaque jour de ${w.startTime} a ${w.endTime}</span><br>
                 Impact: ${w.impact === 'stop' ? 'Interruption' : 'Ralenti ' + w.speedLimit + ' km/h'}
                 ${w.active ? ' <b style="color:var(--red)">EN COURS</b>' : ''}
                 <button class="btn-sm danger" style="float:right" onclick="game.ui.deleteWorks('${w.id}')">x</button>
@@ -1139,8 +1124,8 @@ export class UI {
     }
   }
 
-  deleteIncidentType(id) {
-    this.game.incidentManager.removeCustomType(id);
+  deleteIncident(id) {
+    this.game.incidentManager.removeIncident(id, this.game.world);
     this.renderIncidentsPage();
   }
 
