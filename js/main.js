@@ -1,19 +1,19 @@
-import { SimulationEngine } from './engine.js';
-import { World, createDefaultWorld } from './world.js';
-import { Renderer } from './renderer.js';
-import { UI } from './ui.js';
-import { Economy } from './economy.js';
-import { IncidentManager } from './incidents.js';
-import { FreightManager } from './freight.js';
-import { ScheduleManager } from './schedule.js';
-import { GameStorage } from './storage.js';
-import { AccountManager } from './account.js';
-import { RollingStockManager } from './rolling-stock.js';
-import { RameManager } from './rame.js';
-import { ScheduleCreator } from './schedule-creator.js';
-import { DepotManager } from './depot.js';
-import { WorksManager } from './works.js';
-import { ORMClient } from './orm.js';
+import { SimulationEngine } from './engine.js?v=1777581315';
+import { World, createDefaultWorld } from './world.js?v=1777581315';
+import { Renderer } from './renderer.js?v=1777581315';
+import { UI } from './ui.js?v=1777581315';
+import { Economy } from './economy.js?v=1777581315';
+import { IncidentManager } from './incidents.js?v=1777581315';
+import { FreightManager } from './freight.js?v=1777581315';
+import { ScheduleManager } from './schedule.js?v=1777581315';
+import { GameStorage } from './storage.js?v=1777581315';
+import { AccountManager } from './account.js?v=1777581315';
+import { RollingStockManager } from './rolling-stock.js?v=1777581315';
+import { RameManager } from './rame.js?v=1777581315';
+import { ScheduleCreator } from './schedule-creator.js?v=1777581315';
+import { DepotManager } from './depot.js?v=1777581315';
+import { WorksManager } from './works.js?v=1777581315';
+import { ORMClient } from './orm.js?v=1777581315';
 
 class RailEmpire {
   constructor() {

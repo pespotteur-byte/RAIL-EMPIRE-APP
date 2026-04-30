@@ -1,4 +1,4 @@
-import { TileMap } from './map.js';
+import { TileMap } from './map.js?v=1777581315';
 
 export class Renderer {
   constructor(canvas) {
