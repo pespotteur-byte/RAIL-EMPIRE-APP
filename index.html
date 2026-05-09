@@ -7,7 +7,8 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Rail Empire</title>
-  <link rel="stylesheet" href="style.css?v=1777581315">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css?v=1778288657">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -30,17 +31,20 @@
     <header>
       <div class="header-left">
         <span id="company-name" class="company-name">Rail Empire</span>
+        <button id="nav-toggle" class="nav-toggle">&#9776;</button>
         <nav class="nav-tabs">
           <button class="nav-btn active" data-page="map">Carte</button>
           <button class="nav-btn" data-page="rolling-stock">Materiel</button>
           <button class="nav-btn" data-page="rames">Rames</button>
           <button class="nav-btn" data-page="schedules">Horaires</button>
+          <button class="nav-btn" data-page="lines">Lignes</button>
           <button class="nav-btn" data-page="depots">Depots/ITE</button>
           <button class="nav-btn" data-page="incidents">Incidents</button>
           <button class="nav-btn" data-page="economy">Finances</button>
         </nav>
       </div>
       <div class="header-right">
+        <img id="company-logo" src="" alt="" style="display:none;height:28px;width:28px;object-fit:contain;border-radius:4px;margin-right:6px;vertical-align:middle">
         <span id="balance" class="balance">500 k&euro;</span>
         <span id="clock" class="clock">--:--</span>
         <span id="date-display" class="date"></span>
@@ -61,6 +65,20 @@
           <div id="tooltip" class="tooltip hidden"></div>
           <div class="map-controls">
             <button id="btn-create-station" class="btn-sm btn-map-action">+ Creer une gare</button>
+            <button id="btn-create-voie-point" class="btn-sm btn-map-action" style="background:#334155">+ Point de voie</button>
+            <button id="btn-create-troncon" class="btn-sm btn-map-action" style="background:#334155">+ Troncon</button>
+            <button id="btn-create-troncon-manual" class="btn-sm btn-map-action" style="background:#1e3a5f">+ Tracé manuel</button>
+            <button id="btn-tracer-ligne" class="btn-sm btn-map-action" style="background:#065f46">Tracer ligne</button>
+          </div>
+          <div class="map-toggles">
+            <label><input type="checkbox" id="toggle-stations" checked> Gares</label>
+            <label><input type="checkbox" id="toggle-station-names" checked> Noms</label>
+            <label><input type="checkbox" id="toggle-trains" checked> Trains</label>
+            <label><input type="checkbox" id="toggle-voie-points" checked> Points voie</label>
+          </div>
+          <div class="map-search">
+            <input type="text" id="map-search-input" placeholder="Rechercher un lieu..." autocomplete="off">
+            <div id="map-search-results" class="map-search-results hidden"></div>
           </div>
         </div>
         <aside id="sidebar">
@@ -107,6 +125,17 @@
             <button id="btn-new-schedule" class="btn-primary">+ Creer un trajet</button>
           </div>
           <div id="schedules-list" class="schedules-list"></div>
+        </div>
+      </div>
+
+      <!-- LINES PAGE -->
+      <div id="page-lines" class="page">
+        <div class="page-content">
+          <div class="page-header">
+            <h2>Lignes</h2>
+            <button id="btn-new-line" class="btn-primary">+ Creer une ligne</button>
+          </div>
+          <div id="lines-list" class="lines-list"></div>
         </div>
       </div>
 
@@ -162,6 +191,24 @@
                 <div class="eco-value penalty" id="eco-penalties">0 &euro;</div>
               </div>
             </div>
+            <div class="eco-stats" style="margin-top:10px">
+              <div class="eco-stat">
+                <div class="eco-label">Passagers transport&eacute;s</div>
+                <div class="eco-value" id="eco-passengers" style="color:#38bdf8">0</div>
+              </div>
+              <div class="eco-stat">
+                <div class="eco-label">Fret transport&eacute; (tonnes)</div>
+                <div class="eco-value" id="eco-freight-tonnes" style="color:#facc15">0</div>
+              </div>
+              <div class="eco-stat">
+                <div class="eco-label">Km de voies poss&eacute;d&eacute;s</div>
+                <div class="eco-value" id="eco-track-km" style="color:#a78bfa">0</div>
+              </div>
+              <div class="eco-stat">
+                <div class="eco-label">Kilom&eacute;trage total trains</div>
+                <div class="eco-value" id="eco-total-train-km" style="color:#34d399">0</div>
+              </div>
+            </div>
           </div>
           <div class="eco-section">
             <h3>Configuration des tarifs</h3>
@@ -173,6 +220,22 @@
               <div class="form-group">
                 <label>Prix fret / t / km (&euro;)</label>
                 <input type="number" id="eco-freight-price" value="0.08" min="0.01" max="1" step="0.01">
+              </div>
+            </div>
+          </div>
+          <div class="eco-section">
+            <h3>Compagnie</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Logo de la compagnie</label>
+                <div id="logo-drop" class="image-drop" style="width:80px;height:80px;cursor:pointer">
+                  <span style="font-size:10px">Cliquer ou glisser</span>
+                  <input type="file" id="logo-input" accept="image/*" style="display:none">
+                </div>
+              </div>
+              <div class="form-group" style="display:flex;align-items:end;gap:8px;flex-wrap:wrap">
+                <button id="btn-generate-bulletin" class="btn-primary">Bulletin de compagnie (PDF)</button>
+                <button id="btn-generate-fiche-horaire" class="btn-primary" style="background:#1e3a5f">Fiche horaire de gare (PDF)</button>
               </div>
             </div>
           </div>
@@ -262,6 +325,16 @@
               <input type="number" id="stock-freight-cap" value="0" min="0" max="500">
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Serie <span style="font-size:9px;color:var(--text3)">(ex: BB 26000)</span></label>
+              <input type="text" id="stock-series-name" placeholder="BB 26000">
+            </div>
+            <div class="form-group">
+              <label>Numero <span style="font-size:9px;color:var(--text3)">(ex: 26001)</span></label>
+              <input type="text" id="stock-number-start" placeholder="26001">
+            </div>
+          </div>
           <button id="btn-save-stock" class="btn-primary btn-full">Enregistrer</button>
         </div>
       </div>
@@ -312,6 +385,10 @@
               <label>Nom du service</label>
               <input type="text" id="sched-name" placeholder="ex: TGV 8001">
             </div>
+            <div class="form-group">
+              <label>Nom retour <span style="font-size:9px;color:var(--text3)">(si different)</span></label>
+              <input type="text" id="sched-return-name" placeholder="ex: TGV 8002">
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -319,14 +396,23 @@
             </div>
             <div class="form-group">
               <label>Nb allers-retours</label>
-              <input type="number" id="sched-multi-departures" value="1" min="1" max="10">
+              <div style="display:flex;gap:4px;align-items:center">
+                <input type="number" id="sched-multi-departures" value="1" min="1" max="50" style="flex:1">
+                <button type="button" id="btn-auto-ar" class="btn-sm" title="Calcul auto pour ne pas depasser 24h" style="font-size:9px;padding:3px 6px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Auto 24h</button>
+              </div>
             </div>
             <div class="form-group">
               <label>Attente au terminus (min)</label>
               <input type="number" id="sched-terminus-wait" value="10" min="1" max="120">
             </div>
           </div>
-          <p class="sched-hint">Cliquer sur les gares de la carte pour definir le trajet. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label><input type="checkbox" id="sched-work-train"> Train de travaux <span style="font-size:9px;color:var(--text3)">(non affecte par les travaux)</span></label>
+            </div>
+
+          </div>
+          <p class="sched-hint">Cliquer sur les gares de la carte pour definir le trajet. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.<br><span style="color:#fbbf24;font-size:10px">Astuce : Ajoutez des gares intermediaires en "Waypoint" pour forcer le passage par un raccordement precis (ex: via Troyes au lieu de Nancy).</span></p>
           <div class="sched-map-container">
             <canvas id="sched-map-canvas"></canvas>
           </div>
@@ -466,6 +552,37 @@
       </div>
     </div>
 
+    <!-- Line Creation Modal -->
+    <div id="modal-line" class="modal hidden">
+      <div class="modal-content modal-wide">
+        <button class="modal-close">&times;</button>
+        <h3 id="modal-line-title">Creer une ligne</h3>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom de la ligne</label>
+              <input type="text" id="line-name" placeholder="ex: LGV Sud-Est">
+            </div>
+            <div class="form-group">
+              <label>Code</label>
+              <input type="text" id="line-code" placeholder="ex: A" maxlength="6">
+            </div>
+            <div class="form-group">
+              <label>Couleur</label>
+              <input type="color" id="line-color" value="#3b82f6">
+            </div>
+          </div>
+          <p class="sched-hint">Cliquer sur les gares de la carte pour definir le parcours de la ligne. Les troncons communs avec d'autres lignes sont automatiquement partages.</p>
+          <div class="sched-map-container">
+            <canvas id="line-map-canvas"></canvas>
+          </div>
+          <div id="line-stops-list" class="sched-stops"></div>
+          <div id="line-loading" class="hidden" style="color:var(--blue);font-size:11px;padding:4px">Calcul du trace ORM en cours...</div>
+          <button id="btn-save-line" class="btn-primary btn-full">Enregistrer la ligne</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Station Creation Modal -->
     <div id="modal-station" class="modal hidden">
       <div class="modal-content">
@@ -486,9 +603,41 @@
               <option value="depot">Depot de maintenance</option>
             </select>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre de voies</label>
+              <input type="number" id="station-platforms" value="4" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label>Ligne (optionnel)</label>
+              <select id="station-line"><option value="">Aucune</option></select>
+            </div>
+          </div>
           <div class="form-group">
-            <label>Nombre de voies</label>
-            <input type="number" id="station-platforms" value="4" min="1" max="30">
+            <label>Noms des voies (optionnel, separes par virgules)</label>
+            <input type="text" id="station-platform-names" placeholder="ex: 1, 2, 3A, 3B, 4, 5 ou A, B, C">
+            <span style="font-size:9px;color:var(--text3)">Laissez vide pour numerotation auto (1, 2, 3...)</span>
+          </div>
+          <div class="form-group">
+            <label>Connecter a (gare de raccordement)</label>
+            <div style="display:flex;gap:4px;align-items:center">
+              <select id="station-connect" style="flex:1">
+                <option value="_nearest">La plus proche (auto)</option>
+                <option value="">Aucune connexion</option>
+              </select>
+              <button type="button" id="btn-pick-connect-map" class="btn-sm" title="Choisir sur la carte" style="white-space:nowrap;font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">&#x1F5FA; Carte</button>
+            </div>
+            <span id="station-connect-info" style="font-size:9px;color:var(--text3)"></span>
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" id="station-terminus"> Gare terminus (cree ou termine une ligne)</label>
+            <div id="station-terminus-options" class="hidden" style="margin-top:4px">
+              <select id="station-terminus-line" style="width:100%">
+                <option value="_new">Creer une nouvelle ligne</option>
+              </select>
+              <input type="text" id="station-terminus-line-name" placeholder="Nom de la ligne" style="margin-top:4px;width:100%">
+              <input type="color" id="station-terminus-line-color" value="#3b82f6" style="margin-top:4px;width:50px;height:24px">
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -502,11 +651,72 @@
           </div>
           <div id="station-loading" class="hidden" style="color:var(--blue);font-size:11px;padding:4px">Chargement...</div>
           <button id="btn-save-station" class="btn-primary btn-full">Creer la gare</button>
+          <button id="btn-delete-station" class="btn-sm danger btn-full hidden" style="margin-top:6px">Supprimer cette gare</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voie Point Edit Modal -->
+    <div id="modal-voie-point" class="modal hidden">
+      <div class="modal-content" style="max-width:320px">
+        <button class="modal-close">&times;</button>
+        <h3 id="vp-modal-title">Point de voie</h3>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Gare associee</label>
+            <select id="vp-station" style="font-size:11px">
+              <option value="">Aucune (point en ligne)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Voie</label>
+            <input type="text" id="vp-voie" placeholder="Ex: 1, 2A, Quai B..." style="font-size:11px">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Latitude</label>
+              <input type="text" id="vp-lat" readonly style="font-size:10px">
+            </div>
+            <div class="form-group">
+              <label>Longitude</label>
+              <input type="text" id="vp-lon" readonly style="font-size:10px">
+            </div>
+          </div>
+          <div id="vp-troncons-list" style="margin-top:8px"></div>
+          <button id="btn-save-vp" class="btn-primary btn-full">Enregistrer</button>
+          <button id="btn-delete-vp" class="btn-sm danger btn-full hidden" style="margin-top:6px">Supprimer ce point</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-snap selection Modal -->
+    <div id="modal-multi-snap" class="modal hidden">
+      <div class="modal-content" style="max-width:350px">
+        <button class="modal-close">&times;</button>
+        <h3>Choisir la position</h3>
+        <div class="modal-body">
+          <p style="font-size:11px;color:var(--text2);margin-bottom:8px">Plusieurs voies detectees. Choisissez le point de snap :</p>
+          <div id="snap-options-list" style="display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Fiche horaire de gare -->
+    <div id="modal-fiche-horaire" class="modal hidden">
+      <div class="modal-content" style="max-width:340px">
+        <button class="modal-close" onclick="document.getElementById('modal-fiche-horaire').classList.add('hidden')">&times;</button>
+        <h3>Fiche horaire de gare</h3>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Gare</label>
+            <select id="fiche-horaire-station"></select>
+          </div>
+          <button id="btn-fiche-horaire-go" class="btn-primary" style="width:100%;margin-top:8px">Générer le PDF</button>
         </div>
       </div>
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1777581315"></script>
+  <script type="module" src="js/main.js?v=1778288657"></script>
 </body>
 </html>

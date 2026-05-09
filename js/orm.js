@@ -61,10 +61,453 @@ export class ORMClient {
         electrified: el.tags?.electrified !== 'no',
         tracks: parseInt(el.tags?.tracks) || 1,
         usage: el.tags?.usage || 'main',
+        service: el.tags?.service || '',
         name: el.tags?.name || '',
         ref: el.tags?.ref || '',
         geometry: el.geometry.map(p => ({ lat: p.lat, lon: p.lon })),
       }));
+  }
+
+  /**
+   * Import infrastructure between two points: fetches OSM data and returns
+   * voie points (at junctions/endpoints) and tronçons (track segments) with
+   * real geometry, speeds, and track counts.
+   * Imports ALL parallel tracks (not just the Dijkstra shortest path).
+   */
+  async importInfrastructure(fromLat, fromLon, toLat, toLon) {
+    const distKm = haversine(fromLat, fromLon, toLat, toLon);
+    const padding = Math.max(0.5, distKm * 0.005 + 0.2);
+    const south = Math.min(fromLat, toLat) - padding;
+    const north = Math.max(fromLat, toLat) + padding;
+    const west = Math.min(fromLon, toLon) - padding;
+    const east = Math.max(fromLon, toLon) + padding;
+
+    const allWays = await this.fetchArea(south, west, north, east);
+    if (allWays.length === 0) return { voiePoints: [], troncons: [] };
+
+    // Build node registry
+    const nodes = new Map();
+    for (const way of allWays) {
+      const geom = way.geometry;
+      if (geom.length < 2) continue;
+      for (let i = 0; i < geom.length; i++) {
+        const key = `${geom[i].lat.toFixed(6)},${geom[i].lon.toFixed(6)}`;
+        if (!nodes.has(key)) {
+          nodes.set(key, { key, lat: geom[i].lat, lon: geom[i].lon, wayIds: new Set(), edgeCount: 0 });
+        }
+        nodes.get(key).wayIds.add(way.id);
+      }
+      const firstKey = `${geom[0].lat.toFixed(6)},${geom[0].lon.toFixed(6)}`;
+      const lastKey = `${geom[geom.length - 1].lat.toFixed(6)},${geom[geom.length - 1].lon.toFixed(6)}`;
+      nodes.get(firstKey).edgeCount++;
+      nodes.get(lastKey).edgeCount++;
+    }
+    // Mark intermediate junction nodes
+    for (const way of allWays) {
+      const geom = way.geometry;
+      for (let i = 1; i < geom.length - 1; i++) {
+        const key = `${geom[i].lat.toFixed(6)},${geom[i].lon.toFixed(6)}`;
+        const node = nodes.get(key);
+        if (node && node.wayIds.size > 1) node.edgeCount += 2;
+      }
+    }
+
+    // Find main path A→B via Dijkstra
+    const graph = this.buildGraph(allWays);
+    const startResult = this.findNearestNode(graph, fromLat, fromLon, 5);
+    const endResult = this.findNearestNode(graph, toLat, toLon, 5);
+    if (!startResult || !endResult) return { voiePoints: [], troncons: [] };
+
+    const path = this.dijkstra(graph, startResult.node.key, endResult.node.key);
+    if (!path || path.length < 2) return { voiePoints: [], troncons: [] };
+
+    // Build a polyline of path points for proximity tests
+    const pathPoints = path.map(p => ({ lat: p.lat, lon: p.lon }));
+    const pathKeys = new Set(path.map(p => `${p.lat.toFixed(6)},${p.lon.toFixed(6)}`));
+
+    // Determine which ways to import: on the path OR parallel (within 100m)
+    // Build a spatial grid of path points for fast proximity lookups
+    const PARALLEL_THRESHOLD = 0.1; // km (~100m)
+    const GRID_SIZE = 0.002; // ~200m grid cells
+    const pathGrid = new Map();
+    for (const pp of pathPoints) {
+      const gx = Math.floor(pp.lat / GRID_SIZE);
+      const gy = Math.floor(pp.lon / GRID_SIZE);
+      const gk = `${gx},${gy}`;
+      if (!pathGrid.has(gk)) pathGrid.set(gk, []);
+      pathGrid.get(gk).push(pp);
+    }
+    const nearPath = (lat, lon) => {
+      const gx = Math.floor(lat / GRID_SIZE);
+      const gy = Math.floor(lon / GRID_SIZE);
+      let minD = Infinity;
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const pts = pathGrid.get(`${gx+dx},${gy+dy}`);
+          if (!pts) continue;
+          for (const pp of pts) {
+            const d = haversine(lat, lon, pp.lat, pp.lon);
+            if (d < minD) minD = d;
+          }
+        }
+      }
+      return minD;
+    };
+
+    const waysToImport = new Set();
+    const SERVICE_EXCLUDE = new Set(['siding', 'yard', 'spur', 'crossover']);
+    for (const way of allWays) {
+      const geom = way.geometry;
+      if (geom.length < 2) continue;
+      // Check if any point of this way is on the path
+      let onPath = false;
+      for (const p of geom) {
+        if (pathKeys.has(`${p.lat.toFixed(6)},${p.lon.toFixed(6)}`)) { onPath = true; break; }
+      }
+      if (onPath) { waysToImport.add(way.id); continue; }
+
+      // Skip service tracks (sidings, yards, spurs) for parallel detection
+      if (SERVICE_EXCLUDE.has(way.service)) continue;
+
+      // Check if way runs parallel using grid-accelerated proximity
+      const step = Math.max(1, Math.floor(geom.length / 6));
+      const samples = [];
+      for (let si = 0; si < geom.length; si += step) samples.push(geom[si]);
+      if (samples[samples.length - 1] !== geom[geom.length - 1]) samples.push(geom[geom.length - 1]);
+      let closeCount = 0;
+      for (const sp of samples) {
+        if (nearPath(sp.lat, sp.lon) < PARALLEL_THRESHOLD) closeCount++;
+      }
+      if (closeCount >= Math.ceil(samples.length * 0.6)) {
+        waysToImport.add(way.id);
+      }
+    }
+
+    // --- Build node-level adjacency graph from imported ways ---
+    const importedWays = allWays.filter(w => waysToImport.has(w.id) && w.geometry.length >= 2);
+    const nodeGraph = new Map(); // nodeKey -> [{neighborKey, lat, lon, maxSpeed}]
+
+    for (const way of importedWays) {
+      const geom = way.geometry;
+      for (let i = 0; i < geom.length - 1; i++) {
+        const aKey = `${geom[i].lat.toFixed(6)},${geom[i].lon.toFixed(6)}`;
+        const bKey = `${geom[i + 1].lat.toFixed(6)},${geom[i + 1].lon.toFixed(6)}`;
+        if (aKey === bKey) continue;
+        if (!nodeGraph.has(aKey)) nodeGraph.set(aKey, []);
+        if (!nodeGraph.has(bKey)) nodeGraph.set(bKey, []);
+        nodeGraph.get(aKey).push({ neighborKey: bKey, lat: geom[i + 1].lat, lon: geom[i + 1].lon, maxSpeed: way.maxSpeed });
+        nodeGraph.get(bKey).push({ neighborKey: aKey, lat: geom[i].lat, lon: geom[i].lon, maxSpeed: way.maxSpeed });
+      }
+    }
+
+    // --- Identify junction nodes (degree != 2, or import start/end) ---
+    const junctionNodes = new Set();
+    junctionNodes.add(startResult.node.key);
+    junctionNodes.add(endResult.node.key);
+    for (const [nodeKey, neighbors] of nodeGraph) {
+      // Count unique neighbor keys
+      const uniqueNeighbors = new Set(neighbors.map(n => n.neighborKey));
+      if (uniqueNeighbors.size !== 2) junctionNodes.add(nodeKey);
+    }
+
+    // --- Chain-follow between junctions ---
+    const resultVoiePoints = [];
+    const resultTroncons = [];
+    const vpMap = new Map(); // nodeKey -> vpId
+
+    const getOrCreateVP = (nodeKey) => {
+      if (vpMap.has(nodeKey)) return vpMap.get(nodeKey);
+      const node = nodes.get(nodeKey);
+      if (!node) return null;
+      const vpId = `vp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      resultVoiePoints.push({
+        id: vpId, lat: node.lat, lon: node.lon,
+        voie: '1', stationId: null, linePoint: true
+      });
+      vpMap.set(nodeKey, vpId);
+      return vpId;
+    };
+
+    const visitedEdges = new Set(); // "a|b" directional
+    for (const jNodeKey of junctionNodes) {
+      if (!nodeGraph.has(jNodeKey)) continue;
+      const neighbors = nodeGraph.get(jNodeKey);
+      const uniqueNbs = [...new Set(neighbors.map(n => n.neighborKey))];
+      for (const firstNb of uniqueNbs) {
+        const edgeKey = `${jNodeKey}|${firstNb}`;
+        if (visitedEdges.has(edgeKey)) continue;
+
+        // Chain-follow from jNodeKey through firstNb until next junction
+        const chainPoints = [nodes.get(jNodeKey)];
+        let prevKey = jNodeKey;
+        let curKey = firstNb;
+        let chainMaxSpeed = (neighbors.find(n => n.neighborKey === firstNb) || {}).maxSpeed || 100;
+        visitedEdges.add(`${jNodeKey}|${firstNb}`);
+        visitedEdges.add(`${firstNb}|${jNodeKey}`);
+
+        while (!junctionNodes.has(curKey) && nodeGraph.has(curKey)) {
+          const curNode = nodes.get(curKey);
+          if (!curNode) break;
+          chainPoints.push(curNode);
+          const curNeighbors = nodeGraph.get(curKey);
+          const uniqueCurNbs = [...new Set(curNeighbors.map(n => n.neighborKey))];
+          const nextKey = uniqueCurNbs.find(k => k !== prevKey);
+          if (!nextKey) break;
+          const nextEdge = curNeighbors.find(n => n.neighborKey === nextKey);
+          if (nextEdge) chainMaxSpeed = Math.min(chainMaxSpeed, nextEdge.maxSpeed);
+          visitedEdges.add(`${curKey}|${nextKey}`);
+          visitedEdges.add(`${nextKey}|${curKey}`);
+          prevKey = curKey;
+          curKey = nextKey;
+        }
+        // Add the final junction node
+        const endNode = nodes.get(curKey);
+        if (endNode) chainPoints.push(endNode);
+
+        if (chainPoints.length < 2) continue;
+        const vpAId = getOrCreateVP(jNodeKey);
+        const vpBId = getOrCreateVP(curKey);
+        if (vpAId && vpBId && vpAId !== vpBId) {
+          const trcRoute = chainPoints.map(p => ({
+            lat: p.lat, lon: p.lon, maxSpeed: chainMaxSpeed, tracks: 1
+          }));
+          const dist = trcRoute.reduce((sum, p, idx) => {
+            if (idx === 0) return 0;
+            return sum + haversine(trcRoute[idx - 1].lat, trcRoute[idx - 1].lon, p.lat, p.lon);
+          }, 0);
+          resultTroncons.push({
+            pointA: vpAId, pointB: vpBId,
+            route: trcRoute, distance: Math.round(dist * 10) / 10
+          });
+        }
+      }
+    }
+
+    // Clean up self-loops and duplicate tronçons (no VP merging — keep parallel tracks separate)
+    const trcKeySet = new Set();
+    const finalVPs = resultVoiePoints.slice();
+    const finalTrcs = resultTroncons.filter(trc => {
+      if (trc.pointA === trc.pointB) return false;
+      const key = [trc.pointA, trc.pointB].sort().join('|');
+      if (trcKeySet.has(key)) return false;
+      trcKeySet.add(key);
+      return true;
+    });
+
+    // --- Connect disconnected components to the main graph ---
+    // Find main component via BFS, then for each satellite component,
+    // connect its nearest VP to the main graph with a single tronçon.
+    const vpIdSet = new Set(finalVPs.map(v => v.id));
+    const adj = new Map();
+    for (const v of finalVPs) adj.set(v.id, []);
+    for (const t of finalTrcs) {
+      if (vpIdSet.has(t.pointA) && vpIdSet.has(t.pointB)) {
+        adj.get(t.pointA).push(t.pointB);
+        adj.get(t.pointB).push(t.pointA);
+      }
+    }
+    // BFS from first VP to find main component
+    const mainComp = new Set();
+    if (finalVPs.length > 0) {
+      const bfsQ = [finalVPs[0].id];
+      mainComp.add(finalVPs[0].id);
+      while (bfsQ.length > 0) {
+        const c = bfsQ.shift();
+        for (const n of (adj.get(c) || [])) {
+          if (!mainComp.has(n)) { mainComp.add(n); bfsQ.push(n); }
+        }
+      }
+    }
+    // Connect or discard satellite components
+    const mainVPs = finalVPs.filter(v => mainComp.has(v.id));
+    const visited = new Set(mainComp);
+    const vpById = new Map(finalVPs.map(v => [v.id, v]));
+    const discardIds = new Set();
+    for (const vp of finalVPs) {
+      if (visited.has(vp.id)) continue;
+      const satComp = [vp];
+      const satQ = [vp.id];
+      visited.add(vp.id);
+      while (satQ.length > 0) {
+        const c = satQ.shift();
+        for (const n of (adj.get(c) || [])) {
+          if (!visited.has(n)) {
+            visited.add(n);
+            satQ.push(n);
+            const nvp = vpById.get(n);
+            if (nvp) satComp.push(nvp);
+          }
+        }
+      }
+      // Find closest VP in main component
+      let bestDist = Infinity, bestSat = null, bestMain = null;
+      for (const sv of satComp) {
+        for (const mv of mainVPs) {
+          const d = haversine(sv.lat, sv.lon, mv.lat, mv.lon);
+          if (d < bestDist) { bestDist = d; bestSat = sv; bestMain = mv; }
+        }
+      }
+      if (bestSat && bestMain && bestDist < 0.2) { // within 200m: connect
+        finalTrcs.push({
+          pointA: bestSat.id, pointB: bestMain.id,
+          route: [
+            { lat: bestSat.lat, lon: bestSat.lon, maxSpeed: 30, tracks: 1 },
+            { lat: bestMain.lat, lon: bestMain.lon, maxSpeed: 30, tracks: 1 }
+          ],
+          distance: Math.round(bestDist * 1000) / 1000
+        });
+        for (const sv of satComp) { mainComp.add(sv.id); mainVPs.push(sv); }
+      } else {
+        // Too far: discard this satellite (noise from parallel detection)
+        for (const sv of satComp) discardIds.add(sv.id);
+      }
+    }
+
+    // Remove discarded VPs and their tronçons
+    let cleanVPs = finalVPs.filter(v => !discardIds.has(v.id));
+    let cleanTrcs = finalTrcs.filter(t => !discardIds.has(t.pointA) && !discardIds.has(t.pointB));
+
+    // --- Iterative simplify + prune until stable ---
+    // 1. Merge degree-2 VPs (pass-through from way boundaries)
+    // 2. Prune short dead-end stubs (<2km, not start/end)
+    // 3. Repeat until no changes
+    const startVpIdFinal = vpMap.get(startResult.node.key);
+    const endVpIdFinal = vpMap.get(endResult.node.key);
+    let anyChange = true;
+    while (anyChange) {
+      anyChange = false;
+
+      // Simplify: merge degree-2 pass-through VPs
+      let simplified = true;
+      while (simplified) {
+        simplified = false;
+        const deg2 = new Map();
+        for (const v of cleanVPs) deg2.set(v.id, []);
+        for (let ti = 0; ti < cleanTrcs.length; ti++) {
+          const t = cleanTrcs[ti];
+          if (!t) continue;
+          if (deg2.has(t.pointA)) deg2.get(t.pointA).push(ti);
+          if (deg2.has(t.pointB)) deg2.get(t.pointB).push(ti);
+        }
+        for (const vp of cleanVPs) {
+          if (vp.id === startVpIdFinal || vp.id === endVpIdFinal) continue;
+          const trcIndices = deg2.get(vp.id);
+          if (!trcIndices || trcIndices.length !== 2) continue;
+          const t1 = cleanTrcs[trcIndices[0]];
+          const t2 = cleanTrcs[trcIndices[1]];
+          if (!t1 || !t2) continue;
+          const other1 = t1.pointA === vp.id ? t1.pointB : t1.pointA;
+          const other2 = t2.pointA === vp.id ? t2.pointB : t2.pointA;
+          if (other1 === other2) continue;
+          let r1 = t1.route || [];
+          if (t1.pointB !== vp.id) r1 = [...r1].reverse();
+          let r2 = t2.route || [];
+          if (t2.pointA !== vp.id) r2 = [...r2].reverse();
+          const mergedRoute = [...r1, ...r2.slice(1)];
+          const mergedDist = Math.round((t1.distance + t2.distance) * 10) / 10;
+          cleanTrcs[trcIndices[0]] = {
+            pointA: other1, pointB: other2,
+            route: mergedRoute, distance: mergedDist
+          };
+          cleanTrcs[trcIndices[1]] = null;
+          cleanVPs = cleanVPs.filter(v => v.id !== vp.id);
+          simplified = true;
+          anyChange = true;
+          break;
+        }
+      }
+      cleanTrcs = cleanTrcs.filter(t => t !== null);
+
+      // Prune: remove short dead-end stubs (<2km, not start/end)
+      let prunedAny = true;
+      while (prunedAny) {
+        prunedAny = false;
+        const degP = new Map();
+        for (const v of cleanVPs) degP.set(v.id, []);
+        for (const t of cleanTrcs) {
+          if (degP.has(t.pointA)) degP.get(t.pointA).push(t);
+          if (degP.has(t.pointB)) degP.get(t.pointB).push(t);
+        }
+        for (const vp of cleanVPs) {
+          if (vp.id === startVpIdFinal || vp.id === endVpIdFinal) continue;
+          const trcs = degP.get(vp.id);
+          if (!trcs || trcs.length !== 1) continue;
+          // Only prune short stubs (<2km) to avoid removing real parallel track
+          if (trcs[0].distance > 2) continue;
+          cleanTrcs = cleanTrcs.filter(t => t.pointA !== vp.id && t.pointB !== vp.id);
+          cleanVPs = cleanVPs.filter(v => v.id !== vp.id);
+          prunedAny = true;
+          anyChange = true;
+          break;
+        }
+      }
+    }
+
+    // --- Final merge: collapse junction VPs within 15m ---
+    // At convergence/divergence points, the two parallel tracks often have
+    // separate OSM nodes a few meters apart instead of one shared node.
+    // Merge these into a single VP to get the correct aiguillage count.
+    const FINAL_MERGE = 0.015; // km (~15m)
+    const fMerge = new Map();
+    for (let i = 0; i < cleanVPs.length; i++) {
+      for (let j = i + 1; j < cleanVPs.length; j++) {
+        const a = cleanVPs[i], b = cleanVPs[j];
+        if (fMerge.has(b.id)) continue;
+        if (haversine(a.lat, a.lon, b.lat, b.lon) < FINAL_MERGE) {
+          fMerge.set(b.id, a.id);
+        }
+      }
+    }
+    if (fMerge.size > 0) {
+      const resolve = id => { while (fMerge.has(id)) id = fMerge.get(id); return id; };
+      for (const t of cleanTrcs) {
+        t.pointA = resolve(t.pointA);
+        t.pointB = resolve(t.pointB);
+      }
+      const mergedIds = new Set(fMerge.keys());
+      cleanVPs = cleanVPs.filter(v => !mergedIds.has(v.id));
+      // Remove self-loops and duplicates after merge
+      const tks2 = new Set();
+      cleanTrcs = cleanTrcs.filter(t => {
+        if (t.pointA === t.pointB) return false;
+        const k = [t.pointA, t.pointB].sort().join('|');
+        if (tks2.has(k)) return false;
+        tks2.add(k);
+        return true;
+      });
+      // Run one more simplify pass for any new degree-2 VPs
+      let s2 = true;
+      while (s2) {
+        s2 = false;
+        const d2 = new Map();
+        for (const v of cleanVPs) d2.set(v.id, []);
+        for (let ti = 0; ti < cleanTrcs.length; ti++) {
+          const t = cleanTrcs[ti];
+          if (!t) continue;
+          if (d2.has(t.pointA)) d2.get(t.pointA).push(ti);
+          if (d2.has(t.pointB)) d2.get(t.pointB).push(ti);
+        }
+        for (const vp of cleanVPs) {
+          if (vp.id === startVpIdFinal || vp.id === endVpIdFinal) continue;
+          const idx = d2.get(vp.id);
+          if (!idx || idx.length !== 2) continue;
+          const t1 = cleanTrcs[idx[0]], t2 = cleanTrcs[idx[1]];
+          if (!t1 || !t2) continue;
+          const o1 = t1.pointA === vp.id ? t1.pointB : t1.pointA;
+          const o2 = t2.pointA === vp.id ? t2.pointB : t2.pointA;
+          if (o1 === o2) continue;
+          let r1 = t1.route || []; if (t1.pointB !== vp.id) r1 = [...r1].reverse();
+          let r2 = t2.route || []; if (t2.pointA !== vp.id) r2 = [...r2].reverse();
+          cleanTrcs[idx[0]] = { pointA: o1, pointB: o2, route: [...r1, ...r2.slice(1)], distance: Math.round((t1.distance + t2.distance) * 10) / 10 };
+          cleanTrcs[idx[1]] = null;
+          cleanVPs = cleanVPs.filter(v => v.id !== vp.id);
+          s2 = true; break;
+        }
+      }
+      cleanTrcs = cleanTrcs.filter(t => t !== null);
+    }
+
+    return { voiePoints: cleanVPs, troncons: cleanTrcs };
   }
 
   buildGraph(ways) {
@@ -82,7 +525,14 @@ export class ORMClient {
         if (!nodes.has(aKey)) nodes.set(aKey, { key: aKey, lat: geom[i].lat, lon: geom[i].lon, edges: [] });
         if (!nodes.has(bKey)) nodes.set(bKey, { key: bKey, lat: geom[i + 1].lat, lon: geom[i + 1].lon, edges: [] });
 
-        const dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
+        let dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
+        // Penalize non-main tracks to prefer main lines
+        const usage = way.usage;
+        const svc = way.service;
+        if (svc === 'yard' || svc === 'siding' || svc === 'crossover') dist *= 4;
+        else if (usage === 'industrial' || usage === 'military') dist *= 5;
+        else if (usage === 'branch') dist *= 1.5;
+        else if (usage === 'tourism') dist *= 3;
         const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks };
         const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks };
 
@@ -192,8 +642,17 @@ export class ORMClient {
     }
 
     const graph = this.buildGraph(allWays);
-    const startResult = this.findNearestNode(graph, fromLat, fromLon, 5);
-    const endResult = this.findNearestNode(graph, toLat, toLon, 5);
+    // For short distances (< 0.5km), use tight snap to avoid jumping to wrong track
+    const snapRadius = distKm < 0.5 ? 0.3 : 5;
+    const startResult = this.findNearestNode(graph, fromLat, fromLon, snapRadius);
+    const endResult = this.findNearestNode(graph, toLat, toLon, snapRadius);
+
+    // Very short distance: if both snap to same node or snap failed, use direct route
+    if (distKm < 0.5 && (!startResult || !endResult || startResult.node.key === endResult.node.key)) {
+      const direct = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
+      this.routeCache.set(cacheKey, direct);
+      return direct;
+    }
 
     if (!startResult || !endResult) {
       console.warn('ORM: No nearby railway nodes found within 5km');
