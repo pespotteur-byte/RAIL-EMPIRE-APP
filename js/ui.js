@@ -1107,35 +1107,50 @@ export class UI {
       // Render tile layers (base map + ORM railway tiles)
       tileMap.renderTiles(ctx, canvas.width, canvas.height);
 
-      // Draw user's tracks (simplified)
+      // Viewport bounds for culling
+      const vpTL = tileMap.screenToWorld(0, 0, canvas.width, canvas.height);
+      const vpBR = tileMap.screenToWorld(canvas.width, canvas.height, canvas.width, canvas.height);
+      const vMinLat = Math.min(vpTL.lat, vpBR.lat) - 0.02;
+      const vMaxLat = Math.max(vpTL.lat, vpBR.lat) + 0.02;
+      const vMinLon = Math.min(vpTL.lon, vpBR.lon) - 0.02;
+      const vMaxLon = Math.max(vpTL.lon, vpBR.lon) + 0.02;
+
+      // Draw user's tracks (simplified, viewport-culled, single batch)
       ctx.strokeStyle = 'rgba(100, 160, 255, 0.4)';
       ctx.lineWidth = 2;
+      ctx.beginPath();
       for (const track of world.tracks) {
         if (track.route && track.route.length > 2) {
+          const rF = track.route[0], rL = track.route[track.route.length - 1];
+          const tMinLat = Math.min(rF.lat, rL.lat), tMaxLat = Math.max(rF.lat, rL.lat);
+          const tMinLon = Math.min(rF.lon, rL.lon), tMaxLon = Math.max(rF.lon, rL.lon);
+          if (tMaxLat < vMinLat || tMinLat > vMaxLat || tMaxLon < vMinLon || tMinLon > vMaxLon) continue;
           const step = Math.max(1, Math.floor(track.route.length / 60));
-          ctx.beginPath();
-          const p0 = tileMap.worldToScreen(track.route[0].lat, track.route[0].lon, canvas.width, canvas.height);
+          const p0 = tileMap.worldToScreen(rF.lat, rF.lon, canvas.width, canvas.height);
           ctx.moveTo(p0.x, p0.y);
           for (let r = step; r < track.route.length; r += step) {
             const pr = tileMap.worldToScreen(track.route[r].lat, track.route[r].lon, canvas.width, canvas.height);
             ctx.lineTo(pr.x, pr.y);
           }
-          ctx.stroke();
         } else {
           const a = world.getStationById(track.stationA);
           const b = world.getStationById(track.stationB);
           if (!a || !b) continue;
+          if (Math.max(a.lat, b.lat) < vMinLat || Math.min(a.lat, b.lat) > vMaxLat) continue;
+          if (Math.max(a.lon, b.lon) < vMinLon || Math.min(a.lon, b.lon) > vMaxLon) continue;
           const pa = tileMap.worldToScreen(a.lat, a.lon, canvas.width, canvas.height);
           const pb = tileMap.worldToScreen(b.lat, b.lon, canvas.width, canvas.height);
-          ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+          ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
         }
       }
+      ctx.stroke();
 
-      // Draw stations
+      // Draw stations (viewport-culled)
+      const selectedIds = new Set(this.schedStops.map(s => s.stationId));
       for (const st of world.stations) {
+        if (st.lat < vMinLat || st.lat > vMaxLat || st.lon < vMinLon || st.lon > vMaxLon) continue;
         const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
-        if (p.x < -30 || p.x > canvas.width + 30 || p.y < -30 || p.y > canvas.height + 30) continue;
-        const isSelected = this.schedStops.some(s => s.stationId === st.id);
+        const isSelected = selectedIds.has(st.id);
         const isJunction = (connectionCount[st.id] || 0) >= 3;
         ctx.fillStyle = isSelected ? '#fbbf24' : isJunction ? '#f97316' : '#3b82f6';
         const radius = isSelected ? 7 : isJunction ? 6 : 5;
@@ -1178,43 +1193,67 @@ export class UI {
         }
       }
 
-      // Draw voie points on schedule map
+      // Draw voie points on schedule map (viewport-culled for performance)
       const vpm = this.game.voiePointManager;
       if (vpm) {
-        // Draw troncons
+        // Get viewport bounds for culling
+        const topLeft = tileMap.screenToWorld(0, 0, canvas.width, canvas.height);
+        const botRight = tileMap.screenToWorld(canvas.width, canvas.height, canvas.width, canvas.height);
+        const vpMinLat = Math.min(topLeft.lat, botRight.lat) - 0.01;
+        const vpMaxLat = Math.max(topLeft.lat, botRight.lat) + 0.01;
+        const vpMinLon = Math.min(topLeft.lon, botRight.lon) - 0.01;
+        const vpMaxLon = Math.max(topLeft.lon, botRight.lon) + 0.01;
+
+        // Draw troncons — batch into single path, skip off-screen, simplify at low zoom
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        const simplifyStep = tileMap.zoomLevel >= 13 ? 1 : tileMap.zoomLevel >= 10 ? 3 : 6;
         for (const trc of vpm.getAllTroncons()) {
-          if (trc.route && trc.route.length >= 2) {
-            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            const p0 = tileMap.worldToScreen(trc.route[0].lat, trc.route[0].lon, canvas.width, canvas.height);
-            ctx.moveTo(p0.x, p0.y);
-            for (let r = 1; r < trc.route.length; r++) {
-              const pr = tileMap.worldToScreen(trc.route[r].lat, trc.route[r].lon, canvas.width, canvas.height);
-              ctx.lineTo(pr.x, pr.y);
-            }
-            ctx.stroke();
+          if (!trc.route || trc.route.length < 2) continue;
+          // Quick bounds check using first and last route points
+          const rFirst = trc.route[0];
+          const rLast = trc.route[trc.route.length - 1];
+          const trcMinLat = Math.min(rFirst.lat, rLast.lat);
+          const trcMaxLat = Math.max(rFirst.lat, rLast.lat);
+          const trcMinLon = Math.min(rFirst.lon, rLast.lon);
+          const trcMaxLon = Math.max(rFirst.lon, rLast.lon);
+          if (trcMaxLat < vpMinLat || trcMinLat > vpMaxLat || trcMaxLon < vpMinLon || trcMinLon > vpMaxLon) continue;
+
+          const p0 = tileMap.worldToScreen(rFirst.lat, rFirst.lon, canvas.width, canvas.height);
+          ctx.moveTo(p0.x, p0.y);
+          for (let r = simplifyStep; r < trc.route.length; r += simplifyStep) {
+            const pr = tileMap.worldToScreen(trc.route[r].lat, trc.route[r].lon, canvas.width, canvas.height);
+            ctx.lineTo(pr.x, pr.y);
           }
+          // Always include last point
+          const pL = tileMap.worldToScreen(rLast.lat, rLast.lon, canvas.width, canvas.height);
+          ctx.lineTo(pL.x, pL.y);
         }
-        // Draw voie point markers
-        for (const vp of vpm.getAll()) {
-          const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
-          if (p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) continue;
-          const isUsed = this.schedStops.some(s => s.voiePointId === vp.id);
-          const size = 3;
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(Math.PI / 4);
-          ctx.fillStyle = isUsed ? '#fbbf24' : '#0f172a';
-          ctx.fillRect(-size, -size, size * 2, size * 2);
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(-size, -size, size * 2, size * 2);
-          ctx.restore();
-          if (tileMap.zoomLevel >= 10) {
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '8px sans-serif';
-            ctx.fillText(`Voie ${vp.voie}`, p.x + 6, p.y + 3);
+        ctx.stroke();
+
+        // Draw voie point markers — only at zoom >= 11, viewport-culled
+        if (tileMap.zoomLevel >= 11) {
+          const usedVPIds = new Set(this.schedStops.filter(s => s.voiePointId).map(s => s.voiePointId));
+          for (const vp of vpm.getAll()) {
+            if (vp.lat < vpMinLat || vp.lat > vpMaxLat || vp.lon < vpMinLon || vp.lon > vpMaxLon) continue;
+            const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+            const isUsed = usedVPIds.has(vp.id);
+            const size = 3;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(Math.PI / 4);
+            ctx.fillStyle = isUsed ? '#fbbf24' : '#0f172a';
+            ctx.fillRect(-size, -size, size * 2, size * 2);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-size, -size, size * 2, size * 2);
+            ctx.restore();
+            if (tileMap.zoomLevel >= 13) {
+              ctx.fillStyle = '#94a3b8';
+              ctx.font = '8px sans-serif';
+              ctx.fillText(`Voie ${vp.voie}`, p.x + 6, p.y + 3);
+            }
           }
         }
       }

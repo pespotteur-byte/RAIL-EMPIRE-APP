@@ -425,34 +425,100 @@ export class Renderer {
   }
 
   drawVoieTroncons(ctx, voiePointManager, world) {
+    // Viewport bounds for culling
+    const vw = ctx.canvas.width, vh = ctx.canvas.height;
+    const topLeft = this.tileMap ? this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight) : null;
+    const botRight = this.tileMap ? this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight) : null;
+    const hasViewport = topLeft && botRight;
+    const vpMinLat = hasViewport ? Math.min(topLeft.lat, botRight.lat) - 0.005 : -90;
+    const vpMaxLat = hasViewport ? Math.max(topLeft.lat, botRight.lat) + 0.005 : 90;
+    const vpMinLon = hasViewport ? Math.min(topLeft.lon, botRight.lon) - 0.005 : -180;
+    const vpMaxLon = hasViewport ? Math.max(topLeft.lon, botRight.lon) + 0.005 : 180;
+
+    // Batch troncons by color (occupied vs free) for fewer state changes
+    const freeTrcs = [];
+    const occupiedTrcs = [];
+
     for (const trc of voiePointManager.getAllTroncons()) {
       if (!trc.route || trc.route.length < 2) {
-        // Fallback: draw straight line between endpoints
         const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
         const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
         if (!ptA || !ptB) continue;
-        const pa = this.latLonToScreen(ptA.lat, ptA.lon);
-        const pb = this.latLonToScreen(ptB.lat, ptB.lon);
-        ctx.strokeStyle = trc.occupiedBy ? '#ef4444' : '#64748b';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.moveTo(pa.x, pa.y);
-        ctx.lineTo(pb.x, pb.y);
-        ctx.stroke();
+        // Viewport cull
+        const minLat = Math.min(ptA.lat, ptB.lat);
+        const maxLat = Math.max(ptA.lat, ptB.lat);
+        const minLon = Math.min(ptA.lon, ptB.lon);
+        const maxLon = Math.max(ptA.lon, ptB.lon);
+        if (maxLat < vpMinLat || minLat > vpMaxLat || maxLon < vpMinLon || minLon > vpMaxLon) continue;
+        (trc.occupiedBy ? occupiedTrcs : freeTrcs).push(trc);
         continue;
       }
+      // Viewport cull using first/last route points
+      const rF = trc.route[0], rL = trc.route[trc.route.length - 1];
+      const minLat = Math.min(rF.lat, rL.lat);
+      const maxLat = Math.max(rF.lat, rL.lat);
+      const minLon = Math.min(rF.lon, rL.lon);
+      const maxLon = Math.max(rF.lon, rL.lon);
+      if (maxLat < vpMinLat || minLat > vpMaxLat || maxLon < vpMinLon || minLon > vpMaxLon) continue;
+      (trc.occupiedBy ? occupiedTrcs : freeTrcs).push(trc);
+    }
 
-      // Draw ORM route
-      ctx.strokeStyle = trc.occupiedBy ? '#ef4444' : '#64748b';
+    // Route simplification step based on zoom
+    const zoom = this.tileMap?.zoomLevel || 10;
+    const step = zoom >= 14 ? 1 : zoom >= 11 ? 2 : 4;
+
+    // Draw free tronçons (single batch)
+    if (freeTrcs.length > 0) {
+      ctx.strokeStyle = '#64748b';
       ctx.lineWidth = 1.5;
       ctx.setLineDash([]);
       ctx.beginPath();
-      const p0 = this.latLonToScreen(trc.route[0].lat, trc.route[0].lon);
-      ctx.moveTo(p0.x, p0.y);
-      for (let i = 1; i < trc.route.length; i++) {
-        const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
-        ctx.lineTo(p.x, p.y);
+      for (const trc of freeTrcs) {
+        if (!trc.route || trc.route.length < 2) {
+          const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
+          const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
+          const pa = this.latLonToScreen(ptA.lat, ptA.lon);
+          const pb = this.latLonToScreen(ptB.lat, ptB.lon);
+          ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+        } else {
+          const p0 = this.latLonToScreen(trc.route[0].lat, trc.route[0].lon);
+          ctx.moveTo(p0.x, p0.y);
+          for (let i = step; i < trc.route.length; i += step) {
+            const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
+            ctx.lineTo(p.x, p.y);
+          }
+          const pL = trc.route[trc.route.length - 1];
+          const pEnd = this.latLonToScreen(pL.lat, pL.lon);
+          ctx.lineTo(pEnd.x, pEnd.y);
+        }
+      }
+      ctx.stroke();
+    }
+
+    // Draw occupied tronçons (red, single batch)
+    if (occupiedTrcs.length > 0) {
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      for (const trc of occupiedTrcs) {
+        if (!trc.route || trc.route.length < 2) {
+          const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
+          const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
+          const pa = this.latLonToScreen(ptA.lat, ptA.lon);
+          const pb = this.latLonToScreen(ptB.lat, ptB.lon);
+          ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+        } else {
+          const p0 = this.latLonToScreen(trc.route[0].lat, trc.route[0].lon);
+          ctx.moveTo(p0.x, p0.y);
+          for (let i = step; i < trc.route.length; i += step) {
+            const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
+            ctx.lineTo(p.x, p.y);
+          }
+          const pL = trc.route[trc.route.length - 1];
+          const pEnd = this.latLonToScreen(pL.lat, pL.lon);
+          ctx.lineTo(pEnd.x, pEnd.y);
+        }
       }
       ctx.stroke();
     }
