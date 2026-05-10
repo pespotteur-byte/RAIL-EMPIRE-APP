@@ -68,10 +68,26 @@ export class Renderer {
   }
 
   drawTracks(ctx, world, lineManager) {
+    // Viewport culling bounds
+    const topLeft = this.tileMap ? this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight) : null;
+    const botRight = this.tileMap ? this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight) : null;
+    const hasVP = topLeft && botRight;
+    const vpMinLat = hasVP ? Math.min(topLeft.lat, botRight.lat) - 0.01 : -90;
+    const vpMaxLat = hasVP ? Math.max(topLeft.lat, botRight.lat) + 0.01 : 90;
+    const vpMinLon = hasVP ? Math.min(topLeft.lon, botRight.lon) - 0.01 : -180;
+    const vpMaxLon = hasVP ? Math.max(topLeft.lon, botRight.lon) + 0.01 : 180;
+
     for (const track of world.tracks) {
       const stA = world.getStationById(track.stationA);
       const stB = world.getStationById(track.stationB);
       if (!stA || !stB) continue;
+
+      // Viewport cull
+      const tMinLat = Math.min(stA.lat, stB.lat);
+      const tMaxLat = Math.max(stA.lat, stB.lat);
+      const tMinLon = Math.min(stA.lon, stB.lon);
+      const tMaxLon = Math.max(stA.lon, stB.lon);
+      if (tMaxLat < vpMinLat || tMinLat > vpMaxLat || tMaxLon < vpMinLon || tMinLon > vpMaxLon) continue;
 
       // Determine track color: incidents/works override, then line color, then speed-based
       let trackColor, trackWidth;

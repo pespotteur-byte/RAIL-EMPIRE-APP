@@ -352,6 +352,8 @@ export class ActiveService {
     this._state.cachedRoute = null;
     this._routeAnalysis = null;
     this._cantonAssignments = null;
+    this._cachedTroncon = null;
+    this._cachedTronconTime = null;
   }
 
   /**
@@ -562,8 +564,16 @@ export class ActiveService {
     let onTroncon = false;
     if (window.game?.voiePointManager && this.position) {
       const vpm = window.game.voiePointManager;
-      const trainVoie = this.train.platform || vpm.getVoieAtPosition(this.position) || null;
-      const currentTrc = vpm.getTronconAtPosition(this.position, 0.3, trainVoie);
+      // Cache troncon lookup: only re-scan every ~1s or when position changes significantly
+      let currentTrc = null;
+      if (this._cachedTroncon && this._cachedTronconTime && (performance.now() - this._cachedTronconTime < 1000)) {
+        currentTrc = this._cachedTroncon;
+      } else {
+        const trainVoie = this.train.platform || null;
+        currentTrc = vpm.getTronconAtPosition(this.position, 0.3, trainVoie);
+        this._cachedTroncon = currentTrc;
+        this._cachedTronconTime = performance.now();
+      }
       if (currentTrc) {
         onTroncon = true;
         if (currentTrc.occupiedBy !== this.id) {

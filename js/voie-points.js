@@ -37,6 +37,15 @@ export class VoiePointManager {
   constructor() {
     this.voiePoints = [];
     this.troncons = [];
+    this._vpMap = new Map(); // O(1) lookup by id
+    this._trcMap = new Map(); // O(1) lookup by id
+  }
+
+  _rebuildMaps() {
+    this._vpMap.clear();
+    for (const vp of this.voiePoints) this._vpMap.set(vp.id, vp);
+    this._trcMap.clear();
+    for (const trc of this.troncons) this._trcMap.set(trc.id, trc);
   }
 
   // --- Voie Points ---
@@ -44,6 +53,7 @@ export class VoiePointManager {
   addVoiePoint(data) {
     const vp = new VoiePoint(data);
     this.voiePoints.push(vp);
+    this._vpMap.set(vp.id, vp);
     return vp;
   }
 
@@ -51,6 +61,8 @@ export class VoiePointManager {
     // Also remove all troncons connected to this point
     this.troncons = this.troncons.filter(t => t.pointA !== id && t.pointB !== id);
     this.voiePoints = this.voiePoints.filter(vp => vp.id !== id);
+    this._vpMap.delete(id);
+    this._rebuildMaps();
   }
 
   deleteLineGroup(lineGroupId) {
@@ -59,11 +71,12 @@ export class VoiePointManager {
     const trcsBefore = this.troncons.length;
     this.troncons = this.troncons.filter(t => t.lineGroupId !== lineGroupId);
     this.voiePoints = this.voiePoints.filter(vp => vp.lineGroupId !== lineGroupId);
+    this._rebuildMaps();
     return (vpsBefore - this.voiePoints.length) + (trcsBefore - this.troncons.length);
   }
 
   getVoiePointById(id) {
-    return this.voiePoints.find(vp => vp.id === id);
+    return this._vpMap.get(id) || null;
   }
 
   getAll() {
@@ -107,15 +120,17 @@ export class VoiePointManager {
   addTroncon(data) {
     const trc = new Troncon(data);
     this.troncons.push(trc);
+    this._trcMap.set(trc.id, trc);
     return trc;
   }
 
   removeTroncon(id) {
     this.troncons = this.troncons.filter(t => t.id !== id);
+    this._trcMap.delete(id);
   }
 
   getTronconById(id) {
-    return this.troncons.find(t => t.id === id);
+    return this._trcMap.get(id) || null;
   }
 
   getAllTroncons() {
@@ -470,6 +485,9 @@ export class VoiePointManager {
     if (!data) return;
     this.voiePoints = (data.voiePoints || []).map(d => new VoiePoint(d));
     this.troncons = (data.troncons || []).map(d => new Troncon(d));
+
+    // Rebuild O(1) lookup maps
+    this._rebuildMaps();
 
     // Update ID counters
     for (const vp of this.voiePoints) {
