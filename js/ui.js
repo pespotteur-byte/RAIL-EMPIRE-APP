@@ -3375,8 +3375,13 @@ export class UI {
       if (svc.state === 'stopped_at_station' && !_isWaypoint) {
         const stName = t.stoppedAt?.name || '';
         const voie = t.platform ? ` Voie ${t.platform}` : '';
-        contextLabel = stName ? `À quai — ${stName}${voie}` : 'À quai';
-        contextClass = 'ctx-quai';
+        if (svc._atTerminus) {
+          contextLabel = stName ? `Terminus — ${stName}${voie}` : 'Terminus';
+          contextClass = 'ctx-quai';
+        } else {
+          contextLabel = stName ? `À quai — ${stName}${voie}` : 'À quai';
+          contextClass = 'ctx-quai';
+        }
       } else if (t.speed === 0 && svc.state === 'moving') {
         contextLabel = 'Régulation du trafic';
         contextClass = 'ctx-regulation';
@@ -3428,7 +3433,14 @@ export class UI {
       const nextStop = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
       const targetStation = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
       let nextInfo;
-      if (nextStop && targetStation) {
+      if (svc._atTerminus && svc._nextDepartureTime != null) {
+        const pt = this.game?.engine?.getParisTime?.();
+        const currentMin = pt ? pt.hours * 60 + pt.minutes : 0;
+        const waitMin = Math.max(0, Math.round(svc._nextDepartureTime - currentMin));
+        nextInfo = `Terminus — départ dans ${waitMin} min`;
+      } else if (svc.completed) {
+        nextInfo = 'Service terminé';
+      } else if (nextStop && targetStation) {
         // For voie point waypoints, name already contains voie info
         const voie = (nextStop.platform && nextStop.stationId) ? ` Voie ${nextStop.platform}` : '';
         nextInfo = `→ ${targetStation.name}${voie}`;

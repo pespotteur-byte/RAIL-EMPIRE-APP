@@ -250,6 +250,13 @@ export class ActiveService {
         const lastStop = currentStops[currentStops.length - 1];
         const endTime = lastStop?.arrivalTime ?? firstDep + 120;
         if (timeOfDay <= endTime + 30) {
+          // Board passengers at departure station before moving
+          if (economy) {
+            const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
+            if (firstStation) {
+              economy.processStopRevenue(this, firstStation.name, 0, true, false);
+            }
+          }
           this.state = 'moving';
           this.currentStopIndex = 1;
           this.speed = 0;
@@ -273,7 +280,18 @@ export class ActiveService {
       // Multi-trip waiting: use _nextDepartureTime if set
       if (this._nextDepartureTime != null && this.currentStopIndex === 0) {
         if (timeOfDay >= this._nextDepartureTime) {
+          // Board passengers at departure station for return/multi-trip
+          const curStops = this.getCurrentStops();
+          if (economy && curStops[0]) {
+            const depStation = this.world?.getStationById(curStops[0].stationId);
+            if (depStation) {
+              economy.processStopRevenue(this, depStation.name, 0, true, false);
+            }
+          }
           this._nextDepartureTime = null;
+          this._atTerminus = false;
+          this.delay = 0;
+          this.train.delay = 0;
           this.state = 'moving';
           this.currentStopIndex = 1;
           this.speed = 0;
@@ -1248,6 +1266,10 @@ export class ActiveService {
       this.train.speed = 0;
       this.train.state = 'waiting';
       this.train.blockedBy = false;
+      // Reset delay for the return leg
+      this.delay = 0;
+      this.train.delay = 0;
+      this._atTerminus = true;
       // Set next departure time based on terminus wait
       this._nextDepartureTime = (this._lastArrivalTime || 0) + this.terminusWait;
       return;
@@ -1265,6 +1287,10 @@ export class ActiveService {
       this.train.state = 'waiting';
       this.train.blockedBy = false;
       this.revenueCollected = false;
+      // Reset delay for next trip
+      this.delay = 0;
+      this.train.delay = 0;
+      this._atTerminus = true;
       this._nextDepartureTime = (this._lastArrivalTime || 0) + this.terminusWait;
       // Rebuild forward stops with adjusted times for new trip
       this._adjustedStops = this._rebuildStopsFromTime(this._nextDepartureTime);
@@ -1284,6 +1310,9 @@ export class ActiveService {
     this.train.speed = 0;
     this.train.state = 'waiting';
     this.train.blockedBy = false;
+    this.delay = 0;
+    this.train.delay = 0;
+    this._atTerminus = false;
     this.completed = true;
     this.completedDate = this._currentDate || '';
     this.isReturnLeg = false;
