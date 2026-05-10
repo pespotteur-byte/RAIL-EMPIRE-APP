@@ -964,10 +964,12 @@ export class ActiveService {
 
     const lineSpeed = this.getLineSpeedAtPosition();
     let blockLength;
-    if (lineSpeed <= 80) blockLength = 0.6;
+    if (lineSpeed <= 60) blockLength = 0.4;
+    else if (lineSpeed <= 80) blockLength = 0.6;
+    else if (lineSpeed <= 120) blockLength = 0.8;
     else if (lineSpeed <= 160) blockLength = 1.0;
-    else if (lineSpeed <= 200) blockLength = 1.5;
-    else blockLength = 2.5;
+    else if (lineSpeed <= 220) blockLength = 1.5;
+    else blockLength = 1.8;
 
     if (nearestAheadDist < blockLength) return 0;
     if (nearestAheadDist < blockLength * 2) return Math.min(nearestAheadSpeed, 30);
