@@ -2,7 +2,7 @@
 // Voie points are unnamed geographic markers that define which voie (track) a train is on
 // Troncons connect voie points and/or stations with ORM-traced routes
 
-import { haversineDistance } from './simulation.js?v=1778287469';
+import { haversineDistance } from './simulation.js?v=1778401410';
 
 let nextVoiePointId = 1;
 let nextTronconId = 1;
@@ -285,8 +285,14 @@ export class VoiePointManager {
     const queue = [{ id: startVP.id, d: 0 }];
 
     while (queue.length > 0) {
-      queue.sort((a, b) => a.d - b.d);
-      const { id: u } = queue.shift();
+      // Find minimum manually (avoids O(n log n) sort per iteration)
+      let minIdx = 0;
+      for (let i = 1; i < queue.length; i++) {
+        if (queue[i].d < queue[minIdx].d) minIdx = i;
+      }
+      const { id: u } = queue[minIdx];
+      queue[minIdx] = queue[queue.length - 1];
+      queue.pop();
       if (visited.has(u)) continue;
       visited.add(u);
       if (u === endVP.id) break;
@@ -407,10 +413,13 @@ export class VoiePointManager {
       voiePoints: this.voiePoints.map(vp => ({
         id: vp.id, lat: vp.lat, lon: vp.lon, voie: vp.voie,
         stationId: vp.stationId || null,
+        lineGroupId: vp.lineGroupId || null,
+        linePoint: vp.linePoint || false,
       })),
       troncons: this.troncons.map(t => ({
         id: t.id, pointA: t.pointA, pointB: t.pointB,
         route: t.route, distance: t.distance,
+        lineGroupId: t.lineGroupId || null,
       })),
     };
   }

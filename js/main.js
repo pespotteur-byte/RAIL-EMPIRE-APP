@@ -1,19 +1,21 @@
-import { SimulationEngine } from './engine.js?v=1777581315';
-import { World, createDefaultWorld } from './world.js?v=1777581315';
-import { Renderer } from './renderer.js?v=1777581315';
-import { UI } from './ui.js?v=1777581315';
-import { Economy } from './economy.js?v=1777581315';
-import { IncidentManager } from './incidents.js?v=1777581315';
-import { FreightManager } from './freight.js?v=1777581315';
-import { ScheduleManager } from './schedule.js?v=1777581315';
-import { GameStorage } from './storage.js?v=1777581315';
-import { AccountManager } from './account.js?v=1777581315';
-import { RollingStockManager } from './rolling-stock.js?v=1777581315';
-import { RameManager } from './rame.js?v=1777581315';
-import { ScheduleCreator } from './schedule-creator.js?v=1777581315';
-import { DepotManager } from './depot.js?v=1777581315';
-import { WorksManager } from './works.js?v=1777581315';
-import { ORMClient } from './orm.js?v=1777581315';
+import { SimulationEngine } from './engine.js?v=1778401410';
+import { World, createDefaultWorld } from './world.js?v=1778401410';
+import { Renderer } from './renderer.js?v=1778401410';
+import { UI } from './ui.js?v=1778401410';
+import { Economy } from './economy.js?v=1778401410';
+import { IncidentManager } from './incidents.js?v=1778401410';
+import { FreightManager } from './freight.js?v=1778401410';
+import { ScheduleManager } from './schedule.js?v=1778401410';
+import { GameStorage } from './storage.js?v=1778401410';
+import { AccountManager } from './account.js?v=1778401410';
+import { RollingStockManager } from './rolling-stock.js?v=1778401410';
+import { RameManager } from './rame.js?v=1778401410';
+import { ScheduleCreator } from './schedule-creator.js?v=1778401410';
+import { DepotManager } from './depot.js?v=1778401410';
+import { WorksManager } from './works.js?v=1778401410';
+import { ORMClient } from './orm.js?v=1778401410';
+import { LineManager, PlatformManager } from './line.js?v=1778401410';
+import { VoiePointManager } from './voie-points.js?v=1778401410';
 
 class RailEmpire {
   constructor() {
@@ -31,6 +33,9 @@ class RailEmpire {
     this.depotManager = new DepotManager();
     this.worksManager = new WorksManager();
     this.orm = new ORMClient();
+    this.lineManager = new LineManager();
+    this.platformManager = new PlatformManager();
+    this.voiePointManager = new VoiePointManager();
     this.renderer = null;
     this.ui = null;
     this.running = false;
@@ -149,6 +154,21 @@ class RailEmpire {
     this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
     this.gameLoop();
     this.autoSaveInterval = setInterval(() => this.saveState(), 10000);
+
+    // Save on tab hide, fast-forward on tab return
+    this._lastVisibleTime = Date.now();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.saveState();
+        this._lastVisibleTime = Date.now();
+      } else {
+        const elapsed = (Date.now() - this._lastVisibleTime) / 1000;
+        if (elapsed > 5 && elapsed < 86400) {
+          this._fastForward(elapsed);
+          this.saveState();
+        }
+      }
+    });
   }
 
   exportSaveFile() {
@@ -164,6 +184,8 @@ class RailEmpire {
       works: this.worksManager.toSave(),
       freightContracts: this.freightManager.toSave(),
       ormRoutes: this.orm.toSave(),
+      lines: this.lineManager.toSave(),
+      voiePoints: this.voiePointManager.toSave(),
       exportDate: new Date().toISOString(),
     };
     const json = JSON.stringify(state, null, 2);
@@ -189,6 +211,16 @@ class RailEmpire {
     if (s.works) this.worksManager.loadFromSave(s.works);
     if (s.freightContracts) this.freightManager.loadFromSave(s.freightContracts);
     if (s.ormRoutes) this.orm.loadFromSave(s.ormRoutes);
+    if (s.lines) this.lineManager.loadFromSave(s.lines);
+    if (s.voiePoints) this.voiePointManager.loadFromSave(s.voiePoints);
+    // Clear voie point occupations on reload (prevent ghost occupations after crash)
+    for (const vp of this.voiePointManager.getAll()) { vp.occupiedBy = null; }
+    for (const trc of this.voiePointManager.getAllTroncons()) { trc.occupiedBy = null; }
+
+    // Initialize platform manager for all stations
+    for (const st of this.world.stations) {
+      this.platformManager.initStation(st.id, st.platforms || 2);
+    }
 
     // Fast-forward simulation based on elapsed time since save
     if (s.saveTime) {
@@ -201,25 +233,88 @@ class RailEmpire {
   }
 
   _fastForward(elapsedSeconds) {
-    const stepDt = 1; // simulate 1-second steps
-    const activeServices = this.scheduleCreator.getActiveServices();
-    const pt = this.engine.getParisTime();
-    let timeOfDay = pt.hours * 60 + pt.minutes;
+    try {
+      const activeServices = this.scheduleCreator.getActiveServices();
+      const pt = this.engine.getParisTime();
+      const currentTimeOfDay = pt.hours * 60 + pt.minutes;
+      const dateStr = this.engine.getParisDate();
 
-    let remaining = elapsedSeconds;
-    while (remaining > 0) {
-      const dt = Math.min(stepDt, remaining);
-      for (const svc of activeServices) {
-        svc.moveUpdate(dt, timeOfDay, activeServices);
+      // Start from save time (current time minus elapsed), not current time
+      let timeOfDay = currentTimeOfDay - (elapsedSeconds / 60);
+      if (timeOfDay < 0) timeOfDay += 1440;
+
+      // Use larger steps for long fast-forwards to save CPU
+      const stepDt = elapsedSeconds > 600 ? 5 : 1;
+      let lastMinute = Math.floor(timeOfDay);
+
+      let remaining = elapsedSeconds;
+      while (remaining > 0) {
+        const dt = Math.min(stepDt, remaining);
+        for (const svc of activeServices) {
+          svc.moveUpdate(dt, timeOfDay, activeServices);
+        }
+        remaining -= dt;
+        timeOfDay += (dt / 60);
+        if (timeOfDay >= 1440) timeOfDay -= 1440;
+
+        // Process schedule ticks + revenue each simulated minute
+        const currentMinute = Math.floor(timeOfDay);
+        if (currentMinute !== lastMinute) {
+          for (const svc of activeServices) {
+            svc.scheduleTick(currentMinute, dateStr, this.economy);
+          }
+          lastMinute = currentMinute;
+        }
       }
-      remaining -= dt;
-      timeOfDay += (dt / 60);
-      if (timeOfDay >= 1440) timeOfDay -= 1440;
+      console.log(`Fast-forward complete. Simulated ${Math.round(elapsedSeconds)}s of game time.`);
+      // Validate service states against current time
+      this._validateServiceStates(currentTimeOfDay, dateStr);
+    } catch (e) {
+      console.warn('Fast-forward error (ignored):', e);
     }
-    console.log(`Fast-forward complete. Simulated ${Math.round(elapsedSeconds)}s of game time.`);
+  }
+
+  _validateServiceStates(timeOfDay, dateStr) {
+    const services = this.scheduleCreator.getActiveServices();
+    for (const svc of services) {
+      if (!svc.active) continue;
+      const stops = svc.getCurrentStops();
+      if (!stops || stops.length < 2) continue;
+      const firstDep = stops[0]?.departureTime ?? 0;
+      const lastArr = stops[stops.length - 1]?.arrivalTime ?? firstDep + 120;
+
+      // Always clear stale blocked state after fast-forward
+      svc.train.blockedBy = false;
+
+      // If current time is before first departure or after last arrival + buffer, reset to waiting
+      if (timeOfDay < firstDep || timeOfDay > lastArr + 30) {
+        svc.state = 'waiting';
+        svc.currentStopIndex = 0;
+        svc.speed = 0;
+        svc.train.speed = 0;
+        svc.train.stoppedAt = null;
+        svc._resetState();
+        if (timeOfDay > lastArr + 30) {
+          svc.completed = true;
+          svc.completedDate = dateStr;
+        }
+      }
+    }
   }
 
   saveState() {
+    // Sync rame km from active services — sum km from all services using same rame
+    const rameKmMap = new Map();
+    for (const svc of this.scheduleCreator.getActiveServices()) {
+      if (svc.rame && svc.train) {
+        const rid = svc.rame.id;
+        rameKmMap.set(rid, (rameKmMap.get(rid) || 0) + (svc.train.totalKmRun || 0));
+      }
+    }
+    for (const [rid, km] of rameKmMap) {
+      const rame = this.rameManager.getById(rid);
+      if (rame) rame.totalKmRun = km;
+    }
     const state = {
       companyName: this.account.companyName,
       saveTime: Date.now(),
@@ -233,18 +328,25 @@ class RailEmpire {
       works: this.worksManager.toSave(),
       freightContracts: this.freightManager.toSave(),
       ormRoutes: this.orm.toSave(),
+      lines: this.lineManager.toSave(),
+      voiePoints: this.voiePointManager.toSave(),
     };
     this.storage.saveGame(state);
   }
 
   moveTick(dt, timeOfDay) {
     const activeServices = this.scheduleCreator.getActiveServices();
+    // Check incident positions BEFORE movement so effect is immediate
+    this.incidentManager.checkTrainPositions(activeServices, this.depotManager, this.world);
     for (const svc of activeServices) {
       svc.moveUpdate(dt, timeOfDay, activeServices);
     }
+    // Update rescue locomotives movement
+    this.depotManager.updateRescues(dt);
   }
 
   tick(timeOfDay, dateStr, pt) {
+    this.timeOfDay = timeOfDay;
     const activeSchedules = this.scheduleCreator.getActiveServices();
 
     for (const svc of activeSchedules) {
@@ -253,6 +355,17 @@ class RailEmpire {
 
     this.incidentManager.update(timeOfDay, activeSchedules, this.depotManager, this.world);
     this.worksManager.update(dateStr, timeOfDay, this.world);
+
+    // Update repair & maintenance queues
+    const { repairedIds, maintainedIds } = this.depotManager.updateRepairs(1);
+    for (const sid of repairedIds) {
+      const svc = activeSchedules.find(s => s.id === sid);
+      if (svc) { svc.train.breakdown = null; svc.train.state = 'waiting'; svc.state = 'waiting'; }
+    }
+    for (const sid of maintainedIds) {
+      const svc = activeSchedules.find(s => s.id === sid);
+      if (svc) { svc.train.wearLevel = 0; svc.train.kmSinceLastMaint = 0; svc.train.inMaintenance = false; svc.state = 'waiting'; }
+    }
 
     if (timeOfDay % 60 === 0) {
       this.freightManager.maybeGenerate(this.world.stations, timeOfDay);
@@ -275,13 +388,21 @@ class RailEmpire {
     this.engine.update();
 
     const activeServices = this.scheduleCreator.getActiveServices();
+    // Include rescue services for rendering
+    const rescueServices = this.depotManager.getRescueServices();
+    const allVisibleServices = [...activeServices, ...rescueServices];
 
     if (this.renderer) {
-      this.renderer.render(this.world, activeServices, this.engine, this.depotManager);
+      this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
     }
 
-    if (this.ui) {
-      this.ui.update(activeServices);
+    // S17: Throttle UI updates to ~4Hz to avoid excessive DOM manipulation
+    const now = performance.now();
+    if (!this._lastUIUpdate || now - this._lastUIUpdate > 250) {
+      this._lastUIUpdate = now;
+      if (this.ui) {
+        this.ui.update(allVisibleServices);
+      }
     }
 
     requestAnimationFrame(() => this.gameLoop());

@@ -9,8 +9,20 @@ export class UI {
     this.currentRameElements = [];
     this.editingRameId = null;
     this.stationCreationMode = false;
-    this.schedMapCenter = null;
-    this.schedMapScale = null;
+    this.voiePointCreationMode = false;
+    this.tronconCreationMode = false;
+    this._tronconPointA = null; // first point selected for troncon creation
+    this._hoveredVoiePoint = null;
+    this._draggingVoiePoint = null;
+    this._schedTileMap = null;
+    // Global blink timer for "À l'approche" (survives DOM re-renders)
+    this._approachVisible = true;
+    setInterval(() => {
+      this._approachVisible = !this._approachVisible;
+      document.querySelectorAll('.ctx-approach').forEach(el => {
+        el.style.opacity = this._approachVisible ? '1' : '0';
+      });
+    }, 800);
   }
 
   setupAll() {
@@ -20,16 +32,21 @@ export class UI {
     this.setupRollingStockPage();
     this.setupRamePage();
     this.setupSchedulePage();
+    this.setupLinePage();
     this.setupDepotPage();
     this.setupIncidentPage();
     this.setupEconomyPage();
     this.setupModals();
+    this.setupVoiePointButtons();
+    this.setupMapSearch();
+    this.setupMobileNav();
   }
 
   refreshAll() {
     if (this.activePage === 'rolling-stock') this.renderStockList();
     else if (this.activePage === 'rames') this.renderRamesList();
     else if (this.activePage === 'schedules') this.renderSchedulesList();
+    else if (this.activePage === 'lines') this.renderLinesList();
     else if (this.activePage === 'depots') this.renderDepotsList();
     else if (this.activePage === 'incidents') this.renderIncidentsPage();
     else if (this.activePage === 'economy') this.renderEconomyPage();
@@ -51,6 +68,7 @@ export class UI {
     if (page === 'rolling-stock') this.renderStockList();
     if (page === 'rames') this.renderRamesList();
     if (page === 'schedules') this.renderSchedulesList();
+    if (page === 'lines') this.renderLinesList();
     if (page === 'depots') this.renderDepotsList();
     if (page === 'incidents') this.renderIncidentsPage();
     if (page === 'economy') this.renderEconomyPage();
@@ -61,12 +79,45 @@ export class UI {
     if (!canvas) return;
 
     canvas.addEventListener('mousedown', (e) => {
+      // S9: Check if clicking on a station for drag-to-move (shift+click)
+      if (e.shiftKey && this._hoveredStation) {
+        this._draggingStation = this._hoveredStation;
+        this._stationDragStart = { x: e.clientX, y: e.clientY };
+        canvas.style.cursor = 'move';
+        return;
+      }
+      // Voie point drag-to-move (shift+click)
+      if (e.shiftKey && this._hoveredVoiePoint) {
+        this._draggingVoiePoint = this._hoveredVoiePoint;
+        canvas.style.cursor = 'move';
+        return;
+      }
       this.isDragging = true;
       this.dragStart = { x: e.clientX, y: e.clientY };
       this.dragMoved = false;
     });
 
     canvas.addEventListener('mousemove', (e) => {
+      // S9: Handle station dragging
+      if (this._draggingStation && this.game.renderer) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+        this._draggingStation.lat = worldPos.lat;
+        this._draggingStation.lon = worldPos.lon;
+        return;
+      }
+      // Voie point dragging
+      if (this._draggingVoiePoint && this.game.renderer) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+        this._draggingVoiePoint.lat = worldPos.lat;
+        this._draggingVoiePoint.lon = worldPos.lon;
+        return;
+      }
       if (this.isDragging && this.game.renderer) {
         const dx = e.clientX - this.dragStart.x;
         const dy = e.clientY - this.dragStart.y;
@@ -81,14 +132,119 @@ export class UI {
     });
 
     canvas.addEventListener('mouseup', (e) => {
-      if (!this.dragMoved && this.stationCreationMode && this.game.renderer) {
+      // S9: Finish station drag
+      if (this._draggingStation) {
+        this._draggingStation = null;
+        canvas.style.cursor = 'grab';
+        this.game.saveState();
+        return;
+      }
+      // Finish voie point drag
+      if (this._draggingVoiePoint) {
+        this._draggingVoiePoint = null;
+        canvas.style.cursor = 'grab';
+        this.game.saveState();
+        return;
+      }
+      if (!this.dragMoved && this.game.renderer) {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
-        this.openStationCreationModal(worldPos.lat, worldPos.lon);
+
+        // Pick-connection mode: clicking on an existing station to connect
+        if (this._pickConnectionMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          let closest = null, minDist = Infinity;
+          for (const st of this.game.world.stations) {
+            const d = Math.hypot(st.lat - worldPos.lat, st.lon - worldPos.lon);
+            if (d < minDist) { minDist = d; closest = st; }
+          }
+          if (closest && minDist < 0.5) {
+            this.handlePickConnection(closest);
+          }
+          this.isDragging = false;
+          return;
+        }
+
+        // Troncon creation mode: click 2 points (station or voie point)
+        if (this.tronconCreationMode) {
+          this._handleTronconClick(x, y);
+          this.isDragging = false;
+          return;
+        }
+
+        // Manual troncon creation mode: click places waypoints on map
+        if (this.manualTronconMode) {
+          this._handleManualTronconClick(x, y);
+          this.isDragging = false;
+          return;
+        }
+
+        // Tracer ligne mode: click picks start/end for infrastructure import
+        if (this.tracerLigneMode) {
+          this._handleTracerLigneClick(x, y);
+          this.isDragging = false;
+          return;
+        }
+
+        // Voie point creation mode
+        if (this.voiePointCreationMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          this.openVoiePointModal(worldPos.lat, worldPos.lon);
+          this.isDragging = false;
+          return;
+        }
+
+        if (this.stationCreationMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          this.openStationCreationModal(worldPos.lat, worldPos.lon);
+        }
       }
       this.isDragging = false;
+    });
+
+    // Arrow keys pan the map
+    document.addEventListener('keydown', (e) => {
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && this.activePage === 'map') {
+        e.preventDefault();
+        const step = 50;
+        if (e.key === 'ArrowUp') this.game.renderer.tileMap.pan(0, step);
+        else if (e.key === 'ArrowDown') this.game.renderer.tileMap.pan(0, -step);
+        else if (e.key === 'ArrowLeft') this.game.renderer.tileMap.pan(step, 0);
+        else if (e.key === 'ArrowRight') this.game.renderer.tileMap.pan(-step, 0);
+      }
+    });
+
+    // Escape key cancels pick-connection mode and voie point modes
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (this._pickConnectionMode) {
+          this._pickConnectionMode = false;
+          this._hidePickHint();
+          const c = document.getElementById('game-canvas');
+          if (c) c.style.cursor = 'grab';
+          document.getElementById('modal-station')?.classList.remove('hidden');
+        }
+        if (this.voiePointCreationMode) this.toggleVoiePointCreation();
+        if (this.tronconCreationMode) this.toggleTronconCreation();
+        if (this.manualTronconMode) this.toggleManualTronconCreation();
+        if (this.tracerLigneMode) this.toggleTracerLigne();
+      }
+      if (e.key === 'Delete' && this._lastLineGroupId) {
+        const removed = this.game.voiePointManager.deleteLineGroup(this._lastLineGroupId);
+        this._lastLineGroupId = null;
+        this.game.saveState();
+        this._showPickHint(`Supprimé: ${removed} éléments. Cliquer pour un nouveau tracé ou Echap.`);
+      }
+    });
+
+    canvas.addEventListener('dblclick', (e) => {
+      if (this._hoveredStation && !this.stationCreationMode && !this._pickConnectionMode) {
+        this.openEditStationModal(this._hoveredStation);
+      }
+      if (this._hoveredVoiePoint && !this.voiePointCreationMode && !this.tronconCreationMode) {
+        this.openEditVoiePointModal(this._hoveredVoiePoint);
+      }
     });
 
     canvas.addEventListener('mouseleave', () => {
@@ -106,6 +262,35 @@ export class UI {
         this.game.renderer.tileMap.applyZoom(delta, x, y);
       }
     });
+
+    // Touch events for mobile
+    let touchStart = null, touchDist = null;
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        touchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+      }
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && touchStart && this.game.renderer) {
+        const dx = e.touches[0].clientX - touchStart.x;
+        const dy = e.touches[0].clientY - touchStart.y;
+        this.game.renderer.tileMap.pan(dx, dy);
+        touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2 && touchDist !== null && this.game.renderer) {
+        const newDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const rect = canvas.getBoundingClientRect();
+        const delta = newDist > touchDist ? 1 : -1;
+        this.game.renderer.tileMap.applyZoom(delta, cx - rect.left, cy - rect.top);
+        touchDist = newDist;
+      }
+    }, { passive: false });
+    canvas.addEventListener('touchend', () => { touchStart = null; touchDist = null; });
   }
 
   handleMapHover(x, y) {
@@ -115,13 +300,36 @@ export class UI {
     const station = renderer.getStationAt(x, y, this.game.world.stations);
     if (station) {
       const typeLabels = { voyageur: 'Voyageurs', marchandise: 'Marchandises', ite: 'ITE', depot: 'Depot', mixed: 'Mixte' };
-      tooltip.innerHTML = `<div class="tt-name">${station.name}</div><div class="tt-info">${station.platforms} voies | ${typeLabels[station.type] || station.type}</div>`;
+      const platformNames = station.platformNames?.length > 0 ? station.platformNames.join(', ') : '';
+      tooltip.innerHTML = `<div class="tt-name">${station.name}</div><div class="tt-info">${station.platforms} voies${platformNames ? ' (' + platformNames + ')' : ''} | ${typeLabels[station.type] || station.type}</div><div style="font-size:9px;color:#fbbf24;margin-top:2px">Double-clic pour modifier</div>`;
       tooltip.style.left = (x + 15) + 'px';
       tooltip.style.top = (y - 10) + 'px';
       tooltip.classList.remove('hidden');
-    } else {
-      tooltip.classList.add('hidden');
+      this._hoveredStation = station;
+      this._hoveredVoiePoint = null;
+      return;
     }
+    this._hoveredStation = null;
+
+    // Check voie points
+    const vpm = this.game.voiePointManager;
+    if (vpm) {
+      const vp = renderer.getVoiePointAt(x, y, vpm.getAll());
+      if (vp) {
+        const tronconsCount = vpm.getTronconsForPoint(vp.id).length;
+        const stName = vp.stationId ? (this.game.world.getStationById(vp.stationId)?.name || '') : '';
+        const stLabel = stName ? ` (${stName})` : ' (en ligne)';
+        const occLabel = vp.occupiedBy ? ' — OCCUPEE' : '';
+        tooltip.innerHTML = `<div class="tt-name">Voie ${vp.voie}${stLabel}${occLabel}</div><div class="tt-info">${tronconsCount} troncon(s)</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Double-clic pour modifier | Shift+drag pour deplacer</div>`;
+        tooltip.style.left = (x + 15) + 'px';
+        tooltip.style.top = (y - 10) + 'px';
+        tooltip.classList.remove('hidden');
+        this._hoveredVoiePoint = vp;
+        return;
+      }
+    }
+    this._hoveredVoiePoint = null;
+    tooltip.classList.add('hidden');
   }
 
   setupTabs() {
@@ -163,10 +371,99 @@ export class UI {
     if (btn) { btn.textContent = '+ Creer une gare'; btn.classList.remove('active-mode'); }
     document.getElementById('game-canvas').style.cursor = 'grab';
 
+    this._editingStationId = null;
     document.getElementById('station-lat').value = lat.toFixed(6);
     document.getElementById('station-lon').value = lon.toFixed(6);
     document.getElementById('station-name').value = '';
     document.getElementById('station-platforms').value = '4';
+    document.getElementById('station-platform-names').value = '';
+    const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
+    if (connectGroup) connectGroup.style.display = '';
+    const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
+    if (terminusGroup) terminusGroup.style.display = '';
+    const saveBtn = document.getElementById('btn-save-station');
+    if (saveBtn) saveBtn.textContent = 'Creer la gare';
+    // Hide delete button in creation mode
+    const delBtn = document.getElementById('btn-delete-station');
+    if (delBtn) delBtn.classList.add('hidden');
+    // Populate line selector
+    const lineSelect = document.getElementById('station-line');
+    if (lineSelect) {
+      lineSelect.innerHTML = '<option value="">Aucune</option>' +
+        this.game.lineManager.getAll().map(l =>
+          `<option value="${l.id}">${l.name}${l.code ? ' (' + l.code + ')' : ''}</option>`
+        ).join('');
+    }
+    // Populate connection selector with existing stations sorted by distance
+    const connectSelect = document.getElementById('station-connect');
+    const connectInfo = document.getElementById('station-connect-info');
+    if (connectSelect) {
+      const existing = this.game.world.stations.map(s => {
+        const d = Math.sqrt(
+          Math.pow((s.lat - lat) * 111, 2) +
+          Math.pow((s.lon - lon) * 111 * Math.cos(lat * Math.PI / 180), 2)
+        );
+        return { ...s, dist: d };
+      }).sort((a, b) => a.dist - b.dist);
+
+      connectSelect.innerHTML = '<option value="_nearest">La plus proche (auto)</option>' +
+        '<option value="">Aucune connexion</option>' +
+        existing.map(s =>
+          `<option value="${s.id}">${s.name} (${Math.round(s.dist)} km)</option>`
+        ).join('');
+
+      if (connectInfo) {
+        if (existing.length > 0) {
+          connectInfo.textContent = `Plus proche : ${existing[0].name} (~${Math.round(existing[0].dist)} km)`;
+        } else {
+          connectInfo.textContent = 'Aucune gare existante';
+        }
+      }
+    }
+
+    // Pick-on-map button for connection station
+    const pickBtn = document.getElementById('btn-pick-connect-map');
+    if (pickBtn) {
+      pickBtn.onclick = () => {
+        // Hide modal temporarily, enter pick mode on main canvas
+        document.getElementById('modal-station')?.classList.add('hidden');
+        this._pickConnectionMode = true;
+        this._pendingStationLat = lat;
+        this._pendingStationLon = lon;
+        const canvas = document.getElementById('game-canvas');
+        if (canvas) canvas.style.cursor = 'pointer';
+        // Show hint overlay
+        this._showPickHint('Cliquer sur une gare existante pour la connecter (Echap pour annuler)');
+      };
+    }
+
+    // Terminus checkbox logic
+    const terminusCheck = document.getElementById('station-terminus');
+    const terminusOpts = document.getElementById('station-terminus-options');
+    const terminusLineSelect = document.getElementById('station-terminus-line');
+    const terminusLineName = document.getElementById('station-terminus-line-name');
+    const terminusLineColor = document.getElementById('station-terminus-line-color');
+    if (terminusCheck) {
+      terminusCheck.checked = false;
+      terminusCheck.onchange = () => {
+        if (terminusOpts) terminusOpts.classList.toggle('hidden', !terminusCheck.checked);
+        if (terminusCheck.checked && terminusLineName) terminusLineName.style.display = '';
+        if (terminusCheck.checked && terminusLineColor) terminusLineColor.style.display = '';
+      };
+    }
+    if (terminusOpts) terminusOpts.classList.add('hidden');
+    // Populate terminus line selector with open lines (lines with stops but no explicit end terminus)
+    if (terminusLineSelect) {
+      const openLines = this.game.lineManager.getAll().filter(l => l.stops.length > 0);
+      terminusLineSelect.innerHTML = '<option value="_new">Creer une nouvelle ligne</option>' +
+        openLines.map(l => `<option value="${l.id}">Terminer : ${l.name}${l.code ? ' (' + l.code + ')' : ''} (${l.stops.length} gares)</option>`).join('');
+      terminusLineSelect.onchange = () => {
+        const isNew = terminusLineSelect.value === '_new';
+        if (terminusLineName) terminusLineName.style.display = isNew ? '' : 'none';
+        if (terminusLineColor) terminusLineColor.style.display = isNew ? '' : 'none';
+      };
+    }
+
     const loadingEl = document.getElementById('station-loading');
     if (loadingEl) loadingEl.classList.add('hidden');
     document.getElementById('modal-station')?.classList.remove('hidden');
@@ -179,6 +476,35 @@ export class UI {
     let lon = parseFloat(document.getElementById('station-lon').value);
     const type = document.getElementById('station-type').value;
     const platforms = parseInt(document.getElementById('station-platforms').value) || 4;
+    const platformNamesRaw = document.getElementById('station-platform-names')?.value.trim() || '';
+    const platformNames = platformNamesRaw ? platformNamesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
+
+    // Handle edit mode
+    if (this._editingStationId) {
+      const station = this.game.world.getStationById(this._editingStationId);
+      if (station) {
+        station.name = name;
+        station.type = type;
+        station.platforms = platforms;
+        station.platformNames = platformNames;
+        const lineId = document.getElementById('station-line')?.value;
+        if (lineId) {
+          if (!station.lineIds.includes(lineId)) station.lineIds.push(lineId);
+        }
+        this.game.platformManager.initStation(station.id, platforms);
+      }
+      this._editingStationId = null;
+      // Restore modal for creation mode
+      const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
+      if (connectGroup) connectGroup.style.display = '';
+      const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
+      if (terminusGroup) terminusGroup.style.display = '';
+      const btn = document.getElementById('btn-save-station');
+      if (btn) btn.textContent = 'Creer la gare';
+      document.getElementById('modal-station')?.classList.add('hidden');
+      this.game.saveState();
+      return;
+    }
 
     const orm = this.game.orm;
 
@@ -198,45 +524,115 @@ export class UI {
       console.warn('Railway snapping failed:', e);
     }
 
-    const station = this.game.world.addStation({ name, lat, lon, type, platforms });
+    const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames });
     station.country = orm.getCountryAtPoint(lat, lon);
     station.facilities = [type];
 
+    // Assign to line if selected
+    const lineId = document.getElementById('station-line')?.value;
+    if (lineId) {
+      station.lineIds = [lineId];
+      const line = this.game.lineManager.getLine(lineId);
+      if (line) {
+        line.stops.push(station.id);
+      }
+    }
+
+    // Init platform manager
+    this.game.platformManager.initStation(station.id, platforms);
+
+    // Determine which station to connect to
+    const connectChoice = document.getElementById('station-connect')?.value;
     const existingStations = this.game.world.stations.filter(s => s.id !== station.id);
-    if (existingStations.length > 0) {
-      let nearest = null, nearestDist = Infinity;
+
+    let connectTo = null;
+    if (connectChoice === '') {
+      // User chose "Aucune connexion"
+      connectTo = null;
+    } else if (connectChoice === '_nearest') {
+      // Auto: find nearest
+      let nearestDist = Infinity;
       for (const s of existingStations) {
         const d = Math.hypot(s.lat - lat, s.lon - lon);
-        if (d < nearestDist) { nearestDist = d; nearest = s; }
+        if (d < nearestDist) { nearestDist = d; connectTo = s; }
       }
+      if (nearestDist >= 3) connectTo = null; // too far
+    } else if (connectChoice) {
+      // User picked a specific station
+      connectTo = this.game.world.getStationById(connectChoice);
+    }
 
-      if (nearest && nearestDist < 3) {
-        const loadingEl = document.getElementById('station-loading');
-        if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Calcul du trace ORM en cours...'; }
+    if (connectTo) {
+      const loadingEl = document.getElementById('station-loading');
+      if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Calcul du trace ORM en cours...'; }
 
-        try {
-          const route = await orm.findRoute(nearest.lat, nearest.lon, lat, lon);
-          const distance = orm.getRouteDistance(route);
-          const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
-          const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+      try {
+        const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+        const distance = orm.getRouteDistance(route);
+        const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+        const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
 
-          this.game.world.addTrack({
-            stationA: nearest.id, stationB: station.id,
-            distance: Math.round(distance), maxSpeed: avgSpeed,
-            electrified: true, name: `${nearest.name} - ${name}`,
-            route,
-          });
-          console.log(`Track created: ${nearest.name} -> ${name}, ${Math.round(distance)} km, ${route.length} points, avg ${avgSpeed} km/h`);
-        } catch (e) {
-          console.warn('ORM route failed:', e);
-          const dist = Math.round(Math.sqrt(Math.pow((lat - nearest.lat) * 111, 2) + Math.pow((lon - nearest.lon) * 111 * Math.cos(lat * Math.PI / 180), 2)));
-          this.game.world.addTrack({
-            stationA: nearest.id, stationB: station.id,
-            distance: dist, maxSpeed: 160, name: `${nearest.name} - ${name}`,
-          });
-          console.log(`Fallback track: ${nearest.name} -> ${name}, ${dist} km (no ORM data)`);
+        this.game.world.addTrack({
+          stationA: connectTo.id, stationB: station.id,
+          distance: Math.round(distance), maxSpeed: avgSpeed,
+          electrified: true, name: `${connectTo.name} - ${name}`,
+          route,
+        });
+        console.log(`Track created: ${connectTo.name} -> ${name}, ${Math.round(distance)} km, ${route.length} points, avg ${avgSpeed} km/h`);
+      } catch (e) {
+        console.warn('ORM route failed:', e);
+        const dist = Math.round(Math.sqrt(Math.pow((lat - connectTo.lat) * 111, 2) + Math.pow((lon - connectTo.lon) * 111 * Math.cos(lat * Math.PI / 180), 2)));
+        this.game.world.addTrack({
+          stationA: connectTo.id, stationB: station.id,
+          distance: dist, maxSpeed: 160, name: `${connectTo.name} - ${name}`,
+        });
+        console.log(`Fallback track: ${connectTo.name} -> ${name}, ${dist} km (no ORM data)`);
+      }
+      if (loadingEl) loadingEl.classList.add('hidden');
+    }
+
+    // Handle terminus -> auto-create or finish a line
+    const isTerminus = document.getElementById('station-terminus')?.checked;
+    if (isTerminus) {
+      const terminusLineChoice = document.getElementById('station-terminus-line')?.value;
+      if (terminusLineChoice === '_new') {
+        // Create a new line starting at this station
+        const lineName = document.getElementById('station-terminus-line-name')?.value.trim() || `Ligne ${name}`;
+        const lineColor = document.getElementById('station-terminus-line-color')?.value || '#3b82f6';
+        const newLine = this.game.lineManager.addLine({
+          name: lineName,
+          color: lineColor,
+          code: '',
+          stops: [station.id],
+          trackIds: [],
+        });
+        station.lineIds = station.lineIds || [];
+        if (!station.lineIds.includes(newLine.id)) station.lineIds.push(newLine.id);
+        console.log(`New line created: ${lineName} starting at ${name}`);
+      } else if (terminusLineChoice) {
+        // Finish an existing line with this station as terminus
+        const line = this.game.lineManager.getLine(terminusLineChoice);
+        if (line) {
+          line.stops.push(station.id);
+          station.lineIds = station.lineIds || [];
+          if (!station.lineIds.includes(line.id)) station.lineIds.push(line.id);
+          // Build track between the last station in the line and this one
+          if (line.stops.length >= 2) {
+            const prevStId = line.stops[line.stops.length - 2];
+            const prevSt = this.game.world.getStationById(prevStId);
+            if (prevSt) {
+              const existingTrack = this.game.world.getTrackBetween(prevSt.id, station.id);
+              if (existingTrack) {
+                line.trackIds.push(existingTrack.id);
+              } else if (connectTo) {
+                // Track was just created above via connectTo, find it
+                const newTrack = this.game.world.getTrackBetween(connectTo.id, station.id);
+                if (newTrack) line.trackIds.push(newTrack.id);
+              }
+            }
+          }
+          console.log(`Line "${line.name}" completed at ${name} (${line.stops.length} stops)`);
         }
-        if (loadingEl) loadingEl.classList.add('hidden');
       }
     }
 
@@ -247,6 +643,111 @@ export class UI {
       this.game.depotManager.add({ type: 'ite-fret', name: `ITE ${name}`, stationId: station.id, tracks: 2, cost: 0 });
     }
 
+    document.getElementById('modal-station')?.classList.add('hidden');
+    this.game.saveState();
+  }
+
+  _showPickHint(text) {
+    let hint = document.getElementById('pick-hint-overlay');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'pick-hint-overlay';
+      hint.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fbbf24;padding:8px 16px;border-radius:6px;font-size:12px;z-index:9999;border:1px solid #fbbf24;pointer-events:none';
+      document.body.appendChild(hint);
+    }
+    hint.textContent = text;
+    hint.style.display = 'block';
+  }
+
+  _hidePickHint() {
+    const hint = document.getElementById('pick-hint-overlay');
+    if (hint) hint.style.display = 'none';
+  }
+
+  handlePickConnection(station) {
+    if (!this._pickConnectionMode) return false;
+    this._pickConnectionMode = false;
+    this._hidePickHint();
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = 'grab';
+
+    // Set the connect dropdown to the picked station
+    const connectSelect = document.getElementById('station-connect');
+    if (connectSelect) {
+      // Make sure the option exists
+      let exists = false;
+      for (const opt of connectSelect.options) {
+        if (opt.value === station.id) { exists = true; break; }
+      }
+      if (!exists) {
+        const opt = document.createElement('option');
+        opt.value = station.id;
+        opt.textContent = station.name;
+        connectSelect.appendChild(opt);
+      }
+      connectSelect.value = station.id;
+    }
+    const connectInfo = document.getElementById('station-connect-info');
+    if (connectInfo) connectInfo.textContent = `Selectionnee : ${station.name}`;
+
+    // Re-open the modal
+    document.getElementById('modal-station')?.classList.remove('hidden');
+    return true;
+  }
+
+  openEditStationModal(station) {
+    this._editingStationId = station.id;
+    document.getElementById('station-name').value = station.name;
+    document.getElementById('station-lat').value = station.lat.toFixed(6);
+    document.getElementById('station-lon').value = station.lon.toFixed(6);
+    document.getElementById('station-type').value = station.type;
+    document.getElementById('station-platforms').value = station.platforms || 4;
+    document.getElementById('station-platform-names').value = (station.platformNames || []).join(', ');
+
+    // Populate line selector
+    const lineSelect = document.getElementById('station-line');
+    if (lineSelect) {
+      lineSelect.innerHTML = '<option value="">Aucune</option>' +
+        this.game.lineManager.getAll().map(l =>
+          `<option value="${l.id}" ${(station.lineIds || []).includes(l.id) ? 'selected' : ''}>${l.name}${l.code ? ' (' + l.code + ')' : ''}</option>`
+        ).join('');
+    }
+    // Hide connection selector for editing
+    const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
+    if (connectGroup) connectGroup.style.display = 'none';
+    // Hide terminus options for editing
+    const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
+    if (terminusGroup) terminusGroup.style.display = 'none';
+
+    const btn = document.getElementById('btn-save-station');
+    if (btn) btn.textContent = 'Modifier la gare';
+
+    // S9: Show delete button in edit mode
+    const delBtn = document.getElementById('btn-delete-station');
+    if (delBtn) {
+      delBtn.classList.remove('hidden');
+      delBtn.onclick = () => this.deleteStation(station.id);
+    }
+
+    const loadingEl = document.getElementById('station-loading');
+    if (loadingEl) loadingEl.classList.add('hidden');
+    document.getElementById('modal-station')?.classList.remove('hidden');
+  }
+
+  // S9: Delete a station safely
+  deleteStation(stationId) {
+    if (!confirm('Supprimer cette gare ? Les voies connectees seront aussi supprimees.')) return;
+    this.game.world.removeStation(stationId);
+    this._editingStationId = null;
+    // Restore modal state
+    const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
+    if (connectGroup) connectGroup.style.display = '';
+    const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
+    if (terminusGroup) terminusGroup.style.display = '';
+    const btn = document.getElementById('btn-save-station');
+    if (btn) btn.textContent = 'Creer la gare';
+    const delBtn = document.getElementById('btn-delete-station');
+    if (delBtn) delBtn.classList.add('hidden');
     document.getElementById('modal-station')?.classList.add('hidden');
     this.game.saveState();
   }
@@ -309,6 +810,8 @@ export class UI {
       freightCapacity: parseInt(document.getElementById('stock-freight-cap').value) || 0,
       length: parseFloat(document.getElementById('stock-length').value) || 20,
       imageData: this._stockImageData,
+      seriesName: document.getElementById('stock-series-name')?.value.trim() || '',
+      numberStart: document.getElementById('stock-number-start')?.value.trim() || '',
     });
     document.getElementById('modal-add-stock')?.classList.add('hidden');
     this.renderStockList();
@@ -330,6 +833,7 @@ export class UI {
           <b>Cat:</b> ${item.category} | <b>Tract:</b> ${item.traction}<br>
           <b>Vmax:</b> ${item.maxSpeed} km/h | <b>Long:</b> ${item.length}m<br>
           <b>Tonnage:</b> ${item.tonnage}t | <b>Masse:</b> ${item.mass}t${item.power ? ` | <b>P:</b> ${item.power}kW` : ''} | <b>Places:</b> ${item.passengerCapacity} | <b>Fret:</b> ${item.freightCapacity}t
+          ${item.seriesName ? `<br><b>Serie:</b> ${item.seriesName}${item.numberStart ? ' n°' + item.numberStart : ''}` : ''}
         </div>
         <div class="card-actions">
           <button class="btn-sm danger" onclick="game.ui.deleteStock('${item.id}')">Supprimer</button>
@@ -464,8 +968,11 @@ export class UI {
         </div>
         <div class="card-info">
           <b>Long:</b> ${r.totalLength.toFixed(1)}m | <b>Tonnage:</b> ${r.totalTonnage}t |
-          <b>Places:</b> ${r.totalCapacity} | <b>Vmax:</b> ${r.maxSpeed} km/h |
+          <b>Places:</b> ${r.totalCapacity} | <b>Fret:</b> ${r.totalFreightCapacity}t | <b>Vmax:</b> ${r.maxSpeed} km/h |
           <b>Traction:</b> ${r.traction}
+        </div>
+        <div class="card-info" style="font-size:10px;color:var(--text3)">
+          <b>Mise en service:</b> ${r.createdDate} | <b>Km parcourus:</b> ${Math.round(r.totalKmRun || 0).toLocaleString('fr-FR')} km
         </div>
       </div>
     `).join('');
@@ -482,20 +989,71 @@ export class UI {
     document.getElementById('btn-save-schedule')?.addEventListener('click', () => this.saveSchedule());
   }
 
-  openScheduleModal() {
-    this.schedStops = [];
-    document.getElementById('sched-name').value = '';
-    document.getElementById('sched-round-trip')?.removeAttribute('checked');
-    document.getElementById('sched-terminus-wait').value = '10';
+  openScheduleModal(editService) {
+    this._editingScheduleId = editService?.id || null;
+    if (editService) {
+      this.schedStops = editService.stops.map(s => {
+        const st = s.stationId ? this.game.world.getStationById(s.stationId) : null;
+        let stationName = st?.name || s.stationId || '';
+        if (s.voiePointId) {
+          const vp = this.game.voiePointManager?.getVoiePointById(s.voiePointId);
+          stationName = vp ? `Voie ${vp.voie}` : s.voiePointId;
+        }
+        return {
+          stationId: s.stationId,
+          voiePointId: s.voiePointId || null,
+          stationName,
+          type: s.type,
+          arrTimeMin: s.arrivalTime,
+          depTimeMin: s.departureTime,
+          arrTimeStr: this.minToTimeStr(s.arrivalTime),
+          depTimeStr: this.minToTimeStr(s.departureTime),
+          platform: s.platform || '',
+        };
+      });
+      document.getElementById('sched-name').value = editService.name;
+      document.getElementById('sched-return-name').value = editService.returnName || '';
+      this._schedReturnPlatforms = editService.returnPlatforms ? { ...editService.returnPlatforms } : {};
+      const rtCheck = document.getElementById('sched-round-trip');
+      if (rtCheck) rtCheck.checked = editService.roundTrip;
+      document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
+      document.getElementById('sched-terminus-wait').value = editService.terminusWait || 10;
+    } else {
+      this.schedStops = [];
+      document.getElementById('sched-name').value = '';
+      document.getElementById('sched-return-name').value = '';
+      this._schedReturnPlatforms = {};
+      const rtCheck = document.getElementById('sched-round-trip');
+      if (rtCheck) rtCheck.checked = false;
+      document.getElementById('sched-multi-departures').value = '1';
+      document.getElementById('sched-terminus-wait').value = '10';
+    }
     document.getElementById('modal-schedule')?.classList.remove('hidden');
 
     const rameSelect = document.getElementById('sched-rame');
     const rames = this.game.rameManager.getAll();
     rameSelect.innerHTML = rames.map(r => `<option value="${r.id}">${r.name} (${r.maxSpeed} km/h)</option>`).join('');
+    if (editService) rameSelect.value = editService.rameId;
     rameSelect.onchange = () => this.recalcStopsFrom(1);
+
+    // Auto 24h button
+    document.getElementById('btn-auto-ar')?.addEventListener('click', () => this._calcAutoAR());
 
     this.renderSchedStops();
     this.setupSchedMap();
+  }
+
+  _calcAutoAR() {
+    if (this.schedStops.length < 2) return;
+    const firstDep = this.schedStops[0].depTimeMin;
+    const lastArr = this.schedStops[this.schedStops.length - 1].arrTimeMin;
+    const oneWayMin = lastArr - firstDep;
+    if (oneWayMin <= 0) return;
+    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 10;
+    // One round trip = oneWay + terminusWait + oneWay + terminusWait
+    const oneRoundTrip = (oneWayMin * 2) + (terminusWait * 2);
+    const maxAR = Math.max(1, Math.floor((24 * 60) / oneRoundTrip));
+    document.getElementById('sched-multi-departures').value = maxAR;
   }
 
   setupSchedMap() {
@@ -503,89 +1061,195 @@ export class UI {
     if (!canvas) return;
     const container = canvas.parentElement;
     canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight || 300;
+    canvas.height = container.clientHeight || 500;
 
     const ctx = canvas.getContext('2d');
     const world = this.game.world;
 
-    // Center on France by default, or on stations if available
-    if (!this.schedMapCenter) {
-      if (world.stations.length > 0) {
-        let sumLat = 0, sumLon = 0;
-        for (const st of world.stations) { sumLat += st.lat; sumLon += st.lon; }
-        this.schedMapCenter = { lat: sumLat / world.stations.length, lon: sumLon / world.stations.length };
-      } else {
-        this.schedMapCenter = { lat: 46.8, lon: 2.3 }; // center of France
-      }
+    // Create a dedicated TileMap for the schedule map (same class as main game map)
+    const mainTileMap = this.game.renderer.tileMap;
+    if (!this._schedTileMap) {
+      // Import TileMap constructor from main renderer's instance
+      this._schedTileMap = new mainTileMap.constructor();
     }
-    if (!this.schedMapScale) {
-      // degrees per pixel - smaller = more zoomed in
-      this.schedMapScale = world.stations.length > 1 ? 0.02 : 0.04;
+    const tileMap = this._schedTileMap;
+    tileMap.viewportWidth = canvas.width;
+    tileMap.viewportHeight = canvas.height;
+
+    // Center on stations if available, otherwise France
+    if (world.stations.length > 0) {
+      let sumLat = 0, sumLon = 0;
+      for (const st of world.stations) { sumLat += st.lat; sumLon += st.lon; }
+      tileMap.centerLat = sumLat / world.stations.length;
+      tileMap.centerLon = sumLon / world.stations.length;
+      tileMap.zoomLevel = world.stations.length > 5 ? 7 : 8;
+    } else {
+      tileMap.centerLat = 46.8;
+      tileMap.centerLon = 2.3;
+      tileMap.zoomLevel = 7;
     }
 
-    const project = (lat, lon) => {
-      const cx = this.schedMapCenter.lon;
-      const cy = this.schedMapCenter.lat;
-      const scale = this.schedMapScale;
-      const x = (lon - cx) / scale + canvas.width / 2;
-      const y = (cy - lat) / scale + canvas.height / 2;
-      return { x, y };
+    // Pre-compute junction counts once
+    const connectionCount = {};
+    for (const track of world.tracks) {
+      connectionCount[track.stationA] = (connectionCount[track.stationA] || 0) + 1;
+      connectionCount[track.stationB] = (connectionCount[track.stationB] || 0) + 1;
+    }
+
+    let _schedDrawPending = false;
+    const requestDraw = () => {
+      if (_schedDrawPending) return;
+      _schedDrawPending = true;
+      requestAnimationFrame(() => { _schedDrawPending = false; drawMap(); });
     };
 
     const drawMap = () => {
-      ctx.fillStyle = '#0a0a1a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Render tile layers (base map + ORM railway tiles)
+      tileMap.renderTiles(ctx, canvas.width, canvas.height);
 
-      // Draw tracks
+      // Draw user's tracks (simplified)
+      ctx.strokeStyle = 'rgba(100, 160, 255, 0.4)';
+      ctx.lineWidth = 2;
       for (const track of world.tracks) {
-        const a = world.getStationById(track.stationA);
-        const b = world.getStationById(track.stationB);
-        if (!a || !b) continue;
-        const pa = project(a.lat, a.lon);
-        const pb = project(b.lat, b.lon);
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        if (track.route && track.route.length > 2) {
+          const step = Math.max(1, Math.floor(track.route.length / 60));
+          ctx.beginPath();
+          const p0 = tileMap.worldToScreen(track.route[0].lat, track.route[0].lon, canvas.width, canvas.height);
+          ctx.moveTo(p0.x, p0.y);
+          for (let r = step; r < track.route.length; r += step) {
+            const pr = tileMap.worldToScreen(track.route[r].lat, track.route[r].lon, canvas.width, canvas.height);
+            ctx.lineTo(pr.x, pr.y);
+          }
+          ctx.stroke();
+        } else {
+          const a = world.getStationById(track.stationA);
+          const b = world.getStationById(track.stationB);
+          if (!a || !b) continue;
+          const pa = tileMap.worldToScreen(a.lat, a.lon, canvas.width, canvas.height);
+          const pb = tileMap.worldToScreen(b.lat, b.lon, canvas.width, canvas.height);
+          ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        }
       }
 
       // Draw stations
       for (const st of world.stations) {
-        const p = project(st.lat, st.lon);
-        if (p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) continue;
+        const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+        if (p.x < -30 || p.x > canvas.width + 30 || p.y < -30 || p.y > canvas.height + 30) continue;
         const isSelected = this.schedStops.some(s => s.stationId === st.id);
-        ctx.fillStyle = isSelected ? '#fbbf24' : '#3b82f6';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, isSelected ? 6 : 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '10px sans-serif';
-        ctx.fillText(st.name, p.x + 8, p.y + 4);
+        const isJunction = (connectionCount[st.id] || 0) >= 3;
+        ctx.fillStyle = isSelected ? '#fbbf24' : isJunction ? '#f97316' : '#3b82f6';
+        const radius = isSelected ? 7 : isJunction ? 6 : 5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); ctx.fill();
+        if (isJunction && !isSelected) {
+          ctx.strokeStyle = '#f97316'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2); ctx.stroke();
+        }
+        // Station name label
+        ctx.fillStyle = isSelected ? '#fbbf24' : isJunction ? '#fb923c' : '#94a3b8';
+        ctx.font = `${tileMap.zoomLevel >= 10 ? 12 : 10}px sans-serif`;
+        ctx.fillText(st.name, p.x + 10, p.y + 4);
       }
 
-      // Draw route lines between selected stops
-      for (let i = 0; i < this.schedStops.length - 1; i++) {
-        const sa = world.getStationById(this.schedStops[i].stationId);
-        const sb = world.getStationById(this.schedStops[i + 1].stationId);
-        if (!sa || !sb) continue;
-        const pa = project(sa.lat, sa.lon);
-        const pb = project(sb.lat, sb.lon);
-        ctx.strokeStyle = '#fbbf24';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      // Draw route between selected stops (yellow)
+      if (this.schedStops.length > 1) {
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
+        for (let i = 0; i < this.schedStops.length - 1; i++) {
+          const sa = world.getStationById(this.schedStops[i].stationId);
+          const sb = world.getStationById(this.schedStops[i + 1].stationId);
+          if (!sa || !sb) continue;
+          const track = world.getTrackBetween(sa.id, sb.id);
+          if (track && track.route && track.route.length > 2) {
+            const step = Math.max(1, Math.floor(track.route.length / 80));
+            ctx.beginPath();
+            const p0 = tileMap.worldToScreen(track.route[0].lat, track.route[0].lon, canvas.width, canvas.height);
+            ctx.moveTo(p0.x, p0.y);
+            for (let r = step; r < track.route.length; r += step) {
+              const pr = tileMap.worldToScreen(track.route[r].lat, track.route[r].lon, canvas.width, canvas.height);
+              ctx.lineTo(pr.x, pr.y);
+            }
+            const pL = tileMap.worldToScreen(track.route[track.route.length - 1].lat, track.route[track.route.length - 1].lon, canvas.width, canvas.height);
+            ctx.lineTo(pL.x, pL.y);
+            ctx.stroke();
+          } else {
+            const pa = tileMap.worldToScreen(sa.lat, sa.lon, canvas.width, canvas.height);
+            const pb = tileMap.worldToScreen(sb.lat, sb.lon, canvas.width, canvas.height);
+            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+          }
+        }
       }
 
-      // Draw stop order numbers
+      // Draw voie points on schedule map
+      const vpm = this.game.voiePointManager;
+      if (vpm) {
+        // Draw troncons
+        for (const trc of vpm.getAllTroncons()) {
+          if (trc.route && trc.route.length >= 2) {
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            const p0 = tileMap.worldToScreen(trc.route[0].lat, trc.route[0].lon, canvas.width, canvas.height);
+            ctx.moveTo(p0.x, p0.y);
+            for (let r = 1; r < trc.route.length; r++) {
+              const pr = tileMap.worldToScreen(trc.route[r].lat, trc.route[r].lon, canvas.width, canvas.height);
+              ctx.lineTo(pr.x, pr.y);
+            }
+            ctx.stroke();
+          }
+        }
+        // Draw voie point markers
+        for (const vp of vpm.getAll()) {
+          const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+          if (p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) continue;
+          const isUsed = this.schedStops.some(s => s.voiePointId === vp.id);
+          const size = 3;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = isUsed ? '#fbbf24' : '#0f172a';
+          ctx.fillRect(-size, -size, size * 2, size * 2);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(-size, -size, size * 2, size * 2);
+          ctx.restore();
+          if (tileMap.zoomLevel >= 10) {
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '8px sans-serif';
+            ctx.fillText(`Voie ${vp.voie}`, p.x + 6, p.y + 3);
+          }
+        }
+      }
+
+      // Stop order numbers
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 11px sans-serif';
       for (let i = 0; i < this.schedStops.length; i++) {
-        const st = world.getStationById(this.schedStops[i].stationId);
-        if (!st) continue;
-        const p = project(st.lat, st.lon);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.fillText(String(i + 1), p.x - 3, p.y - 8);
+        const stop = this.schedStops[i];
+        let pLat, pLon;
+        if (stop.stationId) {
+          const st = world.getStationById(stop.stationId);
+          if (st) { pLat = st.lat; pLon = st.lon; }
+        }
+        if (!pLat && stop.voiePointId && this.game.voiePointManager) {
+          const vp = this.game.voiePointManager.getVoiePointById(stop.voiePointId);
+          if (vp) { pLat = vp.lat; pLon = vp.lon; }
+        }
+        if (!pLat) continue;
+        const p = tileMap.worldToScreen(pLat, pLon, canvas.width, canvas.height);
+        const label = stop.type === 'waypoint' ? `${i + 1}(via)` : String(i + 1);
+        ctx.fillText(label, p.x - 3, p.y - 10);
+        // Draw waypoint marker for map-placed waypoints
+        if (stop.type === 'waypoint' && !stop.stationId) {
+          ctx.fillStyle = '#f59e0b';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = '#fff';
+        }
       }
     };
 
     drawMap();
+
+    // Tile loading: periodically redraw to show loaded tiles
+    this._schedMapInterval = setInterval(() => { if (document.getElementById('modal-schedule')?.classList.contains('hidden')) return; requestDraw(); }, 250);
 
     let schedDrag = false, schedDragStart = null, totalDragDist = 0;
 
@@ -600,24 +1264,44 @@ export class UI {
         const dx = e.offsetX - schedDragStart.x;
         const dy = e.offsetY - schedDragStart.y;
         totalDragDist += Math.abs(dx) + Math.abs(dy);
-        this.schedMapCenter.lon -= dx * this.schedMapScale;
-        this.schedMapCenter.lat += dy * this.schedMapScale;
+        tileMap.pan(dx, dy);
         schedDragStart = { x: e.offsetX, y: e.offsetY };
-        drawMap();
+        requestDraw();
       }
     };
 
     canvas.onmouseup = (e) => {
       if (totalDragDist < 5) {
-        // Click - find nearest station
         const x = e.offsetX, y = e.offsetY;
+
+        // Check voie points first (smaller targets, higher priority for waypoint)
+        let closestVP = null, minVPDist = Infinity;
+        if (this.game.voiePointManager) {
+          for (const vp of this.game.voiePointManager.getAll()) {
+            const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < minVPDist && d < 15) { minVPDist = d; closestVP = vp; }
+          }
+        }
+
+        // Check stations
         let closest = null, minDist = Infinity;
         for (const st of world.stations) {
-          const p = project(st.lat, st.lon);
+          const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
           const d = Math.hypot(p.x - x, p.y - y);
           if (d < minDist && d < 20) { minDist = d; closest = st; }
         }
-        if (closest) this.addSchedStop(closest);
+
+        // If voie point is closer, add as invisible waypoint
+        if (closestVP && minVPDist < minDist) {
+          this.addSchedVoiePointStop(closestVP);
+        } else if (closest) {
+          this.addSchedStop(closest);
+        } else {
+          // Click on empty space: snap to nearest tronçon or ORM rail as waypoint
+          const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
+          this._addMapWaypoint(worldPos.lat, worldPos.lon);
+        }
       }
       schedDrag = false;
       schedDragStart = null;
@@ -625,9 +1309,8 @@ export class UI {
 
     canvas.onwheel = (e) => {
       e.preventDefault();
-      const factor = e.deltaY > 0 ? 1.2 : 0.83;
-      this.schedMapScale = Math.max(0.002, Math.min(0.2, this.schedMapScale * factor));
-      drawMap();
+      tileMap.applyZoom(e.deltaY < 0 ? 1 : -1, e.offsetX, e.offsetY);
+      requestDraw();
     };
 
     this._drawSchedMap = drawMap;
@@ -677,10 +1360,123 @@ export class UI {
       depTimeMin,
       arrTimeStr: this.minToTimeStr(arrTimeMin),
       depTimeStr: this.minToTimeStr(depTimeMin),
+      platform: '',
     });
 
     this.renderSchedStops();
     if (this._drawSchedMap) this._drawSchedMap();
+  }
+
+  addSchedVoiePointStop(voiePoint) {
+    // Add voie point as invisible waypoint (no stop, no time, just passage obligé)
+    const rameId = document.getElementById('sched-rame').value;
+    const rame = this.game.rameManager.getById(rameId);
+    const rameSpeed = rame ? rame.maxSpeed : 160;
+
+    let arrTimeMin, depTimeMin;
+    if (this.schedStops.length === 0) {
+      const pt = this.game.engine.getParisTime();
+      const currentMin = pt.hours * 60 + pt.minutes;
+      arrTimeMin = Math.ceil(currentMin / 5) * 5;
+      depTimeMin = arrTimeMin;
+    } else {
+      const prevStop = this.schedStops[this.schedStops.length - 1];
+      const prevLat = prevStop.voiePointId
+        ? this.game.voiePointManager.getVoiePointById(prevStop.voiePointId)?.lat || 0
+        : (this.game.world.getStationById(prevStop.stationId)?.lat || 0);
+      const prevLon = prevStop.voiePointId
+        ? this.game.voiePointManager.getVoiePointById(prevStop.voiePointId)?.lon || 0
+        : (this.game.world.getStationById(prevStop.stationId)?.lon || 0);
+      const dist = Math.sqrt(Math.pow((voiePoint.lat - prevLat) * 111, 2) + Math.pow((voiePoint.lon - prevLon) * 111 * Math.cos(voiePoint.lat * Math.PI / 180), 2));
+      const travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.15);
+      arrTimeMin = prevStop.depTimeMin + travelTime;
+      depTimeMin = arrTimeMin; // no stop time for waypoint
+    }
+
+    // If voie point is linked to a station, show "GareName — Voie X"
+    let vpName = `Voie ${voiePoint.voie}`;
+    let vpStationId = null;
+    if (voiePoint.stationId) {
+      const st = this.game.world.getStationById(voiePoint.stationId);
+      if (st) { vpName = `${st.name} — Voie ${voiePoint.voie}`; vpStationId = st.id; }
+    }
+
+    this.schedStops.push({
+      stationId: vpStationId,
+      voiePointId: voiePoint.id,
+      stationName: vpName,
+      type: voiePoint.stationId ? 'arret' : 'waypoint',
+      arrTimeMin,
+      depTimeMin,
+      arrTimeStr: this.minToTimeStr(arrTimeMin),
+      depTimeStr: this.minToTimeStr(depTimeMin),
+      platform: voiePoint.voie,
+    });
+
+    this.renderSchedStops();
+    if (this._drawSchedMap) this._drawSchedMap();
+  }
+
+  async _addMapWaypoint(lat, lon) {
+    if (this.schedStops.length === 0) return; // need at least one stop first
+
+    const vpm = this.game.voiePointManager;
+    // Try to snap to nearest tronçon route point
+    let snappedLat = lat, snappedLon = lon;
+    let bestDist = Infinity;
+    for (const trc of vpm.getAllTroncons()) {
+      if (!trc.route) continue;
+      for (const pt of trc.route) {
+        const d = Math.sqrt(Math.pow((pt.lat - lat) * 111, 2) + Math.pow((pt.lon - lon) * 111 * Math.cos(lat * Math.PI / 180), 2));
+        if (d < bestDist) { bestDist = d; snappedLat = pt.lat; snappedLon = pt.lon; }
+      }
+    }
+
+    // If no tronçon nearby, try ORM snap
+    if (bestDist > 2) {
+      try {
+        const snapResult = await this.game.orm.snapToRailway(lat, lon, 2);
+        if (snapResult) { snappedLat = snapResult.lat; snappedLon = snapResult.lon; bestDist = snapResult.dist; }
+      } catch (e) { /* keep original coords */ }
+    }
+
+    // Only add if within reasonable distance of a railway (5km)
+    if (bestDist > 5) return;
+
+    // Create a temporary voie point for this waypoint
+    const vpId = `vp-wp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    vpm.addVoiePoint({ id: vpId, lat: snappedLat, lon: snappedLon, voie: 'WP', stationId: null });
+
+    const rameId = document.getElementById('sched-rame').value;
+    const rame = this.game.rameManager.getById(rameId);
+    const rameSpeed = rame ? rame.maxSpeed : 160;
+
+    const prevStop = this.schedStops[this.schedStops.length - 1];
+    const prevLat = prevStop.voiePointId
+      ? (vpm.getVoiePointById(prevStop.voiePointId)?.lat || 0)
+      : (this.game.world.getStationById(prevStop.stationId)?.lat || 0);
+    const prevLon = prevStop.voiePointId
+      ? (vpm.getVoiePointById(prevStop.voiePointId)?.lon || 0)
+      : (this.game.world.getStationById(prevStop.stationId)?.lon || 0);
+    const dist = Math.sqrt(Math.pow((snappedLat - prevLat) * 111, 2) + Math.pow((snappedLon - prevLon) * 111 * Math.cos(snappedLat * Math.PI / 180), 2));
+    const travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.15);
+    const arrTimeMin = prevStop.depTimeMin + travelTime;
+
+    this.schedStops.push({
+      stationId: null,
+      voiePointId: vpId,
+      stationName: `Waypoint (${snappedLat.toFixed(4)}, ${snappedLon.toFixed(4)})`,
+      type: 'waypoint',
+      arrTimeMin,
+      depTimeMin: arrTimeMin,
+      arrTimeStr: this.minToTimeStr(arrTimeMin),
+      depTimeStr: this.minToTimeStr(arrTimeMin),
+      platform: '',
+    });
+
+    this.renderSchedStops();
+    if (this._drawSchedMap) this._drawSchedMap();
+    this.game.saveState();
   }
 
   minToTimeStr(m) {
@@ -707,6 +1503,8 @@ export class UI {
       return;
     }
 
+    if (!this._schedReturnPlatforms) this._schedReturnPlatforms = {};
+
     container.innerHTML = this.schedStops.map((stop, i) => {
       const isFirst = i === 0;
       const isLast = i === this.schedStops.length - 1;
@@ -715,6 +1513,35 @@ export class UI {
         const travelMin = stop.arrTimeMin - prev.depTimeMin;
         return `<div style="font-size:9px;color:var(--text3);text-align:center;padding:1px 0">↓ ${travelMin} min</div>`;
       })() : '';
+
+      // Platform selector (for arret and waypoint stops)
+      let platformSelect = '';
+      if (stop.voiePointId) {
+        // Voie point: voie is fixed, show as label
+        platformSelect = `<span style="font-size:9px;color:#94a3b8;font-weight:600">Voie ${stop.platform || '?'}</span>`;
+      } else if (stop.type === 'arret' || stop.type === 'waypoint') {
+        const station = this.game.world.getStationById(stop.stationId);
+        if (station) {
+          // Check if station has voie points linked
+          const stVPs = this.game.voiePointManager?.getStationVoiePoints(station.id) || [];
+          let options = '<option value="">Auto</option>';
+          if (stVPs.length > 0) {
+            for (const svp of stVPs) {
+              const sel = stop.platform === svp.voie ? 'selected' : '';
+              options += `<option value="${svp.voie}" ${sel}>Voie ${svp.voie}</option>`;
+            }
+          } else if (station.platforms > 0) {
+            const names = station.platformNames || [];
+            for (let p = 1; p <= station.platforms; p++) {
+              const pName = names[p - 1] || String(p);
+              const sel = stop.platform === pName ? 'selected' : '';
+              options += `<option value="${pName}" ${sel}>Voie ${pName}</option>`;
+            }
+          }
+          platformSelect = `<select style="width:70px" onchange="game.ui.updateSchedStop(${i}, 'platform', this.value)">${options}</select>`;
+        }
+      }
+
       return `
         ${travelInfo}
         <div class="sched-stop-row">
@@ -727,19 +1554,66 @@ export class UI {
           </select>
           ${stop.type === 'waypoint' ? `
             <span style="font-size:9px;color:var(--text3);font-style:italic">via</span>
+            ${platformSelect}
           ` : stop.type === 'passage' ? `
             <label style="font-size:9px;color:var(--text3)">Pass:</label>
             <input type="text" value="${stop.arrTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">
+          ` : isFirst ? `
+            <label style="font-size:9px;color:var(--text3)">Dep:</label>
+            <input type="text" value="${stop.depTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'depTime', this.value)">
+            ${platformSelect}
           ` : `
             <label style="font-size:9px;color:var(--text3)">Arr:</label>
-            <input type="text" value="${stop.arrTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)" ${isFirst ? 'disabled' : ''}>
-            <label style="font-size:9px;color:var(--text3)">Dep:</label>
-            <input type="text" value="${stop.depTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'depTime', this.value)" ${isLast ? 'disabled' : ''}>
+            <input type="text" value="${stop.arrTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">
+            ${!isLast ? `<label style="font-size:9px;color:var(--text3)">Arret:</label>
+            <input type="number" value="${Math.max(0, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0))}" min="0" max="120" style="width:45px" onchange="game.ui.updateSchedStop(${i}, 'stopDuration', this.value)"> <span style="font-size:9px;color:var(--text3)">min</span>` : ''}
+            ${platformSelect}
           `}
           <button class="btn-remove-stop" onclick="game.ui.removeSchedStop(${i})">x</button>
         </div>
       `;
     }).join('');
+
+    // Add return leg stops if round-trip is checked
+    const rtChecked = document.getElementById('sched-round-trip')?.checked;
+    if (rtChecked && this.schedStops.length >= 2) {
+      const reversed = [...this.schedStops].reverse();
+      const returnHtml = reversed.map((stop, i) => {
+        const station = this.game.world.getStationById(stop.stationId);
+        const stName = station?.name || stop.stationName || '?';
+        const isFirst = i === 0;
+        const isLast = i === reversed.length - 1;
+        const typeLabel = stop.type === 'waypoint' ? 'passage' : (isFirst ? 'depart' : (isLast ? 'terminus' : stop.type));
+        const typeColor = typeLabel === 'depart' ? '#22c55e' : (typeLabel === 'terminus' ? '#ef4444' : (typeLabel === 'passage' ? '#8b5cf6' : 'var(--text3)'));
+
+        // Platform selector
+        let platformSelect = '';
+        if (station && station.platforms > 0) {
+          const names = station.platformNames || [];
+          const currentVal = this._schedReturnPlatforms?.[stop.stationId] || '';
+          let options = '<option value="">Auto</option>';
+          for (let p = 1; p <= station.platforms; p++) {
+            const pName = names[p - 1] || String(p);
+            const sel = currentVal === pName ? 'selected' : '';
+            options += `<option value="${pName}" ${sel}>Voie ${pName}</option>`;
+          }
+          platformSelect = `<select style="width:70px;font-size:10px" onchange="game.ui.updateReturnPlatform('${stop.stationId}', this.value)">${options}</select>`;
+        }
+
+        return `<div class="sched-stop-row" style="padding:3px 6px;display:flex;align-items:center;gap:6px">
+          <span style="color:var(--text3);font-size:10px;min-width:14px">${i + 1}</span>
+          <span style="color:${typeColor};font-size:9px;min-width:50px">${typeLabel}</span>
+          <span class="stop-name" style="flex:1">${stName}</span>
+          ${platformSelect}
+        </div>`;
+      }).join('');
+      if (returnHtml) {
+        container.innerHTML += `<div style="margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">
+          <div style="font-size:10px;color:#f59e0b;font-weight:600;margin-bottom:4px">↩ Trajet retour (${reversed.length} arrets)</div>
+          ${returnHtml}
+        </div>`;
+      }
+    }
   }
 
   updateSchedStop(index, field, value) {
@@ -769,9 +1643,26 @@ export class UI {
       stop.depTimeStr = value;
       stop.depTimeMin = this.timeStrToMin(value);
     }
+    if (field === 'stopDuration') {
+      const dur = Math.max(0, parseInt(value) || 0);
+      stop.depTimeMin = stop.arrTimeMin + dur;
+      stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
+    }
+    if (field === 'platform') {
+      stop.platform = value || '';
+    }
     // Auto-recalculate all subsequent stops
     this.recalcStopsFrom(index + 1);
     this.renderSchedStops();
+  }
+
+  updateReturnPlatform(stationId, value) {
+    if (!this._schedReturnPlatforms) this._schedReturnPlatforms = {};
+    if (value) {
+      this._schedReturnPlatforms[stationId] = value;
+    } else {
+      delete this._schedReturnPlatforms[stationId];
+    }
   }
 
   async recalcStopsFrom(fromIndex) {
@@ -837,34 +1728,74 @@ export class UI {
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
     const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 10;
 
-    const routes = [];
+    // Build route requests in parallel for speed
+    const routePromises = [];
     for (let i = 0; i < this.schedStops.length - 1; i++) {
-      const fromSt = this.game.world.getStationById(this.schedStops[i].stationId);
-      const toSt = this.game.world.getStationById(this.schedStops[i + 1].stationId);
-      if (fromSt && toSt) {
-        const existingTrack = this.game.world.getTrackBetween(fromSt.id, toSt.id);
-        if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-          const needReverse = existingTrack.stationA !== fromSt.id;
-          routes.push(needReverse ? [...existingTrack.route].reverse() : existingTrack.route);
+      const stopA = this.schedStops[i];
+      const stopB = this.schedStops[i + 1];
+      let fromLat, fromLon, toLat, toLon;
+      if (stopA.voiePointId) {
+        const vp = this.game.voiePointManager.getVoiePointById(stopA.voiePointId);
+        fromLat = vp?.lat; fromLon = vp?.lon;
+      } else {
+        const st = this.game.world.getStationById(stopA.stationId);
+        if (st && stopA.platform && this.game.voiePointManager) {
+          const svp = this.game.voiePointManager.getStationVoiePoint(st.id, stopA.platform);
+          if (svp) { fromLat = svp.lat; fromLon = svp.lon; }
+          else { fromLat = st.lat; fromLon = st.lon; }
         } else {
-          try {
-            const route = await this.game.orm.findRoute(fromSt.lat, fromSt.lon, toSt.lat, toSt.lon);
-            routes.push(route);
-          } catch (e) {
-            console.warn('ORM route failed:', e);
-            routes.push([{ lat: fromSt.lat, lon: fromSt.lon, maxSpeed: 160 }, { lat: toSt.lat, lon: toSt.lon, maxSpeed: 160 }]);
+          fromLat = st?.lat; fromLon = st?.lon;
+        }
+      }
+      if (stopB.voiePointId) {
+        const vp = this.game.voiePointManager.getVoiePointById(stopB.voiePointId);
+        toLat = vp?.lat; toLon = vp?.lon;
+      } else {
+        const st = this.game.world.getStationById(stopB.stationId);
+        if (st && stopB.platform && this.game.voiePointManager) {
+          const svp = this.game.voiePointManager.getStationVoiePoint(st.id, stopB.platform);
+          if (svp) { toLat = svp.lat; toLon = svp.lon; }
+          else { toLat = st.lat; toLon = st.lon; }
+        } else {
+          toLat = st?.lat; toLon = st?.lon;
+        }
+      }
+      if (fromLat != null && toLat != null) {
+        // Priority 1: Try tronçon graph routing (exact player infrastructure)
+        const trcResult = this.game.voiePointManager?.findTronconRoute(fromLat, fromLon, toLat, toLon);
+        if (trcResult && trcResult.route && trcResult.route.length >= 2) {
+          routePromises.push(Promise.resolve(trcResult.route));
+          continue;
+        }
+        // Priority 2: Existing world track
+        const fromSt = stopA.stationId ? this.game.world.getStationById(stopA.stationId) : null;
+        const toSt = stopB.stationId ? this.game.world.getStationById(stopB.stationId) : null;
+        if (fromSt && toSt) {
+          const existingTrack = this.game.world.getTrackBetween(fromSt.id, toSt.id);
+          if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
+            const needReverse = existingTrack.stationA !== fromSt.id;
+            routePromises.push(Promise.resolve(needReverse ? [...existingTrack.route].reverse() : existingTrack.route));
+            continue;
           }
         }
+        // Priority 3: ORM fallback
+        routePromises.push(
+          this.game.orm.findRoute(fromLat, fromLon, toLat, toLon)
+            .catch(() => [{ lat: fromLat, lon: fromLon, maxSpeed: 160 }, { lat: toLat, lon: toLon, maxSpeed: 160 }])
+        );
       } else {
-        routes.push([]);
+        routePromises.push(Promise.resolve([]));
       }
     }
+    const routes = await Promise.all(routePromises);
 
     const stops = this.schedStops.map(s => ({
       stationId: s.stationId,
+      voiePointId: s.voiePointId || null,
       type: s.type,
       departureTime: s.depTimeMin,
       arrivalTime: s.arrTimeMin,
+      platform: s.platform || '',
     }));
 
     let totalDist = 0;
@@ -872,12 +1803,30 @@ export class UI {
       totalDist += this.game.orm.getRouteDistance(route);
     }
 
+    // If editing, remove old service first
+    if (this._editingScheduleId) {
+      this.game.scheduleCreator.removeService(this._editingScheduleId);
+    }
+
+    const isWorkTrain = document.getElementById('sched-work-train')?.checked || false;
+    const returnName = document.getElementById('sched-return-name')?.value.trim() || '';
+    const returnPlatforms = this._schedReturnPlatforms || {};
+
     this.game.scheduleCreator.addService({
-      name, rameId, stops, routes, roundTrip, multiDepartures, terminusWait, totalDistance: Math.round(totalDist),
+      name, rameId, stops, routes, roundTrip, multiDepartures, terminusWait,
+      totalDistance: Math.round(totalDist), isWorkTrain, returnName, returnPlatforms,
     }, rame, this.game.world);
 
+    this._editingScheduleId = null;
+    if (this._schedMapInterval) { clearInterval(this._schedMapInterval); this._schedMapInterval = null; }
     document.getElementById('modal-schedule')?.classList.add('hidden');
     this.renderSchedulesList();
+    this.game.saveState();
+  }
+
+  editSchedule(id) {
+    const svc = this.game.scheduleCreator.services.find(s => s.id === id);
+    if (svc) this.openScheduleModal(svc);
   }
 
   renderSchedulesList() {
@@ -895,6 +1844,7 @@ export class UI {
         const name = st ? st.name : s.stationId;
         const arr = this.minToTimeStr(s.arrivalTime);
         const dep = this.minToTimeStr(s.departureTime);
+        if (s.type === 'waypoint') return `<span class="sched-stop-tag waypoint" style="opacity:0.5;font-style:italic">(via ${name})</span>`;
         return `<span class="sched-stop-tag ${s.type}">${s.type === 'passage' ? arr : `${arr}-${dep}`} ${name}</span>`;
       }).join('<span style="color:var(--text3)"> → </span>');
 
@@ -906,6 +1856,7 @@ export class UI {
           const name = st ? st.name : s.stationId;
           const arr = this.minToTimeStr(s.arrivalTime);
           const dep = this.minToTimeStr(s.departureTime);
+          if (s.type === 'waypoint') return `<span class="sched-stop-tag waypoint" style="opacity:0.5;font-style:italic">(via ${name})</span>`;
           return `<span class="sched-stop-tag ${s.type}">${s.type === 'passage' ? arr : `${arr}-${dep}`} ${name}</span>`;
         }).join('<span style="color:var(--text3)"> → </span>');
         returnPreview = `<div class="sched-stops-preview" style="margin-top:4px"><span style="color:#f59e0b;font-size:9px;margin-right:4px">↩ Retour (${svc.terminusWait} min attente):</span>${retStr}</div>`;
@@ -913,15 +1864,23 @@ export class UI {
 
       const rame = this.game.rameManager.getById(svc.rameId);
       const statusLabel = svc.isReturnLeg ? '<span style="color:#f59e0b;font-size:9px"> (retour)</span>' : '';
+      // S11: Show trip count and direction names
+      const firstSt = this.game.world.getStationById(svc.stops[0]?.stationId);
+      const lastSt = this.game.world.getStationById(svc.stops[svc.stops.length - 1]?.stationId);
+      const dirLabel = firstSt && lastSt ? `${firstSt.name} → ${lastSt.name}` : '';
+      const tripInfo = svc.roundTrip && svc.multiDepartures > 1 ? ` x${svc.multiDepartures} AR` : svc.roundTrip ? ' A/R' : '';
       return `
         <div class="sched-item">
           <div class="sched-item-header">
             <span class="sched-item-name">${svc.name}${statusLabel}</span>
             <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
-            <span style="color:var(--text3);font-size:10px">${Math.round(svc.totalDistance)} km${svc.roundTrip ? ' A/R' : ''}</span>
+            <span style="color:var(--text3);font-size:10px">${Math.round(svc.totalDistance)} km${tripInfo}</span>
+            <button class="btn-sm" onclick="game.ui.editSchedule('${svc.id}')">Modifier</button>
+            <button class="btn-sm" onclick="game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
             <button class="btn-sm" onclick="game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
             <button class="btn-sm danger" onclick="game.ui.deleteSchedule('${svc.id}')">Supprimer</button>
           </div>
+          <div style="font-size:10px;color:var(--text2);margin-bottom:2px">${dirLabel}</div>
           <div class="sched-stops-preview">${stopsPreview}</div>
           ${returnPreview}
         </div>
@@ -935,9 +1894,429 @@ export class UI {
     this.renderSchedulesList();
   }
 
+  duplicateSchedulePrompt(id) {
+    const svc = this.game.scheduleCreator.services.find(s => s.id === id);
+    if (!svc) return;
+    const interval = prompt('Intervalle entre chaque depart (en minutes) :', '60');
+    if (!interval) return;
+    const count = prompt('Nombre de duplicatas :', '3');
+    if (!count) return;
+    const intv = parseInt(interval), cnt = parseInt(count);
+    if (!intv || intv < 1 || !cnt || cnt < 1) return;
+    const rame = this.game.rameManager.getById(svc.rameId);
+    this.game.scheduleCreator.duplicateService(id, intv, cnt, rame, this.game.world);
+    this.renderSchedulesList();
+  }
+
   deleteSchedule(id) {
     this.game.scheduleCreator.removeService(id);
     this.renderSchedulesList();
+  }
+
+  // --- LINES ---
+  setupLinePage() {
+    document.getElementById('btn-new-line')?.addEventListener('click', () => this.openLineModal());
+    document.getElementById('btn-save-line')?.addEventListener('click', () => this.saveLine());
+    this.lineStops = [];
+    this.lineMapCenter = null;
+    this.lineMapScale = null;
+    this._editingLineId = null;
+  }
+
+  openLineModal(editLine) {
+    this.lineStops = [];
+    this._editingLineId = null;
+    this.lineMapCenter = null;
+    this.lineMapScale = null;
+
+    if (editLine) {
+      this._editingLineId = editLine.id;
+      document.getElementById('line-name').value = editLine.name;
+      document.getElementById('line-code').value = editLine.code || '';
+      document.getElementById('line-color').value = editLine.color || '#3b82f6';
+      document.getElementById('modal-line-title').textContent = 'Modifier la ligne';
+      this.lineStops = editLine.stops.map(stId => {
+        const st = this.game.world.getStationById(stId);
+        return { stationId: stId, stationName: st ? st.name : stId };
+      });
+    } else {
+      document.getElementById('line-name').value = '';
+      document.getElementById('line-code').value = '';
+      document.getElementById('line-color').value = '#3b82f6';
+      document.getElementById('modal-line-title').textContent = 'Creer une ligne';
+    }
+
+    document.getElementById('modal-line')?.classList.remove('hidden');
+    this.renderLineStops();
+    setTimeout(() => this.setupLineMap(), 50);
+  }
+
+  setupLineMap() {
+    const canvas = document.getElementById('line-map-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight || 300;
+
+    const ctx = canvas.getContext('2d');
+    const world = this.game.world;
+
+    if (!this.lineMapCenter) {
+      if (world.stations.length > 0) {
+        let sumLat = 0, sumLon = 0;
+        for (const st of world.stations) { sumLat += st.lat; sumLon += st.lon; }
+        this.lineMapCenter = { lat: sumLat / world.stations.length, lon: sumLon / world.stations.length };
+      } else {
+        this.lineMapCenter = { lat: 46.8, lon: 2.3 };
+      }
+    }
+    if (!this.lineMapScale) {
+      this.lineMapScale = world.stations.length > 1 ? 0.02 : 0.04;
+    }
+
+    const project = (lat, lon) => {
+      const cx = this.lineMapCenter.lon;
+      const cy = this.lineMapCenter.lat;
+      const scale = this.lineMapScale;
+      return {
+        x: (lon - cx) / scale + canvas.width / 2,
+        y: (cy - lat) / scale + canvas.height / 2,
+      };
+    };
+
+    const lineColor = document.getElementById('line-color')?.value || '#3b82f6';
+
+    const drawMap = () => {
+      ctx.fillStyle = '#0a0a1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw existing tracks in gray
+      for (const track of world.tracks) {
+        const a = world.getStationById(track.stationA);
+        const b = world.getStationById(track.stationB);
+        if (!a || !b) continue;
+        const pa = project(a.lat, a.lon);
+        const pb = project(b.lat, b.lon);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      }
+
+      // Draw existing lines with their colors
+      for (const line of this.game.lineManager.getAll()) {
+        if (line.id === this._editingLineId) continue;
+        ctx.strokeStyle = line.color + '60';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < line.stops.length - 1; i++) {
+          const sa = world.getStationById(line.stops[i]);
+          const sb = world.getStationById(line.stops[i + 1]);
+          if (!sa || !sb) continue;
+          const pa = project(sa.lat, sa.lon);
+          const pb = project(sb.lat, sb.lon);
+          ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        }
+      }
+
+      // Draw stations
+      for (const st of world.stations) {
+        const p = project(st.lat, st.lon);
+        if (p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) continue;
+        const isSelected = this.lineStops.some(s => s.stationId === st.id);
+        ctx.fillStyle = isSelected ? lineColor : '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, isSelected ? 6 : 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(st.name, p.x + 8, p.y + 4);
+      }
+
+      // Draw current line route
+      const lc = document.getElementById('line-color')?.value || '#3b82f6';
+      for (let i = 0; i < this.lineStops.length - 1; i++) {
+        const sa = world.getStationById(this.lineStops[i].stationId);
+        const sb = world.getStationById(this.lineStops[i + 1].stationId);
+        if (!sa || !sb) continue;
+
+        // Check if there's a shared track
+        const track = world.getTrackBetween(sa.id, sb.id);
+        if (track) {
+          ctx.strokeStyle = lc;
+          ctx.lineWidth = 3;
+          if (track.route && track.route.length > 1) {
+            ctx.beginPath();
+            const p0 = project(track.route[0].lat, track.route[0].lon);
+            ctx.moveTo(p0.x, p0.y);
+            for (let j = 1; j < track.route.length; j++) {
+              const p = project(track.route[j].lat, track.route[j].lon);
+              ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+          } else {
+            const pa = project(sa.lat, sa.lon);
+            const pb = project(sb.lat, sb.lon);
+            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+          }
+        } else {
+          const pa = project(sa.lat, sa.lon);
+          const pb = project(sb.lat, sb.lon);
+          ctx.strokeStyle = lc;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      // Draw stop order numbers
+      for (let i = 0; i < this.lineStops.length; i++) {
+        const st = world.getStationById(this.lineStops[i].stationId);
+        if (!st) continue;
+        const p = project(st.lat, st.lon);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(String(i + 1), p.x - 3, p.y - 8);
+      }
+    };
+
+    drawMap();
+
+    let drag = false, dragStart = null, totalDragDist = 0;
+
+    canvas.onmousedown = (e) => {
+      drag = true;
+      dragStart = { x: e.offsetX, y: e.offsetY };
+      totalDragDist = 0;
+    };
+    canvas.onmousemove = (e) => {
+      if (drag && dragStart) {
+        const dx = e.offsetX - dragStart.x;
+        const dy = e.offsetY - dragStart.y;
+        totalDragDist += Math.abs(dx) + Math.abs(dy);
+        this.lineMapCenter.lon -= dx * this.lineMapScale;
+        this.lineMapCenter.lat += dy * this.lineMapScale;
+        dragStart = { x: e.offsetX, y: e.offsetY };
+        drawMap();
+      }
+    };
+    canvas.onmouseup = (e) => {
+      if (totalDragDist < 5) {
+        const x = e.offsetX, y = e.offsetY;
+        let closest = null, minDist = Infinity;
+        for (const st of world.stations) {
+          const p = project(st.lat, st.lon);
+          const d = Math.hypot(p.x - x, p.y - y);
+          if (d < minDist && d < 20) { minDist = d; closest = st; }
+        }
+        if (closest) this.addLineStop(closest);
+      }
+      drag = false;
+      dragStart = null;
+    };
+    canvas.onwheel = (e) => {
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 1.2 : 0.83;
+      this.lineMapScale = Math.max(0.002, Math.min(0.2, this.lineMapScale * factor));
+      drawMap();
+    };
+
+    this._drawLineMap = drawMap;
+  }
+
+  addLineStop(station) {
+    // Don't add duplicate consecutive stops
+    if (this.lineStops.length > 0 && this.lineStops[this.lineStops.length - 1].stationId === station.id) return;
+
+    this.lineStops.push({
+      stationId: station.id,
+      stationName: station.name,
+    });
+    this.renderLineStops();
+    if (this._drawLineMap) this._drawLineMap();
+  }
+
+  removeLineStop(index) {
+    this.lineStops.splice(index, 1);
+    this.renderLineStops();
+    if (this._drawLineMap) this._drawLineMap();
+  }
+
+  renderLineStops() {
+    const container = document.getElementById('line-stops-list');
+    if (!container) return;
+    if (this.lineStops.length === 0) {
+      container.innerHTML = '<p style="color:var(--text3);font-size:11px;text-align:center;padding:8px">Cliquer sur les gares de la carte pour definir la ligne</p>';
+      return;
+    }
+    container.innerHTML = this.lineStops.map((stop, i) => {
+      const isShared = i > 0 ? !!this.game.world.getTrackBetween(this.lineStops[i - 1].stationId, stop.stationId) : false;
+      const sharedInfo = (i > 0 && isShared) ? '<span style="color:#16a34a;font-size:9px"> (troncon existant)</span>' : (i > 0 ? '<span style="color:#f59e0b;font-size:9px"> (nouveau troncon)</span>' : '');
+      return `
+        <div class="sched-stop-row">
+          <span style="color:var(--text3);font-size:10px;width:16px">${i + 1}</span>
+          <span class="stop-name">${stop.stationName}${sharedInfo}</span>
+          <button class="btn-remove-stop" onclick="game.ui.removeLineStop(${i})">x</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async saveLine() {
+    const name = document.getElementById('line-name').value.trim();
+    if (!name) return alert('Nom requis');
+    if (this.lineStops.length < 2) return alert('Il faut au moins 2 gares');
+
+    const color = document.getElementById('line-color').value || '#3b82f6';
+    const code = document.getElementById('line-code').value.trim();
+    const stops = this.lineStops.map(s => s.stationId);
+
+    const loadingEl = document.getElementById('line-loading');
+    if (loadingEl) loadingEl.classList.remove('hidden');
+
+    if (this._editingLineId) {
+      // Update existing line
+      const line = this.game.lineManager.getLine(this._editingLineId);
+      if (line) {
+        // Remove old line references from stations
+        for (const oldStId of line.stops) {
+          const st = this.game.world.getStationById(oldStId);
+          if (st) st.lineIds = (st.lineIds || []).filter(lid => lid !== line.id);
+        }
+        line.name = name;
+        line.color = color;
+        line.code = code;
+        line.stops = stops;
+
+        // Build track IDs
+        const trackIds = [];
+        for (let i = 0; i < stops.length - 1; i++) {
+          const stA = this.game.world.getStationById(stops[i]);
+          const stB = this.game.world.getStationById(stops[i + 1]);
+          if (!stA || !stB) { trackIds.push(null); continue; }
+          let existing = this.game.world.getTrackBetween(stA.id, stB.id);
+          if (existing) {
+            trackIds.push(existing.id);
+          } else {
+            try {
+              const route = await this.game.orm.findRoute(stA.lat, stA.lon, stB.lat, stB.lon);
+              const distance = this.game.orm.getRouteDistance(route);
+              const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+              const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+              const track = this.game.world.addTrack({
+                stationA: stA.id, stationB: stB.id,
+                distance: Math.round(distance), maxSpeed: avgSpeed,
+                electrified: true, name: `${stA.name} - ${stB.name}`, route,
+              });
+              trackIds.push(track.id);
+            } catch (e) {
+              const dist = Math.round(Math.sqrt(Math.pow((stB.lat - stA.lat) * 111, 2) + Math.pow((stB.lon - stA.lon) * 111 * Math.cos(stA.lat * Math.PI / 180), 2)));
+              const track = this.game.world.addTrack({ stationA: stA.id, stationB: stB.id, distance: dist, maxSpeed: 160, name: `${stA.name} - ${stB.name}` });
+              trackIds.push(track.id);
+            }
+          }
+        }
+        line.trackIds = trackIds;
+
+        // Update station references
+        for (const stId of stops) {
+          const st = this.game.world.getStationById(stId);
+          if (st) {
+            if (!st.lineIds) st.lineIds = [];
+            if (!st.lineIds.includes(line.id)) st.lineIds.push(line.id);
+          }
+        }
+      }
+    } else {
+      // Create new line
+      const line = await this.game.lineManager.buildLine(
+        { name, color, code, stops },
+        this.game.world,
+        this.game.orm
+      );
+      if (line) {
+        for (const stId of stops) {
+          const st = this.game.world.getStationById(stId);
+          if (st) {
+            if (!st.lineIds) st.lineIds = [];
+            if (!st.lineIds.includes(line.id)) st.lineIds.push(line.id);
+          }
+        }
+      }
+    }
+
+    if (loadingEl) loadingEl.classList.add('hidden');
+    document.getElementById('modal-line')?.classList.add('hidden');
+    this.renderLinesList();
+    this.game.saveState();
+  }
+
+  renderLinesList() {
+    const container = document.getElementById('lines-list');
+    if (!container) return;
+    const lines = this.game.lineManager.getAll();
+    if (lines.length === 0) {
+      container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucune ligne. Cliquer "+ Creer une ligne" pour commencer.</p>';
+      return;
+    }
+
+    container.innerHTML = lines.map(line => {
+      const stopsPreview = line.stops.map(stId => {
+        const st = this.game.world.getStationById(stId);
+        return st ? st.name : stId;
+      });
+      const firstStop = stopsPreview[0] || '?';
+      const lastStop = stopsPreview[stopsPreview.length - 1] || '?';
+
+      // Count shared tracks
+      let sharedCount = 0;
+      for (const trkId of line.trackIds) {
+        if (!trkId) continue;
+        const linesOnTrack = this.game.lineManager.getLinesForTrack(trkId);
+        if (linesOnTrack.length > 1) sharedCount++;
+      }
+
+      const totalDist = line.trackIds.reduce((sum, trkId) => {
+        if (!trkId) return sum;
+        const track = this.game.world.tracks.find(t => t.id === trkId);
+        return sum + (track ? track.distance : 0);
+      }, 0);
+
+      return `
+        <div class="line-item" style="border-left:4px solid ${line.color}">
+          <div class="line-item-header">
+            <span class="line-item-name" style="color:${line.color}">${line.code ? '[' + line.code + '] ' : ''}${line.name}</span>
+            <span style="color:var(--text3);font-size:10px">${Math.round(totalDist)} km | ${line.stops.length} gares${sharedCount > 0 ? ' | ' + sharedCount + ' troncon(s) partage(s)' : ''}</span>
+            <button class="btn-sm" onclick="game.ui.editLine('${line.id}')">Modifier</button>
+            <button class="btn-sm danger" onclick="game.ui.deleteLine('${line.id}')">Supprimer</button>
+          </div>
+          <div class="line-route-preview">
+            ${stopsPreview.map((name, i) =>
+              `<span class="line-stop-tag">${name}</span>${i < stopsPreview.length - 1 ? '<span style="color:var(--text3)"> → </span>' : ''}`
+            ).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  editLine(id) {
+    const line = this.game.lineManager.getLine(id);
+    if (line) this.openLineModal(line);
+  }
+
+  deleteLine(id) {
+    if (!confirm('Supprimer cette ligne ?')) return;
+    const line = this.game.lineManager.getLine(id);
+    if (line) {
+      // Remove line references from stations
+      for (const stId of line.stops) {
+        const st = this.game.world.getStationById(stId);
+        if (st) st.lineIds = (st.lineIds || []).filter(lid => lid !== id);
+      }
+    }
+    this.game.lineManager.removeLine(id);
+    this.renderLinesList();
+    this.game.saveState();
   }
 
   // --- DEPOTS ---
@@ -971,32 +2350,148 @@ export class UI {
     const iteContainer = document.getElementById('ite-list');
     const depots = this.game.depotManager.getDepots();
     const ites = this.game.depotManager.getITEs();
+    const allStock = this.game.rollingStock.getAll().filter(s => s.category === 'locomotive' || s.category === 'automotrice');
 
-    const renderList = (items) => items.length === 0
-      ? '<p style="color:var(--text3);font-size:11px;padding:10px">Aucun</p>'
-      : items.map(d => {
-          const station = this.game.world.getStationById(d.stationId);
-          return `
-            <div class="card">
-              <div class="card-title">${d.name}</div>
-              <div class="card-info">
-                <b>Type:</b> ${d.getTypeLabel()}<br>
-                <b>Gare:</b> ${station ? station.name : d.stationId}<br>
-                <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR
-              </div>
-              <div class="card-actions">
-                <button class="btn-sm danger" onclick="game.ui.deleteDepot('${d.id}')">Supprimer</button>
-              </div>
+    const renderDepotCard = (d) => {
+      const station = this.game.world.getStationById(d.stationId);
+      const rescueList = d.rescueLocos.length > 0
+        ? d.rescueLocos.map(r => `
+          <div style="display:flex;align-items:center;gap:6px;padding:2px 0;font-size:10px">
+            <span style="color:${r.deployed ? '#ef4444' : '#22c55e'}">${r.deployed ? 'En mission' : 'Disponible'}</span>
+            <span style="flex:1">${r.stockName}</span>
+            <button class="btn-sm danger" style="font-size:9px;padding:1px 4px" onclick="game.ui.removeRescueLoco('${d.id}','${r.stockId}')">x</button>
+          </div>
+        `).join('')
+        : '<span style="color:var(--text3);font-size:10px">Aucune machine de secours</span>';
+
+      // Build stock picker (only locos/automotrices not already assigned)
+      const assignedIds = d.rescueLocos.map(r => r.stockId);
+      const availableStock = allStock.filter(s => !assignedIds.includes(s.id));
+      const stockOptions = availableStock.map(s =>
+        `<option value="${s.id}">${s.seriesName ? s.seriesName + ' ' + (s.numberStart || '') : s.name}</option>`
+      ).join('');
+
+      return `
+        <div class="card">
+          <div class="card-title">${d.name}</div>
+          <div class="card-info">
+            <b>Type:</b> ${d.getTypeLabel()}<br>
+            <b>Gare:</b> ${station ? station.name : d.stationId}<br>
+            <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR
+          </div>
+          ${d.type === 'depot' ? `
+            <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+              <div style="font-size:11px;font-weight:600;margin-bottom:4px">Machines de secours</div>
+              ${rescueList}
+              ${availableStock.length > 0 ? `
+                <div style="display:flex;gap:4px;margin-top:4px">
+                  <select id="rescue-stock-${d.id}" style="flex:1;font-size:10px">${stockOptions}</select>
+                  <button class="btn-sm" style="font-size:9px" onclick="game.ui.addRescueLoco('${d.id}')">+ Ajouter</button>
+                </div>
+              ` : ''}
             </div>
-          `;
-        }).join('');
+            ${this._renderDepotQueueSection(d)}
+            ${this._renderMaintenanceButton(d)}
+          ` : ''}
+          <div class="card-actions">
+            <button class="btn-sm danger" onclick="game.ui.deleteDepot('${d.id}')">Supprimer</button>
+          </div>
+        </div>
+      `;
+    };
 
-    if (depotsContainer) depotsContainer.innerHTML = renderList(depots);
-    if (iteContainer) iteContainer.innerHTML = renderList(ites);
+    const renderIteCard = (d) => {
+      const station = this.game.world.getStationById(d.stationId);
+      return `
+        <div class="card">
+          <div class="card-title">${d.name}</div>
+          <div class="card-info">
+            <b>Type:</b> ${d.getTypeLabel()}<br>
+            <b>Gare:</b> ${station ? station.name : d.stationId}<br>
+            <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR
+          </div>
+          <div class="card-actions">
+            <button class="btn-sm danger" onclick="game.ui.deleteDepot('${d.id}')">Supprimer</button>
+          </div>
+        </div>
+      `;
+    };
+
+    if (depotsContainer) {
+      depotsContainer.innerHTML = depots.length === 0
+        ? '<p style="color:var(--text3);font-size:11px;padding:10px">Aucun</p>'
+        : depots.map(renderDepotCard).join('');
+    }
+    if (iteContainer) {
+      iteContainer.innerHTML = ites.length === 0
+        ? '<p style="color:var(--text3);font-size:11px;padding:10px">Aucun</p>'
+        : ites.map(renderIteCard).join('');
+    }
+  }
+
+  addRescueLoco(depotId) {
+    const select = document.getElementById(`rescue-stock-${depotId}`);
+    if (!select || !select.value) return;
+    const stock = this.game.rollingStock.getAll().find(s => s.id === select.value);
+    if (!stock) return;
+    const displayName = stock.seriesName ? `${stock.seriesName} ${stock.numberStart || ''}`.trim() : stock.name;
+    this.game.depotManager.addRescueLoco(depotId, stock.id, displayName);
+    this.game.saveState();
+    this.renderDepotsList();
+  }
+
+  removeRescueLoco(depotId, stockId) {
+    this.game.depotManager.removeRescueLoco(depotId, stockId);
+    this.game.saveState();
+    this.renderDepotsList();
   }
 
   deleteDepot(id) {
     this.game.depotManager.remove(id);
+    this.renderDepotsList();
+  }
+
+  _renderDepotQueueSection(depot) {
+    const dm = this.game.depotManager;
+    const repairs = dm.repairQueue.filter(r => r.depotId === depot.id);
+    const maint = dm.maintenanceQueue.filter(m => m.depotId === depot.id);
+    if (repairs.length === 0 && maint.length === 0) return '';
+    const items = [
+      ...repairs.map(r => `<div style="font-size:10px;padding:2px 0"><span style="color:#ef4444">Reparation</span> ${r.serviceName} — ${Math.ceil(r.remainingMin)} min</div>`),
+      ...maint.map(m => `<div style="font-size:10px;padding:2px 0"><span style="color:#3b82f6">Entretien</span> ${m.serviceName} — ${Math.ceil(m.remainingMin)} min</div>`),
+    ];
+    return `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;margin-bottom:4px">En atelier</div>${items.join('')}</div>`;
+  }
+
+  _renderMaintenanceButton(depot) {
+    const services = this.game.scheduleCreator.getActiveServices();
+    const available = services.filter(svc =>
+      svc.active && !svc.train.breakdown && !svc.train.inMaintenance
+      && (svc.train.wearLevel || 0) > 0
+      && !this.game.depotManager.isInRepairOrMaintenance(svc.id)
+    );
+    if (available.length === 0) return '';
+    const opts = available.map(s => `<option value="${s.id}">${s.name} (${Math.round(s.train.wearLevel)}%)</option>`).join('');
+    return `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;margin-bottom:4px">Entretien preventif</div>
+      <div style="display:flex;gap:4px">
+        <select id="maint-svc-${depot.id}" style="flex:1;font-size:10px">${opts}</select>
+        <button class="btn-sm" style="font-size:9px" onclick="game.ui.sendToMaintenance('${depot.id}')">Envoyer</button>
+      </div>
+    </div>`;
+  }
+
+  sendToMaintenance(depotId) {
+    const select = document.getElementById(`maint-svc-${depotId}`);
+    if (!select || !select.value) return;
+    const svc = this.game.scheduleCreator.getActiveServices().find(s => s.id === select.value);
+    if (!svc) return;
+    svc.train.inMaintenance = true;
+    svc.speed = 0;
+    svc.train.speed = 0;
+    this.game.depotManager.sendToMaintenance(svc.id, svc.name, depotId);
+    this.game.saveState();
     this.renderDepotsList();
   }
 
@@ -1009,12 +2504,45 @@ export class UI {
       document.getElementById('inc-radius').value = '10';
       document.getElementById('inc-duration').value = '60';
       document.getElementById('inc-speed-group').style.display = 'block';
-      // Populate track selector
+      // Populate location selector (stations + tracks + tronçons)
       const select = document.getElementById('inc-track');
       if (select) {
-        select.innerHTML = this.game.world.tracks.map(t =>
-          `<option value="${t.id}">${t.name || t.id}</option>`
-        ).join('');
+        let opts = '';
+        // Stations
+        const stations = this.game.world.stations || [];
+        if (stations.length > 0) {
+          opts += '<optgroup label="Gares">';
+          opts += stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+          opts += '</optgroup>';
+        }
+        // Tracks (connections between stations)
+        const tracks = this.game.world.tracks || [];
+        if (tracks.length > 0) {
+          opts += '<optgroup label="Liaisons">';
+          opts += tracks.map(t => {
+            const a = this.game.world.getStationById(t.stationA);
+            const b = this.game.world.getStationById(t.stationB);
+            const label = (a?.name || '?') + ' — ' + (b?.name || '?');
+            return `<option value="${t.id}">${label}</option>`;
+          }).join('');
+          opts += '</optgroup>';
+        }
+        // Tronçons (voie points)
+        if (this.game.voiePointManager) {
+          const troncons = this.game.voiePointManager.troncons || [];
+          if (troncons.length > 0) {
+            opts += '<optgroup label="Tronçons voie">';
+            opts += troncons.map(tr => {
+              const pA = this.game.voiePointManager.getVoiePointById(tr.pointA);
+              const pB = this.game.voiePointManager.getVoiePointById(tr.pointB);
+              const lA = pA ? `Voie ${pA.voie}` : '?';
+              const lB = pB ? `Voie ${pB.voie}` : '?';
+              return `<option value="${tr.id}">${lA} — ${lB}</option>`;
+            }).join('');
+            opts += '</optgroup>';
+          }
+        }
+        select.innerHTML = opts || '<option>Aucun lieu disponible</option>';
       }
       document.getElementById('modal-incident')?.classList.remove('hidden');
     });
@@ -1031,18 +2559,40 @@ export class UI {
 
   saveIncident() {
     const name = document.getElementById('inc-name').value.trim() || 'Incident';
-    const trackId = document.getElementById('inc-track').value;
+    const locationId = document.getElementById('inc-track').value;
     const effect = document.getElementById('inc-impact').value;
     const speedLimit = parseInt(document.getElementById('inc-speed-limit').value) || 30;
     const radiusKm = parseInt(document.getElementById('inc-radius').value) || 10;
     const duration = parseInt(document.getElementById('inc-duration').value) || 60;
-
     const pt = this.game.engine.getParisTime();
     const timeOfDay = pt.hours * 60 + pt.minutes;
 
+    // Resolve center coordinates from station, track, or tronçon
+    let centerLat = 0, centerLon = 0, trackName = '';
+    const station = this.game.world.getStationById(locationId);
+    const track = this.game.world.tracks.find(t => t.id === locationId);
+    const troncon = this.game.voiePointManager?.troncons?.find(t => t.id === locationId);
+    if (station) {
+      centerLat = station.lat; centerLon = station.lon;
+      trackName = station.name;
+    } else if (track) {
+      const a = this.game.world.getStationById(track.stationA);
+      const b = this.game.world.getStationById(track.stationB);
+      if (a && b) { centerLat = (a.lat + b.lat) / 2; centerLon = (a.lon + b.lon) / 2; }
+      trackName = (a?.name || '?') + ' — ' + (b?.name || '?');
+    } else if (troncon) {
+      const pA = this.game.voiePointManager.getVoiePointById(troncon.pointA);
+      const pB = this.game.voiePointManager.getVoiePointById(troncon.pointB);
+      if (pA && pB) { centerLat = (pA.lat + pB.lat) / 2; centerLon = (pA.lon + pB.lon) / 2; }
+      trackName = `Voie ${pA?.voie || '?'} — Voie ${pB?.voie || '?'}`;
+    }
+
     this.game.incidentManager.createIncident({
       name,
-      trackId,
+      trackId: locationId,
+      trackName,
+      centerLat,
+      centerLon,
       effect,
       speedLimit: effect === 'stop' ? 0 : speedLimit,
       radiusKm: Math.min(radiusKm, 50),
@@ -1087,19 +2637,44 @@ export class UI {
     const activeList = document.getElementById('active-incidents-list');
     const worksList = document.getElementById('planned-works-list');
 
+    // Set up event delegation once (mousedown to avoid re-render race on Opera/others)
+    if (activeList && !activeList._delegated) {
+      activeList._delegated = true;
+      activeList.addEventListener('mousedown', (e) => {
+        const t = e.target;
+        const btn = t.dataset?.deleteIncident ? t : (t.closest ? t.closest('[data-delete-incident]') : t.parentElement?.closest('[data-delete-incident]'));
+        if (btn && btn.dataset?.deleteIncident) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.deleteIncident(btn.dataset.deleteIncident);
+        }
+      });
+    }
+    if (worksList && !worksList._delegated) {
+      worksList._delegated = true;
+      worksList.addEventListener('mousedown', (e) => {
+        const t = e.target;
+        const btn = t.dataset?.deleteWorks ? t : (t.closest ? t.closest('[data-delete-works]') : t.parentElement?.closest('[data-delete-works]'));
+        if (btn && btn.dataset?.deleteWorks) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.deleteWorks(btn.dataset.deleteWorks);
+        }
+      });
+    }
+
     const active = this.game.incidentManager.getActiveIncidents();
     if (activeList) {
       activeList.innerHTML = active.length === 0
         ? '<div class="no-incidents">Aucun incident en cours</div>'
         : active.map(inc => `
             <div class="incident-item">
-              <span class="incident-icon">${inc.icon || '⚠'}</span>
               <div style="flex:1">
                 <div class="incident-name">${inc.name}</div>
                 <div class="incident-desc">${inc.trackName || 'Zone'} (rayon ${inc.radiusKm || 10}km) - ${inc.effect === 'stop' ? '<span style="color:#7B1E1E;font-weight:700">Interruption</span>' : '<span style="color:#FFE135;font-weight:700">Ralenti ' + (inc.speedLimit || 30) + ' km/h</span>'}</div>
                 <div class="incident-time">${Math.ceil(inc.remaining)} min restantes</div>
               </div>
-              <button class="btn-sm danger" onclick="game.ui.deleteIncident('${inc.id}')" title="Supprimer">x</button>
+              <button class="btn-sm danger incident-delete-btn" data-delete-incident="${inc.id}" title="Supprimer l'incident">✕</button>
             </div>
           `).join('');
     }
@@ -1117,7 +2692,7 @@ export class UI {
                 <span style="font-size:10px;color:var(--text3)">Actif chaque jour de ${w.startTime} a ${w.endTime}</span><br>
                 Impact: ${w.impact === 'stop' ? 'Interruption' : 'Ralenti ' + w.speedLimit + ' km/h'}
                 ${w.active ? ' <b style="color:var(--red)">EN COURS</b>' : ''}
-                <button class="btn-sm danger" style="float:right" onclick="game.ui.deleteWorks('${w.id}')">x</button>
+                <button class="btn-sm danger incident-delete-btn" style="float:right" data-delete-works="${w.id}" title="Supprimer les travaux">✕</button>
               </div>
             `;
           }).join('');
@@ -1144,6 +2719,492 @@ export class UI {
     freightInput?.addEventListener('change', () => {
       this.game.economy.freightPricePerTKm = parseFloat(freightInput.value) || 0.08;
     });
+
+    // Logo import
+    const logoDrop = document.getElementById('logo-drop');
+    const logoInput = document.getElementById('logo-input');
+    logoDrop?.addEventListener('click', () => logoInput?.click());
+    logoDrop?.addEventListener('dragover', e => { e.preventDefault(); logoDrop.style.borderColor = '#38bdf8'; });
+    logoDrop?.addEventListener('dragleave', () => { logoDrop.style.borderColor = ''; });
+    logoDrop?.addEventListener('drop', e => {
+      e.preventDefault(); logoDrop.style.borderColor = '';
+      const f = e.dataTransfer?.files[0]; if (f) this._loadLogo(f);
+    });
+    logoInput?.addEventListener('change', e => { const f = e.target.files[0]; if (f) this._loadLogo(f); });
+
+    // Restore logo
+    if (this.game.economy._companyLogo) this._applyLogo(this.game.economy._companyLogo);
+
+    // Bulletin
+    document.getElementById('btn-generate-bulletin')?.addEventListener('click', () => this._generateBulletin());
+    // Fiche horaire de gare
+    document.getElementById('btn-generate-fiche-horaire')?.addEventListener('click', () => this._openFicheHoraireModal());
+  }
+
+  _loadLogo(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = e.target.result;
+      this.game.economy._companyLogo = data;
+      this._applyLogo(data);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  _applyLogo(dataUrl) {
+    const img = document.getElementById('company-logo');
+    if (img) { img.src = dataUrl; img.style.display = 'inline-block'; }
+    const drop = document.getElementById('logo-drop');
+    if (drop) drop.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain">`;
+  }
+
+  _generateBulletin() {
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) return alert('jsPDF non charge — verifiez votre connexion internet');
+    try {
+    const doc = new jsPDF();
+    // Helper: strip accents for jsPDF default font compatibility
+    const noAcc = (s) => typeof s === 'string' ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : String(s);
+    const eco = this.game.economy;
+    const company = noAcc(this.game.account.companyName || 'Rail Empire');
+    const now = new Date().toLocaleDateString('fr-FR');
+    const lastBulletin = eco._lastBulletinDate || null;
+    const pw = doc.internal.pageSize.getWidth();
+
+    // Helper: draw line separator
+    const drawLine = (yPos) => { doc.setDrawColor(180); doc.line(10, yPos, pw - 10, yPos); };
+    // Helper: page footer
+    const addFooter = () => {
+      doc.setFontSize(8); doc.setTextColor(150); doc.setFont(undefined, 'italic');
+      doc.text(`${company} -- Bulletin genere automatiquement -- ${now}`, pw / 2, 290, { align: 'center' });
+      doc.setTextColor(0); doc.setFont(undefined, 'normal');
+    };
+
+    // ========== PAGE 1 : PAGE DE GARDE ==========
+    // Logo en haut à droite + nom compagnie dessous
+    if (eco._companyLogo) {
+      try { doc.addImage(eco._companyLogo, 'PNG', pw - 50, 15, 35, 35); } catch(e) {}
+    }
+    doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.setTextColor(80);
+    doc.text(company, pw - 32, eco._companyLogo ? 56 : 25, { align: 'center' });
+
+    // Titre centré au milieu de la page
+    doc.setTextColor(0);
+    doc.setFontSize(28); doc.setFont(undefined, 'bold');
+    doc.text('Bulletin', pw / 2, 100, { align: 'center' });
+    doc.setFontSize(22);
+    doc.text('recapitulatif', pw / 2, 115, { align: 'center' });
+    doc.setFontSize(18); doc.setFont(undefined, 'normal');
+    doc.text('de votre compagnie', pw / 2, 128, { align: 'center' });
+
+    // Date + période
+    drawLine(145);
+    doc.setFontSize(11); doc.setTextColor(80);
+    doc.text(`Genere le ${now}`, pw / 2, 155, { align: 'center' });
+    if (lastBulletin) {
+      doc.text(`Periode : depuis le ${lastBulletin}`, pw / 2, 163, { align: 'center' });
+    } else {
+      doc.text('Premier bulletin de la compagnie', pw / 2, 163, { align: 'center' });
+    }
+    doc.setTextColor(0);
+    addFooter();
+
+    // ========== PAGE 2 : SOMMAIRE ==========
+    doc.addPage();
+    doc.setFontSize(20); doc.setFont(undefined, 'bold');
+    doc.text('Sommaire', pw / 2, 30, { align: 'center' });
+    drawLine(36);
+
+    const sections = [
+      { num: '1', title: 'Finances', page: 3 },
+      { num: '2', title: 'Transport & Reseau', page: 3 },
+      { num: '3', title: 'Services actifs', page: 4 },
+      { num: '4', title: lastBulletin ? 'Nouvelles rames' : 'Parc de rames', page: 5 },
+      { num: '5', title: 'Incidents', page: 6 },
+    ];
+    let sy = 50;
+    doc.setFontSize(13);
+    for (const s of sections) {
+      doc.setFont(undefined, 'bold');
+      doc.text(`${s.num}.`, 20, sy);
+      doc.setFont(undefined, 'normal');
+      doc.text(s.title, 30, sy);
+      doc.text(`p. ${s.page}`, pw - 25, sy, { align: 'right' });
+      // Dotted line between title and page number
+      doc.setLineDash([1, 1], 0);
+      const titleW = doc.getTextWidth(s.title);
+      doc.line(30 + titleW + 3, sy + 0.5, pw - 30, sy + 0.5);
+      doc.setLineDash([], 0);
+      sy += 10;
+    }
+    addFooter();
+
+    // ========== PAGE 3 : FINANCES + TRANSPORT ==========
+    doc.addPage();
+    let y = 20;
+
+    // Section 1: Finances
+    doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text('1. Finances', 10, y); y += 2;
+    drawLine(y); y += 8;
+    doc.setFontSize(11); doc.setFont(undefined, 'normal');
+    doc.text('Solde actuel :', 14, y);
+    doc.setFont(undefined, 'bold'); doc.text(eco.formatAmount(eco.balance), 65, y); doc.setFont(undefined, 'normal'); y += 7;
+    doc.text('Recettes totales :', 14, y);
+    doc.setTextColor(34, 139, 34); doc.text(`+${eco.formatAmount(eco.revenue)}`, 65, y); doc.setTextColor(0); y += 7;
+    doc.text('Depenses totales :', 14, y);
+    doc.setTextColor(200, 0, 0); doc.text(`-${eco.formatAmount(eco.expenses)}`, 65, y); doc.setTextColor(0); y += 7;
+    doc.text('Amendes :', 14, y);
+    doc.setTextColor(200, 0, 0); doc.text(`-${eco.formatAmount(eco.penalties)}`, 65, y); doc.setTextColor(0); y += 12;
+
+    // Section 2: Transport & Réseau
+    doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text('2. Transport & Reseau', 10, y); y += 2;
+    drawLine(y); y += 8;
+    doc.setFontSize(11); doc.setFont(undefined, 'normal');
+    doc.text('Passagers transportes :', 14, y);
+    doc.setFont(undefined, 'bold'); doc.text(eco.totalPassengers.toLocaleString('fr-FR'), 75, y); doc.setFont(undefined, 'normal'); y += 7;
+    doc.text('Fret transporte :', 14, y);
+    doc.setFont(undefined, 'bold'); doc.text(`${eco.totalFreightTonnes.toLocaleString('fr-FR')} tonnes`, 75, y); doc.setFont(undefined, 'normal'); y += 7;
+    const tracks = this.game.world.tracks || [];
+    let trackKm = Math.round(tracks.reduce((s, t) => s + (t.distance || 0), 0));
+    if (this.game.voiePointManager) {
+      trackKm += Math.round(this.game.voiePointManager.getAllTroncons().reduce((s, t) => s + (t.distance || 0), 0));
+    }
+    doc.text('Km de voies possedes :', 14, y);
+    doc.setFont(undefined, 'bold'); doc.text(`${trackKm.toLocaleString('fr-FR')} km`, 75, y); doc.setFont(undefined, 'normal'); y += 7;
+    const rames = this.game.rameManager.getAll();
+    const totalTrainKm = Math.round(rames.reduce((s, r) => s + (r.totalKmRun || 0), 0));
+    doc.text('Kilometrage total trains :', 14, y);
+    doc.setFont(undefined, 'bold'); doc.text(`${totalTrainKm.toLocaleString('fr-FR')} km`, 75, y); doc.setFont(undefined, 'normal'); y += 7;
+    doc.text('Nombre de gares :', 14, y);
+    const stations = this.game.world.stations || [];
+    doc.setFont(undefined, 'bold'); doc.text(`${stations.length}`, 75, y); doc.setFont(undefined, 'normal'); y += 7;
+    doc.text('Nombre de rames :', 14, y);
+    doc.setFont(undefined, 'bold'); doc.text(`${rames.length}`, 75, y); doc.setFont(undefined, 'normal');
+    addFooter();
+
+    // ========== PAGE 4 : SERVICES ==========
+    doc.addPage();
+    y = 20;
+    const services = this.game.scheduleCreator.getActiveServices();
+    doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text(`3. Services actifs (${services.length})`, 10, y); y += 2;
+    drawLine(y); y += 8;
+    doc.setFontSize(10);
+    for (const svc of services) {
+      if (y > 265) { doc.addPage(); y = 15; }
+      doc.setFont(undefined, 'bold');
+      doc.text(noAcc(svc.name), 14, y); y += 5;
+      doc.setFont(undefined, 'normal');
+      const stopsStr = svc.stops.map(s => {
+        const st = this.game.world.getStationById(s.stationId);
+        return st ? st.name : '?';
+      }).join('  >  ');
+      // Word wrap long routes
+      const lines = doc.splitTextToSize(noAcc(stopsStr), pw - 30);
+      doc.text(lines, 18, y); y += lines.length * 4 + 1;
+      doc.setFontSize(9); doc.setTextColor(100);
+      doc.text(`Distance: ${Math.round(svc.totalDistance || 0)} km | Aller-retour: ${svc.roundTrip ? 'Oui' : 'Non'} | Multi: x${svc.multiDepartures || 1}`, 18, y);
+      doc.setTextColor(0); doc.setFontSize(10); y += 8;
+    }
+    addFooter();
+
+    // ========== PAGE 5 : RAMES ==========
+    doc.addPage();
+    y = 20;
+    const newRames = lastBulletin ? rames.filter(r => r.createdDate >= lastBulletin) : rames;
+    const rameTitle = lastBulletin ? `4. Nouvelles rames (${newRames.length})` : `4. Parc de rames (${rames.length})`;
+    doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text(rameTitle, 10, y); y += 2;
+    drawLine(y); y += 8;
+    doc.setFontSize(10);
+    for (const r of (newRames.length > 0 ? newRames : rames)) {
+      if (y > 240) { doc.addPage(); y = 15; }
+      doc.setFont(undefined, 'bold');
+      doc.text(noAcc(r.name), 14, y); y += 5;
+      doc.setFont(undefined, 'normal'); doc.setFontSize(9);
+      doc.text(noAcc(`${r.totalLength.toFixed(0)}m | ${r.totalTonnage}t | ${r.totalCapacity} places | Fret: ${r.totalFreightCapacity}t | Vmax: ${r.maxSpeed} km/h`), 18, y); y += 4;
+      doc.text(noAcc(`Mise en service: ${r.createdDate} | Km: ${Math.round(r.totalKmRun || 0).toLocaleString('fr-FR')} km | Traction: ${r.traction}`), 18, y); y += 5;
+      // Images
+      let imgX = 18;
+      for (const e of r.elementDetails) {
+        if (e.imageData && y < 255 && imgX < pw - 40) {
+          try { doc.addImage(e.imageData, 'PNG', imgX, y, 25, 8); imgX += 28; } catch(err) {}
+        }
+      }
+      if (imgX > 18) y += 11;
+      doc.setFontSize(10);
+      y += 4;
+    }
+    addFooter();
+
+    // ========== PAGE 6 : INCIDENTS ==========
+    doc.addPage();
+    y = 20;
+    const incidents = this.game.incidentManager?.getActiveIncidents?.() || [];
+    doc.setFontSize(16); doc.setFont(undefined, 'bold'); doc.text(`5. Incidents (${incidents.length})`, 10, y); y += 2;
+    drawLine(y); y += 8;
+    if (incidents.length === 0) {
+      doc.setFontSize(11); doc.setFont(undefined, 'italic'); doc.setTextColor(120);
+      doc.text('Aucun incident actif.', 14, y);
+      doc.setTextColor(0);
+    } else {
+      doc.setFontSize(10); doc.setFont(undefined, 'normal');
+      for (const inc of incidents) {
+        if (y > 270) { doc.addPage(); y = 15; }
+        doc.setFont(undefined, 'bold');
+        doc.text(noAcc(inc.name || 'Incident'), 14, y);
+        doc.setFont(undefined, 'normal'); y += 5;
+        doc.text(`Impact: ${inc.impact || '?'} | Rayon: ${inc.radius || '?'} km | Duree: ${inc.duration || '?'} min`, 18, y); y += 7;
+      }
+    }
+    addFooter();
+
+    eco._lastBulletinDate = now;
+    doc.save(`bulletin_${company.replace(/\s/g, '_')}_${now.replace(/\//g, '-')}.pdf`);
+    } catch (err) { console.error('Bulletin PDF error:', err); alert('Erreur generation PDF: ' + err.message); }
+  }
+
+  _openFicheHoraireModal() {
+    const modal = document.getElementById('modal-fiche-horaire');
+    const select = document.getElementById('fiche-horaire-station');
+    if (!modal || !select) return;
+
+    // Populate station list sorted alphabetically
+    const stations = [...(this.game.world.stations || [])].sort((a, b) => a.name.localeCompare(b.name));
+    select.innerHTML = stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+
+    modal.classList.remove('hidden');
+
+    // Bind generate button (replace handler to avoid duplicates)
+    const btn = document.getElementById('btn-fiche-horaire-go');
+    if (btn) {
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', () => {
+        const stationId = select.value;
+        if (!stationId) return;
+        modal.classList.add('hidden');
+        this._generateFicheHoraire(stationId);
+      });
+    }
+  }
+
+  _generateFicheHoraire(stationId) {
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) return alert('jsPDF non charge');
+    try {
+    const noAcc = (s) => typeof s === 'string' ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : String(s);
+    const minToStr = (m) => { const h = Math.floor(m / 60) % 24; const mi = Math.round(m % 60); return `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`; };
+
+    const station = this.game.world.getStationById(stationId);
+    if (!station) return alert('Gare introuvable');
+    const stationName = noAcc(station.name);
+    const company = noAcc(this.game.account.companyName || 'Rail Empire');
+    const now = new Date().toLocaleDateString('fr-FR');
+
+    // Collect all services that stop at this station (type 'arret')
+    const allServices = this.game.scheduleCreator.services || [];
+    const entries = [];
+
+    for (const svc of allServices) {
+      if (!svc.active) continue;
+      const stops = svc.stops || [];
+
+      // Find this station in the forward stops
+      for (let i = 0; i < stops.length; i++) {
+        if (stops[i].stationId !== stationId) continue;
+        if (stops[i].type !== 'arret') continue;
+
+        // Determine destination (last arret stop after this one)
+        let destStop = null, destStation = null;
+        for (let j = stops.length - 1; j > i; j--) {
+          if (stops[j].type === 'arret' && stops[j].stationId) {
+            destStop = stops[j];
+            destStation = this.game.world.getStationById(stops[j].stationId);
+            break;
+          }
+        }
+        if (!destStation) continue; // Skip if this is the last stop (terminus)
+
+        // Intermediate stops (between this station and destination, only 'arret' type)
+        const intermediates = [];
+        for (let j = i + 1; j < stops.length; j++) {
+          if (stops[j] === destStop) break;
+          if (stops[j].type !== 'arret' || !stops[j].stationId) continue;
+          const intSt = this.game.world.getStationById(stops[j].stationId);
+          if (intSt) {
+            intermediates.push({
+              name: noAcc(intSt.name),
+              depTime: minToStr(stops[j].departureTime),
+            });
+          }
+        }
+
+        // Platform at this station
+        const voie = stops[i].platform || '';
+
+        entries.push({
+          serviceName: noAcc(svc.name),
+          depTime: stops[i].departureTime,
+          depTimeStr: minToStr(stops[i].departureTime),
+          destination: noAcc(destStation.name),
+          destArrTime: minToStr(destStop.arrivalTime),
+          intermediates,
+          voie,
+        });
+      }
+
+      // Also check return leg if round trip
+      if (svc.roundTrip) {
+        const retStops = svc.buildReturnStops();
+        for (let i = 0; i < retStops.length; i++) {
+          if (retStops[i].stationId !== stationId) continue;
+          if (retStops[i].type !== 'arret') continue;
+
+          let destStop = null, destStation = null;
+          for (let j = retStops.length - 1; j > i; j--) {
+            if (retStops[j].type === 'arret' && retStops[j].stationId) {
+              destStop = retStops[j];
+              destStation = this.game.world.getStationById(retStops[j].stationId);
+              break;
+            }
+          }
+          if (!destStation) continue;
+
+          const intermediates = [];
+          for (let j = i + 1; j < retStops.length; j++) {
+            if (retStops[j] === destStop) break;
+            if (retStops[j].type !== 'arret' || !retStops[j].stationId) continue;
+            const intSt = this.game.world.getStationById(retStops[j].stationId);
+            if (intSt) {
+              intermediates.push({
+                name: noAcc(intSt.name),
+                depTime: minToStr(retStops[j].departureTime),
+              });
+            }
+          }
+
+          const voie = retStops[i].platform || '';
+          const retName = svc.returnName ? noAcc(svc.returnName) : noAcc(svc.name) + ' (retour)';
+
+          entries.push({
+            serviceName: retName,
+            depTime: retStops[i].departureTime,
+            depTimeStr: minToStr(retStops[i].departureTime),
+            destination: noAcc(destStation.name),
+            destArrTime: minToStr(destStop.arrivalTime),
+            intermediates,
+            voie,
+          });
+        }
+      }
+    }
+
+    // Sort by departure time
+    entries.sort((a, b) => a.depTime - b.depTime);
+
+    if (entries.length === 0) {
+      return alert(`Aucun service ne dessert ${station.name}`);
+    }
+
+    // Generate PDF
+    const doc = new jsPDF();
+    const pw = doc.internal.pageSize.getWidth();
+
+    // --- HEADER ---
+    let y = 15;
+    doc.setFillColor(0, 40, 85);
+    doc.rect(0, 0, pw, 30, 'F');
+    doc.setTextColor(255);
+    doc.setFontSize(16); doc.setFont(undefined, 'bold');
+    doc.text(stationName, pw / 2, 13, { align: 'center' });
+    doc.setFontSize(10); doc.setFont(undefined, 'normal');
+    doc.text(`Fiche horaire -- ${company} -- ${now}`, pw / 2, 21, { align: 'center' });
+    doc.setFontSize(9);
+    doc.text(`${entries.length} train(s)`, pw / 2, 27, { align: 'center' });
+    doc.setTextColor(0);
+    y = 36;
+
+    // --- COLUMN HEADERS ---
+    doc.setFillColor(230, 230, 230);
+    doc.rect(10, y - 4, pw - 20, 8, 'F');
+    doc.setFontSize(8); doc.setFont(undefined, 'bold'); doc.setTextColor(60);
+    doc.text('Dep.', 12, y);
+    doc.text('Service', 30, y);
+    doc.text('Destination', 70, y);
+    doc.text('Arr.', 140, y);
+    doc.text('Voie', pw - 18, y, { align: 'center' });
+    doc.setTextColor(0);
+    y += 8;
+
+    // --- ENTRIES ---
+    for (const entry of entries) {
+      // Check page overflow
+      const neededHeight = 14 + entry.intermediates.length * 4;
+      if (y + neededHeight > 275) {
+        // Footer
+        doc.setFontSize(7); doc.setTextColor(150); doc.setFont(undefined, 'italic');
+        doc.text(`${stationName} -- ${company}`, pw / 2, 290, { align: 'center' });
+        doc.setTextColor(0); doc.setFont(undefined, 'normal');
+        doc.addPage();
+        y = 15;
+      }
+
+      // Separator line
+      doc.setDrawColor(200);
+      doc.line(10, y - 2, pw - 10, y - 2);
+
+      // Departure time (bold, large)
+      doc.setFontSize(11); doc.setFont(undefined, 'bold');
+      doc.text(entry.depTimeStr, 12, y + 2);
+
+      // Service name
+      doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.setTextColor(80);
+      doc.text(entry.serviceName, 30, y + 2);
+      doc.setTextColor(0);
+
+      // Destination (bold, prominent)
+      doc.setFontSize(11); doc.setFont(undefined, 'bold');
+      doc.text(entry.destination, 70, y + 2);
+
+      // Arrival time at destination
+      doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.setTextColor(80);
+      doc.text(entry.destArrTime, 140, y + 2);
+      doc.setTextColor(0);
+
+      // Voie (right column, highlighted)
+      if (entry.voie) {
+        doc.setFontSize(10); doc.setFont(undefined, 'bold');
+        doc.text(String(entry.voie), pw - 18, y + 2, { align: 'center' });
+      }
+
+      y += 7;
+
+      // Intermediate stations (smaller, grey)
+      if (entry.intermediates.length > 0) {
+        doc.setFontSize(7); doc.setFont(undefined, 'normal'); doc.setTextColor(120);
+        const intText = entry.intermediates.map(s => `${s.name} (${s.depTime})`).join('  |  ');
+        // Split long text across lines
+        const lines = doc.splitTextToSize(intText, pw - 40);
+        for (const line of lines) {
+          doc.text(line, 30, y);
+          y += 3.5;
+        }
+        doc.setTextColor(0);
+      }
+
+      y += 4;
+    }
+
+    // Final separator
+    doc.setDrawColor(200);
+    doc.line(10, y - 2, pw - 10, y - 2);
+
+    // Footer
+    doc.setFontSize(7); doc.setTextColor(150); doc.setFont(undefined, 'italic');
+    doc.text(`${stationName} -- ${company} -- Genere automatiquement`, pw / 2, 290, { align: 'center' });
+    doc.setTextColor(0);
+
+    doc.save(`fiche_horaire_${stationName.replace(/\s/g, '_')}_${now.replace(/\//g, '-')}.pdf`);
+    } catch (err) { console.error('Fiche horaire PDF error:', err); alert('Erreur generation PDF: ' + err.message); }
   }
 
   renderEconomyPage() {
@@ -1153,6 +3214,33 @@ export class UI {
     if (el('eco-revenue')) el('eco-revenue').textContent = '+' + eco.formatAmount(eco.revenue);
     if (el('eco-expenses')) el('eco-expenses').textContent = '-' + eco.formatAmount(eco.expenses);
     if (el('eco-penalties')) el('eco-penalties').textContent = '-' + eco.formatAmount(eco.penalties);
+    if (el('eco-passengers')) el('eco-passengers').textContent = eco.totalPassengers.toLocaleString('fr-FR');
+    if (el('eco-freight-tonnes')) el('eco-freight-tonnes').textContent = eco.totalFreightTonnes.toLocaleString('fr-FR');
+
+    // Km de voies possédés (tracks + tronçons)
+    if (el('eco-track-km')) {
+      const tracks = this.game.world.tracks || [];
+      let totalTrackKm = tracks.reduce((s, t) => s + (t.distance || 0), 0);
+      if (this.game.voiePointManager) {
+        totalTrackKm += this.game.voiePointManager.getAllTroncons().reduce((s, t) => s + (t.distance || 0), 0);
+      }
+      el('eco-track-km').textContent = Math.round(totalTrackKm).toLocaleString('fr-FR');
+    }
+    // Total km parcourus par tous les trains (sum all services per rame)
+    if (el('eco-total-train-km')) {
+      const rameKm = new Map();
+      for (const svc of this.game.scheduleCreator.getActiveServices()) {
+        if (svc.rame && svc.train) {
+          const rid = svc.rame.id;
+          rameKm.set(rid, (rameKm.get(rid) || 0) + (svc.train.totalKmRun || 0));
+        }
+      }
+      let totalKm = 0;
+      for (const r of this.game.rameManager.getAll()) {
+        totalKm += rameKm.get(r.id) || r.totalKmRun || 0;
+      }
+      el('eco-total-train-km').textContent = Math.round(totalKm).toLocaleString('fr-FR');
+    }
 
     const histEl = el('eco-history');
     if (histEl) {
@@ -1188,10 +3276,14 @@ export class UI {
     const container = document.getElementById('trains-list');
     if (!container) return;
 
-    // Show only active trains (moving or stopped at station)
+    // Show only active trains (moving or stopped at station) + rescue services + in repair/maintenance
     const activeTrains = services.filter(svc =>
-      svc.state === 'moving' || svc.state === 'stopped_at_station' ||
-      (svc.train && svc.train.speed > 0)
+      svc && svc.train && (
+        svc.isRescue ||
+        svc.state === 'moving' || svc.state === 'stopped_at_station' ||
+        svc.train.speed > 0 ||
+        svc.train.breakdown || svc.train.inMaintenance
+      )
     );
 
     if (activeTrains.length === 0) {
@@ -1199,48 +3291,230 @@ export class UI {
       return;
     }
 
-    container.innerHTML = activeTrains.map(svc => {
+    const html = activeTrains.map(svc => {
       const t = svc.train;
-      const stateLabel = t.breakdown ? 'En panne' :
-        t.blockedBy ? 'Bloque (cantonnement)' :
-        t.incident ? `Incident: ${t.incident.name}` :
-        svc.state === 'waiting' ? 'En attente' :
-        svc.state === 'moving' ? (t.speed > 0 ? 'En ligne' : 'Arret') :
-        'En gare';
-      const stateClass = t.breakdown ? 'status-stopped' :
-        t.blockedBy ? 'status-stopped' :
-        t.incident ? 'status-stopped' :
-        svc.state === 'moving' && t.speed > 0 ? 'status-moving' :
-        svc.state === 'waiting' ? 'status-waiting' : 'status-stopped';
-      const nextStop = svc.getNextStop();
-      const targetStation = svc.getTargetStation();
-      const nextInfo = nextStop
-        ? `${nextStop.type === 'arret' ? 'Arr.' : 'Pass.'} ${this.minToTimeStr(nextStop.arrivalTime)} ${targetStation?.name || ''}`
-        : 'Service termine';
+      if (!t) return '';
 
-      const ramePreview = svc.rame ? svc.rame.elementDetails.map(e =>
-        e.imageData ? `<img src="${e.imageData}">` : ''
-      ).join('') : '';
+      // S1.1: Delay status with ±0.5 min neutral zone to avoid flickering
+      const rawDelay = t.delay || 0;
+      const delayVal = rawDelay === 0 ? 0 : Math.round(rawDelay);
+      let delayLabel, delayClass;
+      if (delayVal > 0) {
+        delayLabel = `+${delayVal} min`;
+        delayClass = 'delay-late';
+      } else if (delayVal < 0) {
+        delayLabel = `- ${Math.abs(delayVal)} min`;
+        delayClass = 'delay-early';
+      } else {
+        delayLabel = 'À l\'heure';
+        delayClass = 'delay-ok';
+      }
+
+      // Rescue services have simplified display
+      if (svc.isRescue) {
+        const stateLabels = { en_route: 'En route', recovering: 'Remorquage', returning: 'Retour depot' };
+        const stateLabel = stateLabels[svc.rescueState] || '';
+        return `
+          <div class="train-card-fixed" style="border-color:#ef4444">
+            <div class="tc-row1">
+              <span class="train-color" style="background:#ef4444"></span>
+              <span class="tc-name">${svc.name}</span>
+              <span class="tc-speed">${Math.round(t.speed)} km/h</span>
+            </div>
+            <div class="tc-row2">
+              <span style="color:#ef4444;font-weight:600;font-size:10px">SECOURS</span>
+              <span style="color:var(--text2);font-size:10px">${stateLabel}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // S3: Approach / platform / regulation status
+      let contextLabel = '', contextClass = '';
+      const _nsCtx = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
+      const _isWaypoint = _nsCtx?.type === 'waypoint';
+      if (svc.state === 'stopped_at_station' && !_isWaypoint) {
+        const stName = t.stoppedAt?.name || '';
+        const voie = t.platform ? ` Voie ${t.platform}` : '';
+        contextLabel = stName ? `À quai — ${stName}${voie}` : 'À quai';
+        contextClass = 'ctx-quai';
+      } else if (t.speed === 0 && svc.state === 'moving') {
+        contextLabel = 'Régulation du trafic';
+        contextClass = 'ctx-regulation';
+      } else if (t.blockedBy) {
+        contextLabel = 'Régulation du trafic';
+        contextClass = 'ctx-regulation';
+      } else if (svc.state === 'moving' && t.speed > 0) {
+        const target = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
+        if (target && svc.position) {
+          let tgtLat = target.lat, tgtLon = target.lon;
+          const ns = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
+          if (ns && this.game.voiePointManager) {
+            // Priority: use exact voie point, then station voie point by platform name
+            if (ns.voiePointId) {
+              const vp = this.game.voiePointManager.getVoiePointById(ns.voiePointId);
+              if (vp) { tgtLat = vp.lat; tgtLon = vp.lon; }
+            } else if (ns.platform) {
+              const svp = this.game.voiePointManager.getStationVoiePoint(target.id, ns.platform);
+              if (svp) { tgtLat = svp.lat; tgtLon = svp.lon; }
+            }
+          }
+          const dLat = (tgtLat - svc.position.lat) * 111;
+          const dLon = (tgtLon - svc.position.lon) * 111 * Math.cos(svc.position.lat * Math.PI / 180);
+          const distKm = Math.sqrt(dLat * dLat + dLon * dLon);
+          if (distKm < 0.3 && !_isWaypoint) {
+            contextLabel = 'À l\'approche';
+            contextClass = 'ctx-approach';
+          }
+        }
+      }
+
+      // "Circule sur Voie X" — use the train's current voie from schedule data
+      let circuleSurVoie = '';
+      if (svc.state === 'moving' && svc.position && this.game.voiePointManager) {
+        // Priority: 1) previous stop's voie, 2) nearest voie point
+        const prevStopIdx = (svc.currentStopIndex || 1) - 1;
+        const curStops = typeof svc.getCurrentStops === 'function' ? svc.getCurrentStops() : [];
+        const prevStop = curStops[prevStopIdx];
+        let voie = prevStop?.platform || null;
+        if (!voie) {
+          voie = this.game.voiePointManager.getVoieAtPosition(svc.position);
+        }
+        if (voie) {
+          circuleSurVoie = `Circule sur Voie ${voie}`;
+        }
+      }
+
+      // Next stop info — include scheduled voie if set
+      const nextStop = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
+      const targetStation = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
+      let nextInfo;
+      if (nextStop && targetStation) {
+        // For voie point waypoints, name already contains voie info
+        const voie = (nextStop.platform && nextStop.stationId) ? ` Voie ${nextStop.platform}` : '';
+        nextInfo = `→ ${targetStation.name}${voie}`;
+      } else if (nextStop) {
+        nextInfo = `→ ...`;
+      } else {
+        nextInfo = 'Termine';
+      }
+
+      // S4 + S12: Platform label with station name + "Voie X"
+      let platformLabel = '';
+      if (t.platform) {
+        const stoppedStation = t.stoppedAt;
+        let voieName;
+        if (stoppedStation?.platformNames?.length >= t.platform) {
+          voieName = stoppedStation.platformNames[t.platform - 1];
+        } else {
+          voieName = String(t.platform);
+        }
+        const stName = stoppedStation?.name || '';
+        platformLabel = stName ? `${stName} Voie ${voieName}` : `Voie ${voieName}`;
+      }
+
+      // S12: Train identification (series + number)
+      const displayName = t.seriesName ? `${t.seriesName} ${t.number || ''}`.trim() : svc.name;
+
+      // S2: Train images (scrollable zone)
+      let imageHtml = '';
+      if (svc.rame && svc.rame.elementDetails) {
+        const imgs = svc.rame.elementDetails
+          .filter(e => e.imageData)
+          .map(e => `<img src="${e.imageData}" class="tc-train-img">`)
+          .join('');
+        if (imgs) {
+          imageHtml = `<div class="tc-images-scroll">${imgs}</div>`;
+        }
+      }
+
+      // Incident status
+      let incidentHtml = '';
+      if (t.incident) {
+        const incColor = t.incident.effect === 'stop' ? '#f87171' : '#facc15';
+        const incLabel = t.incident.effect === 'stop' ? 'Interruption' : `Ralentissement (${t.incident.speedLimit} km/h)`;
+        const incIcon = t.incident.effect === 'stop' ? '<img src="img/interruption.png" style="height:12px;vertical-align:middle;margin-right:3px">' : '<img src="img/ralentissement.png" style="height:12px;vertical-align:middle;margin-right:3px">';
+        incidentHtml = `<div class="tc-line"><span style="color:${incColor};font-weight:600;font-size:10px">${incIcon}${incLabel}${t.incident.name ? ' — ' + t.incident.name : ''}</span></div>`;
+      }
+
+      // Breakdown status
+      let breakdownHtml = '';
+      if (t.breakdown) {
+        const repairInfo = this.game.depotManager.getRepairInfo(svc.id);
+        const repairLabel = repairInfo ? ` — Reparation ${Math.ceil(repairInfo.remainingMin)} min` : '';
+        breakdownHtml = `<div class="tc-line"><span style="color:#ef4444;font-weight:600;font-size:10px">EN PANNE${repairLabel}</span></div>`;
+      }
+
+      // Maintenance status
+      let maintenanceHtml = '';
+      if (t.inMaintenance) {
+        const maintInfo = this.game.depotManager.getRepairInfo(svc.id);
+        const maintLabel = maintInfo ? ` — ${Math.ceil(maintInfo.remainingMin)} min` : '';
+        maintenanceHtml = `<div class="tc-line"><span style="color:#3b82f6;font-weight:600;font-size:10px">EN MAINTENANCE${maintLabel}</span></div>`;
+      }
+
+      // Wear info
+      const wearHtml = t.wearLevel > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(t.wearLevel)}% · Total: ${Math.round(t.totalKmRun || 0)} km</span></div>` : '';
+
+      // Garage button
+      let garageHtml = '';
+      if (svc._garage && svc._garage.phase === 'parked') {
+        garageHtml = `<div class="tc-line"><span style="color:#f59e0b;font-size:10px;font-weight:600">Gare sur voie de garage</span> <button class="btn-sm" style="font-size:9px;padding:1px 5px" onclick="game.ui.resumeFromGarage('${svc.id}')">Reprendre</button></div>`;
+      } else if (svc._garage && svc._garage.phase === 'going') {
+        garageHtml = `<div class="tc-line"><span style="color:#f59e0b;font-size:10px">En route vers voie de garage...</span></div>`;
+      } else if (svc._garage && svc._garage.phase === 'returning') {
+        garageHtml = `<div class="tc-line"><span style="color:#22c55e;font-size:10px">Reprise du trajet...</span></div>`;
+      } else if (t.blockedBy && svc.state === 'moving' && !t.breakdown) {
+        let vpOptions = '';
+        if (svc.position && this.game.voiePointManager) {
+          const nearVPs = this.game.voiePointManager.getAll().filter(vp => {
+            const d = Math.sqrt(Math.pow((vp.lat - svc.position.lat) * 111, 2) + Math.pow((vp.lon - svc.position.lon) * 111 * Math.cos(svc.position.lat * Math.PI / 180), 2));
+            return d < 5 && !vp.stationId;
+          }).slice(0, 10);
+          if (nearVPs.length > 0) {
+            vpOptions = `<select id="garage-vp-${svc.id}" style="font-size:9px;max-width:90px">${nearVPs.map(vp => `<option value="${vp.id}">Voie ${vp.voie} (${vp.id.slice(-4)})</option>`).join('')}</select> <button class="btn-sm" style="font-size:9px;padding:1px 5px" onclick="game.ui.garageService('${svc.id}')">Garer</button>`;
+          }
+        }
+        if (vpOptions) garageHtml = `<div class="tc-line">${vpOptions}</div>`;
+      }
 
       return `
-        <div class="train-item">
-          <div class="train-header">
+        <div class="train-card-fixed">
+          <div class="tc-line tc-header">
             <span class="train-color" style="background:${t.color}"></span>
-            <span class="train-name">${svc.name}</span>
-            <span class="train-speed">${Math.round(t.speed)} km/h</span>
+            <span class="tc-name">${displayName}</span>
           </div>
-          <div class="train-details">
-            <span class="${stateClass}">${stateLabel}</span>
-            <span class="train-next">${nextInfo}</span>
-          </div>
-          <div class="train-meta">
-            <span>Retard: <b class="${t.delay > 0 ? 'delay-late' : 'delay-ok'}">${t.delay} min</b></span>
-            <span>${Math.round(svc.totalDistance)} km</span>
-          </div>
-          ${ramePreview ? `<div class="train-rame-preview">${ramePreview}</div>` : ''}
+          ${imageHtml}
+          <div class="tc-line"><span class="tc-speed">${Math.round(t.speed)} km/h</span></div>
+          <div class="tc-line"><span class="${delayClass}">${delayLabel}</span></div>
+          ${contextLabel ? `<div class="tc-line"><span class="${contextClass}">${contextLabel}</span></div>` : ''}
+          ${circuleSurVoie ? `<div class="tc-line"><span style="color:#94a3b8;font-size:10px">${circuleSurVoie}</span></div>` : ''}
+          ${platformLabel ? `<div class="tc-line"><span class="tc-voie">${platformLabel}</span></div>` : ''}
+          <div class="tc-line"><span class="tc-next">${nextInfo}</span></div>
+          ${incidentHtml}
+          ${breakdownHtml}
+          ${maintenanceHtml}
+          ${wearHtml}
+          ${garageHtml}
         </div>
       `;
     }).join('');
+    // S10: Only update DOM if content actually changed to avoid flicker
+    if (container.innerHTML !== html) container.innerHTML = html;
+  }
+
+  garageService(svcId) {
+    const svc = this.game.scheduleCreator.services.find(s => s.id === svcId);
+    if (!svc) return;
+    const sel = document.getElementById(`garage-vp-${svcId}`);
+    if (!sel) return;
+    svc.garageToVoiePoint(sel.value);
+  }
+
+  resumeFromGarage(svcId) {
+    const svc = this.game.scheduleCreator.services.find(s => s.id === svcId);
+    if (!svc) return;
+    svc.resumeFromGarage();
   }
 
   updateFreightTab() {
@@ -1279,7 +3553,7 @@ export class UI {
 
     for (const inc of incidents) {
       const zone = inc.trackName || 'Zone inconnue';
-      const label = `${inc.icon} ${inc.name} - ${zone} (${Math.ceil(inc.remaining)} min)`;
+      const label = `${inc.name} - ${zone} (${Math.ceil(inc.remaining)} min)`;
       if (inc.effect === 'stop') {
         interruptions.push(label);
       } else {
@@ -1294,23 +3568,28 @@ export class UI {
       }
     }
 
-    // Update dual banners
-    if (bannerInterruptions) {
-      if (interruptions.length > 0) {
-        bannerInterruptions.textContent = interruptions.join(' | ');
-        bannerInterruptions.classList.remove('hidden');
+    // Helper to set banner content with icon and optional scrolling
+    const setBanner = (el, items, iconSrc) => {
+      if (!el) return;
+      if (items.length === 0) { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+      const joined = items.join('  \u00b7  ');
+      const contentKey = iconSrc + joined;
+      if (el._lastContent === contentKey) return;
+      el._lastContent = contentKey;
+      const icon = `<img class="alert-icon" src="${iconSrc}">`;
+      if (items.length > 1) {
+        el.classList.add('scrolling');
+        const dur = Math.max(10, joined.length * 0.3);
+        el.innerHTML = `${icon}<span class="alert-text" style="animation-duration:${dur}s">${joined}</span>`;
       } else {
-        bannerInterruptions.classList.add('hidden');
+        el.classList.remove('scrolling');
+        el.innerHTML = `${icon}<span class="alert-text">${joined}</span>`;
       }
-    }
-    if (bannerSlowdowns) {
-      if (slowdowns.length > 0) {
-        bannerSlowdowns.textContent = slowdowns.join(' | ');
-        bannerSlowdowns.classList.remove('hidden');
-      } else {
-        bannerSlowdowns.classList.add('hidden');
-      }
-    }
+    };
+
+    setBanner(bannerInterruptions, interruptions, 'img/interruption.png');
+    setBanner(bannerSlowdowns, slowdowns, 'img/ralentissement.png');
 
     // Legacy single banner fallback
     if (legacyBanner && !bannerInterruptions) {
@@ -1322,5 +3601,533 @@ export class UI {
         legacyBanner.classList.add('hidden');
       }
     }
+  }
+
+  // --- VOIE POINTS SYSTEM ---
+
+  setupVoiePointButtons() {
+    document.getElementById('btn-create-voie-point')?.addEventListener('click', () => {
+      this.toggleVoiePointCreation();
+    });
+    document.getElementById('btn-create-troncon')?.addEventListener('click', () => {
+      this.toggleTronconCreation();
+    });
+    document.getElementById('btn-create-troncon-manual')?.addEventListener('click', () => {
+      this.toggleManualTronconCreation();
+    });
+    document.getElementById('btn-tracer-ligne')?.addEventListener('click', () => {
+      this.toggleTracerLigne();
+    });
+    document.getElementById('btn-save-vp')?.addEventListener('click', () => {
+      this._saveVoiePoint();
+    });
+    document.getElementById('btn-delete-vp')?.addEventListener('click', () => {
+      this._deleteVoiePoint();
+    });
+  }
+
+  toggleVoiePointCreation() {
+    this.voiePointCreationMode = !this.voiePointCreationMode;
+    if (this.voiePointCreationMode) {
+      this.tronconCreationMode = false;
+      this.stationCreationMode = false;
+      this._tronconPointA = null;
+    }
+    const btn = document.getElementById('btn-create-voie-point');
+    if (btn) {
+      btn.textContent = this.voiePointCreationMode ? '✕ Annuler' : '+ Point de voie';
+      btn.classList.toggle('active-mode', this.voiePointCreationMode);
+    }
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = this.voiePointCreationMode ? 'crosshair' : 'grab';
+    // Reset other buttons
+    const stBtn = document.getElementById('btn-create-station');
+    if (stBtn && this.voiePointCreationMode) { stBtn.textContent = '+ Creer une gare'; stBtn.classList.remove('active-mode'); }
+    const trcBtn = document.getElementById('btn-create-troncon');
+    if (trcBtn && this.voiePointCreationMode) { trcBtn.textContent = '+ Troncon'; trcBtn.classList.remove('active-mode'); }
+  }
+
+  toggleTronconCreation() {
+    this.tronconCreationMode = !this.tronconCreationMode;
+    if (this.tronconCreationMode) {
+      this.voiePointCreationMode = false;
+      this.stationCreationMode = false;
+      this._tronconPointA = null;
+    }
+    const btn = document.getElementById('btn-create-troncon');
+    if (btn) {
+      btn.textContent = this.tronconCreationMode ? '✕ Annuler' : '+ Troncon';
+      btn.classList.toggle('active-mode', this.tronconCreationMode);
+    }
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = this.tronconCreationMode ? 'pointer' : 'grab';
+    // Reset other buttons
+    const stBtn = document.getElementById('btn-create-station');
+    if (stBtn && this.tronconCreationMode) { stBtn.textContent = '+ Creer une gare'; stBtn.classList.remove('active-mode'); }
+    const vpBtn = document.getElementById('btn-create-voie-point');
+    if (vpBtn && this.tronconCreationMode) { vpBtn.textContent = '+ Point de voie'; vpBtn.classList.remove('active-mode'); }
+    if (this.tronconCreationMode) {
+      this._showPickHint('Cliquer sur le point de depart (gare ou point de voie)');
+    } else {
+      this._hidePickHint();
+    }
+  }
+
+  _populateVpStationDropdown(selectedStationId, lat, lon) {
+    const sel = document.getElementById('vp-station');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Aucune (point en ligne)</option>';
+    // Sort stations by distance from the voie point
+    const stations = [...this.game.world.stations].sort((a, b) => {
+      const dA = Math.hypot((a.lat - lat) * 111, (a.lon - lon) * 111 * Math.cos(lat * Math.PI / 180));
+      const dB = Math.hypot((b.lat - lat) * 111, (b.lon - lon) * 111 * Math.cos(lat * Math.PI / 180));
+      return dA - dB;
+    });
+    for (const st of stations) {
+      const dist = Math.hypot((st.lat - lat) * 111, (st.lon - lon) * 111 * Math.cos(lat * Math.PI / 180));
+      const label = `${st.name} (${dist.toFixed(1)} km)`;
+      const opt = document.createElement('option');
+      opt.value = st.id;
+      opt.textContent = label;
+      if (st.id === selectedStationId) opt.selected = true;
+      sel.appendChild(opt);
+    }
+    // Auto-select nearest station if < 2km and creating new
+    if (!selectedStationId && stations.length > 0) {
+      const nearest = stations[0];
+      const dist = Math.hypot((nearest.lat - lat) * 111, (nearest.lon - lon) * 111 * Math.cos(lat * Math.PI / 180));
+      if (dist < 2) sel.value = nearest.id;
+    }
+  }
+
+  openVoiePointModal(lat, lon) {
+    this.voiePointCreationMode = false;
+    const btn = document.getElementById('btn-create-voie-point');
+    if (btn) { btn.textContent = '+ Point de voie'; btn.classList.remove('active-mode'); }
+    document.getElementById('game-canvas').style.cursor = 'grab';
+
+    this._editingVoiePointId = null;
+    document.getElementById('vp-modal-title').textContent = 'Nouveau point de voie';
+    document.getElementById('vp-voie').value = '1';
+    document.getElementById('vp-lat').value = lat.toFixed(6);
+    document.getElementById('vp-lon').value = lon.toFixed(6);
+    document.getElementById('btn-delete-vp').classList.add('hidden');
+    document.getElementById('btn-save-vp').textContent = 'Creer le point';
+    document.getElementById('vp-troncons-list').innerHTML = '';
+    this._populateVpStationDropdown(null, lat, lon);
+    document.getElementById('modal-voie-point')?.classList.remove('hidden');
+  }
+
+  openEditVoiePointModal(vp) {
+    this._editingVoiePointId = vp.id;
+    document.getElementById('vp-modal-title').textContent = 'Modifier le point de voie';
+    document.getElementById('vp-voie').value = vp.voie;
+    document.getElementById('vp-lat').value = vp.lat.toFixed(6);
+    document.getElementById('vp-lon').value = vp.lon.toFixed(6);
+    document.getElementById('btn-delete-vp').classList.remove('hidden');
+    document.getElementById('btn-save-vp').textContent = 'Enregistrer';
+    this._populateVpStationDropdown(vp.stationId, vp.lat, vp.lon);
+
+    // Show connected troncons
+    const vpm = this.game.voiePointManager;
+    const troncons = vpm.getTronconsForPoint(vp.id);
+    const trcList = document.getElementById('vp-troncons-list');
+    if (troncons.length > 0) {
+      trcList.innerHTML = '<div style="font-size:10px;color:var(--text2);margin-bottom:4px;font-weight:600">Troncons connectes:</div>' +
+        troncons.map(trc => {
+          const otherPt = trc.pointA === vp.id ? trc.pointB : trc.pointA;
+          const otherName = this._getPointName(otherPt);
+          return `<div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;padding:2px 0">
+            <span>→ ${otherName} (${Math.round(trc.distance)} km)</span>
+            <button onclick="game.ui._deleteTroncon('${trc.id}')" style="background:#7f1d1d;color:#fff;border:none;border-radius:3px;font-size:9px;padding:1px 6px;cursor:pointer">✕</button>
+          </div>`;
+        }).join('');
+    } else {
+      trcList.innerHTML = '<div style="font-size:10px;color:var(--text3)">Aucun troncon</div>';
+    }
+
+    document.getElementById('modal-voie-point')?.classList.remove('hidden');
+  }
+
+  _getPointName(pointId) {
+    const vp = this.game.voiePointManager.getVoiePointById(pointId);
+    if (vp) return `Voie ${vp.voie} (${vp.lat.toFixed(3)}, ${vp.lon.toFixed(3)})`;
+    const st = this.game.world.getStationById(pointId);
+    if (st) return st.name;
+    return pointId;
+  }
+
+  _saveVoiePoint() {
+    const voie = document.getElementById('vp-voie').value;
+    const lat = parseFloat(document.getElementById('vp-lat').value);
+    const lon = parseFloat(document.getElementById('vp-lon').value);
+    const stationId = document.getElementById('vp-station')?.value || null;
+    const vpm = this.game.voiePointManager;
+
+    if (this._editingVoiePointId) {
+      const vp = vpm.getVoiePointById(this._editingVoiePointId);
+      if (vp) {
+        vp.voie = voie;
+        vp.lat = lat;
+        vp.lon = lon;
+        vp.stationId = stationId;
+      }
+    } else {
+      vpm.addVoiePoint({ lat, lon, voie, stationId });
+    }
+
+    document.getElementById('modal-voie-point')?.classList.add('hidden');
+    this.game.saveState();
+  }
+
+  _deleteVoiePoint() {
+    if (!this._editingVoiePointId) return;
+    if (!confirm('Supprimer ce point de voie et ses troncons ?')) return;
+    this.game.voiePointManager.removeVoiePoint(this._editingVoiePointId);
+    document.getElementById('modal-voie-point')?.classList.add('hidden');
+    this.game.saveState();
+  }
+
+  _deleteTroncon(trcId) {
+    if (!confirm('Supprimer ce troncon ?')) return;
+    this.game.voiePointManager.removeTroncon(trcId);
+    // Refresh modal if open
+    if (this._editingVoiePointId) {
+      const vp = this.game.voiePointManager.getVoiePointById(this._editingVoiePointId);
+      if (vp) this.openEditVoiePointModal(vp);
+    }
+    this.game.saveState();
+  }
+
+  async _handleTronconClick(x, y) {
+    const renderer = this.game.renderer;
+    const vpm = this.game.voiePointManager;
+    const world = this.game.world;
+
+    // Find nearest station or voie point
+    let closest = null, minDist = Infinity, closestType = null;
+
+    for (const st of world.stations) {
+      const p = renderer.latLonToScreen(st.lat, st.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < minDist && d < 25) { minDist = d; closest = st; closestType = 'station'; }
+    }
+    for (const vp of vpm.getAll()) {
+      const p = renderer.latLonToScreen(vp.lat, vp.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < minDist && d < 25) { minDist = d; closest = vp; closestType = 'voiepoint'; }
+    }
+
+    if (!closest) return;
+
+    if (!this._tronconPointA) {
+      // First point selected
+      this._tronconPointA = { id: closest.id, type: closestType, lat: closest.lat, lon: closest.lon };
+      this._showPickHint(`Point A: ${closestType === 'station' ? closest.name : 'V' + closest.voie} — Cliquer sur le point B`);
+    } else {
+      // Second point selected — create troncon
+      if (closest.id === this._tronconPointA.id) {
+        this._showPickHint('Meme point! Choisissez un point different.');
+        return;
+      }
+
+      const ptA = this._tronconPointA;
+      const ptB = { id: closest.id, type: closestType, lat: closest.lat, lon: closest.lon };
+
+      // Try to get ORM route between the two points
+      let route = [];
+      let distance = 0;
+      try {
+        route = await this.game.orm.findRoute(ptA.lat, ptA.lon, ptB.lat, ptB.lon);
+        distance = this.game.orm.getRouteDistance(route);
+      } catch (e) {
+        // Fallback: straight line
+        const dLat = (ptB.lat - ptA.lat) * 111;
+        const dLon = (ptB.lon - ptA.lon) * 111 * Math.cos(ptA.lat * Math.PI / 180);
+        distance = Math.sqrt(dLat * dLat + dLon * dLon);
+        route = [
+          { lat: ptA.lat, lon: ptA.lon, maxSpeed: 160 },
+          { lat: ptB.lat, lon: ptB.lon, maxSpeed: 160 },
+        ];
+      }
+
+      vpm.addTroncon({
+        pointA: ptA.id,
+        pointB: ptB.id,
+        route,
+        distance: Math.round(distance),
+      });
+
+      this._tronconPointA = null;
+      this._showPickHint('Troncon cree ! Cliquer pour en creer un autre ou Echap pour quitter.');
+      this.game.saveState();
+    }
+  }
+
+  // --- Manual troncon tracing ---
+
+  toggleManualTronconCreation() {
+    this.manualTronconMode = !this.manualTronconMode;
+    if (this.manualTronconMode) {
+      this.voiePointCreationMode = false;
+      this.stationCreationMode = false;
+      this.tronconCreationMode = false;
+      this._manualTronconPointA = null;
+      this._manualTronconWaypoints = [];
+    }
+    const btn = document.getElementById('btn-create-troncon-manual');
+    if (btn) {
+      btn.textContent = this.manualTronconMode ? '✕ Annuler tracé' : '+ Tracé manuel';
+      btn.classList.toggle('active-mode', this.manualTronconMode);
+    }
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = this.manualTronconMode ? 'crosshair' : 'grab';
+    // Reset other mode buttons
+    const trcBtn = document.getElementById('btn-create-troncon');
+    if (trcBtn && this.manualTronconMode) { trcBtn.textContent = '+ Troncon'; trcBtn.classList.remove('active-mode'); }
+    const vpBtn = document.getElementById('btn-create-voie-point');
+    if (vpBtn && this.manualTronconMode) { vpBtn.textContent = '+ Point de voie'; vpBtn.classList.remove('active-mode'); }
+    if (this.manualTronconMode) {
+      this._showPickHint('Cliquer sur le point de départ (gare ou point de voie)');
+    } else {
+      this._hidePickHint();
+      this._manualTronconWaypoints = [];
+      this._manualTronconPointA = null;
+    }
+  }
+
+  _handleManualTronconClick(x, y) {
+    const renderer = this.game.renderer;
+    const vpm = this.game.voiePointManager;
+    const world = this.game.world;
+
+    // Check if clicking near a station or voie point
+    let closest = null, minDist = Infinity, closestType = null;
+    for (const st of world.stations) {
+      const p = renderer.latLonToScreen(st.lat, st.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < minDist && d < 25) { minDist = d; closest = st; closestType = 'station'; }
+    }
+    for (const vp of vpm.getAll()) {
+      const p = renderer.latLonToScreen(vp.lat, vp.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < minDist && d < 25) { minDist = d; closest = vp; closestType = 'voiepoint'; }
+    }
+
+    if (!this._manualTronconPointA) {
+      // Must click a station or voie point as starting point
+      if (!closest) {
+        this._showPickHint('Cliquer sur un point existant (gare ou point de voie) pour démarrer');
+        return;
+      }
+      this._manualTronconPointA = { id: closest.id, type: closestType, lat: closest.lat, lon: closest.lon };
+      this._manualTronconWaypoints = [{ lat: closest.lat, lon: closest.lon }];
+      this._showPickHint(`Départ: ${closestType === 'station' ? closest.name : 'Voie ' + closest.voie} — Cliquer pour tracer, cliquer un point pour terminer`);
+    } else if (closest && closest.id !== this._manualTronconPointA.id) {
+      // Clicked on a target point — finalize the tronçon
+      this._manualTronconWaypoints.push({ lat: closest.lat, lon: closest.lon });
+      this._finalizeManualTroncon(closest);
+    } else {
+      // Clicked on empty space — add waypoint
+      const worldPos = renderer.tileMap.screenToWorld(x, y, renderer.logicalWidth, renderer.logicalHeight);
+      this._manualTronconWaypoints.push({ lat: worldPos.lat, lon: worldPos.lon, maxSpeed: 160 });
+      this._showPickHint(`${this._manualTronconWaypoints.length} points tracés — Cliquer un point existant pour terminer`);
+    }
+  }
+
+  _finalizeManualTroncon(endPoint) {
+    const vpm = this.game.voiePointManager;
+    const ptA = this._manualTronconPointA;
+    const route = this._manualTronconWaypoints.map(wp => ({
+      lat: wp.lat, lon: wp.lon, maxSpeed: wp.maxSpeed || 160,
+    }));
+
+    // Calculate distance from waypoints
+    let distance = 0;
+    for (let i = 1; i < route.length; i++) {
+      const dLat = (route[i].lat - route[i-1].lat) * 111;
+      const dLon = (route[i].lon - route[i-1].lon) * 111 * Math.cos(route[i].lat * Math.PI / 180);
+      distance += Math.sqrt(dLat * dLat + dLon * dLon);
+    }
+
+    vpm.addTroncon({
+      pointA: ptA.id,
+      pointB: endPoint.id,
+      route,
+      distance: Math.round(distance),
+    });
+
+    this._manualTronconPointA = null;
+    this._manualTronconWaypoints = [];
+    this._showPickHint('Tronçon tracé ! Cliquer pour en tracer un autre ou Echap pour quitter.');
+    this.game.saveState();
+  }
+
+  // --- TRACER LIGNE (infrastructure import from OSM) ---
+
+  toggleTracerLigne() {
+    this.tracerLigneMode = !this.tracerLigneMode;
+    if (this.tracerLigneMode) {
+      this.voiePointCreationMode = false;
+      this.stationCreationMode = false;
+      this.tronconCreationMode = false;
+      this.manualTronconMode = false;
+      this._tracerLignePointA = null;
+    }
+    const btn = document.getElementById('btn-tracer-ligne');
+    if (btn) {
+      btn.textContent = this.tracerLigneMode ? '✕ Annuler' : 'Tracer ligne';
+      btn.classList.toggle('active-mode', this.tracerLigneMode);
+    }
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = this.tracerLigneMode ? 'crosshair' : 'grab';
+    if (this.tracerLigneMode) {
+      this._showPickHint('Cliquer sur le point A (gare, point de voie, ou un point sur la carte)');
+    } else {
+      this._hidePickHint();
+      this._tracerLignePointA = null;
+    }
+  }
+
+  async _handleTracerLigneClick(x, y) {
+    const renderer = this.game.renderer;
+    const worldPos = renderer.tileMap.screenToWorld(x, y, renderer.logicalWidth, renderer.logicalHeight);
+
+    // Try to snap to existing station or voie point
+    let snapped = null;
+    const world = this.game.world;
+    const vpm = this.game.voiePointManager;
+    for (const st of world.stations) {
+      const p = renderer.latLonToScreen(st.lat, st.lon);
+      if (Math.hypot(p.x - x, p.y - y) < 25) { snapped = { lat: st.lat, lon: st.lon, name: st.name, stationId: st.id }; break; }
+    }
+    if (!snapped) {
+      for (const vp of vpm.getAll()) {
+        const p = renderer.latLonToScreen(vp.lat, vp.lon);
+        if (Math.hypot(p.x - x, p.y - y) < 25) { snapped = { lat: vp.lat, lon: vp.lon, name: 'Voie ' + vp.voie }; break; }
+      }
+    }
+    const point = snapped || { lat: worldPos.lat, lon: worldPos.lon, name: `(${worldPos.lat.toFixed(4)}, ${worldPos.lon.toFixed(4)})` };
+
+    if (!this._tracerLignePointA) {
+      this._tracerLignePointA = point;
+      this._showPickHint(`Point A: ${point.name} — Cliquer sur le point B`);
+    } else {
+      const ptA = this._tracerLignePointA;
+      this._showPickHint('Import en cours...');
+
+      try {
+        const result = await this.game.orm.importInfrastructure(ptA.lat, ptA.lon, point.lat, point.lon);
+        if (result.voiePoints.length === 0) {
+          this._showPickHint('Aucune voie ferrée trouvée entre ces 2 points. Réessayez.');
+          this._tracerLignePointA = null;
+          return;
+        }
+
+        // Tag everything with a group ID for bulk delete
+        const lineGroupId = `line-${Date.now()}`;
+
+        // Link voie points near existing stations
+        for (const vpData of result.voiePoints) {
+          vpData.lineGroupId = lineGroupId;
+          for (const st of world.stations) {
+            const d = Math.sqrt(Math.pow((vpData.lat - st.lat) * 111, 2) + Math.pow((vpData.lon - st.lon) * 111 * Math.cos(st.lat * Math.PI / 180), 2));
+            if (d < 0.5) { // within 500m of station
+              vpData.stationId = st.id;
+              break;
+            }
+          }
+          // Don't duplicate existing voie points at same location
+          const existing = vpm.getAll().find(v => {
+            const d = Math.sqrt(Math.pow((v.lat - vpData.lat) * 111, 2) + Math.pow((v.lon - vpData.lon) * 111 * Math.cos(v.lat * Math.PI / 180), 2));
+            return d < 0.02 && v.voie === vpData.voie; // within 20m and same voie
+          });
+          if (!existing) {
+            vpm.addVoiePoint(vpData);
+          } else {
+            // Remap tronçons to use existing VP
+            for (const trc of result.troncons) {
+              if (trc.pointA === vpData.id) trc.pointA = existing.id;
+              if (trc.pointB === vpData.id) trc.pointB = existing.id;
+            }
+          }
+        }
+
+        // Add tronçons (keep all — no dédoublonnage, parallel tracks are valid!)
+        let addedTrc = 0;
+        for (const trcData of result.troncons) {
+          trcData.lineGroupId = lineGroupId;
+          if (trcData.pointA === trcData.pointB) continue;
+          vpm.addTroncon(trcData);
+          addedTrc++;
+        }
+
+        this.game.saveState();
+        this._lastLineGroupId = lineGroupId;
+        this._tracerLignePointA = null;
+        const vpCount = result.voiePoints.length;
+        const trackInfo = result.troncons.length > 0 ? ` (${addedTrc} tronçons)` : '';
+        this._showPickHint(`Import OK: ${vpCount} points de voie${trackInfo}. Cliquer pour un autre tracé, Suppr pour annuler l'import, ou Echap.`);
+      } catch (e) {
+        console.error('Tracer ligne error:', e);
+        this._showPickHint('Erreur lors de l\'import. Réessayez.');
+        this._tracerLignePointA = null;
+      }
+    }
+  }
+
+  // --- MAP SEARCH (Nominatim geocoding) ---
+  setupMapSearch() {
+    const input = document.getElementById('map-search-input');
+    const results = document.getElementById('map-search-results');
+    if (!input || !results) return;
+    let timer = null;
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      const q = input.value.trim();
+      if (q.length < 3) { results.classList.add('hidden'); return; }
+      timer = setTimeout(() => this._searchPlace(q), 400);
+    });
+    input.addEventListener('blur', () => { setTimeout(() => results.classList.add('hidden'), 200); });
+    input.addEventListener('focus', () => { if (results.children.length > 0) results.classList.remove('hidden'); });
+  }
+
+  async _searchPlace(q) {
+    const results = document.getElementById('map-search-results');
+    try {
+      const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&accept-language=fr`);
+      const data = await resp.json();
+      results.innerHTML = '';
+      if (data.length === 0) {
+        results.innerHTML = '<div class="map-search-result" style="color:var(--text3)">Aucun résultat</div>';
+      } else {
+        for (const r of data) {
+          const div = document.createElement('div');
+          div.className = 'map-search-result';
+          div.textContent = r.display_name;
+          div.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const lat = parseFloat(r.lat);
+            const lon = parseFloat(r.lon);
+            this.game.renderer.tileMap.centerLat = lat;
+            this.game.renderer.tileMap.centerLon = lon;
+            this.game.renderer.tileMap.zoomLevel = Math.max(this.game.renderer.tileMap.zoomLevel, 12);
+            document.getElementById('map-search-input').value = '';
+            results.classList.add('hidden');
+          });
+          results.appendChild(div);
+        }
+      }
+      results.classList.remove('hidden');
+    } catch (e) { /* silent */ }
+  }
+
+  // --- MOBILE NAV ---
+  setupMobileNav() {
+    const toggle = document.getElementById('nav-toggle');
+    const nav = document.querySelector('.nav-tabs');
+    if (!toggle || !nav) return;
+    toggle.addEventListener('click', () => nav.classList.toggle('open'));
+    nav.addEventListener('click', (e) => { if (e.target.classList.contains('nav-btn')) nav.classList.remove('open'); });
   }
 }

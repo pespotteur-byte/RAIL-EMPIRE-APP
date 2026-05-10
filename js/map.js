@@ -6,7 +6,7 @@ export class TileMap {
     this.centerLon = 2.7;
     this.zoomLevel = 7.5;
     this.minZoom = 5;
-    this.maxZoom = 18;
+    this.maxZoom = 20;
     this.viewportWidth = 800;
     this.viewportHeight = 600;
 

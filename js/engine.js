@@ -31,9 +31,14 @@ export class SimulationEngine {
   update() {
     if (this.paused) return;
 
-    const pt = this.getParisTime();
-    const currentMinute = pt.hours * 60 + pt.minutes;
     const now = performance.now();
+    // Cache Paris time computation (expensive) — refresh max every 500ms
+    if (!this._ptCache || now - this._ptCacheTime > 500) {
+      this._ptCache = this.getParisTime();
+      this._ptCacheTime = now;
+    }
+    const pt = this._ptCache;
+    const currentMinute = pt.hours * 60 + pt.minutes;
 
     // Minute-level tick for schedule events
     if (currentMinute !== this.lastMinute) {

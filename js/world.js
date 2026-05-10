@@ -15,9 +15,11 @@ export class Station {
       this.platforms = data.platforms || 2;
       this.type = data.type || 'voyageur';
     }
+    this.platformNames = data.platformNames || []; // custom platform names (e.g. ['1', '2', '3A', '3B'])
     this.cargo = [];
     this.facilities = [];
     this.country = '';
+    this.lineIds = data.lineIds || []; // lines this station belongs to
   }
 }
 
@@ -113,7 +115,8 @@ export class World {
       stations: this.stations.map(s => ({
         id: s.id, name: s.name, lat: s.lat, lon: s.lon,
         platforms: s.platforms, type: s.type, country: s.country,
-        facilities: s.facilities,
+        facilities: s.facilities, lineIds: s.lineIds || [],
+        platformNames: s.platformNames || [],
       })),
       tracks: this.tracks.map(t => ({
         id: t.id, stationA: t.stationA, stationB: t.stationB,
@@ -130,6 +133,8 @@ export class World {
       const s = new Station(d);
       s.country = d.country || '';
       s.facilities = d.facilities || [];
+      s.lineIds = d.lineIds || [];
+      s.platformNames = d.platformNames || [];
       return s;
     });
     this.tracks = (data.tracks || []).map(d => new Track(d));

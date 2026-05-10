@@ -8,6 +8,8 @@ export class Economy {
     this.ticketPricePerKm = 0.12;
     this.freightPricePerTKm = 0.08;
     this.dailyProcessed = {};
+    this.totalPassengers = 0;
+    this.totalFreightTonnes = 0;
   }
 
   addRevenue(amount, category, description) {
@@ -35,30 +37,68 @@ export class Economy {
     if (this.history.length > 200) this.history.shift();
   }
 
-  processServiceRevenue(service) {
+  // Legacy — kept for backward compat but now empty (revenue is per-stop)
+  processServiceRevenue(service) {}
+
+  /**
+   * Process revenue at each station stop.
+   * - Passengers: some descend (revenue for their trip), new ones board
+   * - Freight: some unloaded (revenue), new freight loaded
+   */
+  processStopRevenue(service, stationName, distFromPrev, isFirst, isTerminus) {
     if (!service || !service.rame) return;
-    const dist = service.totalDistance || 0;
-    if (dist <= 0) return;
+    if (distFromPrev <= 0 && !isFirst) return;
 
-    const passengers = service.rame.totalCapacity || 0;
-    const freightCap = service.rame.totalFreightCapacity || 0;
-    const occupancy = 0.6 + Math.random() * 0.3;
+    const maxPax = service.rame.totalCapacity || 0;
+    const maxFreight = service.rame.totalFreightCapacity || 0;
 
-    let passengerRevenue = Math.round(passengers * occupancy * dist * this.ticketPricePerKm);
-    let freightRevenue = Math.round(freightCap * occupancy * dist * this.freightPricePerTKm);
+    // Initialize onboard counts on first stop
+    if (service._onboardPax == null) service._onboardPax = 0;
+    if (service._onboardFreight == null) service._onboardFreight = 0;
 
-    if (service.train && service.train.delay >= 30) {
-      const penalty = Math.round((passengerRevenue + freightRevenue) * 0.25);
-      this.addPenalty(penalty, `Amende retard >30min ${service.name}`);
-      passengerRevenue = Math.round(passengerRevenue * 0.75);
-      freightRevenue = Math.round(freightRevenue * 0.75);
+    // --- DESCENTE / DÉCHARGEMENT (revenue from those who rode this segment) ---
+    if (!isFirst && distFromPrev > 0) {
+      // Random 30-70% of onboard passengers descend at intermediate stops, 100% at terminus
+      const paxDescendRate = isTerminus ? 1.0 : (0.3 + Math.random() * 0.4);
+      const freightUnloadRate = isTerminus ? 1.0 : (0.2 + Math.random() * 0.3);
+
+      const paxDescend = Math.round(service._onboardPax * paxDescendRate);
+      const freightUnload = Math.round(service._onboardFreight * freightUnloadRate);
+
+      // Revenue = descended passengers * distance they traveled * ticket price
+      let paxRevenue = Math.round(paxDescend * distFromPrev * this.ticketPricePerKm);
+      let frtRevenue = Math.round(freightUnload * distFromPrev * this.freightPricePerTKm);
+
+      // Delay penalty
+      if (service.train && service.train.delay >= 30) {
+        const penalty = Math.round((paxRevenue + frtRevenue) * 0.25);
+        if (penalty > 0) this.addPenalty(penalty, `Retard >30min ${service.name} @ ${stationName}`);
+        paxRevenue = Math.round(paxRevenue * 0.75);
+        frtRevenue = Math.round(frtRevenue * 0.75);
+      }
+
+      if (paxDescend > 0) {
+        this.totalPassengers += paxDescend;
+        if (paxRevenue > 0) this.addRevenue(paxRevenue, 'voyageurs', `${stationName}: ${paxDescend} desc. (${Math.round(distFromPrev)} km) — ${service.name}`);
+      }
+      if (freightUnload > 0) {
+        this.totalFreightTonnes += freightUnload;
+        if (frtRevenue > 0) this.addRevenue(frtRevenue, 'fret', `${stationName}: ${freightUnload}t déch. (${Math.round(distFromPrev)} km) — ${service.name}`);
+      }
+
+      service._onboardPax -= paxDescend;
+      service._onboardFreight -= freightUnload;
     }
 
-    if (passengerRevenue > 0) {
-      this.addRevenue(passengerRevenue, 'voyageurs', `Voyageurs ${service.name} (${Math.round(passengers * occupancy)} pax, ${Math.round(dist)} km)`);
-    }
-    if (freightRevenue > 0) {
-      this.addRevenue(freightRevenue, 'fret', `Fret ${service.name} (${Math.round(dist)} km)`);
+    // --- MONTÉE / CHARGEMENT (new passengers/freight board) ---
+    if (!isTerminus) {
+      const availPaxSlots = maxPax - service._onboardPax;
+      const availFreightSlots = maxFreight - service._onboardFreight;
+      const boardRate = 0.4 + Math.random() * 0.4; // 40-80% fill of available
+      const paxBoard = Math.round(availPaxSlots * boardRate);
+      const freightLoad = Math.round(availFreightSlots * boardRate);
+      service._onboardPax += paxBoard;
+      service._onboardFreight += freightLoad;
     }
   }
 
@@ -85,9 +125,7 @@ export class Economy {
   }
 
   formatAmount(n) {
-    if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + ' M€';
-    if (Math.abs(n) >= 1000) return Math.round(n / 1000) + ' k€';
-    return Math.round(n) + ' €';
+    return Math.round(n).toLocaleString('fr-FR') + ' €';
   }
 
   toSave() {
@@ -100,6 +138,10 @@ export class Economy {
       freightPricePerTKm: this.freightPricePerTKm,
       history: this.history.slice(-100),
       dailyProcessed: this.dailyProcessed,
+      totalPassengers: this.totalPassengers,
+      totalFreightTonnes: this.totalFreightTonnes,
+      _companyLogo: this._companyLogo || null,
+      _lastBulletinDate: this._lastBulletinDate || null,
     };
   }
 
@@ -113,5 +155,9 @@ export class Economy {
     this.freightPricePerTKm = s.freightPricePerTKm || 0.08;
     this.history = s.history || [];
     this.dailyProcessed = s.dailyProcessed || {};
+    this.totalPassengers = s.totalPassengers || 0;
+    this.totalFreightTonnes = s.totalFreightTonnes || 0;
+    this._companyLogo = s._companyLogo || null;
+    this._lastBulletinDate = s._lastBulletinDate || null;
   }
 }

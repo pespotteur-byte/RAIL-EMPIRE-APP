@@ -100,7 +100,10 @@ export class CantonManager {
    * Routes sharing physical track produce the same canton keys.
    */
   _geoKey(lat1, lon1, lat2, lon2) {
-    return `${lat1.toFixed(4)},${lon1.toFixed(4)}|${lat2.toFixed(4)},${lon2.toFixed(4)}`;
+    // Sort coordinates to ensure symmetric keys: A→B and B→A produce the same canton ID
+    const a = `${lat1.toFixed(4)},${lon1.toFixed(4)}`;
+    const b = `${lat2.toFixed(4)},${lon2.toFixed(4)}`;
+    return a < b ? `${a}|${b}` : `${b}|${a}`;
   }
 
   _routeKey(route) {

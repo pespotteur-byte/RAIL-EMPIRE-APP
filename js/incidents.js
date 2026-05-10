@@ -10,7 +10,6 @@ export class Incident {
     this.stationB = track?.stationB || data.stationB || null;
     this.effect = data.effect || 'slow';
     this.speedLimit = data.speedLimit || 0;
-    this.icon = data.icon || '⚠';
     this.radiusKm = data.radiusKm || 10;
     this.centerLat = data.centerLat || 0;
     this.centerLon = data.centerLon || 0;
@@ -39,6 +38,11 @@ export class IncidentManager {
         inc.centerLat = (stA.lat + stB.lat) / 2;
         inc.centerLon = (stA.lon + stB.lon) / 2;
       }
+    }
+
+    // Safety: ensure center coordinates are valid
+    if (!inc.centerLat && !inc.centerLon && track) {
+      console.warn('Incident center not set, using track direct coords');
     }
 
     this.activeIncidents.push(inc);
@@ -123,23 +127,64 @@ export class IncidentManager {
   }
 
   update(timeOfDay, services, depotManager, world) {
-    if (timeOfDay === this.lastCheck) return;
-    this.lastCheck = timeOfDay;
-
-    // Update remaining time
-    for (const inc of this.activeIncidents) {
-      inc.remaining -= 1;
-      if (inc.remaining <= 0) {
-        inc.active = false;
-        this._clearTrackFlags(inc, world);
+    // Time countdown: only once per game-minute
+    if (timeOfDay !== this.lastCheck) {
+      this.lastCheck = timeOfDay;
+      for (const inc of this.activeIncidents) {
+        inc.remaining -= 1;
+        if (inc.remaining <= 0) {
+          inc.active = false;
+          this._clearTrackFlags(inc, world);
+        }
       }
+      this.activeIncidents = this.activeIncidents.filter(i => i.active);
     }
-    this.activeIncidents = this.activeIncidents.filter(i => i.active);
 
-    // Incidents are visual/UI only
+    // Position check: runs EVERY call (not just per-minute) so newly created
+    // incidents affect trains already in the zone immediately
+    this.checkTrainPositions(services, depotManager, world);
+  }
+
+  // Separate method so it can be called from moveTick as well
+  checkTrainPositions(services, depotManager, world) {
+    if (!services || this.activeIncidents.length === 0) {
+      // Clear incident flags when no incidents active
+      for (const svc of (services || [])) {
+        if (svc?.train) svc.train.incident = null;
+      }
+      return;
+    }
+
     for (const svc of services) {
-      if (!svc.train) continue;
-      if (svc.train.incident) svc.train.incident = null;
+      if (!svc.train || !svc.position) continue;
+      svc.train.incident = null;
+
+      let worstIncident = null;
+      for (const inc of this.activeIncidents) {
+        if (!inc.active) continue;
+        const dist = this._haversine(svc.position.lat, svc.position.lon, inc.centerLat, inc.centerLon);
+        if (dist <= (inc.radiusKm || 10)) {
+          if (!worstIncident || inc.effect === 'stop') {
+            worstIncident = inc;
+            if (inc.effect === 'stop') break;
+          } else if (worstIncident.effect === 'slow' && inc.effect === 'slow') {
+            if (inc.speedLimit < worstIncident.speedLimit) worstIncident = inc;
+          }
+        }
+      }
+      if (worstIncident) {
+        svc.train.incident = {
+          effect: worstIncident.effect,
+          speedLimit: worstIncident.speedLimit || 0,
+          name: worstIncident.name,
+        };
+        if (worstIncident.effect === 'stop' && depotManager && world) {
+          const alreadyRescued = depotManager.activeRescues?.some(r => r.targetServiceId === svc.id && r.state !== 'done');
+          if (!alreadyRescued) {
+            depotManager.dispatchRescue(world, svc);
+          }
+        }
+      }
     }
   }
 
@@ -162,7 +207,6 @@ export class IncidentManager {
       stationB: inc.stationB,
       effect: inc.effect,
       speedLimit: inc.speedLimit,
-      icon: inc.icon,
       radiusKm: inc.radiusKm,
       centerLat: inc.centerLat,
       centerLon: inc.centerLon,

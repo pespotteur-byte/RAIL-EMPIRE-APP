@@ -6,6 +6,8 @@ export class Rame {
     this.name = data.name || 'Sans nom';
     this.elements = data.elements || []; // array of RollingStockItem ids
     this.elementDetails = data.elementDetails || []; // cached details
+    this.createdDate = data.createdDate || new Date().toISOString().split('T')[0];
+    this.totalKmRun = data.totalKmRun || 0;
   }
 
   get totalLength() {
@@ -21,7 +23,12 @@ export class Rame {
   }
 
   get totalFreightCapacity() {
-    return this.elementDetails.reduce((s, e) => s + (e.freightCapacity || 0), 0);
+    return this.elementDetails.reduce((s, e) => {
+      if (e.freightCapacity > 0) return s + e.freightCapacity;
+      // Wagons fret: use tonnage as freight capacity if freightCapacity not set
+      if (e.category === 'wagon') return s + (e.tonnage || 0);
+      return s;
+    }, 0);
   }
 
   get maxSpeed() {
@@ -91,6 +98,8 @@ export class RameManager {
       name: r.name,
       elements: r.elements,
       elementDetails: r.elementDetails,
+      createdDate: r.createdDate,
+      totalKmRun: r.totalKmRun,
     }));
   }
 

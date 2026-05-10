@@ -15,6 +15,9 @@ export class RollingStockItem {
     this.freightCapacity = data.freightCapacity || 0;
     this.length = data.length || 20;
     this.imageData = data.imageData || null;
+    // S12: Train identification
+    this.seriesName = data.seriesName || ''; // e.g. 'BB 26000'
+    this.numberStart = data.numberStart || 1;  // e.g. 26001
   }
 }
 
@@ -55,6 +58,8 @@ export class RollingStockManager {
       freightCapacity: i.freightCapacity,
       length: i.length,
       imageData: i.imageData,
+      seriesName: i.seriesName || '',
+      numberStart: i.numberStart || 1,
     }));
   }
 
