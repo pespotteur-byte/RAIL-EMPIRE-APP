@@ -1,9 +1,10 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1778403500';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1778404142';
 
 let nextServiceId = 1;
 
 // Global canton manager shared across all services
 const cantonManager = new CantonManager();
+export { cantonManager };
 
 export class ServiceStop {
   constructor(stationId, type, depTime, arrTime, voiePointId, platform) {
@@ -904,7 +905,7 @@ export class ActiveService {
     const route = this._state.cachedRoute || this.getCurrentRoute();
     if (!route || route.length < 2) return null;
 
-    const myProgress = this._getRouteProgressKm(this.position, route);
+    const myProgress = this._getRouteProgressKm(this.position, route, this._state.index);
     let nearestAheadDist = Infinity;
     let nearestAheadSpeed = 0;
     const vpm = window.game?.voiePointManager;
@@ -931,7 +932,7 @@ export class ActiveService {
       }
       if (!nearRoute) continue;
 
-      const otherProgress = this._getRouteProgressKm(other.position, route);
+      const otherProgress = this._getRouteProgressKm(other.position, route, this._state.index);
       const ahead = this.isReturnLeg ? otherProgress < myProgress : otherProgress > myProgress;
 
       if (ahead) {
@@ -975,19 +976,33 @@ export class ActiveService {
     return null;
   }
 
-  _getRouteProgressKm(pos, route) {
+  _getRouteProgressKm(pos, route, hintIndex) {
     if (!pos || !route || route.length < 2) return 0;
+
+    // Use hint index to limit search window — train is near its current segment
     let minDist = Infinity;
     let bestIdx = 0;
-    for (let i = 0; i < route.length; i++) {
-      const d = haversineDistance(pos.lat, pos.lon, route[i].lat, route[i].lon);
+    const hint = hintIndex ?? 0;
+    const lo = Math.max(0, hint - 50);
+    const hi = Math.min(route.length, hint + 200);
+
+    for (let i = lo; i < hi; i++) {
+      const dlat = (pos.lat - route[i].lat) * 111;
+      const dlon = (pos.lon - route[i].lon) * 111 * Math.cos(pos.lat * Math.PI / 180);
+      const d = dlat * dlat + dlon * dlon;
       if (d < minDist) { minDist = d; bestIdx = i; }
     }
-    let progress = 0;
-    for (let i = 0; i < bestIdx && i < route.length - 1; i++) {
-      progress += haversineDistance(route[i].lat, route[i].lon, route[i + 1].lat, route[i + 1].lon);
+
+    // Use cached cumulative distances if available
+    if (!route._cumDist) {
+      route._cumDist = new Float64Array(route.length);
+      for (let i = 1; i < route.length; i++) {
+        const dlat = (route[i].lat - route[i-1].lat) * 111;
+        const dlon = (route[i].lon - route[i-1].lon) * 111 * Math.cos(route[i].lat * Math.PI / 180);
+        route._cumDist[i] = route._cumDist[i-1] + Math.sqrt(dlat * dlat + dlon * dlon);
+      }
     }
-    return progress;
+    return route._cumDist[bestIdx];
   }
 
   // Legacy compatibility
@@ -1294,7 +1309,7 @@ export class ActiveService {
   }
 
   buildReturnStops() {
-    const fwdStops = this.getCurrentStops();
+    const fwdStops = this._adjustedStops || this.stops;
     if (!fwdStops || fwdStops.length === 0) return [];
     const reversed = [...fwdStops].reverse();
     const lastStop = fwdStops[fwdStops.length - 1];

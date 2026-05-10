@@ -50,7 +50,7 @@ export class SimulationEngine {
       }
     }
 
-    // 0.5s movement tick for smooth train movement
+    // Movement tick for smooth train movement (every ~100ms)
     if (now - this.lastMoveTime >= this.moveInterval) {
       const dt = Math.min((now - this.lastMoveTime) / 1000, 1.0); // delta in seconds, cap at 1s
       this.lastMoveTime = now;

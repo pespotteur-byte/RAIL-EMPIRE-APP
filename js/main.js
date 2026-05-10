@@ -1,21 +1,21 @@
-import { SimulationEngine } from './engine.js?v=1778403500';
-import { World, createDefaultWorld } from './world.js?v=1778403500';
-import { Renderer } from './renderer.js?v=1778403500';
-import { UI } from './ui.js?v=1778403500';
-import { Economy } from './economy.js?v=1778403500';
-import { IncidentManager } from './incidents.js?v=1778403500';
-import { FreightManager } from './freight.js?v=1778403500';
-import { ScheduleManager } from './schedule.js?v=1778403500';
-import { GameStorage } from './storage.js?v=1778403500';
-import { AccountManager } from './account.js?v=1778403500';
-import { RollingStockManager } from './rolling-stock.js?v=1778403500';
-import { RameManager } from './rame.js?v=1778403500';
-import { ScheduleCreator } from './schedule-creator.js?v=1778403500';
-import { DepotManager } from './depot.js?v=1778403500';
-import { WorksManager } from './works.js?v=1778403500';
-import { ORMClient } from './orm.js?v=1778403500';
-import { LineManager, PlatformManager } from './line.js?v=1778403500';
-import { VoiePointManager } from './voie-points.js?v=1778403500';
+import { SimulationEngine } from './engine.js?v=1778404142';
+import { World, createDefaultWorld } from './world.js?v=1778404142';
+import { Renderer } from './renderer.js?v=1778404142';
+import { UI } from './ui.js?v=1778404142';
+import { Economy } from './economy.js?v=1778404142';
+import { IncidentManager } from './incidents.js?v=1778404142';
+import { FreightManager } from './freight.js?v=1778404142';
+import { ScheduleManager } from './schedule.js?v=1778404142';
+import { GameStorage } from './storage.js?v=1778404142';
+import { AccountManager } from './account.js?v=1778404142';
+import { RollingStockManager } from './rolling-stock.js?v=1778404142';
+import { RameManager } from './rame.js?v=1778404142';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1778404142';
+import { DepotManager } from './depot.js?v=1778404142';
+import { WorksManager } from './works.js?v=1778404142';
+import { ORMClient } from './orm.js?v=1778404142';
+import { LineManager, PlatformManager } from './line.js?v=1778404142';
+import { VoiePointManager } from './voie-points.js?v=1778404142';
 
 class RailEmpire {
   constructor() {
@@ -36,6 +36,7 @@ class RailEmpire {
     this.lineManager = new LineManager();
     this.platformManager = new PlatformManager();
     this.voiePointManager = new VoiePointManager();
+    this.cantonManager = cantonManager;
     this.renderer = null;
     this.ui = null;
     this.running = false;

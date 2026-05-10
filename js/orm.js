@@ -747,6 +747,8 @@ export class ORMClient {
   generateSignalBlocks(route) {
     const segments = this.getRouteSegments(route);
     const signals = [];
+    const totalDist = this.getRouteDistance(route);
+    if (totalDist <= 0) return signals;
     let accDist = 0, lastSignalDist = 0;
     for (const seg of segments) {
       const speed = seg.maxSpeed;
@@ -758,7 +760,7 @@ export class ORMClient {
       accDist += seg.distance;
       while (accDist - lastSignalDist >= blockLength) {
         lastSignalDist += blockLength;
-        const ratio = lastSignalDist / this.getRouteDistance(route);
+        const ratio = lastSignalDist / totalDist;
         const pos = this.getPointAtRatio(route, ratio);
         signals.push({ km: lastSignalDist, lat: pos.lat, lon: pos.lon, maxSpeed: speed, blockLength });
       }

@@ -1,4 +1,4 @@
-import { haversineDistance } from './simulation.js?v=1778403500';
+import { haversineDistance } from './simulation.js?v=1778404142';
 
 let nextIncId = 1;
 

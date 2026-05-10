@@ -59,7 +59,8 @@ export class Economy {
     // --- DESCENTE / DÉCHARGEMENT (revenue from those who rode this segment) ---
     if (!isFirst && distFromPrev > 0) {
       // Deterministic descent rates based on stop position in route
-      const stopRatio = service.currentStopIndex / Math.max(1, (service.stops || service.getCurrentStops?.() || []).length - 1);
+      const allStops = service.stops || service.getCurrentStops?.() || [];
+      const stopRatio = allStops.length > 1 ? service.currentStopIndex / (allStops.length - 1) : 1;
       const paxDescendRate = isTerminus ? 1.0 : Math.min(0.7, 0.2 + stopRatio * 0.4);
       const freightUnloadRate = isTerminus ? 1.0 : Math.min(0.5, 0.15 + stopRatio * 0.3);
 

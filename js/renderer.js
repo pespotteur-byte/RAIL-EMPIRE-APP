@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1778285270';
+import { TileMap } from './map.js?v=1778404142';
 
 export class Renderer {
   constructor(canvas) {
@@ -54,6 +54,11 @@ export class Renderer {
     // Draw temporary manual tronçon trace
     if (window.game?.ui?._manualTronconWaypoints?.length > 1) {
       this._drawTempTrace(ctx, window.game.ui._manualTronconWaypoints);
+    }
+    // Draw signal lights at canton boundaries
+    const showSignals = document.getElementById('toggle-signals')?.checked !== false;
+    if (showSignals && services.length > 0) {
+      this.drawSignals(ctx, services);
     }
     if (showTrains) this.drawServices(ctx, world, services);
   }
@@ -521,6 +526,88 @@ export class Renderer {
         }
       }
       ctx.stroke();
+    }
+  }
+
+  /**
+   * Draw signal lights at canton boundaries for active services.
+   * Green = clear, Yellow = approach (next canton occupied), Red = stop.
+   */
+  drawSignals(ctx, services) {
+    const zoom = this.tileMap.zoom;
+    if (zoom < 12) return; // Only show signals at high zoom
+
+    // Viewport bounds for culling
+    const topLeft = this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight);
+    const botRight = this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight);
+    if (!topLeft || !botRight) return;
+    const vpMinLat = Math.min(topLeft.lat, botRight.lat) - 0.005;
+    const vpMaxLat = Math.max(topLeft.lat, botRight.lat) + 0.005;
+    const vpMinLon = Math.min(topLeft.lon, botRight.lon) - 0.005;
+    const vpMaxLon = Math.max(topLeft.lon, botRight.lon) + 0.005;
+
+    const cantonMgr = window.game?.cantonManager;
+    if (!cantonMgr) return;
+
+    const drawnSignals = new Set();
+    const signalRadius = zoom >= 15 ? 5 : zoom >= 13 ? 4 : 3;
+
+    // Collect all signal positions from active services' canton assignments
+    for (const svc of services) {
+      if (!svc._cantonAssignments || !svc.active || svc.isRescue) continue;
+      const route = svc._state?.cachedRoute;
+      if (!route || route.length < 2) continue;
+
+      for (const assignment of svc._cantonAssignments) {
+        const endIdx = assignment.endIndex;
+        if (endIdx >= route.length) continue;
+
+        const pt = route[endIdx];
+        if (!pt || pt.lat < vpMinLat || pt.lat > vpMaxLat || pt.lon < vpMinLon || pt.lon > vpMaxLon) continue;
+
+        const signalKey = `${pt.lat.toFixed(5)},${pt.lon.toFixed(5)}`;
+        if (drawnSignals.has(signalKey)) continue;
+        drawnSignals.add(signalKey);
+
+        // Determine signal aspect
+        const canton = cantonMgr.cantons.get(assignment.cantonId);
+        let color = '#22c55e'; // green (clear)
+
+        if (canton) {
+          if (canton.occupiedBy) {
+            color = '#ef4444'; // red (occupied)
+          } else if (canton.reservedBy) {
+            color = '#eab308'; // yellow (reserved/approach)
+          }
+        }
+
+        const screenPos = this.latLonToScreen(pt.lat, pt.lon);
+
+        // Signal post (small vertical line)
+        ctx.strokeStyle = '#6b7280';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(screenPos.x, screenPos.y + signalRadius);
+        ctx.lineTo(screenPos.x, screenPos.y + signalRadius + 6);
+        ctx.stroke();
+
+        // Signal head (filled circle with glow)
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, signalRadius, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#1f2937';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Glow effect for red/yellow signals
+        if (color !== '#22c55e') {
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, signalRadius + 3, 0, Math.PI * 2);
+          ctx.fillStyle = color === '#ef4444' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)';
+          ctx.fill();
+        }
+      }
     }
   }
 

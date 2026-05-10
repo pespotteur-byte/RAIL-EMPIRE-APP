@@ -184,19 +184,18 @@ export class DepotManager {
         if (rescue.route && rescue.route.length >= 2) {
           let remaining = stepKm;
           while (remaining > 0 && rescue.routeIndex < rescue.route.length - 1) {
-            const from = rescue.route[rescue.routeIndex];
             const to = rescue.route[rescue.routeIndex + 1];
-            const dLat = (to.lat - from.lat) * 111;
-            const dLon = (to.lon - from.lon) * 111 * Math.cos(from.lat * Math.PI / 180);
-            const segDist = Math.sqrt(dLat * dLat + dLon * dLon);
-            if (segDist <= 0) { rescue.routeIndex++; continue; }
-            if (remaining >= segDist) {
+            const dLat = (to.lat - rescue.position.lat) * 111;
+            const dLon = (to.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+            const distToNext = Math.sqrt(dLat * dLat + dLon * dLon);
+            if (distToNext <= 0.001) { rescue.routeIndex++; continue; }
+            if (remaining >= distToNext) {
               rescue.position.lat = to.lat;
               rescue.position.lon = to.lon;
-              remaining -= segDist;
+              remaining -= distToNext;
               rescue.routeIndex++;
             } else {
-              const ratio = remaining / segDist;
+              const ratio = remaining / distToNext;
               rescue.position.lat += (to.lat - rescue.position.lat) * ratio;
               rescue.position.lon += (to.lon - rescue.position.lon) * ratio;
               remaining = 0;
@@ -244,19 +243,18 @@ export class DepotManager {
         if (rescue.returnRoute && rescue.returnRoute.length >= 2) {
           let remaining = stepKm;
           while (remaining > 0 && rescue.routeIndex < rescue.returnRoute.length - 1) {
-            const from = rescue.returnRoute[rescue.routeIndex];
             const to = rescue.returnRoute[rescue.routeIndex + 1];
-            const dLat2 = (to.lat - from.lat) * 111;
-            const dLon2 = (to.lon - from.lon) * 111 * Math.cos(from.lat * Math.PI / 180);
-            const segDist = Math.sqrt(dLat2 * dLat2 + dLon2 * dLon2);
-            if (segDist <= 0) { rescue.routeIndex++; continue; }
-            if (remaining >= segDist) {
+            const dLat2 = (to.lat - rescue.position.lat) * 111;
+            const dLon2 = (to.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+            const distToNext = Math.sqrt(dLat2 * dLat2 + dLon2 * dLon2);
+            if (distToNext <= 0.001) { rescue.routeIndex++; continue; }
+            if (remaining >= distToNext) {
               rescue.position.lat = to.lat;
               rescue.position.lon = to.lon;
-              remaining -= segDist;
+              remaining -= distToNext;
               rescue.routeIndex++;
             } else {
-              const ratio = remaining / segDist;
+              const ratio = remaining / distToNext;
               rescue.position.lat += (to.lat - rescue.position.lat) * ratio;
               rescue.position.lon += (to.lon - rescue.position.lon) * ratio;
               remaining = 0;

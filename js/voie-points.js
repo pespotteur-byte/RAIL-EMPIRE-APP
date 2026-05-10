@@ -2,7 +2,7 @@
 // Voie points are unnamed geographic markers that define which voie (track) a train is on
 // Troncons connect voie points and/or stations with ORM-traced routes
 
-import { haversineDistance } from './simulation.js?v=1778403500';
+import { haversineDistance } from './simulation.js?v=1778404142';
 
 let nextVoiePointId = 1;
 let nextTronconId = 1;
@@ -277,22 +277,46 @@ export class VoiePointManager {
 
     if (!adj.has(startVP.id) || !adj.has(endVP.id)) return null;
 
-    // Dijkstra
+    // Dijkstra with binary heap — O(E log V)
     const dist = new Map();
     const prev = new Map();
     const visited = new Set();
     dist.set(startVP.id, 0);
-    const queue = [{ id: startVP.id, d: 0 }];
 
-    while (queue.length > 0) {
-      // Find minimum manually (avoids O(n log n) sort per iteration)
-      let minIdx = 0;
-      for (let i = 1; i < queue.length; i++) {
-        if (queue[i].d < queue[minIdx].d) minIdx = i;
+    // MinHeap inlined for this module (no import needed)
+    const heap = [];
+    const push = (item) => {
+      heap.push(item);
+      let i = heap.length - 1;
+      while (i > 0) {
+        const p = (i - 1) >> 1;
+        if (heap[i].d >= heap[p].d) break;
+        [heap[i], heap[p]] = [heap[p], heap[i]];
+        i = p;
       }
-      const { id: u } = queue[minIdx];
-      queue[minIdx] = queue[queue.length - 1];
-      queue.pop();
+    };
+    const pop = () => {
+      const top = heap[0];
+      const last = heap.pop();
+      if (heap.length > 0) {
+        heap[0] = last;
+        let i = 0;
+        while (true) {
+          let s = i, l = 2 * i + 1, r = 2 * i + 2;
+          if (l < heap.length && heap[l].d < heap[s].d) s = l;
+          if (r < heap.length && heap[r].d < heap[s].d) s = r;
+          if (s === i) break;
+          [heap[i], heap[s]] = [heap[s], heap[i]];
+          i = s;
+        }
+      }
+      return top;
+    };
+
+    push({ id: startVP.id, d: 0 });
+
+    while (heap.length > 0) {
+      const { id: u } = pop();
       if (visited.has(u)) continue;
       visited.add(u);
       if (u === endVP.id) break;
@@ -304,7 +328,7 @@ export class VoiePointManager {
         if (newDist < (dist.get(edge.neighbor) || Infinity)) {
           dist.set(edge.neighbor, newDist);
           prev.set(edge.neighbor, { from: u, troncon: edge.troncon, reversed: edge.reversed });
-          queue.push({ id: edge.neighbor, d: newDist });
+          push({ id: edge.neighbor, d: newDist });
         }
       }
     }
