@@ -155,7 +155,15 @@ export class DepotManager {
       depotPosition: station ? { lat: station.lat, lon: station.lon } : null,
       speed: 0,
       progress: 0,
+      route: null,
+      routeIndex: 0,
     };
+    // Try to find a route via ORM instead of going straight line
+    if (station && window.game?.orm) {
+      window.game.orm.findRoute(station.lat, station.lon, brokenService.position.lat, brokenService.position.lon)
+        .then(route => { if (route && route.length >= 2) rescue.route = route; })
+        .catch(() => {});
+    }
     this.activeRescues.push(rescue);
     return rescue;
   }
@@ -169,24 +177,51 @@ export class DepotManager {
       const accel = 2.0; // km/h/s
 
       if (rescue.state === 'en_route') {
-        // Move toward broken train
-        const dLat = (rescue.targetPosition.lat - rescue.position.lat) * 111;
-        const dLon = (rescue.targetPosition.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
-        const dist = Math.sqrt(dLat * dLat + dLon * dLon);
-
-        if (dist < 0.5) {
-          rescue.state = 'recovering';
-          rescue.speed = 0;
-          rescue._recoverTimer = 5; // 5 minutes to couple
-          continue;
-        }
-
+        // Follow route if available, else go straight
         rescue.speed = Math.min(maxSpeed, rescue.speed + accel * dt);
         const stepKm = rescue.speed * dt / 3600;
-        if (dist > 0) {
-          const ratio = Math.min(1, stepKm / dist);
-          rescue.position.lat += (rescue.targetPosition.lat - rescue.position.lat) * ratio;
-          rescue.position.lon += (rescue.targetPosition.lon - rescue.position.lon) * ratio;
+
+        if (rescue.route && rescue.route.length >= 2) {
+          let remaining = stepKm;
+          while (remaining > 0 && rescue.routeIndex < rescue.route.length - 1) {
+            const from = rescue.route[rescue.routeIndex];
+            const to = rescue.route[rescue.routeIndex + 1];
+            const dLat = (to.lat - from.lat) * 111;
+            const dLon = (to.lon - from.lon) * 111 * Math.cos(from.lat * Math.PI / 180);
+            const segDist = Math.sqrt(dLat * dLat + dLon * dLon);
+            if (segDist <= 0) { rescue.routeIndex++; continue; }
+            if (remaining >= segDist) {
+              rescue.position.lat = to.lat;
+              rescue.position.lon = to.lon;
+              remaining -= segDist;
+              rescue.routeIndex++;
+            } else {
+              const ratio = remaining / segDist;
+              rescue.position.lat += (to.lat - rescue.position.lat) * ratio;
+              rescue.position.lon += (to.lon - rescue.position.lon) * ratio;
+              remaining = 0;
+            }
+          }
+          if (rescue.routeIndex >= rescue.route.length - 1) {
+            rescue.state = 'recovering';
+            rescue.speed = 0;
+            rescue._recoverTimer = 5;
+          }
+        } else {
+          const dLat = (rescue.targetPosition.lat - rescue.position.lat) * 111;
+          const dLon = (rescue.targetPosition.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+          if (dist < 0.5) {
+            rescue.state = 'recovering';
+            rescue.speed = 0;
+            rescue._recoverTimer = 5;
+            continue;
+          }
+          if (dist > 0) {
+            const ratio = Math.min(1, stepKm / dist);
+            rescue.position.lat += (rescue.targetPosition.lat - rescue.position.lat) * ratio;
+            rescue.position.lon += (rescue.targetPosition.lon - rescue.position.lon) * ratio;
+          }
         }
       } else if (rescue.state === 'recovering') {
         rescue._recoverTimer = (rescue._recoverTimer || 0) - dt / 60;
@@ -194,38 +229,77 @@ export class DepotManager {
           rescue.state = 'returning';
           rescue.targetPosition = rescue.depotPosition;
           rescue.speed = 0;
+          // Build return route (reverse of outbound route)
+          if (rescue.route) {
+            rescue.returnRoute = [...rescue.route].reverse();
+            rescue.routeIndex = 0;
+          }
         }
       } else if (rescue.state === 'returning') {
         if (!rescue.depotPosition) { rescue.state = 'done'; continue; }
-        const dLat = (rescue.depotPosition.lat - rescue.position.lat) * 111;
-        const dLon = (rescue.depotPosition.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
-        const dist = Math.sqrt(dLat * dLat + dLon * dLon);
-
-        if (dist < 0.5) {
-          rescue.state = 'done';
-          // Return loco to depot
-          const depot = this.depots.find(d => d.id === rescue.depotId);
-          if (depot) depot.returnRescue(rescue.stockId);
-          // Queue broken train for repair
-          if (rescue.targetServiceId) {
-            const wearMin = 30; // base repair time
-            this.repairQueue.push({
-              serviceId: rescue.targetServiceId,
-              depotId: rescue.depotId,
-              remainingMin: wearMin,
-              totalMin: wearMin,
-              serviceName: rescue.targetServiceId,
-            });
-          }
-          continue;
-        }
 
         rescue.speed = Math.min(60, rescue.speed + accel * dt); // slower on return (towing)
         const stepKm = rescue.speed * dt / 3600;
-        if (dist > 0) {
-          const ratio = Math.min(1, stepKm / dist);
-          rescue.position.lat += (rescue.depotPosition.lat - rescue.position.lat) * ratio;
-          rescue.position.lon += (rescue.depotPosition.lon - rescue.position.lon) * ratio;
+
+        if (rescue.returnRoute && rescue.returnRoute.length >= 2) {
+          let remaining = stepKm;
+          while (remaining > 0 && rescue.routeIndex < rescue.returnRoute.length - 1) {
+            const from = rescue.returnRoute[rescue.routeIndex];
+            const to = rescue.returnRoute[rescue.routeIndex + 1];
+            const dLat2 = (to.lat - from.lat) * 111;
+            const dLon2 = (to.lon - from.lon) * 111 * Math.cos(from.lat * Math.PI / 180);
+            const segDist = Math.sqrt(dLat2 * dLat2 + dLon2 * dLon2);
+            if (segDist <= 0) { rescue.routeIndex++; continue; }
+            if (remaining >= segDist) {
+              rescue.position.lat = to.lat;
+              rescue.position.lon = to.lon;
+              remaining -= segDist;
+              rescue.routeIndex++;
+            } else {
+              const ratio = remaining / segDist;
+              rescue.position.lat += (to.lat - rescue.position.lat) * ratio;
+              rescue.position.lon += (to.lon - rescue.position.lon) * ratio;
+              remaining = 0;
+            }
+          }
+          if (rescue.routeIndex >= rescue.returnRoute.length - 1) {
+            rescue.state = 'done';
+            const depot = this.depots.find(d => d.id === rescue.depotId);
+            if (depot) depot.returnRescue(rescue.stockId);
+            if (rescue.targetServiceId) {
+              this.repairQueue.push({
+                serviceId: rescue.targetServiceId,
+                depotId: rescue.depotId,
+                remainingMin: 30,
+                totalMin: 30,
+                serviceName: rescue.targetServiceId,
+              });
+            }
+          }
+        } else {
+          const dLat = (rescue.depotPosition.lat - rescue.position.lat) * 111;
+          const dLon = (rescue.depotPosition.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+          if (dist < 0.5) {
+            rescue.state = 'done';
+            const depot = this.depots.find(d => d.id === rescue.depotId);
+            if (depot) depot.returnRescue(rescue.stockId);
+            if (rescue.targetServiceId) {
+              this.repairQueue.push({
+                serviceId: rescue.targetServiceId,
+                depotId: rescue.depotId,
+                remainingMin: 30,
+                totalMin: 30,
+                serviceName: rescue.targetServiceId,
+              });
+            }
+            continue;
+          }
+          if (dist > 0) {
+            const ratio = Math.min(1, stepKm / dist);
+            rescue.position.lat += (rescue.depotPosition.lat - rescue.position.lat) * ratio;
+            rescue.position.lon += (rescue.depotPosition.lon - rescue.position.lon) * ratio;
+          }
         }
       }
     }

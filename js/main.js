@@ -1,21 +1,21 @@
-import { SimulationEngine } from './engine.js?v=1778401410';
-import { World, createDefaultWorld } from './world.js?v=1778401410';
-import { Renderer } from './renderer.js?v=1778401410';
-import { UI } from './ui.js?v=1778401410';
-import { Economy } from './economy.js?v=1778401410';
-import { IncidentManager } from './incidents.js?v=1778401410';
-import { FreightManager } from './freight.js?v=1778401410';
-import { ScheduleManager } from './schedule.js?v=1778401410';
-import { GameStorage } from './storage.js?v=1778401410';
-import { AccountManager } from './account.js?v=1778401410';
-import { RollingStockManager } from './rolling-stock.js?v=1778401410';
-import { RameManager } from './rame.js?v=1778401410';
-import { ScheduleCreator } from './schedule-creator.js?v=1778401410';
-import { DepotManager } from './depot.js?v=1778401410';
-import { WorksManager } from './works.js?v=1778401410';
-import { ORMClient } from './orm.js?v=1778401410';
-import { LineManager, PlatformManager } from './line.js?v=1778401410';
-import { VoiePointManager } from './voie-points.js?v=1778401410';
+import { SimulationEngine } from './engine.js?v=1778402725';
+import { World, createDefaultWorld } from './world.js?v=1778402725';
+import { Renderer } from './renderer.js?v=1778402725';
+import { UI } from './ui.js?v=1778402725';
+import { Economy } from './economy.js?v=1778402725';
+import { IncidentManager } from './incidents.js?v=1778402725';
+import { FreightManager } from './freight.js?v=1778402725';
+import { ScheduleManager } from './schedule.js?v=1778402725';
+import { GameStorage } from './storage.js?v=1778402725';
+import { AccountManager } from './account.js?v=1778402725';
+import { RollingStockManager } from './rolling-stock.js?v=1778402725';
+import { RameManager } from './rame.js?v=1778402725';
+import { ScheduleCreator } from './schedule-creator.js?v=1778402725';
+import { DepotManager } from './depot.js?v=1778402725';
+import { WorksManager } from './works.js?v=1778402725';
+import { ORMClient } from './orm.js?v=1778402725';
+import { LineManager, PlatformManager } from './line.js?v=1778402725';
+import { VoiePointManager } from './voie-points.js?v=1778402725';
 
 class RailEmpire {
   constructor() {
@@ -262,6 +262,11 @@ class RailEmpire {
         if (currentMinute !== lastMinute) {
           for (const svc of activeServices) {
             svc.scheduleTick(currentMinute, dateStr, this.economy);
+          }
+          // Process incidents and daily charges during fast-forward
+          this.incidentManager.update(currentMinute, activeServices, this.depotManager, this.world);
+          if (currentMinute === 0) {
+            this.economy.processDailyCharges(activeServices, this.depotManager.getAll(), dateStr);
           }
           lastMinute = currentMinute;
         }

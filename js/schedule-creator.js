@@ -1,4 +1,4 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1778401410';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1778402725';
 
 let nextServiceId = 1;
 
@@ -730,9 +730,10 @@ export class ActiveService {
     this.train.totalKmRun = (this.train.totalKmRun || 0) + stepKm;
     this.train.kmSinceLastMaint = (this.train.kmSinceLastMaint || 0) + stepKm;
     this.train.wearLevel = Math.min(100, (this.train.kmSinceLastMaint || 0) / 250); // 100% wear at 25,000km
-    // Failure probability check: ~1/25000km per km → check per step
+    // Failure probability: scales with wear level (higher wear = more likely to break)
     if (!this.train.breakdown && stepKm > 0) {
-      const failureProb = stepKm / 25000;
+      const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25; // 1x at 0%, 5x at 100%
+      const failureProb = (stepKm / 25000) * wearMultiplier;
       if (Math.random() < failureProb) {
         this.train.breakdown = { type: 'panne', time: timeOfDay };
       }
@@ -938,6 +939,22 @@ export class ActiveService {
         if (dist < nearestAheadDist) {
           nearestAheadDist = dist;
           nearestAheadSpeed = other.speed || 0;
+        }
+      }
+
+      // Nez-à-nez detection: other train coming toward us on same track
+      if (!ahead && rawDist < 3) {
+        const otherRoute = other._state?.cachedRoute || other.getCurrentRoute?.();
+        if (otherRoute && otherRoute.length >= 2) {
+          const otherDir = other.isReturnLeg ? -1 : 1;
+          const myDir = this.isReturnLeg ? -1 : 1;
+          if (otherDir !== myDir) {
+            const dist = Math.abs(otherProgress - myProgress);
+            if (dist < nearestAheadDist) {
+              nearestAheadDist = dist;
+              nearestAheadSpeed = 0; // Full stop for head-on
+            }
+          }
         }
       }
     }
@@ -1300,11 +1317,20 @@ export class ActiveService {
       const depTime = arrTime + (stop.type === 'arret' ? 2 : 0);
       currentTime = depTime;
 
-      const rs = new ServiceStop(stop.stationId, stop.type, depTime, arrTime, stop.voiePointId, stop.platform);
-      // Apply return platform override if configured
+      // Default: swap platform for return leg (voie 1 ↔ voie 2)
+      let returnPlat = stop.platform;
       if (this.returnPlatforms && stop.stationId && this.returnPlatforms[stop.stationId]) {
-        rs.platform = this.returnPlatforms[stop.stationId];
+        returnPlat = this.returnPlatforms[stop.stationId];
+      } else if (returnPlat === '1' || returnPlat === 'Voie 1') {
+        returnPlat = '2';
+      } else if (returnPlat === '2' || returnPlat === 'Voie 2') {
+        returnPlat = '1';
+      } else if (/^\d+$/.test(returnPlat)) {
+        // Numeric platform: swap odd↔even (1↔2, 3↔4, etc.)
+        const n = parseInt(returnPlat, 10);
+        returnPlat = String(n % 2 === 0 ? n - 1 : n + 1);
       }
+      const rs = new ServiceStop(stop.stationId, stop.type, depTime, arrTime, stop.voiePointId, returnPlat);
       return rs;
     });
   }

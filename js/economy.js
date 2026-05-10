@@ -58,9 +58,10 @@ export class Economy {
 
     // --- DESCENTE / DÉCHARGEMENT (revenue from those who rode this segment) ---
     if (!isFirst && distFromPrev > 0) {
-      // Random 30-70% of onboard passengers descend at intermediate stops, 100% at terminus
-      const paxDescendRate = isTerminus ? 1.0 : (0.3 + Math.random() * 0.4);
-      const freightUnloadRate = isTerminus ? 1.0 : (0.2 + Math.random() * 0.3);
+      // Deterministic descent rates based on stop position in route
+      const stopRatio = service.currentStopIndex / Math.max(1, (service.stops || service.getCurrentStops?.() || []).length - 1);
+      const paxDescendRate = isTerminus ? 1.0 : Math.min(0.7, 0.2 + stopRatio * 0.4);
+      const freightUnloadRate = isTerminus ? 1.0 : Math.min(0.5, 0.15 + stopRatio * 0.3);
 
       const paxDescend = Math.round(service._onboardPax * paxDescendRate);
       const freightUnload = Math.round(service._onboardFreight * freightUnloadRate);
@@ -94,7 +95,7 @@ export class Economy {
     if (!isTerminus) {
       const availPaxSlots = maxPax - service._onboardPax;
       const availFreightSlots = maxFreight - service._onboardFreight;
-      const boardRate = 0.4 + Math.random() * 0.4; // 40-80% fill of available
+      const boardRate = 0.6; // 60% fill of available slots (deterministic)
       const paxBoard = Math.round(availPaxSlots * boardRate);
       const freightLoad = Math.round(availFreightSlots * boardRate);
       service._onboardPax += paxBoard;

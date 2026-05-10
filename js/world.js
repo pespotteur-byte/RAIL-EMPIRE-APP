@@ -40,17 +40,8 @@ export class Track {
   }
 }
 
-export function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+// Re-export from simulation.js to avoid duplication
+export { haversineDistance as haversine } from './simulation.js?v=1778402725';
 
 export class World {
   constructor() {
@@ -90,25 +81,7 @@ export class World {
     );
   }
 
-  findPath(fromId, toId) {
-    const visited = new Set();
-    const queue = [{ id: fromId, path: [fromId] }];
-    while (queue.length > 0) {
-      const { id, path } = queue.shift();
-      if (id === toId) return path;
-      if (visited.has(id)) continue;
-      visited.add(id);
-      for (const track of this.tracks) {
-        let next = null;
-        if (track.stationA === id) next = track.stationB;
-        else if (track.stationB === id) next = track.stationA;
-        if (next && !visited.has(next)) {
-          queue.push({ id: next, path: [...path, next] });
-        }
-      }
-    }
-    return null;
-  }
+  // findPath removed — routing now uses ORM Dijkstra directly
 
   toSave() {
     return {

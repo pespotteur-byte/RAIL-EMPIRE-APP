@@ -2,7 +2,7 @@
 // Voie points are unnamed geographic markers that define which voie (track) a train is on
 // Troncons connect voie points and/or stations with ORM-traced routes
 
-import { haversineDistance } from './simulation.js?v=1778401410';
+import { haversineDistance } from './simulation.js?v=1778402725';
 
 let nextVoiePointId = 1;
 let nextTronconId = 1;
@@ -381,20 +381,38 @@ export class VoiePointManager {
   getTronconAtPosition(position, maxDistKm = 2, filterVoie = null) {
     if (!position) return null;
 
+    // Quick bounding box pre-filter (~0.01° ≈ 1.1km)
+    const margin = maxDistKm / 111;
+    const lat = position.lat;
+    const lon = position.lon;
+
     let bestTrc = null;
     let bestDist = Infinity;
 
     for (const trc of this.troncons) {
       if (!trc.route || trc.route.length < 2) continue;
 
-      // Filter by voie if specified — only match tronçons on the same voie
+      // Bounding box pre-check using troncon endpoints
+      const vpA = this.getVoiePointById(trc.pointA);
+      const vpB = this.getVoiePointById(trc.pointB);
+      if (vpA && vpB) {
+        const minLat = Math.min(vpA.lat, vpB.lat) - margin;
+        const maxLat = Math.max(vpA.lat, vpB.lat) + margin;
+        const minLon = Math.min(vpA.lon, vpB.lon) - margin;
+        const maxLon = Math.max(vpA.lon, vpB.lon) + margin;
+        if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon) continue;
+      }
+
+      // Filter by voie if specified
       if (filterVoie) {
         const voies = this.getTronconVoies(trc);
         if (!voies.has(filterVoie)) continue;
       }
 
-      // Find closest point on this troncon's route
-      for (const pt of trc.route) {
+      // Sample route points (skip some for speed if route is long)
+      const step = trc.route.length > 20 ? Math.floor(trc.route.length / 10) : 1;
+      for (let i = 0; i < trc.route.length; i += step) {
+        const pt = trc.route[i];
         const dist = haversineDistance(position.lat, position.lon, pt.lat, pt.lon);
         if (dist < bestDist && dist <= maxDistKm) {
           bestDist = dist;
