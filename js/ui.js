@@ -4469,53 +4469,67 @@ export class UI {
     }, 10000);
   }
 
-  // --- RER RATP ---
+  // --- RER RATP --- pixel-perfect dark screen
   _renderRerRatp(station, trains, nowStr) {
-    const lines = [...new Set(trains.map(t => t.lineName).filter(Boolean))];
-    const lineLabel = lines.join(' · ') || 'Ligne';
     const dests = [...new Set(trains.map(t => t.destination))].slice(0, 4);
     const lineColor = trains[0]?.lineColor || '#003DA5';
+    const lineCode = trains[0]?.lineCode || 'A';
 
     let rows = '';
     for (const t of trains) {
-      const waitStr = this._fmtWait(t.waitMin);
-      const waitClass = t.waitMin != null && t.waitMin <= 1 ? 'ig-blink' : '';
+      let waitHtml;
+      if (t.waitMin != null && t.waitMin <= 1) {
+        waitHtml = `<span class="ig-ratp-wait-approche ig-blink">a l'approche</span>`;
+      } else if (t.waitMin != null && t.waitMin < 60) {
+        waitHtml = `<span class="ig-ratp-wait-box">${Math.round(t.waitMin)}</span><span class="ig-ratp-wait-unit">min</span>`;
+      } else if (t.waitMin != null) {
+        const h = Math.floor(t.waitMin / 60);
+        const m = Math.round(t.waitMin % 60);
+        waitHtml = `<span class="ig-ratp-wait-box">${h}h${m.toString().padStart(2,'0')}</span>`;
+      } else {
+        waitHtml = '';
+      }
       rows += `<div class="ig-ratp-row" data-svc-id="${t.svcId}">
         <span class="ig-ratp-code">${t.name}</span>
         <span class="ig-ratp-dest">${t.destination}</span>
-        <span class="ig-ratp-wait ${waitClass}">${waitStr}</span>
+        <span class="ig-ratp-wait">${waitHtml}</span>
       </div>`;
     }
 
+    const destsLine1 = dests.slice(0, 2).join(' \u2022 ');
+    const destsLine2 = dests.slice(2).join(' \u2022 ');
+
     return `<div class="ig-ratp-board">
       <div class="ig-ratp-header">
-        <div class="ig-ratp-line-info">
-          <span class="ig-ratp-line-badge" style="background:${lineColor}">${trains[0]?.lineCode || 'A'}</span>
-          <div class="ig-ratp-destinations">${dests.join(' · ')}</div>
-        </div>
+        <span class="ig-ratp-rer">RER</span>
+        <span class="ig-ratp-line-badge" style="background:${lineColor}">${lineCode}</span>
+        <div class="ig-ratp-destinations">${destsLine1}${destsLine2 ? '<br>' + destsLine2 : ''}</div>
         <div class="ig-ratp-clock">${nowStr}</div>
       </div>
-      <div class="ig-ratp-separator" style="background:${lineColor}"></div>
-      <div class="ig-ratp-rows">${rows || '<div style="color:#999;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
+      <div class="ig-ratp-separator" style="background:#cc0000"></div>
+      <div class="ig-ratp-rows">${rows || '<div style="color:#666;padding:16px;text-align:center;background:#c8c8d0">Aucun train prevu</div>'}</div>
       <div class="ig-ratp-footer">
-        <div class="ig-ratp-info-banner">Pas de perturbation signalee</div>
+        <span class="ig-ratp-alert-badge">${lineCode}</span>
+        <span class="ig-ratp-alert-icon">&#9888;</span>
+        <span class="ig-ratp-alert-text">Pas de perturbation signalee sur cette ligne.</span>
       </div>
     </div>`;
   }
 
-  // --- RER SNCF ---
+  // --- RER SNCF --- dark navy, colored line circles, white separators
   _renderRerSncf(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const served = t.servedStations.slice(0, 2).join('   ');
+      const served = t.servedStations.slice(0, 3).join('   ');
+      const waitStr = t.waitMin != null ? (t.waitMin < 60 ? `${Math.round(t.waitMin)} min` : this._fmtWait(t.waitMin)) : '';
       rows += `<div class="ig-rsncf-row" data-svc-id="${t.svcId}">
         <span class="ig-rsncf-line" style="background:${t.lineColor}">${t.lineCode || '?'}</span>
         <span class="ig-rsncf-code">${t.name}</span>
         <span class="ig-rsncf-dest">${t.destination}</span>
-        <span class="ig-rsncf-wait">${this._fmtWait(t.waitMin)}</span>
+        <span class="ig-rsncf-wait">${waitStr}</span>
         <span class="ig-rsncf-voie">${t.voie || ''}</span>
       </div>
-      <div class="ig-rsncf-served">${served}</div>`;
+      ${served ? `<div class="ig-rsncf-served">${served}</div>` : ''}`;
     }
 
     return `<div class="ig-rsncf-board">
@@ -4527,51 +4541,57 @@ export class UI {
     </div>`;
   }
 
-  // --- SNCF DEPARTS (blue) ---
+  // --- SNCF DEPARTS (blue) --- exact replica with voie badges
   _renderSncfDep(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
       const delayStr = t.delay > 0 ? `<span class="ig-sncf-delay">retard ${t.delay} min.</span>` : '<span class="ig-sncf-ontime">a l\'heure</span>';
-      const served = t.servedStations.map(s => `<span class="ig-sncf-dot">·</span> ${s}`).join(' ');
+      const served = t.servedStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
+      const voieNum = parseInt(t.voie) || 0;
+      const voieClass = voieNum > 10 ? 'ig-sncf-voie-high' : 'ig-sncf-voie-low';
       rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
         <div class="ig-sncf-main">
+          <span class="ig-sncf-logo-icon">${t.seriesName || 'SNCF'}</span>
           <span class="ig-sncf-status">${delayStr}</span>
           <span class="ig-sncf-time">${this._fmtTime(t.depTime)}</span>
           <span class="ig-sncf-dest">${t.destination}</span>
-          <span class="ig-sncf-voie">${t.voie || ''}</span>
+          <span class="ig-sncf-voie">${t.voie ? `<span class="ig-sncf-voie-num ${voieClass}">${t.voie}</span>` : ''}</span>
         </div>
         ${served ? `<div class="ig-sncf-served">${served}</div>` : ''}
       </div>`;
     }
 
     return `<div class="ig-sncf-board ig-sncf-dep">
-      <div class="ig-sncf-header">
-        <span>Departs Grandes Lignes</span>
-        <span style="font-size:10px;font-style:italic">Mainline departures</span>
+      <div class="ig-sncf-header ig-sncf-header-dep">
+        <div class="ig-sncf-header-title">Departs Grandes Lignes</div>
+        <div class="ig-sncf-header-sub">Mainline departures - Abfahrt Fernverkehr</div>
       </div>
-      <div class="ig-sncf-colheader"><span>train</span><span>heure</span><span>destination</span><span>voie</span></div>
+      <div class="ig-sncf-colheader"><span>train n\u00b0</span><span>heure</span><span>destination</span><span>voie</span></div>
       <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
       <div class="ig-sncf-footer">
-        <div class="ig-sncf-legend"><span class="ig-sncf-voie-yellow"></span> voies 1-10 <span class="ig-sncf-voie-blue"></span> voies 11-30</div>
-        <div class="ig-sncf-clock">${nowStr}</div>
+        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 a 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 a 30</div>
+        <div class="ig-sncf-clock">${nowStr.replace(':','.')}</div>
         <div class="ig-sncf-logo">SNCF</div>
       </div>
     </div>`;
   }
 
-  // --- SNCF ARRIVEES (green) ---
+  // --- SNCF ARRIVEES (green) --- exact replica
   _renderSncfArr(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
       const delayStr = t.delay > 0 ? `<span class="ig-sncf-delay">retard ${t.delay} min.</span>` : '<span class="ig-sncf-ontime">a l\'heure</span>';
-      const from = t.fromStations.map(s => `<span class="ig-sncf-dot">·</span> ${s}`).join(' ');
+      const from = t.fromStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
       const stateStr = t.state === 'stopped_at_station' && t.isLast ? '<span class="ig-sncf-arrived">arrive</span>' : '';
+      const voieNum = parseInt(t.voie) || 0;
+      const voieClass = voieNum > 10 ? 'ig-sncf-voie-high' : 'ig-sncf-voie-low';
       rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
         <div class="ig-sncf-main">
+          <span class="ig-sncf-logo-icon">${t.seriesName || 'SNCF'}</span>
           <span class="ig-sncf-status">${stateStr || delayStr}</span>
           <span class="ig-sncf-time">${this._fmtTime(t.arrTime)}</span>
           <span class="ig-sncf-dest">${t.origin}</span>
-          <span class="ig-sncf-voie">${t.voie || ''}</span>
+          <span class="ig-sncf-voie">${t.voie ? `<span class="ig-sncf-voie-num ${voieClass}">${t.voie}</span>` : ''}</span>
         </div>
         ${from ? `<div class="ig-sncf-served">${from}</div>` : ''}
       </div>`;
@@ -4579,35 +4599,35 @@ export class UI {
 
     return `<div class="ig-sncf-board ig-sncf-arr">
       <div class="ig-sncf-header ig-sncf-header-arr">
-        <span>Arrivees Grandes Lignes</span>
-        <span style="font-size:10px;font-style:italic">Mainline arrivals</span>
+        <div class="ig-sncf-header-title">Arrivees Grandes Lignes</div>
+        <div class="ig-sncf-header-sub">Mainline arrivals - Ankunft Fernverkehr</div>
       </div>
-      <div class="ig-sncf-colheader"><span>train</span><span>heure</span><span>provenance</span><span>voie</span></div>
+      <div class="ig-sncf-colheader"><span>train n\u00b0</span><span>heure</span><span>provenance</span><span>voie</span></div>
       <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
       <div class="ig-sncf-footer">
-        <div class="ig-sncf-legend"><span class="ig-sncf-voie-yellow"></span> voies 1-10 <span class="ig-sncf-voie-blue"></span> voies 11-30</div>
-        <div class="ig-sncf-clock">${nowStr}</div>
+        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 a 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 a 30</div>
+        <div class="ig-sncf-clock">${nowStr.replace(':','.')}</div>
         <div class="ig-sncf-logo">SNCF</div>
       </div>
     </div>`;
   }
 
-  // --- OLD SNCF (Solari split-flap) ---
+  // --- OLD SNCF (Solari split-flap) --- exact Gare du Nord style
   _renderOldSncf(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const served = t.servedStations.join('  ').toUpperCase();
-      const dest = `${served}`.substring(0, 60);
+      const servedTxt = t.servedStations.join('  ').toUpperCase();
+      const destFull = `${t.destination.toUpperCase()}${servedTxt ? '  ' + servedTxt : ''}`;
+      const remarks = (t.seriesName || '').toUpperCase();
       rows += `<div class="ig-solari-row" data-svc-id="${t.svcId}">
-        <span class="ig-solari-time">${this._fmtTime(t.depTime).replace('h', '<span class="ig-solari-sep">.</span>')}</span>
-        <span class="ig-solari-dest">${t.destination.toUpperCase()} ${dest}</span>
-        <span class="ig-solari-type">${t.seriesName || ''}</span>
-        <span class="ig-solari-num">${t.trainNumber || ''}</span>
-        <span class="ig-solari-voie">${t.voie || ''}</span>
+        <span class="ig-solari-cell ig-solari-time">${this._fmtTime(t.depTime).replace('h', '.')}</span>
+        <span class="ig-solari-cell ig-solari-dest">${destFull}</span>
+        <span class="ig-solari-cell ig-solari-remarks">${remarks}</span>
+        <span class="ig-solari-cell ig-solari-num">${t.trainNumber || t.name || ''}</span>
+        <span class="ig-solari-cell ig-solari-voie">${t.voie || ''}</span>
       </div>`;
     }
 
-    // Trigger split-flap animation after render
     setTimeout(() => this._animateSolari(), 50);
 
     return `<div class="ig-solari-board">
@@ -4616,11 +4636,11 @@ export class UI {
       </div>
       <div class="ig-solari-subheader">
         <span>Trains au depart</span>
-        <span style="text-align:center">Departures trains</span>
-        <span style="text-align:right">Abfahrt der Zuge</span>
+        <span>Departing trains</span>
+        <span>Abfahrt der Zuge</span>
       </div>
-      <div class="ig-solari-colheader"><span>heure</span><span>destination</span><span></span><span>train n°</span><span>voie</span></div>
-      <div class="ig-solari-rows">${rows || '<div style="color:#cc9;padding:16px;text-align:center">AUCUN TRAIN PREVU</div>'}</div>
+      <div class="ig-solari-colheader"><span>heure</span><span>destination - desservant</span><span>remarques</span><span>train n\u00b0</span><span>voie</span></div>
+      <div class="ig-solari-rows">${rows || '<div style="color:#ccbb33;padding:16px;text-align:center;letter-spacing:2px">AUCUN TRAIN PREVU</div>'}</div>
       <div class="ig-solari-footer">
         <div class="ig-solari-clock">${nowStr.replace(':', '.')}</div>
       </div>
@@ -4628,13 +4648,10 @@ export class UI {
   }
 
   _animateSolari() {
-    const rows = document.querySelectorAll('.ig-solari-row');
-    rows.forEach((row, idx) => {
-      const chars = row.querySelectorAll('.ig-solari-dest, .ig-solari-time, .ig-solari-type, .ig-solari-num, .ig-solari-voie');
-      chars.forEach(el => {
-        el.classList.add('ig-solari-flip');
-        el.style.animationDelay = `${idx * 0.15}s`;
-      });
+    const cells = document.querySelectorAll('.ig-solari-cell');
+    cells.forEach((el, idx) => {
+      el.classList.add('ig-solari-flip');
+      el.style.animationDelay = `${Math.floor(idx / 5) * 0.12}s`;
     });
   }
 
@@ -4648,11 +4665,9 @@ export class UI {
     const pt = this.game.engine.getParisTime();
     const nowStr = `${pt.hours.toString().padStart(2,'0')}:${pt.minutes.toString().padStart(2,'0')}`;
 
-    // Find this station's stop index
     const stopIdx = stops.findIndex(s => s.stationId === stationId);
     const isGrandeLigne = (svc.rame?.maxSpeed || 0) >= 160;
 
-    // Served stations after this one
     const servedAfter = [];
     for (let i = stopIdx + 1; i < stops.length; i++) {
       if (stops[i].type === 'waypoint' || stops[i].type === 'passage') continue;
@@ -4663,9 +4678,7 @@ export class UI {
     const lastStop = stops[stops.length - 1];
     const destStation = this.game.world.getStationById(lastStop?.stationId);
     const depTime = stops[stopIdx]?.departureTime;
-    const delayStr = svc.delay > 0 ? `Retard ${svc.delay}min.` : '';
-
-    // Composition (number of cars from rame)
+    const delayStr = svc.delay > 0 ? `Retard ${svc.delay} min` : '';
     const numCars = svc.rame?.elementDetails?.length || 8;
 
     const board = document.getElementById('infogare-board');
@@ -4677,102 +4690,119 @@ export class UI {
       board.innerHTML = this._renderPlatformBanlieue(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars);
     }
 
-    // Back button
     board.querySelector('.ig-platform-back')?.addEventListener('click', () => this._showInfogareBoard());
   }
 
-  // --- Platform Grande Ligne ---
+  // --- Platform Grande Ligne --- exact Ouigo/TGV display
   _renderPlatformGL(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars) {
     const stopsHtml = servedAfter.map(s =>
-      `<div class="ig-pgl-stop ${s.isLast ? 'ig-pgl-terminus' : ''}"><span class="ig-pgl-bullet">●</span> ${s.name}</div>`
+      `<div class="ig-pgl-stop ${s.isLast ? 'ig-pgl-terminus' : ''}"><span class="ig-pgl-bullet">\u25CF</span>${s.name}</div>`
     ).join('');
 
-    // Composition bar
     let carsHtml = '';
     for (let i = 1; i <= numCars; i++) {
       carsHtml += `<div class="ig-pgl-car">${i}</div>`;
     }
     const sections = 'ABCDEFGH';
     let sectionsHtml = '';
-    const carsPerSection = Math.ceil(numCars / Math.min(8, numCars));
-    for (let i = 0; i < Math.min(8, Math.ceil(numCars / 2)); i++) {
+    const numSections = Math.min(8, Math.ceil(numCars / 2));
+    for (let i = 0; i < numSections; i++) {
       sectionsHtml += `<div class="ig-pgl-section">${sections[i]}</div>`;
     }
 
+    const seriesName = svc.train?.seriesName || svc.rame?.seriesName || '';
+    const trainNum = svc.train?.number || svc.name || '';
+
     return `<div class="ig-pgl-board">
-      <button class="ig-platform-back btn-sm" style="position:absolute;top:8px;left:8px;z-index:10">← Retour</button>
+      <div class="ig-pgl-back"><button class="ig-platform-back btn-sm" style="background:rgba(0,0,0,.4);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer">\u2190 Retour</button></div>
       <div class="ig-pgl-header">
         <div class="ig-pgl-left">
-          <div class="ig-pgl-series">${svc.train?.seriesName || ''}</div>
+          <div class="ig-pgl-series">${seriesName}</div>
           <div class="ig-pgl-time">${this._fmtTime(depTime)}</div>
           ${delayStr ? `<div class="ig-pgl-delay">${delayStr}</div>` : ''}
           <div class="ig-pgl-dest">${destStation?.name || '?'}</div>
-          <div class="ig-pgl-trainnum">${svc.train?.seriesName || 'Train'} ${svc.train?.number || ''}</div>
+          <div class="ig-pgl-trainnum">${seriesName} ${trainNum}</div>
         </div>
         <div class="ig-pgl-right">
-          <div class="ig-pgl-label">depart</div>
-          <div class="ig-pgl-stops">${stopsHtml || '<div style="color:#999">Terminus</div>'}</div>
+          <div class="ig-pgl-watermark">depart</div>
+          <div class="ig-pgl-stops">${stopsHtml || '<div style="color:#7788aa">Terminus</div>'}</div>
         </div>
       </div>
       <div class="ig-pgl-composition">
-        <div class="ig-pgl-station-name">${station?.name || ''}</div>
+        <div class="ig-pgl-station-center"><span class="ig-pgl-station-label">${station?.name || ''}</span></div>
         <div class="ig-pgl-cars">${carsHtml}</div>
         <div class="ig-pgl-sections">${sectionsHtml}</div>
       </div>
       <div class="ig-pgl-footer">
-        <div class="ig-pgl-info">SNCF</div>
+        <div class="ig-pgl-info-bar">Information en temps reel</div>
         <div class="ig-pgl-clock">${nowStr}</div>
+        <div class="ig-pgl-sncf">SNCF</div>
       </div>
     </div>`;
   }
 
-  // --- Platform Banlieue ---
+  // --- Platform Banlieue --- exact Transilien cream display
   _renderPlatformBanlieue(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars) {
-    // Two columns of stops
     const half = Math.ceil(servedAfter.length / 2);
     const col1 = servedAfter.slice(0, half);
     const col2 = servedAfter.slice(half);
-    const col1Html = col1.map(s => `<div>${s.isLast ? '<b>' : ''}${s.name}${s.isLast ? '</b>' : ''}</div>`).join('');
-    const col2Html = col2.map(s => `<div>${s.isLast ? '<b>' : ''}${s.name}${s.isLast ? '</b>' : ''}</div>`).join('');
+    const col1Html = col1.map(s => `<div class="ig-pban-stop-item"><span class="ig-pban-stop-dot">\u25CF</span><span class="ig-pban-stop-name${s.isLast ? ' ig-pgl-terminus' : ''}">${s.name}</span></div>`).join('');
+    const col2Html = col2.map(s => `<div class="ig-pban-stop-item"><span class="ig-pban-stop-dot">\u25CF</span><span class="ig-pban-stop-name${s.isLast ? ' ig-pgl-terminus' : ''}">${s.name}</span></div>`).join('');
 
-    // Crowding (simulated)
     let crowdHtml = '';
+    const crowdClasses = ['ig-pban-car-green', 'ig-pban-car-green', 'ig-pban-car-orange', 'ig-pban-car-red'];
+    const crowdIcons = ['\u{1F9CD}', '\u{1F9CD}', '\u{1F9CD}\u{1F9CD}', '\u{1F9CD}\u{1F9CD}\u{1F9CD}'];
     for (let i = 0; i < numCars; i++) {
-      const level = Math.floor(Math.random() * 3); // 0=empty, 1=medium, 2=full
-      const colors = ['#4ade80', '#f59e0b', '#ef4444'];
-      crowdHtml += `<div class="ig-pban-car" style="border-color:${colors[level]}"><span style="color:${colors[level]}">🧍</span></div>`;
+      const lvl = Math.floor(Math.random() * 3);
+      crowdHtml += `<div class="ig-pban-car-box ${crowdClasses[lvl]}"><span class="ig-pban-car-icon">${lvl === 0 ? '\u{1F7E2}' : lvl === 1 ? '\u{1F7E0}' : '\u{1F534}'}</span></div>`;
     }
 
-    const waitStr = svc.state === 'stopped_at_station' ? 'at platform' : this._fmtWait(depTime != null ? depTime - (this.game.engine.getParisTime().hours * 60 + this.game.engine.getParisTime().minutes) : null);
+    const lineColor = svc.train?.color || '#2d8a4e';
+    const lineCode = svc.train?.seriesName?.[0] || '?';
+    const trainIsLong = numCars > 4;
+    const voieStr = svc.train?.platform || '?';
+
+    const pt = this.game.engine.getParisTime();
+    const now = pt.hours * 60 + pt.minutes;
+    let waitMin = depTime != null ? depTime - now : null;
+    if (waitMin != null && waitMin < 0) waitMin += 1440;
+    const waitStr = svc.state === 'stopped_at_station' ? 'a quai' : this._fmtWait(waitMin);
+
+    const totalPages = Math.ceil(servedAfter.length / 10) || 1;
 
     return `<div class="ig-pban-board">
-      <button class="ig-platform-back btn-sm" style="position:absolute;top:8px;left:8px;z-index:10">← Retour</button>
+      <div class="ig-pban-back"><button class="ig-platform-back btn-sm" style="background:rgba(0,0,0,.1);color:#333;border:1px solid #aaa;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer">\u2190 Retour</button></div>
       <div class="ig-pban-header">
         <div class="ig-pban-clock">${nowStr}</div>
-        <div class="ig-pban-title">Next Train</div>
-        <div class="ig-pban-voie">Platform <b>${svc.train?.platform || '?'}</b></div>
+        <div class="ig-pban-title">Prochain Train</div>
+        <div class="ig-pban-platform">
+          <span class="ig-pban-platform-num">${voieStr}</span>
+          ${trainIsLong ? '<span class="ig-pban-long-train">Train long</span>' : ''}
+        </div>
       </div>
       <div class="ig-pban-main">
-        <div class="ig-pban-info">
-          <div class="ig-pban-line" style="background:${svc.train?.color || '#3b82f6'}">${svc.train?.seriesName?.[0] || '?'}</div>
-          <div>
-            <div class="ig-pban-dest"><b>${destStation?.name || '?'}</b></div>
-            <div class="ig-pban-code">${svc.name}</div>
+        <div class="ig-pban-train-row">
+          <div class="ig-pban-line-circle" style="background:${lineColor}">${lineCode}</div>
+          <div class="ig-pban-train-info">
+            <div class="ig-pban-dest-name">${destStation?.name || '?'}</div>
+            <div class="ig-pban-dest-via">${servedAfter.length > 0 ? 'via ' + servedAfter[0]?.name : ''}</div>
+            <div class="ig-pban-code-label">Mission: ${svc.name}</div>
           </div>
           <div class="ig-pban-wait">${waitStr}</div>
         </div>
-        <div class="ig-pban-stops">
-          <div class="ig-pban-stops-label">Stations</div>
-          <div class="ig-pban-stops-cols">
+        <div class="ig-pban-page">Page 1/${totalPages}</div>
+        <div class="ig-pban-stops-section">
+          <div class="ig-pban-stops-title">Gares desservies</div>
+          <div class="ig-pban-stops-grid">
             <div>${col1Html}</div>
             <div>${col2Html}</div>
           </div>
         </div>
       </div>
       <div class="ig-pban-crowding">
-        <div class="ig-pban-crowd-label">Crowding</div>
+        <div class="ig-pban-crowd-label">Affluence prevue</div>
         <div class="ig-pban-crowd-cars">${crowdHtml}</div>
-        <div class="ig-pban-crowd-ends"><span>Rear</span><span>Front</span></div>
+        <div class="ig-pban-crowd-ends"><span>Queue</span><span>Tete</span></div>
       </div>
     </div>`;
   }
