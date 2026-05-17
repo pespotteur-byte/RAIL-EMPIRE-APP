@@ -1396,7 +1396,7 @@ export class UI {
             travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
           } catch (e) {
             const dist = Math.sqrt(Math.pow((station.lat - prevStation.lat) * 111, 2) + Math.pow((station.lon - prevStation.lon) * 111 * Math.cos(station.lat * Math.PI / 180), 2));
-            travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
+            travelTime = Math.round((dist / rameSpeed) * 60 * 1.05) || 1;
           }
         }
       }
@@ -1736,6 +1736,29 @@ export class UI {
     return null;
   }
 
+  async _getSegmentTravelTime(prevStop, curStop, rameSpeed) {
+    const prevCoords = this._getStopCoords(prevStop);
+    const curCoords = this._getStopCoords(curStop);
+    if (!prevCoords || !curCoords) return 15;
+
+    const prevStation = prevStop.stationId ? this.game.world.getStationById(prevStop.stationId) : null;
+    const curStation = curStop.stationId ? this.game.world.getStationById(curStop.stationId) : null;
+
+    if (prevStation && curStation) {
+      const existingTrack = this.game.world.getTrackBetween(prevStation.id, curStation.id);
+      if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
+        return this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
+      }
+    }
+    try {
+      const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
+      return this.game.orm.calculateTravelTime(route, rameSpeed);
+    } catch (e) {
+      const dist = Math.sqrt(Math.pow((curCoords.lat - prevCoords.lat) * 111, 2) + Math.pow((curCoords.lon - prevCoords.lon) * 111 * Math.cos(curCoords.lat * Math.PI / 180), 2));
+      return Math.round((dist / rameSpeed) * 60 * 1.05) || 1;
+    }
+  }
+
   async recalcStopsFrom(fromIndex) {
     if (fromIndex >= this.schedStops.length || fromIndex < 1) return;
 
@@ -1743,36 +1766,16 @@ export class UI {
     const rame = this.game.rameManager.getById(rameId);
     const rameSpeed = rame ? rame.maxSpeed : 160;
 
-    for (let i = fromIndex; i < this.schedStops.length; i++) {
+    // Build merged arret-to-arret segments to avoid per-waypoint accel/decel overhead
+    // First pass: find the last arret before fromIndex to use as anchor
+    let anchorIdx = fromIndex - 1;
+    while (anchorIdx > 0 && this.schedStops[anchorIdx].type !== 'arret') anchorIdx--;
+
+    for (let i = Math.max(fromIndex, anchorIdx + 1); i < this.schedStops.length; i++) {
       const prevStop = this.schedStops[i - 1];
       const curStop = this.schedStops[i];
 
-      const prevCoords = this._getStopCoords(prevStop);
-      const curCoords = this._getStopCoords(curStop);
-
-      let travelTime = 15;
-      if (prevCoords && curCoords) {
-        // Try station-based track lookup first
-        const prevStation = prevStop.stationId ? this.game.world.getStationById(prevStop.stationId) : null;
-        const curStation = curStop.stationId ? this.game.world.getStationById(curStop.stationId) : null;
-        let found = false;
-        if (prevStation && curStation) {
-          const existingTrack = this.game.world.getTrackBetween(prevStation.id, curStation.id);
-          if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-            travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
-            found = true;
-          }
-        }
-        if (!found) {
-          try {
-            const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
-            travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
-          } catch (e) {
-            const dist = Math.sqrt(Math.pow((curCoords.lat - prevCoords.lat) * 111, 2) + Math.pow((curCoords.lon - prevCoords.lon) * 111 * Math.cos(curCoords.lat * Math.PI / 180), 2));
-            travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
-          }
-        }
-      }
+      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed);
 
       curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
       curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
@@ -1781,8 +1784,8 @@ export class UI {
         curStop.depTimeMin = curStop.arrTimeMin;
         curStop.depTimeStr = curStop.arrTimeStr;
       } else {
-        const stopDuration = Math.max(2, (curStop.depTimeMin || 0) - (curStop.arrTimeMin || 0));
-        curStop.depTimeMin = curStop.arrTimeMin + (i === this.schedStops.length - 1 ? 0 : Math.max(stopDuration, 2));
+        const oldStopDuration = Math.max(2, (curStop.depTimeMin || 0) - (curStop.arrTimeMin || 0));
+        curStop.depTimeMin = curStop.arrTimeMin + (i === this.schedStops.length - 1 ? 0 : Math.max(oldStopDuration, 2));
         curStop.depTimeStr = this.minToTimeStr(curStop.depTimeMin);
       }
     }

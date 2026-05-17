@@ -736,7 +736,7 @@ export class ORMClient {
     const segments = this.getRouteSegments(route);
     if (segments.length === 0) return 1;
 
-    // Merge consecutive segments into speed zones (avoid per-point accel/decel)
+    // Merge consecutive segments into speed zones
     const zones = [];
     for (const seg of segments) {
       const vMax = Math.min(rameMaxSpeed, seg.maxSpeed);
@@ -749,42 +749,34 @@ export class ORMClient {
     }
     if (zones.length === 0) return 1;
 
-    // Total distance for the whole route
     const totalDistKm = zones.reduce((s, z) => s + z.distKm, 0);
     if (totalDistKm <= 0) return 1;
 
-    // Accel/decel only at start and end of the full journey
-    const accelRate = 1.8; // km/h per second
-    const cruiseSpeed = zones.length === 1 ? zones[0].vMax : Math.min(rameMaxSpeed, Math.max(...zones.map(z => z.vMax)));
-
-    // Time for each zone at its speed limit (cruise only)
+    // Cruise time per zone
     let totalSeconds = 0;
     for (const z of zones) {
       totalSeconds += (z.distKm / z.vMax) * 3600;
     }
 
-    // Add acceleration at start (0 -> first zone speed) and deceleration at end (last zone speed -> 0)
+    // Accel/decel at start and end only (rate = 0.7 m/s² ≈ 2.52 km/h/s)
+    const accelRate = 2.52;
     const startSpeed = zones[0].vMax;
     const endSpeed = zones[zones.length - 1].vMax;
-    const tAccelStart = startSpeed / accelRate;
-    const tDecelEnd = endSpeed / accelRate;
-    // During acceleration, we travel slower than cruise: lost time = tAccel/2
-    totalSeconds += tAccelStart / 2;
-    totalSeconds += tDecelEnd / 2;
+    totalSeconds += (startSpeed / accelRate) / 2;
+    totalSeconds += (endSpeed / accelRate) / 2;
 
-    // Add time for speed transitions between zones (braking/accelerating)
+    // Speed transitions between zones (only significant ones > 20 km/h diff)
     for (let i = 1; i < zones.length; i++) {
       const speedDiff = Math.abs(zones[i].vMax - zones[i - 1].vMax);
-      if (speedDiff > 0) {
-        const tTransition = speedDiff / accelRate;
-        totalSeconds += tTransition / 2;
+      if (speedDiff > 20) {
+        totalSeconds += (speedDiff / accelRate) / 2;
       }
     }
 
     let totalMinutes = totalSeconds / 60;
-    // 10% margin for signals, junctions, minor slowdowns
-    totalMinutes *= 1.10;
-    return Math.ceil(totalMinutes);
+    // 3% margin — tight schedule so train stays on time
+    totalMinutes *= 1.03;
+    return Math.round(totalMinutes) || 1;
   }
 
   generateSignalBlocks(route) {
