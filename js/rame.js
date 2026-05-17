@@ -8,6 +8,9 @@ export class Rame {
     this.elementDetails = data.elementDetails || []; // cached details
     this.createdDate = data.createdDate || new Date().toISOString().split('T')[0];
     this.totalKmRun = data.totalKmRun || 0;
+    this.kmSinceLastMaint = data.kmSinceLastMaint || 0;
+    this.wearLevel = data.wearLevel || 0;
+    this.inMaintenance = data.inMaintenance || false;
   }
 
   get totalLength() {
@@ -100,6 +103,9 @@ export class RameManager {
       elementDetails: r.elementDetails,
       createdDate: r.createdDate,
       totalKmRun: r.totalKmRun,
+      kmSinceLastMaint: r.kmSinceLastMaint,
+      wearLevel: r.wearLevel,
+      inMaintenance: r.inMaintenance,
     }));
   }
 

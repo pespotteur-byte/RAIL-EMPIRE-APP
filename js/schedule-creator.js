@@ -139,10 +139,10 @@ export class ActiveService {
       seriesName,
       number: trainNumber,
       platform: null,
-      // S14: Wear tracking
-      totalKmRun: 0,
-      kmSinceLastMaint: 0,
-      wearLevel: 0, // 0-100
+      // S14: Wear tracking — initialize from rame (persists across services)
+      totalKmRun: rame ? (rame.totalKmRun || 0) : 0,
+      kmSinceLastMaint: rame ? (rame.kmSinceLastMaint || 0) : 0,
+      wearLevel: rame ? (rame.wearLevel || 0) : 0,
     };
 
     // Garage/shunting state
@@ -747,6 +747,12 @@ export class ActiveService {
     this.train.totalKmRun = (this.train.totalKmRun || 0) + stepKm;
     this.train.kmSinceLastMaint = (this.train.kmSinceLastMaint || 0) + stepKm;
     this.train.wearLevel = Math.min(100, (this.train.kmSinceLastMaint || 0) / 250); // 100% wear at 25,000km
+    // Sync km to persistent rame object
+    if (this.rame && stepKm > 0) {
+      this.rame.totalKmRun = (this.rame.totalKmRun || 0) + stepKm;
+      this.rame.kmSinceLastMaint = (this.rame.kmSinceLastMaint || 0) + stepKm;
+      this.rame.wearLevel = this.train.wearLevel;
+    }
     // Failure probability: scales with wear level (higher wear = more likely to break)
     if (!this.train.breakdown && stepKm > 0) {
       const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25; // 1x at 0%, 5x at 100%
@@ -1518,15 +1524,10 @@ export class ScheduleCreator {
       svc.totalDistance = d.totalDistance || 0;
       svc.active = d.active !== false;
 
-      // Restore persistent train stats from save (wear, km, etc.)
-      // but reset operational state — game will re-evaluate based on current time
+      // Restore non-operational state from save
+      // Km/wear are read from the rame (source of truth, loaded earlier)
       if (d._runtime) {
         const rt = d._runtime;
-        svc.train.totalKm = rt.trainTotalKm || 0;
-        svc.train.totalKmRun = rt.trainTotalKmRun || 0;
-        svc.train.kmSinceLastMaint = rt.trainKmSinceLastMaint || 0;
-        svc.train.wearLevel = rt.trainWearLevel || 0;
-        svc.train.inMaintenance = rt.trainInMaintenance || false;
         svc.completedDate = rt.completedDate || '';
         svc.direction = rt.direction || 1;
         svc._tripCount = rt._tripCount || 0;
@@ -1550,6 +1551,7 @@ export class ScheduleCreator {
       svc.train.blockedBy = false;
       svc.train.stoppedAt = null;
       svc.train._stoppedSinceGameTime = null;
+      svc.train.inMaintenance = rame ? (rame.inMaintenance || false) : false;
       svc._nextDepartureTime = null;
       svc._onboardPax = 0;
       svc._onboardFreight = 0;
