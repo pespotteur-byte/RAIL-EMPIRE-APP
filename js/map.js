@@ -71,21 +71,38 @@ export class TileMap {
 
   getTile(tx, ty, z, urlTemplate) {
     const key = `${urlTemplate}/${z}/${tx}/${ty}`;
-    if (this.tileCache.has(key)) return this.tileCache.get(key);
+    const cached = this.tileCache.get(key);
+    if (cached) {
+      // Retry failed tiles after 5 seconds
+      if (cached.error && Date.now() - cached.errorTime > 5000) {
+        this.tileCache.delete(key);
+      } else {
+        return cached;
+      }
+    }
 
-    const tile = { loaded: false, error: false, img: null };
+    const tile = { loaded: false, error: false, img: null, errorTime: 0 };
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => { tile.loaded = true; tile.img = img; };
-    img.onerror = () => { tile.error = true; };
+    img.onerror = () => { tile.error = true; tile.errorTime = Date.now(); };
 
     const url = urlTemplate.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
     img.src = url;
 
     this.tileCache.set(key, tile);
     if (this.tileCache.size > 800) {
+      // Evict errored tiles first, then oldest
       const keys = Array.from(this.tileCache.keys());
-      for (let i = 0; i < 200; i++) this.tileCache.delete(keys[i]);
+      let evicted = 0;
+      for (const k of keys) {
+        if (evicted >= 200) break;
+        const t = this.tileCache.get(k);
+        if (t && t.error) { this.tileCache.delete(k); evicted++; }
+      }
+      for (let i = 0; evicted < 200 && i < keys.length; i++) {
+        if (this.tileCache.has(keys[i])) { this.tileCache.delete(keys[i]); evicted++; }
+      }
     }
     return tile;
   }

@@ -421,24 +421,26 @@ class RailEmpire {
   gameLoop() {
     if (!this.running) return;
 
-    this.engine.update();
+    try {
+      this.engine.update();
 
-    const activeServices = this.scheduleCreator.getActiveServices();
-    // Include rescue services for rendering
-    const rescueServices = this.depotManager.getRescueServices();
-    const allVisibleServices = [...activeServices, ...rescueServices];
+      const activeServices = this.scheduleCreator.getActiveServices();
+      const rescueServices = this.depotManager.getRescueServices();
+      const allVisibleServices = [...activeServices, ...rescueServices];
 
-    if (this.renderer) {
-      this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
-    }
-
-    // S17: Throttle UI updates to ~4Hz to avoid excessive DOM manipulation
-    const now = performance.now();
-    if (!this._lastUIUpdate || now - this._lastUIUpdate > 250) {
-      this._lastUIUpdate = now;
-      if (this.ui) {
-        this.ui.update(allVisibleServices);
+      if (this.renderer) {
+        this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
       }
+
+      const now = performance.now();
+      if (!this._lastUIUpdate || now - this._lastUIUpdate > 250) {
+        this._lastUIUpdate = now;
+        if (this.ui) {
+          this.ui.update(allVisibleServices);
+        }
+      }
+    } catch (e) {
+      console.error('Game loop error:', e);
     }
 
     requestAnimationFrame(() => this.gameLoop());
