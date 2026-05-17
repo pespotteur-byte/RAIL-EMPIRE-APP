@@ -1,21 +1,21 @@
-import { SimulationEngine } from './engine.js?v=1778404142';
-import { World, createDefaultWorld } from './world.js?v=1778404142';
-import { Renderer } from './renderer.js?v=1778404142';
-import { UI } from './ui.js?v=1778404142';
-import { Economy } from './economy.js?v=1778404142';
-import { IncidentManager } from './incidents.js?v=1778404142';
-import { FreightManager } from './freight.js?v=1778404142';
-import { ScheduleManager } from './schedule.js?v=1778404142';
-import { GameStorage } from './storage.js?v=1778404142';
-import { AccountManager } from './account.js?v=1778404142';
-import { RollingStockManager } from './rolling-stock.js?v=1778404142';
-import { RameManager } from './rame.js?v=1778404142';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1778404142';
-import { DepotManager } from './depot.js?v=1778404142';
-import { WorksManager } from './works.js?v=1778404142';
-import { ORMClient } from './orm.js?v=1778404142';
-import { LineManager, PlatformManager } from './line.js?v=1778404142';
-import { VoiePointManager } from './voie-points.js?v=1778404142';
+import { SimulationEngine } from './engine.js?v=1778517600';
+import { World, createDefaultWorld } from './world.js?v=1778517600';
+import { Renderer } from './renderer.js?v=1778517600';
+import { UI } from './ui.js?v=1778517600';
+import { Economy } from './economy.js?v=1778517600';
+import { IncidentManager } from './incidents.js?v=1778517600';
+import { FreightManager } from './freight.js?v=1778517600';
+import { ScheduleManager } from './schedule.js?v=1778517600';
+import { GameStorage } from './storage.js?v=1778517600';
+import { AccountManager } from './account.js?v=1778517600';
+import { RollingStockManager } from './rolling-stock.js?v=1778517600';
+import { RameManager } from './rame.js?v=1778517600';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1778517600';
+import { DepotManager } from './depot.js?v=1778517600';
+import { WorksManager } from './works.js?v=1778517600';
+import { ORMClient } from './orm.js?v=1778517600';
+import { LineManager, PlatformManager } from './line.js?v=1778517600';
+import { VoiePointManager } from './voie-points.js?v=1778517600';
 
 class RailEmpire {
   constructor() {
@@ -291,21 +291,34 @@ class RailEmpire {
 
       // Always clear stale blocked state after fast-forward
       svc.train.blockedBy = false;
+      svc.train._stoppedSinceGameTime = null;
 
-      // If current time is before first departure or after last arrival + buffer, reset to waiting
-      if (timeOfDay < firstDep || timeOfDay > lastArr + 30) {
+      // Midnight-safe: is timeOfDay outside the service window?
+      const beforeDep = !this._timeGte(timeOfDay, firstDep);
+      const afterArr = this._timeGte(timeOfDay, lastArr + 31);
+
+      if (beforeDep || afterArr) {
         svc.state = 'waiting';
         svc.currentStopIndex = 0;
         svc.speed = 0;
         svc.train.speed = 0;
         svc.train.stoppedAt = null;
+        svc.position = null;
         svc._resetState();
-        if (timeOfDay > lastArr + 30) {
+        if (afterArr) {
           svc.completed = true;
           svc.completedDate = dateStr;
         }
       }
     }
+  }
+
+  // Midnight-safe time comparison
+  _timeGte(a, b) {
+    let d = a - b;
+    if (d > 720) d -= 1440;
+    else if (d < -720) d += 1440;
+    return d >= 0;
   }
 
   saveState() {

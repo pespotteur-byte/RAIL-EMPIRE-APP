@@ -2,7 +2,7 @@
 // Voie points are unnamed geographic markers that define which voie (track) a train is on
 // Troncons connect voie points and/or stations with ORM-traced routes
 
-import { haversineDistance } from './simulation.js?v=1778404142';
+import { haversineDistance } from './simulation.js?v=1778517600';
 
 let nextVoiePointId = 1;
 let nextTronconId = 1;
@@ -183,6 +183,15 @@ export class VoiePointManager {
     const trc = this.getTronconById(tronconId);
     if (!trc) return false;
     if (trc.occupiedBy === null || trc.occupiedBy === excludeTrainId) return false;
+    // Verify the occupying train still exists and is active
+    const services = window.game?.scheduleCreator?.services;
+    if (services) {
+      const occupier = services.find(s => s.id === trc.occupiedBy);
+      if (!occupier || occupier.state === 'waiting' || occupier.state === 'completed' || !occupier.position) {
+        trc.occupiedBy = null;
+        return false;
+      }
+    }
     return true;
   }
 

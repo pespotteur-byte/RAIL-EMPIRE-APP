@@ -734,13 +734,56 @@ export class ORMClient {
 
   calculateTravelTime(route, rameMaxSpeed) {
     const segments = this.getRouteSegments(route);
-    let totalMinutes = 0;
+    if (segments.length === 0) return 1;
+
+    // Merge consecutive segments into speed zones (avoid per-point accel/decel)
+    const zones = [];
     for (const seg of segments) {
-      const effectiveSpeed = Math.min(rameMaxSpeed, seg.maxSpeed);
-      if (effectiveSpeed <= 0) continue;
-      totalMinutes += (seg.distance / effectiveSpeed) * 60;
+      const vMax = Math.min(rameMaxSpeed, seg.maxSpeed);
+      if (vMax <= 0) continue;
+      if (zones.length > 0 && zones[zones.length - 1].vMax === vMax) {
+        zones[zones.length - 1].distKm += seg.distance;
+      } else {
+        zones.push({ vMax, distKm: seg.distance });
+      }
     }
-    totalMinutes *= 1.15;
+    if (zones.length === 0) return 1;
+
+    // Total distance for the whole route
+    const totalDistKm = zones.reduce((s, z) => s + z.distKm, 0);
+    if (totalDistKm <= 0) return 1;
+
+    // Accel/decel only at start and end of the full journey
+    const accelRate = 1.8; // km/h per second
+    const cruiseSpeed = zones.length === 1 ? zones[0].vMax : Math.min(rameMaxSpeed, Math.max(...zones.map(z => z.vMax)));
+
+    // Time for each zone at its speed limit (cruise only)
+    let totalSeconds = 0;
+    for (const z of zones) {
+      totalSeconds += (z.distKm / z.vMax) * 3600;
+    }
+
+    // Add acceleration at start (0 -> first zone speed) and deceleration at end (last zone speed -> 0)
+    const startSpeed = zones[0].vMax;
+    const endSpeed = zones[zones.length - 1].vMax;
+    const tAccelStart = startSpeed / accelRate;
+    const tDecelEnd = endSpeed / accelRate;
+    // During acceleration, we travel slower than cruise: lost time = tAccel/2
+    totalSeconds += tAccelStart / 2;
+    totalSeconds += tDecelEnd / 2;
+
+    // Add time for speed transitions between zones (braking/accelerating)
+    for (let i = 1; i < zones.length; i++) {
+      const speedDiff = Math.abs(zones[i].vMax - zones[i - 1].vMax);
+      if (speedDiff > 0) {
+        const tTransition = speedDiff / accelRate;
+        totalSeconds += tTransition / 2;
+      }
+    }
+
+    let totalMinutes = totalSeconds / 60;
+    // 10% margin for signals, junctions, minor slowdowns
+    totalMinutes *= 1.10;
     return Math.ceil(totalMinutes);
   }
 

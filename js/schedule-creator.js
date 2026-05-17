@@ -1,6 +1,34 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1778404142';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1778517600';
 
 let nextServiceId = 1;
+
+// Midnight-safe time difference: handles wrapping around 00:00
+// Returns difference in minutes, clamped to [-720, 720]
+function timeDiff(timeA, timeB) {
+  let d = timeA - timeB;
+  if (d > 720) d -= 1440;
+  else if (d < -720) d += 1440;
+  return d;
+}
+
+// Midnight-safe "is timeA >= timeB"
+function timeGte(timeA, timeB) {
+  return timeDiff(timeA, timeB) >= 0;
+}
+
+// Check if timeOfDay falls within a service window [start, end]
+// Handles midnight-crossing services (e.g., depart 23:00, arrive 01:00)
+function isInServiceWindow(timeOfDay, start, end) {
+  // Normalize to [0, 1440)
+  start = ((start % 1440) + 1440) % 1440;
+  end = ((end % 1440) + 1440) % 1440;
+  if (start <= end) {
+    return timeOfDay >= start && timeOfDay <= end;
+  } else {
+    // Midnight-crossing
+    return timeOfDay >= start || timeOfDay <= end;
+  }
+}
 
 // Global canton manager shared across all services
 const cantonManager = new CantonManager();
@@ -129,38 +157,8 @@ export class ActiveService {
     }
   }
 
-  async garageToVoiePoint(vpId) {
-    if (this._garage || !this.position) return;
-    const vpm = window.game?.voiePointManager;
-    const vp = vpm?.getVoiePointById(vpId);
-    if (!vp) return;
-    const orm = window.game?.orm;
-    let route;
-    try {
-      route = await orm.findRoute(this.position.lat, this.position.lon, vp.lat, vp.lon);
-    } catch (e) {
-      route = [{ lat: this.position.lat, lon: this.position.lon, maxSpeed: 30 }, { lat: vp.lat, lon: vp.lon, maxSpeed: 30 }];
-    }
-    this._garage = {
-      vpId, route,
-      savedRoutes: this.routes,
-      savedStopIndex: this.currentStopIndex,
-      savedState: this.state,
-      savedIsReturn: this.isReturnLeg,
-      phase: 'going', // going → parked → returning
-    };
-    this._state.cachedRoute = route;
-    this._state.routeIndex = 0;
-    this._state.segDists = null;
-    this.state = 'moving';
-    this.train.blockedBy = false;
-    this.speed = 0;
-  }
-
-  resumeFromGarage() {
-    if (!this._garage) return;
-    this._garage.phase = 'resuming';
-  }
+  async garageToVoiePoint(vpId) { return; }
+  resumeFromGarage() { return; }
 
   getColor() {
     const colors = ['#2563eb', '#dc2626', '#16a34a', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
@@ -218,11 +216,25 @@ export class ActiveService {
     if (this.state === 'waiting') {
       if (this.completed && dateStr !== this.completedDate) {
         this.completed = false;
+        // Reset position so the train is not rendered until near departure
+        this.position = null;
+        this.train.stoppedAt = null;
       }
       if (this.completed) return;
 
+      // Compute service window
+      const lastStop = currentStops[currentStops.length - 1];
+      const endTime = lastStop?.arrivalTime ?? firstDep + 120;
+
+      // Don't show train if not in service window (uses direct comparison, no ±720 wrapping)
+      if (this.currentStopIndex === 0 && !isInServiceWindow(timeOfDay, firstDep - 1, endTime + 31)) {
+        this.position = null;
+        this.train.stoppedAt = null;
+        return;
+      }
+
       // Show train on map 1 minute before departure (position at first station)
-      if (this.currentStopIndex === 0 && timeOfDay >= firstDep - 1 && timeOfDay < firstDep) {
+      if (this.currentStopIndex === 0 && isInServiceWindow(timeOfDay, firstDep - 1, firstDep) && !timeGte(timeOfDay, firstDep)) {
         const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
         if (firstStation) {
           // Use voie point coords if available
@@ -246,10 +258,8 @@ export class ActiveService {
         return;
       }
 
-      if (this.currentStopIndex === 0 && timeOfDay >= firstDep) {
-        const lastStop = currentStops[currentStops.length - 1];
-        const endTime = lastStop?.arrivalTime ?? firstDep + 120;
-        if (timeOfDay <= endTime + 30) {
+      if (this.currentStopIndex === 0 && timeGte(timeOfDay, firstDep)) {
+        if (isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
           // Board passengers at departure station before moving
           if (economy) {
             const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
@@ -261,7 +271,7 @@ export class ActiveService {
           this.currentStopIndex = 1;
           this.speed = 0;
           this.revenueCollected = false;
-          this.delay = Math.max(0, timeOfDay - firstDep);
+          this.delay = Math.max(0, timeDiff(timeOfDay, firstDep));
           this.train.delay = this.delay;
           this.train.blockedBy = false;
           this.train.stoppedAt = null;
@@ -279,7 +289,7 @@ export class ActiveService {
     if (this.state === 'stopped_at_station') {
       // Multi-trip waiting: use _nextDepartureTime if set
       if (this._nextDepartureTime != null && this.currentStopIndex === 0) {
-        if (timeOfDay >= this._nextDepartureTime) {
+        if (timeGte(timeOfDay, this._nextDepartureTime)) {
           // Board passengers at departure station for return/multi-trip
           const curStops = this.getCurrentStops();
           if (economy && curStops[0]) {
@@ -314,7 +324,8 @@ export class ActiveService {
       if (!stop) { this.state = 'moving'; return; }
 
       const depTime = stop.departureTime;
-      if (stop.type === 'passage' || stop.type === 'waypoint' || timeOfDay >= depTime) {
+      // Guard against undefined/NaN departureTime — depart immediately
+      if (stop.type === 'passage' || stop.type === 'waypoint' || depTime == null || isNaN(depTime) || timeGte(timeOfDay, depTime)) {
         // Release platform on departure
         if (this._platformAssignment && window.game?.platformManager) {
           window.game.platformManager.releasePlatform(
@@ -420,41 +431,8 @@ export class ActiveService {
   moveUpdate(dt, timeOfDay, allServices) {
     if (!this.active || this.state !== 'moving') return;
 
-    // Garage: parked at voie de garage — wait for resume
-    if (this._garage && this._garage.phase === 'parked') {
-      this.speed = 0;
-      this.train.speed = 0;
-      this.train.blockedBy = false;
-      return;
-    }
-    // Garage: resuming — build return route
-    if (this._garage && this._garage.phase === 'resuming') {
-      this._garage.phase = 'returning';
-      const vp = window.game?.voiePointManager?.getVoiePointById(this._garage.vpId);
-      if (vp && this.position) {
-        const target = this.getTargetStation();
-        const tgtLat = target?.lat || this.position.lat;
-        const tgtLon = target?.lon || this.position.lon;
-        window.game.orm.findRoute(vp.lat, vp.lon, tgtLat, tgtLon).then(route => {
-          this._state.cachedRoute = route;
-          this._state.index = 0;
-          this._state.progress = 0;
-          this._state.segDists = null;
-          this._state.legKey = null;
-        }).catch(() => {
-          // Fallback: direct line
-          this._state.cachedRoute = [
-            { lat: vp.lat, lon: vp.lon, maxSpeed: 30 },
-            { lat: tgtLat, lon: tgtLon, maxSpeed: 30 },
-          ];
-          this._state.index = 0;
-          this._state.progress = 0;
-          this._state.segDists = null;
-          this._state.legKey = null;
-        });
-      }
-      return;
-    }
+    // Clear any stale garage state from old saves
+    if (this._garage) this._garage = null;
 
     let target = this.getTargetStation();
     if (!target) {
@@ -493,25 +471,6 @@ export class ActiveService {
 
     // Check if we've reached end of route
     if (this._state.index >= route.length - 1) {
-      // Garage: arrived at voie de garage
-      if (this._garage && this._garage.phase === 'going') {
-        this._garage.phase = 'parked';
-        this.speed = 0;
-        this.train.speed = 0;
-        this.state = 'moving'; // keep moving state but speed 0
-        return;
-      }
-      // Garage: returning to main route
-      if (this._garage && this._garage.phase === 'returning') {
-        this.currentStopIndex = this._garage.savedStopIndex;
-        this.isReturnLeg = this._garage.savedIsReturn;
-        this.routes = this._garage.savedRoutes;
-        this._garage = null;
-        this._resetState();
-        this.state = 'moving';
-        this.train.blockedBy = false;
-        return;
-      }
       cantonManager.releaseAll(this.id);
       this.arriveAtStation(target, timeOfDay, this._economy);
       return;
@@ -564,9 +523,10 @@ export class ActiveService {
     let onTroncon = false;
     if (window.game?.voiePointManager && this.position) {
       const vpm = window.game.voiePointManager;
-      // Cache troncon lookup: only re-scan every ~1s or when position changes significantly
+      // Cache troncon lookup: re-scan every ~300ms or when position changes
       let currentTrc = null;
-      if (this._cachedTroncon && this._cachedTronconTime && (performance.now() - this._cachedTronconTime < 1000)) {
+      const cacheAge = this._cachedTronconTime ? (performance.now() - this._cachedTronconTime) : Infinity;
+      if (this._cachedTroncon && cacheAge < 300) {
         currentTrc = this._cachedTroncon;
       } else {
         const trainVoie = this.train.platform || null;
@@ -641,6 +601,30 @@ export class ActiveService {
             this.train.blockedBy = true;
           }
         }
+      }
+    }
+
+    // --- ANTICIPATORY BRAKING FOR SPEED ZONE CHANGES ---
+    // Look ahead: if a lower speed zone is coming, start braking before entering it
+    if (this.speed > 0 && effectiveMaxSpeed > 0) {
+      let lookDist = 0;
+      for (let li = segIdx + 1; li < route.length - 1; li++) {
+        const ld = (this._state.segDists && this._state.segDists[li]) || haversineDistance(route[li].lat, route[li].lon, route[li + 1].lat, route[li + 1].lon);
+        lookDist += ld;
+        const nextSpeed = Math.min(rameMaxSpeed, route[li + 1].maxSpeed || route[li].maxSpeed || 160);
+        if (nextSpeed < this.speed) {
+          // Distance from current position to this zone boundary
+          const segRemain = segDistance * (1 - this._state.progress);
+          const distToZone = segRemain + lookDist - ld;
+          // Braking distance needed: (v² - v_target²) / (2 * decel)
+          const brakingNeeded = Math.max(0, (this.speed * this.speed - nextSpeed * nextSpeed) / (2 * this.train.decel * 3600));
+          if (distToZone <= brakingNeeded + 0.1) {
+            const targetNow = Math.sqrt(Math.max(nextSpeed * nextSpeed, nextSpeed * nextSpeed + 2 * this.train.decel * 3600 * distToZone));
+            effectiveMaxSpeed = Math.min(effectiveMaxSpeed, targetNow);
+          }
+          break;
+        }
+        if (lookDist > 5) break;
       }
     }
 
@@ -836,7 +820,7 @@ export class ActiveService {
       const totalScheduledTime = scheduledArrivalTime - scheduledDepartureTime;
       const expectedTimeAtPosition = scheduledDepartureTime + totalScheduledTime * timeFraction;
 
-      this.delay = timeOfDay - expectedTimeAtPosition;
+      this.delay = timeDiff(timeOfDay, expectedTimeAtPosition);
     } else {
       // Fallback: estimate delay using distance-based progress
       const scheduledArrivalTime = nextStop?.arrivalTime || (scheduledDepartureTime + 60);
@@ -851,9 +835,9 @@ export class ActiveService {
         const progress = totalDist > 0 ? Math.max(0, 1 - remainDist / totalDist) : 0;
         const totalScheduledTime = scheduledArrivalTime - scheduledDepartureTime;
         const expectedTime = scheduledDepartureTime + totalScheduledTime * progress;
-        this.delay = timeOfDay - expectedTime;
+        this.delay = timeDiff(timeOfDay, expectedTime);
       } else {
-        this.delay = timeOfDay - scheduledDepartureTime;
+        this.delay = timeDiff(timeOfDay, scheduledDepartureTime);
       }
     }
 
@@ -940,21 +924,28 @@ export class ActiveService {
     const myVoie = this.train.platform || (vpm ? vpm.getVoieAtPosition(this.position) : null);
 
     for (const other of allServices) {
-      if (other.id === this.id || !other.position || other.state === 'waiting' || other.state === 'stopped_at_station') continue;
+      if (other.id === this.id) continue;
+      // Skip trains not physically on the track
+      if (!other.position || other.state === 'waiting' || other.state === 'completed') continue;
 
-      // Skip trains on a different voie (parallel tracks)
+      // Voie check: only block if confirmed on the SAME voie
       const otherVoie = other.train?.platform || (vpm && other.position ? vpm.getVoieAtPosition(other.position) : null);
       if (myVoie && otherVoie && myVoie !== otherVoie) continue;
+      // If neither has voie info, skip — can't confirm same track
+      if (!myVoie && !otherVoie) continue;
+      // If only one has voie info, skip — can't confirm same track
+      if (!myVoie || !otherVoie) continue;
 
       const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
-      if (rawDist > 30) continue;
+      // Only check trains within canton range (max ~5km, not 30km)
+      if (rawDist > 5) continue;
 
-      // Quick check: is other train near our route? Sample a few route points
+      // Check if other train is actually on our route (within 0.5km of a route point)
       const rLen = route.length;
       const step = Math.max(1, Math.floor(rLen / 10));
       let nearRoute = false;
       for (let ri = 0; ri < rLen; ri += step) {
-        if (haversineDistance(other.position.lat, other.position.lon, route[ri].lat, route[ri].lon) < 3) {
+        if (haversineDistance(other.position.lat, other.position.lon, route[ri].lat, route[ri].lon) < 0.5) {
           nearRoute = true; break;
         }
       }
@@ -972,7 +963,7 @@ export class ActiveService {
       }
 
       // Nez-à-nez detection: other train coming toward us on same track
-      if (!ahead && rawDist < 3) {
+      if (!ahead && rawDist < 2) {
         const otherRoute = other._state?.cachedRoute || other.getCurrentRoute?.();
         if (otherRoute && otherRoute.length >= 2) {
           const otherDir = other.isReturnLeg ? -1 : 1;
@@ -981,7 +972,7 @@ export class ActiveService {
             const dist = Math.abs(otherProgress - myProgress);
             if (dist < nearestAheadDist) {
               nearestAheadDist = dist;
-              nearestAheadSpeed = 0; // Full stop for head-on
+              nearestAheadSpeed = 0;
             }
           }
         }
@@ -1112,7 +1103,7 @@ export class ActiveService {
     const stop = stops[this.currentStopIndex];
     const expectedTime = stop?.arrivalTime;
     if (expectedTime != null) {
-      this.delay = timeOfDay - expectedTime;
+      this.delay = timeDiff(timeOfDay, expectedTime);
     }
     const roundedDelay = Math.round(this.delay);
     this.train.delay = roundedDelay === 0 ? 0 : roundedDelay;
@@ -1407,8 +1398,25 @@ export class ScheduleCreator {
     const src = this.services.find(s => s.id === id);
     if (!src) return [];
     const created = [];
+    // Naming: if name ends with digit, increment trailing number by 2 per copy
+    // If name ends with letter, keep name as-is
+    const srcName = src.name;
+    const endsWithDigit = /\d$/.test(srcName);
+    let trailingNum = 0, namePrefix = srcName;
+    if (endsWithDigit) {
+      const m = srcName.match(/^(.*?)(\d+)$/);
+      if (m) { namePrefix = m[1]; trailingNum = parseInt(m[2], 10); }
+    }
     for (let i = 1; i <= count; i++) {
       const offset = intervalMin * i;
+      let newName;
+      if (endsWithDigit) {
+        const newNum = trailingNum + 2 * i;
+        const padLen = (srcName.length - namePrefix.length);
+        newName = namePrefix + String(newNum).padStart(padLen, '0');
+      } else {
+        newName = srcName;
+      }
       const newStops = src.stops.map(st => ({
         stationId: st.stationId, type: st.type,
         departureTime: st.departureTime + offset,
@@ -1416,7 +1424,7 @@ export class ScheduleCreator {
         voiePointId: st.voiePointId || null, platform: st.platform || '',
       }));
       const svc = this.addService({
-        name: `${src.name} +${offset}min`,
+        name: newName,
         rameId: src.rameId, stops: newStops, routes: src.routes,
         roundTrip: src.roundTrip, multiDepartures: src.multiDepartures,
         terminusWait: src.terminusWait, totalDistance: src.totalDistance,
@@ -1506,70 +1514,43 @@ export class ScheduleCreator {
       svc.totalDistance = d.totalDistance || 0;
       svc.active = d.active !== false;
 
-      // Restore runtime state if saved
+      // Restore persistent train stats from save (wear, km, etc.)
+      // but reset operational state — game will re-evaluate based on current time
       if (d._runtime) {
         const rt = d._runtime;
-        svc.currentStopIndex = rt.currentStopIndex || 0;
-        svc.state = rt.state || 'waiting';
-        svc.isReturnLeg = rt.isReturnLeg || false;
-        svc._tripCount = rt._tripCount || 0;
-        if (rt.position) svc.position = { lat: rt.position.lat, lon: rt.position.lon };
-        svc.speed = rt.speed || 0;
-        svc.delay = rt.delay || 0;
-        svc.completed = rt.completed || false;
+        svc.train.totalKm = rt.trainTotalKm || 0;
+        svc.train.totalKmRun = rt.trainTotalKmRun || 0;
+        svc.train.kmSinceLastMaint = rt.trainKmSinceLastMaint || 0;
+        svc.train.wearLevel = rt.trainWearLevel || 0;
+        svc.train.inMaintenance = rt.trainInMaintenance || false;
         svc.completedDate = rt.completedDate || '';
         svc.direction = rt.direction || 1;
-        svc.revenueCollected = rt.revenueCollected || false;
-        svc._nextDepartureTime = rt._nextDepartureTime ?? null;
-        svc._lastArrivalTime = rt._lastArrivalTime ?? null;
-        svc._onboardPax = rt._onboardPax || 0;
-        svc._onboardFreight = rt._onboardFreight || 0;
+        svc._tripCount = rt._tripCount || 0;
         if (rt._adjustedStops) {
           svc._adjustedStops = rt._adjustedStops.map(s => new ServiceStop(
             s.stationId, s.type, s.departureTime, s.arrivalTime
           ));
         }
-        if (rt._simState) {
-          svc._state.index = rt._simState.index || 0;
-          svc._state.progress = rt._simState.progress || 0;
-          svc._state.legKey = rt._simState.legKey || null;
-          // Rebuild cached route so train can continue moving
-          if (svc._state.legKey && svc.state === 'moving') {
-            const route = svc.getCurrentRoute();
-            if (route && route.length >= 2) {
-              svc._state.cachedRoute = route;
-            }
-          }
-        }
-        svc.train.speed = rt.trainSpeed || 0;
-        svc.train.state = rt.trainState || 'waiting';
-        svc.train.totalKm = rt.trainTotalKm || 0;
-        svc.train.delay = rt.delay || 0;
-        svc.train.totalKmRun = rt.trainTotalKmRun || 0;
-        svc.train.kmSinceLastMaint = rt.trainKmSinceLastMaint || 0;
-        svc.train.wearLevel = rt.trainWearLevel || 0;
-        svc.train.inMaintenance = rt.trainInMaintenance || false;
-        svc.train.blockedBy = false; // Reset on load — will be recomputed
-
-        // Rebuild return stops if on return leg
-        if (svc.isReturnLeg && svc.roundTrip) {
-          svc.returnStops = svc.buildReturnStops();
-          if (svc.returnName) svc.train.name = svc.returnName;
-        }
-
-        // Restore position from current station if stopped and no position saved
-        if (!rt.position && svc.state === 'stopped_at_station') {
-          const stops = svc.isReturnLeg ? svc.returnStops : svc.stops;
-          const stopIdx = Math.max(0, svc.currentStopIndex - 1);
-          if (stops[stopIdx]) {
-            const st = world.getStationById(stops[stopIdx].stationId);
-            if (st) {
-              svc.position = { lat: st.lat, lon: st.lon };
-              svc.train.stoppedAt = st;
-            }
-          }
-        }
       }
+      // Always start clean: waiting state, no position, let scheduleTick decide
+      svc.state = 'waiting';
+      svc.position = null;
+      svc.speed = 0;
+      svc.currentStopIndex = 0;
+      svc.completed = false;
+      svc.isReturnLeg = false;
+      svc.delay = 0;
+      svc.train.delay = 0;
+      svc.train.speed = 0;
+      svc.train.state = 'waiting';
+      svc.train.blockedBy = false;
+      svc.train.stoppedAt = null;
+      svc.train._stoppedSinceGameTime = null;
+      svc._nextDepartureTime = null;
+      svc._onboardPax = 0;
+      svc._onboardFreight = 0;
+      svc.revenueCollected = false;
+      svc._resetState();
 
       this.services.push(svc);
       const num = parseInt(d.id?.split('-')[1] || '0');

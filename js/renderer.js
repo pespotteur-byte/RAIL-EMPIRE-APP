@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1778404142';
+import { TileMap } from './map.js?v=1778517600';
 
 export class Renderer {
   constructor(canvas) {
@@ -55,11 +55,7 @@ export class Renderer {
     if (window.game?.ui?._manualTronconWaypoints?.length > 1) {
       this._drawTempTrace(ctx, window.game.ui._manualTronconWaypoints);
     }
-    // Draw signal lights at canton boundaries
-    const showSignals = document.getElementById('toggle-signals')?.checked !== false;
-    if (showSignals && services.length > 0) {
-      this.drawSignals(ctx, services);
-    }
+    // Signals removed
     if (showTrains) this.drawServices(ctx, world, services);
   }
 
@@ -234,14 +230,10 @@ export class Renderer {
       if (!svc || !svc.position || !svc.train) continue;
       if (typeof svc.position.lat !== 'number' || typeof svc.position.lon !== 'number') continue;
       if (isNaN(svc.position.lat) || isNaN(svc.position.lon)) continue;
-      // Hide trains stopped at a STATION for > 5 game minutes (not trains stopped in line)
-      if (svc.train._stoppedSinceGameTime != null && svc.train.stoppedAt && window.game?.timeOfDay != null) {
-        let elapsed = window.game.timeOfDay - svc.train._stoppedSinceGameTime;
-        if (elapsed < 0) elapsed += 1440;
-        if (elapsed > 5) continue;
-      }
-      // Hide trains truly inactive (waiting, no position)
-      if (svc.state === 'waiting' && !svc.train.stoppedAt && !svc.position) continue;
+      // Hide trains that have completed their service and are just waiting
+      if (svc.state === 'waiting' && svc.completed) continue;
+      // Hide trains truly inactive (waiting with no position set)
+      if (svc.state === 'waiting' && !svc.position) continue;
 
       const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
       if (p.x < -30 || p.x > this.logicalWidth + 30 || p.y < -30 || p.y > this.logicalHeight + 30) continue;

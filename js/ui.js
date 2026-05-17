@@ -1383,7 +1383,7 @@ export class UI {
             travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
           } catch (e) {
             const dist = Math.sqrt(Math.pow((station.lat - prevStation.lat) * 111, 2) + Math.pow((station.lon - prevStation.lon) * 111 * Math.cos(station.lat * Math.PI / 180), 2));
-            travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.15);
+            travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
           }
         }
       }
@@ -1406,7 +1406,7 @@ export class UI {
     if (this._drawSchedMap) this._drawSchedMap();
   }
 
-  addSchedVoiePointStop(voiePoint) {
+  async addSchedVoiePointStop(voiePoint) {
     // Add voie point as invisible waypoint (no stop, no time, just passage obligé)
     const rameId = document.getElementById('sched-rame').value;
     const rame = this.game.rameManager.getById(rameId);
@@ -1420,14 +1420,17 @@ export class UI {
       depTimeMin = arrTimeMin;
     } else {
       const prevStop = this.schedStops[this.schedStops.length - 1];
-      const prevLat = prevStop.voiePointId
-        ? this.game.voiePointManager.getVoiePointById(prevStop.voiePointId)?.lat || 0
-        : (this.game.world.getStationById(prevStop.stationId)?.lat || 0);
-      const prevLon = prevStop.voiePointId
-        ? this.game.voiePointManager.getVoiePointById(prevStop.voiePointId)?.lon || 0
-        : (this.game.world.getStationById(prevStop.stationId)?.lon || 0);
-      const dist = Math.sqrt(Math.pow((voiePoint.lat - prevLat) * 111, 2) + Math.pow((voiePoint.lon - prevLon) * 111 * Math.cos(voiePoint.lat * Math.PI / 180), 2));
-      const travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.15);
+      const prevCoords = this._getStopCoords(prevStop);
+      let travelTime = 5;
+      if (prevCoords) {
+        try {
+          const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
+          travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+        } catch (e) {
+          const dist = Math.sqrt(Math.pow((voiePoint.lat - prevCoords.lat) * 111, 2) + Math.pow((voiePoint.lon - prevCoords.lon) * 111 * Math.cos(voiePoint.lat * Math.PI / 180), 2));
+          travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
+        }
+      }
       arrTimeMin = prevStop.depTimeMin + travelTime;
       depTimeMin = arrTimeMin; // no stop time for waypoint
     }
@@ -1491,14 +1494,17 @@ export class UI {
     const rameSpeed = rame ? rame.maxSpeed : 160;
 
     const prevStop = this.schedStops[this.schedStops.length - 1];
-    const prevLat = prevStop.voiePointId
-      ? (vpm.getVoiePointById(prevStop.voiePointId)?.lat || 0)
-      : (this.game.world.getStationById(prevStop.stationId)?.lat || 0);
-    const prevLon = prevStop.voiePointId
-      ? (vpm.getVoiePointById(prevStop.voiePointId)?.lon || 0)
-      : (this.game.world.getStationById(prevStop.stationId)?.lon || 0);
-    const dist = Math.sqrt(Math.pow((snappedLat - prevLat) * 111, 2) + Math.pow((snappedLon - prevLon) * 111 * Math.cos(snappedLat * Math.PI / 180), 2));
-    const travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.15);
+    const prevCoords = this._getStopCoords(prevStop);
+    let travelTime = 5;
+    if (prevCoords) {
+      try {
+        const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
+        travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+      } catch (e) {
+        const dist = Math.sqrt(Math.pow((snappedLat - prevCoords.lat) * 111, 2) + Math.pow((snappedLon - prevCoords.lon) * 111 * Math.cos(snappedLat * Math.PI / 180), 2));
+        travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
+      }
+    }
     const arrTimeMin = prevStop.depTimeMin + travelTime;
 
     this.schedStops.push({
@@ -1655,7 +1661,7 @@ export class UI {
     }
   }
 
-  updateSchedStop(index, field, value) {
+  async updateSchedStop(index, field, value) {
     const stop = this.schedStops[index];
     if (field === 'type') {
       stop.type = value;
@@ -1690,8 +1696,8 @@ export class UI {
     if (field === 'platform') {
       stop.platform = value || '';
     }
-    // Auto-recalculate all subsequent stops
-    this.recalcStopsFrom(index + 1);
+    // Auto-recalculate all subsequent stops (await async routing)
+    await this.recalcStopsFrom(index + 1);
     this.renderSchedStops();
   }
 
@@ -1702,6 +1708,19 @@ export class UI {
     } else {
       delete this._schedReturnPlatforms[stationId];
     }
+  }
+
+  _getStopCoords(stop) {
+    // Resolve lat/lon for any stop type (station, voie point, waypoint)
+    if (stop.voiePointId && this.game.voiePointManager) {
+      const vp = this.game.voiePointManager.getVoiePointById(stop.voiePointId);
+      if (vp) return { lat: vp.lat, lon: vp.lon };
+    }
+    if (stop.stationId) {
+      const st = this.game.world.getStationById(stop.stationId);
+      if (st) return { lat: st.lat, lon: st.lon };
+    }
+    return null;
   }
 
   async recalcStopsFrom(fromIndex) {
@@ -1715,21 +1734,29 @@ export class UI {
       const prevStop = this.schedStops[i - 1];
       const curStop = this.schedStops[i];
 
-      const prevStation = this.game.world.getStationById(prevStop.stationId);
-      const curStation = this.game.world.getStationById(curStop.stationId);
+      const prevCoords = this._getStopCoords(prevStop);
+      const curCoords = this._getStopCoords(curStop);
 
       let travelTime = 15;
-      if (prevStation && curStation) {
-        const existingTrack = this.game.world.getTrackBetween(prevStation.id, curStation.id);
-        if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-          travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
-        } else {
+      if (prevCoords && curCoords) {
+        // Try station-based track lookup first
+        const prevStation = prevStop.stationId ? this.game.world.getStationById(prevStop.stationId) : null;
+        const curStation = curStop.stationId ? this.game.world.getStationById(curStop.stationId) : null;
+        let found = false;
+        if (prevStation && curStation) {
+          const existingTrack = this.game.world.getTrackBetween(prevStation.id, curStation.id);
+          if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
+            travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
+            found = true;
+          }
+        }
+        if (!found) {
           try {
-            const route = await this.game.orm.findRoute(prevStation.lat, prevStation.lon, curStation.lat, curStation.lon);
+            const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
             travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
           } catch (e) {
-            const dist = Math.sqrt(Math.pow((curStation.lat - prevStation.lat) * 111, 2) + Math.pow((curStation.lon - prevStation.lon) * 111 * Math.cos(curStation.lat * Math.PI / 180), 2));
-            travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.15);
+            const dist = Math.sqrt(Math.pow((curCoords.lat - prevCoords.lat) * 111, 2) + Math.pow((curCoords.lon - prevCoords.lon) * 111 * Math.cos(curCoords.lat * Math.PI / 180), 2));
+            travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
           }
         }
       }
@@ -1960,6 +1987,117 @@ export class UI {
     this.lineMapCenter = null;
     this.lineMapScale = null;
     this._editingLineId = null;
+
+    // Station creator in Lines page
+    document.getElementById('btn-new-station-lines')?.addEventListener('click', () => {
+      const creator = document.getElementById('lines-station-creator');
+      if (!creator) return;
+      creator.classList.remove('hidden');
+      document.getElementById('lsc-name').value = '';
+      document.getElementById('lsc-lat').value = '';
+      document.getElementById('lsc-lon').value = '';
+      document.getElementById('lsc-platforms').value = '4';
+      document.getElementById('lsc-type').value = 'voyageur';
+      // Populate connect dropdown with existing stations
+      const connectSel = document.getElementById('lsc-connect');
+      if (connectSel) {
+        let opts = '<option value="">Aucune connexion</option><option value="_nearest">La plus proche (auto)</option>';
+        for (const st of this.game.world.stations) {
+          opts += `<option value="${st.id}">${st.name}</option>`;
+        }
+        connectSel.innerHTML = opts;
+      }
+      // Populate line dropdown
+      const lineSel = document.getElementById('lsc-line');
+      if (lineSel) {
+        let opts = '<option value="">Aucune</option>';
+        for (const line of this.game.lineManager.getAll()) {
+          opts += `<option value="${line.id}">${line.name}</option>`;
+        }
+        lineSel.innerHTML = opts;
+      }
+    });
+    document.getElementById('btn-lsc-cancel')?.addEventListener('click', () => {
+      document.getElementById('lines-station-creator')?.classList.add('hidden');
+    });
+    document.getElementById('btn-lsc-save')?.addEventListener('click', () => this.saveStationFromLines());
+  }
+
+  async saveStationFromLines() {
+    const name = document.getElementById('lsc-name')?.value.trim();
+    let lat = parseFloat(document.getElementById('lsc-lat')?.value);
+    let lon = parseFloat(document.getElementById('lsc-lon')?.value);
+    const type = document.getElementById('lsc-type')?.value || 'voyageur';
+    const platforms = parseInt(document.getElementById('lsc-platforms')?.value) || 4;
+
+    if (!name) return alert('Nom de gare requis');
+    if (isNaN(lat) || isNaN(lon)) return alert('Latitude et longitude requises');
+
+    const orm = this.game.orm;
+    const loadingEl = document.getElementById('lsc-loading');
+
+    // Snap to railway
+    if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Accrochage au reseau ferroviaire...'; }
+    try {
+      const snapped = await orm.snapToRailway(lat, lon, 2);
+      if (snapped) { lat = snapped.lat; lon = snapped.lon; }
+    } catch (e) { console.warn('Snap failed:', e); }
+
+    const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [] });
+    station.country = orm.getCountryAtPoint(lat, lon);
+    station.facilities = [type];
+    this.game.platformManager.initStation(station.id, platforms);
+
+    // Assign to line
+    const lineId = document.getElementById('lsc-line')?.value;
+    if (lineId) {
+      station.lineIds = [lineId];
+      const line = this.game.lineManager.getLine(lineId);
+      if (line) line.stops.push(station.id);
+    }
+
+    // Connect to another station
+    const connectChoice = document.getElementById('lsc-connect')?.value;
+    let connectTo = null;
+    if (connectChoice === '_nearest') {
+      let nearestDist = Infinity;
+      for (const s of this.game.world.stations) {
+        if (s.id === station.id) continue;
+        const d = Math.hypot(s.lat - lat, s.lon - lon);
+        if (d < nearestDist) { nearestDist = d; connectTo = s; }
+      }
+      if (nearestDist >= 3) connectTo = null;
+    } else if (connectChoice) {
+      connectTo = this.game.world.getStationById(connectChoice);
+    }
+
+    if (connectTo) {
+      if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Calcul du trace ORM en cours...'; }
+      try {
+        const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+        const distance = orm.getRouteDistance(route);
+        const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+        const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+        this.game.world.addTrack({
+          stationA: connectTo.id, stationB: station.id,
+          distance: Math.round(distance), maxSpeed: avgSpeed,
+          electrified: true, name: `${connectTo.name} - ${name}`,
+          route,
+        });
+      } catch (e) {
+        console.warn('ORM route failed:', e);
+        const dist = Math.round(Math.sqrt(Math.pow((lat - connectTo.lat) * 111, 2) + Math.pow((lon - connectTo.lon) * 111 * Math.cos(lat * Math.PI / 180), 2)));
+        this.game.world.addTrack({
+          stationA: connectTo.id, stationB: station.id,
+          distance: dist, maxSpeed: 160, name: `${connectTo.name} - ${name}`,
+        });
+      }
+    }
+
+    if (loadingEl) loadingEl.classList.add('hidden');
+    document.getElementById('lines-station-creator')?.classList.add('hidden');
+    this.game.saveState();
+    this.renderLinesList();
   }
 
   openLineModal(editLine) {
@@ -2290,6 +2428,25 @@ export class UI {
   }
 
   renderLinesList() {
+    // Render stations list
+    const stationsContainer = document.getElementById('lines-stations-list');
+    if (stationsContainer) {
+      const stations = this.game.world.stations || [];
+      if (stations.length > 0) {
+        stationsContainer.innerHTML = `
+          <h3 style="font-size:13px;margin:0 0 6px;color:var(--text2)">Gares (${stations.length})</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+            ${stations.map(st => {
+              const typeLabel = { voyageur: 'Voy', marchandise: 'Fret', mixed: 'Mix', depot: 'Dep', ite: 'ITE' }[st.type] || '';
+              return `<span class="line-stop-tag" style="font-size:10px;cursor:pointer" title="${st.lat.toFixed(4)}, ${st.lon.toFixed(4)} | ${st.platforms || '?'} voies" onclick="game.ui.editStationFromLines('${st.id}')">${st.name} <span style="color:var(--text3);font-size:9px">${typeLabel}</span></span>`;
+            }).join('')}
+          </div>
+        `;
+      } else {
+        stationsContainer.innerHTML = '';
+      }
+    }
+
     const container = document.getElementById('lines-list');
     if (!container) return;
     const lines = this.game.lineManager.getAll();
@@ -2336,6 +2493,11 @@ export class UI {
         </div>
       `;
     }).join('');
+  }
+
+  editStationFromLines(stationId) {
+    const station = this.game.world.getStationById(stationId);
+    if (station) this.openEditStationModal(station);
   }
 
   editLine(id) {
@@ -2540,49 +2702,17 @@ export class UI {
       document.getElementById('inc-name').value = '';
       document.getElementById('inc-impact').value = 'slow';
       document.getElementById('inc-speed-limit').value = '30';
-      document.getElementById('inc-radius').value = '10';
       document.getElementById('inc-duration').value = '60';
       document.getElementById('inc-speed-group').style.display = 'block';
-      // Populate location selector (stations + tracks + tronçons)
-      const select = document.getElementById('inc-track');
-      if (select) {
-        let opts = '';
-        // Stations
-        const stations = this.game.world.stations || [];
-        if (stations.length > 0) {
-          opts += '<optgroup label="Gares">';
-          opts += stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-          opts += '</optgroup>';
-        }
-        // Tracks (connections between stations)
-        const tracks = this.game.world.tracks || [];
-        if (tracks.length > 0) {
-          opts += '<optgroup label="Liaisons">';
-          opts += tracks.map(t => {
-            const a = this.game.world.getStationById(t.stationA);
-            const b = this.game.world.getStationById(t.stationB);
-            const label = (a?.name || '?') + ' — ' + (b?.name || '?');
-            return `<option value="${t.id}">${label}</option>`;
-          }).join('');
-          opts += '</optgroup>';
-        }
-        // Tronçons (voie points)
-        if (this.game.voiePointManager) {
-          const troncons = this.game.voiePointManager.troncons || [];
-          if (troncons.length > 0) {
-            opts += '<optgroup label="Tronçons voie">';
-            opts += troncons.map(tr => {
-              const pA = this.game.voiePointManager.getVoiePointById(tr.pointA);
-              const pB = this.game.voiePointManager.getVoiePointById(tr.pointB);
-              const lA = pA ? `Voie ${pA.voie}` : '?';
-              const lB = pB ? `Voie ${pB.voie}` : '?';
-              return `<option value="${tr.id}">${lA} — ${lB}</option>`;
-            }).join('');
-            opts += '</optgroup>';
-          }
-        }
-        select.innerHTML = opts || '<option>Aucun lieu disponible</option>';
-      }
+      // Populate station selectors (gare A and gare B)
+      const stations = this.game.world.stations || [];
+      const stationOpts = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      const selectA = document.getElementById('inc-station-a');
+      const selectB = document.getElementById('inc-station-b');
+      if (selectA) selectA.innerHTML = stationOpts || '<option>Aucune gare</option>';
+      if (selectB) selectB.innerHTML = stationOpts || '<option>Aucune gare</option>';
+      // Default: select second station for B if available
+      if (selectB && stations.length > 1) selectB.selectedIndex = 1;
       document.getElementById('modal-incident')?.classList.remove('hidden');
     });
     document.getElementById('inc-impact')?.addEventListener('change', (e) => {
@@ -2598,43 +2728,42 @@ export class UI {
 
   saveIncident() {
     const name = document.getElementById('inc-name').value.trim() || 'Incident';
-    const locationId = document.getElementById('inc-track').value;
+    const stationAId = document.getElementById('inc-station-a').value;
+    const stationBId = document.getElementById('inc-station-b').value;
     const effect = document.getElementById('inc-impact').value;
     const speedLimit = parseInt(document.getElementById('inc-speed-limit').value) || 30;
-    const radiusKm = parseInt(document.getElementById('inc-radius').value) || 10;
     const duration = parseInt(document.getElementById('inc-duration').value) || 60;
     const pt = this.game.engine.getParisTime();
     const timeOfDay = pt.hours * 60 + pt.minutes;
 
-    // Resolve center coordinates from station, track, or tronçon
-    let centerLat = 0, centerLon = 0, trackName = '';
-    const station = this.game.world.getStationById(locationId);
-    const track = this.game.world.tracks.find(t => t.id === locationId);
-    const troncon = this.game.voiePointManager?.troncons?.find(t => t.id === locationId);
-    if (station) {
-      centerLat = station.lat; centerLon = station.lon;
-      trackName = station.name;
-    } else if (track) {
-      const a = this.game.world.getStationById(track.stationA);
-      const b = this.game.world.getStationById(track.stationB);
-      if (a && b) { centerLat = (a.lat + b.lat) / 2; centerLon = (a.lon + b.lon) / 2; }
-      trackName = (a?.name || '?') + ' — ' + (b?.name || '?');
-    } else if (troncon) {
-      const pA = this.game.voiePointManager.getVoiePointById(troncon.pointA);
-      const pB = this.game.voiePointManager.getVoiePointById(troncon.pointB);
-      if (pA && pB) { centerLat = (pA.lat + pB.lat) / 2; centerLon = (pA.lon + pB.lon) / 2; }
-      trackName = `Voie ${pA?.voie || '?'} — Voie ${pB?.voie || '?'}`;
+    const stA = this.game.world.getStationById(stationAId);
+    const stB = this.game.world.getStationById(stationBId);
+    if (!stA || !stB) return alert('Sélectionnez deux gares valides');
+    if (stationAId === stationBId) return alert('Les deux gares doivent être différentes');
+
+    const trackName = `${stA.name} — ${stB.name}`;
+
+    // Find route between the two stations for precise impact zone
+    let route = null;
+    const existingTrack = this.game.world.getTrackBetween(stationAId, stationBId);
+    if (existingTrack?.route?.length > 1) {
+      route = existingTrack.route;
+    } else {
+      try {
+        route = this.game.orm.findRouteSync?.(stA.lat, stA.lon, stB.lat, stB.lon) || null;
+      } catch (e) { /* fallback below */ }
     }
 
     this.game.incidentManager.createIncident({
       name,
-      trackId: locationId,
       trackName,
-      centerLat,
-      centerLon,
+      stationA: stationAId,
+      stationB: stationBId,
+      stationAName: stA.name,
+      stationBName: stB.name,
+      route,
       effect,
       speedLimit: effect === 'stop' ? 0 : speedLimit,
-      radiusKm: Math.min(radiusKm, 50),
       duration,
       startTime: timeOfDay,
     }, this.game.world);
@@ -2710,7 +2839,7 @@ export class UI {
             <div class="incident-item">
               <div style="flex:1">
                 <div class="incident-name">${inc.name}</div>
-                <div class="incident-desc">${inc.trackName || 'Zone'} (rayon ${inc.radiusKm || 10}km) - ${inc.effect === 'stop' ? '<span style="color:#7B1E1E;font-weight:700">Interruption</span>' : '<span style="color:#FFE135;font-weight:700">Ralenti ' + (inc.speedLimit || 30) + ' km/h</span>'}</div>
+                <div class="incident-desc">${inc.trackName || (inc.stationAName && inc.stationBName ? inc.stationAName + ' — ' + inc.stationBName : 'Zone')} - ${inc.effect === 'stop' ? '<span style="color:#7B1E1E;font-weight:700">Interruption</span>' : '<span style="color:#FFE135;font-weight:700">Ralenti ' + (inc.speedLimit || 30) + ' km/h</span>'}</div>
                 <div class="incident-time">${Math.ceil(inc.remaining)} min restantes</div>
               </div>
               <button class="btn-sm danger incident-delete-btn" data-delete-incident="${inc.id}" title="Supprimer l'incident">✕</button>
@@ -3507,28 +3636,6 @@ export class UI {
       // Wear info
       const wearHtml = t.wearLevel > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(t.wearLevel)}% · Total: ${Math.round(t.totalKmRun || 0)} km</span></div>` : '';
 
-      // Garage button
-      let garageHtml = '';
-      if (svc._garage && svc._garage.phase === 'parked') {
-        garageHtml = `<div class="tc-line"><span style="color:#f59e0b;font-size:10px;font-weight:600">Gare sur voie de garage</span> <button class="btn-sm" style="font-size:9px;padding:1px 5px" onclick="game.ui.resumeFromGarage('${svc.id}')">Reprendre</button></div>`;
-      } else if (svc._garage && svc._garage.phase === 'going') {
-        garageHtml = `<div class="tc-line"><span style="color:#f59e0b;font-size:10px">En route vers voie de garage...</span></div>`;
-      } else if (svc._garage && svc._garage.phase === 'returning') {
-        garageHtml = `<div class="tc-line"><span style="color:#22c55e;font-size:10px">Reprise du trajet...</span></div>`;
-      } else if (t.blockedBy && svc.state === 'moving' && !t.breakdown) {
-        let vpOptions = '';
-        if (svc.position && this.game.voiePointManager) {
-          const nearVPs = this.game.voiePointManager.getAll().filter(vp => {
-            const d = Math.sqrt(Math.pow((vp.lat - svc.position.lat) * 111, 2) + Math.pow((vp.lon - svc.position.lon) * 111 * Math.cos(svc.position.lat * Math.PI / 180), 2));
-            return d < 5 && !vp.stationId;
-          }).slice(0, 10);
-          if (nearVPs.length > 0) {
-            vpOptions = `<select id="garage-vp-${svc.id}" style="font-size:9px;max-width:90px">${nearVPs.map(vp => `<option value="${vp.id}">Voie ${vp.voie} (${vp.id.slice(-4)})</option>`).join('')}</select> <button class="btn-sm" style="font-size:9px;padding:1px 5px" onclick="game.ui.garageService('${svc.id}')">Garer</button>`;
-          }
-        }
-        if (vpOptions) garageHtml = `<div class="tc-line">${vpOptions}</div>`;
-      }
-
       return `
         <div class="train-card-fixed">
           <div class="tc-line tc-header">
@@ -3546,7 +3653,6 @@ export class UI {
           ${breakdownHtml}
           ${maintenanceHtml}
           ${wearHtml}
-          ${garageHtml}
         </div>
       `;
     }).join('');

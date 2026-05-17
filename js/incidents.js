@@ -1,25 +1,23 @@
-import { haversineDistance } from './simulation.js?v=1778404142';
+import { haversineDistance } from './simulation.js?v=1778517600';
 
 let nextIncId = 1;
 
 export class Incident {
-  constructor(data, track) {
+  constructor(data) {
     this.id = data.id || `inc-${nextIncId++}`;
     this.name = data.name || 'Incident';
-    this.trackId = track?.id || data.trackId || null;
-    this.trackName = track?.name || data.trackName || '';
-    this.stationA = track?.stationA || data.stationA || null;
-    this.stationB = track?.stationB || data.stationB || null;
+    this.trackName = data.trackName || '';
+    this.stationA = data.stationA || null;
+    this.stationB = data.stationB || null;
+    this.stationAName = data.stationAName || '';
+    this.stationBName = data.stationBName || '';
     this.effect = data.effect || 'slow';
     this.speedLimit = data.speedLimit || 0;
-    this.radiusKm = data.radiusKm || 10;
-    this.centerLat = data.centerLat || 0;
-    this.centerLon = data.centerLon || 0;
+    this.route = data.route || null;
     this.duration = data.duration || 60;
     this.remaining = data.remaining ?? this.duration;
     this.active = data.active !== false;
     this.startTime = data.startTime || 0;
-    this.playerCreated = true;
   }
 }
 
@@ -30,55 +28,22 @@ export class IncidentManager {
   }
 
   createIncident(data, world) {
-    const track = world?.tracks?.find(t => t.id === data.trackId);
-    const inc = new Incident(data, track);
-
-    if (track) {
-      const stA = world.getStationById(track.stationA);
-      const stB = world.getStationById(track.stationB);
-      if (stA && stB) {
-        inc.centerLat = (stA.lat + stB.lat) / 2;
-        inc.centerLon = (stA.lon + stB.lon) / 2;
-      }
-    }
-
-    // Safety: ensure center coordinates are valid
-    if (!inc.centerLat && !inc.centerLon && track) {
-      console.warn('Incident center not set, using track direct coords');
-    }
-
+    const inc = new Incident(data);
     this.activeIncidents.push(inc);
 
-    // Mark affected tracks within radius (visual only)
+    // Mark the specific track between stationA and stationB
     if (world) this._markAffectedTracks(inc, world);
 
     return inc;
   }
 
   _markAffectedTracks(inc, world) {
-    if (!inc.centerLat || !inc.centerLon) {
-      // Single track mode
-      const track = world.tracks.find(t => t.id === inc.trackId);
-      if (track) {
-        track.incidentActive = true;
-        track.incidentEffect = inc.effect;
-        track.incidentSpeedLimit = inc.speedLimit;
-        track.incidentName = inc.name;
-      }
-      return;
-    }
-
-    // Mark all tracks within radius
+    if (!inc.stationA || !inc.stationB) return;
+    // Mark only the direct track between these two stations
     for (const track of world.tracks) {
-      const stA = world.getStationById(track.stationA);
-      const stB = world.getStationById(track.stationB);
-      if (!stA || !stB) continue;
-
-      const midLat = (stA.lat + stB.lat) / 2;
-      const midLon = (stA.lon + stB.lon) / 2;
-      const dist = this._haversine(inc.centerLat, inc.centerLon, midLat, midLon);
-
-      if (dist <= inc.radiusKm) {
+      const matches = (track.stationA === inc.stationA && track.stationB === inc.stationB) ||
+                      (track.stationA === inc.stationB && track.stationB === inc.stationA);
+      if (matches) {
         track.incidentActive = true;
         track.incidentEffect = inc.effect;
         track.incidentSpeedLimit = inc.speedLimit;
@@ -87,10 +52,6 @@ export class IncidentManager {
         track._incidentIds.push(inc.id);
       }
     }
-  }
-
-  _haversine(lat1, lon1, lat2, lon2) {
-    return haversineDistance(lat1, lon1, lat2, lon2);
   }
 
   removeIncident(id, world) {
@@ -113,17 +74,50 @@ export class IncidentManager {
           track.incidentSpeedLimit = null;
           track.incidentName = null;
         }
-      } else if (track.incidentActive && track.id === inc.trackId) {
-        track.incidentActive = false;
-        track.incidentEffect = null;
-        track.incidentSpeedLimit = null;
-        track.incidentName = null;
       }
     }
   }
 
+  // Check if a position is on the incident's route (within tolerance)
+  _isOnRoute(lat, lon, route) {
+    if (!route || route.length < 2) return false;
+    // Check proximity to each segment of the route
+    for (let i = 0; i < route.length - 1; i++) {
+      const aLat = route[i].lat, aLon = route[i].lon;
+      const bLat = route[i + 1].lat, bLon = route[i + 1].lon;
+      // Distance from point to segment (simplified: check distance to both endpoints and midpoint)
+      const dA = haversineDistance(lat, lon, aLat, aLon);
+      const dB = haversineDistance(lat, lon, bLat, bLon);
+      if (dA < 0.5 || dB < 0.5) return true; // within 500m of a route point
+      // Check distance to segment midpoint for long segments
+      const segLen = haversineDistance(aLat, aLon, bLat, bLon);
+      if (segLen > 0.3) {
+        const mLat = (aLat + bLat) / 2, mLon = (aLon + bLon) / 2;
+        if (haversineDistance(lat, lon, mLat, mLon) < 0.5) return true;
+      }
+    }
+    return false;
+  }
+
+  // Fallback: check if position is between stationA and stationB using bounding box
+  _isBetweenStations(lat, lon, world, inc) {
+    const stA = world.getStationById(inc.stationA);
+    const stB = world.getStationById(inc.stationB);
+    if (!stA || !stB) return false;
+    // Check if within the corridor between the two stations (1km buffer)
+    const minLat = Math.min(stA.lat, stB.lat) - 0.01;
+    const maxLat = Math.max(stA.lat, stB.lat) + 0.01;
+    const minLon = Math.min(stA.lon, stB.lon) - 0.01;
+    const maxLon = Math.max(stA.lon, stB.lon) + 0.01;
+    if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon) return false;
+    // Also check proximity to the straight line between stations (max 2km off the line)
+    const totalDist = haversineDistance(stA.lat, stA.lon, stB.lat, stB.lon);
+    const dA = haversineDistance(lat, lon, stA.lat, stA.lon);
+    const dB = haversineDistance(lat, lon, stB.lat, stB.lon);
+    return (dA + dB) < totalDist + 2;
+  }
+
   update(timeOfDay, services, depotManager, world) {
-    // Time countdown: only once per game-minute
     if (timeOfDay !== this.lastCheck) {
       this.lastCheck = timeOfDay;
       for (const inc of this.activeIncidents) {
@@ -136,15 +130,11 @@ export class IncidentManager {
       this.activeIncidents = this.activeIncidents.filter(i => i.active);
     }
 
-    // Position check: runs EVERY call (not just per-minute) so newly created
-    // incidents affect trains already in the zone immediately
     this.checkTrainPositions(services, depotManager, world);
   }
 
-  // Separate method so it can be called from moveTick as well
   checkTrainPositions(services, depotManager, world) {
     if (!services || this.activeIncidents.length === 0) {
-      // Clear incident flags when no incidents active
       for (const svc of (services || [])) {
         if (svc?.train) svc.train.incident = null;
       }
@@ -158,14 +148,20 @@ export class IncidentManager {
       let worstIncident = null;
       for (const inc of this.activeIncidents) {
         if (!inc.active) continue;
-        const dist = this._haversine(svc.position.lat, svc.position.lon, inc.centerLat, inc.centerLon);
-        if (dist <= (inc.radiusKm || 10)) {
-          if (!worstIncident || inc.effect === 'stop') {
-            worstIncident = inc;
-            if (inc.effect === 'stop') break;
-          } else if (worstIncident.effect === 'slow' && inc.effect === 'slow') {
-            if (inc.speedLimit < worstIncident.speedLimit) worstIncident = inc;
-          }
+        // Route-based check: is the train on the incident's route?
+        let affected = false;
+        if (inc.route) {
+          affected = this._isOnRoute(svc.position.lat, svc.position.lon, inc.route);
+        } else if (world) {
+          affected = this._isBetweenStations(svc.position.lat, svc.position.lon, world, inc);
+        }
+        if (!affected) continue;
+
+        if (!worstIncident || inc.effect === 'stop') {
+          worstIncident = inc;
+          if (inc.effect === 'stop') break;
+        } else if (worstIncident.effect === 'slow' && inc.effect === 'slow') {
+          if (inc.speedLimit < worstIncident.speedLimit) worstIncident = inc;
         }
       }
       if (worstIncident) {
@@ -188,7 +184,6 @@ export class IncidentManager {
     return this.activeIncidents;
   }
 
-  // No pre-included types - backward compat stubs
   getCustomTypes() { return []; }
   loadCustomTypes() {}
   getAllTypes() { return []; }
@@ -197,15 +192,14 @@ export class IncidentManager {
     return this.activeIncidents.map(inc => ({
       id: inc.id,
       name: inc.name,
-      trackId: inc.trackId,
       trackName: inc.trackName,
       stationA: inc.stationA,
       stationB: inc.stationB,
+      stationAName: inc.stationAName,
+      stationBName: inc.stationBName,
       effect: inc.effect,
       speedLimit: inc.speedLimit,
-      radiusKm: inc.radiusKm,
-      centerLat: inc.centerLat,
-      centerLon: inc.centerLon,
+      route: inc.route,
       duration: inc.duration,
       remaining: inc.remaining,
       active: inc.active,
