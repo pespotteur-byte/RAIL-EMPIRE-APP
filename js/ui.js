@@ -4396,7 +4396,7 @@ export class UI {
           lineCode: line?.code || '',
           lineName: line?.name || '',
           lineColor: line?.color || '#3b82f6',
-          voie: svc.train?.platform || '',
+          voie: stop.platform || svc.train?.platform || '',
           state: svc.state,
           speed: svc.speed || 0,
           rame: svc.rame,
@@ -4493,6 +4493,7 @@ export class UI {
         <span class="ig-ratp-code">${t.name}</span>
         <span class="ig-ratp-dest">${t.destination}</span>
         <span class="ig-ratp-wait">${waitHtml}</span>
+        ${t.voie ? `<span class="ig-rsncf-voie" style="margin-left:4px">${t.voie}</span>` : ''}
       </div>`;
     }
 
