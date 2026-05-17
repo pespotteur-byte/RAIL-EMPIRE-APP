@@ -173,32 +173,49 @@ class RailEmpire {
   }
 
   exportSaveFile() {
-    const state = {
-      companyName: this.account.companyName,
-      economy: this.economy.toSave(),
-      world: this.world.toSave(),
-      rollingStock: this.rollingStock.toSave(),
-      rames: this.rameManager.toSave(),
-      schedules: this.scheduleCreator.toSave(),
-      depots: this.depotManager.toSave(),
-      activeIncidents: this.incidentManager.getActiveIncidentsSave(),
-      works: this.worksManager.toSave(),
-      freightContracts: this.freightManager.toSave(),
-      ormRoutes: this.orm.toSave(),
-      lines: this.lineManager.toSave(),
-      voiePoints: this.voiePointManager.toSave(),
-      exportDate: new Date().toISOString(),
-    };
-    const json = JSON.stringify(state, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rail-empire-${this.account.companyName.replace(/\s+/g, '_')}-${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const state = {
+        companyName: this.account.companyName,
+        economy: this.economy.toSave(),
+        world: this.world.toSave(),
+        rollingStock: this.rollingStock.toSave(),
+        rames: this.rameManager.toSave(),
+        schedules: this.scheduleCreator.toSave(),
+        depots: this.depotManager.toSave(),
+        activeIncidents: this.incidentManager.getActiveIncidentsSave(),
+        works: this.worksManager.toSave(),
+        freightContracts: this.freightManager.toSave(),
+        ormRoutes: this.orm.toSave(),
+        lines: this.lineManager.toSave(),
+        voiePoints: this.voiePointManager.toSave(),
+        exportDate: new Date().toISOString(),
+      };
+      // Use a seen set to avoid circular reference crashes
+      const seen = new WeakSet();
+      const json = JSON.stringify(state, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) return undefined; // skip circular refs
+          seen.add(value);
+        }
+        // Skip non-serializable types
+        if (typeof value === 'function') return undefined;
+        if (value !== value) return null; // NaN → null
+        if (value === Infinity || value === -Infinity) return null;
+        return value;
+      }, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rail-empire-${this.account.companyName.replace(/\s+/g, '_')}-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export save error:', e);
+      alert('Erreur lors de la sauvegarde: ' + e.message);
+    }
   }
 
   loadState(s) {

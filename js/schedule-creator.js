@@ -1471,58 +1471,74 @@ export class ScheduleCreator {
   }
 
   toSave() {
-    return this.services.map(s => ({
-      id: s.id,
-      name: s.name,
-      rameId: s.rameId,
-      stops: s.stops.map(st => ({
-        stationId: st.stationId,
-        voiePointId: st.voiePointId || null,
-        type: st.type,
-        departureTime: st.departureTime,
-        arrivalTime: st.arrivalTime,
-        platform: st.platform || '',
-      })),
-      routes: s.routes,
-      roundTrip: s.roundTrip,
-      multiDepartures: s.multiDepartures,
-      terminusWait: s.terminusWait,
-      totalDistance: s.totalDistance,
-      active: s.active,
-      isWorkTrain: s.isWorkTrain || false,
-      returnName: s.returnName || '',
-      returnPlatforms: s.returnPlatforms || {},
-      // Runtime state persistence
-      _runtime: {
-        currentStopIndex: s.currentStopIndex,
-        state: s.state,
-        isReturnLeg: s.isReturnLeg,
-        _tripCount: s._tripCount || 0,
-        position: s.position ? { lat: s.position.lat, lon: s.position.lon } : null,
-        speed: s.speed,
-        delay: s.delay,
-        completed: s.completed,
-        completedDate: s.completedDate || '',
-        direction: s.direction,
-        revenueCollected: s.revenueCollected,
-        _nextDepartureTime: s._nextDepartureTime ?? null,
-        _lastArrivalTime: s._lastArrivalTime ?? null,
-        _onboardPax: s._onboardPax || 0,
-        _onboardFreight: s._onboardFreight || 0,
-        _adjustedStops: s._adjustedStops ? s._adjustedStops.map(st => ({
-          stationId: st.stationId, type: st.type,
-          departureTime: st.departureTime, arrivalTime: st.arrivalTime,
-        })) : null,
-        _simState: { index: s._state.index, progress: s._state.progress, legKey: s._state.legKey || null },
-        trainSpeed: s.train?.speed || 0,
-        trainState: s.train?.state || 'waiting',
-        trainTotalKm: s.train?.totalKm || 0,
-        trainTotalKmRun: s.train?.totalKmRun || 0,
-        trainKmSinceLastMaint: s.train?.kmSinceLastMaint || 0,
-        trainWearLevel: s.train?.wearLevel || 0,
-        trainInMaintenance: s.train?.inMaintenance || false,
-      },
-    }));
+    return this.services.map(s => {
+      try {
+        // Sanitize routes: only keep serializable coordinate data
+        const safeRoutes = (s.routes || []).map(route => {
+          if (!Array.isArray(route)) return [];
+          return route.map(pt => ({
+            lat: pt.lat, lon: pt.lon,
+            maxSpeed: pt.maxSpeed || 160,
+            electrified: pt.electrified ?? true,
+            tracks: pt.tracks || 1,
+          }));
+        });
+        return {
+          id: s.id,
+          name: s.name,
+          rameId: s.rameId,
+          stops: (s.stops || []).map(st => ({
+            stationId: st.stationId,
+            voiePointId: st.voiePointId || null,
+            type: st.type,
+            departureTime: st.departureTime,
+            arrivalTime: st.arrivalTime,
+            platform: st.platform || '',
+          })),
+          routes: safeRoutes,
+          roundTrip: s.roundTrip,
+          multiDepartures: s.multiDepartures,
+          terminusWait: s.terminusWait,
+          totalDistance: s.totalDistance,
+          active: s.active,
+          isWorkTrain: s.isWorkTrain || false,
+          returnName: s.returnName || '',
+          returnPlatforms: s.returnPlatforms || {},
+          _runtime: {
+            currentStopIndex: s.currentStopIndex || 0,
+            state: s.state || 'waiting',
+            isReturnLeg: s.isReturnLeg || false,
+            _tripCount: s._tripCount || 0,
+            position: s.position ? { lat: s.position.lat, lon: s.position.lon } : null,
+            speed: s.speed || 0,
+            delay: s.delay || 0,
+            completed: s.completed || false,
+            completedDate: s.completedDate || '',
+            direction: s.direction || 1,
+            revenueCollected: s.revenueCollected || false,
+            _nextDepartureTime: s._nextDepartureTime ?? null,
+            _lastArrivalTime: s._lastArrivalTime ?? null,
+            _onboardPax: s._onboardPax || 0,
+            _onboardFreight: s._onboardFreight || 0,
+            _adjustedStops: s._adjustedStops ? s._adjustedStops.map(st => ({
+              stationId: st.stationId, type: st.type,
+              departureTime: st.departureTime, arrivalTime: st.arrivalTime,
+            })) : null,
+            _simState: s._state ? { index: s._state.index || 0, progress: s._state.progress || 0, legKey: s._state.legKey || null } : { index: 0, progress: 0, legKey: null },
+            trainSpeed: s.train?.speed || 0,
+            trainState: s.train?.state || 'waiting',
+            trainTotalKm: s.train?.totalKm || 0,
+            trainTotalKmRun: s.train?.totalKmRun || 0,
+            trainKmSinceLastMaint: s.train?.kmSinceLastMaint || 0,
+            trainWearLevel: s.train?.wearLevel || 0,
+            trainInMaintenance: s.train?.inMaintenance || false,
+          },
+        };
+      } catch (e) {
+        console.warn('Error saving service', s.id, s.name, e);
+        return { id: s.id, name: s.name, rameId: s.rameId, stops: [], routes: [], active: false, _saveError: true };
+      }
+    });
   }
 
   loadFromSave(arr, rameManager, world) {

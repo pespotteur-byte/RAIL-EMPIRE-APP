@@ -7,7 +7,18 @@ export class GameStorage {
 
   saveGame(state) {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+      const seen = new WeakSet();
+      const json = JSON.stringify(state, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) return undefined;
+          seen.add(value);
+        }
+        if (typeof value === 'function') return undefined;
+        if (value !== value) return null; // NaN
+        if (value === Infinity || value === -Infinity) return null;
+        return value;
+      });
+      localStorage.setItem(SAVE_KEY, json);
     } catch (e) {
       console.warn('Save failed:', e);
     }
