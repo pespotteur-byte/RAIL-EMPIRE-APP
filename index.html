@@ -155,6 +155,9 @@
                   <option value="depot">Depot</option>
                 </select>
               </div>
+              <div class="form-group" style="flex:1;display:flex;align-items:flex-end">
+                <label style="margin:0"><input type="checkbox" id="lsc-closed"> Fermee</label>
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -684,6 +687,9 @@
               <button type="button" id="btn-pick-connect-map" class="btn-sm" title="Choisir sur la carte" style="white-space:nowrap;font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">&#x1F5FA; Carte</button>
             </div>
             <span id="station-connect-info" style="font-size:9px;color:var(--text3)"></span>
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" id="station-closed"> Gare fermee (aucun train ne peut desservir)</label>
           </div>
           <div class="form-group">
             <label><input type="checkbox" id="station-terminus"> Gare terminus (cree ou termine une ligne)</label>

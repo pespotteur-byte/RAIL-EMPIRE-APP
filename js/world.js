@@ -20,6 +20,7 @@ export class Station {
     this.facilities = [];
     this.country = '';
     this.lineIds = data.lineIds || []; // lines this station belongs to
+    this.closed = data.closed || false;
   }
 }
 
@@ -89,7 +90,7 @@ export class World {
         id: s.id, name: s.name, lat: s.lat, lon: s.lon,
         platforms: s.platforms, type: s.type, country: s.country,
         facilities: s.facilities, lineIds: s.lineIds || [],
-        platformNames: s.platformNames || [],
+        platformNames: s.platformNames || [], closed: s.closed || false,
       })),
       tracks: this.tracks.map(t => ({
         id: t.id, stationA: t.stationA, stationB: t.stationB,
@@ -108,6 +109,7 @@ export class World {
       s.facilities = d.facilities || [];
       s.lineIds = d.lineIds || [];
       s.platformNames = d.platformNames || [];
+      s.closed = d.closed || false;
       return s;
     });
     this.tracks = (data.tracks || []).map(d => new Track(d));

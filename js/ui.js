@@ -377,6 +377,8 @@ export class UI {
     document.getElementById('station-name').value = '';
     document.getElementById('station-platforms').value = '4';
     document.getElementById('station-platform-names').value = '';
+    const closedCb = document.getElementById('station-closed');
+    if (closedCb) closedCb.checked = false;
     const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
     if (connectGroup) connectGroup.style.display = '';
     const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
@@ -479,6 +481,8 @@ export class UI {
     const platformNamesRaw = document.getElementById('station-platform-names')?.value.trim() || '';
     const platformNames = platformNamesRaw ? platformNamesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
 
+    const closed = document.getElementById('station-closed')?.checked || false;
+
     // Handle edit mode
     if (this._editingStationId) {
       const station = this.game.world.getStationById(this._editingStationId);
@@ -487,6 +491,7 @@ export class UI {
         station.type = type;
         station.platforms = platforms;
         station.platformNames = platformNames;
+        station.closed = closed;
         const lineId = document.getElementById('station-line')?.value;
         if (lineId) {
           if (!station.lineIds.includes(lineId)) station.lineIds.push(lineId);
@@ -524,7 +529,7 @@ export class UI {
       console.warn('Railway snapping failed:', e);
     }
 
-    const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames });
+    const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames, closed });
     station.country = orm.getCountryAtPoint(lat, lon);
     station.facilities = [type];
 
@@ -703,6 +708,8 @@ export class UI {
     document.getElementById('station-type').value = station.type;
     document.getElementById('station-platforms').value = station.platforms || 4;
     document.getElementById('station-platform-names').value = (station.platformNames || []).join(', ');
+    const closedCb = document.getElementById('station-closed');
+    if (closedCb) closedCb.checked = station.closed || false;
 
     // Populate line selector
     const lineSelect = document.getElementById('station-line');
@@ -1356,6 +1363,10 @@ export class UI {
   }
 
   async addSchedStop(station) {
+    if (station.closed) {
+      alert('Cette gare est fermee — aucun train ne peut la desservir.');
+      return;
+    }
     const rameId = document.getElementById('sched-rame').value;
     const rame = this.game.rameManager.getById(rameId);
     const rameSpeed = rame ? rame.maxSpeed : 160;
@@ -2043,7 +2054,8 @@ export class UI {
       if (snapped) { lat = snapped.lat; lon = snapped.lon; }
     } catch (e) { console.warn('Snap failed:', e); }
 
-    const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [] });
+    const closed = document.getElementById('lsc-closed')?.checked || false;
+    const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [], closed });
     station.country = orm.getCountryAtPoint(lat, lon);
     station.facilities = [type];
     this.game.platformManager.initStation(station.id, platforms);
@@ -2438,7 +2450,8 @@ export class UI {
           <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
             ${stations.map(st => {
               const typeLabel = { voyageur: 'Voy', marchandise: 'Fret', mixed: 'Mix', depot: 'Dep', ite: 'ITE' }[st.type] || '';
-              return `<span class="line-stop-tag" style="font-size:10px;cursor:pointer" title="${st.lat.toFixed(4)}, ${st.lon.toFixed(4)} | ${st.platforms || '?'} voies" onclick="game.ui.editStationFromLines('${st.id}')">${st.name} <span style="color:var(--text3);font-size:9px">${typeLabel}</span></span>`;
+              const closedTag = st.closed ? ' <span style="color:#ef4444;font-size:9px">Fermee</span>' : '';
+              return `<span class="line-stop-tag" style="font-size:10px;cursor:pointer;${st.closed ? 'opacity:0.6;' : ''}" title="${st.lat.toFixed(4)}, ${st.lon.toFixed(4)} | ${st.platforms || '?'} voies${st.closed ? ' | FERMEE' : ''}" onclick="game.ui.editStationFromLines('${st.id}')">${st.name} <span style="color:var(--text3);font-size:9px">${typeLabel}</span>${closedTag}</span>`;
             }).join('')}
           </div>
         `;

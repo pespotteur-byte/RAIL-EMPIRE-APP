@@ -172,15 +172,25 @@ export class Renderer {
         depot: '#10b981',
         mixed: '#f59e0b',
       };
-      const color = colors[st.type] || '#fbbf24';
+      const color = st.closed ? '#6b7280' : (colors[st.type] || '#fbbf24');
 
       ctx.fillStyle = color;
       ctx.beginPath();
 
-      // Scale station size by platform count for large stations
       const baseSize = 5;
 
-      if (st.type === 'ite' || st.type === 'depot') {
+      if (st.closed) {
+        // Closed station: X shape
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.moveTo(p.x - 4, p.y - 4); ctx.lineTo(p.x + 4, p.y + 4);
+        ctx.moveTo(p.x + 4, p.y - 4); ctx.lineTo(p.x - 4, p.y + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#6b7280';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (st.type === 'ite' || st.type === 'depot') {
         ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
       } else {
         ctx.arc(p.x, p.y, baseSize, 0, Math.PI * 2);
@@ -192,9 +202,9 @@ export class Renderer {
       ctx.stroke();
 
       if (showNames && this.tileMap.zoomLevel >= 8) {
-        ctx.fillStyle = '#e2e8f0';
+        ctx.fillStyle = st.closed ? '#6b7280' : '#e2e8f0';
         ctx.font = `bold ${this.tileMap.zoomLevel >= 11 ? 12 : 10}px sans-serif`;
-        ctx.fillText(st.name, p.x + baseSize + 4, p.y + 4);
+        ctx.fillText(st.closed ? `${st.name} (Fermee)` : st.name, p.x + baseSize + 4, p.y + 4);
 
         // Show platform occupancy for stations with multiple platforms at high zoom
         if (platformManager && this.tileMap.zoomLevel >= 10 && st.platforms > 1) {
