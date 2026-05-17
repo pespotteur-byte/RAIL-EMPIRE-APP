@@ -803,15 +803,25 @@ export class ActiveService {
     const stops = this.getCurrentStops();
     if (this.currentStopIndex <= 0 || this.currentStopIndex > stops.length) return;
 
-    const prevStop = stops[this.currentStopIndex - 1];
-    if (!prevStop) return;
+    // Find last actual arret (not waypoint/passage) BEFORE current position
+    let prevArret = null;
+    for (let i = this.currentStopIndex - 1; i >= 0; i--) {
+      if (stops[i].type === 'arret') { prevArret = stops[i]; break; }
+    }
+    if (!prevArret) prevArret = stops[this.currentStopIndex - 1]; // fallback
 
-    const scheduledDepartureTime = prevStop.departureTime || 0;
-    const nextStop = stops[this.currentStopIndex];
+    // Find next actual arret (not waypoint/passage) AT or AFTER current position
+    let nextArret = null;
+    for (let i = this.currentStopIndex; i < stops.length; i++) {
+      if (stops[i].type === 'arret') { nextArret = stops[i]; break; }
+    }
+    if (!nextArret) nextArret = stops[this.currentStopIndex]; // fallback
+
+    const scheduledDepartureTime = prevArret.departureTime || 0;
 
     if (this._routeAnalysis && this._routeAnalysis.segments.length > 0) {
       // Precise delay using route segment analysis
-      const scheduledArrivalTime = nextStop?.arrivalTime ||
+      const scheduledArrivalTime = nextArret?.arrivalTime ||
         (scheduledDepartureTime + this._routeAnalysis.estimatedTimeMinutes);
       const segments = this._routeAnalysis.segments;
 
@@ -833,7 +843,7 @@ export class ActiveService {
       this.delay = timeDiff(timeOfDay, expectedTimeAtPosition);
     } else {
       // Fallback: estimate delay using distance-based progress
-      const scheduledArrivalTime = nextStop?.arrivalTime || (scheduledDepartureTime + 60);
+      const scheduledArrivalTime = nextArret?.arrivalTime || (scheduledDepartureTime + 60);
       const target = this.getTargetStation();
       if (target && this.position) {
         const totalDist = haversineDistance(
@@ -1111,12 +1121,15 @@ export class ActiveService {
     if (!economy) economy = this._economy;
     const stops = this.getCurrentStops();
     const stop = stops[this.currentStopIndex];
-    const expectedTime = stop?.arrivalTime;
-    if (expectedTime != null) {
-      this.delay = timeDiff(timeOfDay, expectedTime);
+    // Only update delay based on actual arret stops, not waypoints/passages
+    if (stop?.type === 'arret') {
+      const expectedTime = stop.arrivalTime;
+      if (expectedTime != null) {
+        this.delay = timeDiff(timeOfDay, expectedTime);
+      }
+      const roundedDelay = Math.round(this.delay);
+      this.train.delay = roundedDelay === 0 ? 0 : roundedDelay;
     }
-    const roundedDelay = Math.round(this.delay);
-    this.train.delay = roundedDelay === 0 ? 0 : roundedDelay;
     // Use voie point coords for arrival position
     let arrivalLat = station.lat, arrivalLon = station.lon;
     if (window.game?.voiePointManager && stop) {
