@@ -363,3 +363,146 @@ header {
   .eco-stats { grid-template-columns: 1fr 1fr; }
   .sched-stop-row { font-size: 10px; }
 }
+
+/* ============================================================
+   INFOGARE STYLES
+   ============================================================ */
+
+/* --- RER RATP --- */
+.ig-ratp-board { background:#1a1a2e; border-radius:8px; overflow:hidden; font-family:'Segoe UI',Arial,sans-serif; }
+.ig-ratp-header { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background:#1a1a2e; }
+.ig-ratp-line-info { display:flex; align-items:center; gap:10px; }
+.ig-ratp-line-badge { color:#fff; font-weight:900; font-size:22px; padding:4px 12px; border-radius:4px; }
+.ig-ratp-destinations { color:#ccc; font-size:13px; }
+.ig-ratp-clock { color:#fbbf24; font-size:24px; font-weight:700; font-family:monospace; }
+.ig-ratp-separator { height:4px; width:100%; }
+.ig-ratp-rows { padding:0; }
+.ig-ratp-row { display:flex; align-items:center; padding:8px 16px; border-bottom:1px solid #2a2a4a; gap:12px; transition:background .15s; }
+.ig-ratp-row:hover { background:#2a2a4a; }
+.ig-ratp-code { color:#aaa; font-size:11px; font-family:monospace; min-width:60px; }
+.ig-ratp-dest { color:#fff; font-size:18px; font-weight:700; flex:1; }
+.ig-ratp-wait { color:#fbbf24; font-size:18px; font-weight:700; font-family:monospace; min-width:120px; text-align:right; }
+.ig-ratp-footer { padding:8px 16px; background:#1a1a2e; border-top:1px solid #2a2a4a; }
+.ig-ratp-info-banner { color:#aaa; font-size:11px; }
+.ig-blink { animation: igBlink 1s infinite; }
+@keyframes igBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* --- RER SNCF --- */
+.ig-rsncf-board { background:#1c2744; border-radius:8px; overflow:hidden; font-family:'Segoe UI',Arial,sans-serif; }
+.ig-rsncf-rows { padding:0; }
+.ig-rsncf-row { display:flex; align-items:center; padding:10px 16px; border-bottom:1px solid #2a3a5a; gap:10px; transition:background .15s; }
+.ig-rsncf-row:hover { background:#2a3a5a; }
+.ig-rsncf-line { color:#fff; font-weight:900; font-size:16px; min-width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.ig-rsncf-code { color:#aaa; font-size:10px; font-family:monospace; min-width:50px; }
+.ig-rsncf-dest { color:#fff; font-size:17px; font-weight:700; flex:1; }
+.ig-rsncf-wait { color:#fff; font-size:15px; min-width:60px; text-align:right; }
+.ig-rsncf-voie { background:#3b82f6; color:#fff; font-weight:700; font-size:13px; min-width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; }
+.ig-rsncf-served { color:#8899aa; font-size:11px; padding:0 16px 6px 56px; }
+.ig-rsncf-footer { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background:#e65100; }
+.ig-rsncf-info { color:#fff; font-size:11px; flex:1; }
+.ig-rsncf-clock { color:#fff; font-size:14px; font-weight:700; font-family:monospace; }
+
+/* --- SNCF Dep/Arr common --- */
+.ig-sncf-board { border-radius:8px; overflow:hidden; font-family:'Segoe UI',Arial,sans-serif; }
+.ig-sncf-dep { background:#0a1929; }
+.ig-sncf-arr { background:#0a2910; }
+.ig-sncf-header { padding:10px 16px; color:#fff; font-size:16px; font-weight:700; display:flex; gap:16px; align-items:baseline; background:#0d47a1; }
+.ig-sncf-header-arr { background:#1b5e20; }
+.ig-sncf-colheader { display:flex; padding:4px 16px; color:#6688aa; font-size:10px; gap:8px; }
+.ig-sncf-colheader span:nth-child(1) { min-width:60px; }
+.ig-sncf-colheader span:nth-child(2) { min-width:60px; }
+.ig-sncf-colheader span:nth-child(3) { flex:1; }
+.ig-sncf-colheader span:nth-child(4) { min-width:40px; text-align:right; }
+.ig-sncf-rows { padding:0; }
+.ig-sncf-row { padding:6px 16px; border-bottom:1px solid rgba(255,255,255,.08); transition:background .15s; }
+.ig-sncf-row:hover { background:rgba(255,255,255,.05); }
+.ig-sncf-main { display:flex; align-items:center; gap:8px; }
+.ig-sncf-status { font-size:10px; min-width:60px; }
+.ig-sncf-ontime { color:#4ade80; }
+.ig-sncf-delay { color:#f87171; }
+.ig-sncf-arrived { color:#60a5fa; font-weight:700; }
+.ig-sncf-time { color:#60a5fa; font-size:16px; font-weight:700; font-family:monospace; min-width:60px; }
+.ig-sncf-dest { color:#fff; font-size:16px; font-weight:700; flex:1; }
+.ig-sncf-voie { color:#fbbf24; font-size:15px; font-weight:700; min-width:40px; text-align:right; }
+.ig-sncf-served { color:#7da0c4; font-size:11px; padding:2px 0 4px 128px; }
+.ig-sncf-dot { color:#4488bb; margin:0 2px; }
+.ig-sncf-footer { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; border-top:1px solid rgba(255,255,255,.1); }
+.ig-sncf-legend { font-size:10px; color:#6688aa; display:flex; align-items:center; gap:6px; }
+.ig-sncf-voie-yellow { display:inline-block; width:10px; height:10px; background:#fbbf24; border-radius:2px; }
+.ig-sncf-voie-blue { display:inline-block; width:10px; height:10px; background:#3b82f6; border-radius:2px; }
+.ig-sncf-clock { color:#f87171; font-size:18px; font-weight:700; font-family:monospace; }
+.ig-sncf-logo { color:#fff; font-weight:900; font-size:14px; }
+
+/* --- OLD SNCF Solari --- */
+.ig-solari-board { background:#111; border-radius:8px; overflow:hidden; font-family:'Courier New',monospace; border:4px solid #333; }
+.ig-solari-header { display:flex; justify-content:space-around; padding:12px 20px; background:#2a3a5a; color:#fff; font-size:20px; font-weight:900; letter-spacing:4px; text-transform:uppercase; }
+.ig-solari-subheader { display:flex; justify-content:space-between; padding:4px 20px; background:#2a3a5a; color:#aabbcc; font-size:11px; font-style:italic; }
+.ig-solari-colheader { display:flex; padding:4px 16px; color:#556; font-size:9px; border-bottom:1px solid #333; }
+.ig-solari-colheader span:nth-child(1) { min-width:70px; }
+.ig-solari-colheader span:nth-child(2) { flex:1; }
+.ig-solari-colheader span:nth-child(3) { min-width:80px; }
+.ig-solari-colheader span:nth-child(4) { min-width:70px; text-align:right; }
+.ig-solari-colheader span:nth-child(5) { min-width:40px; text-align:right; }
+.ig-solari-rows { padding:0; }
+.ig-solari-row { display:flex; align-items:center; padding:6px 16px; border-bottom:1px solid #222; gap:4px; transition:background .15s; }
+.ig-solari-row:hover { background:#1a1a1a; }
+.ig-solari-time { color:#ccbb44; font-size:16px; font-weight:700; min-width:70px; }
+.ig-solari-sep { font-size:16px; }
+.ig-solari-dest { color:#ccbb44; font-size:14px; font-weight:700; flex:1; letter-spacing:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ig-solari-type { color:#aaa; font-size:11px; min-width:80px; text-align:right; }
+.ig-solari-num { color:#ccbb44; font-size:13px; min-width:70px; text-align:right; }
+.ig-solari-voie { color:#ccbb44; font-size:15px; font-weight:700; min-width:40px; text-align:right; }
+.ig-solari-footer { display:flex; justify-content:flex-end; padding:8px 16px; border-top:2px solid #333; }
+.ig-solari-clock { color:#f44; font-size:22px; font-weight:700; font-family:monospace; text-shadow:0 0 8px #f44; }
+.ig-solari-flip { animation: solariFlip 0.6s ease-out forwards; }
+@keyframes solariFlip {
+  0% { transform:rotateX(90deg); opacity:0; }
+  50% { transform:rotateX(-10deg); opacity:1; }
+  100% { transform:rotateX(0deg); opacity:1; }
+}
+
+/* --- Platform Grande Ligne --- */
+.ig-pgl-board { background:linear-gradient(180deg,#0d1b4a,#162357); border-radius:8px; overflow:hidden; font-family:'Segoe UI',Arial,sans-serif; position:relative; padding-bottom:12px; }
+.ig-pgl-header { display:flex; padding:40px 20px 16px; gap:20px; }
+.ig-pgl-left { min-width:200px; }
+.ig-pgl-series { background:#a9004f; color:#fff; font-weight:700; font-size:12px; display:inline-block; padding:2px 10px; border-radius:4px; margin-bottom:6px; }
+.ig-pgl-time { color:#fff; font-size:28px; font-weight:700; }
+.ig-pgl-delay { color:#f87171; font-size:13px; font-weight:700; }
+.ig-pgl-dest { color:#fff; font-size:24px; font-weight:900; margin-top:4px; }
+.ig-pgl-trainnum { color:#94a3b8; font-size:12px; margin-top:4px; }
+.ig-pgl-right { flex:1; position:relative; }
+.ig-pgl-label { position:absolute; right:0; top:0; color:rgba(255,255,255,.15); font-size:60px; font-weight:900; writing-mode:vertical-rl; text-orientation:mixed; }
+.ig-pgl-stops { padding-left:10px; }
+.ig-pgl-stop { color:#fff; font-size:14px; padding:3px 0; }
+.ig-pgl-bullet { color:#8b5cf6; margin-right:6px; }
+.ig-pgl-terminus { font-weight:900; }
+.ig-pgl-composition { background:rgba(0,0,0,.3); padding:12px 20px; margin:0 16px; border-radius:8px; }
+.ig-pgl-station-name { text-align:center; color:#fff; font-weight:700; font-size:13px; margin-bottom:8px; }
+.ig-pgl-cars { display:flex; gap:2px; justify-content:center; }
+.ig-pgl-car { background:#8b5cf6; color:#fff; font-size:10px; font-weight:700; min-width:24px; height:20px; display:flex; align-items:center; justify-content:center; border-radius:3px; }
+.ig-pgl-sections { display:flex; justify-content:space-around; margin-top:4px; }
+.ig-pgl-section { color:#fff; font-size:12px; font-weight:700; }
+.ig-pgl-footer { display:flex; justify-content:space-between; padding:8px 20px; color:#fff; font-size:13px; }
+.ig-pgl-clock { font-family:monospace; font-weight:700; }
+
+/* --- Platform Banlieue --- */
+.ig-pban-board { background:#e8e0d0; border-radius:8px; overflow:hidden; font-family:'Segoe UI',Arial,sans-serif; position:relative; color:#333; }
+.ig-pban-header { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; background:#f5f0e5; border-bottom:2px solid #ccc; }
+.ig-pban-clock { color:#333; font-size:13px; font-family:monospace; }
+.ig-pban-title { font-weight:700; font-size:15px; }
+.ig-pban-voie { font-size:13px; }
+.ig-pban-main { padding:12px 16px; }
+.ig-pban-info { display:flex; align-items:center; gap:12px; margin-bottom:12px; background:#1c2744; border-radius:6px; padding:10px 14px; color:#fff; }
+.ig-pban-line { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:18px; }
+.ig-pban-dest { font-size:17px; font-weight:700; }
+.ig-pban-code { font-size:11px; color:#aaa; }
+.ig-pban-wait { margin-left:auto; font-size:14px; font-weight:700; }
+.ig-pban-stops { margin-top:8px; }
+.ig-pban-stops-label { font-size:11px; color:#666; font-weight:700; margin-bottom:4px; }
+.ig-pban-stops-cols { display:flex; gap:24px; font-size:13px; color:#333; }
+.ig-pban-stops-cols div { flex:1; }
+.ig-pban-crowding { padding:10px 16px; background:#f5f0e5; border-top:2px solid #ccc; }
+.ig-pban-crowd-label { font-size:11px; color:#666; font-weight:700; margin-bottom:6px; }
+.ig-pban-crowd-cars { display:flex; gap:3px; justify-content:center; }
+.ig-pban-car { width:28px; height:32px; background:#fff; border:2px solid #ccc; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.ig-pban-crowd-ends { display:flex; justify-content:space-between; font-size:10px; color:#999; margin-top:2px; }

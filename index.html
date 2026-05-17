@@ -41,6 +41,7 @@
           <button class="nav-btn" data-page="depots">Depots/ITE</button>
           <button class="nav-btn" data-page="incidents">Incidents</button>
           <button class="nav-btn" data-page="economy">Finances</button>
+          <button class="nav-btn" data-page="infogare">Infogare</button>
         </nav>
       </div>
       <div class="header-right">
@@ -224,6 +225,33 @@
           <div id="active-incidents-list" class="incidents-active"></div>
           <h3 style="margin-top:12px">Travaux programmes</h3>
           <div id="planned-works-list" class="works-list"></div>
+        </div>
+      </div>
+
+      <!-- INFOGARE PAGE -->
+      <div id="page-infogare" class="page">
+        <div class="page-content">
+          <div class="page-header">
+            <h2>Infogare</h2>
+          </div>
+          <div class="form-row" style="margin-bottom:12px;align-items:flex-end">
+            <div class="form-group" style="flex:2">
+              <label>Gare</label>
+              <select id="infogare-station"></select>
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Type d'affichage</label>
+              <select id="infogare-display">
+                <option value="rer-ratp">RER RATP</option>
+                <option value="rer-sncf">RER SNCF</option>
+                <option value="sncf-dep">SNCF Departs</option>
+                <option value="sncf-arr">SNCF Arrivees</option>
+                <option value="old-sncf">Old SNCF (Palettes)</option>
+              </select>
+            </div>
+            <button id="btn-infogare-show" class="btn-primary" style="height:34px">Afficher</button>
+          </div>
+          <div id="infogare-board" style="width:100%;overflow-y:auto;max-height:calc(100vh - 200px)"></div>
         </div>
       </div>
 

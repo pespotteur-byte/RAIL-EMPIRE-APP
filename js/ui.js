@@ -50,6 +50,7 @@ export class UI {
     else if (this.activePage === 'depots') this.renderDepotsList();
     else if (this.activePage === 'incidents') this.renderIncidentsPage();
     else if (this.activePage === 'economy') this.renderEconomyPage();
+    else if (this.activePage === 'infogare') this.renderInfogarePage();
   }
 
   setupNav() {
@@ -72,6 +73,7 @@ export class UI {
     if (page === 'depots') this.renderDepotsList();
     if (page === 'incidents') this.renderIncidentsPage();
     if (page === 'economy') this.renderEconomyPage();
+    if (page === 'infogare') this.renderInfogarePage();
   }
 
   setupMapEvents() {
@@ -4299,5 +4301,479 @@ export class UI {
     if (!toggle || !nav) return;
     toggle.addEventListener('click', () => nav.classList.toggle('open'));
     nav.addEventListener('click', (e) => { if (e.target.classList.contains('nav-btn')) nav.classList.remove('open'); });
+  }
+
+  // ============================================================
+  // INFOGARE
+  // ============================================================
+
+  renderInfogarePage() {
+    const sel = document.getElementById('infogare-station');
+    if (!sel) return;
+    const stations = this.game.world.stations.filter(s => !s.closed);
+    sel.innerHTML = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    const btn = document.getElementById('btn-infogare-show');
+    if (btn) btn.onclick = () => this._showInfogareBoard();
+  }
+
+  _getInfogareTrains(stationId, mode) {
+    const services = this.game.scheduleCreator?.services || [];
+    const pt = this.game.engine.getParisTime();
+    const now = pt.hours * 60 + pt.minutes;
+    const results = [];
+
+    for (const svc of services) {
+      if (!svc.active) continue;
+      const stops = svc.getCurrentStops();
+      if (!stops || stops.length === 0) continue;
+
+      for (let i = 0; i < stops.length; i++) {
+        const stop = stops[i];
+        if (stop.stationId !== stationId) continue;
+        if (stop.type === 'waypoint' || stop.type === 'passage') continue;
+
+        const isFirst = i === 0;
+        const isLast = i === stops.length - 1;
+        const isDeparture = !isLast;
+        const isArrival = !isFirst;
+        const depTime = stop.departureTime;
+        const arrTime = stop.arrivalTime;
+
+        // Destination = last stop name
+        const lastStop = stops[stops.length - 1];
+        const destStation = this.game.world.getStationById(lastStop.stationId);
+        // Origin = first stop name
+        const firstStop = stops[0];
+        const origStation = this.game.world.getStationById(firstStop.stationId);
+
+        // Gares desservies after this station
+        const servedStations = [];
+        for (let j = i + 1; j < stops.length; j++) {
+          if (stops[j].type === 'waypoint' || stops[j].type === 'passage') continue;
+          const st = this.game.world.getStationById(stops[j].stationId);
+          if (st) servedStations.push(st.name);
+        }
+
+        // Gares desservies before this station (for arrivals)
+        const fromStations = [];
+        for (let j = 0; j < i; j++) {
+          if (stops[j].type === 'waypoint' || stops[j].type === 'passage') continue;
+          const st = this.game.world.getStationById(stops[j].stationId);
+          if (st) fromStations.push(st.name);
+        }
+
+        // Time diff for "X min" display
+        let waitMin = null;
+        if (isDeparture && depTime != null) {
+          waitMin = depTime - now;
+          if (waitMin < 0) waitMin += 1440;
+        }
+        if (isArrival && arrTime != null) {
+          waitMin = arrTime - now;
+          if (waitMin < 0) waitMin += 1440;
+        }
+
+        // Line info
+        const station = this.game.world.getStationById(stationId);
+        const lineIds = station?.lineIds || [];
+        const line = lineIds.length > 0 ? this.game.lineManager.getLine(lineIds[0]) : null;
+
+        // Delay
+        const delay = svc.delay || 0;
+
+        results.push({
+          svcId: svc.id,
+          name: svc.name,
+          trainNumber: svc.train?.number || '',
+          seriesName: svc.train?.seriesName || '',
+          destination: destStation?.name || '?',
+          origin: origStation?.name || '?',
+          depTime, arrTime, waitMin,
+          isDeparture, isArrival, isFirst, isLast,
+          servedStations, fromStations,
+          delay,
+          line,
+          lineCode: line?.code || '',
+          lineName: line?.name || '',
+          lineColor: line?.color || '#3b82f6',
+          voie: svc.train?.platform || '',
+          state: svc.state,
+          speed: svc.speed || 0,
+          rame: svc.rame,
+        });
+      }
+    }
+
+    // Filter by mode
+    if (mode === 'sncf-arr') {
+      return results.filter(r => r.isArrival).sort((a, b) => ((a.arrTime || 0) - (b.arrTime || 0) + 1440) % 1440 - ((b.arrTime || 0) - (b.arrTime || 0) + 1440) % 1440);
+    }
+    // Default: departures
+    const deps = results.filter(r => r.isDeparture);
+    deps.sort((a, b) => {
+      const wa = a.waitMin != null ? a.waitMin : 9999;
+      const wb = b.waitMin != null ? b.waitMin : 9999;
+      return wa - wb;
+    });
+    return deps;
+  }
+
+  _fmtTime(min) {
+    if (min == null || isNaN(min)) return '--h--';
+    const h = Math.floor(((min % 1440) + 1440) % 1440 / 60);
+    const m = Math.round(((min % 1440) + 1440) % 1440 % 60);
+    return `${h}h${m.toString().padStart(2, '0')}`;
+  }
+
+  _fmtWait(min) {
+    if (min == null) return '';
+    if (min <= 0) return "a l'approche";
+    if (min < 60) return `${Math.round(min)} min`;
+    const h = Math.floor(min / 60);
+    const m = Math.round(min % 60);
+    return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h00`;
+  }
+
+  _showInfogareBoard() {
+    const stationId = document.getElementById('infogare-station')?.value;
+    const displayType = document.getElementById('infogare-display')?.value;
+    if (!stationId) return;
+
+    const station = this.game.world.getStationById(stationId);
+    const trains = this._getInfogareTrains(stationId, displayType);
+    const board = document.getElementById('infogare-board');
+    if (!board) return;
+
+    const pt = this.game.engine.getParisTime();
+    const nowStr = `${pt.hours.toString().padStart(2,'0')}:${pt.minutes.toString().padStart(2,'0')}`;
+
+    switch (displayType) {
+      case 'rer-ratp': board.innerHTML = this._renderRerRatp(station, trains, nowStr); break;
+      case 'rer-sncf': board.innerHTML = this._renderRerSncf(station, trains, nowStr); break;
+      case 'sncf-dep': board.innerHTML = this._renderSncfDep(station, trains, nowStr); break;
+      case 'sncf-arr': board.innerHTML = this._renderSncfArr(station, trains, nowStr); break;
+      case 'old-sncf': board.innerHTML = this._renderOldSncf(station, trains, nowStr); break;
+    }
+
+    // Setup train click handlers for platform display
+    board.querySelectorAll('[data-svc-id]').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => this._showPlatformDisplay(el.dataset.svcId, stationId));
+    });
+
+    // Auto-refresh every 10 seconds
+    if (this._infogareInterval) clearInterval(this._infogareInterval);
+    this._infogareInterval = setInterval(() => {
+      if (this.activePage !== 'infogare') { clearInterval(this._infogareInterval); return; }
+      this._showInfogareBoard();
+    }, 10000);
+  }
+
+  // --- RER RATP ---
+  _renderRerRatp(station, trains, nowStr) {
+    const lines = [...new Set(trains.map(t => t.lineName).filter(Boolean))];
+    const lineLabel = lines.join(' · ') || 'Ligne';
+    const dests = [...new Set(trains.map(t => t.destination))].slice(0, 4);
+    const lineColor = trains[0]?.lineColor || '#003DA5';
+
+    let rows = '';
+    for (const t of trains) {
+      const waitStr = this._fmtWait(t.waitMin);
+      const waitClass = t.waitMin != null && t.waitMin <= 1 ? 'ig-blink' : '';
+      rows += `<div class="ig-ratp-row" data-svc-id="${t.svcId}">
+        <span class="ig-ratp-code">${t.name}</span>
+        <span class="ig-ratp-dest">${t.destination}</span>
+        <span class="ig-ratp-wait ${waitClass}">${waitStr}</span>
+      </div>`;
+    }
+
+    return `<div class="ig-ratp-board">
+      <div class="ig-ratp-header">
+        <div class="ig-ratp-line-info">
+          <span class="ig-ratp-line-badge" style="background:${lineColor}">${trains[0]?.lineCode || 'A'}</span>
+          <div class="ig-ratp-destinations">${dests.join(' · ')}</div>
+        </div>
+        <div class="ig-ratp-clock">${nowStr}</div>
+      </div>
+      <div class="ig-ratp-separator" style="background:${lineColor}"></div>
+      <div class="ig-ratp-rows">${rows || '<div style="color:#999;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
+      <div class="ig-ratp-footer">
+        <div class="ig-ratp-info-banner">Pas de perturbation signalee</div>
+      </div>
+    </div>`;
+  }
+
+  // --- RER SNCF ---
+  _renderRerSncf(station, trains, nowStr) {
+    let rows = '';
+    for (const t of trains) {
+      const served = t.servedStations.slice(0, 2).join('   ');
+      rows += `<div class="ig-rsncf-row" data-svc-id="${t.svcId}">
+        <span class="ig-rsncf-line" style="background:${t.lineColor}">${t.lineCode || '?'}</span>
+        <span class="ig-rsncf-code">${t.name}</span>
+        <span class="ig-rsncf-dest">${t.destination}</span>
+        <span class="ig-rsncf-wait">${this._fmtWait(t.waitMin)}</span>
+        <span class="ig-rsncf-voie">${t.voie || ''}</span>
+      </div>
+      <div class="ig-rsncf-served">${served}</div>`;
+    }
+
+    return `<div class="ig-rsncf-board">
+      <div class="ig-rsncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
+      <div class="ig-rsncf-footer">
+        <div class="ig-rsncf-info">Pas de perturbation signalee</div>
+        <div class="ig-rsncf-clock">${nowStr}</div>
+      </div>
+    </div>`;
+  }
+
+  // --- SNCF DEPARTS (blue) ---
+  _renderSncfDep(station, trains, nowStr) {
+    let rows = '';
+    for (const t of trains) {
+      const delayStr = t.delay > 0 ? `<span class="ig-sncf-delay">retard ${t.delay} min.</span>` : '<span class="ig-sncf-ontime">a l\'heure</span>';
+      const served = t.servedStations.map(s => `<span class="ig-sncf-dot">·</span> ${s}`).join(' ');
+      rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
+        <div class="ig-sncf-main">
+          <span class="ig-sncf-status">${delayStr}</span>
+          <span class="ig-sncf-time">${this._fmtTime(t.depTime)}</span>
+          <span class="ig-sncf-dest">${t.destination}</span>
+          <span class="ig-sncf-voie">${t.voie || ''}</span>
+        </div>
+        ${served ? `<div class="ig-sncf-served">${served}</div>` : ''}
+      </div>`;
+    }
+
+    return `<div class="ig-sncf-board ig-sncf-dep">
+      <div class="ig-sncf-header">
+        <span>Departs Grandes Lignes</span>
+        <span style="font-size:10px;font-style:italic">Mainline departures</span>
+      </div>
+      <div class="ig-sncf-colheader"><span>train</span><span>heure</span><span>destination</span><span>voie</span></div>
+      <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
+      <div class="ig-sncf-footer">
+        <div class="ig-sncf-legend"><span class="ig-sncf-voie-yellow"></span> voies 1-10 <span class="ig-sncf-voie-blue"></span> voies 11-30</div>
+        <div class="ig-sncf-clock">${nowStr}</div>
+        <div class="ig-sncf-logo">SNCF</div>
+      </div>
+    </div>`;
+  }
+
+  // --- SNCF ARRIVEES (green) ---
+  _renderSncfArr(station, trains, nowStr) {
+    let rows = '';
+    for (const t of trains) {
+      const delayStr = t.delay > 0 ? `<span class="ig-sncf-delay">retard ${t.delay} min.</span>` : '<span class="ig-sncf-ontime">a l\'heure</span>';
+      const from = t.fromStations.map(s => `<span class="ig-sncf-dot">·</span> ${s}`).join(' ');
+      const stateStr = t.state === 'stopped_at_station' && t.isLast ? '<span class="ig-sncf-arrived">arrive</span>' : '';
+      rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
+        <div class="ig-sncf-main">
+          <span class="ig-sncf-status">${stateStr || delayStr}</span>
+          <span class="ig-sncf-time">${this._fmtTime(t.arrTime)}</span>
+          <span class="ig-sncf-dest">${t.origin}</span>
+          <span class="ig-sncf-voie">${t.voie || ''}</span>
+        </div>
+        ${from ? `<div class="ig-sncf-served">${from}</div>` : ''}
+      </div>`;
+    }
+
+    return `<div class="ig-sncf-board ig-sncf-arr">
+      <div class="ig-sncf-header ig-sncf-header-arr">
+        <span>Arrivees Grandes Lignes</span>
+        <span style="font-size:10px;font-style:italic">Mainline arrivals</span>
+      </div>
+      <div class="ig-sncf-colheader"><span>train</span><span>heure</span><span>provenance</span><span>voie</span></div>
+      <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
+      <div class="ig-sncf-footer">
+        <div class="ig-sncf-legend"><span class="ig-sncf-voie-yellow"></span> voies 1-10 <span class="ig-sncf-voie-blue"></span> voies 11-30</div>
+        <div class="ig-sncf-clock">${nowStr}</div>
+        <div class="ig-sncf-logo">SNCF</div>
+      </div>
+    </div>`;
+  }
+
+  // --- OLD SNCF (Solari split-flap) ---
+  _renderOldSncf(station, trains, nowStr) {
+    let rows = '';
+    for (const t of trains) {
+      const served = t.servedStations.join('  ').toUpperCase();
+      const dest = `${served}`.substring(0, 60);
+      rows += `<div class="ig-solari-row" data-svc-id="${t.svcId}">
+        <span class="ig-solari-time">${this._fmtTime(t.depTime).replace('h', '<span class="ig-solari-sep">.</span>')}</span>
+        <span class="ig-solari-dest">${t.destination.toUpperCase()} ${dest}</span>
+        <span class="ig-solari-type">${t.seriesName || ''}</span>
+        <span class="ig-solari-num">${t.trainNumber || ''}</span>
+        <span class="ig-solari-voie">${t.voie || ''}</span>
+      </div>`;
+    }
+
+    // Trigger split-flap animation after render
+    setTimeout(() => this._animateSolari(), 50);
+
+    return `<div class="ig-solari-board">
+      <div class="ig-solari-header">
+        <span>DEPART</span><span>DEPARTURE</span><span>ABFAHRT</span>
+      </div>
+      <div class="ig-solari-subheader">
+        <span>Trains au depart</span>
+        <span style="text-align:center">Departures trains</span>
+        <span style="text-align:right">Abfahrt der Zuge</span>
+      </div>
+      <div class="ig-solari-colheader"><span>heure</span><span>destination</span><span></span><span>train n°</span><span>voie</span></div>
+      <div class="ig-solari-rows">${rows || '<div style="color:#cc9;padding:16px;text-align:center">AUCUN TRAIN PREVU</div>'}</div>
+      <div class="ig-solari-footer">
+        <div class="ig-solari-clock">${nowStr.replace(':', '.')}</div>
+      </div>
+    </div>`;
+  }
+
+  _animateSolari() {
+    const rows = document.querySelectorAll('.ig-solari-row');
+    rows.forEach((row, idx) => {
+      const chars = row.querySelectorAll('.ig-solari-dest, .ig-solari-time, .ig-solari-type, .ig-solari-num, .ig-solari-voie');
+      chars.forEach(el => {
+        el.classList.add('ig-solari-flip');
+        el.style.animationDelay = `${idx * 0.15}s`;
+      });
+    });
+  }
+
+  // --- PLATFORM DISPLAY (click on a train) ---
+  _showPlatformDisplay(svcId, stationId) {
+    const svc = this.game.scheduleCreator?.services?.find(s => s.id === svcId);
+    if (!svc) return;
+
+    const station = this.game.world.getStationById(stationId);
+    const stops = svc.getCurrentStops();
+    const pt = this.game.engine.getParisTime();
+    const nowStr = `${pt.hours.toString().padStart(2,'0')}:${pt.minutes.toString().padStart(2,'0')}`;
+
+    // Find this station's stop index
+    const stopIdx = stops.findIndex(s => s.stationId === stationId);
+    const isGrandeLigne = (svc.rame?.maxSpeed || 0) >= 160;
+
+    // Served stations after this one
+    const servedAfter = [];
+    for (let i = stopIdx + 1; i < stops.length; i++) {
+      if (stops[i].type === 'waypoint' || stops[i].type === 'passage') continue;
+      const st = this.game.world.getStationById(stops[i].stationId);
+      if (st) servedAfter.push({ name: st.name, isLast: i === stops.length - 1 });
+    }
+
+    const lastStop = stops[stops.length - 1];
+    const destStation = this.game.world.getStationById(lastStop?.stationId);
+    const depTime = stops[stopIdx]?.departureTime;
+    const delayStr = svc.delay > 0 ? `Retard ${svc.delay}min.` : '';
+
+    // Composition (number of cars from rame)
+    const numCars = svc.rame?.elementDetails?.length || 8;
+
+    const board = document.getElementById('infogare-board');
+    if (!board) return;
+
+    if (isGrandeLigne) {
+      board.innerHTML = this._renderPlatformGL(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars);
+    } else {
+      board.innerHTML = this._renderPlatformBanlieue(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars);
+    }
+
+    // Back button
+    board.querySelector('.ig-platform-back')?.addEventListener('click', () => this._showInfogareBoard());
+  }
+
+  // --- Platform Grande Ligne ---
+  _renderPlatformGL(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars) {
+    const stopsHtml = servedAfter.map(s =>
+      `<div class="ig-pgl-stop ${s.isLast ? 'ig-pgl-terminus' : ''}"><span class="ig-pgl-bullet">●</span> ${s.name}</div>`
+    ).join('');
+
+    // Composition bar
+    let carsHtml = '';
+    for (let i = 1; i <= numCars; i++) {
+      carsHtml += `<div class="ig-pgl-car">${i}</div>`;
+    }
+    const sections = 'ABCDEFGH';
+    let sectionsHtml = '';
+    const carsPerSection = Math.ceil(numCars / Math.min(8, numCars));
+    for (let i = 0; i < Math.min(8, Math.ceil(numCars / 2)); i++) {
+      sectionsHtml += `<div class="ig-pgl-section">${sections[i]}</div>`;
+    }
+
+    return `<div class="ig-pgl-board">
+      <button class="ig-platform-back btn-sm" style="position:absolute;top:8px;left:8px;z-index:10">← Retour</button>
+      <div class="ig-pgl-header">
+        <div class="ig-pgl-left">
+          <div class="ig-pgl-series">${svc.train?.seriesName || ''}</div>
+          <div class="ig-pgl-time">${this._fmtTime(depTime)}</div>
+          ${delayStr ? `<div class="ig-pgl-delay">${delayStr}</div>` : ''}
+          <div class="ig-pgl-dest">${destStation?.name || '?'}</div>
+          <div class="ig-pgl-trainnum">${svc.train?.seriesName || 'Train'} ${svc.train?.number || ''}</div>
+        </div>
+        <div class="ig-pgl-right">
+          <div class="ig-pgl-label">depart</div>
+          <div class="ig-pgl-stops">${stopsHtml || '<div style="color:#999">Terminus</div>'}</div>
+        </div>
+      </div>
+      <div class="ig-pgl-composition">
+        <div class="ig-pgl-station-name">${station?.name || ''}</div>
+        <div class="ig-pgl-cars">${carsHtml}</div>
+        <div class="ig-pgl-sections">${sectionsHtml}</div>
+      </div>
+      <div class="ig-pgl-footer">
+        <div class="ig-pgl-info">SNCF</div>
+        <div class="ig-pgl-clock">${nowStr}</div>
+      </div>
+    </div>`;
+  }
+
+  // --- Platform Banlieue ---
+  _renderPlatformBanlieue(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars) {
+    // Two columns of stops
+    const half = Math.ceil(servedAfter.length / 2);
+    const col1 = servedAfter.slice(0, half);
+    const col2 = servedAfter.slice(half);
+    const col1Html = col1.map(s => `<div>${s.isLast ? '<b>' : ''}${s.name}${s.isLast ? '</b>' : ''}</div>`).join('');
+    const col2Html = col2.map(s => `<div>${s.isLast ? '<b>' : ''}${s.name}${s.isLast ? '</b>' : ''}</div>`).join('');
+
+    // Crowding (simulated)
+    let crowdHtml = '';
+    for (let i = 0; i < numCars; i++) {
+      const level = Math.floor(Math.random() * 3); // 0=empty, 1=medium, 2=full
+      const colors = ['#4ade80', '#f59e0b', '#ef4444'];
+      crowdHtml += `<div class="ig-pban-car" style="border-color:${colors[level]}"><span style="color:${colors[level]}">🧍</span></div>`;
+    }
+
+    const waitStr = svc.state === 'stopped_at_station' ? 'at platform' : this._fmtWait(depTime != null ? depTime - (this.game.engine.getParisTime().hours * 60 + this.game.engine.getParisTime().minutes) : null);
+
+    return `<div class="ig-pban-board">
+      <button class="ig-platform-back btn-sm" style="position:absolute;top:8px;left:8px;z-index:10">← Retour</button>
+      <div class="ig-pban-header">
+        <div class="ig-pban-clock">${nowStr}</div>
+        <div class="ig-pban-title">Next Train</div>
+        <div class="ig-pban-voie">Platform <b>${svc.train?.platform || '?'}</b></div>
+      </div>
+      <div class="ig-pban-main">
+        <div class="ig-pban-info">
+          <div class="ig-pban-line" style="background:${svc.train?.color || '#3b82f6'}">${svc.train?.seriesName?.[0] || '?'}</div>
+          <div>
+            <div class="ig-pban-dest"><b>${destStation?.name || '?'}</b></div>
+            <div class="ig-pban-code">${svc.name}</div>
+          </div>
+          <div class="ig-pban-wait">${waitStr}</div>
+        </div>
+        <div class="ig-pban-stops">
+          <div class="ig-pban-stops-label">Stations</div>
+          <div class="ig-pban-stops-cols">
+            <div>${col1Html}</div>
+            <div>${col2Html}</div>
+          </div>
+        </div>
+      </div>
+      <div class="ig-pban-crowding">
+        <div class="ig-pban-crowd-label">Crowding</div>
+        <div class="ig-pban-crowd-cars">${crowdHtml}</div>
+        <div class="ig-pban-crowd-ends"><span>Rear</span><span>Front</span></div>
+      </div>
+    </div>`;
   }
 }
