@@ -218,9 +218,23 @@ export class CantonManager {
   isAvailable(cantonId, trainId) {
     const c = this.cantons.get(cantonId);
     if (!c) return true;
-    if (c.occupiedBy !== null && c.occupiedBy !== trainId) return false;
-    if (c.reservedBy !== null && c.reservedBy !== trainId) return false;
+    // Verify occupying/reserving train still exists and is active
+    if (c.occupiedBy !== null && c.occupiedBy !== trainId) {
+      if (this._isTrainGone(c.occupiedBy)) { c.occupiedBy = null; }
+      else return false;
+    }
+    if (c.reservedBy !== null && c.reservedBy !== trainId) {
+      if (this._isTrainGone(c.reservedBy)) { c.reservedBy = null; }
+      else return false;
+    }
     return true;
+  }
+
+  _isTrainGone(id) {
+    const svcs = window.game?.scheduleCreator?.services;
+    if (!svcs) return false;
+    const s = svcs.find(s => s.id === id);
+    return !s || s.state === 'waiting' || s.state === 'completed' || !s.position;
   }
 
   releaseAll(trainId) {

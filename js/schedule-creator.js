@@ -279,7 +279,8 @@ export class ActiveService {
           // Release all occupations on departure
           if (window.game?.voiePointManager) window.game.voiePointManager.releaseAllVoiePointsForTrain(this.id);
           if (window.game?.platformManager) window.game.platformManager.releasePlatform(currentStops[0]?.stationId, this.id);
-          // Reset simulation state for new movement leg
+          // Release any stale cantons and reset simulation state
+          cantonManager.releaseAll(this.id);
           this._resetState();
         }
       }
@@ -314,6 +315,7 @@ export class ActiveService {
             window.game.platformManager.releasePlatform(this._platformAssignment.stationId, this.id);
             this._platformAssignment = null;
           }
+          cantonManager.releaseAll(this.id);
           this._resetState();
         }
         return;
@@ -346,6 +348,8 @@ export class ActiveService {
         if (this.currentStopIndex >= stops.length) {
           this.completeService(economy);
         } else {
+          // Release old cantons before starting new leg
+          cantonManager.releaseAll(this.id);
           this.state = 'moving';
           this._resetState();
         }

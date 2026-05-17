@@ -211,6 +211,15 @@ export class VoiePointManager {
     for (const other of this.troncons) {
       if (other.id === tronconId) continue;
       if (!other.occupiedBy || other.occupiedBy === trainId) continue;
+      // Verify the occupying train still exists and is active
+      const services = window.game?.scheduleCreator?.services;
+      if (services) {
+        const occ = services.find(s => s.id === other.occupiedBy);
+        if (!occ || occ.state === 'waiting' || occ.state === 'completed' || !occ.position) {
+          other.occupiedBy = null;
+          continue;
+        }
+      }
       if (!other.route || other.route.length < 2) continue;
       // Different voies = different physical tracks, no conflict
       if (!this.tronconsShareVoie(trc, other)) continue;
