@@ -390,8 +390,8 @@ header {
 .ig-ratp-alert-badge { background:#c00; color:#fff; font-weight:900; font-size:14px; width:24px; height:24px; border-radius:4px; display:flex; align-items:center; justify-content:center; }
 .ig-ratp-alert-icon { color:#fbbf24; font-size:18px; }
 .ig-ratp-alert-text { color:#ccc; font-size:11px; line-height:1.4; flex:1; }
-.ig-blink { animation: igBlink 1s infinite; }
-@keyframes igBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.ig-blink { animation: igBlink 1s step-end infinite; }
+@keyframes igBlink { 0%{opacity:1} 50%{opacity:0} }
 
 /* === RER SNCF === dark navy with colored line circles */
 .ig-rsncf-board { background:#1c2240; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:3px solid #333; }
