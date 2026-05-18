@@ -10,6 +10,37 @@ export class TileMap {
     this.viewportWidth = 800;
     this.viewportHeight = 600;
 
+    // Separate loading pools: base and ORM load in parallel
+    this._baseLoading = 0;
+    this._railLoading = 0;
+    this._maxBaseConn = 8;
+    this._maxRailConn = 8;
+    this._baseQueue = [];
+    this._railQueue = [];
+    this._lastQueueZoom = 0;
+
+    // Generation counter — increments on zoom change to discard stale loads
+    this._generation = 0;
+    // Zoom debounce — wait for zoom to stabilize before loading
+    this._zoomDebounceTimer = null;
+    this._zoomSettled = true;
+    this._lastRoundedZoom = 0;
+
+    // Dirty flag for view changes
+    this._dirty = true;
+    this._lastCenterLat = 0;
+    this._lastCenterLon = 0;
+    this._lastZoom = 0;
+
+    // Offscreen tile buffer
+    this._tileCanvas = null;
+    this._tileCtx = null;
+    this._tileBufferValid = false;
+    this._tileBufferW = 0;
+    this._tileBufferH = 0;
+    this._pendingTiles = 0;
+    this._lastPendingTiles = 0;
+
     this.baseTileUrls = [
       'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
       'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
@@ -21,6 +52,53 @@ export class TileMap {
       'https://c.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
     ];
   }
+
+  markDirty() { this._dirty = true; this._tileBufferValid = false; }
+
+  _checkDirty() {
+    if (this.centerLat !== this._lastCenterLat ||
+        this.centerLon !== this._lastCenterLon ||
+        this.zoomLevel !== this._lastZoom) {
+      this._dirty = true;
+      this._tileBufferValid = false;
+
+      // Detect zoom level change (integer) → discard stale + debounce
+      const newZ = Math.round(this.zoomLevel);
+      if (newZ !== this._lastRoundedZoom) {
+        this._lastRoundedZoom = newZ;
+        // Bump generation so in-flight loads are discarded on completion
+        this._generation++;
+        this._baseLoading = 0;
+        this._railLoading = 0;
+        this._baseQueue = [];
+        this._railQueue = [];
+        // Remove unfinished tile entries so they get re-queued at new zoom
+        for (const [k, t] of this.tileCache) {
+          if (!t.loaded && !t.error) this.tileCache.delete(k);
+        }
+        // Debounce: don't load new tiles until zoom stable for 80ms
+        this._zoomSettled = false;
+        clearTimeout(this._zoomDebounceTimer);
+        this._zoomDebounceTimer = setTimeout(() => {
+          this._zoomSettled = true;
+          this._dirty = true;
+          this._tileBufferValid = false;
+          this._processQueue();
+        }, 80);
+      }
+
+      this._lastCenterLat = this.centerLat;
+      this._lastCenterLon = this.centerLon;
+      this._lastZoom = this.zoomLevel;
+    }
+  }
+
+  get isDirty() {
+    this._checkDirty();
+    return this._dirty;
+  }
+
+  clearDirty() { this._dirty = false; }
 
   latLonToGlobalPixel(lat, lon, zoom) {
     const scale = Math.pow(2, zoom) * this.tileSize;
@@ -69,12 +147,56 @@ export class TileMap {
     this.centerLon -= worldAfter.lon - worldBefore.lon;
   }
 
+  _processQueue() {
+    if (!this._zoomSettled) return;
+    const curZ = Math.round(this.zoomLevel);
+    // Process base pool
+    this._drainPool(this._baseQueue, curZ, false);
+    // Process rail pool in parallel
+    this._drainPool(this._railQueue, curZ, true);
+  }
+
+  _drainPool(queue, curZ, isRail) {
+    const max = isRail ? this._maxRailConn : this._maxBaseConn;
+    let loading = isRail ? this._railLoading : this._baseLoading;
+    while (queue.length > 0 && loading < max) {
+      const item = queue.shift();
+      if (item.tile.loaded || item.tile.error) continue;
+      if (item.z !== undefined && item.z !== curZ) continue;
+      loading++;
+      if (isRail) this._railLoading = loading; else this._baseLoading = loading;
+      this._fetchTile(item.tile, item.url, isRail);
+    }
+  }
+
+  _fetchTile(tile, url, isRail) {
+    const gen = this._generation;
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      if (gen !== this._generation) return;
+      tile.loaded = true;
+      tile.img = img;
+      if (isRail) this._railLoading--; else this._baseLoading--;
+      this._tileBufferValid = false;
+      this._dirty = true;
+      this._processQueue();
+    };
+    img.onerror = () => {
+      if (gen !== this._generation) return;
+      tile.error = true;
+      tile.errorTime = Date.now();
+      if (isRail) this._railLoading--; else this._baseLoading--;
+      this._processQueue();
+    };
+    img.src = url;
+  }
+
   getTile(tx, ty, z, urlTemplate) {
-    const key = `${urlTemplate}/${z}/${tx}/${ty}`;
+    const key = `${z}/${tx}/${ty}/${urlTemplate.includes('openrailway') ? 'r' : 'b'}`;
     const cached = this.tileCache.get(key);
     if (cached) {
-      // Retry failed tiles after 5 seconds
-      if (cached.error && Date.now() - cached.errorTime > 5000) {
+      if (cached.error && Date.now() - cached.errorTime > 3000) {
         this.tileCache.delete(key);
       } else {
         return cached;
@@ -82,25 +204,24 @@ export class TileMap {
     }
 
     const tile = { loaded: false, error: false, img: null, errorTime: 0 };
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => { tile.loaded = true; tile.img = img; };
-    img.onerror = () => { tile.error = true; tile.errorTime = Date.now(); };
+    this.tileCache.set(key, tile);
 
     const url = urlTemplate.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
-    img.src = url;
+    const isRail = urlTemplate.includes('openrailway');
+    if (isRail) this._railQueue.push({ tile, url, z });
+    else this._baseQueue.push({ tile, url, z });
+    this._processQueue();
 
-    this.tileCache.set(key, tile);
-    if (this.tileCache.size > 800) {
-      // Evict errored tiles first, then oldest
+    // Evict when cache too large — keep 3000 tiles (multiple zoom levels)
+    if (this.tileCache.size > 3000) {
       const keys = Array.from(this.tileCache.keys());
       let evicted = 0;
       for (const k of keys) {
-        if (evicted >= 200) break;
+        if (evicted >= 500) break;
         const t = this.tileCache.get(k);
         if (t && t.error) { this.tileCache.delete(k); evicted++; }
       }
-      for (let i = 0; evicted < 200 && i < keys.length; i++) {
+      for (let i = 0; evicted < 500 && i < keys.length; i++) {
         if (this.tileCache.has(keys[i])) { this.tileCache.delete(keys[i]); evicted++; }
       }
     }
@@ -108,6 +229,29 @@ export class TileMap {
   }
 
   renderTiles(ctx, canvasW, canvasH) {
+    // Detect view changes (zoom/pan) and invalidate buffer if needed
+    this._checkDirty();
+
+    // Use offscreen buffer: only re-render tiles when view changed or new tiles loaded
+    if (this._tileBufferValid && this._tileCanvas &&
+        this._tileBufferW === canvasW && this._tileBufferH === canvasH) {
+      ctx.drawImage(this._tileCanvas, 0, 0);
+      return;
+    }
+
+    // Create/resize offscreen canvas (logical size — same coordinate space as main ctx)
+    if (!this._tileCanvas || this._tileBufferW !== canvasW || this._tileBufferH !== canvasH) {
+      this._tileCanvas = document.createElement('canvas');
+      this._tileCanvas.width = canvasW;
+      this._tileCanvas.height = canvasH;
+      this._tileCtx = this._tileCanvas.getContext('2d');
+      this._tileBufferW = canvasW;
+      this._tileBufferH = canvasH;
+    }
+
+    const tctx = this._tileCtx;
+    tctx.clearRect(0, 0, canvasW, canvasH);
+
     const z = Math.round(this.zoomLevel);
     const scale = Math.pow(2, this.zoomLevel - z);
     const scaledTileSize = this.tileSize * scale;
@@ -118,6 +262,10 @@ export class TileMap {
     const endTileX = Math.ceil((center.x + canvasW / 2 / scale) / this.tileSize);
     const endTileY = Math.ceil((center.y + canvasH / 2 / scale) / this.tileSize);
     const maxTile = Math.pow(2, z);
+
+    this._pendingTiles = 0;
+
+    this._lastQueueZoom = z;
 
     const layers = [this.baseTileUrls, this.railTileUrls];
     for (const urls of layers) {
@@ -130,11 +278,41 @@ export class TileMap {
           if (tile.loaded && tile.img) {
             const px = (tx * this.tileSize - center.x) * scale + canvasW / 2;
             const py = (ty * this.tileSize - center.y) * scale + canvasH / 2;
-            ctx.drawImage(tile.img, px, py, scaledTileSize, scaledTileSize);
+            tctx.drawImage(tile.img, px, py, scaledTileSize, scaledTileSize);
+          } else {
+            // Fallback: draw cached lower-zoom tile while loading
+            if (!tile.error) this._pendingTiles++;
+            const isRail = urls === this.railTileUrls;
+            const suffix = isRail ? 'r' : 'b';
+            let drawn = false;
+            for (let fz = z - 1; fz >= this.minZoom; fz--) {
+              const fScale = Math.pow(2, z - fz);
+              const ftx = Math.floor(wrappedTx / fScale);
+              const fty = Math.floor(ty / fScale);
+              const fKey = `${fz}/${ftx}/${fty}/${suffix}`;
+              const fTile = this.tileCache.get(fKey);
+              if (fTile && fTile.loaded && fTile.img) {
+                const subX = wrappedTx - ftx * fScale;
+                const subY = ty - fty * fScale;
+                const srcSize = this.tileSize / fScale;
+                const px = (tx * this.tileSize - center.x) * scale + canvasW / 2;
+                const py2 = (ty * this.tileSize - center.y) * scale + canvasH / 2;
+                tctx.drawImage(fTile.img, subX * srcSize, subY * srcSize, srcSize, srcSize, px, py2, scaledTileSize, scaledTileSize);
+                drawn = true;
+                break;
+              }
+            }
           }
         }
       }
     }
+
+    // Buffer is valid only if all tiles loaded
+    this._tileBufferValid = this._pendingTiles === 0;
+    this._lastPendingTiles = this._pendingTiles;
+
+    // Blit to main canvas
+    ctx.drawImage(this._tileCanvas, 0, 0);
   }
 
   latLonToPixel(lat, lon) {

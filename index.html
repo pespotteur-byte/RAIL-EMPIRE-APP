@@ -3,12 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv=1778517600"Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv=1778517600"Pragma" content="no-cache">
-  <meta http-equiv=1778517600"Expires" content="0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Rail Empire</title>
+  <!-- Preconnect to tile servers for faster first load -->
+  <link rel="preconnect" href="https://a.tiles.openrailwaymap.org" crossorigin>
+  <link rel="preconnect" href="https://b.tiles.openrailwaymap.org" crossorigin>
+  <link rel="preconnect" href="https://c.tiles.openrailwaymap.org" crossorigin>
+  <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
+  <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin>
+  <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin>
+  <link rel="dns-prefetch" href="https://a.tiles.openrailwaymap.org">
+  <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
+  <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1778517600">
+  <link rel="stylesheet" href="style.css?v=1779103051">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -497,7 +507,24 @@
             <div class="form-group">
               <label><input type="checkbox" id="sched-work-train"> Train de travaux <span style="font-size:9px;color:var(--text3)">(non affecte par les travaux)</span></label>
             </div>
-
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Jours de circulation</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
+                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
+                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
+                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
+                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
+                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
+                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
+              </div>
+            </div>
+            <div class="form-group" style="flex:1">
+              <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Dates specifiques <span style="font-size:9px;color:var(--text3)">(vide = tous les jours)</span></label>
+              <input type="text" id="sched-run-dates" placeholder="2026-01-15, 2026-03-20, ..." style="font-size:10px;width:100%">
+            </div>
           </div>
           <p class="sched-hint">Cliquer sur les gares de la carte pour definir le trajet. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.<br><span style="color:#fbbf24;font-size:10px">Astuce : Ajoutez des gares intermediaires en "Waypoint" pour forcer le passage par un raccordement precis (ex: via Troyes au lieu de Nancy).</span></p>
           <div class="sched-map-container">
@@ -807,6 +834,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1778517600"></script>
+  <script type="module" src="js/main.js?v=1779103051"></script>
 </body>
 </html>
