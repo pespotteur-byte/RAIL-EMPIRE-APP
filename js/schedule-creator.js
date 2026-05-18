@@ -1,4 +1,4 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1778517600';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779103051';
 
 let nextServiceId = 1;
 
@@ -64,6 +64,8 @@ export class ActiveService {
     this.isWorkTrain = data.isWorkTrain || false; // S15: Work trains unaffected by works
     this.returnName = data.returnName || '';
     this.returnPlatforms = data.returnPlatforms || {}; // { stationId: platformName }
+    this.runDays = data.runDays || [0,1,2,3,4,5,6]; // days of week (0=Sun..6=Sat), default all
+    this.runDates = data.runDates || []; // specific dates (YYYY-MM-DD), empty = every day
     this._tripCount = 0;
     this._adjustedStops = null;
 
@@ -210,6 +212,20 @@ export class ActiveService {
       return;
     }
 
+    // Check if train runs today (day of week + specific dates)
+    if (this.state === 'waiting' || (this.state === 'stopped_at_station' && this.currentStopIndex === 0)) {
+      const today = new Date(dateStr + 'T12:00:00');
+      const dow = today.getDay(); // 0=Sun..6=Sat
+      const runsToday = this.runDays.includes(dow);
+      const hasDateRestriction = this.runDates.length > 0;
+      const dateAllowed = !hasDateRestriction || this.runDates.includes(dateStr);
+      if (!runsToday || !dateAllowed) {
+        this.position = null;
+        this.train.stoppedAt = null;
+        return;
+      }
+    }
+
     const currentStops = this.getCurrentStops();
     const firstDep = currentStops[0]?.departureTime ?? 0;
 
@@ -259,6 +275,16 @@ export class ActiveService {
       }
 
       if (this.currentStopIndex === 0 && timeGte(timeOfDay, firstDep)) {
+        // Don't start a train if departure was missed by more than 5 minutes
+        // (prevents all trains starting late after JSON reload)
+        const minutesLate = timeDiff(timeOfDay, firstDep);
+        if (minutesLate > 5) {
+          this.completed = true;
+          this.completedDate = dateStr;
+          this.position = null;
+          this.train.stoppedAt = null;
+          return;
+        }
         if (isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
           // Board passengers at departure station before moving
           if (economy) {
@@ -738,25 +764,27 @@ export class ActiveService {
       return;
     }
 
-    this.totalDistance += stepKm;
+    // Cap stepKm to prevent aberrant jumps (max 5 km per tick at 300 km/h)
+    const clampedStepKm = Math.min(stepKm, 0.5);
+    this.totalDistance += clampedStepKm;
     this.train.speed = Math.round(this.speed);
     this.train.totalKm = this.totalDistance;
     this.train.state = this.speed > 0 ? 'moving' : 'stopped';
 
     // S8/S14: Wear tracking + probabilistic failure (~1 per 25,000 km)
-    this.train.totalKmRun = (this.train.totalKmRun || 0) + stepKm;
-    this.train.kmSinceLastMaint = (this.train.kmSinceLastMaint || 0) + stepKm;
+    this.train.totalKmRun = (this.train.totalKmRun || 0) + clampedStepKm;
+    this.train.kmSinceLastMaint = (this.train.kmSinceLastMaint || 0) + clampedStepKm;
     this.train.wearLevel = Math.min(100, (this.train.kmSinceLastMaint || 0) / 250); // 100% wear at 25,000km
-    // Sync km to persistent rame object
-    if (this.rame && stepKm > 0) {
-      this.rame.totalKmRun = (this.rame.totalKmRun || 0) + stepKm;
-      this.rame.kmSinceLastMaint = (this.rame.kmSinceLastMaint || 0) + stepKm;
+    // Sync km to persistent rame object (source of truth)
+    if (this.rame && clampedStepKm > 0) {
+      this.rame.totalKmRun = (this.rame.totalKmRun || 0) + clampedStepKm;
+      this.rame.kmSinceLastMaint = (this.rame.kmSinceLastMaint || 0) + clampedStepKm;
       this.rame.wearLevel = this.train.wearLevel;
     }
     // Failure probability: scales with wear level (higher wear = more likely to break)
-    if (!this.train.breakdown && stepKm > 0) {
+    if (!this.train.breakdown && clampedStepKm > 0) {
       const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25; // 1x at 0%, 5x at 100%
-      const failureProb = (stepKm / 25000) * wearMultiplier;
+      const failureProb = (clampedStepKm / 25000) * wearMultiplier;
       if (Math.random() < failureProb) {
         this.train.breakdown = { type: 'panne', time: timeOfDay };
       }
@@ -803,65 +831,53 @@ export class ActiveService {
     const stops = this.getCurrentStops();
     if (this.currentStopIndex <= 0 || this.currentStopIndex > stops.length) return;
 
-    // Find last actual arret (not waypoint/passage) BEFORE current position
-    let prevArret = null;
+    // Find last actual arret (gare A) BEFORE current position
+    let gareAIdx = 0;
     for (let i = this.currentStopIndex - 1; i >= 0; i--) {
-      if (stops[i].type === 'arret') { prevArret = stops[i]; break; }
+      const t = stops[i].type;
+      if (t === 'arret' || t === 'depart' || i === 0) { gareAIdx = i; break; }
     }
-    if (!prevArret) prevArret = stops[this.currentStopIndex - 1]; // fallback
+    const gareA = stops[gareAIdx];
 
-    // Find next actual arret (not waypoint/passage) AT or AFTER current position
-    let nextArret = null;
+    // Find next actual arret (gare B) AT or AFTER current position
+    let gareBIdx = stops.length - 1;
     for (let i = this.currentStopIndex; i < stops.length; i++) {
-      if (stops[i].type === 'arret') { nextArret = stops[i]; break; }
+      const t = stops[i].type;
+      if (t === 'arret' || t === 'terminus') { gareBIdx = i; break; }
     }
-    if (!nextArret) nextArret = stops[this.currentStopIndex]; // fallback
+    const gareB = stops[gareBIdx];
 
-    const scheduledDepartureTime = prevArret.departureTime || 0;
+    const depA = gareA.departureTime || 0;
+    const arrB = gareB.arrivalTime || gareB.departureTime || (depA + 30);
+    const scheduledTravelTime = arrB - depA;
+    if (scheduledTravelTime <= 0) {
+      this.delay = timeDiff(timeOfDay, depA);
+      const rounded = Math.round(this.delay);
+      this.train.delay = rounded === 0 ? 0 : rounded;
+      return;
+    }
 
-    if (this._routeAnalysis && this._routeAnalysis.segments.length > 0) {
-      // Precise delay using route segment analysis
-      const scheduledArrivalTime = nextArret?.arrivalTime ||
-        (scheduledDepartureTime + this._routeAnalysis.estimatedTimeMinutes);
-      const segments = this._routeAnalysis.segments;
-
-      let elapsedSegTime = 0;
-      let totalSegTime = 0;
-      for (const seg of segments) totalSegTime += seg.timeMinutes;
-
-      for (let i = 0; i < this._state.index && i < segments.length; i++) {
-        elapsedSegTime += segments[i].timeMinutes;
-      }
-      if (this._state.index < segments.length) {
-        elapsedSegTime += segments[this._state.index].timeMinutes * this._state.progress;
-      }
-
-      const timeFraction = totalSegTime > 0 ? elapsedSegTime / totalSegTime : 0;
-      const totalScheduledTime = scheduledArrivalTime - scheduledDepartureTime;
-      const expectedTimeAtPosition = scheduledDepartureTime + totalScheduledTime * timeFraction;
-
-      this.delay = timeDiff(timeOfDay, expectedTimeAtPosition);
-    } else {
-      // Fallback: estimate delay using distance-based progress
-      const scheduledArrivalTime = nextArret?.arrivalTime || (scheduledDepartureTime + 60);
-      const target = this.getTargetStation();
-      if (target && this.position) {
-        const totalDist = haversineDistance(
-          stops[this.currentStopIndex - 1]?.lat || this.position.lat,
-          stops[this.currentStopIndex - 1]?.lon || this.position.lon,
-          target.lat, target.lon
-        );
-        const remainDist = haversineDistance(this.position.lat, this.position.lon, target.lat, target.lon);
-        const progress = totalDist > 0 ? Math.max(0, 1 - remainDist / totalDist) : 0;
-        const totalScheduledTime = scheduledArrivalTime - scheduledDepartureTime;
-        const expectedTime = scheduledDepartureTime + totalScheduledTime * progress;
-        this.delay = timeDiff(timeOfDay, expectedTime);
-      } else {
-        this.delay = timeDiff(timeOfDay, scheduledDepartureTime);
+    // Distance-based progress from gare A to gare B using haversine
+    // This works correctly even with waypoints between A and B
+    let progress = 0;
+    if (this.position) {
+      const stA = gareA.stationId ? this.world?.getStationById(gareA.stationId) : null;
+      const stB = gareB.stationId ? this.world?.getStationById(gareB.stationId) : null;
+      const latA = stA ? stA.lat : (gareA.lat || this.position.lat);
+      const lonA = stA ? stA.lon : (gareA.lon || this.position.lon);
+      const latB = stB ? stB.lat : (gareB.lat || this.position.lat);
+      const lonB = stB ? stB.lon : (gareB.lon || this.position.lon);
+      const totalDist = haversineDistance(latA, lonA, latB, lonB);
+      if (totalDist > 0.01) {
+        const distFromA = haversineDistance(latA, lonA, this.position.lat, this.position.lon);
+        progress = Math.max(0, Math.min(1, distFromA / totalDist));
       }
     }
 
-    // Avoid -0 display
+    // Expected time at current position = depA + scheduledTravelTime * progress
+    const expectedTime = depA + scheduledTravelTime * progress;
+    this.delay = timeDiff(timeOfDay, expectedTime);
+
     const rounded = Math.round(this.delay);
     this.train.delay = rounded === 0 ? 0 : rounded;
   }
@@ -1258,6 +1274,13 @@ export class ActiveService {
       this.revenueCollected = true;
     }
 
+    // Final sync km to rame (source of truth)
+    if (this.rame) {
+      this.rame.totalKmRun = this.train.totalKmRun || 0;
+      this.rame.kmSinceLastMaint = this.train.kmSinceLastMaint || 0;
+      this.rame.wearLevel = this.train.wearLevel || 0;
+    }
+
     // Release all cantons
     cantonManager.releaseAll(this.id);
     this._resetState();
@@ -1473,15 +1496,25 @@ export class ScheduleCreator {
   toSave() {
     return this.services.map(s => {
       try {
-        // Sanitize routes: only keep serializable coordinate data
+        // Sanitize & compress routes: reduce precision, downsample long segments
         const safeRoutes = (s.routes || []).map(route => {
           if (!Array.isArray(route)) return [];
-          return route.map(pt => ({
-            lat: pt.lat, lon: pt.lon,
+          const pts = route.map(pt => ({
+            lat: Math.round(pt.lat * 1e5) / 1e5,
+            lon: Math.round(pt.lon * 1e5) / 1e5,
             maxSpeed: pt.maxSpeed || 160,
             electrified: pt.electrified ?? true,
             tracks: pt.tracks || 1,
           }));
+          // Downsample: keep every Nth point for long routes (first+last always kept)
+          if (pts.length > 100) {
+            const step = Math.ceil(pts.length / 80);
+            const sampled = [pts[0]];
+            for (let i = step; i < pts.length - 1; i += step) sampled.push(pts[i]);
+            sampled.push(pts[pts.length - 1]);
+            return sampled;
+          }
+          return pts;
         });
         return {
           id: s.id,
@@ -1502,6 +1535,8 @@ export class ScheduleCreator {
           totalDistance: s.totalDistance,
           active: s.active,
           isWorkTrain: s.isWorkTrain || false,
+          runDays: s.runDays || [0,1,2,3,4,5,6],
+          runDates: s.runDates || [],
           returnName: s.returnName || '',
           returnPlatforms: s.returnPlatforms || {},
           _runtime: {
