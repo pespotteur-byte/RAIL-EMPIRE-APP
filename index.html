@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1779403154">
+  <link rel="stylesheet" href="style.css?v=1779406655">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -52,6 +52,9 @@
           <button class="nav-btn" data-page="incidents">Incidents</button>
           <button class="nav-btn" data-page="economy">Finances</button>
           <button class="nav-btn" data-page="infogare">Infogare</button>
+          <button class="nav-btn" data-page="dashboard">Dashboard</button>
+          <button class="nav-btn" data-page="graph-marche">Graphique</button>
+          <button class="nav-btn" data-page="staff">Personnel</button>
         </nav>
       </div>
       <div class="header-right">
@@ -341,6 +344,21 @@
             <div id="eco-history" class="eco-history"></div>
           </div>
         </div>
+      </div>
+
+      <!-- DASHBOARD PAGE -->
+      <div id="page-dashboard" class="page">
+        <div class="page-content" id="dashboard-container"></div>
+      </div>
+
+      <!-- GRAPHIQUE DE MARCHE PAGE -->
+      <div id="page-graph-marche" class="page">
+        <div class="page-content" id="graph-marche-container"></div>
+      </div>
+
+      <!-- STAFF PAGE -->
+      <div id="page-staff" class="page">
+        <div class="page-content" id="staff-container"></div>
       </div>
     </div>
 
@@ -834,6 +852,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1779403154"></script>
+  <script type="module" src="js/main.js?v=1779406655"></script>
 </body>
 </html>

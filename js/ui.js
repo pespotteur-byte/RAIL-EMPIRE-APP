@@ -53,6 +53,9 @@ export class UI {
     else if (this.activePage === 'incidents') this.renderIncidentsPage();
     else if (this.activePage === 'economy') this.renderEconomyPage();
     else if (this.activePage === 'infogare') this.renderInfogarePage();
+    else if (this.activePage === 'dashboard') this.renderDashboard();
+    else if (this.activePage === 'graph-marche') this.renderGraphMarche();
+    else if (this.activePage === 'staff') this.renderStaffPage();
   }
 
   setupNav() {
@@ -76,6 +79,9 @@ export class UI {
     if (page === 'incidents') this.renderIncidentsPage();
     if (page === 'economy') this.renderEconomyPage();
     if (page === 'infogare') this.renderInfogarePage();
+    if (page === 'dashboard') this.renderDashboard();
+    if (page === 'graph-marche') this.renderGraphMarche();
+    if (page === 'staff') this.renderStaffPage();
   }
 
   setupMapEvents() {
@@ -4846,5 +4852,29 @@ export class UI {
         <div class="ig-pban-crowd-ends"><span>Queue</span><span>Tete</span></div>
       </div>
     </div>`;
+  }
+
+  // ==================== DASHBOARD ====================
+  renderDashboard() {
+    try {
+      const container = document.getElementById('dashboard-container');
+      this.game.dashboard.render(container, this.game);
+    } catch(e) { console.warn('Dashboard render error:', e); }
+  }
+
+  // ==================== GRAPHIQUE DE MARCHE ====================
+  renderGraphMarche() {
+    try {
+      const container = document.getElementById('graph-marche-container');
+      this.game.graphMarche.render(container, this.game);
+    } catch(e) { console.warn('GraphMarche render error:', e); }
+  }
+
+  // ==================== STAFF ====================
+  renderStaffPage() {
+    try {
+      const container = document.getElementById('staff-container');
+      this.game.staffManager.render(container, this.game);
+    } catch(e) { console.warn('Staff render error:', e); }
   }
 }

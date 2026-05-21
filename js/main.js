@@ -1,21 +1,24 @@
-import { SimulationEngine } from './engine.js?v=1779103051';
-import { World, createDefaultWorld } from './world.js?v=1779103051';
-import { Renderer } from './renderer.js?v=1779103051';
-import { UI } from './ui.js?v=1779103051';
-import { Economy } from './economy.js?v=1779103051';
-import { IncidentManager } from './incidents.js?v=1779103051';
-import { FreightManager } from './freight.js?v=1779103051';
-import { ScheduleManager } from './schedule.js?v=1779103051';
-import { GameStorage } from './storage.js?v=1779103051';
-import { AccountManager } from './account.js?v=1779103051';
-import { RollingStockManager } from './rolling-stock.js?v=1779103051';
-import { RameManager } from './rame.js?v=1779103051';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779103051';
-import { DepotManager } from './depot.js?v=1779103051';
-import { WorksManager } from './works.js?v=1779103051';
-import { ORMClient } from './orm.js?v=1779103051';
-import { LineManager, PlatformManager } from './line.js?v=1779103051';
-import { VoiePointManager } from './voie-points.js?v=1779103051';
+import { SimulationEngine } from './engine.js?v=1779406655';
+import { World, createDefaultWorld } from './world.js?v=1779406655';
+import { Renderer } from './renderer.js?v=1779406655';
+import { UI } from './ui.js?v=1779406655';
+import { Economy } from './economy.js?v=1779406655';
+import { IncidentManager } from './incidents.js?v=1779406655';
+import { FreightManager } from './freight.js?v=1779406655';
+import { ScheduleManager } from './schedule.js?v=1779406655';
+import { GameStorage } from './storage.js?v=1779406655';
+import { AccountManager } from './account.js?v=1779406655';
+import { RollingStockManager } from './rolling-stock.js?v=1779406655';
+import { RameManager } from './rame.js?v=1779406655';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779406655';
+import { DepotManager } from './depot.js?v=1779406655';
+import { WorksManager } from './works.js?v=1779406655';
+import { ORMClient } from './orm.js?v=1779406655';
+import { LineManager, PlatformManager } from './line.js?v=1779406655';
+import { VoiePointManager } from './voie-points.js?v=1779406655';
+import { Dashboard } from './dashboard.js?v=1779403154';
+import { GraphMarche } from './graph-marche.js?v=1779403154';
+import { StaffManager } from './staff.js?v=1779403154';
 
 class RailEmpire {
   constructor() {
@@ -36,6 +39,9 @@ class RailEmpire {
     this.lineManager = new LineManager();
     this.platformManager = new PlatformManager();
     this.voiePointManager = new VoiePointManager();
+    this.dashboard = new Dashboard();
+    this.graphMarche = new GraphMarche();
+    this.staffManager = new StaffManager();
     this.cantonManager = cantonManager;
     this.renderer = null;
     this.ui = null;
@@ -190,6 +196,9 @@ class RailEmpire {
         ormRoutes: this.orm.toSave(),
         lines: this.lineManager.toSave(),
         voiePoints: this.voiePointManager.toSave(),
+        dashboard: this.dashboard.toSave(),
+        graphMarche: this.graphMarche.toSave(),
+        staff: this.staffManager.toSave(),
         exportDate: new Date().toISOString(),
       };
       const json = JSON.stringify(state);
@@ -222,6 +231,9 @@ class RailEmpire {
     if (s.ormRoutes) this.orm.loadFromSave(s.ormRoutes);
     if (s.lines) this.lineManager.loadFromSave(s.lines);
     if (s.voiePoints) this.voiePointManager.loadFromSave(s.voiePoints);
+    if (s.dashboard) this.dashboard.loadFromSave(s.dashboard);
+    if (s.graphMarche) this.graphMarche.loadFromSave(s.graphMarche);
+    if (s.staff) this.staffManager.loadFromSave(s.staff);
     // Clear voie point occupations on reload (prevent ghost occupations after crash)
     for (const vp of this.voiePointManager.getAll()) { vp.occupiedBy = null; }
     for (const trc of this.voiePointManager.getAllTroncons()) { trc.occupiedBy = null; }
@@ -355,6 +367,9 @@ class RailEmpire {
       ormRoutes: this.orm.toSave(),
       lines: this.lineManager.toSave(),
       voiePoints: this.voiePointManager.toSave(),
+      dashboard: this.dashboard.toSave(),
+      graphMarche: this.graphMarche.toSave(),
+      staff: this.staffManager.toSave(),
     };
     try { this.storage.saveGame(state); } catch(e) { console.warn('Auto-save failed:', e); }
   }
@@ -423,7 +438,13 @@ class RailEmpire {
         this.depotManager.getAll(),
         dateStr
       );
+      // Daily staff salaries
+      try { this.staffManager.processDailySalaries(this.economy); } catch(e) { /* graceful */ }
     }
+
+    // Dashboard + Graph hooks (every minute, wrapped in try/catch for safety)
+    try { this.dashboard.record(this); } catch(e) { /* graceful */ }
+    try { this.graphMarche.record(this, timeOfDay); } catch(e) { /* graceful */ }
   }
 
   gameLoop() {
