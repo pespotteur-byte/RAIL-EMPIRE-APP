@@ -56,12 +56,27 @@ export class UI {
     else if (this.activePage === 'dashboard') this.renderDashboard();
     else if (this.activePage === 'graph-marche') this.renderGraphMarche();
     else if (this.activePage === 'staff') this.renderStaffPage();
+    else if (this.activePage === 'bank') this.renderBankPage();
+    else if (this.activePage === 'weather') this.renderWeatherPage();
+    else if (this.activePage === 'unions') this.renderUnionsPage();
+    else if (this.activePage === 'seasonal') this.renderSeasonalPage();
+    else if (this.activePage === 'connections') this.renderConnectionsPage();
+    else if (this.activePage === 'station-upgrades') this.renderStationUpgradesPage();
+    else if (this.activePage === 'junctions') this.renderJunctionsPage();
   }
 
   setupNav() {
     document.querySelectorAll('.nav-btn').forEach(btn => {
       btn.addEventListener('click', () => this.switchPage(btn.dataset.page));
     });
+
+    // Tutorial button
+    const tutBtn = document.getElementById('btn-tutorial');
+    if (tutBtn) {
+      tutBtn.addEventListener('click', () => {
+        try { this.game.tutorial.start(this.game); } catch(e) { console.warn('Tutorial error:', e); }
+      });
+    }
   }
 
   switchPage(page) {
@@ -82,6 +97,13 @@ export class UI {
     if (page === 'dashboard') this.renderDashboard();
     if (page === 'graph-marche') this.renderGraphMarche();
     if (page === 'staff') this.renderStaffPage();
+    if (page === 'bank') this.renderBankPage();
+    if (page === 'weather') this.renderWeatherPage();
+    if (page === 'unions') this.renderUnionsPage();
+    if (page === 'seasonal') this.renderSeasonalPage();
+    if (page === 'connections') this.renderConnectionsPage();
+    if (page === 'station-upgrades') this.renderStationUpgradesPage();
+    if (page === 'junctions') this.renderJunctionsPage();
   }
 
   setupMapEvents() {
@@ -3488,6 +3510,12 @@ export class UI {
     document.getElementById('date-display').textContent = engine.getFormattedDate();
     document.getElementById('balance').textContent = eco.formatAmount(eco.balance);
 
+    // Weather widget in header
+    try {
+      const ww = document.getElementById('weather-widget');
+      if (ww) ww.innerHTML = this.game.weather.renderWidget();
+    } catch(e) { /* graceful */ }
+
     if (this.activePage === 'map') {
       this.updateTrainsList(activeServices);
       this.updateFreightTab();
@@ -4876,5 +4904,61 @@ export class UI {
       const container = document.getElementById('staff-container');
       this.game.staffManager.render(container, this.game);
     } catch(e) { console.warn('Staff render error:', e); }
+  }
+
+  // ==================== BANK ====================
+  renderBankPage() {
+    try {
+      const container = document.getElementById('bank-container');
+      this.game.bank.render(container, this.game);
+    } catch(e) { console.warn('Bank render error:', e); }
+  }
+
+  // ==================== WEATHER ====================
+  renderWeatherPage() {
+    try {
+      const container = document.getElementById('weather-container');
+      this.game.weather.render(container);
+    } catch(e) { console.warn('Weather render error:', e); }
+  }
+
+  // ==================== UNIONS ====================
+  renderUnionsPage() {
+    try {
+      const container = document.getElementById('unions-container');
+      this.game.unions.render(container, this.game);
+    } catch(e) { console.warn('Unions render error:', e); }
+  }
+
+  // ==================== SEASONAL ====================
+  renderSeasonalPage() {
+    try {
+      const container = document.getElementById('seasonal-container');
+      this.game.seasonal.render(container, this.game);
+    } catch(e) { console.warn('Seasonal render error:', e); }
+  }
+
+  // ==================== CONNECTIONS ====================
+  renderConnectionsPage() {
+    try {
+      const container = document.getElementById('connections-container');
+      this.game.connections.render(container, this.game);
+    } catch(e) { console.warn('Connections render error:', e); }
+  }
+
+  // ==================== STATION UPGRADES ====================
+  renderStationUpgradesPage() {
+    try {
+      const container = document.getElementById('station-upgrades-container');
+      this.game.stationUpgrades.render(container, this.game);
+    } catch(e) { console.warn('StationUpgrades render error:', e); }
+  }
+
+  // ==================== JUNCTIONS ====================
+  renderJunctionsPage() {
+    try {
+      const container = document.getElementById('junctions-container');
+      this.game.junctionManager.render(container, this.game);
+    } catch(e) { console.warn('Junctions render error:', e); }
   }
 }

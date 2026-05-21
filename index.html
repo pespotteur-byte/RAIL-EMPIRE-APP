@@ -55,13 +55,22 @@
           <button class="nav-btn" data-page="dashboard">Dashboard</button>
           <button class="nav-btn" data-page="graph-marche">Graphique</button>
           <button class="nav-btn" data-page="staff">Personnel</button>
+          <button class="nav-btn" data-page="bank">Banque</button>
+          <button class="nav-btn" data-page="weather">Météo</button>
+          <button class="nav-btn" data-page="unions">Syndicats</button>
+          <button class="nav-btn" data-page="seasonal">Saisons</button>
+          <button class="nav-btn" data-page="connections">Correspondances</button>
+          <button class="nav-btn" data-page="station-upgrades">Gares+</button>
+          <button class="nav-btn" data-page="junctions">Aiguillages</button>
         </nav>
       </div>
       <div class="header-right">
+        <span id="weather-widget" class="weather-widget"></span>
         <img id="company-logo" src="" alt="" style="display:none;height:28px;width:28px;object-fit:contain;border-radius:4px;margin-right:6px;vertical-align:middle">
         <span id="balance" class="balance">500 k&euro;</span>
         <span id="clock" class="clock">--:--</span>
         <span id="date-display" class="date"></span>
+        <button id="btn-tutorial" class="btn-header" title="Tutoriel">❓</button>
         <button id="btn-save-file" class="btn-header" title="Sauvegarder sur PC">💾</button>
         <button id="btn-load-file" class="btn-header" title="Charger depuis fichier">📂</button>
         <input type="file" id="load-file-input" accept=".json" style="display:none">
@@ -359,6 +368,41 @@
       <!-- STAFF PAGE -->
       <div id="page-staff" class="page">
         <div class="page-content" id="staff-container"></div>
+      </div>
+
+      <!-- BANK PAGE -->
+      <div id="page-bank" class="page">
+        <div class="page-content" id="bank-container"></div>
+      </div>
+
+      <!-- WEATHER PAGE -->
+      <div id="page-weather" class="page">
+        <div class="page-content" id="weather-container"></div>
+      </div>
+
+      <!-- UNIONS PAGE -->
+      <div id="page-unions" class="page">
+        <div class="page-content" id="unions-container"></div>
+      </div>
+
+      <!-- SEASONAL PAGE -->
+      <div id="page-seasonal" class="page">
+        <div class="page-content" id="seasonal-container"></div>
+      </div>
+
+      <!-- CONNECTIONS PAGE -->
+      <div id="page-connections" class="page">
+        <div class="page-content" id="connections-container"></div>
+      </div>
+
+      <!-- STATION UPGRADES PAGE -->
+      <div id="page-station-upgrades" class="page">
+        <div class="page-content" id="station-upgrades-container"></div>
+      </div>
+
+      <!-- JUNCTIONS PAGE -->
+      <div id="page-junctions" class="page">
+        <div class="page-content" id="junctions-container"></div>
       </div>
     </div>
 

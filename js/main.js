@@ -16,9 +16,17 @@ import { WorksManager } from './works.js?v=1779406655';
 import { ORMClient } from './orm.js?v=1779406655';
 import { LineManager, PlatformManager } from './line.js?v=1779406655';
 import { VoiePointManager } from './voie-points.js?v=1779406655';
-import { Dashboard } from './dashboard.js?v=1779403154';
-import { GraphMarche } from './graph-marche.js?v=1779403154';
-import { StaffManager } from './staff.js?v=1779403154';
+import { Dashboard } from './dashboard.js?v=1779406655';
+import { GraphMarche } from './graph-marche.js?v=1779406655';
+import { StaffManager } from './staff.js?v=1779406655';
+import { Tutorial } from './tutorial.js?v=1779406655';
+import { Bank } from './bank.js?v=1779406655';
+import { Weather } from './weather.js?v=1779406655';
+import { Unions } from './unions.js?v=1779406655';
+import { SeasonalSchedule } from './seasonal.js?v=1779406655';
+import { Connections } from './connections.js?v=1779406655';
+import { StationUpgrades } from './station-upgrades.js?v=1779406655';
+import { JunctionManager } from './junctions.js?v=1779406655';
 
 class RailEmpire {
   constructor() {
@@ -42,6 +50,14 @@ class RailEmpire {
     this.dashboard = new Dashboard();
     this.graphMarche = new GraphMarche();
     this.staffManager = new StaffManager();
+    this.tutorial = new Tutorial();
+    this.bank = new Bank();
+    this.weather = new Weather();
+    this.unions = new Unions();
+    this.seasonal = new SeasonalSchedule();
+    this.connections = new Connections();
+    this.stationUpgrades = new StationUpgrades();
+    this.junctionManager = new JunctionManager();
     this.cantonManager = cantonManager;
     this.renderer = null;
     this.ui = null;
@@ -234,6 +250,13 @@ class RailEmpire {
     if (s.dashboard) this.dashboard.loadFromSave(s.dashboard);
     if (s.graphMarche) this.graphMarche.loadFromSave(s.graphMarche);
     if (s.staff) this.staffManager.loadFromSave(s.staff);
+    if (s.bank) this.bank.loadFromSave(s.bank);
+    if (s.weather) this.weather.loadFromSave(s.weather);
+    if (s.unions) this.unions.loadFromSave(s.unions);
+    if (s.seasonal) this.seasonal.loadFromSave(s.seasonal);
+    if (s.connections) this.connections.loadFromSave(s.connections);
+    if (s.stationUpgrades) this.stationUpgrades.loadFromSave(s.stationUpgrades);
+    if (s.junctions) this.junctionManager.loadFromSave(s.junctions);
     // Clear voie point occupations on reload (prevent ghost occupations after crash)
     for (const vp of this.voiePointManager.getAll()) { vp.occupiedBy = null; }
     for (const trc of this.voiePointManager.getAllTroncons()) { trc.occupiedBy = null; }
@@ -370,6 +393,13 @@ class RailEmpire {
       dashboard: this.dashboard.toSave(),
       graphMarche: this.graphMarche.toSave(),
       staff: this.staffManager.toSave(),
+      bank: this.bank.toSave(),
+      weather: this.weather.toSave(),
+      unions: this.unions.toSave(),
+      seasonal: this.seasonal.toSave(),
+      connections: this.connections.toSave(),
+      stationUpgrades: this.stationUpgrades.toSave(),
+      junctions: this.junctionManager.toSave(),
     };
     try { this.storage.saveGame(state); } catch(e) { console.warn('Auto-save failed:', e); }
   }
@@ -440,7 +470,16 @@ class RailEmpire {
       );
       // Daily staff salaries
       try { this.staffManager.processDailySalaries(this.economy); } catch(e) { /* graceful */ }
+      // Daily bank repayments
+      try { this.bank.processDailyRepayments(this.economy); } catch(e) { /* graceful */ }
+      // Daily union check
+      try { this.unions.dailyUpdate(this); } catch(e) { /* graceful */ }
+      // Seasonal schedule check
+      try { this.seasonal.checkSeason(dateStr); } catch(e) { /* graceful */ }
     }
+
+    // Weather update every minute
+    try { this.weather.update(timeOfDay, dateStr); } catch(e) { /* graceful */ }
 
     // Dashboard + Graph hooks (every minute, wrapped in try/catch for safety)
     try { this.dashboard.record(this); } catch(e) { /* graceful */ }
