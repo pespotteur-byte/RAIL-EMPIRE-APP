@@ -8,7 +8,9 @@ export class FreightContract {
     this.quantity = data.quantity || 50;
     this.unit = data.unit || 't';
     this.from = data.from || '';
+    this.fromId = data.fromId || '';
     this.to = data.to || '';
+    this.toId = data.toId || '';
     this.payment = data.payment || 5000;
     this.active = data.active !== false;
     this.progress = data.progress || 0;
@@ -36,7 +38,7 @@ export class FreightManager {
     if (absTime - this.lastGenTime < 120) return;
     this.lastGenTime = absTime;
 
-    if (stations.length < 2) return;
+    if (!stations || stations.length < 2) return;
     if (this.contracts.filter(c => c.active).length >= 8) return;
     if (Math.random() > 0.3) return;
 
@@ -44,6 +46,7 @@ export class FreightManager {
     const quantity = cargo.minQty + Math.floor(Math.random() * (cargo.maxQty - cargo.minQty));
     const from = stations[Math.floor(Math.random() * stations.length)];
     const others = stations.filter(s => s.id !== from.id);
+    if (others.length === 0) return;
     const to = others[Math.floor(Math.random() * others.length)];
 
     this.contracts.push(new FreightContract({
@@ -52,7 +55,9 @@ export class FreightManager {
       quantity,
       unit: cargo.unit,
       from: from.name,
+      fromId: from.id,
       to: to.name,
+      toId: to.id,
       payment: quantity * cargo.pricePerUnit,
     }));
   }
@@ -65,7 +70,9 @@ export class FreightManager {
       quantity: c.quantity,
       unit: c.unit,
       from: c.from,
+      fromId: c.fromId,
       to: c.to,
+      toId: c.toId,
       payment: c.payment,
       active: c.active,
       progress: c.progress,

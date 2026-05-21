@@ -2,7 +2,7 @@
 // Voie points are unnamed geographic markers that define which voie (track) a train is on
 // Troncons connect voie points and/or stations with ORM-traced routes
 
-import { haversineDistance } from './simulation.js?v=1778517600';
+import { haversineDistance } from './simulation.js?v=1779403154';
 
 let nextVoiePointId = 1;
 let nextTronconId = 1;
@@ -182,7 +182,7 @@ export class VoiePointManager {
   isTronconOccupied(tronconId, excludeTrainId) {
     const trc = this.getTronconById(tronconId);
     if (!trc) return false;
-    if (trc.occupiedBy === null || trc.occupiedBy === excludeTrainId) return false;
+    if (!trc.occupiedBy || trc.occupiedBy === excludeTrainId) return false;
     // Verify the occupying train still exists and is active
     const services = window.game?.scheduleCreator?.services;
     if (services) {
@@ -208,6 +208,16 @@ export class VoiePointManager {
     const trc = this.getTronconById(tronconId);
     if (!trc || !trc.route || trc.route.length < 2) return null;
 
+    // Pre-compute bounding box of current troncon for fast rejection
+    let tMinLat = Infinity, tMaxLat = -Infinity, tMinLon = Infinity, tMaxLon = -Infinity;
+    for (const p of trc.route) {
+      if (p.lat < tMinLat) tMinLat = p.lat;
+      if (p.lat > tMaxLat) tMaxLat = p.lat;
+      if (p.lon < tMinLon) tMinLon = p.lon;
+      if (p.lon > tMaxLon) tMaxLon = p.lon;
+    }
+    const margin = 0.01; // ~1km margin
+
     for (const other of this.troncons) {
       if (other.id === tronconId) continue;
       if (!other.occupiedBy || other.occupiedBy === trainId) continue;
@@ -221,6 +231,14 @@ export class VoiePointManager {
         }
       }
       if (!other.route || other.route.length < 2) continue;
+      // Quick bounding box rejection
+      const oFirst = other.route[0], oLast = other.route[other.route.length - 1];
+      const oMinLat = Math.min(oFirst.lat, oLast.lat);
+      const oMaxLat = Math.max(oFirst.lat, oLast.lat);
+      const oMinLon = Math.min(oFirst.lon, oLast.lon);
+      const oMaxLon = Math.max(oFirst.lon, oLast.lon);
+      if (oMaxLat < tMinLat - margin || oMinLat > tMaxLat + margin ||
+          oMaxLon < tMinLon - margin || oMinLon > tMaxLon + margin) continue;
       // Different voies = different physical tracks, no conflict
       if (!this.tronconsShareVoie(trc, other)) continue;
 
@@ -242,9 +260,13 @@ export class VoiePointManager {
     const roughDist = haversineDistance(midA.lat, midA.lon, midB.lat, midB.lon);
     if (roughDist > 50) return false; // > 50km apart, no crossing possible
 
-    // Check if any segments intersect
-    for (let i = 0; i < routeA.length - 1; i++) {
-      for (let j = 0; j < routeB.length - 1; j++) {
+    // Check if any segments intersect (cap iterations to prevent O(n²) explosion)
+    const maxSegsA = Math.min(routeA.length - 1, 200);
+    const maxSegsB = Math.min(routeB.length - 1, 200);
+    const stepA = Math.max(1, Math.floor((routeA.length - 1) / maxSegsA));
+    const stepB = Math.max(1, Math.floor((routeB.length - 1) / maxSegsB));
+    for (let i = 0; i < routeA.length - 1; i += stepA) {
+      for (let j = 0; j < routeB.length - 1; j += stepB) {
         if (this._segmentsIntersect(
           routeA[i].lat, routeA[i].lon, routeA[i + 1].lat, routeA[i + 1].lon,
           routeB[j].lat, routeB[j].lon, routeB[j + 1].lat, routeB[j + 1].lon
@@ -396,7 +418,11 @@ export class VoiePointManager {
 
   _findNearestVoiePoint(lat, lon, maxDistKm) {
     let best = null, bestDist = Infinity;
+    // Pre-filter with bounding box to skip distant points (flat approx)
+    const latRange = maxDistKm / 111;
+    const lonRange = maxDistKm / (111 * Math.cos(lat * Math.PI / 180));
     for (const vp of this.voiePoints) {
+      if (Math.abs(vp.lat - lat) > latRange || Math.abs(vp.lon - lon) > lonRange) continue;
       const d = haversineDistance(lat, lon, vp.lat, vp.lon);
       if (d < bestDist && d <= maxDistKm) { bestDist = d; best = vp; }
     }
@@ -491,11 +517,28 @@ export class VoiePointManager {
         lineGroupId: vp.lineGroupId || null,
         linePoint: vp.linePoint || false,
       })),
-      troncons: this.troncons.map(t => ({
-        id: t.id, pointA: t.pointA, pointB: t.pointB,
-        route: t.route, distance: t.distance,
-        lineGroupId: t.lineGroupId || null,
-      })),
+      troncons: this.troncons.map(t => {
+        // Compress troncon route: reduce precision, downsample long routes
+        let route = t.route;
+        if (Array.isArray(route) && route.length > 0) {
+          route = route.map(pt => ({
+            lat: Math.round(pt.lat * 1e5) / 1e5,
+            lon: Math.round(pt.lon * 1e5) / 1e5,
+          }));
+          if (route.length > 100) {
+            const step = Math.ceil(route.length / 80);
+            const sampled = [route[0]];
+            for (let i = step; i < route.length - 1; i += step) sampled.push(route[i]);
+            sampled.push(route[route.length - 1]);
+            route = sampled;
+          }
+        }
+        return {
+          id: t.id, pointA: t.pointA, pointB: t.pointB,
+          route, distance: t.distance,
+          lineGroupId: t.lineGroupId || null,
+        };
+      }),
     };
   }
 
@@ -506,15 +549,6 @@ export class VoiePointManager {
 
     // Rebuild O(1) lookup maps
     this._rebuildMaps();
-
-    // Update ID counters
-    for (const vp of this.voiePoints) {
-      const num = parseInt(vp.id?.split('-')[1] || '0');
-      if (num >= nextVoiePointId) nextVoiePointId = num + 1;
-    }
-    for (const t of this.troncons) {
-      const num = parseInt(t.id?.split('-')[1] || '0');
-      if (num >= nextTronconId) nextTronconId = num + 1;
-    }
+    // Note: voie point/troncon IDs use Date.now() format, not sequential counters
   }
 }

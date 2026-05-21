@@ -54,8 +54,8 @@ export function analyzeRoute(route, trainMaxSpeed) {
     });
   }
 
-  // 15% margin for acceleration/deceleration/station dwell
-  const estimatedTimeMinutes = Math.ceil(totalTimeMinutes * 1.15);
+  // No margin — raw physics time for accurate delay calculation
+  const estimatedTimeMinutes = Math.round(totalTimeMinutes * 1.0001);
 
   return { segments, totalDistance, estimatedTimeMinutes };
 }
@@ -103,8 +103,9 @@ export class CantonManager {
    */
   _geoKey(lat1, lon1, lat2, lon2) {
     // Sort coordinates to ensure symmetric keys: A→B and B→A produce the same canton ID
-    const a = `${lat1.toFixed(4)},${lon1.toFixed(4)}`;
-    const b = `${lat2.toFixed(4)},${lon2.toFixed(4)}`;
+    // Use 5 decimal places (~1.1m precision) to reduce collision risk in dense areas
+    const a = `${lat1.toFixed(5)},${lon1.toFixed(5)}`;
+    const b = `${lat2.toFixed(5)},${lon2.toFixed(5)}`;
     return a < b ? `${a}|${b}` : `${b}|${a}`;
   }
 
@@ -248,6 +249,31 @@ export class CantonManager {
       }
     }
     ids.clear();
+    this.trainCantons.delete(trainId);
+  }
+
+  /**
+   * Periodic cleanup: remove cantons that are not occupied/reserved
+   * and route cache entries exceeding limit. Call periodically (e.g. every 5 min).
+   */
+  cleanup() {
+    // Evict routeCantons cache if too large (max 200 entries)
+    if (this.routeCantons.size > 200) {
+      const keys = Array.from(this.routeCantons.keys());
+      for (let i = 0; i < keys.length - 100; i++) {
+        this.routeCantons.delete(keys[i]);
+      }
+    }
+    // Remove idle cantons (not occupied, not reserved, not tracked by any train)
+    const activeCantonIds = new Set();
+    for (const [, ids] of this.trainCantons) {
+      for (const cid of ids) activeCantonIds.add(cid);
+    }
+    for (const [cid, c] of this.cantons) {
+      if (!c.occupiedBy && !c.reservedBy && !activeCantonIds.has(cid)) {
+        this.cantons.delete(cid);
+      }
+    }
   }
 
   /**

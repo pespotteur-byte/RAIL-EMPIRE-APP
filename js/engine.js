@@ -7,6 +7,8 @@ export class SimulationEngine {
     this.currentDate = null;
     this.lastMoveTime = 0;
     this.moveInterval = 100; // 0.1 seconds for smooth movement
+    this._ptCache = null;
+    this._ptCacheTime = 0;
   }
 
   getParisTime() {

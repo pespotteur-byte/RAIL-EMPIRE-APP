@@ -7,10 +7,10 @@ export class Rame {
     this.elements = data.elements || []; // array of RollingStockItem ids
     this.elementDetails = data.elementDetails || []; // cached details
     this.createdDate = data.createdDate || new Date().toISOString().split('T')[0];
-    this.totalKmRun = data.totalKmRun || 0;
-    this.kmSinceLastMaint = data.kmSinceLastMaint || 0;
-    this.wearLevel = data.wearLevel || 0;
-    this.inMaintenance = data.inMaintenance || false;
+    this.totalKmRun = data.totalKmRun ?? 0;
+    this.kmSinceLastMaint = data.kmSinceLastMaint ?? 0;
+    this.wearLevel = data.wearLevel ?? 0;
+    this.inMaintenance = data.inMaintenance ?? false;
   }
 
   get totalLength() {
@@ -36,7 +36,7 @@ export class Rame {
 
   get maxSpeed() {
     if (this.elementDetails.length === 0) return 0;
-    return Math.min(...this.elementDetails.map(e => e.maxSpeed || 400));
+    return Math.min(...this.elementDetails.map(e => e.maxSpeed || 160));
   }
 
   get traction() {

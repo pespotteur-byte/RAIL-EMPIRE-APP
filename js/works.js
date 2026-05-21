@@ -69,23 +69,34 @@ export class WorksManager {
   }
 
   update(dateStr, timeOfDay, world) {
-    for (const w of this.works) {
-      const wasActive = w.active;
-      w.active = w.isActiveAt(dateStr, timeOfDay);
+    if (!world) return;
 
-      if (w.active && world) {
-        const track = world.tracks.find(t => t.id === w.trackId);
-        if (track) {
-          track.worksActive = true;
-          track.worksImpact = w.impact;
+    // First, clear all track works flags
+    for (const track of world.tracks) {
+      track.worksActive = false;
+      track.worksImpact = null;
+      track.worksSpeedLimit = null;
+    }
+
+    // Then apply active works (worst impact wins for overlapping works on same track)
+    for (const w of this.works) {
+      w.active = w.isActiveAt(dateStr, timeOfDay);
+      if (!w.active) continue;
+
+      const track = world.tracks.find(t => t.id === w.trackId);
+      if (!track) continue;
+
+      if (!track.worksActive) {
+        track.worksActive = true;
+        track.worksImpact = w.impact;
+        track.worksSpeedLimit = w.speedLimit;
+      } else {
+        // Multiple active works on same track: take worst impact
+        if (w.impact === 'stop') {
+          track.worksImpact = 'stop';
+          track.worksSpeedLimit = 0;
+        } else if (track.worksImpact !== 'stop' && w.speedLimit < (track.worksSpeedLimit || 999)) {
           track.worksSpeedLimit = w.speedLimit;
-        }
-      } else if (!w.active && wasActive && world) {
-        const track = world.tracks.find(t => t.id === w.trackId);
-        if (track) {
-          track.worksActive = false;
-          track.worksImpact = null;
-          track.worksSpeedLimit = null;
         }
       }
     }

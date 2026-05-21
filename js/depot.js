@@ -65,7 +65,7 @@ export class DepotManager {
     this.depots = [];
     this.activeRescues = []; // { id, depotId, stockId, stockName, targetServiceId, state, position }
     this.repairQueue = []; // { serviceId, depotId, remainingMin, totalMin, serviceName }
-    this.maintenanceQueue = []; // { serviceId, depotId, remainingMin, totalMin, serviceName }
+    this.maintenanceQueue = []; // { rameId, depotId, remainingMin, totalMin, rameName }
   }
 
   add(data, economy) {
@@ -223,6 +223,7 @@ export class DepotManager {
           }
         }
       } else if (rescue.state === 'recovering') {
+        // dt is in seconds; _recoverTimer is in minutes
         rescue._recoverTimer = (rescue._recoverTimer || 0) - dt / 60;
         if (rescue._recoverTimer <= 0) {
           rescue.state = 'returning';
@@ -323,34 +324,38 @@ export class DepotManager {
       if (m.remainingMin <= 0) finishedM.push(m);
     }
     for (const m of finishedM) {
-      this.maintenanceQueue = this.maintenanceQueue.filter(q => q.serviceId !== m.serviceId);
+      this.maintenanceQueue = this.maintenanceQueue.filter(q => q.rameId !== m.rameId);
     }
-    return { repairedIds: finished.map(r => r.serviceId), maintainedIds: finishedM.map(m => m.serviceId) };
+    return { repairedIds: finished.map(r => r.serviceId), maintainedIds: finishedM.map(m => m.rameId) };
   }
 
-  // Send a service for preventive maintenance
-  sendToMaintenance(serviceId, serviceName, depotId) {
-    if (this.maintenanceQueue.some(m => m.serviceId === serviceId)) return false;
-    if (this.repairQueue.some(r => r.serviceId === serviceId)) return false;
+  // Send a RAME for preventive maintenance
+  sendRameToMaintenance(rameId, rameName, depotId) {
+    if (this.maintenanceQueue.some(m => m.rameId === rameId)) return false;
     this.maintenanceQueue.push({
-      serviceId,
+      rameId,
       depotId,
       remainingMin: 20, // 20 min for preventive maintenance
       totalMin: 20,
-      serviceName: serviceName || serviceId,
+      rameName: rameName || rameId,
     });
     return true;
   }
 
+  isRameInMaintenance(rameId) {
+    return this.maintenanceQueue.some(m => m.rameId === rameId);
+  }
+
+  getRameMaintenanceInfo(rameId) {
+    return this.maintenanceQueue.find(m => m.rameId === rameId) || null;
+  }
+
   isInRepairOrMaintenance(serviceId) {
-    return this.repairQueue.some(r => r.serviceId === serviceId)
-        || this.maintenanceQueue.some(m => m.serviceId === serviceId);
+    return this.repairQueue.some(r => r.serviceId === serviceId);
   }
 
   getRepairInfo(serviceId) {
-    return this.repairQueue.find(r => r.serviceId === serviceId)
-        || this.maintenanceQueue.find(m => m.serviceId === serviceId)
-        || null;
+    return this.repairQueue.find(r => r.serviceId === serviceId) || null;
   }
 
   // Get active rescues as pseudo-services for rendering on map
@@ -413,7 +418,32 @@ export class DepotManager {
         if (num >= nextRescueId) nextRescueId = num + 1;
       }
     }
-    if (!Array.isArray(data) && data.repairQueue) this.repairQueue = data.repairQueue;
-    if (!Array.isArray(data) && data.maintenanceQueue) this.maintenanceQueue = data.maintenanceQueue;
+    if (!Array.isArray(data) && data.maintenanceQueue) {
+      // Migrate old format (serviceId) to new format (rameId)
+      this.maintenanceQueue = data.maintenanceQueue
+        .filter(m => (m.remainingMin || 0) > 0) // skip finished entries
+        .map(m => ({
+          rameId: m.rameId || m.serviceId || '',
+          depotId: m.depotId,
+          remainingMin: Math.max(0, m.remainingMin || 0),
+          totalMin: m.totalMin || 20,
+          rameName: m.rameName || m.serviceName || '',
+        }));
+    } else {
+      this.maintenanceQueue = [];
+    }
+    if (!Array.isArray(data) && data.repairQueue) {
+      this.repairQueue = data.repairQueue
+        .filter(r => (r.remainingMin || 0) > 0)
+        .map(r => ({
+          serviceId: r.serviceId || '',
+          depotId: r.depotId,
+          remainingMin: Math.max(0, r.remainingMin || 0),
+          totalMin: r.totalMin || 30,
+          serviceName: r.serviceName || '',
+        }));
+    } else {
+      this.repairQueue = [];
+    }
   }
 }

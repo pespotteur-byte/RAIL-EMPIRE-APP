@@ -1,12 +1,12 @@
 export class Station {
-  constructor(data) {
+  constructor(data, name, lat, lon, platforms, type) {
     if (typeof data === 'string') {
       this.id = data;
-      this.name = arguments[1] || data;
-      this.lat = arguments[2] || 0;
-      this.lon = arguments[3] || 0;
-      this.platforms = arguments[4] || 2;
-      this.type = arguments[5] || 'voyageur';
+      this.name = name || data;
+      this.lat = lat || 0;
+      this.lon = lon || 0;
+      this.platforms = platforms || 2;
+      this.type = type || 'voyageur';
     } else {
       this.id = data.id || `st-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       this.name = data.name || 'Gare';
@@ -42,7 +42,7 @@ export class Track {
 }
 
 // Re-export from simulation.js to avoid duplication
-export { haversineDistance as haversine } from './simulation.js?v=1778517600';
+export { haversineDistance as haversine } from './simulation.js?v=1779403154';
 
 export class World {
   constructor() {

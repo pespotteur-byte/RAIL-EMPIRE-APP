@@ -1,21 +1,21 @@
-import { SimulationEngine } from './engine.js?v=1778517600';
-import { World, createDefaultWorld } from './world.js?v=1778517600';
-import { Renderer } from './renderer.js?v=1778517600';
-import { UI } from './ui.js?v=1778517600';
-import { Economy } from './economy.js?v=1778517600';
-import { IncidentManager } from './incidents.js?v=1778517600';
-import { FreightManager } from './freight.js?v=1778517600';
-import { ScheduleManager } from './schedule.js?v=1778517600';
-import { GameStorage } from './storage.js?v=1778517600';
-import { AccountManager } from './account.js?v=1778517600';
-import { RollingStockManager } from './rolling-stock.js?v=1778517600';
-import { RameManager } from './rame.js?v=1778517600';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1778517600';
-import { DepotManager } from './depot.js?v=1778517600';
-import { WorksManager } from './works.js?v=1778517600';
-import { ORMClient } from './orm.js?v=1778517600';
-import { LineManager, PlatformManager } from './line.js?v=1778517600';
-import { VoiePointManager } from './voie-points.js?v=1778517600';
+import { SimulationEngine } from './engine.js?v=1779103051';
+import { World, createDefaultWorld } from './world.js?v=1779103051';
+import { Renderer } from './renderer.js?v=1779103051';
+import { UI } from './ui.js?v=1779103051';
+import { Economy } from './economy.js?v=1779103051';
+import { IncidentManager } from './incidents.js?v=1779103051';
+import { FreightManager } from './freight.js?v=1779103051';
+import { ScheduleManager } from './schedule.js?v=1779103051';
+import { GameStorage } from './storage.js?v=1779103051';
+import { AccountManager } from './account.js?v=1779103051';
+import { RollingStockManager } from './rolling-stock.js?v=1779103051';
+import { RameManager } from './rame.js?v=1779103051';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779103051';
+import { DepotManager } from './depot.js?v=1779103051';
+import { WorksManager } from './works.js?v=1779103051';
+import { ORMClient } from './orm.js?v=1779103051';
+import { LineManager, PlatformManager } from './line.js?v=1779103051';
+import { VoiePointManager } from './voie-points.js?v=1779103051';
 
 class RailEmpire {
   constructor() {
@@ -154,6 +154,8 @@ class RailEmpire {
     this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
     this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
     this.gameLoop();
+    // Clear previous autoSave interval to prevent double-save on re-login
+    if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
     this.autoSaveInterval = setInterval(() => this.saveState(), 10000);
 
     // Save on tab hide, fast-forward on tab return
@@ -190,19 +192,7 @@ class RailEmpire {
         voiePoints: this.voiePointManager.toSave(),
         exportDate: new Date().toISOString(),
       };
-      // Use a seen set to avoid circular reference crashes
-      const seen = new WeakSet();
-      const json = JSON.stringify(state, (key, value) => {
-        if (typeof value === 'object' && value !== null) {
-          if (seen.has(value)) return undefined; // skip circular refs
-          seen.add(value);
-        }
-        // Skip non-serializable types
-        if (typeof value === 'function') return undefined;
-        if (value !== value) return null; // NaN → null
-        if (value === Infinity || value === -Infinity) return null;
-        return value;
-      }, 2);
+      const json = JSON.stringify(state);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -211,7 +201,8 @@ class RailEmpire {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Delay revoke to ensure download starts on slow browsers
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (e) {
       console.error('Export save error:', e);
       alert('Erreur lors de la sauvegarde: ' + e.message);
@@ -252,20 +243,23 @@ class RailEmpire {
 
   _fastForward(elapsedSeconds) {
     try {
+      // Cap fast-forward to prevent browser freeze (max 3600 iterations)
+      const maxSimSeconds = 3600;
+      const cappedElapsed = Math.min(elapsedSeconds, 86400);
       const activeServices = this.scheduleCreator.getActiveServices();
       const pt = this.engine.getParisTime();
       const currentTimeOfDay = pt.hours * 60 + pt.minutes;
       const dateStr = this.engine.getParisDate();
 
       // Start from save time (current time minus elapsed), not current time
-      let timeOfDay = currentTimeOfDay - (elapsedSeconds / 60);
+      let timeOfDay = currentTimeOfDay - (cappedElapsed / 60);
       if (timeOfDay < 0) timeOfDay += 1440;
 
-      // Use larger steps for long fast-forwards to save CPU
-      const stepDt = elapsedSeconds > 600 ? 5 : 1;
+      // Adaptive step size: scale up for long absences to cap total iterations
+      const stepDt = Math.max(1, Math.ceil(cappedElapsed / maxSimSeconds));
       let lastMinute = Math.floor(timeOfDay);
 
-      let remaining = elapsedSeconds;
+      let remaining = cappedElapsed;
       while (remaining > 0) {
         const dt = Math.min(stepDt, remaining);
         for (const svc of activeServices) {
@@ -281,7 +275,6 @@ class RailEmpire {
           for (const svc of activeServices) {
             svc.scheduleTick(currentMinute, dateStr, this.economy);
           }
-          // Process incidents and daily charges during fast-forward
           this.incidentManager.update(currentMinute, activeServices, this.depotManager, this.world);
           if (currentMinute === 0) {
             this.economy.processDailyCharges(activeServices, this.depotManager.getAll(), dateStr);
@@ -289,8 +282,7 @@ class RailEmpire {
           lastMinute = currentMinute;
         }
       }
-      console.log(`Fast-forward complete. Simulated ${Math.round(elapsedSeconds)}s of game time.`);
-      // Validate service states against current time
+      console.log(`Fast-forward complete. Simulated ${Math.round(cappedElapsed)}s (step=${stepDt}s).`);
       this._validateServiceStates(currentTimeOfDay, dateStr);
     } catch (e) {
       console.warn('Fast-forward error (ignored):', e);
@@ -339,17 +331,14 @@ class RailEmpire {
   }
 
   saveState() {
-    // Sync rame km from active services — sum km from all services using same rame
-    const rameKmMap = new Map();
+    // Sync rame km: use the rame's own accumulated km (source of truth),
+    // not the sum of all services (which would multiply km)
     for (const svc of this.scheduleCreator.getActiveServices()) {
-      if (svc.rame && svc.train) {
-        const rid = svc.rame.id;
-        rameKmMap.set(rid, (rameKmMap.get(rid) || 0) + (svc.train.totalKmRun || 0));
+      if (svc.rame && svc.train && svc.state === 'moving') {
+        // Rame km is already synced in moveUpdate() — just ensure consistency
+        svc.rame.totalKmRun = Math.max(svc.rame.totalKmRun || 0, svc.train.totalKmRun || 0);
+        svc.rame.kmSinceLastMaint = Math.max(svc.rame.kmSinceLastMaint || 0, svc.train.kmSinceLastMaint || 0);
       }
-    }
-    for (const [rid, km] of rameKmMap) {
-      const rame = this.rameManager.getById(rid);
-      if (rame) rame.totalKmRun = km;
     }
     const state = {
       companyName: this.account.companyName,
@@ -367,7 +356,7 @@ class RailEmpire {
       lines: this.lineManager.toSave(),
       voiePoints: this.voiePointManager.toSave(),
     };
-    this.storage.saveGame(state);
+    try { this.storage.saveGame(state); } catch(e) { console.warn('Auto-save failed:', e); }
   }
 
   moveTick(dt, timeOfDay) {
@@ -398,13 +387,32 @@ class RailEmpire {
       const svc = activeSchedules.find(s => s.id === sid);
       if (svc) { svc.train.breakdown = null; svc.train.state = 'waiting'; svc.state = 'waiting'; }
     }
-    for (const sid of maintainedIds) {
-      const svc = activeSchedules.find(s => s.id === sid);
-      if (svc) { svc.train.wearLevel = 0; svc.train.kmSinceLastMaint = 0; svc.train.inMaintenance = false; svc.state = 'waiting'; }
+    for (const rameId of maintainedIds) {
+      // Reset the rame itself
+      const rame = this.rameManager.getById(rameId);
+      if (rame) {
+        rame.kmSinceLastMaint = 0;
+        rame.wearLevel = 0;
+        rame.inMaintenance = false;
+      }
+      // Unblock all services using this rame
+      for (const svc of activeSchedules) {
+        if (svc.rame && svc.rame.id === rameId) {
+          svc.train.wearLevel = 0;
+          svc.train.kmSinceLastMaint = 0;
+          svc.train.inMaintenance = false;
+          svc.state = 'waiting';
+        }
+      }
     }
 
     if (timeOfDay % 60 === 0) {
       this.freightManager.maybeGenerate(this.world.stations, timeOfDay);
+    }
+
+    // Periodic canton cleanup every 5 in-game minutes to prevent memory leaks
+    if (timeOfDay % 5 === 0) {
+      this.cantonManager.cleanup();
     }
 
     // Revenue collected inside service.completeService -> economy.processServiceRevenue
@@ -422,21 +430,30 @@ class RailEmpire {
     if (!this.running) return;
 
     try {
+      // Throttle rendering to ~30 FPS max (every ~33ms)
+      const now = performance.now();
+      if (!this._lastFrameTime) this._lastFrameTime = 0;
+      const frameDelta = now - this._lastFrameTime;
+
       this.engine.update();
 
-      const activeServices = this.scheduleCreator.getActiveServices();
-      const rescueServices = this.depotManager.getRescueServices();
-      const allVisibleServices = [...activeServices, ...rescueServices];
+      // Only render at ~30fps (skip frames if too fast)
+      if (frameDelta >= 30) {
+        this._lastFrameTime = now;
 
-      if (this.renderer) {
-        this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
-      }
+        const activeServices = this.scheduleCreator.getActiveServices();
+        const rescueServices = this.depotManager.getRescueServices();
+        const allVisibleServices = [...activeServices, ...rescueServices];
 
-      const now = performance.now();
-      if (!this._lastUIUpdate || now - this._lastUIUpdate > 250) {
-        this._lastUIUpdate = now;
-        if (this.ui) {
-          this.ui.update(allVisibleServices);
+        if (this.renderer) {
+          this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
+        }
+
+        if (!this._lastUIUpdate || now - this._lastUIUpdate > 250) {
+          this._lastUIUpdate = now;
+          if (this.ui) {
+            this.ui.update(allVisibleServices);
+          }
         }
       }
     } catch (e) {
@@ -446,5 +463,15 @@ class RailEmpire {
     requestAnimationFrame(() => this.gameLoop());
   }
 }
+
+// Global error handler to prevent game crashes
+window.addEventListener('error', (e) => {
+  console.error('Uncaught error:', e.error);
+  e.preventDefault();
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled rejection:', e.reason);
+  e.preventDefault();
+});
 
 window.game = new RailEmpire();

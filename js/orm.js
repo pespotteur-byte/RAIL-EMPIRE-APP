@@ -597,7 +597,7 @@ export class ORMClient {
 
     // Fallback: load area and try
     const distKm = haversine(fromLat, fromLon, toLat, toLon);
-    const padding = Math.max(0.3, distKm * 0.003 + 0.1);
+    const padding = Math.max(0.01, Math.min(0.3, distKm * 0.003 + 0.01));
     const south = Math.min(fromLat, toLat) - padding;
     const north = Math.max(fromLat, toLat) + padding;
     const west = Math.min(fromLon, toLon) - padding;
@@ -654,6 +654,11 @@ export class ORMClient {
     }
 
     this.routeCache.set(cacheKey, path);
+    // Limit route cache size to prevent memory bloat
+    if (this.routeCache.size > 500) {
+      const keys = Array.from(this.routeCache.keys());
+      for (let i = 0; i < 200; i++) this.routeCache.delete(keys[i]);
+    }
     return path;
   }
 
@@ -774,8 +779,8 @@ export class ORMClient {
     }
 
     let totalMinutes = totalSeconds / 60;
-    // 3% margin — tight schedule so train stays on time
-    totalMinutes *= 1.03;
+    // 0.01% margin — near-zero margin for accurate schedules
+    totalMinutes *= 1.0001;
     return Math.round(totalMinutes) || 1;
   }
 
@@ -831,15 +836,16 @@ export class ORMClient {
   }
 
   getCountryAtPoint(lat, lon) {
-    if (lat >= 49.5 && lat <= 51.5 && lon >= -5.5 && lon <= 1.8) return 'GB';
-    if (lat >= 41 && lat <= 51.1 && lon >= -5 && lon <= 9.5) return 'FR';
+    // Check smaller/more specific countries first to avoid overlap
+    if (lat >= 49.4 && lat <= 50.2 && lon >= 5.7 && lon <= 6.4) return 'LU';
+    if (lat >= 46 && lat <= 48.3 && lon >= 5.9 && lon <= 10.5) return 'CH';
     if (lat >= 49.5 && lat <= 51.5 && lon >= 2.5 && lon <= 6.4) return 'BE';
+    if (lat >= 50.7 && lat <= 53.6 && lon >= 3.3 && lon <= 7.2) return 'NL';
+    if (lat >= 49.5 && lat <= 51.5 && lon >= -5.5 && lon <= 1.8) return 'GB';
+    if (lat >= 36 && lat <= 43.8 && lon >= -9.5 && lon <= 3.4) return 'ES';
     if (lat >= 36 && lat <= 47.1 && lon >= 6.6 && lon <= 18.5) return 'IT';
     if (lat >= 47 && lat <= 55.1 && lon >= 5.9 && lon <= 15.1) return 'DE';
-    if (lat >= 46 && lat <= 48.3 && lon >= 5.9 && lon <= 10.5) return 'CH';
-    if (lat >= 49.4 && lat <= 50.2 && lon >= 5.7 && lon <= 6.4) return 'LU';
-    if (lat >= 50.7 && lat <= 53.6 && lon >= 3.3 && lon <= 7.2) return 'NL';
-    if (lat >= 36 && lat <= 43.8 && lon >= -9.5 && lon <= 3.4) return 'ES';
+    if (lat >= 41 && lat <= 51.1 && lon >= -5 && lon <= 9.5) return 'FR';
     return 'OTHER';
   }
 
@@ -848,29 +854,15 @@ export class ORMClient {
   }
 
   toSave() {
-    const routes = {};
-    for (const [key, route] of this.routeCache) {
-      routes[key] = route;
-    }
+    // Don't save routeCache — it's huge (100s of MB) and rebuilds on-demand
     return {
-      routes,
       loadedBboxes: this._loadedBboxes,
     };
   }
 
   loadFromSave(saved) {
     if (!saved) return;
-    // Support both old format (just routes) and new format (routes + bboxes)
-    if (saved.routes) {
-      for (const [key, route] of Object.entries(saved.routes)) {
-        this.routeCache.set(key, route);
-      }
-    } else if (typeof saved === 'object' && !Array.isArray(saved)) {
-      // Old format: saved is directly the routes map
-      for (const [key, route] of Object.entries(saved)) {
-        this.routeCache.set(key, route);
-      }
-    }
+    // Restore loaded bounding boxes (route cache is rebuilt on-demand)
     if (saved.loadedBboxes) {
       this._loadedBboxes = saved.loadedBboxes;
     }

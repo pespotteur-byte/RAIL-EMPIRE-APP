@@ -17,9 +17,11 @@ export class UI {
     this._schedTileMap = null;
     // Global blink timer for "À l'approche" (survives DOM re-renders)
     this._approachVisible = true;
-    setInterval(() => {
+    this._approachInterval = setInterval(() => {
       this._approachVisible = !this._approachVisible;
-      document.querySelectorAll('.ctx-approach').forEach(el => {
+      const els = document.querySelectorAll('.ctx-approach');
+      if (els.length === 0) return; // skip when no elements exist
+      els.forEach(el => {
         el.style.opacity = this._approachVisible ? '1' : '0';
       });
     }, 800);
@@ -1027,6 +1029,12 @@ export class UI {
       if (rtCheck) rtCheck.checked = editService.roundTrip;
       document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
       document.getElementById('sched-terminus-wait').value = editService.terminusWait || 10;
+      // Populate run days
+      const editDays = editService.runDays || [0,1,2,3,4,5,6];
+      document.querySelectorAll('.sched-run-day').forEach(cb => {
+        cb.checked = editDays.includes(parseInt(cb.value));
+      });
+      document.getElementById('sched-run-dates').value = (editService.runDates || []).join(', ');
     } else {
       this.schedStops = [];
       document.getElementById('sched-name').value = '';
@@ -1036,6 +1044,9 @@ export class UI {
       if (rtCheck) rtCheck.checked = false;
       document.getElementById('sched-multi-departures').value = '1';
       document.getElementById('sched-terminus-wait').value = '10';
+      // Default: all days checked, no specific dates
+      document.querySelectorAll('.sched-run-day').forEach(cb => { cb.checked = true; });
+      document.getElementById('sched-run-dates').value = '';
     }
     document.getElementById('modal-schedule')?.classList.remove('hidden');
 
@@ -1396,7 +1407,7 @@ export class UI {
             travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
           } catch (e) {
             const dist = Math.sqrt(Math.pow((station.lat - prevStation.lat) * 111, 2) + Math.pow((station.lon - prevStation.lon) * 111 * Math.cos(station.lat * Math.PI / 180), 2));
-            travelTime = Math.round((dist / rameSpeed) * 60 * 1.05) || 1;
+            travelTime = Math.round((dist / rameSpeed) * 60 * 1.0001) || 1;
           }
         }
       }
@@ -1441,7 +1452,7 @@ export class UI {
           travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
         } catch (e) {
           const dist = Math.sqrt(Math.pow((voiePoint.lat - prevCoords.lat) * 111, 2) + Math.pow((voiePoint.lon - prevCoords.lon) * 111 * Math.cos(voiePoint.lat * Math.PI / 180), 2));
-          travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
+          travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.0001);
         }
       }
       arrTimeMin = prevStop.depTimeMin + travelTime;
@@ -1755,7 +1766,7 @@ export class UI {
       return this.game.orm.calculateTravelTime(route, rameSpeed);
     } catch (e) {
       const dist = Math.sqrt(Math.pow((curCoords.lat - prevCoords.lat) * 111, 2) + Math.pow((curCoords.lon - prevCoords.lon) * 111 * Math.cos(curCoords.lat * Math.PI / 180), 2));
-      return Math.round((dist / rameSpeed) * 60 * 1.05) || 1;
+      return Math.round((dist / rameSpeed) * 60 * 1.0001) || 1;
     }
   }
 
@@ -1894,9 +1905,19 @@ export class UI {
     const returnName = document.getElementById('sched-return-name')?.value.trim() || '';
     const returnPlatforms = this._schedReturnPlatforms || {};
 
+    // Read run days from checkboxes
+    const runDays = [];
+    document.querySelectorAll('.sched-run-day:checked').forEach(cb => runDays.push(parseInt(cb.value)));
+    if (runDays.length === 0) runDays.push(0,1,2,3,4,5,6); // fallback: all days
+
+    // Read specific run dates
+    const runDatesStr = document.getElementById('sched-run-dates')?.value.trim() || '';
+    const runDates = runDatesStr ? runDatesStr.split(',').map(d => d.trim()).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
+
     this.game.scheduleCreator.addService({
       name, rameId, stops, routes, roundTrip, multiDepartures, terminusWait,
       totalDistance: Math.round(totalDist), isWorkTrain, returnName, returnPlatforms,
+      runDays, runDates,
     }, rame, this.game.world);
 
     this._editingScheduleId = null;
@@ -1951,12 +1972,17 @@ export class UI {
       const lastSt = this.game.world.getStationById(svc.stops[svc.stops.length - 1]?.stationId);
       const dirLabel = firstSt && lastSt ? `${firstSt.name} → ${lastSt.name}` : '';
       const tripInfo = svc.roundTrip && svc.multiDepartures > 1 ? ` x${svc.multiDepartures} AR` : svc.roundTrip ? ' A/R' : '';
+      const dayNames = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
+      const rd = svc.runDays || [0,1,2,3,4,5,6];
+      const daysLabel = rd.length === 7 ? 'TLJ' : rd.map(d => dayNames[d]).join(' ');
+      const datesLabel = svc.runDates && svc.runDates.length > 0 ? ` +${svc.runDates.length} date(s)` : '';
       return `
         <div class="sched-item">
           <div class="sched-item-header">
             <span class="sched-item-name">${svc.name}${statusLabel}</span>
             <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
             <span style="color:var(--text3);font-size:10px">${Math.round(svc.totalDistance)} km${tripInfo}</span>
+            <span style="color:#60a5fa;font-size:9px">${daysLabel}${datesLabel}</span>
             <button class="btn-sm" onclick="game.ui.editSchedule('${svc.id}')">Modifier</button>
             <button class="btn-sm" onclick="game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
             <button class="btn-sm" onclick="game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
@@ -2677,39 +2703,47 @@ export class UI {
     if (repairs.length === 0 && maint.length === 0) return '';
     const items = [
       ...repairs.map(r => `<div style="font-size:10px;padding:2px 0"><span style="color:#ef4444">Reparation</span> ${r.serviceName} — ${Math.ceil(r.remainingMin)} min</div>`),
-      ...maint.map(m => `<div style="font-size:10px;padding:2px 0"><span style="color:#3b82f6">Entretien</span> ${m.serviceName} — ${Math.ceil(m.remainingMin)} min</div>`),
+      ...maint.map(m => `<div style="font-size:10px;padding:2px 0"><span style="color:#3b82f6">Entretien</span> ${m.rameName} — ${Math.ceil(m.remainingMin)} min</div>`),
     ];
     return `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
       <div style="font-size:11px;font-weight:600;margin-bottom:4px">En atelier</div>${items.join('')}</div>`;
   }
 
   _renderMaintenanceButton(depot) {
-    const services = this.game.scheduleCreator.getActiveServices();
-    const available = services.filter(svc =>
-      svc.active && !svc.train.breakdown && !svc.train.inMaintenance
-      && (svc.train.wearLevel || 0) > 0
-      && !this.game.depotManager.isInRepairOrMaintenance(svc.id)
+    // List RAMES that have wear > 0 and are not already in maintenance
+    const allRames = this.game.rameManager.getAll();
+    const dm = this.game.depotManager;
+    const available = allRames.filter(r =>
+      (r.wearLevel || 0) > 0 && !r.inMaintenance && !dm.isRameInMaintenance(r.id)
     );
     if (available.length === 0) return '';
-    const opts = available.map(s => `<option value="${s.id}">${s.name} (${Math.round(s.train.wearLevel)}%)</option>`).join('');
+    const opts = available.map(r => `<option value="${r.id}">${r.name} (${Math.round(r.wearLevel)}%)</option>`).join('');
     return `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
-      <div style="font-size:11px;font-weight:600;margin-bottom:4px">Entretien preventif</div>
+      <div style="font-size:11px;font-weight:600;margin-bottom:4px">Entretien preventif (rame)</div>
       <div style="display:flex;gap:4px">
-        <select id="maint-svc-${depot.id}" style="flex:1;font-size:10px">${opts}</select>
-        <button class="btn-sm" style="font-size:9px" onclick="game.ui.sendToMaintenance('${depot.id}')">Envoyer</button>
+        <select id="maint-rame-${depot.id}" style="flex:1;font-size:10px">${opts}</select>
+        <button class="btn-sm" style="font-size:9px" onclick="game.ui.sendRameToMaintenance('${depot.id}')">Envoyer</button>
       </div>
     </div>`;
   }
 
-  sendToMaintenance(depotId) {
-    const select = document.getElementById(`maint-svc-${depotId}`);
+  sendRameToMaintenance(depotId) {
+    const select = document.getElementById(`maint-rame-${depotId}`);
     if (!select || !select.value) return;
-    const svc = this.game.scheduleCreator.getActiveServices().find(s => s.id === select.value);
-    if (!svc) return;
-    svc.train.inMaintenance = true;
-    svc.speed = 0;
-    svc.train.speed = 0;
-    this.game.depotManager.sendToMaintenance(svc.id, svc.name, depotId);
+    const rameId = select.value;
+    const rame = this.game.rameManager.getById(rameId);
+    if (!rame) return;
+    rame.inMaintenance = true;
+    // Stop all services using this rame
+    const services = this.game.scheduleCreator.getActiveServices();
+    for (const svc of services) {
+      if (svc.rame && svc.rame.id === rameId) {
+        svc.train.inMaintenance = true;
+        svc.speed = 0;
+        svc.train.speed = 0;
+      }
+    }
+    this.game.depotManager.sendRameToMaintenance(rameId, rame.name, depotId);
     this.game.saveState();
     this.renderDepotsList();
   }
@@ -3643,16 +3677,19 @@ export class UI {
         breakdownHtml = `<div class="tc-line"><span style="color:#ef4444;font-weight:600;font-size:10px">EN PANNE${repairLabel}</span></div>`;
       }
 
-      // Maintenance status
+      // Maintenance status (check rame)
       let maintenanceHtml = '';
-      if (t.inMaintenance) {
-        const maintInfo = this.game.depotManager.getRepairInfo(svc.id);
+      if (t.inMaintenance || (svc.rame && svc.rame.inMaintenance)) {
+        const rameId = svc.rame?.id;
+        const maintInfo = rameId ? this.game.depotManager.getRameMaintenanceInfo(rameId) : null;
         const maintLabel = maintInfo ? ` — ${Math.ceil(maintInfo.remainingMin)} min` : '';
         maintenanceHtml = `<div class="tc-line"><span style="color:#3b82f6;font-weight:600;font-size:10px">EN MAINTENANCE${maintLabel}</span></div>`;
       }
 
-      // Wear info
-      const wearHtml = t.wearLevel > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(t.wearLevel)}% · Total: ${Math.round(t.totalKmRun || 0)} km</span></div>` : '';
+      // Wear info (use rame as source of truth)
+      const rameWear = svc.rame ? (svc.rame.wearLevel || 0) : (t.wearLevel || 0);
+      const rameKm = svc.rame ? (svc.rame.totalKmRun || 0) : (t.totalKmRun || 0);
+      const wearHtml = rameKm > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(rameWear)}% · Total: ${Math.round(rameKm)} km</span></div>` : '';
 
       return `
         <div class="train-card-fixed">

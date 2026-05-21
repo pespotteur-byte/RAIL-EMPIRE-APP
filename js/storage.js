@@ -7,20 +7,13 @@ export class GameStorage {
 
   saveGame(state) {
     try {
-      const seen = new WeakSet();
-      const json = JSON.stringify(state, (key, value) => {
-        if (typeof value === 'object' && value !== null) {
-          if (seen.has(value)) return undefined;
-          seen.add(value);
-        }
-        if (typeof value === 'function') return undefined;
-        if (value !== value) return null; // NaN
-        if (value === Infinity || value === -Infinity) return null;
-        return value;
-      });
+      const json = JSON.stringify(state);
       localStorage.setItem(SAVE_KEY, json);
     } catch (e) {
       console.warn('Save failed:', e);
+      if (e?.name === 'QuotaExceededError') {
+        alert('Sauvegarde échouée : espace de stockage plein. Exportez votre sauvegarde JSON.');
+      }
     }
   }
 

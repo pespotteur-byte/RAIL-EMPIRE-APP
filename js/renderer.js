@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1778517600';
+import { TileMap } from './map.js?v=1779103051';
 
 export class Renderer {
   constructor(canvas) {
@@ -11,9 +11,18 @@ export class Renderer {
     this._minimapCache = null;
     this._lastMinimapDraw = 0;
     this._minimapInterval = 50; // ~20 FPS throttle
+    // Static layer offscreen canvas (tracks, stations, depots)
+    this._staticCanvas = null;
+    this._staticCtx = null;
+    this._staticValid = false;
+    this._lastStaticZoom = 0;
+    this._lastStaticCLat = 0;
+    this._lastStaticCLon = 0;
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
+
+  invalidateStatic() { this._staticValid = false; }
 
   resize() {
     const container = this.canvas.parentElement;
@@ -29,6 +38,8 @@ export class Renderer {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.tileMap.viewportWidth = rect.width;
     this.tileMap.viewportHeight = rect.height;
+    this._staticValid = false;
+    this.tileMap.markDirty();
   }
 
   render(world, services, engine, depotManager, lineManager, platformManager, voiePointManager) {
@@ -40,22 +51,60 @@ export class Renderer {
     ctx.fillRect(0, 0, w, h);
 
     this.tileMap.renderTiles(ctx, w, h);
-    this.drawTracks(ctx, world, lineManager);
-    const showStations = document.getElementById('toggle-stations')?.checked !== false;
-    const showNames = document.getElementById('toggle-station-names')?.checked !== false;
-    const showTrains = document.getElementById('toggle-trains')?.checked !== false;
-    if (showStations) this.drawStations(ctx, world, platformManager, showNames);
-    this.drawDepots(ctx, world, depotManager);
-    const showVoiePoints = document.getElementById('toggle-voie-points')?.checked !== false;
-    if (showVoiePoints && voiePointManager) {
-      this.drawVoieTroncons(ctx, voiePointManager, world);
-      this.drawVoiePoints(ctx, voiePointManager);
+
+    // Static layer: tracks + stations + depots — only redraw when view changes
+    const viewChanged = this.tileMap.zoomLevel !== this._lastStaticZoom ||
+      this.tileMap.centerLat !== this._lastStaticCLat ||
+      this.tileMap.centerLon !== this._lastStaticCLon;
+    if (viewChanged) this._staticValid = false;
+
+    // Cache toggle element refs (avoid per-frame DOM lookups, re-query if null)
+    if (!this._toggleEls || !this._toggleEls.stations) {
+      this._toggleEls = {
+        stations: document.getElementById('toggle-stations'),
+        names: document.getElementById('toggle-station-names'),
+        trains: document.getElementById('toggle-trains'),
+        voie: document.getElementById('toggle-voie-points'),
+      };
     }
-    // Draw temporary manual tronçon trace
+    const showStations = this._toggleEls.stations?.checked !== false;
+    const showNames = this._toggleEls.names?.checked !== false;
+    const showTrains = this._toggleEls.trains?.checked !== false;
+    const showVoiePoints = this._toggleEls.voie?.checked !== false;
+
+    if (!this._staticValid) {
+      if (!this._staticCanvas || this._staticCanvas.width !== this.canvas.width || this._staticCanvas.height !== this.canvas.height) {
+        this._staticCanvas = document.createElement('canvas');
+        this._staticCanvas.width = this.canvas.width;
+        this._staticCanvas.height = this.canvas.height;
+        this._staticCtx = this._staticCanvas.getContext('2d');
+      }
+      const sctx = this._staticCtx;
+      const dpr = window.devicePixelRatio || 1;
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sctx.clearRect(0, 0, w, h);
+      this.drawTracks(sctx, world, lineManager);
+      if (showStations) this.drawStations(sctx, world, platformManager, showNames);
+      this.drawDepots(sctx, world, depotManager);
+      if (showVoiePoints && voiePointManager) {
+        this.drawVoieTroncons(sctx, voiePointManager, world);
+        this.drawVoiePoints(sctx, voiePointManager);
+      }
+      this._staticValid = true;
+      this._lastStaticZoom = this.tileMap.zoomLevel;
+      this._lastStaticCLat = this.tileMap.centerLat;
+      this._lastStaticCLon = this.tileMap.centerLon;
+    }
+    // Blit static layer — reset transform to avoid double DPR scaling
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(this._staticCanvas, 0, 0);
+    ctx.restore();
+
+    // Dynamic layers always drawn
     if (window.game?.ui?._manualTronconWaypoints?.length > 1) {
       this._drawTempTrace(ctx, window.game.ui._manualTronconWaypoints);
     }
-    // Signals removed
     if (showTrains) this.drawServices(ctx, world, services);
   }
 
@@ -127,13 +176,20 @@ export class Renderer {
       }
 
       if (track.route && track.route.length > 1) {
+        // LOD: skip points at lower zoom to reduce draw calls
+        const zoom = this.tileMap?.zoomLevel || 10;
+        const routeStep = track.route.length > 50 ? (zoom >= 14 ? 1 : zoom >= 11 ? 2 : zoom >= 8 ? 4 : 8) : 1;
         ctx.beginPath();
         const p0 = this.latLonToScreen(track.route[0].lat, track.route[0].lon);
         ctx.moveTo(p0.x, p0.y);
-        for (let i = 1; i < track.route.length; i++) {
+        for (let i = routeStep; i < track.route.length; i += routeStep) {
           const p = this.latLonToScreen(track.route[i].lat, track.route[i].lon);
           ctx.lineTo(p.x, p.y);
         }
+        // Always draw last point
+        const pLast = track.route[track.route.length - 1];
+        const pEnd = this.latLonToScreen(pLast.lat, pLast.lon);
+        ctx.lineTo(pEnd.x, pEnd.y);
         ctx.stroke();
       } else {
         const pa = this.latLonToScreen(stA.lat, stA.lon);
@@ -161,18 +217,14 @@ export class Renderer {
   }
 
   drawStations(ctx, world, platformManager, showNames = true) {
+    const stColors = { voyageur: '#fbbf24', marchandise: '#06b6d4', ite: '#a855f7', depot: '#10b981', mixed: '#f59e0b' };
+    const zoom = this.tileMap.zoomLevel;
+    const fontSize = zoom >= 11 ? 12 : 10;
     for (const st of world.stations) {
       const p = this.latLonToScreen(st.lat, st.lon);
       if (p.x < -30 || p.x > this.logicalWidth + 30 || p.y < -30 || p.y > this.logicalHeight + 30) continue;
 
-      const colors = {
-        voyageur: '#fbbf24',
-        marchandise: '#06b6d4',
-        ite: '#a855f7',
-        depot: '#10b981',
-        mixed: '#f59e0b',
-      };
-      const color = st.closed ? '#6b7280' : (colors[st.type] || '#fbbf24');
+      const color = st.closed ? '#6b7280' : (stColors[st.type] || '#fbbf24');
 
       ctx.fillStyle = color;
       ctx.beginPath();
@@ -201,13 +253,13 @@ export class Renderer {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      if (showNames && this.tileMap.zoomLevel >= 8) {
+      if (showNames && zoom >= 8) {
         ctx.fillStyle = st.closed ? '#6b7280' : '#e2e8f0';
-        ctx.font = `bold ${this.tileMap.zoomLevel >= 11 ? 12 : 10}px sans-serif`;
+        ctx.font = `bold ${fontSize}px sans-serif`;
         ctx.fillText(st.closed ? `${st.name} (Fermee)` : st.name, p.x + baseSize + 4, p.y + 4);
 
         // Show platform occupancy for stations with multiple platforms at high zoom
-        if (platformManager && this.tileMap.zoomLevel >= 10 && st.platforms > 1) {
+        if (platformManager && zoom >= 10 && st.platforms > 1) {
           const status = platformManager.getStatus(st.id);
           if (status.total > 0) {
             const label = `${status.used}/${status.total}`;
@@ -252,16 +304,14 @@ export class Renderer {
       const baseSize = 5;
       const color = svc.state === 'waiting' ? '#475569' : (svc.train.color || '#22d3ee');
 
-      // Outer glow for moving trains (reduced shadowBlur for performance)
+      // Moving train indicator (no shadowBlur — too slow on Firefox)
       if (svc.state === 'moving') {
-        ctx.save();
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 5;
         ctx.fillStyle = color;
+        ctx.globalAlpha = 0.3;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, baseSize * 0.6, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, baseSize * 1.2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
+        ctx.globalAlpha = 1.0;
       }
 
       // Train triangle marker
@@ -552,7 +602,7 @@ export class Renderer {
    * Green = clear, Yellow = approach (next canton occupied), Red = stop.
    */
   drawSignals(ctx, services) {
-    const zoom = this.tileMap.zoom;
+    const zoom = this.tileMap.zoomLevel;
     if (zoom < 12) return; // Only show signals at high zoom
 
     // Viewport bounds for culling

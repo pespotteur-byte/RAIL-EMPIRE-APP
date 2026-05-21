@@ -1,4 +1,4 @@
-import { haversineDistance } from './simulation.js?v=1778517600';
+import { haversineDistance } from './simulation.js?v=1779403154';
 
 let nextIncId = 1;
 
@@ -81,22 +81,28 @@ export class IncidentManager {
   // Check if a position is on the incident's route (within tolerance)
   _isOnRoute(lat, lon, route) {
     if (!route || route.length < 2) return false;
-    // Check proximity to each segment of the route
+    const tolerance = 0.5; // 500m
     for (let i = 0; i < route.length - 1; i++) {
       const aLat = route[i].lat, aLon = route[i].lon;
       const bLat = route[i + 1].lat, bLon = route[i + 1].lon;
-      // Distance from point to segment (simplified: check distance to both endpoints and midpoint)
-      const dA = haversineDistance(lat, lon, aLat, aLon);
-      const dB = haversineDistance(lat, lon, bLat, bLon);
-      if (dA < 0.5 || dB < 0.5) return true; // within 500m of a route point
-      // Check distance to segment midpoint for long segments
-      const segLen = haversineDistance(aLat, aLon, bLat, bLon);
-      if (segLen > 0.3) {
-        const mLat = (aLat + bLat) / 2, mLon = (aLon + bLon) / 2;
-        if (haversineDistance(lat, lon, mLat, mLon) < 0.5) return true;
-      }
+      // Point-to-segment distance using projection
+      if (this._pointToSegmentDist(lat, lon, aLat, aLon, bLat, bLon) < tolerance) return true;
     }
     return false;
+  }
+
+  // Approximate point-to-segment distance in km
+  _pointToSegmentDist(pLat, pLon, aLat, aLon, bLat, bLon) {
+    const cosLat = Math.cos(pLat * Math.PI / 180);
+    const dx = (bLon - aLon) * 111 * cosLat;
+    const dy = (bLat - aLat) * 111;
+    const px = (pLon - aLon) * 111 * cosLat;
+    const py = (pLat - aLat) * 111;
+    const segLenSq = dx * dx + dy * dy;
+    if (segLenSq < 0.0001) return Math.sqrt(px * px + py * py);
+    const t = Math.max(0, Math.min(1, (px * dx + py * dy) / segLenSq));
+    const projX = t * dx, projY = t * dy;
+    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
   }
 
   // Fallback: check if position is between stationA and stationB using bounding box

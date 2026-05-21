@@ -212,15 +212,25 @@ export class TileMap {
     else this._baseQueue.push({ tile, url, z });
     this._processQueue();
 
-    // Evict when cache too large — keep 3000 tiles (multiple zoom levels)
+    // Evict when cache too large — LRU-like: remove error tiles first, then oldest
     if (this.tileCache.size > 3000) {
       const keys = Array.from(this.tileCache.keys());
       let evicted = 0;
+      // Phase 1: remove error tiles
       for (const k of keys) {
         if (evicted >= 500) break;
         const t = this.tileCache.get(k);
         if (t && t.error) { this.tileCache.delete(k); evicted++; }
       }
+      // Phase 2: remove tiles from different zoom levels (keep current zoom)
+      const currentZ = this.zoomLevel;
+      for (const k of keys) {
+        if (evicted >= 500) break;
+        if (!this.tileCache.has(k)) continue;
+        const tileZ = parseInt(k.split('/')[0]) || 0;
+        if (tileZ !== currentZ) { this.tileCache.delete(k); evicted++; }
+      }
+      // Phase 3: remove oldest entries (Map preserves insertion order)
       for (let i = 0; evicted < 500 && i < keys.length; i++) {
         if (this.tileCache.has(keys[i])) { this.tileCache.delete(keys[i]); evicted++; }
       }

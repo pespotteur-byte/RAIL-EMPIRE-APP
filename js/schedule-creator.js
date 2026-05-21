@@ -1,4 +1,4 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779103051';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779403154';
 
 let nextServiceId = 1;
 
@@ -1051,15 +1051,19 @@ export class ActiveService {
     }
 
     // Use cached cumulative distances if available
-    if (!route._cumDist) {
-      route._cumDist = new Float64Array(route.length);
+    // Cache on a WeakMap-style key to avoid mutating the shared route object
+    if (!this._cumDistCache) this._cumDistCache = new WeakMap();
+    let cumDist = this._cumDistCache.get(route);
+    if (!cumDist) {
+      cumDist = new Float64Array(route.length);
       for (let i = 1; i < route.length; i++) {
         const dlat = (route[i].lat - route[i-1].lat) * 111;
         const dlon = (route[i].lon - route[i-1].lon) * 111 * Math.cos(route[i].lat * Math.PI / 180);
-        route._cumDist[i] = route._cumDist[i-1] + Math.sqrt(dlat * dlat + dlon * dlon);
+        cumDist[i] = cumDist[i-1] + Math.sqrt(dlat * dlat + dlon * dlon);
       }
+      this._cumDistCache.set(route, cumDist);
     }
-    return route._cumDist[bestIdx];
+    return cumDist[bestIdx];
   }
 
   // Legacy compatibility
@@ -1274,11 +1278,11 @@ export class ActiveService {
       this.revenueCollected = true;
     }
 
-    // Final sync km to rame (source of truth)
+    // Final sync km to rame (use max to avoid overwriting higher values from other services)
     if (this.rame) {
-      this.rame.totalKmRun = this.train.totalKmRun || 0;
-      this.rame.kmSinceLastMaint = this.train.kmSinceLastMaint || 0;
-      this.rame.wearLevel = this.train.wearLevel || 0;
+      this.rame.totalKmRun = Math.max(this.rame.totalKmRun || 0, this.train.totalKmRun || 0);
+      this.rame.kmSinceLastMaint = Math.max(this.rame.kmSinceLastMaint || 0, this.train.kmSinceLastMaint || 0);
+      this.rame.wearLevel = Math.max(this.rame.wearLevel || 0, this.train.wearLevel || 0);
     }
 
     // Release all cantons
@@ -1378,12 +1382,16 @@ export class ActiveService {
 
   _rebuildStopsFromTime(departureTime) {
     const offset = departureTime - (this.stops[0]?.departureTime || 0);
-    return this.stops.map(s => new ServiceStop(
-      s.stationId, s.type,
-      (s.departureTime || 0) + offset,
-      (s.arrivalTime || 0) + offset,
-      s.voiePointId, s.platform
-    ));
+    return this.stops.map(s => {
+      const dep = ((s.departureTime || 0) + offset) % 1440;
+      const arr = ((s.arrivalTime || 0) + offset) % 1440;
+      return new ServiceStop(
+        s.stationId, s.type,
+        dep < 0 ? dep + 1440 : dep,
+        arr < 0 ? arr + 1440 : arr,
+        s.voiePointId, s.platform
+      );
+    });
   }
 
   buildReturnStops() {
@@ -1394,14 +1402,21 @@ export class ActiveService {
     const lastArrival = lastStop.arrivalTime || lastStop.departureTime || 0;
     let currentTime = lastArrival + this.terminusWait;
 
+    // Build index map to handle duplicate station IDs correctly
+    const fwdIndices = fwdStops.map((s, i) => ({ stationId: s.stationId, idx: i }));
+
     return reversed.map((stop, i) => {
       const prevStop = i > 0 ? reversed[i - 1] : null;
       let travelTime = 0;
       if (prevStop) {
-        const origIdx = this.stops.findIndex(s => s.stationId === prevStop.stationId);
-        const origIdx2 = this.stops.findIndex(s => s.stationId === stop.stationId);
-        if (origIdx >= 0 && origIdx2 >= 0) {
-          travelTime = Math.abs((this.stops[origIdx].departureTime || 0) - (this.stops[origIdx2].arrivalTime || 0));
+        // Use the original forward index position (reversed) instead of findIndex
+        // to handle duplicate station IDs correctly
+        const revIdxPrev = i - 1;
+        const revIdxCurr = i;
+        const origIdxPrev = fwdStops.length - 1 - revIdxPrev;
+        const origIdxCurr = fwdStops.length - 1 - revIdxCurr;
+        if (origIdxPrev >= 0 && origIdxCurr >= 0 && origIdxPrev < fwdStops.length && origIdxCurr < fwdStops.length) {
+          travelTime = Math.abs((fwdStops[origIdxPrev].departureTime || 0) - (fwdStops[origIdxCurr].arrivalTime || 0));
         }
         if (travelTime <= 0) travelTime = 15;
       }

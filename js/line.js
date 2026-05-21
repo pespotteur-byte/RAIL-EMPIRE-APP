@@ -183,7 +183,7 @@ export class PlatformManager {
       // Try matching by name (string comparison)
       let preferredKey = null;
       for (let i = 1; i <= data.total; i++) {
-        if (String(i) === String(preferred) || preferred === String(i)) {
+        if (String(i) === String(preferred)) {
           preferredKey = i;
           break;
         }

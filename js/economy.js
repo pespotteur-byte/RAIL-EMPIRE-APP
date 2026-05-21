@@ -73,12 +73,17 @@ export class Economy {
       let paxRevenue = Math.round(paxDescend * distFromPrev * this.ticketPricePerKm);
       let frtRevenue = Math.round(freightUnload * distFromPrev * this.freightPricePerTKm);
 
-      // Delay penalty
+      // Delay penalty: reduce revenue by 25% (not double-dip)
       if (service.train && service.train.delay >= 30) {
-        const penalty = Math.round((paxRevenue + frtRevenue) * 0.25);
+        const totalRev = paxRevenue + frtRevenue;
+        const reducedTotal = Math.round(totalRev * 0.75);
+        const penalty = totalRev - reducedTotal;
         if (penalty > 0) this.addPenalty(penalty, `Retard >30min ${service.name} @ ${stationName}`);
-        paxRevenue = Math.round(paxRevenue * 0.75);
-        frtRevenue = Math.round(frtRevenue * 0.75);
+        // Distribute reduced revenue proportionally
+        if (totalRev > 0) {
+          paxRevenue = Math.round(reducedTotal * (paxRevenue / totalRev));
+          frtRevenue = reducedTotal - paxRevenue;
+        }
       }
 
       if (paxDescend > 0) {
@@ -125,8 +130,8 @@ export class Economy {
     }
 
     const keys = Object.keys(this.dailyProcessed);
-    if (keys.length > 30) {
-      delete this.dailyProcessed[keys[0]];
+    while (keys.length > 7) {
+      delete this.dailyProcessed[keys.shift()];
     }
   }
 
@@ -142,7 +147,7 @@ export class Economy {
       penalties: this.penalties,
       ticketPricePerKm: this.ticketPricePerKm,
       freightPricePerTKm: this.freightPricePerTKm,
-      history: this.history.slice(-100),
+      history: this.history.slice(-200),
       dailyProcessed: this.dailyProcessed,
       totalPassengers: this.totalPassengers,
       totalFreightTonnes: this.totalFreightTonnes,
