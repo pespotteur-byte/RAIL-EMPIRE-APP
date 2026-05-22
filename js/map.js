@@ -259,6 +259,7 @@ export class TileMap {
   }
 
   renderTiles(ctx, canvasW, canvasH) {
+    if (!canvasW || !canvasH) return;
     // Detect view changes (zoom/pan) and invalidate buffer if needed
     this._checkDirty();
 
