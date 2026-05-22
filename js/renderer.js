@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1779103051';
+import { TileMap } from './map.js?v=1779481252';
 
 export class Renderer {
   constructor(canvas) {
@@ -51,6 +51,9 @@ export class Renderer {
     ctx.fillRect(0, 0, w, h);
 
     this.tileMap.renderTiles(ctx, w, h);
+
+    // Update frame projection cache once per render (avoids redundant trig in latLonToScreen)
+    this.tileMap._updateFrameCache();
 
     // Static layer: tracks + stations + depots — only redraw when view changes
     const viewChanged = this.tileMap.zoomLevel !== this._lastStaticZoom ||
@@ -138,17 +141,33 @@ export class Renderer {
     const vpMinLon = hasVP ? Math.min(topLeft.lon, botRight.lon) - 0.01 : -180;
     const vpMaxLon = hasVP ? Math.max(topLeft.lon, botRight.lon) + 0.01 : 180;
 
+    const zoom = this.tileMap?.zoomLevel || 10;
+    // Precompute pixels-per-degree for sub-pixel skip
+    const pxPerDegLon = this.tileMap._frameScale ? (this.tileMap._frameScale / 360) : 500;
+
     for (const track of world.tracks) {
       const stA = world.getStationById(track.stationA);
       const stB = world.getStationById(track.stationB);
       if (!stA || !stB) continue;
 
-      // Viewport cull
-      const tMinLat = Math.min(stA.lat, stB.lat);
-      const tMaxLat = Math.max(stA.lat, stB.lat);
-      const tMinLon = Math.min(stA.lon, stB.lon);
-      const tMaxLon = Math.max(stA.lon, stB.lon);
+      // Use cached bounding box if available
+      let tMinLat, tMaxLat, tMinLon, tMaxLon;
+      if (track._bbox) {
+        tMinLat = track._bbox[0]; tMaxLat = track._bbox[1];
+        tMinLon = track._bbox[2]; tMaxLon = track._bbox[3];
+      } else {
+        tMinLat = Math.min(stA.lat, stB.lat);
+        tMaxLat = Math.max(stA.lat, stB.lat);
+        tMinLon = Math.min(stA.lon, stB.lon);
+        tMaxLon = Math.max(stA.lon, stB.lon);
+        track._bbox = [tMinLat, tMaxLat, tMinLon, tMaxLon];
+      }
       if (tMaxLat < vpMinLat || tMinLat > vpMaxLat || tMaxLon < vpMinLon || tMinLon > vpMaxLon) continue;
+
+      // Skip tiny tracks that would be sub-pixel at current zoom
+      const spanPx = (tMaxLon - tMinLon) * pxPerDegLon;
+      const spanPy = (tMaxLat - tMinLat) * pxPerDegLon;
+      if (spanPx < 2 && spanPy < 2 && zoom < 10) continue;
 
       // Determine track color: incidents/works override, then line color, then speed-based
       let trackColor, trackWidth;
@@ -164,9 +183,9 @@ export class Renderer {
         trackColor = track.worksActive ? '#c2410c' : '#facc15';
         trackWidth = 3.5;
       } else {
-        // Check if track belongs to a line
+        // Check if track belongs to a line (skip expensive lookup at very low zoom)
         let lineColor = null;
-        if (lineManager) {
+        if (lineManager && zoom >= 7) {
           const linesOnTrack = lineManager.getLinesForTrack(track.id);
           if (linesOnTrack.length > 0) {
             lineColor = linesOnTrack[0].color;
@@ -192,9 +211,11 @@ export class Renderer {
       }
 
       if (track.route && track.route.length > 1) {
-        // LOD: skip points at lower zoom to reduce draw calls
-        const zoom = this.tileMap?.zoomLevel || 10;
-        const routeStep = track.route.length > 50 ? (zoom >= 14 ? 1 : zoom >= 11 ? 2 : zoom >= 8 ? 4 : 8) : 1;
+        // Aggressive LOD: skip more points at lower zoom levels
+        const len = track.route.length;
+        const routeStep = len <= 20 ? 1 :
+          zoom >= 15 ? 1 : zoom >= 12 ? Math.max(1, len >> 6) :
+          zoom >= 9 ? Math.max(2, len >> 4) : Math.max(4, len >> 3);
         ctx.beginPath();
         const p0 = this.latLonToScreen(track.route[0].lat, track.route[0].lon);
         ctx.moveTo(p0.x, p0.y);

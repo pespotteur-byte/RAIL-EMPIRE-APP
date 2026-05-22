@@ -42,44 +42,61 @@ export class Track {
 }
 
 // Re-export from simulation.js to avoid duplication
-export { haversineDistance as haversine } from './simulation.js?v=1779403154';
+export { haversineDistance as haversine } from './simulation.js?v=1779481252';
 
 export class World {
   constructor() {
     this.stations = [];
     this.tracks = [];
+    this._stationMap = new Map();
+    this._trackPairMap = new Map();
+  }
+
+  _rebuildStationMap() {
+    this._stationMap.clear();
+    for (const s of this.stations) this._stationMap.set(s.id, s);
+  }
+
+  _trackPairKey(a, b) { return a < b ? `${a}|${b}` : `${b}|${a}`; }
+
+  _rebuildTrackPairMap() {
+    this._trackPairMap.clear();
+    for (const t of this.tracks) this._trackPairMap.set(this._trackPairKey(t.stationA, t.stationB), t);
   }
 
   addStation(data) {
     const station = new Station(data);
     this.stations.push(station);
+    this._stationMap.set(station.id, station);
     return station;
   }
 
   removeStation(id) {
     this.tracks = this.tracks.filter(t => t.stationA !== id && t.stationB !== id);
     this.stations = this.stations.filter(s => s.id !== id);
+    this._stationMap.delete(id);
+    this._rebuildTrackPairMap();
   }
 
   addTrack(data) {
     const track = new Track(data);
     this.tracks.push(track);
+    this._trackPairMap.set(this._trackPairKey(track.stationA, track.stationB), track);
     return track;
   }
 
   removeTrack(id) {
+    const t = this.tracks.find(t => t.id === id);
     this.tracks = this.tracks.filter(t => t.id !== id);
+    if (t) this._trackPairMap.delete(this._trackPairKey(t.stationA, t.stationB));
   }
 
   getStationById(id) {
-    return this.stations.find(s => s.id === id);
+    return this._stationMap.get(id);
   }
 
   getTrackBetween(stationAId, stationBId) {
-    return this.tracks.find(t =>
-      (t.stationA === stationAId && t.stationB === stationBId) ||
-      (t.stationA === stationBId && t.stationB === stationAId)
-    );
+    return this._trackPairMap.get(this._trackPairKey(stationAId, stationBId));
   }
 
   // findPath removed — routing now uses ORM Dijkstra directly
@@ -166,6 +183,8 @@ export class World {
       }
       return new Track(d);
     });
+    this._rebuildStationMap();
+    this._rebuildTrackPairMap();
   }
 }
 

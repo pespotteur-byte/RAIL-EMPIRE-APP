@@ -130,7 +130,37 @@ export class TileMap {
     return { lat, lon };
   }
 
+  // Cache center projection per frame to avoid redundant trig
+  _updateFrameCache() {
+    if (this._frameCacheZoom === this.zoomLevel &&
+        this._frameCacheLat === this.centerLat &&
+        this._frameCacheLon === this.centerLon) return;
+    this._frameCacheZoom = this.zoomLevel;
+    this._frameCacheLat = this.centerLat;
+    this._frameCacheLon = this.centerLon;
+    const s = Math.pow(2, this.zoomLevel) * this.tileSize;
+    this._frameScale = s;
+    this._frameCx = ((this.centerLon + 180) / 360) * s;
+    const sinC = Math.sin((this.centerLat * Math.PI) / 180);
+    this._frameCy = (0.5 - Math.log((1 + sinC) / (1 - sinC)) / (4 * Math.PI)) * s;
+    this._frameHalfW = this.viewportWidth / 2;
+    this._frameHalfH = this.viewportHeight / 2;
+  }
+
+  // Fast inline projection using cached center (avoids 2x trig per call)
+  worldToScreenFast(lat, lon) {
+    const s = this._frameScale;
+    const x = ((lon + 180) / 360) * s;
+    const sinLat = Math.sin((lat * Math.PI) / 180);
+    const y = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * s;
+    return { x: x - this._frameCx + this._frameHalfW, y: y - this._frameCy + this._frameHalfH };
+  }
+
   worldToScreen(lat, lon, canvasW, canvasH) {
+    // Use fast path if frame cache is valid
+    if (this._frameScale && canvasW === this.viewportWidth && canvasH === this.viewportHeight) {
+      return this.worldToScreenFast(lat, lon);
+    }
     const center = this.latLonToGlobalPixel(this.centerLat, this.centerLon, this.zoomLevel);
     const point = this.latLonToGlobalPixel(lat, lon, this.zoomLevel);
     return {

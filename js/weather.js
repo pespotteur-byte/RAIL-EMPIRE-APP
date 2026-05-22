@@ -12,6 +12,12 @@ export class Weather {
     this.humidity = 50;          // %
     this.precipitation = 0;      // mm
     this.cloudCover = 0;         // %
+    this.pressure = 1013;        // hPa
+    this.apparentTemp = 18;      // °C (felt temperature)
+    this.windDirection = 0;      // degrees
+    this.visibility = 10;        // km
+    this.uvIndex = 0;
+    this.dewpoint = 10;          // °C
     this.season = 'spring';
     this.locationName = '';      // reverse geocoded name
     this._lastFetchTime = 0;
@@ -104,7 +110,7 @@ export class Weather {
     this._lastFetchTime = Date.now();
 
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,cloud_cover&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m,cloud_cover,pressure_msl,apparent_temperature,visibility,uv_index,dew_point_2m&timezone=auto`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
@@ -115,6 +121,12 @@ export class Weather {
         this.precipitation = data.current.precipitation ?? 0;
         this.windSpeed = Math.round(data.current.wind_speed_10m ?? 0);
         this.cloudCover = Math.round(data.current.cloud_cover ?? 0);
+        this.pressure = Math.round(data.current.pressure_msl ?? 1013);
+        this.apparentTemp = Math.round(data.current.apparent_temperature ?? this.temperature);
+        this.windDirection = Math.round(data.current.wind_direction_10m ?? 0);
+        this.visibility = data.current.visibility != null ? Math.round(data.current.visibility / 1000) : 10;
+        this.uvIndex = data.current.uv_index ?? 0;
+        this.dewpoint = Math.round(data.current.dew_point_2m ?? 10);
 
         const wmoCode = data.current.weather_code ?? 0;
         const wmo = this._wmoMapping[wmoCode] || this._wmoMapping[0];
@@ -192,13 +204,24 @@ export class Weather {
       color: e.color,
       speedPct: Math.round(e.speedMult * 100),
       temperature: this.temperature,
+      apparentTemp: this.apparentTemp,
       season: this._seasonLabel(),
       humidity: this.humidity,
       windSpeed: this.windSpeed,
+      windDirection: this.windDirection,
       precipitation: this.precipitation,
       cloudCover: this.cloudCover,
+      pressure: this.pressure,
+      visibility: this.visibility,
+      uvIndex: this.uvIndex,
+      dewpoint: this.dewpoint,
       live: this._liveDataAvailable,
     };
+  }
+
+  _windDirLabel(deg) {
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+    return dirs[Math.round(deg / 22.5) % 16];
   }
 
   _seasonLabel() {
@@ -249,11 +272,24 @@ export class Weather {
           </div>
         </div>
 
+        <!-- Felt temp + pressure row -->
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1;padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">${icon('thermometer', 12)} Ressenti</div>
+            <div style="font-size:18px;font-weight:700;color:${tempColor}">${d.apparentTemp}°C</div>
+          </div>
+          <div style="flex:1;padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px">${icon('gauge', 12)} Pression</div>
+            <div style="font-size:18px;font-weight:700;color:${d.pressure < 1000 ? '#60a5fa' : d.pressure > 1025 ? '#f97316' : 'var(--text)'}">${d.pressure} hPa</div>
+          </div>
+        </div>
+
         <!-- Detail grid -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
             <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${windArrow} Vent</div>
             <div style="font-size:16px;font-weight:600;${windClass}">${d.windSpeed} km/h</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">Direction: ${this._windDirLabel(d.windDirection)} (${d.windDirection}°)</div>
           </div>
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
             <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('rain', 12)} Précipitations</div>
@@ -266,6 +302,18 @@ export class Weather {
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
             <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('cloud', 12)} Couverture nuageuse</div>
             ${cloudBar}
+          </div>
+          <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('eye', 12)} Visibilité</div>
+            <div style="font-size:16px;font-weight:600;color:${d.visibility < 2 ? '#ef4444' : d.visibility < 5 ? '#f97316' : 'var(--text)'}">${d.visibility} km</div>
+          </div>
+          <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('thermometer', 12)} Point de rosée</div>
+            <div style="font-size:16px;font-weight:600">${d.dewpoint}°C</div>
+          </div>
+          <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('sun', 12)} Indice UV</div>
+            <div style="font-size:16px;font-weight:600;color:${d.uvIndex >= 8 ? '#ef4444' : d.uvIndex >= 6 ? '#f97316' : d.uvIndex >= 3 ? '#eab308' : '#22c55e'}">${d.uvIndex.toFixed(1)}</div>
           </div>
         </div>
 

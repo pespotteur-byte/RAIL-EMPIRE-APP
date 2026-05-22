@@ -1,4 +1,4 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779473226';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779481252';
 
 let nextServiceId = 1;
 
@@ -974,9 +974,11 @@ export class ActiveService {
     const vpm = window.game?.voiePointManager;
     const myVoie = this.train.platform || (vpm ? vpm.getVoieAtPosition(this.position) : null);
 
-    for (const other of allServices) {
+    // Use spatial hash if available (O(k) where k = nearby trains), else fallback to all
+    const candidates = this._nearbyServices || allServices;
+
+    for (const other of candidates) {
       if (other.id === this.id) continue;
-      // Skip trains not physically on the track
       if (!other.position || other.state === 'waiting' || other.state === 'completed') continue;
 
       // Voie check: if both trains have voie info and they differ → different tracks, skip
@@ -1474,6 +1476,7 @@ export class ScheduleCreator {
   addService(data, rame, world) {
     const svc = new ActiveService(data, rame, world);
     this.services.push(svc);
+    this._invalidateActiveCache();
     return svc;
   }
 
@@ -1520,14 +1523,21 @@ export class ScheduleCreator {
   }
 
   removeService(id) {
-    // Release cantons for removed service
     const svc = this.services.find(s => s.id === id);
     if (svc) cantonManager.releaseAll(svc.id);
     this.services = this.services.filter(s => s.id !== id);
+    this._invalidateActiveCache();
   }
 
   getActiveServices() {
-    return this.services.filter(s => s.active);
+    if (this._activeCache && this._activeCacheVer === this._serviceVer) return this._activeCache;
+    this._activeCache = this.services.filter(s => s.active);
+    this._activeCacheVer = this._serviceVer;
+    return this._activeCache;
+  }
+
+  _invalidateActiveCache() {
+    this._serviceVer = (this._serviceVer || 0) + 1;
   }
 
   toSave() {
@@ -1668,6 +1678,7 @@ export class ScheduleCreator {
 
   loadFromSave(arr, rameManager, world) {
     this.services = [];
+    this._invalidateActiveCache();
     cantonManager.cantons.clear();
     cantonManager.routeCantons.clear();
     cantonManager.trainCantons.clear();

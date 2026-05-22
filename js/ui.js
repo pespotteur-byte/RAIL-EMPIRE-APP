@@ -2106,7 +2106,10 @@ export class UI {
 
   toggleSchedule(id) {
     const svc = this.game.scheduleCreator.services.find(s => s.id === id);
-    if (svc) svc.active = !svc.active;
+    if (svc) {
+      svc.active = !svc.active;
+      this.game.scheduleCreator._invalidateActiveCache();
+    }
     this.renderSchedulesList();
   }
 

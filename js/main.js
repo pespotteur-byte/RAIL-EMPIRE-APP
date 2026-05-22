@@ -1,36 +1,36 @@
-import { SimulationEngine } from './engine.js?v=1779473220';
-import { World, createDefaultWorld } from './world.js?v=1779473220';
-import { Renderer } from './renderer.js?v=1779473220';
-import { UI } from './ui.js?v=1779473220';
-import { Economy } from './economy.js?v=1779473220';
-import { IncidentManager } from './incidents.js?v=1779473220';
-import { FreightManager } from './freight.js?v=1779473220';
-import { ScheduleManager } from './schedule.js?v=1779473220';
-import { GameStorage } from './storage.js?v=1779473220';
-import { AccountManager } from './account.js?v=1779473220';
-import { RollingStockManager } from './rolling-stock.js?v=1779473220';
-import { RameManager } from './rame.js?v=1779473220';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779473220';
-import { DepotManager } from './depot.js?v=1779473220';
-import { WorksManager } from './works.js?v=1779473220';
-import { ORMClient } from './orm.js?v=1779473220';
-import { LineManager, PlatformManager } from './line.js?v=1779473220';
-import { VoiePointManager } from './voie-points.js?v=1779473220';
-import { Dashboard } from './dashboard.js?v=1779473220';
-import { GraphMarche } from './graph-marche.js?v=1779473220';
-import { StaffManager } from './staff.js?v=1779473220';
-import { Tutorial } from './tutorial.js?v=1779473220';
-import { Bank } from './bank.js?v=1779473220';
-import { Weather } from './weather.js?v=1779473220';
-import { Unions } from './unions.js?v=1779473220';
-import { SeasonalSchedule } from './seasonal.js?v=1779473220';
-import { Connections } from './connections.js?v=1779473220';
-import { StationUpgrades } from './station-upgrades.js?v=1779473220';
-import { JunctionManager } from './junctions.js?v=1779473220';
-import { CargoTypeManager } from './cargo-types.js?v=1779473220';
-import { ITEModules } from './ite-modules.js?v=1779473220';
-import { IndustrialClients } from './industrial-clients.js?v=1779473220';
-import { ShuntingManager } from './shunting.js?v=1779473220';
+import { SimulationEngine } from './engine.js?v=1779481252';
+import { World, createDefaultWorld } from './world.js?v=1779481252';
+import { Renderer } from './renderer.js?v=1779481252';
+import { UI } from './ui.js?v=1779481252';
+import { Economy } from './economy.js?v=1779481252';
+import { IncidentManager } from './incidents.js?v=1779481252';
+import { FreightManager } from './freight.js?v=1779481252';
+import { ScheduleManager } from './schedule.js?v=1779481252';
+import { GameStorage } from './storage.js?v=1779481252';
+import { AccountManager } from './account.js?v=1779481252';
+import { RollingStockManager } from './rolling-stock.js?v=1779481252';
+import { RameManager } from './rame.js?v=1779481252';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779481252';
+import { DepotManager } from './depot.js?v=1779481252';
+import { WorksManager } from './works.js?v=1779481252';
+import { ORMClient } from './orm.js?v=1779481252';
+import { LineManager, PlatformManager } from './line.js?v=1779481252';
+import { VoiePointManager } from './voie-points.js?v=1779481252';
+import { Dashboard } from './dashboard.js?v=1779481252';
+import { GraphMarche } from './graph-marche.js?v=1779481252';
+import { StaffManager } from './staff.js?v=1779481252';
+import { Tutorial } from './tutorial.js?v=1779481252';
+import { Bank } from './bank.js?v=1779481252';
+import { Weather } from './weather.js?v=1779481252';
+import { Unions } from './unions.js?v=1779481252';
+import { SeasonalSchedule } from './seasonal.js?v=1779481252';
+import { Connections } from './connections.js?v=1779481252';
+import { StationUpgrades } from './station-upgrades.js?v=1779481252';
+import { JunctionManager } from './junctions.js?v=1779481252';
+import { CargoTypeManager } from './cargo-types.js?v=1779481252';
+import { ITEModules } from './ite-modules.js?v=1779481252';
+import { IndustrialClients } from './industrial-clients.js?v=1779481252';
+import { ShuntingManager } from './shunting.js?v=1779481252';
 
 class RailEmpire {
   constructor() {
@@ -455,7 +455,33 @@ class RailEmpire {
     const activeServices = this.scheduleCreator.getActiveServices();
     // Check incident positions BEFORE movement so effect is immediate
     this.incidentManager.checkTrainPositions(activeServices, this.depotManager, this.world);
+
+    // Build spatial hash for proximity checks (avoids O(n²) in moveUpdate)
+    if (!this._spatialGrid) this._spatialGrid = new Map();
+    this._spatialGrid.clear();
     for (const svc of activeServices) {
+      if (!svc.position || svc.state === 'waiting' || svc.state === 'completed') continue;
+      // Grid cell size ~0.05° ≈ 5km
+      const key = `${Math.floor(svc.position.lat * 20)},${Math.floor(svc.position.lon * 20)}`;
+      let cell = this._spatialGrid.get(key);
+      if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
+      cell.push(svc);
+    }
+
+    for (const svc of activeServices) {
+      svc._nearbyServices = null;
+      if (svc.position && svc.state === 'moving') {
+        const gx = Math.floor(svc.position.lat * 20);
+        const gy = Math.floor(svc.position.lon * 20);
+        const nearby = [];
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const cell = this._spatialGrid.get(`${gx+dx},${gy+dy}`);
+            if (cell) for (const s of cell) { if (s.id !== svc.id) nearby.push(s); }
+          }
+        }
+        svc._nearbyServices = nearby;
+      }
       svc.moveUpdate(dt, timeOfDay, activeServices);
     }
     // Update rescue locomotives movement
@@ -579,14 +605,22 @@ class RailEmpire {
 
         const activeServices = this.scheduleCreator.getActiveServices();
         const rescueServices = this.depotManager.getRescueServices();
-        const allVisibleServices = [...activeServices, ...rescueServices];
+        // Reuse array to avoid GC pressure every frame
+        if (!this._visibleBuf) this._visibleBuf = [];
+        const allVisibleServices = this._visibleBuf;
+        allVisibleServices.length = 0;
+        for (let i = 0; i < activeServices.length; i++) allVisibleServices.push(activeServices[i]);
+        for (let i = 0; i < rescueServices.length; i++) allVisibleServices.push(rescueServices[i]);
 
         if (this.renderer) {
-          // Keep radar tile URL in sync with weather data (needed for toggle to work immediately)
-          try {
-            const rp = this.weather.getLatestRadarPath();
-            if (rp) this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(rp));
-          } catch(e) { /* graceful */ }
+          // Sync radar tile URL every ~2s (not every frame)
+          if (!this._lastRadarSync || now - this._lastRadarSync > 2000) {
+            this._lastRadarSync = now;
+            try {
+              const rp = this.weather.getLatestRadarPath();
+              if (rp) this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(rp));
+            } catch(e) { /* graceful */ }
+          }
           this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
         }
 

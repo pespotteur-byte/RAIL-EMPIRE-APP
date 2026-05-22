@@ -1,4 +1,4 @@
-import { haversineDistance } from './simulation.js?v=1779403154';
+import { haversineDistance } from './simulation.js?v=1779481252';
 
 let nextIncId = 1;
 
@@ -147,19 +147,46 @@ export class IncidentManager {
       return;
     }
 
+    // Precompute incident bounding boxes for fast spatial skip
+    if (!this._incBboxVer || this._incBboxVer !== this.activeIncidents.length) {
+      this._incBboxVer = this.activeIncidents.length;
+      for (const inc of this.activeIncidents) {
+        if (inc._bbox) continue;
+        if (inc.route && inc.route.length >= 2) {
+          let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+          for (const p of inc.route) {
+            if (p.lat < minLat) minLat = p.lat; if (p.lat > maxLat) maxLat = p.lat;
+            if (p.lon < minLon) minLon = p.lon; if (p.lon > maxLon) maxLon = p.lon;
+          }
+          inc._bbox = [minLat - 0.01, maxLat + 0.01, minLon - 0.01, maxLon + 0.01];
+        } else if (world) {
+          const stA = world.getStationById(inc.stationA);
+          const stB = world.getStationById(inc.stationB);
+          if (stA && stB) {
+            inc._bbox = [Math.min(stA.lat, stB.lat) - 0.02, Math.max(stA.lat, stB.lat) + 0.02,
+                         Math.min(stA.lon, stB.lon) - 0.02, Math.max(stA.lon, stB.lon) + 0.02];
+          }
+        }
+      }
+    }
+
     for (const svc of services) {
       if (!svc.train || !svc.position) continue;
+      // Skip trains that aren't moving (no need to recheck)
+      if (svc.state !== 'moving') { if (!svc.train.incident) continue; }
       svc.train.incident = null;
 
+      const lat = svc.position.lat, lon = svc.position.lon;
       let worstIncident = null;
       for (const inc of this.activeIncidents) {
         if (!inc.active) continue;
-        // Route-based check: is the train on the incident's route?
+        // Fast bbox reject
+        if (inc._bbox && (lat < inc._bbox[0] || lat > inc._bbox[1] || lon < inc._bbox[2] || lon > inc._bbox[3])) continue;
         let affected = false;
         if (inc.route) {
-          affected = this._isOnRoute(svc.position.lat, svc.position.lon, inc.route);
+          affected = this._isOnRoute(lat, lon, inc.route);
         } else if (world) {
-          affected = this._isBetweenStations(svc.position.lat, svc.position.lon, world, inc);
+          affected = this._isBetweenStations(lat, lon, world, inc);
         }
         if (!affected) continue;
 

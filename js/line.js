@@ -42,11 +42,13 @@ export class LineManager {
   addLine(data) {
     const line = new Line(data);
     this.lines.push(line);
+    this.invalidateTrackLineMap();
     return line;
   }
 
   removeLine(id) {
     this.lines = this.lines.filter(l => l.id !== id);
+    this.invalidateTrackLineMap();
   }
 
   getLine(id) {
@@ -62,8 +64,23 @@ export class LineManager {
   }
 
   getLinesForTrack(trackId) {
-    return this.lines.filter(l => l.hasTrack(trackId));
+    // Use cached track→line map for O(1) lookup
+    if (!this._trackLineMap) this._rebuildTrackLineMap();
+    return this._trackLineMap.get(trackId) || [];
   }
+
+  _rebuildTrackLineMap() {
+    this._trackLineMap = new Map();
+    for (const l of this.lines) {
+      for (const tid of l.trackIds) {
+        let arr = this._trackLineMap.get(tid);
+        if (!arr) { arr = []; this._trackLineMap.set(tid, arr); }
+        arr.push(l);
+      }
+    }
+  }
+
+  invalidateTrackLineMap() { this._trackLineMap = null; }
 
   /**
    * Build a line from ordered station IDs.
@@ -133,6 +150,7 @@ export class LineManager {
   loadFromSave(data) {
     if (!data || !Array.isArray(data)) return;
     this.lines = data.map(d => new Line(d));
+    this.invalidateTrackLineMap();
     nextLineId = this.lines.reduce((max, l) => {
       const num = parseInt(l.id.replace('line-', ''));
       return isNaN(num) ? max : Math.max(max, num + 1);
