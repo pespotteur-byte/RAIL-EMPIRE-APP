@@ -50,6 +50,7 @@ export class TileMap {
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     ];
     this.satelliteEnabled = false;
+    this._satelliteMaxZoom = 18;
     this.railTileUrls = [
       'https://a.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
       'https://b.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
@@ -298,18 +299,22 @@ export class TileMap {
     }
     for (const urls of layers) {
       const isRadarLayer = this.radarEnabled && urls[0] === this._radarTileUrl;
+      const isSatLayer = this.satelliteEnabled && urls === baseUrls;
       if (isRadarLayer) tctx.globalAlpha = 0.5;
-      // Radar tiles: clamp zoom to max supported, upscale for higher zooms
-      const layerZ = isRadarLayer ? Math.min(z, this._radarMaxZoom) : z;
-      const layerMaxTile = isRadarLayer ? Math.pow(2, layerZ) : maxTile;
+
+      // Clamp zoom for layers with max zoom limits
+      let layerZ = z;
+      if (isRadarLayer) layerZ = Math.min(z, this._radarMaxZoom);
+      else if (isSatLayer) layerZ = Math.min(z, this._satelliteMaxZoom);
       const zoomDiff = z - layerZ;
       const upscale = Math.pow(2, zoomDiff);
+
       for (let tx = startTileX; tx <= endTileX; tx++) {
         for (let ty = startTileY; ty <= endTileY; ty++) {
           if (ty < 0 || ty >= maxTile) continue;
           const wrappedTx = ((tx % maxTile) + maxTile) % maxTile;
-          if (isRadarLayer && zoomDiff > 0) {
-            // Upscale: find the parent tile at clamped zoom
+          if (zoomDiff > 0) {
+            // Upscale: fetch parent tile at clamped zoom, draw sub-region
             const parentTx = Math.floor(wrappedTx / upscale);
             const parentTy = Math.floor(ty / upscale);
             const urlIdx = (parentTx + parentTy) % urls.length;
@@ -329,30 +334,24 @@ export class TileMap {
               const px = (tx * this.tileSize - center.x) * scale + canvasW / 2;
               const py = (ty * this.tileSize - center.y) * scale + canvasH / 2;
               tctx.drawImage(tile.img, px, py, scaledTileSize, scaledTileSize);
-            }
-          }
-          if (!isRadarLayer) {
-            // Fallback: draw cached lower-zoom tile while loading (non-radar only)
-            const wrTx = ((tx % maxTile) + maxTile) % maxTile;
-            const urlIdx2 = (wrTx + ty) % urls.length;
-            const tile2 = this.getTile(wrTx, ty, z, urls[urlIdx2]);
-            if (!tile2.loaded && !tile2.error) {
+            } else if (!tile.error && !isRadarLayer) {
+              // Fallback: draw cached lower-zoom tile while loading
               this._pendingTiles++;
               const isOverlay = urls === this.railTileUrls;
-              const suffix = isOverlay ? 'r' : 'b';
-              for (let fz = z - 1; fz >= this.minZoom; fz--) {
-                const fScale = Math.pow(2, z - fz);
-                const ftx = Math.floor(wrTx / fScale);
+              const suffix = isSatLayer ? 's' : (isOverlay ? 'r' : 'b');
+              for (let fz = layerZ - 1; fz >= this.minZoom; fz--) {
+                const fScale = Math.pow(2, layerZ - fz);
+                const ftx = Math.floor(wrappedTx / fScale);
                 const fty = Math.floor(ty / fScale);
                 const fKey = `${fz}/${ftx}/${fty}/${suffix}`;
                 const fTile = this.tileCache.get(fKey);
                 if (fTile && fTile.loaded && fTile.img) {
-                  const subX = wrTx - ftx * fScale;
-                  const subY = ty - fty * fScale;
-                  const srcSize = this.tileSize / fScale;
-                  const px = (tx * this.tileSize - center.x) * scale + canvasW / 2;
+                  const subX2 = wrappedTx - ftx * fScale;
+                  const subY2 = ty - fty * fScale;
+                  const srcSize2 = this.tileSize / fScale;
+                  const px2 = (tx * this.tileSize - center.x) * scale + canvasW / 2;
                   const py2 = (ty * this.tileSize - center.y) * scale + canvasH / 2;
-                  tctx.drawImage(fTile.img, subX * srcSize, subY * srcSize, srcSize, srcSize, px, py2, scaledTileSize, scaledTileSize);
+                  tctx.drawImage(fTile.img, subX2 * srcSize2, subY2 * srcSize2, srcSize2, srcSize2, px2, py2, scaledTileSize, scaledTileSize);
                   break;
                 }
               }
