@@ -1511,79 +1511,71 @@ export class ScheduleCreator {
   toSave() {
     return this.services.map(s => {
       try {
-        // Sanitize & compress routes: reduce precision, downsample long segments
+        // Compact route encoding: delta-encoded flat arrays + strip defaults
         const safeRoutes = (s.routes || []).map(route => {
-          if (!Array.isArray(route)) return [];
-          const pts = route.map(pt => ({
-            lat: Math.round(pt.lat * 1e5) / 1e5,
-            lon: Math.round(pt.lon * 1e5) / 1e5,
-            maxSpeed: pt.maxSpeed || 160,
-            electrified: pt.electrified ?? true,
-            tracks: pt.tracks || 1,
-          }));
-          // Downsample: keep every Nth point for long routes (first+last always kept)
+          if (!Array.isArray(route) || route.length === 0) return null;
+          // Downsample: keep every Nth point for long routes
+          let pts = route;
           if (pts.length > 100) {
             const step = Math.ceil(pts.length / 80);
             const sampled = [pts[0]];
             for (let i = step; i < pts.length - 1; i += step) sampled.push(pts[i]);
             sampled.push(pts[pts.length - 1]);
-            return sampled;
+            pts = sampled;
           }
-          return pts;
+          // Delta-encode coords as flat int array
+          const coords = [];
+          let prevLat = 0, prevLon = 0;
+          for (let i = 0; i < pts.length; i++) {
+            const lat5 = Math.round(pts[i].lat * 1e5);
+            const lon5 = Math.round(pts[i].lon * 1e5);
+            if (i === 0) { coords.push(lat5, lon5); }
+            else { coords.push(lat5 - prevLat, lon5 - prevLon); }
+            prevLat = lat5; prevLon = lon5;
+          }
+          // Speed segments: only store when speed changes from 160
+          const speeds = [];
+          let hasCustomSpeed = false;
+          for (const pt of pts) {
+            const sp = pt.maxSpeed || 160;
+            if (sp !== 160) hasCustomSpeed = true;
+            speeds.push(sp);
+          }
+          const o = { c: coords };
+          if (hasCustomSpeed) o.s = speeds;
+          return o;
+        }).filter(r => r !== null);
+        // Compact stops: short keys
+        const compactStops = (s.stops || []).map(st => {
+          const o = { si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime };
+          if (st.voiePointId) o.vp = st.voiePointId;
+          if (st.platform) o.p = st.platform;
+          return o;
         });
-        return {
-          id: s.id,
-          name: s.name,
-          rameId: s.rameId,
-          stops: (s.stops || []).map(st => ({
-            stationId: st.stationId,
-            voiePointId: st.voiePointId || null,
-            type: st.type,
-            departureTime: st.departureTime,
-            arrivalTime: st.arrivalTime,
-            platform: st.platform || '',
-          })),
-          routes: safeRoutes,
-          roundTrip: s.roundTrip,
-          multiDepartures: s.multiDepartures,
-          terminusWait: s.terminusWait,
-          totalDistance: s.totalDistance,
-          active: s.active,
-          isWorkTrain: s.isWorkTrain || false,
-          runDays: s.runDays || [0,1,2,3,4,5,6],
-          runDates: s.runDates || [],
-          returnName: s.returnName || '',
-          returnPlatforms: s.returnPlatforms || {},
-          _runtime: {
-            currentStopIndex: s.currentStopIndex || 0,
-            state: s.state || 'waiting',
-            isReturnLeg: s.isReturnLeg || false,
-            _tripCount: s._tripCount || 0,
-            position: s.position ? { lat: s.position.lat, lon: s.position.lon } : null,
-            speed: s.speed || 0,
-            delay: s.delay || 0,
-            completed: s.completed || false,
-            completedDate: s.completedDate || '',
-            direction: s.direction || 1,
-            revenueCollected: s.revenueCollected || false,
-            _nextDepartureTime: s._nextDepartureTime ?? null,
-            _lastArrivalTime: s._lastArrivalTime ?? null,
-            _onboardPax: s._onboardPax || 0,
-            _onboardFreight: s._onboardFreight || 0,
-            _adjustedStops: s._adjustedStops ? s._adjustedStops.map(st => ({
-              stationId: st.stationId, type: st.type,
-              departureTime: st.departureTime, arrivalTime: st.arrivalTime,
-            })) : null,
-            _simState: s._state ? { index: s._state.index || 0, progress: s._state.progress || 0, legKey: s._state.legKey || null } : { index: 0, progress: 0, legKey: null },
-            trainSpeed: s.train?.speed || 0,
-            trainState: s.train?.state || 'waiting',
-            trainTotalKm: s.train?.totalKm || 0,
-            trainTotalKmRun: s.train?.totalKmRun || 0,
-            trainKmSinceLastMaint: s.train?.kmSinceLastMaint || 0,
-            trainWearLevel: s.train?.wearLevel || 0,
-            trainInMaintenance: s.train?.inMaintenance || false,
-          },
+        const o = { id: s.id, n: s.name, ri: s.rameId, st: compactStops, rt: safeRoutes };
+        if (s.roundTrip) o.rnd = true;
+        if (s.multiDepartures > 1) o.md = s.multiDepartures;
+        if (s.terminusWait !== 10) o.tw = s.terminusWait;
+        o.td = Math.round((s.totalDistance || 0) * 100) / 100;
+        if (!s.active) o.act = false;
+        if (s.isWorkTrain) o.wt = true;
+        const allDays = [0,1,2,3,4,5,6];
+        if (JSON.stringify(s.runDays) !== JSON.stringify(allDays)) o.rd = s.runDays;
+        if (s.runDates?.length) o.rdt = s.runDates;
+        if (s.returnName) o.rn = s.returnName;
+        if (s.returnPlatforms && Object.keys(s.returnPlatforms).length) o.rp = s.returnPlatforms;
+        // Runtime state (compact)
+        o._r = {
+          ci: s.currentStopIndex || 0,
+          dir: s.direction || 1,
+          tc: s._tripCount || 0,
         };
+        if (s._adjustedStops) {
+          o._r.as = s._adjustedStops.map(st => ({
+            si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime,
+          }));
+        }
+        return o;
       } catch (e) {
         console.warn('Error saving service', s.id, s.name, e);
         return { id: s.id, name: s.name, rameId: s.rameId, stops: [], routes: [], active: false, _saveError: true };
@@ -1591,20 +1583,79 @@ export class ScheduleCreator {
     });
   }
 
+  _decodeRoutes(routes) {
+    if (!routes || !Array.isArray(routes)) return [];
+    return routes.map(r => {
+      // New compact format: { c: [delta-encoded ints], s: [speeds] }
+      if (r && r.c && Array.isArray(r.c)) {
+        const pts = [];
+        let lat = 0, lon = 0;
+        for (let i = 0; i < r.c.length; i += 2) {
+          if (i === 0) { lat = r.c[0]; lon = r.c[1]; }
+          else { lat += r.c[i]; lon += r.c[i + 1]; }
+          const pt = { lat: lat / 1e5, lon: lon / 1e5, maxSpeed: 160, electrified: true, tracks: 1 };
+          if (r.s && r.s[i / 2] !== undefined) pt.maxSpeed = r.s[i / 2];
+          pts.push(pt);
+        }
+        return pts;
+      }
+      // Old format: array of {lat, lon, maxSpeed, ...}
+      if (Array.isArray(r)) return r;
+      return [];
+    });
+  }
+
+  _expandCompactService(d) {
+    // Expand compact format (short keys) to full format for ActiveService constructor
+    if (d.n !== undefined && d.ri !== undefined && d.st !== undefined) {
+      const expanded = {
+        id: d.id,
+        name: d.n,
+        rameId: d.ri,
+        stops: (d.st || []).map(s => ({
+          stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
+          voiePointId: s.vp || null, platform: s.p || '',
+        })),
+        routes: this._decodeRoutes(d.rt || []),
+        roundTrip: d.rnd || false,
+        multiDepartures: d.md || 1,
+        terminusWait: d.tw ?? 10,
+        totalDistance: d.td || 0,
+        active: d.act !== false,
+        isWorkTrain: d.wt || false,
+        runDays: d.rd || [0,1,2,3,4,5,6],
+        runDates: d.rdt || [],
+        returnName: d.rn || '',
+        returnPlatforms: d.rp || {},
+      };
+      if (d._r) {
+        expanded._runtime = {
+          direction: d._r.dir || 1,
+          _tripCount: d._r.tc || 0,
+          _adjustedStops: d._r.as ? d._r.as.map(s => ({
+            stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
+          })) : null,
+        };
+      }
+      return expanded;
+    }
+    // Old format — just decode routes
+    if (d.routes) d.routes = this._decodeRoutes(d.routes);
+    return d;
+  }
+
   loadFromSave(arr, rameManager, world) {
     this.services = [];
-    // Clear all canton reservations to prevent stale blocks after crash/reload
     cantonManager.cantons.clear();
     cantonManager.routeCantons.clear();
     cantonManager.trainCantons.clear();
-    for (const d of arr) {
+    for (let d of arr) {
+      d = this._expandCompactService(d);
       const rame = rameManager.getById(d.rameId);
       const svc = new ActiveService(d, rame, world);
       svc.totalDistance = d.totalDistance || 0;
       svc.active = d.active !== false;
 
-      // Restore non-operational state from save
-      // Km/wear are read from the rame (source of truth, loaded earlier)
       if (d._runtime) {
         const rt = d._runtime;
         svc.completedDate = rt.completedDate || '';
@@ -1616,7 +1667,6 @@ export class ScheduleCreator {
           ));
         }
       }
-      // Always start clean: waiting state, no position, let scheduleTick decide
       svc.state = 'waiting';
       svc.position = null;
       svc.speed = 0;

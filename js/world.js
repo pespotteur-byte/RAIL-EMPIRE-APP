@@ -86,24 +86,57 @@ export class World {
 
   toSave() {
     return {
-      stations: this.stations.map(s => ({
-        id: s.id, name: s.name, lat: s.lat, lon: s.lon,
-        platforms: s.platforms, type: s.type, country: s.country,
-        facilities: s.facilities, lineIds: s.lineIds || [],
-        platformNames: s.platformNames || [], closed: s.closed || false,
-      })),
-      tracks: this.tracks.map(t => ({
-        id: t.id, stationA: t.stationA, stationB: t.stationB,
-        distance: t.distance, maxSpeed: t.maxSpeed,
-        electrified: t.electrified, name: t.name,
-        route: t.route, tracks: t.tracks,
-      })),
+      stations: this.stations.map(s => {
+        const o = { id: s.id, n: s.name, la: Math.round(s.lat * 1e5), lo: Math.round(s.lon * 1e5) };
+        if (s.platforms !== 2) o.p = s.platforms;
+        if (s.type !== 'voyageur') o.t = s.type;
+        if (s.country) o.c = s.country;
+        if (s.facilities?.length) o.f = s.facilities;
+        if (s.lineIds?.length) o.li = s.lineIds;
+        if (s.platformNames?.length) o.pn = s.platformNames;
+        if (s.closed) o.cl = true;
+        return o;
+      }),
+      tracks: this.tracks.map(t => {
+        const o = { id: t.id, a: t.stationA, b: t.stationB, d: Math.round(t.distance * 100) / 100 };
+        if (t.maxSpeed !== 160) o.s = t.maxSpeed;
+        if (!t.electrified) o.e = false;
+        if (t.name) o.n = t.name;
+        if (t.tracks !== 2) o.tk = t.tracks;
+        // Compact route: delta-encoded int array [lat0*1e5, lon0*1e5, dlat1, dlon1, dlat2, dlon2, ...]
+        if (t.route?.length > 0) {
+          const r = [];
+          let prevLat = 0, prevLon = 0;
+          for (let i = 0; i < t.route.length; i++) {
+            const pt = t.route[i];
+            const lat5 = Math.round(pt.lat * 1e5);
+            const lon5 = Math.round(pt.lon * 1e5);
+            if (i === 0) { r.push(lat5, lon5); }
+            else { r.push(lat5 - prevLat, lon5 - prevLon); }
+            prevLat = lat5; prevLon = lon5;
+          }
+          o.r = r;
+        }
+        return o;
+      }),
+      _v: 2, // format version
     };
   }
 
   loadFromSave(data) {
     if (!data) return;
+    const v2 = data._v === 2;
     this.stations = (data.stations || []).map(d => {
+      if (v2) {
+        const s = new Station({
+          id: d.id, name: d.n, lat: d.la / 1e5, lon: d.lo / 1e5,
+          platforms: d.p || 2, type: d.t || 'voyageur',
+          lineIds: d.li || [], platformNames: d.pn || [], closed: d.cl || false,
+        });
+        s.country = d.c || '';
+        s.facilities = d.f || [];
+        return s;
+      }
       const s = new Station(d);
       s.country = d.country || '';
       s.facilities = d.facilities || [];
@@ -112,7 +145,27 @@ export class World {
       s.closed = d.closed || false;
       return s;
     });
-    this.tracks = (data.tracks || []).map(d => new Track(d));
+    this.tracks = (data.tracks || []).map(d => {
+      if (v2) {
+        // Decode delta-encoded route
+        let route = [];
+        if (d.r?.length >= 2) {
+          let lat = d.r[0], lon = d.r[1];
+          route.push({ lat: lat / 1e5, lon: lon / 1e5 });
+          for (let i = 2; i < d.r.length; i += 2) {
+            lat += d.r[i]; lon += d.r[i + 1];
+            route.push({ lat: lat / 1e5, lon: lon / 1e5 });
+          }
+        }
+        return new Track({
+          id: d.id, stationA: d.a, stationB: d.b,
+          distance: d.d, maxSpeed: d.s || 160,
+          electrified: d.e !== false, name: d.n || '',
+          route, tracks: d.tk || 2,
+        });
+      }
+      return new Track(d);
+    });
   }
 }
 

@@ -511,44 +511,67 @@ export class VoiePointManager {
 
   toSave() {
     return {
-      voiePoints: this.voiePoints.map(vp => ({
-        id: vp.id, lat: vp.lat, lon: vp.lon, voie: vp.voie,
-        stationId: vp.stationId || null,
-        lineGroupId: vp.lineGroupId || null,
-        linePoint: vp.linePoint || false,
-      })),
-      troncons: this.troncons.map(t => {
-        // Compress troncon route: reduce precision, downsample long routes
-        let route = t.route;
-        if (Array.isArray(route) && route.length > 0) {
-          route = route.map(pt => ({
-            lat: Math.round(pt.lat * 1e5) / 1e5,
-            lon: Math.round(pt.lon * 1e5) / 1e5,
-          }));
-          if (route.length > 100) {
-            const step = Math.ceil(route.length / 80);
-            const sampled = [route[0]];
-            for (let i = step; i < route.length - 1; i += step) sampled.push(route[i]);
-            sampled.push(route[route.length - 1]);
-            route = sampled;
-          }
-        }
-        return {
-          id: t.id, pointA: t.pointA, pointB: t.pointB,
-          route, distance: t.distance,
-          lineGroupId: t.lineGroupId || null,
-        };
+      voiePoints: this.voiePoints.map(vp => {
+        const o = { id: vp.id, la: Math.round(vp.lat * 1e5), lo: Math.round(vp.lon * 1e5), v: vp.voie };
+        if (vp.stationId) o.s = vp.stationId;
+        if (vp.lineGroupId) o.lg = vp.lineGroupId;
+        if (vp.linePoint) o.lp = true;
+        return o;
       }),
+      troncons: this.troncons.map(t => {
+        const o = { id: t.id, a: t.pointA, b: t.pointB, d: Math.round(t.distance * 100) / 100 };
+        if (t.lineGroupId) o.lg = t.lineGroupId;
+        // Delta-encoded route
+        if (Array.isArray(t.route) && t.route.length > 0) {
+          let pts = t.route;
+          if (pts.length > 100) {
+            const step = Math.ceil(pts.length / 80);
+            const sampled = [pts[0]];
+            for (let i = step; i < pts.length - 1; i += step) sampled.push(pts[i]);
+            sampled.push(pts[pts.length - 1]);
+            pts = sampled;
+          }
+          const r = [];
+          let prevLat = 0, prevLon = 0;
+          for (let i = 0; i < pts.length; i++) {
+            const lat5 = Math.round(pts[i].lat * 1e5);
+            const lon5 = Math.round(pts[i].lon * 1e5);
+            if (i === 0) { r.push(lat5, lon5); }
+            else { r.push(lat5 - prevLat, lon5 - prevLon); }
+            prevLat = lat5; prevLon = lon5;
+          }
+          o.r = r;
+        }
+        return o;
+      }),
+      _v: 2,
     };
   }
 
   loadFromSave(data) {
     if (!data) return;
-    this.voiePoints = (data.voiePoints || []).map(d => new VoiePoint(d));
-    this.troncons = (data.troncons || []).map(d => new Troncon(d));
+    const v2 = data._v === 2;
+    this.voiePoints = (data.voiePoints || []).map(d => {
+      if (v2) return new VoiePoint({ id: d.id, lat: d.la / 1e5, lon: d.lo / 1e5, voie: d.v, stationId: d.s || null, lineGroupId: d.lg || null, linePoint: d.lp || false });
+      return new VoiePoint(d);
+    });
+    this.troncons = (data.troncons || []).map(d => {
+      if (v2) {
+        let route = [];
+        if (d.r?.length >= 2) {
+          let lat = d.r[0], lon = d.r[1];
+          route.push({ lat: lat / 1e5, lon: lon / 1e5 });
+          for (let i = 2; i < d.r.length; i += 2) {
+            lat += d.r[i]; lon += d.r[i + 1];
+            route.push({ lat: lat / 1e5, lon: lon / 1e5 });
+          }
+        }
+        return new Troncon({ id: d.id, pointA: d.a, pointB: d.b, route, distance: d.d, lineGroupId: d.lg || null });
+      }
+      return new Troncon(d);
+    });
 
     // Rebuild O(1) lookup maps
     this._rebuildMaps();
-    // Note: voie point/troncon IDs use Date.now() format, not sequential counters
   }
 }

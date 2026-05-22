@@ -75,14 +75,14 @@ class RailEmpire {
     this.init();
   }
 
-  init() {
+  async init() {
     const btnNew = document.getElementById('btn-new-game');
     const btnLoad = document.getElementById('btn-load-game');
     const nameInput = document.getElementById('login-name');
 
     if (this.storage.hasSave()) {
       btnLoad.style.display = 'block';
-      const saved = this.storage.loadGame();
+      const saved = await this.storage.loadGame();
       if (saved?.companyName) {
         nameInput.value = saved.companyName;
       }
@@ -95,8 +95,8 @@ class RailEmpire {
       this.startGame(null);
     });
 
-    btnLoad.addEventListener('click', () => {
-      const saved = this.storage.loadGame();
+    btnLoad.addEventListener('click', async () => {
+      const saved = await this.storage.loadGame();
       if (saved) {
         this.account.companyName = saved.companyName;
         this.loadState(saved);
@@ -108,24 +108,27 @@ class RailEmpire {
     const btnImport = document.getElementById('btn-import-file');
     const importInput = document.getElementById('import-file-input');
     btnImport.addEventListener('click', () => importInput.click());
-    importInput.addEventListener('change', (e) => {
+    importInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const saved = JSON.parse(ev.target.result);
-          if (!saved.companyName) throw new Error('Fichier invalide');
-          this.account.companyName = saved.companyName;
-          nameInput.value = saved.companyName;
-          this.loadState(saved);
-          this.storage.saveGame(saved);
-          this.startGame(saved);
-        } catch (err) {
-          alert('Erreur: fichier de sauvegarde invalide.\n' + err.message);
+      try {
+        let text;
+        if (file.name.endsWith('.gz')) {
+          const stream = file.stream().pipeThrough(new DecompressionStream('gzip'));
+          text = await new Response(stream).text();
+        } else {
+          text = await file.text();
         }
-      };
-      reader.readAsText(file);
+        const saved = JSON.parse(text);
+        if (!saved.companyName) throw new Error('Fichier invalide');
+        this.account.companyName = saved.companyName;
+        nameInput.value = saved.companyName;
+        this.loadState(saved);
+        this.storage.saveGame(saved);
+        this.startGame(saved);
+      } catch (err) {
+        alert('Erreur: fichier de sauvegarde invalide.\n' + err.message);
+      }
     });
   }
 
@@ -157,25 +160,29 @@ class RailEmpire {
     document.getElementById('btn-load-file')?.addEventListener('click', () => {
       loadFileInput.click();
     });
-    loadFileInput?.addEventListener('change', (e) => {
+    loadFileInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const saved = JSON.parse(ev.target.result);
-          if (!saved.companyName) throw new Error('Fichier invalide');
-          this.loadState(saved);
-          this.storage.saveGame(saved);
-          this.account.companyName = saved.companyName;
-          document.getElementById('company-name').textContent = saved.companyName;
-          if (this.ui) this.ui.refreshAll();
-          alert('Partie chargee avec succes !');
-        } catch (err) {
-          alert('Erreur: fichier de sauvegarde invalide.\n' + err.message);
+      try {
+        let text;
+        if (file.name.endsWith('.gz')) {
+          // Decompress gzipped file
+          const stream = file.stream().pipeThrough(new DecompressionStream('gzip'));
+          text = await new Response(stream).text();
+        } else {
+          text = await file.text();
         }
-      };
-      reader.readAsText(file);
+        const saved = JSON.parse(text);
+        if (!saved.companyName) throw new Error('Fichier invalide');
+        this.loadState(saved);
+        this.storage.saveGame(saved);
+        this.account.companyName = saved.companyName;
+        document.getElementById('company-name').textContent = saved.companyName;
+        if (this.ui) this.ui.refreshAll();
+        alert('Partie chargee avec succes !');
+      } catch (err) {
+        alert('Erreur: fichier de sauvegarde invalide.\n' + err.message);
+      }
       e.target.value = '';
     });
 
@@ -204,7 +211,7 @@ class RailEmpire {
     });
   }
 
-  exportSaveFile() {
+  async exportSaveFile() {
     try {
       const state = {
         companyName: this.account.companyName,
@@ -230,11 +237,31 @@ class RailEmpire {
         exportDate: new Date().toISOString(),
       };
       const json = JSON.stringify(state);
-      const blob = new Blob([json], { type: 'application/json' });
+      const filename = `rail-empire-${this.account.companyName.replace(/\s+/g, '_')}-${new Date().toISOString().slice(0,10)}`;
+
+      // Try gzip compression for smaller file
+      let blob, ext;
+      if (typeof CompressionStream !== 'undefined') {
+        try {
+          const encoder = new TextEncoder();
+          const stream = new Blob([encoder.encode(json)])
+            .stream()
+            .pipeThrough(new CompressionStream('gzip'));
+          blob = await new Response(stream).blob();
+          ext = '.json.gz';
+        } catch (e) {
+          blob = new Blob([json], { type: 'application/json' });
+          ext = '.json';
+        }
+      } else {
+        blob = new Blob([json], { type: 'application/json' });
+        ext = '.json';
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rail-empire-${this.account.companyName.replace(/\s+/g, '_')}-${new Date().toISOString().slice(0,10)}.json`;
+      a.download = filename + ext;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -421,7 +448,7 @@ class RailEmpire {
       industrialClients: this.industrialClients.toSave(),
       shunting: this.shuntingManager.toSave(),
     };
-    try { this.storage.saveGame(state); } catch(e) { console.warn('Auto-save failed:', e); }
+    try { this.storage.saveGame(state).catch(e => console.warn('Auto-save failed:', e)); } catch(e) { console.warn('Auto-save failed:', e); }
   }
 
   moveTick(dt, timeOfDay) {
