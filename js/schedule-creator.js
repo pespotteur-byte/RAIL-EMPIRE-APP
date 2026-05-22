@@ -1,4 +1,4 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779403154';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779473226';
 
 let nextServiceId = 1;
 
@@ -436,13 +436,16 @@ export class ActiveService {
     // Create canton assignments for block signaling
     this._cantonAssignments = cantonManager.createRouteCantons(route);
 
-    // Occupy initial canton
+    // Occupy initial canton (may fail if another train is there)
     if (this._cantonAssignments.length > 0) {
       const initialCanton = cantonManager.getCantonForSegment(
         this._cantonAssignments, this._state.index
       );
       if (initialCanton) {
-        cantonManager.occupy(initialCanton.cantonId, this.id);
+        const occupied = cantonManager.occupy(initialCanton.cantonId, this.id);
+        if (!occupied) {
+          this.train.blockedBy = true;
+        }
       }
     }
   }
@@ -592,7 +595,7 @@ export class ActiveService {
       }
     }
 
-    // --- CANTONNEMENT / PROXIMITY (only if NOT on a troncon) ---
+    // --- CANTONNEMENT + PROXIMITY SAFETY (only if NOT on a troncon) ---
     if (!onTroncon) {
       if (this._cantonAssignments && this._cantonAssignments.length > 0) {
         const signalAspect = cantonManager.getSignalAspect(
@@ -604,14 +607,13 @@ export class ActiveService {
         } else {
           this.train.blockedBy = false;
         }
-      } else {
-        const blockLimit = this._proximityBlockCheck(allServices);
-        if (blockLimit !== null) {
-          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, blockLimit);
-          this.train.blockedBy = blockLimit === 0;
-        } else {
-          this.train.blockedBy = false;
-        }
+      }
+      // ALWAYS run proximity check as a safety net (catches cases where
+      // canton geo-keys don't match between trains with different routes)
+      const blockLimit = this._proximityBlockCheck(allServices);
+      if (blockLimit !== null) {
+        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, blockLimit);
+        if (blockLimit === 0) this.train.blockedBy = true;
       }
     }
 
@@ -730,7 +732,16 @@ export class ActiveService {
               break;
             }
             // Reserve and occupy next canton, release previous
-            cantonManager.occupy(nextCanton.cantonId, this.id);
+            const occ = cantonManager.occupy(nextCanton.cantonId, this.id);
+            if (!occ) {
+              // Canton unexpectedly occupied — stop at boundary
+              this._state.progress = 1.0;
+              this.position.lat = segTo.lat;
+              this.position.lon = segTo.lon;
+              this.train.blockedBy = true;
+              remaining = 0;
+              break;
+            }
             if (prevCanton) {
               cantonManager.release(prevCanton.cantonId, this.id);
             }
@@ -964,31 +975,41 @@ export class ActiveService {
       // Skip trains not physically on the track
       if (!other.position || other.state === 'waiting' || other.state === 'completed') continue;
 
-      // Voie check: only block if confirmed on the SAME voie
+      // Voie check: if both trains have voie info and they differ → different tracks, skip
       const otherVoie = other.train?.platform || (vpm && other.position ? vpm.getVoieAtPosition(other.position) : null);
       if (myVoie && otherVoie && myVoie !== otherVoie) continue;
-      // If neither has voie info, skip — can't confirm same track
-      if (!myVoie && !otherVoie) continue;
-      // If only one has voie info, skip — can't confirm same track
-      if (!myVoie || !otherVoie) continue;
 
       const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
       // Only check trains within canton range (max ~5km, not 30km)
       if (rawDist > 5) continue;
 
-      // Check if other train is actually on our route (within 0.5km of a route point)
+      // Check if other train is actually on our route (within 0.2km of a route point)
       const rLen = route.length;
-      const step = Math.max(1, Math.floor(rLen / 10));
+      const step = Math.max(1, Math.floor(rLen / 15));
       let nearRoute = false;
       for (let ri = 0; ri < rLen; ri += step) {
-        if (haversineDistance(other.position.lat, other.position.lon, route[ri].lat, route[ri].lon) < 0.5) {
+        if (haversineDistance(other.position.lat, other.position.lon, route[ri].lat, route[ri].lon) < 0.2) {
           nearRoute = true; break;
         }
       }
       if (!nearRoute) continue;
 
+      // Heading check: skip trains going in opposite direction (likely on other track)
+      if (other.state === 'moving' && other._state?.cachedRoute && other._state.index < other._state.cachedRoute.length - 1) {
+        const oRoute = other._state.cachedRoute;
+        const oi = other._state.index;
+        const segIdx = this._state.index;
+        if (segIdx < route.length - 1) {
+          const myHdg = Math.atan2(route[segIdx + 1].lon - route[segIdx].lon, route[segIdx + 1].lat - route[segIdx].lat);
+          const otHdg = Math.atan2(oRoute[oi + 1].lon - oRoute[oi].lon, oRoute[oi + 1].lat - oRoute[oi].lat);
+          let hdiff = Math.abs(myHdg - otHdg);
+          if (hdiff > Math.PI) hdiff = 2 * Math.PI - hdiff;
+          if (hdiff > Math.PI / 2) continue; // Opposite direction → different tracks
+        }
+      }
+
       const otherProgress = this._getRouteProgressKm(other.position, route, this._state.index);
-      const ahead = this.isReturnLeg ? otherProgress < myProgress : otherProgress > myProgress;
+      const ahead = otherProgress > myProgress;
 
       if (ahead) {
         const dist = Math.abs(otherProgress - myProgress);
@@ -999,18 +1020,15 @@ export class ActiveService {
       }
 
       // Nez-à-nez detection: other train coming toward us on same track
-      if (!ahead && rawDist < 2) {
-        const otherRoute = other._state?.cachedRoute || other.getCurrentRoute?.();
-        if (otherRoute && otherRoute.length >= 2) {
-          const otherDir = other.isReturnLeg ? -1 : 1;
-          const myDir = this.isReturnLeg ? -1 : 1;
-          if (otherDir !== myDir) {
-            const dist = Math.abs(otherProgress - myProgress);
-            if (dist < nearestAheadDist) {
-              nearestAheadDist = dist;
-              nearestAheadSpeed = 0;
-            }
-          }
+      // (heading check above already filtered opposite-direction trains on parallel tracks,
+      //  but if they're stopped or have no heading data, check raw distance)
+      if (!ahead && rawDist < 1.5 && other.state === 'stopped_at_station') {
+        // A stopped train close behind us is not a head-on concern
+      } else if (!ahead && rawDist < 1.5 && other.speed > 0) {
+        const dist = Math.abs(otherProgress - myProgress);
+        if (dist < nearestAheadDist && dist < 0.8) {
+          nearestAheadDist = dist;
+          nearestAheadSpeed = 0;
         }
       }
     }

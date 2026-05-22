@@ -201,6 +201,10 @@ export class CantonManager {
   occupy(cantonId, trainId) {
     const c = this.cantons.get(cantonId);
     if (!c) return true;
+    // Prevent overwriting occupation by another active train
+    if (c.occupiedBy && c.occupiedBy !== trainId) {
+      if (!this._isTrainGone(c.occupiedBy)) return false;
+    }
     c.occupiedBy = trainId;
     c.reservedBy = null;
     this._trackCanton(trainId, cantonId);
@@ -235,7 +239,12 @@ export class CantonManager {
     const svcs = window.game?.scheduleCreator?.services;
     if (!svcs) return false;
     const s = svcs.find(s => s.id === id);
-    return !s || s.state === 'waiting' || s.state === 'completed' || !s.position;
+    if (!s) return true;
+    if (s.state === 'waiting' || s.state === 'completed') return true;
+    if (!s.position) return true;
+    // A train stopped at station has already released its cantons
+    if (s.state === 'stopped_at_station') return true;
+    return false;
   }
 
   releaseAll(trainId) {

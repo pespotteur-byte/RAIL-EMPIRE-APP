@@ -2,7 +2,7 @@
 // Voie points are unnamed geographic markers that define which voie (track) a train is on
 // Troncons connect voie points and/or stations with ORM-traced routes
 
-import { haversineDistance } from './simulation.js?v=1779403154';
+import { haversineDistance } from './simulation.js?v=1779473226';
 
 let nextVoiePointId = 1;
 let nextTronconId = 1;
@@ -183,13 +183,27 @@ export class VoiePointManager {
     const trc = this.getTronconById(tronconId);
     if (!trc) return false;
     if (!trc.occupiedBy || trc.occupiedBy === excludeTrainId) return false;
-    // Verify the occupying train still exists and is active
+    // Verify the occupying train still exists, is active, and is still near this troncon
     const services = window.game?.scheduleCreator?.services;
     if (services) {
       const occupier = services.find(s => s.id === trc.occupiedBy);
       if (!occupier || occupier.state === 'waiting' || occupier.state === 'completed' || !occupier.position) {
         trc.occupiedBy = null;
         return false;
+      }
+      // Staleness check: if occupier has moved far from this troncon, release it
+      if (occupier.position && trc.route && trc.route.length >= 2) {
+        const vpA = this.getVoiePointById(trc.pointA);
+        const vpB = this.getVoiePointById(trc.pointB);
+        if (vpA && vpB) {
+          const dA = haversineDistance(occupier.position.lat, occupier.position.lon, vpA.lat, vpA.lon);
+          const dB = haversineDistance(occupier.position.lat, occupier.position.lon, vpB.lat, vpB.lon);
+          const trcLen = haversineDistance(vpA.lat, vpA.lon, vpB.lat, vpB.lon);
+          if (Math.min(dA, dB) > trcLen + 0.5) {
+            trc.occupiedBy = null;
+            return false;
+          }
+        }
       }
     }
     return true;

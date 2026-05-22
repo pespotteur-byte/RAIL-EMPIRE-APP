@@ -1,36 +1,36 @@
-import { SimulationEngine } from './engine.js?v=1779406655';
-import { World, createDefaultWorld } from './world.js?v=1779406655';
-import { Renderer } from './renderer.js?v=1779406655';
-import { UI } from './ui.js?v=1779406655';
-import { Economy } from './economy.js?v=1779406655';
-import { IncidentManager } from './incidents.js?v=1779406655';
-import { FreightManager } from './freight.js?v=1779406655';
-import { ScheduleManager } from './schedule.js?v=1779406655';
-import { GameStorage } from './storage.js?v=1779406655';
-import { AccountManager } from './account.js?v=1779406655';
-import { RollingStockManager } from './rolling-stock.js?v=1779406655';
-import { RameManager } from './rame.js?v=1779406655';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779406655';
-import { DepotManager } from './depot.js?v=1779406655';
-import { WorksManager } from './works.js?v=1779406655';
-import { ORMClient } from './orm.js?v=1779406655';
-import { LineManager, PlatformManager } from './line.js?v=1779406655';
-import { VoiePointManager } from './voie-points.js?v=1779406655';
-import { Dashboard } from './dashboard.js?v=1779406655';
-import { GraphMarche } from './graph-marche.js?v=1779406655';
-import { StaffManager } from './staff.js?v=1779406655';
-import { Tutorial } from './tutorial.js?v=1779406655';
-import { Bank } from './bank.js?v=1779406655';
-import { Weather } from './weather.js?v=1779406655';
-import { Unions } from './unions.js?v=1779406655';
-import { SeasonalSchedule } from './seasonal.js?v=1779406655';
-import { Connections } from './connections.js?v=1779406655';
-import { StationUpgrades } from './station-upgrades.js?v=1779406655';
-import { JunctionManager } from './junctions.js?v=1779406655';
-import { CargoTypeManager } from './cargo-types.js?v=1779406655';
-import { ITEModules } from './ite-modules.js?v=1779406655';
-import { IndustrialClients } from './industrial-clients.js?v=1779406655';
-import { ShuntingManager } from './shunting.js?v=1779406655';
+import { SimulationEngine } from './engine.js?v=1779473220';
+import { World, createDefaultWorld } from './world.js?v=1779473220';
+import { Renderer } from './renderer.js?v=1779473220';
+import { UI } from './ui.js?v=1779473220';
+import { Economy } from './economy.js?v=1779473220';
+import { IncidentManager } from './incidents.js?v=1779473220';
+import { FreightManager } from './freight.js?v=1779473220';
+import { ScheduleManager } from './schedule.js?v=1779473220';
+import { GameStorage } from './storage.js?v=1779473220';
+import { AccountManager } from './account.js?v=1779473220';
+import { RollingStockManager } from './rolling-stock.js?v=1779473220';
+import { RameManager } from './rame.js?v=1779473220';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779473220';
+import { DepotManager } from './depot.js?v=1779473220';
+import { WorksManager } from './works.js?v=1779473220';
+import { ORMClient } from './orm.js?v=1779473220';
+import { LineManager, PlatformManager } from './line.js?v=1779473220';
+import { VoiePointManager } from './voie-points.js?v=1779473220';
+import { Dashboard } from './dashboard.js?v=1779473220';
+import { GraphMarche } from './graph-marche.js?v=1779473220';
+import { StaffManager } from './staff.js?v=1779473220';
+import { Tutorial } from './tutorial.js?v=1779473220';
+import { Bank } from './bank.js?v=1779473220';
+import { Weather } from './weather.js?v=1779473220';
+import { Unions } from './unions.js?v=1779473220';
+import { SeasonalSchedule } from './seasonal.js?v=1779473220';
+import { Connections } from './connections.js?v=1779473220';
+import { StationUpgrades } from './station-upgrades.js?v=1779473220';
+import { JunctionManager } from './junctions.js?v=1779473220';
+import { CargoTypeManager } from './cargo-types.js?v=1779473220';
+import { ITEModules } from './ite-modules.js?v=1779473220';
+import { IndustrialClients } from './industrial-clients.js?v=1779473220';
+import { ShuntingManager } from './shunting.js?v=1779473220';
 
 class RailEmpire {
   constructor() {
@@ -460,6 +460,13 @@ class RailEmpire {
     }
     // Update rescue locomotives movement
     this.depotManager.updateRescues(dt);
+    // Periodic canton cleanup (every ~30s)
+    if (!this._lastCantonCleanup) this._lastCantonCleanup = 0;
+    const now = performance.now();
+    if (now - this._lastCantonCleanup > 30000) {
+      this._lastCantonCleanup = now;
+      this.cantonManager.cleanup();
+    }
   }
 
   tick(timeOfDay, dateStr, pt) {
