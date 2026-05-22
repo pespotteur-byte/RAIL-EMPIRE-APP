@@ -53,12 +53,13 @@ header {
 .company-name { font-weight: 700; font-size: 13px; color: var(--blue); white-space: nowrap; }
 .nav-tabs {
   display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden;
-  scrollbar-width: thin; scrollbar-color: var(--bg3) transparent;
+  scrollbar-width: auto; scrollbar-color: var(--bg3) var(--bg);
   flex: 1; min-width: 0; padding: 2px 0;
 }
-.nav-tabs::-webkit-scrollbar { height: 3px; }
-.nav-tabs::-webkit-scrollbar-track { background: transparent; }
-.nav-tabs::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+.nav-tabs::-webkit-scrollbar { height: 10px; }
+.nav-tabs::-webkit-scrollbar-track { background: var(--bg); border-radius: 5px; }
+.nav-tabs::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 5px; border: 2px solid var(--bg); }
+.nav-tabs::-webkit-scrollbar-thumb:hover { background: #64748b; }
 .nav-btn { padding: 5px 10px; background: transparent; border: none; color: var(--text3); cursor: pointer; font-size: 11px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
 .nav-btn.active { background: var(--blue); color: #fff; }
 .nav-btn:hover:not(.active) { background: var(--bg3); color: var(--text); }
@@ -368,10 +369,13 @@ header {
 .nav-toggle { display: none; background: none; border: 1px solid var(--border); color: var(--text); font-size: 18px; padding: 2px 8px; border-radius: 4px; cursor: pointer; }
 
 /* SCROLLBAR */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--bg); border-radius: 6px; }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 6px; min-height: 40px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+::-webkit-scrollbar-thumb:active { background: #94a3b8; }
+::-webkit-scrollbar-corner { background: var(--bg); }
+* { scrollbar-width: auto; scrollbar-color: var(--bg3) var(--bg); }
 
 /* RESPONSIVE - TABLET */
 @media (max-width: 900px) {
