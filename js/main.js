@@ -575,6 +575,11 @@ class RailEmpire {
         const allVisibleServices = [...activeServices, ...rescueServices];
 
         if (this.renderer) {
+          // Keep radar tile URL in sync with weather data (needed for toggle to work immediately)
+          try {
+            const rp = this.weather.getLatestRadarPath();
+            if (rp) this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(rp));
+          } catch(e) { /* graceful */ }
           this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
         }
 

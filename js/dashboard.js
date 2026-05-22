@@ -2,6 +2,7 @@
  * Dashboard — Real-time performance analytics for Rail Empire.
  * Pure read-only module: observes game state, never modifies it.
  */
+import { icon } from './icons.js';
 export class Dashboard {
   constructor() {
     // Rolling history buffers (max 288 entries = 24h at 5-min intervals)
@@ -146,7 +147,7 @@ export class Dashboard {
             <span>Train</span><span>Rame</span><span>&Eacute;tat</span><span>Retard</span><span>Vitesse</span><span>Prochain arr&ecirc;t</span>
           </div>
           ${activeServices.map(svc => {
-            const state = svc.state === 'moving' ? '🟢 En route' : svc.state === 'waiting' ? '🟡 Attente' : '⚪ Terminé';
+            const state = svc.state === 'moving' ? `${icon('dot_green', 10)} En route` : svc.state === 'waiting' ? `${icon('dot_yellow', 10)} Attente` : `${icon('dot_gray', 10)} Terminé`;
             const delay = svc.train?.delay || 0;
             const delayStr = delay > 0 ? `+${delay.toFixed(0)} min` : delay < -1 ? `${delay.toFixed(0)} min` : 'À l\'heure';
             const delayColor = Math.abs(delay) <= 5 ? 'var(--green)' : delay > 0 ? '#ef4444' : '#38bdf8';

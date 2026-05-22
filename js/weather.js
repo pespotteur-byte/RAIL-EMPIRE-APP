@@ -3,6 +3,7 @@
  * Fetches real weather data based on map center position.
  * Falls back to simulated weather if API is unavailable.
  */
+import { icon } from './icons.js';
 export class Weather {
   constructor() {
     this.current = 'clear';      // clear, rain, snow, storm, heat, fog
@@ -28,12 +29,12 @@ export class Weather {
     this._radarFetchCooldown = 600000; // 10 min
 
     this._effects = {
-      clear:  { speedMult: 1.0,  icon: '☀️',  label: 'Dégagé',      color: '#fbbf24' },
-      rain:   { speedMult: 0.90, icon: '🌧️',  label: 'Pluie',       color: '#60a5fa' },
-      snow:   { speedMult: 0.70, icon: '❄️',  label: 'Neige',       color: '#e2e8f0' },
-      storm:  { speedMult: 0.60, icon: '⛈️',  label: 'Tempête',     color: '#a855f7' },
-      heat:   { speedMult: 0.85, icon: '🌡️',  label: 'Canicule',    color: '#ef4444' },
-      fog:    { speedMult: 0.75, icon: '🌫️',  label: 'Brouillard',  color: '#94a3b8' },
+      clear:  { speedMult: 1.0,  icon: 'sun',         label: 'Dégagé',      color: '#fbbf24' },
+      rain:   { speedMult: 0.90, icon: 'rain',        label: 'Pluie',       color: '#60a5fa' },
+      snow:   { speedMult: 0.70, icon: 'snow',        label: 'Neige',       color: '#e2e8f0' },
+      storm:  { speedMult: 0.60, icon: 'storm',       label: 'Tempête',     color: '#a855f7' },
+      heat:   { speedMult: 0.85, icon: 'thermometer', label: 'Canicule',    color: '#ef4444' },
+      fog:    { speedMult: 0.75, icon: 'fog',         label: 'Brouillard',  color: '#94a3b8' },
     };
 
     // WMO weather code mapping
@@ -208,7 +209,7 @@ export class Weather {
     const d = this.getDisplay();
     const liveTag = d.live ? ' LIVE' : '';
     return `<span class="weather-widget" style="color:${d.color}" title="${d.label} — ${d.temperature}°C — Vent: ${d.windSpeed} km/h — Vitesse: ${d.speedPct}%${liveTag}">
-      ${d.icon} ${d.temperature}°C${d.live ? ' <span style="font-size:8px;color:#22c55e;vertical-align:super">LIVE</span>' : ''}
+      ${icon(d.icon, 14)} ${d.temperature}°C${d.live ? ' <span style="font-size:8px;color:#22c55e;vertical-align:super">LIVE</span>' : ''}
     </span>`;
   }
 
@@ -217,7 +218,7 @@ export class Weather {
     const d = this.getDisplay();
 
     // Wind direction indicator
-    const windArrow = d.windSpeed > 0 ? '💨' : '';
+    const windArrow = d.windSpeed > 0 ? icon('wind', 12) : '';
     const windClass = d.windSpeed > 80 ? 'color:#ef4444;font-weight:700' : d.windSpeed > 50 ? 'color:#f97316' : d.windSpeed > 20 ? 'color:#eab308' : 'color:var(--text)';
 
     // Temperature color gradient
@@ -240,7 +241,7 @@ export class Weather {
 
         <!-- Big weather display -->
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px">
-          <div style="font-size:48px;line-height:1">${d.icon}</div>
+          <div style="font-size:48px;line-height:1">${icon(d.icon, 48)}</div>
           <div style="flex:1">
             <div style="font-size:28px;font-weight:700;color:${tempColor}">${d.temperature}°C</div>
             <div style="font-size:14px;color:${d.color};font-weight:600">${d.label}</div>
@@ -255,20 +256,20 @@ export class Weather {
             <div style="font-size:16px;font-weight:600;${windClass}">${d.windSpeed} km/h</div>
           </div>
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">🌧️ Précipitations</div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('rain', 12)} Précipitations</div>
             <div style="font-size:16px;font-weight:600;color:${d.precipitation > 0 ? '#60a5fa' : 'var(--text)'}">${d.precipitation} mm</div>
           </div>
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">💧 Humidité</div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('droplet', 12)} Humidité</div>
             ${humBar}
           </div>
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">☁️ Couverture nuageuse</div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('cloud', 12)} Couverture nuageuse</div>
             ${cloudBar}
           </div>
         </div>
 
-        ${d.live ? `<p style="font-size:10px;color:var(--text3);margin-top:10px">📡 Données Open-Meteo • Lat ${this._lastLat.toFixed(2)}° Lon ${this._lastLon.toFixed(2)}° • Rafraîchissement toutes les 5 min</p>` : ''}
+        ${d.live ? `<p style="font-size:10px;color:var(--text3);margin-top:10px">${icon('signal', 12)} Données Open-Meteo • Lat ${this._lastLat.toFixed(2)}° Lon ${this._lastLon.toFixed(2)}° • Rafraîchissement toutes les 5 min</p>` : ''}
       </div>
 
       <div class="dash-section">
@@ -282,7 +283,7 @@ export class Weather {
             const pct = Math.round(e.speedMult * 100);
             const reduction = 100 - pct;
             return `<div class="dash-train-row" style="grid-template-columns:50px 1fr 100px 100px;${isActive ? 'background:var(--bg3);border-left:3px solid ' + e.color : ''}">
-              <span style="font-size:20px">${e.icon}</span>
+              <span style="font-size:20px">${icon(e.icon, 20)}</span>
               <span style="${isActive ? 'font-weight:700;color:' + e.color : ''}">${e.label}${reduction > 0 ? ` <span style="font-size:10px;color:var(--text3)">(-${reduction}%)</span>` : ''}</span>
               <span style="color:${pct < 100 ? '#ef4444' : '#22c55e'};font-weight:${isActive ? '700' : '400'}">${pct}%</span>
               <span>${isActive ? '<span style="color:#22c55e;font-size:11px;font-weight:600">● ACTIF</span>' : ''}</span>
@@ -292,23 +293,23 @@ export class Weather {
       </div>
 
       <div class="dash-section">
-        <h3>🛰️ Radar & Satellite</h3>
+        <h3>${icon('satellite', 16)} Radar & Satellite</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div style="padding:10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:11px;font-weight:600;margin-bottom:4px">🌧️ Radar précipitations</div>
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px">${icon('radar', 14)} Radar précipitations</div>
             <div style="font-size:11px;color:var(--text3)">
               ${this.radarTimestamps.length > 0
                 ? `<span style="color:#22c55e">●</span> ${this.radarTimestamps.length} images disponibles`
                 : '<span style="color:#f97316">●</span> Chargement...'}
             </div>
-            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez "🌧️ Radar" sur la carte</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez le toggle Radar sur la carte</div>
           </div>
           <div style="padding:10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:11px;font-weight:600;margin-bottom:4px">🛰️ Vue satellite</div>
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px">${icon('satellite', 14)} Vue satellite</div>
             <div style="font-size:11px;color:var(--text3)">
               <span style="color:#22c55e">●</span> ArcGIS World Imagery
             </div>
-            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez "🛰️ Satellite" sur la carte</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez le toggle Satellite sur la carte</div>
           </div>
         </div>
       </div>

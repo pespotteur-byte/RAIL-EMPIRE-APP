@@ -225,7 +225,7 @@ export class Renderer {
         if (label) {
           ctx.fillStyle = hasInterruption ? (track.worksActive ? '#c2410c' : '#7f1d1d') : '#facc15';
           ctx.font = 'bold 10px sans-serif';
-          ctx.fillText(`⚠ ${label}`, mp.x + 5, mp.y - 5);
+          ctx.fillText(`\u26A0 ${label}`, mp.x + 5, mp.y - 5);
         }
       }
     }

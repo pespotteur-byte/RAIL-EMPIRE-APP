@@ -1,4 +1,8 @@
 /**
+ * @module CargoTypes
+ */
+import { icon } from './icons.js';
+/**
  * CargoTypes — Extended cargo type system with wagon requirements and constraints.
  * Enhances the freight system with realistic cargo categories.
  */
@@ -7,7 +11,7 @@ export class CargoTypeManager {
     this.categories = {
       vrac: {
         name: 'Vrac',
-        icon: '🪨',
+        icon: 'cargo',
         description: 'Matières en vrac (charbon, sable, gravier, minerai)',
         wagonType: 'trémie',
         speedLimit: null,
@@ -22,7 +26,7 @@ export class CargoTypeManager {
       },
       conteneurs: {
         name: 'Conteneurs',
-        icon: '📦',
+        icon: 'container',
         description: 'Conteneurs ISO standard (20\' et 40\')',
         wagonType: 'plat',
         speedLimit: null,
@@ -35,7 +39,7 @@ export class CargoTypeManager {
       },
       liquides: {
         name: 'Liquides',
-        icon: '🛢️',
+        icon: 'oil',
         description: 'Produits liquides (carburant, chimie, alimentaire)',
         wagonType: 'citerne',
         speedLimit: 80,
@@ -49,7 +53,7 @@ export class CargoTypeManager {
       },
       dangereux: {
         name: 'Matières dangereuses',
-        icon: '☢️',
+        icon: 'hazard',
         description: 'Transport réglementé (TMD) — vitesse réduite obligatoire',
         wagonType: 'spécial',
         speedLimit: 60,
@@ -63,7 +67,7 @@ export class CargoTypeManager {
       },
       automobiles: {
         name: 'Automobiles',
-        icon: '🚗',
+        icon: 'car',
         description: 'Transport de véhicules neufs sur wagons porte-autos',
         wagonType: 'porte-auto',
         speedLimit: 100,
@@ -75,7 +79,7 @@ export class CargoTypeManager {
       },
       siderurgie: {
         name: 'Sidérurgie',
-        icon: '🔩',
+        icon: 'wrench',
         description: 'Produits métallurgiques (bobines, poutrelles, tôles)',
         wagonType: 'plat-lourd',
         speedLimit: null,
@@ -88,7 +92,7 @@ export class CargoTypeManager {
       },
       bois: {
         name: 'Bois & Papier',
-        icon: '🪵',
+        icon: 'wood',
         description: 'Bois de construction, pâte à papier, papier',
         wagonType: 'plat',
         speedLimit: null,
@@ -199,7 +203,7 @@ export class CargoTypeManager {
 
       ${Object.entries(this.categories).map(([key, cat]) => `
         <div class="dash-section">
-          <h3>${cat.icon} ${cat.name}</h3>
+          <h3>${icon(cat.icon, 16)} ${cat.name}</h3>
           <p style="font-size:11px;color:var(--text3);margin-bottom:8px">${cat.description}</p>
           <p style="font-size:10px;color:var(--text3);margin-bottom:6px">
             Wagon requis : <b>${cat.wagonType}</b> •
@@ -216,7 +220,7 @@ export class CargoTypeManager {
                 <span>${t.unit}</span>
                 <span>${t.minQty}-${t.maxQty}</span>
                 <span style="color:var(--green)">${t.pricePerUnit} €</span>
-                <span style="color:${t.hazard ? '#ef4444' : 'var(--text3)'}">${t.hazard ? '⚠️ Oui' : '—'}</span>
+                <span style="color:${t.hazard ? '#ef4444' : 'var(--text3)'}">${t.hazard ? icon('warning',12) + ' Oui' : '—'}</span>
               </div>
             `).join('')}
           </div>

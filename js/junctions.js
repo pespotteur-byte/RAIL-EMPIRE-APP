@@ -2,6 +2,7 @@
  * Junctions — Switch/junction management for railway operations.
  * Manages turnouts, sidings, and junction routing in stations.
  */
+import { icon } from './icons.js';
 export class JunctionManager {
   constructor() {
     this.junctions = [];     // { id, stationId, name, type, tracks, state }
@@ -174,7 +175,7 @@ export class JunctionManager {
                 <span>${j.name}</span>
                 <span>${j.type === 'simple' ? 'Simple' : j.type === 'double' ? 'Double' : 'Croisement'}</span>
                 <span style="color:${j.state === 'normal' ? 'var(--green)' : j.state === 'reversed' ? '#f97316' : '#ef4444'}">
-                  ${j.state === 'normal' ? '↑ Normal' : j.state === 'reversed' ? '↗ Dévié' : '🔒 Verrouillé'}
+                  ${j.state === 'normal' ? '↑ Normal' : j.state === 'reversed' ? '↗ Dévié' : `${icon('lock', 12)} Verrouillé`}
                 </span>
                 <span>
                   <button class="jct-switch btn-sm" data-id="${j.id}" data-state="${j.state === 'normal' ? 'reversed' : 'normal'}" style="background:#3b82f6">⇄</button>

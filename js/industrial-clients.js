@@ -2,6 +2,7 @@
  * IndustrialClients — Major industrial customers that generate massive freight traffic.
  * Adapted for very high traffic volumes (cimenteries, raffineries, ports, aciéries).
  */
+import { icon } from './icons.js';
 
 let nextClientId = 1;
 
@@ -9,7 +10,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'cement',
     name: 'Cimenterie',
-    icon: '🏭',
+    icon: 'factory',
     cargoTypes: ['sand', 'gravel', 'coal'],
     cargoOut: 'Ciment',
     dailyTonnageMin: 200,
@@ -21,7 +22,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'refinery',
     name: 'Raffinerie',
-    icon: '🛢️',
+    icon: 'oil',
     cargoTypes: ['fuel', 'chemicals-liq', 'lpg'],
     cargoOut: 'Produits pétroliers',
     dailyTonnageMin: 500,
@@ -33,7 +34,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'port',
     name: 'Port maritime',
-    icon: '🚢',
+    icon: 'cargo',
     cargoTypes: ['containers-20', 'containers-40', 'containers-reefer'],
     cargoOut: 'Conteneurs export',
     dailyTonnageMin: 800,
@@ -45,7 +46,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'steel_mill',
     name: 'Aciérie',
-    icon: '🔩',
+    icon: 'wrench',
     cargoTypes: ['ore', 'coal', 'steel-coils', 'steel-beams'],
     cargoOut: 'Produits sidérurgiques',
     dailyTonnageMin: 400,
@@ -57,7 +58,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'auto_plant',
     name: 'Usine automobile',
-    icon: '🚗',
+    icon: 'car',
     cargoTypes: ['cars', 'trucks', 'steel-coils'],
     cargoOut: 'Véhicules neufs',
     dailyTonnageMin: 100,
@@ -69,7 +70,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'grain_terminal',
     name: 'Terminal céréalier',
-    icon: '🌾',
+    icon: 'silo',
     cargoTypes: ['cereals'],
     cargoOut: 'Céréales export',
     dailyTonnageMin: 300,
@@ -81,7 +82,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'chemical_plant',
     name: 'Usine chimique',
-    icon: '⚗️',
+    icon: 'chemistry',
     cargoTypes: ['chemicals-liq', 'toxic', 'corrosive'],
     cargoOut: 'Produits chimiques',
     dailyTonnageMin: 150,
@@ -93,7 +94,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'paper_mill',
     name: 'Papeterie',
-    icon: '📜',
+    icon: 'wood',
     cargoTypes: ['timber', 'pulp', 'paper'],
     cargoOut: 'Papier/carton',
     dailyTonnageMin: 200,
@@ -105,7 +106,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'logistics_hub',
     name: 'Plateforme logistique',
-    icon: '📦',
+    icon: 'container',
     cargoTypes: ['containers-20', 'containers-40'],
     cargoOut: 'Colis/palettes',
     dailyTonnageMin: 400,
@@ -117,7 +118,7 @@ const INDUSTRY_TYPES = [
   {
     type: 'power_plant',
     name: 'Centrale thermique',
-    icon: '⚡',
+    icon: 'lightning',
     cargoTypes: ['coal'],
     cargoOut: 'Cendres/résidus',
     dailyTonnageMin: 500,
@@ -314,7 +315,7 @@ export class IndustrialClients {
             const satColor = c.satisfaction > 70 ? 'var(--green)' : c.satisfaction > 40 ? '#f97316' : '#ef4444';
             return `
               <div class="dash-train-row" style="grid-template-columns:0.3fr 1fr 0.8fr 0.6fr 0.6fr 0.5fr">
-                <span>${c.icon}</span>
+                <span>${icon(c.icon, 16)}</span>
                 <span>${c.name}<br><span style="font-size:9px;color:var(--text3)">${c.totalTonnage.toLocaleString('fr-FR')} t traités</span></span>
                 <span>${station?.name || '?'}</span>
                 <span style="color:#38bdf8">${c.dailyTonnage.toLocaleString('fr-FR')} t</span>
@@ -346,7 +347,7 @@ export class IndustrialClients {
             return `<button class="industrial-attract btn-primary" data-type="${ind.type}"
               style="font-size:11px;padding:10px 14px;background:${affordable ? '#3b82f6' : '#991b1b'};text-align:left;min-width:200px"
               ${!affordable ? 'disabled' : ''}>
-              ${ind.icon} <b>${ind.name}</b><br>
+              ${icon(ind.icon, 14)} <b>${ind.name}</b><br>
               <span style="font-size:9px;opacity:0.8">${ind.description}</span><br>
               <span style="font-size:10px;color:#fbbf24">${ind.attractCost.toLocaleString('fr-FR')} € • ${ind.dailyTonnageMin}-${ind.dailyTonnageMax} t/j • ${ind.pricePerTonne} €/t</span>
             </button>`;

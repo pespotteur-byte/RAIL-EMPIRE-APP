@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 /**
  * SeasonalSchedule — Summer/winter timetable system.
  * Manages timetable grids and automatic switching.
@@ -84,7 +85,7 @@ export class SeasonalSchedule {
     if (!container) return;
 
     const modeColor = this.mode === 'summer' ? '#f97316' : this.mode === 'winter' ? '#38bdf8' : 'var(--text)';
-    const modeIcon = this.mode === 'summer' ? '☀️' : this.mode === 'winter' ? '❄️' : '🔄';
+    const modeIcon = this.mode === 'summer' ? icon('sun',14) : this.mode === 'winter' ? icon('snow',14) : icon('transfer',14);
     const modeLabel = this.mode === 'summer' ? 'Grille été' : this.mode === 'winter' ? 'Grille hiver' : 'Normal';
 
     const services = game.scheduleCreator?.services || [];
@@ -118,13 +119,13 @@ export class SeasonalSchedule {
         <h3>Changer de grille</h3>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
           <button class="seasonal-switch btn-primary" data-mode="summer" style="font-size:11px;padding:8px 14px;background:#f97316">
-            ☀️ Grille été
+            Grille été
           </button>
           <button class="seasonal-switch btn-primary" data-mode="winter" style="font-size:11px;padding:8px 14px;background:#38bdf8">
-            ❄️ Grille hiver
+            Grille hiver
           </button>
           <button class="seasonal-switch btn-primary" data-mode="normal" style="font-size:11px;padding:8px 14px;background:#6b7280">
-            🔄 Normal
+            Normal
           </button>
           <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)">
             <input type="checkbox" id="seasonal-auto" ${this.autoSwitch ? 'checked' : ''}> Changement auto

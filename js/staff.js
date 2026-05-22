@@ -2,6 +2,7 @@
  * Staff Management — Conductors and personnel for Rail Empire.
  * Additive module: adds hiring/salary/availability constraints.
  */
+import { icon } from './icons.js';
 
 let nextStaffId = 1;
 
@@ -157,7 +158,7 @@ export class StaffManager {
           </div>
           ${this.conductors.map(c => {
             const assignedSvc = activeServices.find(s => s.id === c.assignedServiceId);
-            const statusStr = assignedSvc ? '🟢 En service' : '🟡 Disponible';
+            const statusStr = assignedSvc ? `${icon('dot_green', 10)} En service` : `${icon('dot_yellow', 10)} Disponible`;
             const assignedName = assignedSvc ? assignedSvc.name : '-';
             return `<div class="dash-train-row">
               <span style="font-weight:600">${c.name}</span>

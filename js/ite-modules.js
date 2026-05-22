@@ -1,3 +1,4 @@
+import { icon } from './icons.js';
 /**
  * ITEModules — Modular ITE system with upgradeable infrastructure.
  * Adds loading bays, cranes, silos, warehouses to ITE installations.
@@ -10,7 +11,7 @@ export class ITEModules {
       loading_bay: {
         name: 'Voie de chargement',
         cost: 25000,
-        icon: '🛤️',
+        icon: 'track',
         description: '+1 voie de chargement simultané',
         maxPerITE: 8,
         effect: { loadingTracks: 1, throughputBonus: 50 },
@@ -19,7 +20,7 @@ export class ITEModules {
       crane: {
         name: 'Grue de manutention',
         cost: 45000,
-        icon: '🏗️',
+        icon: 'crane',
         description: 'Réduit le temps de chargement de 20%',
         maxPerITE: 4,
         effect: { loadingSpeedBonus: 0.20, throughputBonus: 100 },
@@ -28,7 +29,7 @@ export class ITEModules {
       gantry_crane: {
         name: 'Portique conteneurs',
         cost: 120000,
-        icon: '🏗️',
+        icon: 'crane',
         description: 'Chargement rapide de conteneurs, +200t/jour de capacité',
         maxPerITE: 3,
         effect: { containerSpeed: 0.35, throughputBonus: 200, containerOnly: true },
@@ -37,7 +38,7 @@ export class ITEModules {
       silo: {
         name: 'Silo de stockage',
         cost: 35000,
-        icon: '🏭',
+        icon: 'silo',
         description: 'Stockage vrac (céréales, charbon, sable) — 500t de capacité',
         maxPerITE: 6,
         effect: { storageCapacity: 500, bulkOnly: true, throughputBonus: 80 },
@@ -46,7 +47,7 @@ export class ITEModules {
       warehouse: {
         name: 'Entrepôt couvert',
         cost: 55000,
-        icon: '🏢',
+        icon: 'warehouse',
         description: 'Stockage marchandises sensibles — 300t, protège du vol/intempéries',
         maxPerITE: 4,
         effect: { storageCapacity: 300, throughputBonus: 60, protection: true },
@@ -55,7 +56,7 @@ export class ITEModules {
       tank_farm: {
         name: 'Parc de citernes',
         cost: 80000,
-        icon: '🛢️',
+        icon: 'oil',
         description: 'Stockage liquides/gaz — 200m³, équipement TMD',
         maxPerITE: 4,
         effect: { liquidCapacity: 200, throughputBonus: 120, hazardCapable: true },
@@ -64,7 +65,7 @@ export class ITEModules {
       weighbridge: {
         name: 'Pont-bascule',
         cost: 20000,
-        icon: '⚖️',
+        icon: 'scale',
         description: 'Pesée automatique — évite les surcharges et amendes',
         maxPerITE: 1,
         effect: { weighing: true, throughputBonus: 20 },
@@ -73,7 +74,7 @@ export class ITEModules {
       shunting_yard: {
         name: 'Faisceau de triage',
         cost: 90000,
-        icon: '🔀',
+        icon: 'sorting',
         description: 'Manœuvres rapides — réduit le temps de manœuvre de 30%',
         maxPerITE: 2,
         effect: { shuntingSpeedBonus: 0.30, throughputBonus: 150 },
@@ -266,7 +267,7 @@ export class ITEModules {
           </div>
           ${Object.entries(this.availableModules).map(([key, mod]) => `
             <div class="dash-train-row" style="grid-template-columns:0.3fr 1.2fr 1fr 0.5fr 0.5fr 0.4fr">
-              <span>${mod.icon}</span>
+              <span>${icon(mod.icon, 16)}</span>
               <span>${mod.name}</span>
               <span style="font-size:10px;color:var(--text3)">${mod.description}</span>
               <span style="color:#f97316">${(mod.cost/1000).toFixed(0)}K€</span>
@@ -346,7 +347,7 @@ export class ITEModules {
         ${data.modules.length === 0 ? '<p style="color:var(--text3);font-size:11px">Aucun module — ITE de base uniquement</p>' :
           `<div style="display:flex;gap:6px;flex-wrap:wrap">${data.modules.map(m => {
             const mod = this.availableModules[m.type];
-            return `<span style="background:var(--bg3);padding:4px 8px;border-radius:4px;font-size:11px">${mod?.icon || ''} ${mod?.name || m.type}</span>`;
+            return `<span style="background:var(--bg3);padding:4px 8px;border-radius:4px;font-size:11px">${mod ? icon(mod.icon, 12) : ''} ${mod?.name || m.type}</span>`;
           }).join('')}</div>`}
 
         <h4 style="font-size:12px;margin:12px 0 6px">Acheter un module</h4>
@@ -358,7 +359,7 @@ export class ITEModules {
             return `<button class="ite-buy-mod btn-primary" data-depot="${depotId}" data-module="${key}"
               style="font-size:11px;padding:8px 12px;background:${maxed ? '#374151' : affordable ? '#3b82f6' : '#991b1b'};text-align:left"
               ${maxed || !affordable ? 'disabled' : ''}>
-              ${mod.icon} ${mod.name}<br>
+              ${icon(mod.icon, 12)} ${mod.name}<br>
               <span style="font-size:9px;opacity:0.7">${mod.cost.toLocaleString('fr-FR')} € — ${mod.description}${count > 0 ? ` (${count}/${mod.maxPerITE})` : ''}</span>
             </button>`;
           }).join('')}

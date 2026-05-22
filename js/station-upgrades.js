@@ -2,6 +2,7 @@
  * StationUpgrades — Modular station upgrade system.
  * Additive: adds upgrade capabilities to existing stations.
  */
+import { icon } from './icons.js';
 export class StationUpgrades {
   constructor() {
     this.upgrades = {}; // stationId -> { modules: [...], level: N }
@@ -9,7 +10,7 @@ export class StationUpgrades {
       platform: {
         name: 'Quai supplémentaire',
         cost: 15000,
-        icon: '🚏',
+        icon: 'station',
         description: '+1 quai, permet plus de trains simultanés',
         maxPerStation: 6,
         effect: { platforms: 1 },
@@ -17,7 +18,7 @@ export class StationUpgrades {
       parking: {
         name: 'Parking voyageurs',
         cost: 20000,
-        icon: '🅿️',
+        icon: 'parking',
         description: '+5% de fréquentation',
         maxPerStation: 1,
         effect: { frequentation: 0.05 },
@@ -25,7 +26,7 @@ export class StationUpgrades {
       hall: {
         name: 'Hall voyageurs',
         cost: 50000,
-        icon: '🏛️',
+        icon: 'hall',
         description: '+10% de fréquentation, +5% satisfaction',
         maxPerStation: 1,
         effect: { frequentation: 0.10, satisfaction: 0.05 },
@@ -33,7 +34,7 @@ export class StationUpgrades {
       display: {
         name: 'Écrans Infogare',
         cost: 8000,
-        icon: '📺',
+        icon: 'screen',
         description: 'Information voyageurs en temps réel',
         maxPerStation: 1,
         effect: { satisfaction: 0.03 },
@@ -41,7 +42,7 @@ export class StationUpgrades {
       depot: {
         name: 'Voie de garage',
         cost: 25000,
-        icon: '🔧',
+        icon: 'wrench',
         description: 'Permet le stationnement et le retournement',
         maxPerStation: 3,
         effect: { garage: 1 },
@@ -49,7 +50,7 @@ export class StationUpgrades {
       freight: {
         name: 'Terminal fret',
         cost: 40000,
-        icon: '📦',
+        icon: 'cargo',
         description: 'Permet le chargement/déchargement de fret',
         maxPerStation: 1,
         effect: { freight: true },
@@ -57,7 +58,7 @@ export class StationUpgrades {
       restaurant: {
         name: 'Restauration',
         cost: 12000,
-        icon: '🍽️',
+        icon: 'restaurant',
         description: '+3% satisfaction voyageurs',
         maxPerStation: 1,
         effect: { satisfaction: 0.03 },
@@ -65,7 +66,7 @@ export class StationUpgrades {
       wifi: {
         name: 'WiFi gratuit',
         cost: 5000,
-        icon: '📶',
+        icon: 'wifi',
         description: '+2% satisfaction voyageurs',
         maxPerStation: 1,
         effect: { satisfaction: 0.02 },
@@ -224,7 +225,7 @@ export class StationUpgrades {
         ${data.modules.length === 0 ? '<p style="color:var(--text3);font-size:11px">Aucun module</p>' :
           `<div style="display:flex;gap:6px;flex-wrap:wrap">${data.modules.map(m => {
             const mod = this.availableModules[m.type];
-            return `<span style="background:var(--bg3);padding:4px 8px;border-radius:4px;font-size:11px">${mod?.icon || ''} ${mod?.name || m.type}</span>`;
+            return `<span style="background:var(--bg3);padding:4px 8px;border-radius:4px;font-size:11px">${mod ? icon(mod.icon, 12) : ''} ${mod?.name || m.type}</span>`;
           }).join('')}</div>`}
 
         <h4 style="font-size:12px;margin:12px 0 6px">Modules disponibles</h4>
@@ -236,7 +237,7 @@ export class StationUpgrades {
             return `<button class="upgrade-buy btn-primary" data-station="${stationId}" data-module="${key}"
               style="font-size:11px;padding:8px 12px;background:${maxed ? '#374151' : affordable ? '#3b82f6' : '#991b1b'};text-align:left"
               ${maxed || !affordable ? 'disabled' : ''}>
-              ${mod.icon} ${mod.name}<br>
+              ${icon(mod.icon, 12)} ${mod.name}<br>
               <span style="font-size:9px;opacity:0.7">${mod.cost.toLocaleString('fr-FR')} € — ${mod.description}${count > 0 ? ` (${count}/${mod.maxPerStation})` : ''}</span>
             </button>`;
           }).join('')}

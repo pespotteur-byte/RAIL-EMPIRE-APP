@@ -2,6 +2,7 @@
  * Tutorial — Interactive step-by-step guide for new players.
  * Overlay-based, does not modify any game state.
  */
+import { icon } from './icons.js';
 export class Tutorial {
   constructor() {
     this.steps = [
@@ -22,35 +23,35 @@ export class Tutorial {
 
       // === LA CARTE ===
       {
-        title: '🗺️ La Carte — Vue d\'ensemble',
+        title: icon('map',14) + ' La Carte — Vue d\'ensemble',
         text: `La carte est le cœur du jeu. Elle affiche une carte OpenStreetMap avec les <b>voies ferrées réelles</b> (couche OpenRailwayMap).<br><br>
         <b>Navigation :</b><br>
         • <b>Déplacer</b> : clic gauche + glisser<br>
         • <b>Zoomer</b> : molette de la souris<br>
         • <b>Zoom max</b> : vous verrez les voies ferrées détaillées<br><br>
         <b>Éléments visibles :</b><br>
-        • 🔵 <b>Gares</b> : cercles bleus avec nom<br>
-        • 🟢 <b>Trains en marche</b> : points qui se déplacent sur les voies<br>
-        • 🔴 <b>Incidents</b> : cercles rouges clignotants<br>
-        • ⚫ <b>Points de voie</b> : petits points pour le tracé des routes`,
+        • <b>Gares</b> : cercles bleus avec nom<br>
+        • <b>Trains en marche</b> : points qui se déplacent sur les voies<br>
+        • <b>Incidents</b> : cercles rouges clignotants<br>
+        • <b>Points de voie</b> : petits points pour le tracé des routes`,
         target: '#game-canvas',
         page: 'map',
       },
       {
-        title: '🏗️ Créer une Gare',
+        title: icon('station',14) + ' Créer une Gare',
         text: `Pour créer votre première gare :<br><br>
         1. Cliquez sur <b>"+ Créer une gare"</b> en haut à gauche de la carte<br>
         2. Le curseur se transforme en croix<br>
         3. Cliquez sur la carte à l'endroit où vous voulez placer la gare (idéalement sur une voie ferrée existante)<br>
         4. Donnez un nom à la gare et choisissez le nombre de quais<br>
         5. Cliquez <b>"Créer"</b><br><br>
-        <b>💡 Astuce :</b> Créez vos gares <b>sur ou à côté des voies ferrées</b> existantes pour que le routage automatique fonctionne. Vous avez besoin d'au moins <b>2 gares</b> pour créer un service.<br><br>
+        <b>Astuce :</b> Créez vos gares <b>sur ou à côté des voies ferrées</b> existantes pour que le routage automatique fonctionne. Vous avez besoin d'au moins <b>2 gares</b> pour créer un service.<br><br>
         <b>Déplacer une gare :</b> Maintenez <b>Shift + clic-glisser</b> sur une gare pour la repositionner.`,
         target: '#btn-create-station',
         page: 'map',
       },
       {
-        title: '📋 La Barre Latérale',
+        title: icon('info',14) + ' La Barre Latérale',
         text: `Sur la droite de la carte, la <b>barre latérale</b> affiche en temps réel :<br><br>
         <b>Onglet Trains :</b><br>
         • Liste de tous les trains en circulation<br>
@@ -69,24 +70,24 @@ export class Tutorial {
 
       // === MATÉRIEL ROULANT ===
       {
-        title: '🚂 Matériel Roulant — Acheter des engins',
+        title: icon('train',14) + ' Matériel Roulant — Acheter des engins',
         text: `L'onglet <b>"Matériel"</b> est le catalogue de tout le matériel roulant que vous pouvez acheter.<br><br>
         <b>3 types d'engins :</b><br>
-        • <b>🚂 Locomotives</b> : tirent les voitures. Chaque loco a une vitesse max, une puissance (kW) et un coût.<br>
-        • <b>🚃 Voitures</b> : transportent les passagers. Capacité en places assises.<br>
-        • <b>📦 Wagons</b> : transportent le fret. Capacité en tonnes.<br><br>
+        • <b>Locomotives</b> : tirent les voitures. Chaque loco a une vitesse max, une puissance (kW) et un coût.<br>
+        • <b>Voitures</b> : transportent les passagers. Capacité en places assises.<br>
+        • <b>Wagons</b> : transportent le fret. Capacité en tonnes.<br><br>
         <b>Pour acheter :</b><br>
         1. Cliquez <b>"Ajouter un engin"</b><br>
         2. Choisissez le type et le modèle<br>
         3. Le prix est déduit de votre solde<br><br>
-        <b>💡 Astuce :</b> Commencez avec une locomotive et 2-3 voitures voyageurs. Vous pourrez toujours en acheter plus tard.`,
+        <b>Astuce :</b> Commencez avec une locomotive et 2-3 voitures voyageurs. Vous pourrez toujours en acheter plus tard.`,
         target: '[data-page="rolling-stock"]',
         page: 'rolling-stock',
       },
 
       // === RAMES ===
       {
-        title: '🚆 Rames — Composer vos trains',
+        title: icon('train',14) + ' Rames — Composer vos trains',
         text: `Une <b>rame</b> est un train complet = locomotive(s) + voitures/wagons assemblés ensemble.<br><br>
         <b>Pour créer une rame :</b><br>
         1. Cliquez <b>"Créer une rame"</b><br>
@@ -98,14 +99,14 @@ export class Tutorial {
         • <b>Capacité</b> : somme des places de toutes les voitures<br>
         • <b>Usure</b> : augmente avec les km parcourus, à surveiller<br>
         • <b>Km parcourus</b> : compteur kilométrique total<br><br>
-        <b>⚠️ Important :</b> Un engin ne peut appartenir qu'à <b>une seule rame</b> à la fois.`,
+        <b>Important :</b> Un engin ne peut appartenir qu'à <b>une seule rame</b> à la fois.`,
         target: '[data-page="rames"]',
         page: 'rames',
       },
 
       // === HORAIRES ===
       {
-        title: '🕐 Horaires — Planifier les services',
+        title: icon('calendar',14) + ' Horaires — Planifier les services',
         text: `C'est ici que vous créez les <b>services</b> (= trajets planifiés de vos trains).<br><br>
         <b>Pour créer un service :</b><br>
         1. Cliquez <b>"Nouveau service"</b><br>
@@ -117,14 +118,14 @@ export class Tutorial {
         • <b>Aller-retour</b> : le train fait le trajet dans les deux sens<br>
         • <b>Répétition</b> : le service se répète automatiquement<br>
         • <b>Quai assigné</b> : choisir le quai de départ/arrivée<br><br>
-        <b>💡 Astuce :</b> Vérifiez que votre rame n'est pas déjà utilisée par un autre service au même moment !`,
+        <b>Astuce :</b> Vérifiez que votre rame n'est pas déjà utilisée par un autre service au même moment !`,
         target: '[data-page="schedules"]',
         page: 'schedules',
       },
 
       // === LIGNES ===
       {
-        title: '🛤️ Lignes — Organiser votre réseau',
+        title: icon('track',14) + ' Lignes — Organiser votre réseau',
         text: `Les <b>lignes</b> regroupent plusieurs services sous un même nom et une même couleur.<br><br>
         <b>Exemple :</b><br>
         • Ligne A (bleu) : Paris → Lyon (3 services par jour)<br>
@@ -137,14 +138,14 @@ export class Tutorial {
         • Meilleure visualisation sur la carte (couleur par ligne)<br>
         • Filtrage dans le Graphique de Marche par ligne<br>
         • Organisation claire de votre réseau<br><br>
-        <b>💡</b> C'est optionnel mais fortement recommandé quand votre réseau grandit.`,
+        <b></b> C'est optionnel mais fortement recommandé quand votre réseau grandit.`,
         target: '[data-page="lines"]',
         page: 'lines',
       },
 
       // === DEPOTS ===
       {
-        title: '🔧 Dépôts & ITE — Maintenance et fret',
+        title: icon('wrench',14) + ' Dépôts & ITE — Maintenance et fret',
         text: `Les <b>dépôts</b> sont essentiels pour entretenir vos rames.<br><br>
         <b>Maintenance :</b><br>
         • Chaque rame accumule de <b>l'usure</b> en roulant (km parcourus)<br>
@@ -158,19 +159,19 @@ export class Tutorial {
         <b>ITE (Installations Terminales Embranchées) :</b><br>
         • Voies de garage privées pour le fret<br>
         • Permettent le chargement/déchargement de marchandises<br><br>
-        <b>💡 Astuce :</b> Planifiez la maintenance aux heures creuses pour ne pas perturber le service.`,
+        <b>Astuce :</b> Planifiez la maintenance aux heures creuses pour ne pas perturber le service.`,
         target: '[data-page="depots"]',
         page: 'depots',
       },
 
       // === INCIDENTS ===
       {
-        title: '⚠️ Incidents — Gérer les imprévus',
+        title: icon('warning',14) + ' Incidents — Gérer les imprévus',
         text: `L'onglet <b>"Incidents"</b> affiche tous les événements perturbateurs de votre réseau.<br><br>
         <b>Types d'incidents :</b><br>
-        • <b>🔴 Pannes de rame</b> : un train est immobilisé (usure trop élevée)<br>
-        • <b>🟠 Travaux sur les voies</b> : ralentissement ou interruption d'un tronçon<br>
-        • <b>🟡 Retards importants</b> : un service a accumulé plus de 15 min de retard<br><br>
+        • <b>Pannes de rame</b> : un train est immobilisé (usure trop élevée)<br>
+        • <b>Travaux sur les voies</b> : ralentissement ou interruption d'un tronçon<br>
+        • <b>Retards importants</b> : un service a accumulé plus de 15 min de retard<br><br>
         <b>Actions possibles :</b><br>
         • Envoyer une loco de secours pour remorquer un train en panne<br>
         • Attendre la fin des travaux<br>
@@ -182,7 +183,7 @@ export class Tutorial {
 
       // === FINANCES ===
       {
-        title: '💰 Finances — Votre trésorerie',
+        title: icon('money',14) + ' Finances — Votre trésorerie',
         text: `L'onglet <b>"Finances"</b> est votre tableau de bord financier.<br><br>
         <b>Revenus (en vert) :</b><br>
         • Passagers transportés (par service complété)<br>
@@ -199,14 +200,14 @@ export class Tutorial {
         • Revenus et dépenses du jour<br>
         • Historique des transactions<br>
         • Km totaux parcourus<br><br>
-        <b>⚠️ Attention :</b> Si votre solde passe en négatif, vos trains continuent de rouler mais vous accumulez les dettes.`,
+        <b>Attention :</b> Si votre solde passe en négatif, vos trains continuent de rouler mais vous accumulez les dettes.`,
         target: '[data-page="economy"]',
         page: 'economy',
       },
 
       // === INFOGARE ===
       {
-        title: '📺 Infogare — Affichage voyageurs',
+        title: icon('screen',14) + ' Infogare — Affichage voyageurs',
         text: `L'<b>Infogare</b> reproduit les panneaux d'information voyageurs qu'on trouve dans les gares réelles.<br><br>
         <b>Affichage :</b><br>
         • Prochains départs avec heure, destination et quai<br>
@@ -216,14 +217,14 @@ export class Tutorial {
         • Sélectionnez une gare pour voir ses départs/arrivées<br>
         • Vérifiez que vos services sont bien planifiés<br>
         • Identifiez rapidement les retards<br><br>
-        <b>💡</b> C'est un outil de supervision : rien à configurer, juste à consulter.`,
+        <b></b> C'est un outil de supervision : rien à configurer, juste à consulter.`,
         target: '[data-page="infogare"]',
         page: 'infogare',
       },
 
       // === DASHBOARD ===
       {
-        title: '📊 Dashboard — KPIs en temps réel',
+        title: icon('dashboard',14) + ' Dashboard — KPIs en temps réel',
         text: `Le <b>Dashboard</b> agrège les statistiques clés de votre réseau.<br><br>
         <b>KPIs affichés :</b><br>
         • <b>Ponctualité</b> : % de trains arrivés à l'heure (objectif > 90%)<br>
@@ -242,7 +243,7 @@ export class Tutorial {
 
       // === GRAPHIQUE DE MARCHE ===
       {
-        title: '📈 Graphique de Marche — Diagramme SNCF',
+        title: icon('chart',14) + ' Graphique de Marche — Diagramme SNCF',
         text: `Le <b>Graphique de Marche</b> est un outil professionnel utilisé par les régulateurs SNCF.<br><br>
         <b>Comment le lire :</b><br>
         • <b>Axe horizontal</b> : le temps (0h à 24h)<br>
@@ -261,7 +262,7 @@ export class Tutorial {
 
       // === PERSONNEL ===
       {
-        title: '👥 Personnel — Gérer les conducteurs',
+        title: icon('people',14) + ' Personnel — Gérer les conducteurs',
         text: `L'onglet <b>"Personnel"</b> gère vos conducteurs de train.<br><br>
         <b>Embauche :</b><br>
         • Chaque conducteur coûte <b>2 000 €</b> à l'embauche<br>
@@ -274,14 +275,14 @@ export class Tutorial {
         <b>Licenciement :</b><br>
         • Vous pouvez licencier un conducteur non affecté<br>
         • Pas de remboursement du coût d'embauche<br><br>
-        <b>💡 Astuce :</b> Prévoyez un conducteur de réserve pour remplacer en cas de besoin.`,
+        <b>Astuce :</b> Prévoyez un conducteur de réserve pour remplacer en cas de besoin.`,
         target: '[data-page="staff"]',
         page: 'staff',
       },
 
       // === BANQUE ===
       {
-        title: '🏦 Banque — Emprunts et crédit',
+        title: icon('bank',14) + ' Banque — Emprunts et crédit',
         text: `La <b>Banque</b> vous permet d'emprunter de l'argent pour investir dans votre réseau.<br><br>
         <b>4 niveaux d'emprunt :</b><br>
         • <b>Petit prêt</b> : 50 000 € à 3% (30 jours) — remboursement 1 717€/j<br>
@@ -293,14 +294,14 @@ export class Tutorial {
         • Le remboursement est <b>automatique</b> et quotidien<br>
         • Maximum <b>5 emprunts simultanés</b><br>
         • Le montant restant à rembourser est visible à tout moment<br><br>
-        <b>⚠️ Attention :</b> Ne surendettez pas votre compagnie ! Les remboursements quotidiens peuvent vite dépasser vos revenus.`,
+        <b>Attention :</b> Ne surendettez pas votre compagnie ! Les remboursements quotidiens peuvent vite dépasser vos revenus.`,
         target: '[data-page="bank"]',
         page: 'bank',
       },
 
       // === MÉTÉO ===
       {
-        title: '🌦️ Météo LIVE — Données réelles',
+        title: icon('weather',14) + ' Météo LIVE — Données réelles',
         text: `Le système <b>Météo</b> utilise des <b>données météo réelles</b> via l'API Open-Meteo.<br><br>
         <b>Données en temps réel :</b><br>
         • Température, humidité, vent, précipitations, couverture nuageuse<br>
@@ -308,26 +309,26 @@ export class Tutorial {
         • Mises à jour toutes les 5 minutes (ou quand vous déplacez la carte)<br>
         • Badge <span style="color:#22c55e">LIVE</span> dans le widget quand les données sont réelles<br><br>
         <b>6 conditions avec impact sur la vitesse :</b><br>
-        • ☀️ <b>Dégagé</b> : 100% • 🌧️ <b>Pluie</b> : 90% • ❄️ <b>Neige</b> : 70%<br>
-        • ⛈️ <b>Tempête</b> : 60% • 🌡️ <b>Canicule</b> : 85% • 🌫️ <b>Brouillard</b> : 75%<br><br>
+        • <b>Dégagé</b> : 100% • <b>Pluie</b> : 90% • <b>Neige</b> : 70%<br>
+        • <b>Tempête</b> : 60% • <b>Canicule</b> : 85% • <b>Brouillard</b> : 75%<br><br>
         <b>Radar précipitations :</b><br>
-        • Cochez <b>🌧️ Radar</b> dans les options de la carte pour afficher le <b>radar de précipitations en temps réel</b> (RainViewer)<br>
+        • Cochez <b>Radar</b> dans les options de la carte pour afficher le <b>radar de précipitations en temps réel</b> (RainViewer)<br>
         • L'overlay montre les zones de pluie/neige avec des couleurs (bleu → vert → jaune → rouge)<br><br>
-        <b>💡</b> Déplacez la carte vers une autre ville pour voir la météo locale changer !`,
+        <b></b> Déplacez la carte vers une autre ville pour voir la météo locale changer !`,
         target: '[data-page="weather"]',
         page: 'weather',
       },
 
       // === SYNDICATS ===
       {
-        title: '✊ Syndicats — Relations sociales',
+        title: icon('shield',14) + ' Syndicats — Relations sociales',
         text: `Les <b>Syndicats</b> représentent la satisfaction de vos employés.<br><br>
         <b>Satisfaction sociale (0-100%) :</b><br>
         • Influencée par : salaires, santé financière, charge de travail, ponctualité<br>
         • <b>> 70%</b> : risque de grève très faible<br>
         • <b>50-70%</b> : risque faible, des revendications apparaissent<br>
         • <b>30-50%</b> : risque moyen (10% par jour)<br>
-        • <b>< 30%</b> : risque élevé (25% par jour) ⚠️<br><br>
+        • <b>< 30%</b> : risque élevé (25% par jour) <br><br>
         <b>Grève :</b><br>
         • Dure 1 à 3 jours<br>
         • Bloque un % de vos services (30-80% selon la gravité)<br>
@@ -336,19 +337,19 @@ export class Tutorial {
         • <b>Prime</b> (10 000 €) : +15% satisfaction<br>
         • <b>Augmentation</b> (25 000 €) : +25% satisfaction<br>
         • <b>Conditions</b> (50 000 €) : +35% satisfaction<br><br>
-        <b>💡 Astuce :</b> Négociez préventivement quand la satisfaction descend sous 60%.`,
+        <b>Astuce :</b> Négociez préventivement quand la satisfaction descend sous 60%.`,
         target: '[data-page="unions"]',
         page: 'unions',
       },
 
       // === HORAIRES SAISONNIERS ===
       {
-        title: '📅 Saisons — Grilles horaires été/hiver',
+        title: icon('calendar',14) + ' Saisons — Grilles horaires été/hiver',
         text: `Les <b>Horaires Saisonniers</b> permettent de gérer des grilles horaires différentes selon la saison.<br><br>
         <b>3 modes :</b><br>
         • <b>Normal</b> : tous les services actifs<br>
-        • <b>☀️ Grille été</b> (1er juin → 30 sept) : renforcez les lignes touristiques<br>
-        • <b>❄️ Grille hiver</b> (1er oct → 31 mai) : réduisez les services peu fréquentés<br><br>
+        • <b>Grille été</b> (1er juin → 30 sept) : renforcez les lignes touristiques<br>
+        • <b>Grille hiver</b> (1er oct → 31 mai) : réduisez les services peu fréquentés<br><br>
         <b>Configuration :</b><br>
         • Activez/désactivez chaque service individuellement pour l'été ou l'hiver<br>
         • Le <b>changement automatique</b> bascule la grille selon la date du jeu<br>
@@ -360,7 +361,7 @@ export class Tutorial {
 
       // === CORRESPONDANCES ===
       {
-        title: '🔄 Correspondances — Transferts voyageurs',
+        title: icon('transfer',14) + ' Correspondances — Transferts voyageurs',
         text: `Les <b>Correspondances</b> gèrent les transferts de passagers entre trains en gare.<br><br>
         <b>Créer une correspondance :</b><br>
         1. Choisissez le <b>service arrivant</b> (le train qui amène les passagers)<br>
@@ -377,17 +378,17 @@ export class Tutorial {
 
       // === GARES MODULAIRES ===
       {
-        title: '🏗️ Gares+ — Améliorations modulaires',
+        title: icon('upgrade',14) + ' Gares+ — Améliorations modulaires',
         text: `<b>Gares Modulaires</b> permet d'agrandir et améliorer vos gares avec des modules.<br><br>
         <b>8 modules disponibles :</b><br>
-        • 🚏 <b>Quai supplémentaire</b> (15 000 €) : +1 quai pour plus de trains simultanés<br>
-        • 🅿️ <b>Parking voyageurs</b> (20 000 €) : +5% de fréquentation<br>
-        • 🏛️ <b>Hall voyageurs</b> (50 000 €) : +10% fréquentation, +5% satisfaction<br>
-        • 📺 <b>Écrans Infogare</b> (8 000 €) : +3% satisfaction<br>
-        • 🔧 <b>Voie de garage</b> (25 000 €) : stationnement et retournement<br>
-        • 📦 <b>Terminal fret</b> (40 000 €) : chargement/déchargement fret<br>
-        • 🍽️ <b>Restauration</b> (12 000 €) : +3% satisfaction<br>
-        • 📶 <b>WiFi gratuit</b> (5 000 €) : +2% satisfaction<br><br>
+        • <b>Quai supplémentaire</b> (15 000 €) : +1 quai pour plus de trains simultanés<br>
+        • <b>Parking voyageurs</b> (20 000 €) : +5% de fréquentation<br>
+        • <b>Hall voyageurs</b> (50 000 €) : +10% fréquentation, +5% satisfaction<br>
+        • <b>Écrans Infogare</b> (8 000 €) : +3% satisfaction<br>
+        • <b>Voie de garage</b> (25 000 €) : stationnement et retournement<br>
+        • <b>Terminal fret</b> (40 000 €) : chargement/déchargement fret<br>
+        • <b>Restauration</b> (12 000 €) : +3% satisfaction<br>
+        • <b>WiFi gratuit</b> (5 000 €) : +2% satisfaction<br><br>
         <b>Niveaux de gare :</b> Le niveau augmente automatiquement avec l'investissement total (1 niveau / 50 000 € investis).`,
         target: '[data-page="station-upgrades"]',
         page: 'station-upgrades',
@@ -395,33 +396,33 @@ export class Tutorial {
 
       // === AIGUILLAGES ===
       {
-        title: '🔀 Aiguillages — Bifurcations et voies de garage',
+        title: icon('junction',14) + ' Aiguillages — Bifurcations et voies de garage',
         text: `Les <b>Aiguillages</b> gèrent les bifurcations et voies de garage en gare.<br><br>
         <b>Aiguillages (5 000 € chacun) :</b><br>
         • <b>Simple</b> : permet de dévier un train sur une voie adjacente<br>
         • <b>Double</b> : permet le passage dans les deux sens<br>
         • <b>Croisement</b> : permet le croisement de deux voies<br>
-        • États : ↑ <b>Normal</b> / ↗ <b>Dévié</b> / 🔒 <b>Verrouillé</b><br><br>
+        • États : ↑ <b>Normal</b> / ↗ <b>Dévié</b> / <b>Verrouillé</b><br><br>
         <b>Voies de garage (10 000 € chacune) :</b><br>
         • Garez des rames inutilisées sur des voies dédiées<br>
         • Chaque voie a une capacité limitée (2 rames par défaut)<br>
         • Gérez le stationnement pour optimiser l'espace en gare<br><br>
-        <b>💡 Astuce :</b> Utilisez les aiguillages pour gérer les croisements de trains en gare et éviter les conflits.`,
+        <b>Astuce :</b> Utilisez les aiguillages pour gérer les croisements de trains en gare et éviter les conflits.`,
         target: '[data-page="junctions"]',
         page: 'junctions',
       },
 
       // === MARCHANDISES ===
       {
-        title: '📦 Types de Marchandises — Catalogue complet',
+        title: icon('cargo',14) + ' Types de Marchandises — Catalogue complet',
         text: `L'onglet <b>Marchandises</b> détaille les 7 catégories de cargo transportables :<br><br>
-        • 🪨 <b>Vrac</b> : charbon, sable, gravier, minerai, céréales (wagon trémie)<br>
-        • 📦 <b>Conteneurs</b> : 20', 40', réfrigérés (wagon plat)<br>
-        • 🛢️ <b>Liquides</b> : carburant, chimie, GPL (wagon citerne, vitesse max 80 km/h)<br>
-        • ☢️ <b>Matières dangereuses</b> : explosifs, toxiques, radioactifs (vitesse max 60 km/h)<br>
-        • 🚗 <b>Automobiles</b> : voitures et camions neufs (wagon porte-auto)<br>
-        • 🔩 <b>Sidérurgie</b> : bobines, poutrelles, aluminium<br>
-        • 🪵 <b>Bois & Papier</b> : bois brut, pâte à papier, rouleaux<br><br>
+        • <b>Vrac</b> : charbon, sable, gravier, minerai, céréales (wagon trémie)<br>
+        • <b>Conteneurs</b> : 20', 40', réfrigérés (wagon plat)<br>
+        • <b>Liquides</b> : carburant, chimie, GPL (wagon citerne, vitesse max 80 km/h)<br>
+        • <b>Matières dangereuses</b> : explosifs, toxiques, radioactifs (vitesse max 60 km/h)<br>
+        • <b>Automobiles</b> : voitures et camions neufs (wagon porte-auto)<br>
+        • <b>Sidérurgie</b> : bobines, poutrelles, aluminium<br>
+        • <b>Bois & Papier</b> : bois brut, pâte à papier, rouleaux<br><br>
         Chaque type a un <b>temps de chargement</b> et un <b>prix/unité</b> différent. Les matières dangereuses (TMD) imposent une <b>vitesse réduite</b>.`,
         target: '[data-page="cargo-types"]',
         page: 'cargo-types',
@@ -429,38 +430,38 @@ export class Tutorial {
 
       // === ITE MODULES ===
       {
-        title: '🏭 ITE+ — Modules d\'installation',
+        title: icon('factory',14) + ' ITE+ — Modules d\'installation',
         text: `L'onglet <b>ITE+</b> permet d'équiper vos ITE avec des modules spécialisés :<br><br>
         <b>Infrastructure de chargement :</b><br>
-        • 🛤️ <b>Voie de chargement</b> (25K€) : +1 voie de chargement simultané<br>
-        • 🏗️ <b>Grue</b> (45K€) : réduit le temps de chargement de 20%<br>
-        • 🏗️ <b>Portique conteneurs</b> (120K€) : chargement rapide conteneurs<br>
-        • 🔀 <b>Faisceau de triage</b> (90K€) : manœuvres 30% plus rapides<br><br>
+        • <b>Voie de chargement</b> (25K€) : +1 voie de chargement simultané<br>
+        • <b>Grue</b> (45K€) : réduit le temps de chargement de 20%<br>
+        • <b>Portique conteneurs</b> (120K€) : chargement rapide conteneurs<br>
+        • <b>Faisceau de triage</b> (90K€) : manœuvres 30% plus rapides<br><br>
         <b>Stockage :</b><br>
-        • 🏭 <b>Silo</b> (35K€) : 500t de vrac<br>
-        • 🏢 <b>Entrepôt</b> (55K€) : 300t, protège du vol<br>
-        • 🛢️ <b>Parc de citernes</b> (80K€) : 200m³ de liquides + TMD<br><br>
-        • ⚖️ <b>Pont-bascule</b> (20K€) : pesée automatique<br><br>
-        <b>💡</b> Plus l'ITE est équipée, plus elle attire de clients industriels !`,
+        • <b>Silo</b> (35K€) : 500t de vrac<br>
+        • <b>Entrepôt</b> (55K€) : 300t, protège du vol<br>
+        • <b>Parc de citernes</b> (80K€) : 200m³ de liquides + TMD<br><br>
+        • <b>Pont-bascule</b> (20K€) : pesée automatique<br><br>
+        <b></b> Plus l'ITE est équipée, plus elle attire de clients industriels !`,
         target: '[data-page="ite-modules"]',
         page: 'ite-modules',
       },
 
       // === INDUSTRIAL CLIENTS ===
       {
-        title: '🏭 Industriels — Clients à gros trafic',
+        title: icon('factory',14) + ' Industriels — Clients à gros trafic',
         text: `L'onglet <b>Industriels</b> permet d'attirer des entreprises qui génèrent du fret <b>massif et régulier</b> :<br><br>
         <b>10 types d'industries :</b><br>
-        • 🏭 Cimenterie (200-800 t/j) — 80K€<br>
-        • 🛢️ Raffinerie (500-2000 t/j) — 200K€<br>
-        • 🚢 Port maritime (800-5000 t/j) — 350K€<br>
-        • 🔩 Aciérie (400-1500 t/j) — 150K€<br>
-        • 🚗 Usine auto (100-500 unités/j) — 120K€<br>
-        • 🌾 Terminal céréalier (300-1200 t/j) — 90K€<br>
-        • ⚗️ Usine chimique (150-600 t/j) — 130K€<br>
-        • 📜 Papeterie (200-700 t/j) — 75K€<br>
-        • 📦 Plateforme logistique (400-3000 t/j) — 250K€<br>
-        • ⚡ Centrale thermique (500-2500 t/j) — 100K€<br><br>
+        • Cimenterie (200-800 t/j) — 80K€<br>
+        • Raffinerie (500-2000 t/j) — 200K€<br>
+        • Port maritime (800-5000 t/j) — 350K€<br>
+        • Aciérie (400-1500 t/j) — 150K€<br>
+        • Usine auto (100-500 unités/j) — 120K€<br>
+        • Terminal céréalier (300-1200 t/j) — 90K€<br>
+        • Usine chimique (150-600 t/j) — 130K€<br>
+        • Papeterie (200-700 t/j) — 75K€<br>
+        • Plateforme logistique (400-3000 t/j) — 250K€<br>
+        • Centrale thermique (500-2500 t/j) — 100K€<br><br>
         Les clients génèrent <b>automatiquement des contrats fret chaque jour</b>. Plus l'ITE est équipée, plus leur satisfaction est haute.`,
         target: '[data-page="industrial-clients"]',
         page: 'industrial-clients',
@@ -468,7 +469,7 @@ export class Tutorial {
 
       // === SHUNTING ===
       {
-        title: '🔀 Triage — Manœuvres réalistes',
+        title: icon('shunting',14) + ' Triage — Manœuvres réalistes',
         text: `L'onglet <b>Triage</b> simule les opérations de manœuvre en ITE :<br><br>
         <b>8 phases par opération :</b><br>
         1. <b>Arrivée</b> (5 min) — le train entre dans l'ITE<br>
@@ -486,29 +487,29 @@ export class Tutorial {
 
       // === HEADER ===
       {
-        title: '⏱️ Le Header — Contrôles du jeu',
+        title: icon('info',14) + ' Le Header — Contrôles du jeu',
         text: `Le bandeau supérieur contient les informations et contrôles essentiels :<br><br>
         <b>Informations :</b><br>
-        • 🌤️ <b>Météo</b> : conditions actuelles et température<br>
-        • 💰 <b>Solde</b> : votre trésorerie (vert = positif, rouge = négatif)<br>
+        • <b>Météo</b> : conditions actuelles et température<br>
+        • <b>Solde</b> : votre trésorerie (vert = positif, rouge = négatif)<br>
         • ⏰ <b>Horloge</b> : heure actuelle dans le jeu (orange)<br>
-        • 📅 <b>Date</b> : date du jeu<br><br>
+        • <b>Date</b> : date du jeu<br><br>
         <b>Contrôles de vitesse (en bas de la carte) :</b><br>
-        • <b>⏸️ Pause</b> : met le jeu en pause<br>
-        • <b>▶️ x1</b> : vitesse normale (1 minute de jeu = 1 seconde réelle)<br>
+        • <b>Pause</b> : met le jeu en pause<br>
+        • <b>x1</b> : vitesse normale (1 minute de jeu = 1 seconde réelle)<br>
         • <b>⏩ x5, x15, x60</b> : accélérer le temps<br><br>
         <b>Boutons :</b><br>
-        • ❓ <b>Tutoriel</b> : relancer ce guide<br>
-        • 💾 <b>Sauvegarder</b> : exporter la partie en fichier JSON<br>
-        • 📂 <b>Charger</b> : importer une sauvegarde<br><br>
-        <b>💡</b> Le jeu sauvegarde <b>automatiquement</b> toutes les 10 secondes dans le navigateur.`,
+        • <b>Tutoriel</b> : relancer ce guide<br>
+        • <b>Sauvegarder</b> : exporter la partie en fichier JSON<br>
+        • <b>Charger</b> : importer une sauvegarde<br><br>
+        <b></b> Le jeu sauvegarde <b>automatiquement</b> toutes les 10 secondes dans le navigateur.`,
         target: null,
         page: null,
       },
 
       // === CONSEILS DE JEU ===
       {
-        title: '🎯 Conseils pour bien démarrer',
+        title: icon('info',14) + ' Conseils pour bien démarrer',
         text: `Voici l'ordre recommandé pour vos premières minutes :<br><br>
         <b>Étape 1 :</b> Créez <b>2 gares</b> sur la carte (sur des voies ferrées existantes)<br>
         <b>Étape 2 :</b> Achetez <b>1 locomotive + 2 voitures</b> dans Matériel<br>
@@ -522,7 +523,7 @@ export class Tutorial {
         • Créez de nouvelles lignes et services<br>
         • Gérez les incidents et la maintenance<br>
         • Négociez avec les syndicats si la satisfaction baisse<br><br>
-        <b>Bonne chance, Directeur ! 🚂</b>`,
+        <b>Bonne chance, Directeur !</b>`,
         target: null,
         page: null,
       },
