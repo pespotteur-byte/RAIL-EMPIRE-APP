@@ -534,8 +534,8 @@ class RailEmpire {
 
     // Weather update every minute
     try {
-      const mapLat = this.renderer?.map?.centerLat;
-      const mapLon = this.renderer?.map?.centerLon;
+      const mapLat = this.renderer?.tileMap?.centerLat;
+      const mapLon = this.renderer?.tileMap?.centerLon;
       this.weather.update(timeOfDay, dateStr, mapLat, mapLon);
     } catch(e) { /* graceful */ }
 
@@ -545,8 +545,8 @@ class RailEmpire {
     // Update radar tile URL from weather data
     try {
       const radarPath = this.weather.getLatestRadarPath();
-      if (radarPath && this.renderer?.map) {
-        this.renderer.map.setRadarTileUrl(this.weather.getRadarTileUrl(radarPath));
+      if (radarPath && this.renderer?.tileMap) {
+        this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(radarPath));
       }
     } catch(e) { /* graceful */ }
 

@@ -71,15 +71,15 @@ export class Renderer {
       // Wire radar toggle to map
       if (this._toggleEls.radar) {
         this._toggleEls.radar.addEventListener('change', () => {
-          this.map.radarEnabled = this._toggleEls.radar.checked;
-          this.map.markDirty();
+          this.tileMap.radarEnabled = this._toggleEls.radar.checked;
+          this.tileMap.markDirty();
         });
       }
       // Wire satellite toggle to map
       if (this._toggleEls.satellite) {
         this._toggleEls.satellite.addEventListener('change', () => {
-          this.map.toggleSatellite();
-          this._toggleEls.satellite.checked = this.map.satelliteEnabled;
+          this.tileMap.toggleSatellite();
+          this._toggleEls.satellite.checked = this.tileMap.satelliteEnabled;
         });
       }
     }
