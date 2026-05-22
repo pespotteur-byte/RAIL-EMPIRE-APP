@@ -78,8 +78,8 @@ export class Renderer {
       // Wire satellite toggle to map
       if (this._toggleEls.satellite) {
         this._toggleEls.satellite.addEventListener('change', () => {
-          this.map.satelliteEnabled = this._toggleEls.satellite.checked;
-          this.map.markDirty();
+          this.map.toggleSatellite();
+          this._toggleEls.satellite.checked = this.map.satelliteEnabled;
         });
       }
     }

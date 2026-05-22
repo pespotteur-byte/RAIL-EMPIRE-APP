@@ -403,6 +403,12 @@ export class TileMap {
 
   toggleSatellite() {
     this.satelliteEnabled = !this.satelliteEnabled;
+    // Clear base tile cache so new layer loads fresh
+    for (const [k] of this.tileCache) {
+      if (k.endsWith('/b') || k.endsWith('/s')) this.tileCache.delete(k);
+    }
+    this._baseQueue = [];
+    this._baseLoading = 0;
     this._tileBufferValid = false;
     this._dirty = true;
     return this.satelliteEnabled;
