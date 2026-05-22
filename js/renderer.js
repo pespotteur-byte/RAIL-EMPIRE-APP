@@ -325,44 +325,97 @@ export class Renderer {
   }
 
   drawServices(ctx, world, services) {
-    for (const svc of services) {
+    const zoom = this.tileMap?.zoomLevel || 10;
+    const len = services.length;
+    if (len === 0) return;
+
+    // Viewport bounds for fast lat/lon reject
+    let vpMinLat, vpMaxLat, vpMinLon, vpMaxLon;
+    if (len > 200 && this.tileMap) {
+      const tl = this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight);
+      const br = this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight);
+      if (tl && br) {
+        vpMinLat = Math.min(tl.lat, br.lat) - 0.1;
+        vpMaxLat = Math.max(tl.lat, br.lat) + 0.1;
+        vpMinLon = Math.min(tl.lon, br.lon) - 0.1;
+        vpMaxLon = Math.max(tl.lon, br.lon) + 0.1;
+      }
+    }
+
+    const bs = 5;  // baseSize
+    const bsH = bs * 0.5;
+    const bsW = bs * 0.7;
+    const useBatch = len > 1000;
+    const showLabels = zoom >= 7 && len < 5000;
+    const w = this.logicalWidth, h = this.logicalHeight;
+
+    if (useBatch) {
+      // BATCHED RENDERING: dots (fillRect) for massive scale, much faster than path triangles
+      const tm = this.tileMap;
+      const fScale = tm._frameScale || (256 * Math.pow(2, tm.zoomLevel));
+      const fCx = tm._frameCx;
+      const fCy = tm._frameCy;
+      const fHW = w / 2;
+      const fHH = h / 2;
+      const DEG2RAD = Math.PI / 180;
+      const MAX_VISIBLE = 5000; // cap visible trains for performance
+      const dotSize = len > 10000 ? 3 : 4;
+
+      ctx.fillStyle = '#22d3ee';
+      let drawn = 0;
+      for (let i = 0; i < len && drawn < MAX_VISIBLE; i++) {
+        const svc = services[i];
+        if (!svc || !svc.position) continue;
+        const lat = svc.position.lat, lon = svc.position.lon;
+        if (vpMinLat !== undefined) {
+          if (lat < vpMinLat || lat > vpMaxLat || lon < vpMinLon || lon > vpMaxLon) continue;
+        }
+        const sx = ((lon + 180) / 360) * fScale - fCx + fHW;
+        if (sx < -30 || sx > w + 30) continue;
+        const sinLat = Math.sin(lat * DEG2RAD);
+        const sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * fScale - fCy + fHH;
+        if (sy < -30 || sy > h + 30) continue;
+        ctx.fillRect(sx - dotSize/2, sy - dotSize/2, dotSize, dotSize);
+        drawn++;
+      }
+      return;
+    }
+
+    // NON-BATCHED: detailed rendering for smaller sets
+    for (let i = 0; i < len; i++) {
+      const svc = services[i];
       if (!svc || !svc.position || !svc.train) continue;
-      if (typeof svc.position.lat !== 'number' || typeof svc.position.lon !== 'number') continue;
-      if (isNaN(svc.position.lat) || isNaN(svc.position.lon)) continue;
-      // Hide completed trains and waiting trains that haven't entered pre-departure
       if (svc.state === 'completed') continue;
-      if (svc.state === 'waiting' && !svc.train?.stoppedAt) continue;
+      if (svc.state === 'waiting' && !svc.train.stoppedAt) continue;
+      if (vpMinLat !== undefined) {
+        const lat = svc.position.lat, lon = svc.position.lon;
+        if (lat < vpMinLat || lat > vpMaxLat || lon < vpMinLon || lon > vpMaxLon) continue;
+      }
 
       const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
-      if (p.x < -30 || p.x > this.logicalWidth + 30 || p.y < -30 || p.y > this.logicalHeight + 30) continue;
+      if (p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) continue;
 
-      // Train markers - same size as stations for visual consistency
-      const baseSize = 5;
       const color = svc.state === 'waiting' ? '#475569' : (svc.train.color || '#22d3ee');
 
-      // Moving train indicator (no shadowBlur — too slow on Firefox)
       if (svc.state === 'moving') {
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.3;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, baseSize * 1.2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, bs * 1.2, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1.0;
       }
 
-      // Train triangle marker
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.moveTo(p.x, p.y - baseSize);
-      ctx.lineTo(p.x + baseSize * 0.7, p.y + baseSize * 0.5);
-      ctx.lineTo(p.x - baseSize * 0.7, p.y + baseSize * 0.5);
+      ctx.moveTo(p.x, p.y - bs);
+      ctx.lineTo(p.x + bsW, p.y + bsH);
+      ctx.lineTo(p.x - bsW, p.y + bsH);
       ctx.closePath();
       ctx.fill();
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-
-      // S9: Train images removed from livemap per user request
 
       if (svc.train.breakdown) {
         ctx.fillStyle = '#ef4444';
@@ -378,21 +431,20 @@ export class Renderer {
         ctx.fill();
       }
 
-      // Show labels at zoom >= 7 (not just 10) for better visibility
-      if (this.tileMap.zoomLevel >= 7) {
+      if (showLabels) {
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${this.tileMap.zoomLevel >= 10 ? 11 : 9}px sans-serif`;
+        ctx.font = `bold ${zoom >= 10 ? 11 : 9}px sans-serif`;
         let label = `${Math.round(svc.train.speed)} km/h`;
         if (svc.train.blockedBy) label += ' [BLOQUE]';
-        ctx.fillText(label, p.x + baseSize + 4, p.y - 2);
+        ctx.fillText(label, p.x + bs + 4, p.y - 2);
         ctx.fillStyle = svc.isRescue ? '#ef4444' : (svc.train.delay > 0 ? '#ef4444' : svc.train.delay < 0 ? '#38bdf8' : '#10b981');
-        ctx.fillText(svc.isRescue ? `${svc.name} [SECOURS]` : svc.name, p.x + baseSize + 4, p.y + 10);
+        ctx.fillText(svc.isRescue ? `${svc.name} [SECOURS]` : svc.name, p.x + bs + 4, p.y + 10);
         if (svc.train.delay > 0) {
           ctx.fillStyle = '#ef4444';
-          ctx.fillText(`+${svc.train.delay} min`, p.x + baseSize + 4, p.y + 22);
+          ctx.fillText(`+${svc.train.delay} min`, p.x + bs + 4, p.y + 22);
         } else if (svc.train.delay < 0) {
           ctx.fillStyle = '#38bdf8';
-          ctx.fillText(`- ${Math.abs(svc.train.delay)} min`, p.x + baseSize + 4, p.y + 22);
+          ctx.fillText(`- ${Math.abs(svc.train.delay)} min`, p.x + bs + 4, p.y + 22);
         }
       }
     }

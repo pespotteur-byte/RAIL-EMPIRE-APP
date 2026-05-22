@@ -12,6 +12,9 @@ export class Weather {
     this.humidity = 50;          // %
     this.precipitation = 0;      // mm
     this.cloudCover = 0;         // %
+    this.cloudLow = 0;           // % (< 2km altitude)
+    this.cloudMid = 0;           // % (2-6km altitude)
+    this.cloudHigh = 0;          // % (> 6km altitude)
     this.pressure = 1013;        // hPa
     this.apparentTemp = 18;      // °C (felt temperature)
     this.windDirection = 0;      // degrees
@@ -110,7 +113,7 @@ export class Weather {
     this._lastFetchTime = Date.now();
 
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m,cloud_cover,pressure_msl,apparent_temperature,visibility,uv_index,dew_point_2m&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,pressure_msl,apparent_temperature,visibility,uv_index,dew_point_2m&timezone=auto`;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
@@ -121,6 +124,9 @@ export class Weather {
         this.precipitation = data.current.precipitation ?? 0;
         this.windSpeed = Math.round(data.current.wind_speed_10m ?? 0);
         this.cloudCover = Math.round(data.current.cloud_cover ?? 0);
+        this.cloudLow = Math.round(data.current.cloud_cover_low ?? 0);
+        this.cloudMid = Math.round(data.current.cloud_cover_mid ?? 0);
+        this.cloudHigh = Math.round(data.current.cloud_cover_high ?? 0);
         this.pressure = Math.round(data.current.pressure_msl ?? 1013);
         this.apparentTemp = Math.round(data.current.apparent_temperature ?? this.temperature);
         this.windDirection = Math.round(data.current.wind_direction_10m ?? 0);
@@ -211,6 +217,9 @@ export class Weather {
       windDirection: this.windDirection,
       precipitation: this.precipitation,
       cloudCover: this.cloudCover,
+      cloudLow: this.cloudLow,
+      cloudMid: this.cloudMid,
+      cloudHigh: this.cloudHigh,
       pressure: this.pressure,
       visibility: this.visibility,
       uvIndex: this.uvIndex,
@@ -247,8 +256,8 @@ export class Weather {
     // Temperature color gradient
     const tempColor = this.temperature > 35 ? '#ef4444' : this.temperature > 25 ? '#f97316' : this.temperature < -5 ? '#818cf8' : this.temperature < 5 ? '#38bdf8' : '#22c55e';
 
-    // Cloud cover bar
-    const cloudBar = `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="width:${d.cloudCover}%;height:100%;background:${d.cloudCover > 80 ? '#94a3b8' : d.cloudCover > 50 ? '#64748b' : '#475569'};border-radius:3px"></div></div><span style="font-size:11px">${d.cloudCover}%</span></div>`;
+    // Cloud layer bars helper
+    const mkCloudBar = (pct, color) => `<div style="display:flex;align-items:center;gap:4px"><div style="flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div><span style="font-size:10px;min-width:28px;text-align:right">${pct}%</span></div>`;
 
     // Humidity bar
     const humBar = `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="width:${d.humidity}%;height:100%;background:${d.humidity > 80 ? '#60a5fa' : d.humidity > 50 ? '#3b82f6' : '#2563eb'};border-radius:3px"></div></div><span style="font-size:11px">${d.humidity}%</span></div>`;
@@ -300,8 +309,8 @@ export class Weather {
             ${humBar}
           </div>
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('cloud', 12)} Couverture nuageuse</div>
-            ${cloudBar}
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('cloud', 12)} Nuages (total)</div>
+            ${mkCloudBar(d.cloudCover, d.cloudCover > 80 ? '#94a3b8' : '#64748b')}
           </div>
           <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
             <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${icon('eye', 12)} Visibilité</div>
@@ -318,6 +327,51 @@ export class Weather {
         </div>
 
         ${d.live ? `<p style="font-size:10px;color:var(--text3);margin-top:10px">${icon('signal', 12)} Données Open-Meteo • Lat ${this._lastLat.toFixed(2)}° Lon ${this._lastLon.toFixed(2)}° • Rafraîchissement toutes les 5 min</p>` : ''}
+      </div>
+
+      <div class="dash-section">
+        <h3>${icon('cloud', 16)} Couches de nuages en temps réel</h3>
+        <div style="padding:10px;background:var(--bg);border-radius:8px">
+          <div style="display:flex;align-items:stretch;gap:12px">
+            <!-- Cloud column visualization -->
+            <div style="width:60px;display:flex;flex-direction:column;gap:2px;position:relative">
+              <div style="flex:1;background:${d.cloudHigh > 50 ? 'rgba(148,163,184,' + (d.cloudHigh/100*0.6+0.1) + ')' : 'rgba(71,85,105,0.15)'};border-radius:4px 4px 0 0;min-height:28px;display:flex;align-items:center;justify-content:center">
+                <span style="font-size:9px;color:${d.cloudHigh > 50 ? '#e2e8f0' : '#475569'}">${d.cloudHigh}%</span>
+              </div>
+              <div style="flex:1;background:${d.cloudMid > 50 ? 'rgba(100,116,139,' + (d.cloudMid/100*0.6+0.1) + ')' : 'rgba(71,85,105,0.15)'};min-height:28px;display:flex;align-items:center;justify-content:center">
+                <span style="font-size:9px;color:${d.cloudMid > 50 ? '#e2e8f0' : '#475569'}">${d.cloudMid}%</span>
+              </div>
+              <div style="flex:1;background:${d.cloudLow > 50 ? 'rgba(71,85,105,' + (d.cloudLow/100*0.6+0.1) + ')' : 'rgba(71,85,105,0.15)'};border-radius:0 0 4px 4px;min-height:28px;display:flex;align-items:center;justify-content:center">
+                <span style="font-size:9px;color:${d.cloudLow > 50 ? '#e2e8f0' : '#475569'}">${d.cloudLow}%</span>
+              </div>
+            </div>
+            <!-- Cloud layer details -->
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                  <span style="font-size:11px;font-weight:600;color:#c4b5fd">Nuages hauts (cirrus)</span>
+                  <span style="font-size:10px;color:var(--text3)">> 6 km</span>
+                </div>
+                ${mkCloudBar(d.cloudHigh, '#c4b5fd')}
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                  <span style="font-size:11px;font-weight:600;color:#94a3b8">Nuages moyens (altostratus)</span>
+                  <span style="font-size:10px;color:var(--text3)">2 - 6 km</span>
+                </div>
+                ${mkCloudBar(d.cloudMid, '#94a3b8')}
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                  <span style="font-size:11px;font-weight:600;color:#64748b">Nuages bas (stratus)</span>
+                  <span style="font-size:10px;color:var(--text3)">< 2 km</span>
+                </div>
+                ${mkCloudBar(d.cloudLow, '#64748b')}
+              </div>
+            </div>
+          </div>
+          ${d.live ? '<div style="font-size:9px;color:var(--text3);margin-top:8px;text-align:right">Données live Open-Meteo</div>' : ''}
+        </div>
       </div>
 
       <div class="dash-section">

@@ -453,30 +453,116 @@ class RailEmpire {
 
   moveTick(dt, timeOfDay) {
     const activeServices = this.scheduleCreator.getActiveServices();
-    // Check incident positions BEFORE movement so effect is immediate
-    this.incidentManager.checkTrainPositions(activeServices, this.depotManager, this.world);
+    const movingSvcs = this.scheduleCreator.getMovingServices();
+    const movingCount = movingSvcs.length;
 
-    // Build spatial hash for proximity checks (avoids O(n²) in moveUpdate)
+    // --- BUDGET-BASED ROUND-ROBIN ---
+    // At massive scale (>500 moving trains), update a budget of trains per tick
+    // to keep frame time under control. All trains get simple position interpolation,
+    // but only the budget gets full physics.
+    const FULL_BUDGET = 500; // max trains with full physics per tick
+    const useRoundRobin = movingCount > FULL_BUDGET;
+    if (!this._rrOffset) this._rrOffset = 0;
+
+    // Build spatial hash only for budget trains (no need for all 100K)
     if (!this._spatialGrid) this._spatialGrid = new Map();
     this._spatialGrid.clear();
-    for (const svc of activeServices) {
-      if (!svc.position || svc.state === 'waiting' || svc.state === 'completed') continue;
-      // Grid cell size ~0.05° ≈ 5km
-      const key = `${Math.floor(svc.position.lat * 20)},${Math.floor(svc.position.lon * 20)}`;
-      let cell = this._spatialGrid.get(key);
-      if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
-      cell.push(svc);
+    // Only build spatial hash for trains that get full physics this tick
+    if (useRoundRobin) {
+      const end = Math.min(this._rrOffset + FULL_BUDGET, movingCount);
+      for (let i = this._rrOffset; i < end; i++) {
+        const svc = movingSvcs[i];
+        if (!svc.position) continue;
+        const gx = Math.floor(svc.position.lat * 20);
+        const gy = Math.floor(svc.position.lon * 20);
+        const key = gx * 10000 + gy; // numeric key (faster than string concat)
+        let cell = this._spatialGrid.get(key);
+        if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
+        cell.push(svc);
+      }
+      // Also hash trains near the budget slice for proximity checks
+      if (this._rrOffset + FULL_BUDGET > movingCount) {
+        for (let i = 0; i < (this._rrOffset + FULL_BUDGET) % movingCount; i++) {
+          const svc = movingSvcs[i];
+          if (!svc.position) continue;
+          const gx = Math.floor(svc.position.lat * 20);
+          const gy = Math.floor(svc.position.lon * 20);
+          const key = gx * 10000 + gy;
+          let cell = this._spatialGrid.get(key);
+          if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
+          cell.push(svc);
+        }
+      }
+    } else {
+      for (let i = 0; i < movingCount; i++) {
+        const svc = movingSvcs[i];
+        if (!svc.position) continue;
+        const gx = Math.floor(svc.position.lat * 20);
+        const gy = Math.floor(svc.position.lon * 20);
+        const key = gx * 10000 + gy;
+        let cell = this._spatialGrid.get(key);
+        if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
+        cell.push(svc);
+      }
     }
 
-    for (const svc of activeServices) {
+    // Incident check — only on the budget slice if round-robin
+    if (useRoundRobin) {
+      // Check incidents every N ticks for full set, but only budget per tick
+      if (!this._incidentCheckTick) this._incidentCheckTick = 0;
+      if (this._incidentCheckTick++ % Math.ceil(movingCount / FULL_BUDGET) === 0) {
+        this.incidentManager.checkTrainPositions(movingSvcs, this.depotManager, this.world);
+      }
+    } else {
+      this.incidentManager.checkTrainPositions(movingSvcs, this.depotManager, this.world);
+    }
+
+    // Physics updates
+    for (let i = 0; i < movingCount; i++) {
+      const svc = movingSvcs[i];
+
+      if (useRoundRobin) {
+        // Is this train in the current budget slice?
+        const inBudget = (i >= this._rrOffset && i < this._rrOffset + FULL_BUDGET) ||
+                         (this._rrOffset + FULL_BUDGET > movingCount && i < (this._rrOffset + FULL_BUDGET) % movingCount);
+
+        if (!inBudget) {
+          // Lightweight interpolation: just advance position along current heading
+          if (svc.position && svc.speed > 0) {
+            const stepKm = svc.speed * dt / 3600;
+            if (svc._state?.cachedRoute && svc._state.index < svc._state.cachedRoute.length - 1) {
+              const route = svc._state.cachedRoute;
+              const idx = svc._state.index;
+              const to = route[idx + 1];
+              const from = route[idx];
+              const segDist = (svc._state.segDists?.[idx]) || 0.5;
+              if (segDist > 0) {
+                const frac = Math.min(stepKm / segDist, 1);
+                svc.position.lat += (to.lat - from.lat) * frac;
+                svc.position.lon += (to.lon - from.lon) * frac;
+                svc._state.progress += frac;
+                if (svc._state.progress >= 1) {
+                  svc._state.progress = 0;
+                  svc._state.index++;
+                }
+              }
+            }
+            svc.totalDistance += stepKm;
+            svc.train.totalKm = svc.totalDistance;
+          }
+          continue;
+        }
+      }
+
+      // Full physics update for trains in budget
       svc._nearbyServices = null;
-      if (svc.position && svc.state === 'moving') {
+      if (svc.position) {
         const gx = Math.floor(svc.position.lat * 20);
         const gy = Math.floor(svc.position.lon * 20);
         const nearby = [];
         for (let dx = -1; dx <= 1; dx++) {
           for (let dy = -1; dy <= 1; dy++) {
-            const cell = this._spatialGrid.get(`${gx+dx},${gy+dy}`);
+            const cell = this._spatialGrid.get((gx+dx) * 10000 + (gy+dy));
             if (cell) for (const s of cell) { if (s.id !== svc.id) nearby.push(s); }
           }
         }
@@ -484,6 +570,20 @@ class RailEmpire {
       }
       svc.moveUpdate(dt, timeOfDay, activeServices);
     }
+
+    // Advance round-robin offset
+    if (useRoundRobin) {
+      this._rrOffset = (this._rrOffset + FULL_BUDGET) % Math.max(1, movingCount);
+    }
+
+    // Also update stopped_at_station trains (dwell timer)
+    for (let i = 0; i < activeServices.length; i++) {
+      const svc = activeServices[i];
+      if (svc.state === 'stopped_at_station') {
+        svc.moveUpdate(dt, timeOfDay, activeServices);
+      }
+    }
+
     // Update rescue locomotives movement
     this.depotManager.updateRescues(dt);
     // Periodic canton cleanup (every ~30s)
@@ -499,7 +599,11 @@ class RailEmpire {
     this.timeOfDay = timeOfDay;
     const activeSchedules = this.scheduleCreator.getActiveServices();
 
-    for (const svc of activeSchedules) {
+    // scheduleTick: moving trains already have their state managed by moveUpdate,
+    // so only call scheduleTick on non-moving trains (waiting, stopped_at_station, etc.)
+    for (let i = 0; i < activeSchedules.length; i++) {
+      const svc = activeSchedules[i];
+      if (svc.state === 'moving' || svc.state === 'departing') continue;
       svc.scheduleTick(timeOfDay, dateStr, this.economy);
     }
 
@@ -586,6 +690,9 @@ class RailEmpire {
     // Dashboard + Graph hooks (every minute, wrapped in try/catch for safety)
     try { this.dashboard.record(this); } catch(e) { /* graceful */ }
     try { this.graphMarche.record(this, timeOfDay); } catch(e) { /* graceful */ }
+
+    // Refresh moving services cache after state transitions
+    this.scheduleCreator.refreshMovingCache();
   }
 
   gameLoop() {
@@ -603,14 +710,37 @@ class RailEmpire {
       if (frameDelta >= 30) {
         this._lastFrameTime = now;
 
+        // Use moving services (much smaller subset) for rendering
+        const movingSvcs = this.scheduleCreator.getMovingServices();
         const activeServices = this.scheduleCreator.getActiveServices();
         const rescueServices = this.depotManager.getRescueServices();
-        // Reuse array to avoid GC pressure every frame
+        // Build visible list: moving + stopped_at_station (have positions) + rescue
         if (!this._visibleBuf) this._visibleBuf = [];
         const allVisibleServices = this._visibleBuf;
         allVisibleServices.length = 0;
-        for (let i = 0; i < activeServices.length; i++) allVisibleServices.push(activeServices[i]);
-        for (let i = 0; i < rescueServices.length; i++) allVisibleServices.push(rescueServices[i]);
+        // Moving/departing trains
+        for (let i = 0; i < movingSvcs.length; i++) {
+          if (movingSvcs[i].position) allVisibleServices.push(movingSvcs[i]);
+        }
+        // Add stopped_at_station / waiting-with-position (pre-departure) trains
+        // At massive scale, these are tracked via a lightweight Set to avoid O(n) scan
+        if (!this._stoppedWithPosBuf) this._stoppedWithPosBuf = [];
+        const stoppedBuf = this._stoppedWithPosBuf;
+        // Rebuild only every 500ms
+        if (!this._lastStoppedScan || now - this._lastStoppedScan > 500) {
+          this._lastStoppedScan = now;
+          stoppedBuf.length = 0;
+          for (let i = 0; i < activeServices.length; i++) {
+            const svc = activeServices[i];
+            if ((svc.state === 'stopped_at_station' || (svc.state === 'waiting' && svc.train?.stoppedAt)) && svc.position) {
+              stoppedBuf.push(svc);
+            }
+          }
+        }
+        for (let i = 0; i < stoppedBuf.length; i++) allVisibleServices.push(stoppedBuf[i]);
+        for (let i = 0; i < rescueServices.length; i++) {
+          if (rescueServices[i].position) allVisibleServices.push(rescueServices[i]);
+        }
 
         if (this.renderer) {
           // Sync radar tile URL every ~2s (not every frame)
@@ -627,7 +757,7 @@ class RailEmpire {
         if (!this._lastUIUpdate || now - this._lastUIUpdate > 250) {
           this._lastUIUpdate = now;
           if (this.ui) {
-            this.ui.update(allVisibleServices);
+            this.ui.update(activeServices);
           }
         }
       }

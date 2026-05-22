@@ -207,11 +207,30 @@ export class ActiveService {
       return;
     }
 
+    // FAST EARLY REJECT for waiting trains far from departure
+    // This avoids expensive Date parsing and service window checks for 99% of services
+    if (this.state === 'waiting' && this.currentStopIndex === 0 && !this.train.breakdown && !this.train.inMaintenance) {
+      const dep0 = this._cachedFirstDep;
+      if (dep0 !== undefined) {
+        // Quick check: if departure is more than 2 min away, skip
+        let diff = dep0 - timeOfDay;
+        if (diff < -180) diff += 1440; // wrap around midnight
+        if (diff > 2 && diff < 1400) {
+          if (this.completed) return;
+          return;
+        }
+      }
+    }
+
     // Check if train runs today (day of week + specific dates)
     if (this.state === 'waiting' || (this.state === 'stopped_at_station' && this.currentStopIndex === 0)) {
-      const today = new Date(dateStr + 'T12:00:00');
-      const dow = today.getDay(); // 0=Sun..6=Sat
-      const runsToday = this.runDays.includes(dow);
+      // Cache DOW check per date to avoid repeated Date construction
+      if (this._cachedDowDate !== dateStr) {
+        const today = new Date(dateStr + 'T12:00:00');
+        this._cachedDow = today.getDay();
+        this._cachedDowDate = dateStr;
+      }
+      const runsToday = this.runDays.includes(this._cachedDow);
       const hasDateRestriction = this.runDates.length > 0;
       const dateAllowed = !hasDateRestriction || this.runDates.includes(dateStr);
       if (!runsToday || !dateAllowed) {
@@ -223,6 +242,7 @@ export class ActiveService {
 
     const currentStops = this.getCurrentStops();
     const firstDep = currentStops[0]?.departureTime ?? 0;
+    this._cachedFirstDep = firstDep;
 
     if (this.state === 'waiting') {
       if (this.completed && dateStr !== this.completedDate) {
@@ -1538,6 +1558,26 @@ export class ScheduleCreator {
 
   _invalidateActiveCache() {
     this._serviceVer = (this._serviceVer || 0) + 1;
+  }
+
+  /**
+   * Returns only services that are currently moving (need physics update).
+   * Uses cached subset, rebuilt when version changes.
+   */
+  getMovingServices() {
+    if (this._movingCache && this._movingCacheVer === this._serviceVer) return this._movingCache;
+    const active = this.getActiveServices();
+    this._movingCache = active.filter(s => s.state === 'moving' || s.state === 'departing');
+    this._movingCacheVer = this._serviceVer;
+    return this._movingCache;
+  }
+
+  /**
+   * Rebuild moving cache after state transitions in scheduleTick/moveUpdate.
+   * Called once per tick cycle.
+   */
+  refreshMovingCache() {
+    this._movingCacheVer = -1; // force rebuild on next getMovingServices()
   }
 
   toSave() {
