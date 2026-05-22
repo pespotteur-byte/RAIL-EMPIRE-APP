@@ -308,10 +308,9 @@ export class Renderer {
       if (!svc || !svc.position || !svc.train) continue;
       if (typeof svc.position.lat !== 'number' || typeof svc.position.lon !== 'number') continue;
       if (isNaN(svc.position.lat) || isNaN(svc.position.lon)) continue;
-      // Hide trains that have completed their service and are just waiting
-      if (svc.state === 'waiting' && svc.completed) continue;
-      // Hide trains truly inactive (waiting with no position set)
-      if (svc.state === 'waiting' && !svc.position) continue;
+      // Hide completed trains and waiting trains that haven't entered pre-departure
+      if (svc.state === 'completed') continue;
+      if (svc.state === 'waiting' && !svc.train?.stoppedAt) continue;
 
       const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
       if (p.x < -30 || p.x > this.logicalWidth + 30 || p.y < -30 || p.y > this.logicalHeight + 30) continue;
@@ -443,7 +442,7 @@ export class Renderer {
 
     // Active train dots only (hide if stopped at station > 5 game min)
     for (const svc of services) {
-      if (!svc.position || svc.state === 'waiting') continue;
+      if (!svc.position || svc.state === 'waiting' || svc.state === 'completed') continue;
       if (svc.train?._stoppedSinceGameTime != null && svc.train.stoppedAt && window.game?.timeOfDay != null) {
         let el = window.game.timeOfDay - svc.train._stoppedSinceGameTime;
         if (el < 0) el += 1440;

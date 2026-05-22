@@ -150,13 +150,8 @@ export class ActiveService {
     // Garage/shunting state
     this._garage = null; // { vpId, route, savedRoute, savedStopIndex, savedState, blockerTrainId }
 
-    if (this.stops.length > 0 && world) {
-      const firstStation = world.getStationById(this.stops[0].stationId);
-      if (firstStation) {
-        this.position = { lat: firstStation.lat, lon: firstStation.lon };
-        this.train.stoppedAt = firstStation;
-      }
-    }
+    // Position will be set by scheduleTick when in pre-departure window
+    // (don't set here to avoid ghost trains on the map)
   }
 
   async garageToVoiePoint(vpId) { return; }
