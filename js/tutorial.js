@@ -410,6 +410,79 @@ export class Tutorial {
         page: 'junctions',
       },
 
+      // === MARCHANDISES ===
+      {
+        title: '📦 Types de Marchandises — Catalogue complet',
+        text: `L'onglet <b>Marchandises</b> détaille les 7 catégories de cargo transportables :<br><br>
+        • 🪨 <b>Vrac</b> : charbon, sable, gravier, minerai, céréales (wagon trémie)<br>
+        • 📦 <b>Conteneurs</b> : 20', 40', réfrigérés (wagon plat)<br>
+        • 🛢️ <b>Liquides</b> : carburant, chimie, GPL (wagon citerne, vitesse max 80 km/h)<br>
+        • ☢️ <b>Matières dangereuses</b> : explosifs, toxiques, radioactifs (vitesse max 60 km/h)<br>
+        • 🚗 <b>Automobiles</b> : voitures et camions neufs (wagon porte-auto)<br>
+        • 🔩 <b>Sidérurgie</b> : bobines, poutrelles, aluminium<br>
+        • 🪵 <b>Bois & Papier</b> : bois brut, pâte à papier, rouleaux<br><br>
+        Chaque type a un <b>temps de chargement</b> et un <b>prix/unité</b> différent. Les matières dangereuses (TMD) imposent une <b>vitesse réduite</b>.`,
+        target: '[data-page="cargo-types"]',
+        page: 'cargo-types',
+      },
+
+      // === ITE MODULES ===
+      {
+        title: '🏭 ITE+ — Modules d\'installation',
+        text: `L'onglet <b>ITE+</b> permet d'équiper vos ITE avec des modules spécialisés :<br><br>
+        <b>Infrastructure de chargement :</b><br>
+        • 🛤️ <b>Voie de chargement</b> (25K€) : +1 voie de chargement simultané<br>
+        • 🏗️ <b>Grue</b> (45K€) : réduit le temps de chargement de 20%<br>
+        • 🏗️ <b>Portique conteneurs</b> (120K€) : chargement rapide conteneurs<br>
+        • 🔀 <b>Faisceau de triage</b> (90K€) : manœuvres 30% plus rapides<br><br>
+        <b>Stockage :</b><br>
+        • 🏭 <b>Silo</b> (35K€) : 500t de vrac<br>
+        • 🏢 <b>Entrepôt</b> (55K€) : 300t, protège du vol<br>
+        • 🛢️ <b>Parc de citernes</b> (80K€) : 200m³ de liquides + TMD<br><br>
+        • ⚖️ <b>Pont-bascule</b> (20K€) : pesée automatique<br><br>
+        <b>💡</b> Plus l'ITE est équipée, plus elle attire de clients industriels !`,
+        target: '[data-page="ite-modules"]',
+        page: 'ite-modules',
+      },
+
+      // === INDUSTRIAL CLIENTS ===
+      {
+        title: '🏭 Industriels — Clients à gros trafic',
+        text: `L'onglet <b>Industriels</b> permet d'attirer des entreprises qui génèrent du fret <b>massif et régulier</b> :<br><br>
+        <b>10 types d'industries :</b><br>
+        • 🏭 Cimenterie (200-800 t/j) — 80K€<br>
+        • 🛢️ Raffinerie (500-2000 t/j) — 200K€<br>
+        • 🚢 Port maritime (800-5000 t/j) — 350K€<br>
+        • 🔩 Aciérie (400-1500 t/j) — 150K€<br>
+        • 🚗 Usine auto (100-500 unités/j) — 120K€<br>
+        • 🌾 Terminal céréalier (300-1200 t/j) — 90K€<br>
+        • ⚗️ Usine chimique (150-600 t/j) — 130K€<br>
+        • 📜 Papeterie (200-700 t/j) — 75K€<br>
+        • 📦 Plateforme logistique (400-3000 t/j) — 250K€<br>
+        • ⚡ Centrale thermique (500-2500 t/j) — 100K€<br><br>
+        Les clients génèrent <b>automatiquement des contrats fret chaque jour</b>. Plus l'ITE est équipée, plus leur satisfaction est haute.`,
+        target: '[data-page="industrial-clients"]',
+        page: 'industrial-clients',
+      },
+
+      // === SHUNTING ===
+      {
+        title: '🔀 Triage — Manœuvres réalistes',
+        text: `L'onglet <b>Triage</b> simule les opérations de manœuvre en ITE :<br><br>
+        <b>8 phases par opération :</b><br>
+        1. <b>Arrivée</b> (5 min) — le train entre dans l'ITE<br>
+        2. <b>Découplage</b> (8 min) — séparation des wagons<br>
+        3. <b>Poussage</b> (10 min) — wagons vers la voie de chargement<br>
+        4. <b>Chargement</b> (variable) — proportionnel au tonnage<br>
+        5. <b>Tirage</b> (8 min) — wagons hors de la voie<br>
+        6. <b>Recouplage</b> (6 min) — rattachement au train<br>
+        7. <b>Inspection</b> (5 min) — vérification freins et attelages<br>
+        8. <b>Départ</b> (3 min) — le train repart<br><br>
+        Les durées sont <b>réduites</b> par les modules ITE (grues, faisceaux de triage). Plus de wagons = plus long.`,
+        target: '[data-page="shunting"]',
+        page: 'shunting',
+      },
+
       // === HEADER ===
       {
         title: '⏱️ Le Header — Contrôles du jeu',

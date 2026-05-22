@@ -63,6 +63,10 @@ export class UI {
     else if (this.activePage === 'connections') this.renderConnectionsPage();
     else if (this.activePage === 'station-upgrades') this.renderStationUpgradesPage();
     else if (this.activePage === 'junctions') this.renderJunctionsPage();
+    else if (this.activePage === 'cargo-types') this.renderCargoTypesPage();
+    else if (this.activePage === 'ite-modules') this.renderITEModulesPage();
+    else if (this.activePage === 'industrial-clients') this.renderIndustrialClientsPage();
+    else if (this.activePage === 'shunting') this.renderShuntingPage();
   }
 
   setupNav() {
@@ -104,6 +108,10 @@ export class UI {
     if (page === 'connections') this.renderConnectionsPage();
     if (page === 'station-upgrades') this.renderStationUpgradesPage();
     if (page === 'junctions') this.renderJunctionsPage();
+    if (page === 'cargo-types') this.renderCargoTypesPage();
+    if (page === 'ite-modules') this.renderITEModulesPage();
+    if (page === 'industrial-clients') this.renderIndustrialClientsPage();
+    if (page === 'shunting') this.renderShuntingPage();
   }
 
   setupMapEvents() {
@@ -4960,5 +4968,37 @@ export class UI {
       const container = document.getElementById('junctions-container');
       this.game.junctionManager.render(container, this.game);
     } catch(e) { console.warn('Junctions render error:', e); }
+  }
+
+  // ==================== CARGO TYPES ====================
+  renderCargoTypesPage() {
+    try {
+      const container = document.getElementById('cargo-types-container');
+      this.game.cargoTypes.render(container, this.game);
+    } catch(e) { console.warn('CargoTypes render error:', e); }
+  }
+
+  // ==================== ITE MODULES ====================
+  renderITEModulesPage() {
+    try {
+      const container = document.getElementById('ite-modules-container');
+      this.game.iteModules.render(container, this.game);
+    } catch(e) { console.warn('ITEModules render error:', e); }
+  }
+
+  // ==================== INDUSTRIAL CLIENTS ====================
+  renderIndustrialClientsPage() {
+    try {
+      const container = document.getElementById('industrial-clients-container');
+      this.game.industrialClients.render(container, this.game);
+    } catch(e) { console.warn('IndustrialClients render error:', e); }
+  }
+
+  // ==================== SHUNTING ====================
+  renderShuntingPage() {
+    try {
+      const container = document.getElementById('shunting-container');
+      this.game.shuntingManager.render(container, this.game);
+    } catch(e) { console.warn('Shunting render error:', e); }
   }
 }

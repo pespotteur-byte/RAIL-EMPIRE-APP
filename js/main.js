@@ -27,6 +27,10 @@ import { SeasonalSchedule } from './seasonal.js?v=1779406655';
 import { Connections } from './connections.js?v=1779406655';
 import { StationUpgrades } from './station-upgrades.js?v=1779406655';
 import { JunctionManager } from './junctions.js?v=1779406655';
+import { CargoTypeManager } from './cargo-types.js?v=1779406655';
+import { ITEModules } from './ite-modules.js?v=1779406655';
+import { IndustrialClients } from './industrial-clients.js?v=1779406655';
+import { ShuntingManager } from './shunting.js?v=1779406655';
 
 class RailEmpire {
   constructor() {
@@ -58,6 +62,10 @@ class RailEmpire {
     this.connections = new Connections();
     this.stationUpgrades = new StationUpgrades();
     this.junctionManager = new JunctionManager();
+    this.cargoTypes = new CargoTypeManager();
+    this.iteModules = new ITEModules();
+    this.industrialClients = new IndustrialClients();
+    this.shuntingManager = new ShuntingManager();
     this.cantonManager = cantonManager;
     this.renderer = null;
     this.ui = null;
@@ -215,6 +223,10 @@ class RailEmpire {
         dashboard: this.dashboard.toSave(),
         graphMarche: this.graphMarche.toSave(),
         staff: this.staffManager.toSave(),
+        cargoTypes: this.cargoTypes.toSave(),
+        iteModules: this.iteModules.toSave(),
+        industrialClients: this.industrialClients.toSave(),
+        shunting: this.shuntingManager.toSave(),
         exportDate: new Date().toISOString(),
       };
       const json = JSON.stringify(state);
@@ -257,6 +269,10 @@ class RailEmpire {
     if (s.connections) this.connections.loadFromSave(s.connections);
     if (s.stationUpgrades) this.stationUpgrades.loadFromSave(s.stationUpgrades);
     if (s.junctions) this.junctionManager.loadFromSave(s.junctions);
+    if (s.cargoTypes) this.cargoTypes.loadFromSave(s.cargoTypes);
+    if (s.iteModules) this.iteModules.loadFromSave(s.iteModules);
+    if (s.industrialClients) this.industrialClients.loadFromSave(s.industrialClients);
+    if (s.shunting) this.shuntingManager.loadFromSave(s.shunting);
     // Clear voie point occupations on reload (prevent ghost occupations after crash)
     for (const vp of this.voiePointManager.getAll()) { vp.occupiedBy = null; }
     for (const trc of this.voiePointManager.getAllTroncons()) { trc.occupiedBy = null; }
@@ -400,6 +416,10 @@ class RailEmpire {
       connections: this.connections.toSave(),
       stationUpgrades: this.stationUpgrades.toSave(),
       junctions: this.junctionManager.toSave(),
+      cargoTypes: this.cargoTypes.toSave(),
+      iteModules: this.iteModules.toSave(),
+      industrialClients: this.industrialClients.toSave(),
+      shunting: this.shuntingManager.toSave(),
     };
     try { this.storage.saveGame(state); } catch(e) { console.warn('Auto-save failed:', e); }
   }
@@ -476,10 +496,20 @@ class RailEmpire {
       try { this.unions.dailyUpdate(this); } catch(e) { /* graceful */ }
       // Seasonal schedule check
       try { this.seasonal.checkSeason(dateStr); } catch(e) { /* graceful */ }
+      // Daily industrial client contracts
+      try { this.industrialClients.generateDailyContracts(this.freightManager, this.world); } catch(e) { /* graceful */ }
+      // Daily ITE maintenance costs
+      try {
+        const iteMaint = this.iteModules.getTotalDailyMaintenance();
+        if (iteMaint > 0) this.economy.addExpense(iteMaint, 'maintenance', 'Maintenance ITE');
+      } catch(e) { /* graceful */ }
     }
 
     // Weather update every minute
     try { this.weather.update(timeOfDay, dateStr); } catch(e) { /* graceful */ }
+
+    // Shunting operations update every minute
+    try { this.shuntingManager.update(1); } catch(e) { /* graceful */ }
 
     // Dashboard + Graph hooks (every minute, wrapped in try/catch for safety)
     try { this.dashboard.record(this); } catch(e) { /* graceful */ }

@@ -14,6 +14,7 @@ export class FreightContract {
     this.payment = data.payment || 5000;
     this.active = data.active !== false;
     this.progress = data.progress || 0;
+    this.industrialClientId = data.industrialClientId || null;
   }
 }
 
@@ -39,7 +40,7 @@ export class FreightManager {
     this.lastGenTime = absTime;
 
     if (!stations || stations.length < 2) return;
-    if (this.contracts.filter(c => c.active).length >= 8) return;
+    if (this.contracts.filter(c => c.active && !c.industrialClientId).length >= 8) return;
     if (Math.random() > 0.3) return;
 
     const cargo = CARGO_CATALOGUE[Math.floor(Math.random() * CARGO_CATALOGUE.length)];
@@ -76,6 +77,7 @@ export class FreightManager {
       payment: c.payment,
       active: c.active,
       progress: c.progress,
+      industrialClientId: c.industrialClientId || null,
     }));
   }
 
