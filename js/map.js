@@ -49,6 +49,11 @@ export class TileMap {
     this.satelliteTileUrls = [
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     ];
+    this.labelTileUrls = [
+      'https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+      'https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+      'https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+    ];
     this.satelliteEnabled = false;
     this._satelliteMaxZoom = 18;
     this.railTileUrls = [
@@ -207,7 +212,8 @@ export class TileMap {
     const isRail = urlTemplate.includes('openrailway');
     const isRadar = urlTemplate.includes('rainviewer');
     const isSat = urlTemplate.includes('arcgisonline');
-    const suffix = isRadar ? 'w' : (isRail ? 'r' : (isSat ? 's' : 'b'));
+    const isLabel = urlTemplate.includes('only_labels');
+    const suffix = isRadar ? 'w' : (isRail ? 'r' : (isSat ? 's' : (isLabel ? 'l' : 'b')));
     const key = `${z}/${tx}/${ty}/${suffix}`;
     const cached = this.tileCache.get(key);
     if (cached) {
@@ -222,7 +228,7 @@ export class TileMap {
     this.tileCache.set(key, tile);
 
     const url = urlTemplate.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
-    if (isRail || isRadar) this._railQueue.push({ tile, url, z });
+    if (isRail || isRadar || isLabel) this._railQueue.push({ tile, url, z });
     else this._baseQueue.push({ tile, url, z });
     this._processQueue();
 
@@ -292,7 +298,10 @@ export class TileMap {
     this._lastQueueZoom = z;
 
     const baseUrls = this.satelliteEnabled ? this.satelliteTileUrls : this.baseTileUrls;
-    const layers = [baseUrls, this.railTileUrls];
+    const layers = [baseUrls];
+    // Add labels overlay when in satellite mode
+    if (this.satelliteEnabled) layers.push(this.labelTileUrls);
+    layers.push(this.railTileUrls);
     // Add radar layer if enabled (clamp to max supported zoom)
     if (this.radarEnabled && this._radarTileUrl) {
       layers.push([this._radarTileUrl]);
@@ -404,7 +413,7 @@ export class TileMap {
     this.satelliteEnabled = !this.satelliteEnabled;
     // Clear base tile cache so new layer loads fresh
     for (const [k] of this.tileCache) {
-      if (k.endsWith('/b') || k.endsWith('/s')) this.tileCache.delete(k);
+      if (k.endsWith('/b') || k.endsWith('/s') || k.endsWith('/l')) this.tileCache.delete(k);
     }
     this._baseQueue = [];
     this._baseLoading = 0;
