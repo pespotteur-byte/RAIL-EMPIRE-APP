@@ -679,11 +679,15 @@ class RailEmpire {
     // Shunting operations update every minute
     try { this.shuntingManager.update(1); } catch(e) { /* graceful */ }
 
-    // Update radar tile URL from weather data
+    // Update radar + cloud tile URLs from weather data
     try {
       const radarPath = this.weather.getLatestRadarPath();
       if (radarPath && this.renderer?.tileMap) {
         this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(radarPath));
+      }
+      const cloudPath = this.weather.getLatestCloudPath();
+      if (cloudPath && this.renderer?.tileMap) {
+        this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl(cloudPath));
       }
     } catch(e) { /* graceful */ }
 
@@ -743,12 +747,14 @@ class RailEmpire {
         }
 
         if (this.renderer) {
-          // Sync radar tile URL every ~2s (not every frame)
+          // Sync radar + cloud tile URLs every ~2s (not every frame)
           if (!this._lastRadarSync || now - this._lastRadarSync > 2000) {
             this._lastRadarSync = now;
             try {
               const rp = this.weather.getLatestRadarPath();
               if (rp) this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(rp));
+              const cp = this.weather.getLatestCloudPath();
+              if (cp) this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl(cp));
             } catch(e) { /* graceful */ }
           }
           this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);

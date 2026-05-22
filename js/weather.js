@@ -166,6 +166,10 @@ export class Weather {
         this.radarTimestamps = data.radar.past.map(p => p.path);
         this.radarHost = data.host || 'https://tilecache.rainviewer.com';
       }
+      // Infrared satellite (cloud cover) data
+      if (data.satellite?.infrared) {
+        this.cloudTimestamps = data.satellite.infrared.map(p => p.path);
+      }
     } catch (e) {
       console.warn('RainViewer fetch failed:', e.message);
     }
@@ -176,9 +180,20 @@ export class Weather {
     return this.radarTimestamps[this.radarTimestamps.length - 1];
   }
 
+  getLatestCloudPath() {
+    if (!this.cloudTimestamps || this.cloudTimestamps.length === 0) return null;
+    return this.cloudTimestamps[this.cloudTimestamps.length - 1];
+  }
+
   getRadarTileUrl(path) {
     if (!path) return null;
     return `${this.radarHost}${path}/256/{z}/{x}/{y}/2/1_1.png`;
+  }
+
+  getCloudTileUrl(path) {
+    if (!path) return null;
+    // RainViewer infrared satellite tiles — color scheme 0 (original), smooth=1
+    return `${this.radarHost}${path}/256/{z}/{x}/{y}/0/0_0.png`;
   }
 
   _fallbackWeather() {
@@ -395,23 +410,32 @@ export class Weather {
       </div>
 
       <div class="dash-section">
-        <h3>${icon('satellite', 16)} Radar & Satellite</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <h3>${icon('satellite', 16)} Radar, Nuages & Satellite</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
           <div style="padding:10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:11px;font-weight:600;margin-bottom:4px">${icon('radar', 14)} Radar précipitations</div>
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px">${icon('radar', 14)} Radar</div>
             <div style="font-size:11px;color:var(--text3)">
               ${this.radarTimestamps.length > 0
-                ? `<span style="color:#22c55e">●</span> ${this.radarTimestamps.length} images disponibles`
+                ? `<span style="color:#22c55e">●</span> ${this.radarTimestamps.length} images`
                 : '<span style="color:#f97316">●</span> Chargement...'}
             </div>
-            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez le toggle Radar sur la carte</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Précipitations en temps réel</div>
           </div>
           <div style="padding:10px;background:var(--bg);border-radius:6px">
-            <div style="font-size:11px;font-weight:600;margin-bottom:4px">${icon('satellite', 14)} Vue satellite</div>
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px">${icon('cloud', 14)} Nuages</div>
             <div style="font-size:11px;color:var(--text3)">
-              <span style="color:#22c55e">●</span> ArcGIS World Imagery
+              ${this.cloudTimestamps?.length > 0
+                ? `<span style="color:#22c55e">●</span> Satellite IR`
+                : `<span style="color:#3b82f6">●</span> Open-Meteo`}
             </div>
-            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez le toggle Satellite sur la carte</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Couverture nuageuse live</div>
+          </div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px">${icon('satellite', 14)} Satellite</div>
+            <div style="font-size:11px;color:var(--text3)">
+              <span style="color:#22c55e">●</span> ArcGIS
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Imagerie monde</div>
           </div>
         </div>
       </div>

@@ -10,11 +10,11 @@ export class TileMap {
     this.viewportWidth = 800;
     this.viewportHeight = 600;
 
-    // Separate loading pools: base and ORM load in parallel
+    // Separate loading pools: base and ORM/weather load in parallel
     this._baseLoading = 0;
     this._railLoading = 0;
-    this._maxBaseConn = 8;
-    this._maxRailConn = 8;
+    this._maxBaseConn = 10;
+    this._maxRailConn = 10;
     this._baseQueue = [];
     this._railQueue = [];
     this._lastQueueZoom = 0;
@@ -66,6 +66,11 @@ export class TileMap {
     this.radarEnabled = false;
     this._radarTileUrl = null;
     this._radarMaxZoom = 12; // RainViewer max supported zoom
+
+    // Cloud overlay (RainViewer infrared satellite)
+    this.cloudEnabled = false;
+    this._cloudTileUrl = null;
+    this._cloudMaxZoom = 12;
   }
 
   markDirty() { this._dirty = true; this._tileBufferValid = false; }
@@ -240,10 +245,11 @@ export class TileMap {
 
   getTile(tx, ty, z, urlTemplate) {
     const isRail = urlTemplate.includes('openrailway');
-    const isRadar = urlTemplate.includes('rainviewer');
+    const isRadar = urlTemplate.includes('rainviewer') && urlTemplate.includes('/2/1_1.');
+    const isCloud = urlTemplate.includes('rainviewer') && urlTemplate.includes('/0/0_0.');
     const isSat = urlTemplate.includes('arcgisonline');
     const isLabel = urlTemplate.includes('only_labels');
-    const suffix = isRadar ? 'w' : (isRail ? 'r' : (isSat ? 's' : (isLabel ? 'l' : 'b')));
+    const suffix = isRadar ? 'w' : (isCloud ? 'c' : (isRail ? 'r' : (isSat ? 's' : (isLabel ? 'l' : 'b'))));
     const key = `${z}/${tx}/${ty}/${suffix}`;
     const cached = this.tileCache.get(key);
     if (cached) {
@@ -258,7 +264,7 @@ export class TileMap {
     this.tileCache.set(key, tile);
 
     const url = urlTemplate.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
-    if (isRail || isRadar || isLabel) this._railQueue.push({ tile, url, z });
+    if (isRail || isRadar || isCloud || isLabel) this._railQueue.push({ tile, url, z });
     else this._baseQueue.push({ tile, url, z });
     this._processQueue();
 
@@ -290,17 +296,15 @@ export class TileMap {
 
   renderTiles(ctx, canvasW, canvasH) {
     if (!canvasW || !canvasH) return;
-    // Detect view changes (zoom/pan) and invalidate buffer if needed
     this._checkDirty();
 
-    // Use offscreen buffer: only re-render tiles when view changed or new tiles loaded
+    // Use offscreen buffer when view is static (not panning)
     if (this._tileBufferValid && this._tileCanvas &&
         this._tileBufferW === canvasW && this._tileBufferH === canvasH) {
       ctx.drawImage(this._tileCanvas, 0, 0);
       return;
     }
 
-    // Create/resize offscreen canvas (logical size — same coordinate space as main ctx)
     if (!this._tileCanvas || this._tileBufferW !== canvasW || this._tileBufferH !== canvasH) {
       this._tileCanvas = document.createElement('canvas');
       this._tileCanvas.width = canvasW;
@@ -310,88 +314,93 @@ export class TileMap {
       this._tileBufferH = canvasH;
     }
 
+    // Draw to both the main canvas AND the buffer simultaneously
     const tctx = this._tileCtx;
-    tctx.clearRect(0, 0, canvasW, canvasH);
 
     const z = Math.round(this.zoomLevel);
+    tctx.clearRect(0, 0, canvasW, canvasH);
+
     const scale = Math.pow(2, this.zoomLevel - z);
     const scaledTileSize = this.tileSize * scale;
     const center = this.latLonToGlobalPixel(this.centerLat, this.centerLon, z);
+
+    // Pre-compute tile origin offset (avoid per-tile multiplication)
+    const originX = -center.x * scale + canvasW / 2;
+    const originY = -center.y * scale + canvasH / 2;
 
     const startTileX = Math.floor((center.x - canvasW / 2 / scale) / this.tileSize);
     const startTileY = Math.floor((center.y - canvasH / 2 / scale) / this.tileSize);
     const endTileX = Math.ceil((center.x + canvasW / 2 / scale) / this.tileSize);
     const endTileY = Math.ceil((center.y + canvasH / 2 / scale) / this.tileSize);
-    const maxTile = Math.pow(2, z);
+    const maxTile = 1 << z; // faster than Math.pow(2, z)
+    const tileSize = this.tileSize;
 
     this._pendingTiles = 0;
-
     this._lastQueueZoom = z;
 
     const baseUrls = this.satelliteEnabled ? this.satelliteTileUrls : this.baseTileUrls;
     const layers = [baseUrls];
-    // Add labels overlay when in satellite mode
     if (this.satelliteEnabled) layers.push(this.labelTileUrls);
     layers.push(this.railTileUrls);
-    // Add radar layer if enabled (clamp to max supported zoom)
     if (this.radarEnabled && this._radarTileUrl) {
       layers.push([this._radarTileUrl]);
     }
-    for (const urls of layers) {
+    if (this.cloudEnabled && this._cloudTileUrl) {
+      layers.push([this._cloudTileUrl]);
+    }
+    for (let li = 0; li < layers.length; li++) {
+      const urls = layers[li];
       const isRadarLayer = this.radarEnabled && urls[0] === this._radarTileUrl;
+      const isCloudLayer = this.cloudEnabled && urls[0] === this._cloudTileUrl;
       const isSatLayer = this.satelliteEnabled && urls === baseUrls;
+      const isWeatherOverlay = isRadarLayer || isCloudLayer;
       if (isRadarLayer) tctx.globalAlpha = 0.5;
+      else if (isCloudLayer) tctx.globalAlpha = 0.45;
 
-      // Clamp zoom for layers with max zoom limits
       let layerZ = z;
       if (isRadarLayer) layerZ = Math.min(z, this._radarMaxZoom);
+      else if (isCloudLayer) layerZ = Math.min(z, this._cloudMaxZoom);
       else if (isSatLayer) layerZ = Math.min(z, this._satelliteMaxZoom);
       const zoomDiff = z - layerZ;
-      const upscale = Math.pow(2, zoomDiff);
+      const upscale = 1 << zoomDiff;
+      const urlsLen = urls.length;
 
       for (let tx = startTileX; tx <= endTileX; tx++) {
+        const pxBase = originX + tx * scaledTileSize;
         for (let ty = startTileY; ty <= endTileY; ty++) {
           if (ty < 0 || ty >= maxTile) continue;
           const wrappedTx = ((tx % maxTile) + maxTile) % maxTile;
+          const py = originY + ty * scaledTileSize;
           if (zoomDiff > 0) {
-            // Upscale: fetch parent tile at clamped zoom, draw sub-region
-            const parentTx = Math.floor(wrappedTx / upscale);
-            const parentTy = Math.floor(ty / upscale);
-            const urlIdx = (parentTx + parentTy) % urls.length;
-            const tile = this.getTile(parentTx, parentTy, layerZ, urls[urlIdx]);
+            const parentTx = wrappedTx >> zoomDiff;
+            const parentTy = ty >> zoomDiff;
+            const tile = this.getTile(parentTx, parentTy, layerZ, urls[(parentTx + parentTy) % urlsLen]);
             if (tile.loaded && tile.img) {
-              const subX = wrappedTx - parentTx * upscale;
-              const subY = ty - parentTy * upscale;
-              const srcSize = this.tileSize / upscale;
-              const px = (tx * this.tileSize - center.x) * scale + canvasW / 2;
-              const py = (ty * this.tileSize - center.y) * scale + canvasH / 2;
-              tctx.drawImage(tile.img, subX * srcSize, subY * srcSize, srcSize, srcSize, px, py, scaledTileSize, scaledTileSize);
+              const srcSize = tileSize / upscale;
+              tctx.drawImage(tile.img,
+                (wrappedTx - parentTx * upscale) * srcSize,
+                (ty - parentTy * upscale) * srcSize,
+                srcSize, srcSize, pxBase, py, scaledTileSize, scaledTileSize);
             }
           } else {
-            const urlIdx = (wrappedTx + ty) % urls.length;
-            const tile = this.getTile(wrappedTx, ty, layerZ, urls[urlIdx]);
+            const tile = this.getTile(wrappedTx, ty, layerZ, urls[(wrappedTx + ty) % urlsLen]);
             if (tile.loaded && tile.img) {
-              const px = (tx * this.tileSize - center.x) * scale + canvasW / 2;
-              const py = (ty * this.tileSize - center.y) * scale + canvasH / 2;
-              tctx.drawImage(tile.img, px, py, scaledTileSize, scaledTileSize);
-            } else if (!tile.error && !isRadarLayer) {
-              // Fallback: draw cached lower-zoom tile while loading
+              tctx.drawImage(tile.img, pxBase, py, scaledTileSize, scaledTileSize);
+            } else if (!tile.error && !isWeatherOverlay) {
               this._pendingTiles++;
               const isOverlay = urls === this.railTileUrls;
               const suffix = isSatLayer ? 's' : (isOverlay ? 'r' : 'b');
               for (let fz = layerZ - 1; fz >= this.minZoom; fz--) {
-                const fScale = Math.pow(2, layerZ - fz);
-                const ftx = Math.floor(wrappedTx / fScale);
-                const fty = Math.floor(ty / fScale);
-                const fKey = `${fz}/${ftx}/${fty}/${suffix}`;
-                const fTile = this.tileCache.get(fKey);
+                const fScale = 1 << (layerZ - fz);
+                const ftx = wrappedTx >> (layerZ - fz);
+                const fty = ty >> (layerZ - fz);
+                const fTile = this.tileCache.get(`${fz}/${ftx}/${fty}/${suffix}`);
                 if (fTile && fTile.loaded && fTile.img) {
-                  const subX2 = wrappedTx - ftx * fScale;
-                  const subY2 = ty - fty * fScale;
-                  const srcSize2 = this.tileSize / fScale;
-                  const px2 = (tx * this.tileSize - center.x) * scale + canvasW / 2;
-                  const py2 = (ty * this.tileSize - center.y) * scale + canvasH / 2;
-                  tctx.drawImage(fTile.img, subX2 * srcSize2, subY2 * srcSize2, srcSize2, srcSize2, px2, py2, scaledTileSize, scaledTileSize);
+                  const srcSize2 = tileSize / fScale;
+                  tctx.drawImage(fTile.img,
+                    (wrappedTx - ftx * fScale) * srcSize2,
+                    (ty - fty * fScale) * srcSize2,
+                    srcSize2, srcSize2, pxBase, py, scaledTileSize, scaledTileSize);
                   break;
                 }
               }
@@ -399,7 +408,7 @@ export class TileMap {
           }
         }
       }
-      if (isRadarLayer) tctx.globalAlpha = 1.0;
+      if (isWeatherOverlay) tctx.globalAlpha = 1.0;
     }
 
     // Buffer is valid only if all tiles loaded
@@ -438,6 +447,23 @@ export class TileMap {
     this._tileBufferValid = false;
     this._dirty = true;
     return this.radarEnabled;
+  }
+
+  setCloudTileUrl(url) {
+    if (this._cloudTileUrl !== url) {
+      this._cloudTileUrl = url;
+      if (this.cloudEnabled) {
+        this._tileBufferValid = false;
+        this._dirty = true;
+      }
+    }
+  }
+
+  toggleCloud() {
+    this.cloudEnabled = !this.cloudEnabled;
+    this._tileBufferValid = false;
+    this._dirty = true;
+    return this.cloudEnabled;
   }
 
   toggleSatellite() {

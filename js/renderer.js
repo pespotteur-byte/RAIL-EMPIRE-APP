@@ -55,12 +55,6 @@ export class Renderer {
     // Update frame projection cache once per render (avoids redundant trig in latLonToScreen)
     this.tileMap._updateFrameCache();
 
-    // Static layer: tracks + stations + depots — only redraw when view changes
-    const viewChanged = this.tileMap.zoomLevel !== this._lastStaticZoom ||
-      this.tileMap.centerLat !== this._lastStaticCLat ||
-      this.tileMap.centerLon !== this._lastStaticCLon;
-    if (viewChanged) this._staticValid = false;
-
     // Cache toggle element refs (avoid per-frame DOM lookups, re-query if null)
     if (!this._toggleEls || !this._toggleEls.stations) {
       this._toggleEls = {
@@ -70,19 +64,24 @@ export class Renderer {
         voie: document.getElementById('toggle-voie-points'),
         radar: document.getElementById('toggle-radar'),
         satellite: document.getElementById('toggle-satellite'),
+        clouds: document.getElementById('toggle-clouds'),
       };
-      // Wire radar toggle to map
       if (this._toggleEls.radar) {
         this._toggleEls.radar.addEventListener('change', () => {
           this.tileMap.radarEnabled = this._toggleEls.radar.checked;
           this.tileMap.markDirty();
         });
       }
-      // Wire satellite toggle to map
       if (this._toggleEls.satellite) {
         this._toggleEls.satellite.addEventListener('change', () => {
           this.tileMap.toggleSatellite();
           this._toggleEls.satellite.checked = this.tileMap.satelliteEnabled;
+        });
+      }
+      if (this._toggleEls.clouds) {
+        this._toggleEls.clouds.addEventListener('change', () => {
+          this.tileMap.cloudEnabled = this._toggleEls.clouds.checked;
+          this.tileMap.markDirty();
         });
       }
     }
@@ -91,34 +90,19 @@ export class Renderer {
     const showTrains = this._toggleEls.trains?.checked !== false;
     const showVoiePoints = this._toggleEls.voie?.checked !== false;
 
-    if (!this._staticValid) {
-      if (!this._staticCanvas || this._staticCanvas.width !== this.canvas.width || this._staticCanvas.height !== this.canvas.height) {
-        this._staticCanvas = document.createElement('canvas');
-        this._staticCanvas.width = this.canvas.width;
-        this._staticCanvas.height = this.canvas.height;
-        this._staticCtx = this._staticCanvas.getContext('2d');
-      }
-      const sctx = this._staticCtx;
-      const dpr = window.devicePixelRatio || 1;
-      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      sctx.clearRect(0, 0, w, h);
-      this.drawTracks(sctx, world, lineManager);
-      if (showStations) this.drawStations(sctx, world, platformManager, showNames);
-      this.drawDepots(sctx, world, depotManager);
-      if (showVoiePoints && voiePointManager) {
-        this.drawVoieTroncons(sctx, voiePointManager, world);
-        this.drawVoiePoints(sctx, voiePointManager);
-      }
-      this._staticValid = true;
-      this._lastStaticZoom = this.tileMap.zoomLevel;
-      this._lastStaticCLat = this.tileMap.centerLat;
-      this._lastStaticCLon = this.tileMap.centerLon;
+    // Draw static layers directly to main ctx (tracks ~3ms, stations ~0.2ms = fast)
+    this.drawTracks(ctx, world, lineManager);
+    if (showStations) this.drawStations(ctx, world, platformManager, showNames);
+    this.drawDepots(ctx, world, depotManager);
+    if (showVoiePoints && voiePointManager) {
+      this.drawVoieTroncons(ctx, voiePointManager, world);
+      this.drawVoiePoints(ctx, voiePointManager);
     }
-    // Blit static layer — reset transform to avoid double DPR scaling
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(this._staticCanvas, 0, 0);
-    ctx.restore();
+
+    // Cloud overlay (canvas-based fallback when tile data is unavailable)
+    if (this.tileMap.cloudEnabled && !this.tileMap._cloudTileUrl) {
+      this._drawCloudOverlay(ctx, w, h);
+    }
 
     // Dynamic layers always drawn
     if (window.game?.ui?._manualTronconWaypoints?.length > 1) {
@@ -127,23 +111,47 @@ export class Renderer {
     if (showTrains) this.drawServices(ctx, world, services);
   }
 
+  _drawCloudOverlay(ctx, w, h) {
+    const weather = window.game?.weather;
+    if (!weather) return;
+    const low = weather.cloudLow || 0;
+    const mid = weather.cloudMid || 0;
+    const high = weather.cloudHigh || 0;
+    if (low + mid + high === 0) return;
+
+    // Low clouds: dense, gray-white
+    if (low > 0) {
+      ctx.fillStyle = `rgba(200,210,220,${low * 0.002})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // Mid clouds: lighter, blue-gray
+    if (mid > 0) {
+      ctx.fillStyle = `rgba(180,195,215,${mid * 0.0015})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // High clouds: wispy, very transparent
+    if (high > 0) {
+      ctx.fillStyle = `rgba(220,225,235,${high * 0.001})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
   latLonToScreen(lat, lon) {
     return this.tileMap.latLonToPixel(lat, lon);
   }
 
   drawTracks(ctx, world, lineManager) {
-    // Viewport culling bounds
-    const topLeft = this.tileMap ? this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight) : null;
-    const botRight = this.tileMap ? this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight) : null;
+    const tm = this.tileMap;
+    const topLeft = tm ? tm.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight) : null;
+    const botRight = tm ? tm.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight) : null;
     const hasVP = topLeft && botRight;
     const vpMinLat = hasVP ? Math.min(topLeft.lat, botRight.lat) - 0.01 : -90;
     const vpMaxLat = hasVP ? Math.max(topLeft.lat, botRight.lat) + 0.01 : 90;
     const vpMinLon = hasVP ? Math.min(topLeft.lon, botRight.lon) - 0.01 : -180;
     const vpMaxLon = hasVP ? Math.max(topLeft.lon, botRight.lon) + 0.01 : 180;
 
-    const zoom = this.tileMap?.zoomLevel || 10;
-    // Precompute pixels-per-degree for sub-pixel skip
-    const pxPerDegLon = this.tileMap._frameScale ? (this.tileMap._frameScale / 360) : 500;
+    const zoom = tm?.zoomLevel || 10;
+    const pxPerDegLon = tm._frameScale ? (tm._frameScale / 360) : 500;
 
     for (const track of world.tracks) {
       const stA = world.getStationById(track.stationA);
@@ -211,26 +219,40 @@ export class Renderer {
       }
 
       if (track.route && track.route.length > 1) {
-        // Aggressive LOD: skip more points at lower zoom levels
         const len = track.route.length;
         const routeStep = len <= 20 ? 1 :
           zoom >= 15 ? 1 : zoom >= 12 ? Math.max(1, len >> 6) :
           zoom >= 9 ? Math.max(2, len >> 4) : Math.max(4, len >> 3);
         ctx.beginPath();
-        const p0 = this.latLonToScreen(track.route[0].lat, track.route[0].lon);
-        ctx.moveTo(p0.x, p0.y);
-        for (let i = routeStep; i < track.route.length; i += routeStep) {
-          const p = this.latLonToScreen(track.route[i].lat, track.route[i].lon);
-          ctx.lineTo(p.x, p.y);
+        // Inline Mercator projection for speed (avoid method call overhead)
+        const fScale = tm._frameScale;
+        const fCx = tm._frameCx;
+        const fCy = tm._frameCy;
+        const fHW = tm._frameHalfW;
+        const fHH = tm._frameHalfH;
+        const DEG2RAD = Math.PI / 180;
+        const INV4PI = 1 / (4 * Math.PI);
+        const r0 = track.route[0];
+        let sinLat = Math.sin(r0.lat * DEG2RAD);
+        let sx = ((r0.lon + 180) / 360) * fScale - fCx + fHW;
+        let sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) * INV4PI) * fScale - fCy + fHH;
+        ctx.moveTo(sx, sy);
+        for (let i = routeStep; i < len; i += routeStep) {
+          const rp = track.route[i];
+          sinLat = Math.sin(rp.lat * DEG2RAD);
+          sx = ((rp.lon + 180) / 360) * fScale - fCx + fHW;
+          sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) * INV4PI) * fScale - fCy + fHH;
+          ctx.lineTo(sx, sy);
         }
-        // Always draw last point
-        const pLast = track.route[track.route.length - 1];
-        const pEnd = this.latLonToScreen(pLast.lat, pLast.lon);
-        ctx.lineTo(pEnd.x, pEnd.y);
+        const rl = track.route[len - 1];
+        sinLat = Math.sin(rl.lat * DEG2RAD);
+        sx = ((rl.lon + 180) / 360) * fScale - fCx + fHW;
+        sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) * INV4PI) * fScale - fCy + fHH;
+        ctx.lineTo(sx, sy);
         ctx.stroke();
       } else {
-        const pa = this.latLonToScreen(stA.lat, stA.lon);
-        const pb = this.latLonToScreen(stB.lat, stB.lon);
+        const pa = tm.worldToScreenFast(stA.lat, stA.lon);
+        const pb = tm.worldToScreenFast(stB.lat, stB.lon);
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(pb.x, pb.y);
