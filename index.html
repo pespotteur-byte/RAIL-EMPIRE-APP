@@ -153,6 +153,16 @@
             <h2>Horaires & Trajets</h2>
             <button id="btn-new-schedule" class="btn-primary">+ Creer un trajet</button>
           </div>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+            <label style="color:var(--text2);font-size:11px">Trier par :</label>
+            <select id="sched-sort" style="background:var(--bg2);color:var(--text1);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px">
+              <option value="creation">Ordre de creation</option>
+              <option value="departure">Heure de depart</option>
+              <option value="rame">Rame affectee</option>
+              <option value="name">Nom du service</option>
+              <option value="route">Itineraire</option>
+            </select>
+          </div>
           <div id="schedules-list" class="schedules-list"></div>
         </div>
       </div>

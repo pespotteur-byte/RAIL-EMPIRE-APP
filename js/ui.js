@@ -1034,6 +1034,7 @@ export class UI {
   setupSchedulePage() {
     document.getElementById('btn-new-schedule')?.addEventListener('click', () => this.openScheduleModal());
     document.getElementById('btn-save-schedule')?.addEventListener('click', () => this.saveSchedule());
+    document.getElementById('sched-sort')?.addEventListener('change', () => this.renderSchedulesList());
   }
 
   openScheduleModal(editService) {
@@ -1977,7 +1978,43 @@ export class UI {
       return;
     }
 
-    container.innerHTML = services.map(svc => {
+    const sortMode = document.getElementById('sched-sort')?.value || 'creation';
+    let sorted = [...services];
+
+    if (sortMode === 'departure') {
+      sorted.sort((a, b) => (a.stops[0]?.departureTime || 0) - (b.stops[0]?.departureTime || 0));
+    } else if (sortMode === 'rame') {
+      sorted.sort((a, b) => {
+        const ra = this.game.rameManager.getById(a.rameId);
+        const rb = this.game.rameManager.getById(b.rameId);
+        return (ra?.name || 'ZZZ').localeCompare(rb?.name || 'ZZZ');
+      });
+    } else if (sortMode === 'name') {
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortMode === 'route') {
+      sorted.sort((a, b) => {
+        const aFirst = this.game.world.getStationById(a.stops[0]?.stationId)?.name || '';
+        const bFirst = this.game.world.getStationById(b.stops[0]?.stationId)?.name || '';
+        return aFirst.localeCompare(bFirst) || (a.stops[0]?.departureTime || 0) - (b.stops[0]?.departureTime || 0);
+      });
+    }
+
+    // Build group headers for rame and route sort modes
+    let lastGroupKey = null;
+    const getGroupKey = (svc) => {
+      if (sortMode === 'rame') {
+        const r = this.game.rameManager.getById(svc.rameId);
+        return r ? r.name : 'Sans rame';
+      }
+      if (sortMode === 'route') {
+        const fst = this.game.world.getStationById(svc.stops[0]?.stationId)?.name || '?';
+        const lst = this.game.world.getStationById(svc.stops[svc.stops.length - 1]?.stationId)?.name || '?';
+        return `${fst} → ${lst}`;
+      }
+      return null;
+    };
+
+    container.innerHTML = sorted.map(svc => {
       const stopsPreview = svc.stops.map(s => {
         const st = this.game.world.getStationById(s.stationId);
         const name = st ? st.name : s.stationId;
@@ -2012,9 +2049,20 @@ export class UI {
       const rd = svc.runDays || [0,1,2,3,4,5,6];
       const daysLabel = rd.length === 7 ? 'TLJ' : rd.map(d => dayNames[d]).join(' ');
       const datesLabel = svc.runDates && svc.runDates.length > 0 ? ` +${svc.runDates.length} date(s)` : '';
-      return `
+      // Group header
+      let groupHeader = '';
+      const gk = getGroupKey(svc);
+      if (gk !== null && gk !== lastGroupKey) {
+        lastGroupKey = gk;
+        groupHeader = `<div style="background:var(--bg3);padding:6px 12px;margin:8px 0 4px;border-radius:4px;font-size:12px;font-weight:600;color:var(--accent);border-left:3px solid var(--accent)">${gk}</div>`;
+      }
+
+      const depTime = this.minToTimeStr(svc.stops[0]?.departureTime || 0);
+
+      return `${groupHeader}
         <div class="sched-item">
           <div class="sched-item-header">
+            <span style="color:var(--text3);font-size:10px;min-width:38px">${depTime}</span>
             <span class="sched-item-name">${svc.name}${statusLabel}</span>
             <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
             <span style="color:var(--text3);font-size:10px">${Math.round(svc.totalDistance)} km${tripInfo}</span>
