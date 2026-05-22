@@ -863,10 +863,19 @@ export class ActiveService {
       return;
     }
 
-    // Distance-based progress from gare A to gare B using haversine
-    // This works correctly even with waypoints between A and B
+    // Route-based progress using actual distance along the ORM route
     let progress = 0;
-    if (this.position) {
+    if (this._state?.cachedRoute && this._state.cumDist && this._state.segDists) {
+      const totalRouteDist = this._state.cumDist[0] || 0;
+      if (totalRouteDist > 0.001) {
+        const idx = this._state.index || 0;
+        const segProg = this._state.progress || 0;
+        const distRemaining = (1 - segProg) * (this._state.segDists[idx] || 0)
+          + (this._state.cumDist[idx + 1] || 0);
+        progress = Math.max(0, Math.min(1, 1 - distRemaining / totalRouteDist));
+      }
+    } else if (this.position) {
+      // Fallback if no cached route: use haversine between stations
       const stA = gareA.stationId ? this.world?.getStationById(gareA.stationId) : null;
       const stB = gareB.stationId ? this.world?.getStationById(gareB.stationId) : null;
       const latA = stA ? stA.lat : (gareA.lat || this.position.lat);

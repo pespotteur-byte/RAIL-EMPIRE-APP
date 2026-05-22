@@ -1443,8 +1443,8 @@ export class UI {
             const route = await this.game.orm.findRoute(prevStation.lat, prevStation.lon, station.lat, station.lon);
             travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
           } catch (e) {
-            const dist = Math.sqrt(Math.pow((station.lat - prevStation.lat) * 111, 2) + Math.pow((station.lon - prevStation.lon) * 111 * Math.cos(station.lat * Math.PI / 180), 2));
-            travelTime = Math.round((dist / rameSpeed) * 60 * 1.0001) || 1;
+            const dist = this._approxRailDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
+            travelTime = Math.round((dist / rameSpeed) * 60) || 1;
           }
         }
       }
@@ -1488,8 +1488,8 @@ export class UI {
           const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
           travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
         } catch (e) {
-          const dist = Math.sqrt(Math.pow((voiePoint.lat - prevCoords.lat) * 111, 2) + Math.pow((voiePoint.lon - prevCoords.lon) * 111 * Math.cos(voiePoint.lat * Math.PI / 180), 2));
-          travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.0001);
+          const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
+          travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
         }
       }
       arrTimeMin = prevStop.depTimeMin + travelTime;
@@ -1562,8 +1562,8 @@ export class UI {
         const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
         travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
       } catch (e) {
-        const dist = Math.sqrt(Math.pow((snappedLat - prevCoords.lat) * 111, 2) + Math.pow((snappedLon - prevCoords.lon) * 111 * Math.cos(snappedLat * Math.PI / 180), 2));
-        travelTime = Math.ceil((dist / rameSpeed) * 60 * 1.25);
+        const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
+        travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
       }
     }
     const arrTimeMin = prevStop.depTimeMin + travelTime;
@@ -1771,6 +1771,30 @@ export class UI {
     }
   }
 
+  _approxRailDistance(lat1, lon1, lat2, lon2) {
+    // Try to find existing track/route between these two points to get real distance
+    const tracks = this.game.world.tracks;
+    if (tracks) {
+      for (const t of tracks) {
+        if (!t.route || t.route.length < 2) continue;
+        const r = t.route;
+        const startDist = Math.abs(r[0].lat - lat1) + Math.abs(r[0].lon - lon1);
+        const endDist = Math.abs(r[r.length - 1].lat - lat2) + Math.abs(r[r.length - 1].lon - lon2);
+        const startDistRev = Math.abs(r[0].lat - lat2) + Math.abs(r[0].lon - lon2);
+        const endDistRev = Math.abs(r[r.length - 1].lat - lat1) + Math.abs(r[r.length - 1].lon - lon1);
+        if ((startDist < 0.01 && endDist < 0.01) || (startDistRev < 0.01 && endDistRev < 0.01)) {
+          return this.game.orm.getRouteDistance(r);
+        }
+      }
+    }
+    // Fallback: haversine (great-circle distance)
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
   _getStopCoords(stop) {
     // Resolve lat/lon for any stop type (station, voie point, waypoint)
     if (stop.voiePointId && this.game.voiePointManager) {
@@ -1802,8 +1826,8 @@ export class UI {
       const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
       return this.game.orm.calculateTravelTime(route, rameSpeed);
     } catch (e) {
-      const dist = Math.sqrt(Math.pow((curCoords.lat - prevCoords.lat) * 111, 2) + Math.pow((curCoords.lon - prevCoords.lon) * 111 * Math.cos(curCoords.lat * Math.PI / 180), 2));
-      return Math.round((dist / rameSpeed) * 60 * 1.0001) || 1;
+      const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
+      return Math.round((dist / rameSpeed) * 60) || 1;
     }
   }
 

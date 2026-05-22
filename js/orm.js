@@ -778,9 +778,7 @@ export class ORMClient {
       }
     }
 
-    let totalMinutes = totalSeconds / 60;
-    // 0.01% margin — near-zero margin for accurate schedules
-    totalMinutes *= 1.0001;
+    const totalMinutes = totalSeconds / 60;
     return Math.round(totalMinutes) || 1;
   }
 
