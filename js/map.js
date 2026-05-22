@@ -51,6 +51,13 @@ export class TileMap {
       'https://b.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
       'https://c.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
     ];
+
+    // Weather radar overlay (RainViewer)
+    this.radarEnabled = false;
+    this._radarTileUrl = null; // set dynamically from weather module
+    this._radarLoading = 0;
+    this._maxRadarConn = 4;
+    this._radarQueue = [];
   }
 
   markDirty() { this._dirty = true; this._tileBufferValid = false; }
@@ -193,7 +200,10 @@ export class TileMap {
   }
 
   getTile(tx, ty, z, urlTemplate) {
-    const key = `${z}/${tx}/${ty}/${urlTemplate.includes('openrailway') ? 'r' : 'b'}`;
+    const isRail = urlTemplate.includes('openrailway');
+    const isRadar = urlTemplate.includes('rainviewer');
+    const suffix = isRadar ? 'w' : (isRail ? 'r' : 'b');
+    const key = `${z}/${tx}/${ty}/${suffix}`;
     const cached = this.tileCache.get(key);
     if (cached) {
       if (cached.error && Date.now() - cached.errorTime > 3000) {
@@ -207,8 +217,7 @@ export class TileMap {
     this.tileCache.set(key, tile);
 
     const url = urlTemplate.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
-    const isRail = urlTemplate.includes('openrailway');
-    if (isRail) this._railQueue.push({ tile, url, z });
+    if (isRail || isRadar) this._railQueue.push({ tile, url, z });
     else this._baseQueue.push({ tile, url, z });
     this._processQueue();
 
@@ -278,7 +287,13 @@ export class TileMap {
     this._lastQueueZoom = z;
 
     const layers = [this.baseTileUrls, this.railTileUrls];
+    // Add radar layer if enabled
+    if (this.radarEnabled && this._radarTileUrl) {
+      layers.push([this._radarTileUrl]);
+    }
     for (const urls of layers) {
+      const isRadarLayer = this.radarEnabled && urls[0] === this._radarTileUrl;
+      if (isRadarLayer) tctx.globalAlpha = 0.6;
       for (let tx = startTileX; tx <= endTileX; tx++) {
         for (let ty = startTileY; ty <= endTileY; ty++) {
           if (ty < 0 || ty >= maxTile) continue;
@@ -292,8 +307,8 @@ export class TileMap {
           } else {
             // Fallback: draw cached lower-zoom tile while loading
             if (!tile.error) this._pendingTiles++;
-            const isRail = urls === this.railTileUrls;
-            const suffix = isRail ? 'r' : 'b';
+            const isOverlay = urls === this.railTileUrls || isRadarLayer;
+            const suffix = isRadarLayer ? 'w' : (isOverlay ? 'r' : 'b');
             let drawn = false;
             for (let fz = z - 1; fz >= this.minZoom; fz--) {
               const fScale = Math.pow(2, z - fz);
@@ -315,6 +330,7 @@ export class TileMap {
           }
         }
       }
+      if (isRadarLayer) tctx.globalAlpha = 1.0;
     }
 
     // Buffer is valid only if all tiles loaded
@@ -336,5 +352,22 @@ export class TileMap {
     const pxPer001Deg = p2.x - p1.x;
     const kmPer001Deg = 0.01 * 111.32 * Math.cos((lat * Math.PI) / 180);
     return pxPer001Deg / kmPer001Deg;
+  }
+
+  setRadarTileUrl(url) {
+    if (this._radarTileUrl !== url) {
+      this._radarTileUrl = url;
+      if (this.radarEnabled) {
+        this._tileBufferValid = false;
+        this._dirty = true;
+      }
+    }
+  }
+
+  toggleRadar() {
+    this.radarEnabled = !this.radarEnabled;
+    this._tileBufferValid = false;
+    this._dirty = true;
+    return this.radarEnabled;
   }
 }

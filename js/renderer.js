@@ -65,7 +65,15 @@ export class Renderer {
         names: document.getElementById('toggle-station-names'),
         trains: document.getElementById('toggle-trains'),
         voie: document.getElementById('toggle-voie-points'),
+        radar: document.getElementById('toggle-radar'),
       };
+      // Wire radar toggle to map
+      if (this._toggleEls.radar) {
+        this._toggleEls.radar.addEventListener('change', () => {
+          this.map.radarEnabled = this._toggleEls.radar.checked;
+          this.map.markDirty();
+        });
+      }
     }
     const showStations = this._toggleEls.stations?.checked !== false;
     const showNames = this._toggleEls.names?.checked !== false;

@@ -300,19 +300,20 @@ export class Tutorial {
 
       // === MÉTÉO ===
       {
-        title: '🌦️ Météo — Conditions climatiques',
-        text: `Le système <b>Météo</b> simule les conditions climatiques et leurs impacts sur le réseau.<br><br>
-        <b>6 conditions météo :</b><br>
-        • ☀️ <b>Dégagé</b> : vitesse normale (100%)<br>
-        • 🌧️ <b>Pluie</b> : vitesse réduite à 90%<br>
-        • 🌨️ <b>Neige</b> : vitesse réduite à 70% — attention aux retards !<br>
-        • ⛈️ <b>Orage</b> : vitesse réduite à 60% — risque élevé<br>
-        • 🌡️ <b>Canicule</b> : vitesse réduite à 85% (rails qui se dilatent)<br>
-        • 🌫️ <b>Brouillard</b> : vitesse réduite à 75%<br><br>
-        <b>Saisons :</b><br>
-        • La météo change selon la saison (plus de neige en hiver, canicule en été)<br>
-        • La météo évolue toutes les ~60 minutes de jeu<br><br>
-        <b>Widget :</b> La météo actuelle est affichée en temps réel dans le <b>header</b> du jeu (en haut à gauche du solde).`,
+        title: '🌦️ Météo LIVE — Données réelles',
+        text: `Le système <b>Météo</b> utilise des <b>données météo réelles</b> via l'API Open-Meteo.<br><br>
+        <b>Données en temps réel :</b><br>
+        • Température, humidité, vent, précipitations, couverture nuageuse<br>
+        • Basées sur la <b>position géographique réelle</b> du centre de la carte<br>
+        • Mises à jour toutes les 5 minutes (ou quand vous déplacez la carte)<br>
+        • Badge <span style="color:#22c55e">LIVE</span> dans le widget quand les données sont réelles<br><br>
+        <b>6 conditions avec impact sur la vitesse :</b><br>
+        • ☀️ <b>Dégagé</b> : 100% • 🌧️ <b>Pluie</b> : 90% • ❄️ <b>Neige</b> : 70%<br>
+        • ⛈️ <b>Tempête</b> : 60% • 🌡️ <b>Canicule</b> : 85% • 🌫️ <b>Brouillard</b> : 75%<br><br>
+        <b>Radar précipitations :</b><br>
+        • Cochez <b>🌧️ Radar</b> dans les options de la carte pour afficher le <b>radar de précipitations en temps réel</b> (RainViewer)<br>
+        • L'overlay montre les zones de pluie/neige avec des couleurs (bleu → vert → jaune → rouge)<br><br>
+        <b>💡</b> Déplacez la carte vers une autre ville pour voir la météo locale changer !`,
         target: '[data-page="weather"]',
         page: 'weather',
       },
