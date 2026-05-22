@@ -66,11 +66,19 @@ export class Renderer {
         trains: document.getElementById('toggle-trains'),
         voie: document.getElementById('toggle-voie-points'),
         radar: document.getElementById('toggle-radar'),
+        satellite: document.getElementById('toggle-satellite'),
       };
       // Wire radar toggle to map
       if (this._toggleEls.radar) {
         this._toggleEls.radar.addEventListener('change', () => {
           this.map.radarEnabled = this._toggleEls.radar.checked;
+          this.map.markDirty();
+        });
+      }
+      // Wire satellite toggle to map
+      if (this._toggleEls.satellite) {
+        this._toggleEls.satellite.addEventListener('change', () => {
+          this.map.satelliteEnabled = this._toggleEls.satellite.checked;
           this.map.markDirty();
         });
       }

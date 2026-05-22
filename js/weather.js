@@ -216,70 +216,101 @@ export class Weather {
     if (!container) return;
     const d = this.getDisplay();
 
+    // Wind direction indicator
+    const windArrow = d.windSpeed > 0 ? '💨' : '';
+    const windClass = d.windSpeed > 80 ? 'color:#ef4444;font-weight:700' : d.windSpeed > 50 ? 'color:#f97316' : d.windSpeed > 20 ? 'color:#eab308' : 'color:var(--text)';
+
+    // Temperature color gradient
+    const tempColor = this.temperature > 35 ? '#ef4444' : this.temperature > 25 ? '#f97316' : this.temperature < -5 ? '#818cf8' : this.temperature < 5 ? '#38bdf8' : '#22c55e';
+
+    // Cloud cover bar
+    const cloudBar = `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="width:${d.cloudCover}%;height:100%;background:${d.cloudCover > 80 ? '#94a3b8' : d.cloudCover > 50 ? '#64748b' : '#475569'};border-radius:3px"></div></div><span style="font-size:11px">${d.cloudCover}%</span></div>`;
+
+    // Humidity bar
+    const humBar = `<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden"><div style="width:${d.humidity}%;height:100%;background:${d.humidity > 80 ? '#60a5fa' : d.humidity > 50 ? '#3b82f6' : '#2563eb'};border-radius:3px"></div></div><span style="font-size:11px">${d.humidity}%</span></div>`;
+
     container.innerHTML = `
-      <div class="dash-section">
-        <h3>Météo en temps réel ${d.live ? '<span style="font-size:10px;color:#22c55e;background:#052e16;padding:2px 6px;border-radius:3px;margin-left:6px">LIVE</span>' : '<span style="font-size:10px;color:#94a3b8;background:#1e293b;padding:2px 6px;border-radius:3px;margin-left:6px">SIMULÉE</span>'}</h3>
-        <div class="dash-kpi-grid">
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Condition</div>
-            <div class="dash-kpi-value" style="color:${d.color}">${d.icon} ${d.label}</div>
-          </div>
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Température</div>
-            <div class="dash-kpi-value" style="color:${this.temperature > 35 ? '#ef4444' : this.temperature < 0 ? '#38bdf8' : 'var(--text)'}">${d.temperature}°C</div>
-          </div>
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Humidité</div>
-            <div class="dash-kpi-value">${d.humidity}%</div>
-          </div>
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Vent</div>
-            <div class="dash-kpi-value" style="color:${d.windSpeed > 60 ? '#ef4444' : d.windSpeed > 30 ? '#f97316' : 'var(--text)'}">${d.windSpeed} km/h</div>
-          </div>
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Précipitations</div>
-            <div class="dash-kpi-value" style="color:${d.precipitation > 0 ? '#60a5fa' : 'var(--text)'}">${d.precipitation} mm</div>
-          </div>
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Couverture nuageuse</div>
-            <div class="dash-kpi-value">${d.cloudCover}%</div>
-          </div>
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Saison</div>
-            <div class="dash-kpi-value">${d.season}</div>
-          </div>
-          <div class="dash-kpi">
-            <div class="dash-kpi-label">Impact vitesse</div>
-            <div class="dash-kpi-value" style="color:${d.speedPct < 100 ? '#ef4444' : 'var(--green)'}">${d.speedPct}%</div>
+      <div class="dash-section" style="border-left:3px solid ${d.color};padding-left:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h3 style="margin:0">Météo actuelle</h3>
+          ${d.live
+            ? '<span style="font-size:10px;color:#22c55e;background:#052e16;padding:3px 8px;border-radius:4px;font-weight:600;letter-spacing:0.5px">● LIVE</span>'
+            : '<span style="font-size:10px;color:#94a3b8;background:#1e293b;padding:3px 8px;border-radius:4px">SIMULÉE</span>'}
+        </div>
+
+        <!-- Big weather display -->
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:8px">
+          <div style="font-size:48px;line-height:1">${d.icon}</div>
+          <div style="flex:1">
+            <div style="font-size:28px;font-weight:700;color:${tempColor}">${d.temperature}°C</div>
+            <div style="font-size:14px;color:${d.color};font-weight:600">${d.label}</div>
+            <div style="font-size:11px;color:var(--text3)">${d.season} • Impact vitesse: <span style="color:${d.speedPct < 100 ? '#ef4444' : '#22c55e'};font-weight:600">${d.speedPct}%</span></div>
           </div>
         </div>
-        ${d.live ? `<p style="font-size:10px;color:var(--text3);margin-top:8px">Données Open-Meteo • Position: ${this._lastLat.toFixed(2)}°N, ${this._lastLon.toFixed(2)}°E • Mise à jour toutes les 5 min</p>` : ''}
+
+        <!-- Detail grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">${windArrow} Vent</div>
+            <div style="font-size:16px;font-weight:600;${windClass}">${d.windSpeed} km/h</div>
+          </div>
+          <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">🌧️ Précipitations</div>
+            <div style="font-size:16px;font-weight:600;color:${d.precipitation > 0 ? '#60a5fa' : 'var(--text)'}">${d.precipitation} mm</div>
+          </div>
+          <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">💧 Humidité</div>
+            ${humBar}
+          </div>
+          <div style="padding:8px 10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">☁️ Couverture nuageuse</div>
+            ${cloudBar}
+          </div>
+        </div>
+
+        ${d.live ? `<p style="font-size:10px;color:var(--text3);margin-top:10px">📡 Données Open-Meteo • Lat ${this._lastLat.toFixed(2)}° Lon ${this._lastLon.toFixed(2)}° • Rafraîchissement toutes les 5 min</p>` : ''}
       </div>
 
       <div class="dash-section">
-        <h3>Effets météo sur le trafic</h3>
+        <h3>Impact météo sur la circulation</h3>
         <div class="dash-train-table">
-          <div class="dash-train-header" style="grid-template-columns:0.5fr 1fr 1fr">
-            <span></span><span>Condition</span><span>Impact vitesse</span>
+          <div class="dash-train-header" style="grid-template-columns:50px 1fr 100px 100px">
+            <span></span><span>Condition</span><span>Vitesse</span><span>Statut</span>
           </div>
           ${Object.entries(this._effects).map(([key, e]) => {
             const isActive = key === this.current;
-            return `<div class="dash-train-row" style="grid-template-columns:0.5fr 1fr 1fr;${isActive ? 'background:var(--bg3)' : ''}">
-              <span>${e.icon}</span>
-              <span style="${isActive ? 'font-weight:700' : ''}">${e.label}</span>
-              <span style="color:${e.speedMult < 1 ? '#ef4444' : 'var(--green)'}">${Math.round(e.speedMult * 100)}%</span>
+            const pct = Math.round(e.speedMult * 100);
+            const reduction = 100 - pct;
+            return `<div class="dash-train-row" style="grid-template-columns:50px 1fr 100px 100px;${isActive ? 'background:var(--bg3);border-left:3px solid ' + e.color : ''}">
+              <span style="font-size:20px">${e.icon}</span>
+              <span style="${isActive ? 'font-weight:700;color:' + e.color : ''}">${e.label}${reduction > 0 ? ` <span style="font-size:10px;color:var(--text3)">(-${reduction}%)</span>` : ''}</span>
+              <span style="color:${pct < 100 ? '#ef4444' : '#22c55e'};font-weight:${isActive ? '700' : '400'}">${pct}%</span>
+              <span>${isActive ? '<span style="color:#22c55e;font-size:11px;font-weight:600">● ACTIF</span>' : ''}</span>
             </div>`;
           }).join('')}
         </div>
       </div>
 
       <div class="dash-section">
-        <h3>Radar précipitations</h3>
-        <p style="font-size:11px;color:var(--text3)">
-          ${this.radarTimestamps.length > 0
-            ? `${this.radarTimestamps.length} images radar disponibles. Activez le filtre radar sur la carte (bouton 🌧️ en haut à gauche) pour voir les précipitations en temps réel.`
-            : 'Chargement des données radar RainViewer...'}
-        </p>
+        <h3>🛰️ Radar & Satellite</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="padding:10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px">🌧️ Radar précipitations</div>
+            <div style="font-size:11px;color:var(--text3)">
+              ${this.radarTimestamps.length > 0
+                ? `<span style="color:#22c55e">●</span> ${this.radarTimestamps.length} images disponibles`
+                : '<span style="color:#f97316">●</span> Chargement...'}
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez "🌧️ Radar" sur la carte</div>
+          </div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:4px">🛰️ Vue satellite</div>
+            <div style="font-size:11px;color:var(--text3)">
+              <span style="color:#22c55e">●</span> ArcGIS World Imagery
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Activez "🛰️ Satellite" sur la carte</div>
+          </div>
+        </div>
       </div>
     `;
   }
