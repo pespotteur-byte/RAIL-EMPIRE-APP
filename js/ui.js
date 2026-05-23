@@ -2887,11 +2887,11 @@ export class UI {
   }
 
   _renderMaintenanceButton(depot) {
-    // List RAMES that have wear > 0 and are not already in maintenance
+    // List all RAMES not already in maintenance (preventive maintenance available for any rame)
     const allRames = this.game.rameManager.getAll();
     const dm = this.game.depotManager;
     const available = allRames.filter(r =>
-      (r.wearLevel || 0) > 0 && !r.inMaintenance && !dm.isRameInMaintenance(r.id)
+      !r.inMaintenance && !dm.isRameInMaintenance(r.id)
     );
     if (available.length === 0) return '';
     const opts = available.map(r => `<option value="${r.id}">${r.name} (${Math.round(r.wearLevel)}%)</option>`).join('');
@@ -3746,9 +3746,6 @@ export class UI {
           contextLabel = stName ? `À quai — ${stName}${voie}` : 'À quai';
           contextClass = 'ctx-quai';
         }
-      } else if (t.speed === 0 && svc.state === 'moving') {
-        contextLabel = 'Régulation du trafic';
-        contextClass = 'ctx-regulation';
       } else if (t.blockedBy) {
         contextLabel = 'Régulation du trafic';
         contextClass = 'ctx-regulation';

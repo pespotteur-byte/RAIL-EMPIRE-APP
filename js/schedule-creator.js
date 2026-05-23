@@ -301,6 +301,24 @@ export class ActiveService {
           return;
         }
         if (isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
+          // Ensure position is set (may not have been set by pre-departure positioning)
+          if (!this.position) {
+            const depStation = this.world?.getStationById(currentStops[0]?.stationId);
+            if (depStation) {
+              let posLat = depStation.lat, posLon = depStation.lon;
+              if (window.game?.voiePointManager) {
+                const s0 = currentStops[0];
+                if (s0?.voiePointId) {
+                  const vp = window.game.voiePointManager.getVoiePointById(s0.voiePointId);
+                  if (vp) { posLat = vp.lat; posLon = vp.lon; }
+                } else if (s0?.platform) {
+                  const svp = window.game.voiePointManager.getStationVoiePoint(depStation.id, s0.platform);
+                  if (svp) { posLat = svp.lat; posLon = svp.lon; }
+                }
+              }
+              this.position = { lat: posLat, lon: posLon };
+            }
+          }
           // Board passengers at departure station before moving
           if (economy) {
             const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
@@ -344,6 +362,12 @@ export class ActiveService {
           this._atTerminus = false;
           this.delay = 0;
           this.train.delay = 0;
+          // Ensure position is set for multi-trip departure
+          if (!this.position) {
+            const curStops2 = this.getCurrentStops();
+            const depSt = this.world?.getStationById(curStops2[0]?.stationId);
+            if (depSt) this.position = { lat: depSt.lat, lon: depSt.lon };
+          }
           this.state = 'moving';
           this.currentStopIndex = 1;
           this.speed = 0;
@@ -503,6 +527,17 @@ export class ActiveService {
 
     // Clear any stale garage state from old saves
     if (this._garage) this._garage = null;
+
+    // Safety: ensure position exists (may be null after reload or direct transition)
+    if (!this.position) {
+      const stops = this.getCurrentStops();
+      const depSt = stops?.length > 0 ? this.world?.getStationById(stops[0]?.stationId) : null;
+      if (depSt) {
+        this.position = { lat: depSt.lat, lon: depSt.lon };
+      } else {
+        return;
+      }
+    }
 
     let target = this.getTargetStation();
     if (!target) {
