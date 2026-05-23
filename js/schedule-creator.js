@@ -216,7 +216,8 @@ export class ActiveService {
         let diff = dep0 - timeOfDay;
         if (diff < -180) diff += 1440; // wrap around midnight
         if (diff > 2 && diff < 1400) {
-          if (this.completed) return;
+          this.position = null;
+          this.train.stoppedAt = null;
           return;
         }
       }
@@ -856,6 +857,45 @@ export class ActiveService {
       cantonManager.releaseAll(this.id);
       this.arriveAtStation(target, timeOfDay, this._economy);
       return;
+    }
+
+    // --- ANTI-OVERTAKE: clamp position behind nearest train ahead on same route ---
+    if (allServices && allServices.length > 1) {
+      const myProgressKm = this._getRouteProgressKm(this.position, route, this._state.index);
+      const MIN_SPACING = 0.15; // 150m minimum spacing
+      const candidates = this._nearbyServices || allServices;
+      for (const other of candidates) {
+        if (other.id === this.id || !other.position) continue;
+        if (other.state === 'waiting' || other.state === 'completed') continue;
+        const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
+        if (rawDist > 3) continue;
+        const otherProgress = this._getRouteProgressKm(other.position, route, this._state.index);
+        if (otherProgress <= myProgressKm) continue; // behind us
+        const gap = otherProgress - myProgressKm;
+        if (gap < MIN_SPACING) {
+          // Clamp: place ourselves MIN_SPACING behind the other train
+          const targetKm = otherProgress - MIN_SPACING;
+          if (targetKm > 0) {
+            let cumDist = 0;
+            for (let ci = 0; ci < route.length - 1; ci++) {
+              const sd = (this._state.segDists && this._state.segDists[ci]) || haversineDistance(route[ci].lat, route[ci].lon, route[ci+1].lat, route[ci+1].lon);
+              if (cumDist + sd >= targetKm) {
+                this._state.index = ci;
+                this._state.progress = sd > 0 ? (targetKm - cumDist) / sd : 0;
+                // Re-interpolate position at clamped location
+                const sf = route[ci], st = route[ci + 1];
+                this.position.lat = sf.lat + (st.lat - sf.lat) * this._state.progress;
+                this.position.lon = sf.lon + (st.lon - sf.lon) * this._state.progress;
+                break;
+              }
+              cumDist += sd;
+            }
+          }
+          this.speed = Math.min(this.speed, other.speed || 0);
+          this.train.blockedBy = true;
+          break;
+        }
+      }
     }
 
     // Actual distance traveled along route this tick (not clamped)
@@ -1811,6 +1851,10 @@ export class ScheduleCreator {
       svc._onboardPax = 0;
       svc._onboardFreight = 0;
       svc.revenueCollected = false;
+      // Clear multi-trip adjusted stops to use original schedule on reload
+      svc._adjustedStops = null;
+      svc._tripCount = 0;
+      svc._atTerminus = false;
       svc._resetState();
 
       this.services.push(svc);
