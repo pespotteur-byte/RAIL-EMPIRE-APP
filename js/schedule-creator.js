@@ -1626,7 +1626,7 @@ export class ScheduleCreator {
         name: newName,
         rameId: src.rameId, stops: newStops, routes: src.routes,
         roundTrip: src.roundTrip, multiDepartures: src.multiDepartures,
-        terminusWait: src.terminusWait, totalDistance: src.totalDistance,
+        terminusWait: src.terminusWait, totalDistance: 0,
         isWorkTrain: src.isWorkTrain, returnName: src.returnName,
         returnPlatforms: src.returnPlatforms,
       }, rame, world);
