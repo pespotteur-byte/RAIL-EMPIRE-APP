@@ -254,6 +254,36 @@ header {
 .form-row-inner { display: flex; gap: 6px; }
 .form-row-inner input { flex: 1; }
 
+/* FORM SECTIONS — engine creation form */
+.form-section { margin-bottom: 16px; padding: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+.form-section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.form-section-header .section-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.85; }
+.form-section-header h4 { margin: 0; font-size: 12px; font-weight: 600; color: var(--text); letter-spacing: 0.3px; text-transform: uppercase; }
+.form-section .form-group { margin-bottom: 8px; }
+.form-section .form-group:last-child { margin-bottom: 0; }
+.form-section .form-group label { font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+.form-section .form-group label .label-hint { font-size: 9px; color: var(--text3); font-weight: 400; margin-left: 4px; }
+.form-section .form-group input,
+.form-section .form-group select { padding: 8px 10px; border-radius: 5px; font-size: 12px; transition: border-color 0.15s; }
+.form-section .form-group input:focus,
+.form-section .form-group select:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.form-section .form-row { margin-bottom: 8px; }
+.form-section .form-row:last-child { margin-bottom: 0; }
+
+/* Modal title for stock form */
+#modal-add-stock .modal-content { max-width: 520px; }
+#modal-add-stock h3 { font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+
+/* Image drop improved */
+.form-section .image-drop { border-width: 2px; padding: 16px; border-radius: 8px; font-size: 11px; transition: border-color 0.15s, background 0.15s; }
+.form-section .image-drop:hover { border-color: var(--blue); background: rgba(59,130,246,0.05); }
+
+/* Cargo types list improved */
+#stock-cargo-types-group .cargo-types-container { max-height: 260px; overflow-y: auto; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+
+/* Save button improved */
+#modal-add-stock .btn-save-stock-enhanced { width: 100%; margin-top: 16px; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
 /* IMAGE DROP */
 .image-drop { border: 2px dashed var(--border); border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; color: var(--text3); font-size: 12px; }
 .image-drop.dragging { border-color: var(--blue); background: rgba(59,130,246,0.1); }

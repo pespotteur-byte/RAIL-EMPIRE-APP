@@ -450,100 +450,148 @@
     <div id="modal-add-stock" class="modal hidden">
       <div class="modal-content">
         <button class="modal-close">&times;</button>
-        <h3>Ajouter un engin</h3>
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="3"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><line x1="6" y1="6" x2="6" y2="12"/><line x1="12" y1="6" x2="12" y2="12"/></svg>
+          Ajouter un engin
+        </h3>
         <div class="modal-body">
-          <div class="form-group">
-            <label>Image de l'engin</label>
-            <div id="stock-image-drop" class="image-drop">
-              <span>Cliquer ou glisser une image</span>
-              <input type="file" id="stock-image-input" accept="image/*" hidden>
-            </div>
-            <img id="stock-image-preview" class="image-preview hidden" alt="">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Nom</label>
-              <input type="text" id="stock-name" placeholder="ex: BB 22200">
+
+          <!-- SECTION: Image -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <h4>Visuel</h4>
             </div>
             <div class="form-group">
-              <label>Categorie</label>
-              <select id="stock-category">
-                <option value="locomotive">Locomotive</option>
-                <option value="voiture">Voiture voyageurs</option>
-                <option value="wagon">Wagon fret</option>
-                <option value="automotrice">Automotrice</option>
-              </select>
+              <label>Image de l'engin</label>
+              <div id="stock-image-drop" class="image-drop">
+                <span>Cliquer ou glisser une image</span>
+                <input type="file" id="stock-image-input" accept="image/*" hidden>
+              </div>
+              <img id="stock-image-preview" class="image-preview hidden" alt="">
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Traction</label>
-              <select id="stock-traction">
-                <option value="none">Aucune (remorque)</option>
-                <option value="1500V">1500V DC</option>
-                <option value="25kV">25kV AC</option>
-                <option value="bi">Bicourant</option>
-                <option value="tri">Tricourant</option>
-                <option value="diesel">Diesel</option>
-              </select>
+
+          <!-- SECTION: Identification -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <h4>Identification</h4>
             </div>
-            <div class="form-group">
-              <label>Vmax (km/h)</label>
-              <input type="number" id="stock-speed" value="160" min="10" max="400">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nom de l'engin</label>
+                <input type="text" id="stock-name" placeholder="ex: BB 22200">
+              </div>
+              <div class="form-group">
+                <label>Catégorie</label>
+                <select id="stock-category">
+                  <option value="locomotive">Locomotive</option>
+                  <option value="voiture">Voiture voyageurs</option>
+                  <option value="wagon">Wagon fret</option>
+                  <option value="automotrice">Automotrice</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Tonnage (t)</label>
-              <input type="number" id="stock-tonnage" value="80" min="1" max="500">
-            </div>
-            <div class="form-group">
-              <label>Longueur (m)</label>
-              <input type="number" id="stock-length" value="20" min="1" max="200" step="0.1">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Masse a vide (t) <span style="font-size:9px;color:var(--text3)">(physique)</span></label>
-              <input type="number" id="stock-mass" value="80" min="1" max="500">
-            </div>
-            <div class="form-group">
-              <label>Puissance (kW) <span style="font-size:9px;color:var(--text3)">(locos)</span></label>
-              <input type="number" id="stock-power" value="0" min="0" max="20000">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Série <span class="label-hint">(ex: BB 26000)</span></label>
+                <input type="text" id="stock-series-name" placeholder="BB 26000">
+              </div>
+              <div class="form-group">
+                <label>Numéro <span class="label-hint">(ex: 26001)</span></label>
+                <input type="text" id="stock-number-start" placeholder="26001">
+              </div>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Places voyageurs</label>
-              <input type="number" id="stock-capacity" value="0" min="0" max="1000">
+
+          <!-- SECTION: Caractéristiques techniques -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <h4>Caractéristiques techniques</h4>
             </div>
-            <div class="form-group">
-              <label>Capacite fret (t)</label>
-              <input type="number" id="stock-freight-cap" value="0" min="0" max="99999">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Traction</label>
+                <select id="stock-traction">
+                  <option value="none">Aucune (remorque)</option>
+                  <option value="1500V">1500V DC</option>
+                  <option value="25kV">25kV AC</option>
+                  <option value="bi">Bicourant</option>
+                  <option value="tri">Tricourant</option>
+                  <option value="diesel">Diesel</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Vitesse max <span class="label-hint">(km/h)</span></label>
+                <input type="number" id="stock-speed" value="160" min="10" max="400">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Puissance <span class="label-hint">(kW — locos)</span></label>
+                <input type="number" id="stock-power" value="0" min="0" max="20000">
+              </div>
+              <div class="form-group">
+                <label>Longueur <span class="label-hint">(m)</span></label>
+                <input type="number" id="stock-length" value="20" min="1" max="200" step="0.1">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Masse à vide <span class="label-hint">(t — physique)</span></label>
+                <input type="number" id="stock-mass" value="80" min="1" max="500">
+              </div>
+              <div class="form-group">
+                <label>Tonnage <span class="label-hint">(t)</span></label>
+                <input type="number" id="stock-tonnage" value="80" min="1" max="500">
+              </div>
             </div>
           </div>
-          <div class="form-group" id="stock-cargo-types-group" style="display:none">
-            <label>Types de chargement autorisés <span style="font-size:9px;color:var(--text3)">(choix multiple)</span></label>
-            <div id="stock-cargo-types-list" style="max-height:200px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:6px"></div>
+
+          <!-- SECTION: Capacités -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <h4>Capacités</h4>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Places voyageurs</label>
+                <input type="number" id="stock-capacity" value="0" min="0" max="1000">
+              </div>
+              <div class="form-group">
+                <label>Capacité fret <span class="label-hint">(t)</span></label>
+                <input type="number" id="stock-freight-cap" value="0" min="0" max="99999">
+              </div>
+            </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Serie <span style="font-size:9px;color:var(--text3)">(ex: BB 26000)</span></label>
-              <input type="text" id="stock-series-name" placeholder="BB 26000">
+
+          <!-- SECTION: Chargements (wagons only) -->
+          <div class="form-section" id="stock-cargo-types-group" style="display:none">
+            <div class="form-section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              <h4>Chargements autorisés <span class="label-hint" style="text-transform:none">(choix multiple)</span></h4>
             </div>
             <div class="form-group">
-              <label>Numero <span style="font-size:9px;color:var(--text3)">(ex: 26001)</span></label>
-              <input type="text" id="stock-number-start" placeholder="26001">
+              <div id="stock-cargo-types-list" class="cargo-types-container"></div>
             </div>
           </div>
-          <div class="form-row">
+
+          <!-- SECTION: Tarification -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <h4>Tarification</h4>
+            </div>
             <div class="form-group">
-              <label>Prix d'achat (€)</label>
+              <label>Prix d'achat <span class="label-hint">(€)</span></label>
               <input type="number" id="stock-price" value="0" min="0" max="100000000" step="1000">
             </div>
-            <div class="form-group"></div>
           </div>
-          <button id="btn-save-stock" class="btn-primary btn-full">Enregistrer</button>
+
+          <button id="btn-save-stock" class="btn-primary btn-full btn-save-stock-enhanced">Enregistrer l'engin</button>
         </div>
       </div>
     </div>
