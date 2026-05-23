@@ -251,7 +251,11 @@ export class ActiveService {
         this.position = null;
         this.train.stoppedAt = null;
       }
-      if (this.completed) return;
+      if (this.completed) {
+        this.position = null;
+        this.train.stoppedAt = null;
+        return;
+      }
 
       // Compute service window
       const lastStop = currentStops[currentStops.length - 1];
@@ -1469,14 +1473,8 @@ export class ActiveService {
     this.revenueCollected = false;
     this._tripCount = 0;
     this._adjustedStops = null;
-
-    if (this.stops.length > 0 && this.world) {
-      const firstStation = this.world.getStationById(this.stops[0].stationId);
-      if (firstStation) {
-        this.position = { lat: firstStation.lat, lon: firstStation.lon };
-        this.train.stoppedAt = firstStation;
-      }
-    }
+    this.position = null;
+    this.train.stoppedAt = null;
   }
 
   _rebuildStopsFromTime(departureTime) {
