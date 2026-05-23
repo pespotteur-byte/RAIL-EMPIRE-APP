@@ -2043,7 +2043,8 @@ export class UI {
 
     this.game.scheduleCreator.addService({
       name, rameId, stops, routes, roundTrip, multiDepartures, terminusWait,
-      totalDistance: Math.round(totalDist), isWorkTrain, returnName, returnPlatforms,
+      totalDistance: 0, plannedDistance: Math.round(totalDist),
+      isWorkTrain, returnName, returnPlatforms,
       runDays, runDates,
     }, rame, this.game.world);
 
@@ -2155,7 +2156,7 @@ export class UI {
             <span style="color:var(--text3);font-size:10px;min-width:38px">${depTime}</span>
             <span class="sched-item-name">${svc.name}${statusLabel}</span>
             <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
-            <span style="color:var(--text3);font-size:10px">${Math.round(svc.totalDistance)} km${tripInfo}</span>
+            <span style="color:var(--text3);font-size:10px">${Math.round(svc.plannedDistance || svc.totalDistance)} km${tripInfo}</span>
             <span style="color:#60a5fa;font-size:9px">${daysLabel}${datesLabel}</span>
             <button class="btn-sm" onclick="game.ui.editSchedule('${svc.id}')">Modifier</button>
             <button class="btn-sm" onclick="game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>

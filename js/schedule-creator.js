@@ -60,6 +60,7 @@ export class ActiveService {
     this.multiDepartures = data.multiDepartures || 1;
     this.terminusWait = data.terminusWait || 10;
     this.totalDistance = data.totalDistance || 0;
+    this.plannedDistance = data.plannedDistance || 0;
     this.active = data.active !== false;
     this.isWorkTrain = data.isWorkTrain || false; // S15: Work trains unaffected by works
     this.returnName = data.returnName || '';
@@ -1627,6 +1628,7 @@ export class ScheduleCreator {
         rameId: src.rameId, stops: newStops, routes: src.routes,
         roundTrip: src.roundTrip, multiDepartures: src.multiDepartures,
         terminusWait: src.terminusWait, totalDistance: 0,
+        plannedDistance: src.plannedDistance,
         isWorkTrain: src.isWorkTrain, returnName: src.returnName,
         returnPlatforms: src.returnPlatforms,
       }, rame, world);
@@ -1722,6 +1724,7 @@ export class ScheduleCreator {
         if (s.multiDepartures > 1) o.md = s.multiDepartures;
         if (s.terminusWait !== 10) o.tw = s.terminusWait;
         o.td = Math.round((s.totalDistance || 0) * 100) / 100;
+        if (s.plannedDistance) o.pd = s.plannedDistance;
         if (!s.active) o.act = false;
         if (s.isWorkTrain) o.wt = true;
         const allDays = [0,1,2,3,4,5,6];
@@ -1786,6 +1789,7 @@ export class ScheduleCreator {
         multiDepartures: d.md || 1,
         terminusWait: d.tw ?? 10,
         totalDistance: d.td || 0,
+        plannedDistance: d.pd || 0,
         active: d.act !== false,
         isWorkTrain: d.wt || false,
         runDays: d.rd || [0,1,2,3,4,5,6],
