@@ -1,138 +1,231 @@
 /**
- * Staff Management — Conductors and personnel for Rail Empire.
- * Additive module: adds hiring/salary/availability constraints.
+ * Staff Management — Multi-role personnel for Rail Empire.
  */
 import { icon } from './icons.js';
 
 let nextStaffId = 1;
 
+const ROLES = {
+  conducteur:           { label: 'Conducteur',              salary: 120, hiringCost: 2000, assignTo: 'service' },
+  conducteur_manoeuvre:  { label: 'Conducteur de manœuvre',  salary: 100, hiringCost: 1500, assignTo: 'depot' },
+  agent_gare:           { label: 'Agent en gare',           salary: 90,  hiringCost: 1000, assignTo: 'station' },
+  agent_maintenance:    { label: 'Agent de maintenance',    salary: 110, hiringCost: 1800, assignTo: 'depot' },
+  controleur:           { label: 'Contrôleur',              salary: 100, hiringCost: 1500, assignTo: 'zone' },
+  regulateur:           { label: 'Régulateur',              salary: 150, hiringCost: 3000, assignTo: 'zone' },
+  agent_circulation:    { label: 'Agent de circulation',    salary: 130, hiringCost: 2500, assignTo: 'signalbox' },
+};
+
+export { ROLES as STAFF_ROLES };
+
 export class StaffManager {
   constructor() {
+    this.staff = [];          // all personnel
+    this.signalBoxes = [];    // { id, name, lat, lon, radiusKm, stationId? }
+    this.zones = [];          // { id, name } for regulateurs/controleurs
+    // Legacy compat
     this.conductors = [];
-    this.baseSalary = 120; // € per day per conductor
-    this.hiringCost = 2000; // € per hire
+    this.baseSalary = 120;
+    this.hiringCost = 2000;
   }
 
-  /**
-   * Hire a new conductor.
-   * Returns the new conductor or null if can't afford.
-   */
-  hire(economy, name) {
-    if (!economy || economy.balance < this.hiringCost) return null;
+  // ── Hire ──
+  hire(economy, name, role) {
+    role = role || 'conducteur';
+    const def = ROLES[role];
+    if (!def) return null;
+    if (!economy || economy.balance < def.hiringCost) return null;
 
-    const conductor = {
-      id: `cond-${nextStaffId++}`,
-      name: name || `Conducteur ${this.conductors.length + 1}`,
-      assignedServiceId: null,
+    const member = {
+      id: `staff-${nextStaffId++}`,
+      name: name || `${def.label} ${this.getByRole(role).length + 1}`,
+      role,
+      assignedTo: null,
       available: true,
       hireDate: Date.now(),
       totalTrips: 0,
+      totalFines: 0,
+      totalFineRevenue: 0,
     };
 
-    economy.addExpense(this.hiringCost, 'personnel', `Embauche: ${conductor.name}`);
-    this.conductors.push(conductor);
-    return conductor;
+    economy.addExpense(def.hiringCost, 'personnel', `Embauche: ${member.name} (${def.label})`);
+    this.staff.push(member);
+    this._syncLegacy();
+    return member;
   }
 
-  /**
-   * Fire a conductor (only if not currently assigned to a moving service).
-   */
-  fire(conductorId) {
-    const idx = this.conductors.findIndex(c => c.id === conductorId);
+  // ── Fire ──
+  fire(staffId) {
+    const idx = this.staff.findIndex(s => s.id === staffId);
     if (idx === -1) return false;
-    const c = this.conductors[idx];
-    if (c.assignedServiceId) return false; // can't fire while assigned
-    this.conductors.splice(idx, 1);
+    const s = this.staff[idx];
+    if (s.assignedTo) return false;
+    this.staff.splice(idx, 1);
+    this._syncLegacy();
     return true;
   }
 
-  /**
-   * Assign a conductor to a service. Returns true if successful.
-   */
-  assign(conductorId, serviceId) {
-    const c = this.conductors.find(c => c.id === conductorId);
-    if (!c || !c.available) return false;
-    // Unassign from previous service if any
-    if (c.assignedServiceId) {
-      c.assignedServiceId = null;
+  // ── Assign ──
+  assign(staffId, targetId) {
+    const s = this.staff.find(s => s.id === staffId);
+    if (!s || !s.available) return false;
+    s.assignedTo = targetId;
+    this._syncLegacy();
+    return true;
+  }
+
+  unassignByTarget(targetId) {
+    for (const s of this.staff) {
+      if (s.assignedTo === targetId) {
+        s.assignedTo = null;
+        if (s.role === 'conducteur') s.totalTrips++;
+      }
     }
-    c.assignedServiceId = serviceId;
-    return true;
+    this._syncLegacy();
   }
 
-  /**
-   * Unassign conductor from a service (when service completes).
-   */
-  unassign(serviceId) {
-    for (const c of this.conductors) {
-      if (c.assignedServiceId === serviceId) {
-        c.assignedServiceId = null;
-        c.totalTrips++;
+  // ── Queries ──
+  getByRole(role) { return this.staff.filter(s => s.role === role); }
+  getAvailableByRole(role) { return this.staff.filter(s => s.role === role && !s.assignedTo); }
+  getAssignedTo(targetId) { return this.staff.filter(s => s.assignedTo === targetId); }
+
+  hasAssignedConductor(serviceId) {
+    if (this.getByRole('conducteur').length === 0) return true;
+    return this.staff.some(s => s.role === 'conducteur' && s.assignedTo === serviceId);
+  }
+
+  getAvailable() { return this.getAvailableByRole('conducteur'); }
+
+  // ── Signal Boxes ──
+  addSignalBox(data) {
+    const sb = {
+      id: `sb-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+      name: data.name || `Poste ${this.signalBoxes.length + 1}`,
+      lat: data.lat,
+      lon: data.lon,
+      radiusKm: data.radiusKm || 10,
+      stationId: data.stationId || null,
+    };
+    this.signalBoxes.push(sb);
+    return sb;
+  }
+
+  removeSignalBox(id) {
+    // Unassign agents first
+    for (const s of this.staff) {
+      if (s.role === 'agent_circulation' && s.assignedTo === id) s.assignedTo = null;
+    }
+    this.signalBoxes = this.signalBoxes.filter(sb => sb.id !== id);
+  }
+
+  getSignalBoxById(id) { return this.signalBoxes.find(sb => sb.id === id); }
+
+  // ── Zones ──
+  addZone(name) {
+    const z = { id: `zone-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, name: name || `Zone ${this.zones.length + 1}` };
+    this.zones.push(z);
+    return z;
+  }
+
+  removeZone(id) {
+    for (const s of this.staff) {
+      if ((s.role === 'regulateur' || s.role === 'controleur') && s.assignedTo === id) s.assignedTo = null;
+    }
+    this.zones = this.zones.filter(z => z.id !== id);
+  }
+
+  // ── Contrôleur logic ──
+  tickControleurs(economy, activeServices, gameTimeMin) {
+    const controleurs = this.staff.filter(s => s.role === 'controleur' && s.assignedTo);
+    if (controleurs.length === 0) return;
+
+    const paxServices = activeServices.filter(s =>
+      s.state === 'moving' && s.rame && s.rame.totalCapacity > 0
+    );
+    if (paxServices.length === 0) return;
+
+    for (const ctrl of controleurs) {
+      // Each contrôleur inspects one random train per ~30 min game time
+      if (Math.random() > 0.033) continue; // ~1/30 chance per tick
+      const svc = paxServices[Math.floor(Math.random() * paxServices.length)];
+      const paxCount = svc._onboardPax || 0;
+      if (paxCount <= 0) continue;
+      // ~5% of passengers don't have a ticket
+      const frauders = Math.floor(paxCount * 0.05);
+      if (frauders <= 0) continue;
+      const fineAmount = frauders * 50;
+      ctrl.totalFines += frauders;
+      ctrl.totalFineRevenue += fineAmount;
+      economy.addRevenue(fineAmount, 'amendes', `Contrôle ${ctrl.name}: ${frauders} PV × 50€ (${svc.name})`);
+    }
+  }
+
+  // ── Régulateur coverage check ──
+  getZoneRegulatorCoverage(zoneId) {
+    const regs = this.staff.filter(s => s.role === 'regulateur' && s.assignedTo === zoneId);
+    // Need 3 regulators for 24/7 coverage (3 × 8h shifts)
+    return { count: regs.length, needed: 3, covered: regs.length >= 3 };
+  }
+
+  // ── Daily salaries ──
+  getDailySalaryExpense() {
+    let total = 0;
+    for (const s of this.staff) {
+      const def = ROLES[s.role];
+      total += def ? def.salary : 120;
+    }
+    return total;
+  }
+
+  processDailySalaries(economy) {
+    const byRole = {};
+    for (const s of this.staff) {
+      const role = s.role || 'conducteur';
+      if (!byRole[role]) byRole[role] = 0;
+      byRole[role]++;
+    }
+    for (const [role, count] of Object.entries(byRole)) {
+      const def = ROLES[role];
+      if (!def) continue;
+      const amount = count * def.salary;
+      if (amount > 0) {
+        economy.addExpense(amount, 'salaires', `Salaires: ${count} ${def.label}(s) × ${def.salary}€`);
       }
     }
   }
 
-  /**
-   * Check if a service has a conductor assigned.
-   * If no staff module is active or no conductors exist, always returns true (graceful degradation).
-   */
-  hasAssignedConductor(serviceId) {
-    if (this.conductors.length === 0) return true; // no staff system = no constraint
-    return this.conductors.some(c => c.assignedServiceId === serviceId);
-  }
-
-  /**
-   * Get available (unassigned) conductors.
-   */
-  getAvailable() {
-    return this.conductors.filter(c => !c.assignedServiceId && c.available);
-  }
-
-  /**
-   * Calculate daily salary expense for all conductors.
-   */
-  getDailySalaryExpense() {
-    return this.conductors.length * this.baseSalary;
-  }
-
-  /**
-   * Process daily salaries. Called from economy's processDailyCharges hook.
-   */
-  processDailySalaries(economy) {
-    const total = this.getDailySalaryExpense();
-    if (total > 0) {
-      economy.addExpense(total, 'salaires', `Salaires: ${this.conductors.length} conducteur(s) × ${this.baseSalary}€`);
-    }
-  }
-
-  /**
-   * Render the staff management page.
-   */
+  // ── Render ──
   render(container, game) {
     if (!container) return;
     const eco = game.economy;
-    const activeServices = game.scheduleCreator.getActiveServices();
+    const activeServices = game.scheduleCreator?.getActiveServices() || [];
+    const stations = game.world?.getStations() || [];
+    const depots = game.depotManager?.depots || [];
 
-    // Build service list for assignment dropdown
-    const serviceOptions = activeServices.map(s =>
-      `<option value="${s.id}">${s.name}</option>`
-    ).join('');
+    // KPIs
+    const totalStaff = this.staff.length;
+    const assigned = this.staff.filter(s => s.assignedTo).length;
+    const available = totalStaff - assigned;
+
+    // Role tabs
+    const roleKeys = Object.keys(ROLES);
+    const roleCounts = {};
+    for (const k of roleKeys) roleCounts[k] = this.getByRole(k).length;
 
     container.innerHTML = `
       <div class="dash-section">
         <h3>Gestion du Personnel</h3>
         <div class="dash-kpi-grid">
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Conducteurs</div>
-            <div class="dash-kpi-value" style="color:#38bdf8">${this.conductors.length}</div>
+            <div class="dash-kpi-label">Total</div>
+            <div class="dash-kpi-value" style="color:#38bdf8">${totalStaff}</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Disponibles</div>
-            <div class="dash-kpi-value" style="color:var(--green)">${this.getAvailable().length}</div>
+            <div class="dash-kpi-value" style="color:var(--green)">${available}</div>
           </div>
           <div class="dash-kpi">
-            <div class="dash-kpi-label">En service</div>
-            <div class="dash-kpi-value" style="color:#f97316">${this.conductors.filter(c => c.assignedServiceId).length}</div>
+            <div class="dash-kpi-label">En poste</div>
+            <div class="dash-kpi-value" style="color:#f97316">${assigned}</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Salaires / jour</div>
@@ -144,110 +237,310 @@ export class StaffManager {
       <div class="dash-section">
         <h3>Embaucher</h3>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="text" id="staff-hire-name" placeholder="Nom du conducteur" style="font-size:11px;padding:6px 10px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:180px">
-          <button id="staff-hire-btn" class="btn-primary" style="font-size:11px;padding:6px 12px">Embaucher (${this.hiringCost.toLocaleString('fr-FR')} &euro;)</button>
+          <select id="staff-hire-role" style="font-size:11px;padding:6px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+            ${roleKeys.map(k => `<option value="${k}">${ROLES[k].label} (${ROLES[k].hiringCost.toLocaleString('fr-FR')}€)</option>`).join('')}
+          </select>
+          <input type="text" id="staff-hire-name" placeholder="Nom (optionnel)" style="font-size:11px;padding:6px 10px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:160px">
+          <button id="staff-hire-btn" class="btn-primary" style="font-size:11px;padding:6px 12px">Embaucher</button>
           <span style="font-size:10px;color:var(--text3)">Solde: ${eco.formatAmount(eco.balance)}</span>
         </div>
       </div>
 
+      ${this._renderZonesSection(game)}
+      ${this._renderSignalBoxSection(game)}
+
+      ${roleKeys.map(role => this._renderRoleSection(role, activeServices, stations, depots, game)).join('')}
+    `;
+
+    this._bindEvents(container, game, eco);
+  }
+
+  _renderRoleSection(role, activeServices, stations, depots, game) {
+    const def = ROLES[role];
+    const members = this.getByRole(role);
+    if (members.length === 0 && role !== 'conducteur') return '';
+
+    let assignOptions = '';
+    if (def.assignTo === 'service') {
+      assignOptions = activeServices.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    } else if (def.assignTo === 'station') {
+      assignOptions = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    } else if (def.assignTo === 'depot') {
+      assignOptions = depots.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    } else if (def.assignTo === 'zone') {
+      assignOptions = this.zones.map(z => `<option value="${z.id}">${z.name}</option>`).join('');
+    } else if (def.assignTo === 'signalbox') {
+      assignOptions = this.signalBoxes.map(sb => `<option value="${sb.id}">${sb.name}</option>`).join('');
+    }
+
+    const extraCol = role === 'controleur' ? '<span>PV</span><span>Recettes</span>' : (role === 'conducteur' ? '<span>Trajets</span>' : '');
+    const colCount = role === 'controleur' ? 6 : (role === 'conducteur' ? 5 : 4);
+
+    return `
       <div class="dash-section">
-        <h3>Conducteurs</h3>
+        <h3>${def.label}s (${members.length})</h3>
         <div class="dash-train-table">
-          <div class="dash-train-header">
-            <span>Nom</span><span>Statut</span><span>Affect&eacute; &agrave;</span><span>Trajets</span><span>Actions</span>
+          <div class="dash-train-header" style="grid-template-columns:repeat(${colCount},1fr)">
+            <span>Nom</span><span>Statut</span><span>Affecté à</span>${extraCol}<span>Actions</span>
           </div>
-          ${this.conductors.map(c => {
-            const assignedSvc = activeServices.find(s => s.id === c.assignedServiceId);
-            const statusStr = assignedSvc ? `${icon('dot_green', 10)} En service` : `${icon('dot_yellow', 10)} Disponible`;
-            const assignedName = assignedSvc ? assignedSvc.name : '-';
-            return `<div class="dash-train-row">
-              <span style="font-weight:600">${c.name}</span>
+          ${members.map(m => {
+            const isAssigned = !!m.assignedTo;
+            let assignedLabel = '-';
+            if (isAssigned) {
+              if (def.assignTo === 'service') {
+                const svc = activeServices.find(s => s.id === m.assignedTo);
+                assignedLabel = svc ? svc.name : m.assignedTo;
+              } else if (def.assignTo === 'station') {
+                const st = stations.find(s => s.id === m.assignedTo);
+                assignedLabel = st ? st.name : m.assignedTo;
+              } else if (def.assignTo === 'depot') {
+                const dp = depots.find(d => d.id === m.assignedTo);
+                assignedLabel = dp ? dp.name : m.assignedTo;
+              } else if (def.assignTo === 'zone') {
+                const z = this.zones.find(z => z.id === m.assignedTo);
+                assignedLabel = z ? z.name : m.assignedTo;
+              } else if (def.assignTo === 'signalbox') {
+                const sb = this.signalBoxes.find(sb => sb.id === m.assignedTo);
+                assignedLabel = sb ? sb.name : m.assignedTo;
+              }
+            }
+            const statusStr = isAssigned ? `${icon('dot_green', 10)} En poste` : `${icon('dot_yellow', 10)} Disponible`;
+            const extraVals = role === 'controleur'
+              ? `<span>${m.totalFines || 0}</span><span>${(m.totalFineRevenue || 0).toLocaleString('fr-FR')}€</span>`
+              : (role === 'conducteur' ? `<span>${m.totalTrips || 0}</span>` : '');
+
+            return `<div class="dash-train-row" style="grid-template-columns:repeat(${colCount},1fr)">
+              <span style="font-weight:600">${m.name}</span>
               <span>${statusStr}</span>
-              <span>${assignedName}</span>
-              <span>${c.totalTrips}</span>
+              <span>${assignedLabel}</span>
+              ${extraVals}
               <span>
-                ${!assignedSvc ? `
-                  <select class="staff-assign-select" data-conductor-id="${c.id}" style="font-size:9px;padding:2px 4px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:3px;max-width:100px">
+                ${!isAssigned ? `
+                  <select class="staff-assign-select" data-staff-id="${m.id}" style="font-size:9px;padding:2px 4px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:3px;max-width:100px">
                     <option value="">Affecter...</option>
-                    ${serviceOptions}
+                    ${assignOptions}
                   </select>
-                  <button class="staff-fire-btn btn-sm" data-conductor-id="${c.id}" style="font-size:9px;background:#ef4444;margin-left:4px">Licencier</button>
+                  <button class="staff-fire-btn btn-sm" data-staff-id="${m.id}" style="font-size:9px;background:#ef4444;margin-left:4px">Licencier</button>
                 ` : `
-                  <button class="staff-unassign-btn btn-sm" data-conductor-id="${c.id}" data-service-id="${c.assignedServiceId}" style="font-size:9px;background:#6366f1">Désaffecter</button>
+                  <button class="staff-unassign-btn btn-sm" data-staff-id="${m.id}" style="font-size:9px;background:#6366f1">Désaffecter</button>
                 `}
               </span>
             </div>`;
-          }).join('') || '<div style="padding:8px;color:var(--text3)">Aucun conducteur embauché</div>'}
+          }).join('') || '<div style="padding:8px;color:var(--text3)">Aucun personnel</div>'}
         </div>
-      </div>
-    `;
+      </div>`;
+  }
 
-    // Event: hire
+  _renderZonesSection() {
+    const regCoverage = this.zones.map(z => {
+      const cov = this.getZoneRegulatorCoverage(z.id);
+      const ctrlCount = this.staff.filter(s => s.role === 'controleur' && s.assignedTo === z.id).length;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="font-weight:600">${z.name}</span>
+        <span style="font-size:10px">
+          Régulateurs: <b style="color:${cov.covered ? 'var(--green)' : '#ef4444'}">${cov.count}/3</b>
+          ${cov.covered ? '(24/7)' : `(${cov.count * 8}h/24)`}
+          | Contrôleurs: <b>${ctrlCount}</b>
+        </span>
+        <button class="zone-del-btn btn-sm" data-zone-id="${z.id}" style="font-size:9px;background:#ef4444">Suppr.</button>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="dash-section">
+        <h3>Zones de régulation</h3>
+        <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Chaque zone nécessite 3 régulateurs (3 × 8h = 24/7). Les contrôleurs montent aléatoirement dans les trains de leur zone.</p>
+        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+          <input type="text" id="zone-name-input" placeholder="Nom de la zone" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:160px">
+          <button id="zone-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Zone</button>
+        </div>
+        ${regCoverage || '<div style="font-size:10px;color:var(--text3)">Aucune zone créée</div>'}
+      </div>`;
+  }
+
+  _renderSignalBoxSection() {
+    const sbList = this.signalBoxes.map(sb => {
+      const agents = this.staff.filter(s => s.role === 'agent_circulation' && s.assignedTo === sb.id);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
+        <span style="font-weight:600">${sb.name}</span>
+        <span style="font-size:10px">Rayon: ${sb.radiusKm} km | Agents: <b>${agents.length}</b></span>
+        <button class="sb-del-btn btn-sm" data-sb-id="${sb.id}" style="font-size:9px;background:#ef4444">Suppr.</button>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="dash-section">
+        <h3>Postes d'aiguillage</h3>
+        <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Placez des postes sur la carte pour gérer les tronçons d'une zone. Chaque poste nécessite au moins 1 agent de circulation.</p>
+        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="sb-name-input" placeholder="Nom du poste" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:130px">
+          <input type="number" id="sb-radius-input" value="10" min="1" max="100" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:80px" title="Rayon (km)">
+          <span style="font-size:9px;color:var(--text3)">km</span>
+          <button id="sb-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Poste (clic carte)</button>
+        </div>
+        ${sbList || '<div style="font-size:10px;color:var(--text3)">Aucun poste</div>'}
+      </div>`;
+  }
+
+  _bindEvents(container, game, eco) {
+    // Hire
     document.getElementById('staff-hire-btn')?.addEventListener('click', () => {
-      const nameInput = document.getElementById('staff-hire-name');
-      const name = nameInput?.value?.trim() || '';
-      const result = this.hire(eco, name);
+      const role = document.getElementById('staff-hire-role')?.value || 'conducteur';
+      const name = document.getElementById('staff-hire-name')?.value?.trim() || '';
+      const result = this.hire(eco, name, role);
       if (result) {
         this.render(container, game);
+        game.saveState();
       } else {
-        alert('Fonds insuffisants pour embaucher un conducteur.');
+        alert('Fonds insuffisants.');
       }
     });
 
-    // Event: assign
+    // Assign
     container.querySelectorAll('.staff-assign-select').forEach(sel => {
       sel.addEventListener('change', (e) => {
-        const conductorId = e.target.dataset.conductorId;
-        const serviceId = e.target.value;
-        if (serviceId) {
-          this.assign(conductorId, serviceId);
+        const staffId = e.target.dataset.staffId;
+        const targetId = e.target.value;
+        if (targetId) {
+          this.assign(staffId, targetId);
           this.render(container, game);
+          game.saveState();
         }
       });
     });
 
-    // Event: fire
+    // Fire
     container.querySelectorAll('.staff-fire-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.dataset.conductorId;
-        if (confirm('Licencier ce conducteur ?')) {
-          this.fire(id);
+        if (confirm('Licencier ?')) {
+          this.fire(btn.dataset.staffId);
           this.render(container, game);
+          game.saveState();
         }
       });
     });
 
-    // Event: unassign
+    // Unassign
     container.querySelectorAll('.staff-unassign-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const serviceId = btn.dataset.serviceId;
-        this.unassign(serviceId);
+        const s = this.staff.find(s => s.id === btn.dataset.staffId);
+        if (s) { s.assignedTo = null; this._syncLegacy(); }
         this.render(container, game);
+        game.saveState();
+      });
+    });
+
+    // Add zone
+    document.getElementById('zone-add-btn')?.addEventListener('click', () => {
+      const name = document.getElementById('zone-name-input')?.value.trim();
+      this.addZone(name);
+      this.render(container, game);
+      game.saveState();
+    });
+
+    // Delete zone
+    container.querySelectorAll('.zone-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.removeZone(btn.dataset.zoneId);
+        this.render(container, game);
+        game.saveState();
+      });
+    });
+
+    // Add signal box (enter placement mode)
+    document.getElementById('sb-add-btn')?.addEventListener('click', () => {
+      const name = document.getElementById('sb-name-input')?.value.trim() || '';
+      const radius = parseFloat(document.getElementById('sb-radius-input')?.value) || 10;
+      game._pendingSignalBox = { name, radiusKm: radius };
+      alert('Cliquez sur la carte pour placer le poste d\'aiguillage.');
+    });
+
+    // Delete signal box
+    container.querySelectorAll('.sb-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.removeSignalBox(btn.dataset.sbId);
+        this.render(container, game);
+        game.saveState();
       });
     });
   }
 
+  // Keep legacy conductors array in sync for backward compat
+  _syncLegacy() {
+    this.conductors = this.staff.filter(s => s.role === 'conducteur').map(s => ({
+      id: s.id,
+      name: s.name,
+      assignedServiceId: s.assignedTo,
+      available: !s.assignedTo,
+      hireDate: s.hireDate,
+      totalTrips: s.totalTrips,
+    }));
+  }
+
+  // Legacy API
+  unassign(serviceId) { this.unassignByTarget(serviceId); }
+
   toSave() {
     return {
-      conductors: this.conductors.map(c => ({
-        id: c.id,
-        name: c.name,
-        assignedServiceId: c.assignedServiceId,
-        available: c.available,
-        hireDate: c.hireDate,
-        totalTrips: c.totalTrips,
+      staff: this.staff.map(s => ({
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        assignedTo: s.assignedTo,
+        available: !s.assignedTo,
+        hireDate: s.hireDate,
+        totalTrips: s.totalTrips || 0,
+        totalFines: s.totalFines || 0,
+        totalFineRevenue: s.totalFineRevenue || 0,
       })),
+      signalBoxes: this.signalBoxes,
+      zones: this.zones,
+      nextStaffId,
+      // Legacy fields for backward compat
+      conductors: this.conductors,
       baseSalary: this.baseSalary,
       hiringCost: this.hiringCost,
-      nextStaffId: nextStaffId,
     };
   }
 
   loadFromSave(s) {
     if (!s) return;
-    this.conductors = s.conductors || [];
+
+    if (s.staff && s.staff.length > 0) {
+      // New format
+      this.staff = s.staff.map(m => ({
+        id: m.id,
+        name: m.name,
+        role: m.role || 'conducteur',
+        assignedTo: m.assignedTo || m.assignedServiceId || null,
+        available: !m.assignedTo,
+        hireDate: m.hireDate || Date.now(),
+        totalTrips: m.totalTrips || 0,
+        totalFines: m.totalFines || 0,
+        totalFineRevenue: m.totalFineRevenue || 0,
+      }));
+    } else if (s.conductors && s.conductors.length > 0) {
+      // Migrate from old format
+      this.staff = s.conductors.map(c => ({
+        id: c.id,
+        name: c.name,
+        role: 'conducteur',
+        assignedTo: c.assignedServiceId || null,
+        available: !c.assignedServiceId,
+        hireDate: c.hireDate || Date.now(),
+        totalTrips: c.totalTrips || 0,
+        totalFines: 0,
+        totalFineRevenue: 0,
+      }));
+    } else {
+      this.staff = [];
+    }
+
+    this.signalBoxes = s.signalBoxes || [];
+    this.zones = s.zones || [];
     this.baseSalary = s.baseSalary || 120;
     this.hiringCost = s.hiringCost || 2000;
     if (s.nextStaffId) nextStaffId = s.nextStaffId;
+    this._syncLegacy();
   }
 }

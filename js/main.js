@@ -653,6 +653,9 @@ class RailEmpire {
       this.cantonManager.cleanup();
     }
 
+    // Contrôleurs: random ticket inspections on passenger trains
+    try { this.staffManager.tickControleurs(this.economy, activeSchedules, timeOfDay); } catch(e) { /* graceful */ }
+
     // Revenue collected inside service.completeService -> economy.processServiceRevenue
 
     if (timeOfDay === 0) {

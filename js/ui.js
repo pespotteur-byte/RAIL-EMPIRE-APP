@@ -239,6 +239,22 @@ export class UI {
           const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
           this.openStationCreationModal(worldPos.lat, worldPos.lon);
         }
+
+        // Signal box placement mode
+        if (this.game._pendingSignalBox) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          const pending = this.game._pendingSignalBox;
+          this.game.staffManager.addSignalBox({
+            name: pending.name,
+            lat: worldPos.lat,
+            lon: worldPos.lon,
+            radiusKm: pending.radiusKm,
+          });
+          this.game._pendingSignalBox = null;
+          this.game.saveState();
+          const staffContainer = document.getElementById('staff-container');
+          if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
+        }
       }
       this.isDragging = false;
     });
