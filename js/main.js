@@ -653,6 +653,8 @@ class RailEmpire {
       this.cantonManager.cleanup();
     }
 
+    // Auto-assign conductors to services (random, 8h shifts)
+    try { this.staffManager.tickConductors(activeSchedules, timeOfDay); } catch(e) { /* graceful */ }
     // Contrôleurs: random ticket inspections on passenger trains
     try { this.staffManager.tickControleurs(this.economy, activeSchedules, timeOfDay); } catch(e) { /* graceful */ }
 

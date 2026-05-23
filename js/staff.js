@@ -45,6 +45,9 @@ export class StaffManager {
       totalTrips: 0,
       totalFines: 0,
       totalFineRevenue: 0,
+      shiftStartMin: -1,
+      shiftWorkedMin: 0,
+      resting: false,
     };
 
     economy.addExpense(def.hiringCost, 'personnel', `Embauche: ${member.name} (${def.label})`);
@@ -94,6 +97,76 @@ export class StaffManager {
   }
 
   getAvailable() { return this.getAvailableByRole('conducteur'); }
+
+  // ── Auto-assignment of conductors ──
+  tickConductors(activeServices, timeOfDay) {
+    const conducteurs = this.getByRole('conducteur');
+    if (conducteurs.length === 0) return;
+
+    const SHIFT_DURATION = 480; // 8h in minutes
+    const REST_DURATION = 480;  // 8h rest
+
+    for (const c of conducteurs) {
+      // Handle resting conductors
+      if (c.resting) {
+        c.shiftWorkedMin++;
+        if (c.shiftWorkedMin >= REST_DURATION) {
+          c.resting = false;
+          c.shiftWorkedMin = 0;
+          c.shiftStartMin = -1;
+        }
+        continue;
+      }
+
+      // If assigned, track shift time
+      if (c.assignedTo) {
+        if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
+        c.shiftWorkedMin++;
+
+        // Check if shift exceeded 8h
+        if (c.shiftWorkedMin >= SHIFT_DURATION) {
+          // Check if the assigned service is still moving — wait for it to finish
+          const svc = activeServices.find(s => s.id === c.assignedTo);
+          if (!svc || svc.state !== 'moving') {
+            c.assignedTo = null;
+            c.resting = true;
+            c.shiftWorkedMin = 0;
+            c.totalTrips++;
+          }
+          // If still moving, let them finish this service before resting
+        }
+
+        // Check if the assigned service completed
+        const svc = activeServices.find(s => s.id === c.assignedTo);
+        if (svc && (svc.completed || svc.state === 'waiting') && c.shiftWorkedMin > 0) {
+          c.assignedTo = null;
+          c.totalTrips++;
+          // Don't rest yet — try to take another service within the shift
+        }
+        continue;
+      }
+
+      // Available conductor: try to auto-assign to a service that needs one
+      if (c.shiftWorkedMin < SHIFT_DURATION) {
+        // Find services about to depart or currently without a conductor
+        const needsConductor = activeServices.filter(svc => {
+          if (!svc.active || svc.completed) return false;
+          // Only passenger/freight services that are about to move or waiting
+          if (svc.state !== 'waiting' && svc.state !== 'stopped_at_station') return false;
+          // Check if already has a conductor
+          return !conducteurs.some(cc => cc.assignedTo === svc.id);
+        });
+
+        if (needsConductor.length > 0) {
+          // Pick a random service
+          const pick = needsConductor[Math.floor(Math.random() * needsConductor.length)];
+          c.assignedTo = pick.id;
+          if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
+        }
+      }
+    }
+    this._syncLegacy();
+  }
 
   // ── Signal Boxes ──
   addSignalBox(data) {
@@ -204,7 +277,8 @@ export class StaffManager {
     // KPIs
     const totalStaff = this.staff.length;
     const assigned = this.staff.filter(s => s.assignedTo).length;
-    const available = totalStaff - assigned;
+    const resting = this.staff.filter(s => s.resting).length;
+    const available = totalStaff - assigned - resting;
 
     // Role tabs
     const roleKeys = Object.keys(ROLES);
@@ -226,6 +300,10 @@ export class StaffManager {
           <div class="dash-kpi">
             <div class="dash-kpi-label">En poste</div>
             <div class="dash-kpi-value" style="color:#f97316">${assigned}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Au repos</div>
+            <div class="dash-kpi-value" style="color:#ef4444">${resting}</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Salaires / jour</div>
@@ -273,12 +351,17 @@ export class StaffManager {
       assignOptions = this.signalBoxes.map(sb => `<option value="${sb.id}">${sb.name}</option>`).join('');
     }
 
-    const extraCol = role === 'controleur' ? '<span>PV</span><span>Recettes</span>' : (role === 'conducteur' ? '<span>Trajets</span>' : '');
-    const colCount = role === 'controleur' ? 6 : (role === 'conducteur' ? 5 : 4);
+    const extraCol = role === 'controleur' ? '<span>PV</span><span>Recettes</span>' : (role === 'conducteur' ? '<span>Trajets</span><span>Service</span>' : '');
+    const colCount = role === 'controleur' ? 6 : (role === 'conducteur' ? 6 : 4);
+
+    const roleNote = (role === 'conducteur')
+      ? '<p style="font-size:10px;color:var(--text3);margin:0 0 6px">Affectation automatique aux services. Service de 8h puis repos obligatoire de 8h.</p>'
+      : '';
 
     return `
       <div class="dash-section">
         <h3>${def.label}s (${members.length})</h3>
+        ${roleNote}
         <div class="dash-train-table">
           <div class="dash-train-header" style="grid-template-columns:repeat(${colCount},1fr)">
             <span>Nom</span><span>Statut</span><span>Affecté à</span>${extraCol}<span>Actions</span>
@@ -304,10 +387,20 @@ export class StaffManager {
                 assignedLabel = sb ? sb.name : m.assignedTo;
               }
             }
-            const statusStr = isAssigned ? `${icon('dot_green', 10)} En poste` : `${icon('dot_yellow', 10)} Disponible`;
+            let statusStr;
+            if (role === 'conducteur') {
+              if (m.resting) statusStr = `${icon('dot_red', 10)} Repos`;
+              else if (isAssigned) statusStr = `${icon('dot_green', 10)} En service`;
+              else statusStr = `${icon('dot_yellow', 10)} Disponible`;
+            } else {
+              statusStr = isAssigned ? `${icon('dot_green', 10)} En poste` : `${icon('dot_yellow', 10)} Disponible`;
+            }
+            const shiftInfo = (role === 'conducteur')
+              ? `<span>${Math.floor((m.shiftWorkedMin || 0) / 60)}h${String((m.shiftWorkedMin || 0) % 60).padStart(2,'0')}/${m.resting ? 'repos' : '8h00'}</span>`
+              : '';
             const extraVals = role === 'controleur'
               ? `<span>${m.totalFines || 0}</span><span>${(m.totalFineRevenue || 0).toLocaleString('fr-FR')}€</span>`
-              : (role === 'conducteur' ? `<span>${m.totalTrips || 0}</span>` : '');
+              : (role === 'conducteur' ? `<span>${m.totalTrips || 0}</span>${shiftInfo}` : '');
 
             return `<div class="dash-train-row" style="grid-template-columns:repeat(${colCount},1fr)">
               <span style="font-weight:600">${m.name}</span>
@@ -492,6 +585,9 @@ export class StaffManager {
         totalTrips: s.totalTrips || 0,
         totalFines: s.totalFines || 0,
         totalFineRevenue: s.totalFineRevenue || 0,
+        shiftStartMin: s.shiftStartMin ?? -1,
+        shiftWorkedMin: s.shiftWorkedMin || 0,
+        resting: s.resting || false,
       })),
       signalBoxes: this.signalBoxes,
       zones: this.zones,
@@ -518,6 +614,9 @@ export class StaffManager {
         totalTrips: m.totalTrips || 0,
         totalFines: m.totalFines || 0,
         totalFineRevenue: m.totalFineRevenue || 0,
+        shiftStartMin: m.shiftStartMin ?? -1,
+        shiftWorkedMin: m.shiftWorkedMin || 0,
+        resting: m.resting || false,
       }));
     } else if (s.conductors && s.conductors.length > 0) {
       // Migrate from old format
@@ -531,6 +630,9 @@ export class StaffManager {
         totalTrips: c.totalTrips || 0,
         totalFines: 0,
         totalFineRevenue: 0,
+        shiftStartMin: -1,
+        shiftWorkedMin: 0,
+        resting: false,
       }));
     } else {
       this.staff = [];
