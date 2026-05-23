@@ -7,9 +7,9 @@ export class Rame {
     this.elements = data.elements || []; // array of RollingStockItem ids
     this.elementDetails = data.elementDetails || []; // cached details
     this.createdDate = data.createdDate || new Date().toISOString().split('T')[0];
-    this.totalKmRun = data.totalKmRun ?? 0;
-    this.kmSinceLastMaint = data.kmSinceLastMaint ?? 0;
-    this.wearLevel = data.wearLevel ?? 0;
+    this.totalKmRun = isFinite(data.totalKmRun) ? data.totalKmRun : 0;
+    this.kmSinceLastMaint = isFinite(data.kmSinceLastMaint) ? data.kmSinceLastMaint : 0;
+    this.wearLevel = isFinite(data.wearLevel) ? data.wearLevel : 0;
     this.inMaintenance = data.inMaintenance ?? false;
   }
 

@@ -412,10 +412,19 @@ class RailEmpire {
     // Sync rame km: use the rame's own accumulated km (source of truth),
     // not the sum of all services (which would multiply km)
     for (const svc of this.scheduleCreator.getActiveServices()) {
-      if (svc.rame && svc.train && svc.state === 'moving') {
-        // Rame km is already synced in moveUpdate() — just ensure consistency
-        svc.rame.totalKmRun = Math.max(svc.rame.totalKmRun || 0, svc.train.totalKmRun || 0);
-        svc.rame.kmSinceLastMaint = Math.max(svc.rame.kmSinceLastMaint || 0, svc.train.kmSinceLastMaint || 0);
+      if (svc.rame && svc.train) {
+        const trainKm = svc.train.totalKmRun || 0;
+        const trainMaint = svc.train.kmSinceLastMaint || 0;
+        const trainWear = svc.train.wearLevel || 0;
+        if (isFinite(trainKm) && trainKm > 0) {
+          svc.rame.totalKmRun = Math.max(svc.rame.totalKmRun || 0, trainKm);
+        }
+        if (isFinite(trainMaint) && trainMaint > 0) {
+          svc.rame.kmSinceLastMaint = Math.max(svc.rame.kmSinceLastMaint || 0, trainMaint);
+        }
+        if (isFinite(trainWear) && trainWear > 0) {
+          svc.rame.wearLevel = Math.max(svc.rame.wearLevel || 0, trainWear);
+        }
       }
     }
     const state = {

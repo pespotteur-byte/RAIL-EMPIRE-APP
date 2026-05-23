@@ -399,6 +399,28 @@ export class ActiveService {
   }
 
   /**
+   * Centralized wear/km tracking. Called from moveUpdate and _moveDirectToTarget.
+   */
+  _trackWear(distKm, timeOfDay) {
+    if (!isFinite(distKm) || distKm <= 0) return;
+    this.train.totalKmRun = (this.train.totalKmRun || 0) + distKm;
+    this.train.kmSinceLastMaint = (this.train.kmSinceLastMaint || 0) + distKm;
+    this.train.wearLevel = Math.min(100, (this.train.kmSinceLastMaint || 0) / 250);
+    if (this.rame) {
+      this.rame.totalKmRun = (this.rame.totalKmRun || 0) + distKm;
+      this.rame.kmSinceLastMaint = (this.rame.kmSinceLastMaint || 0) + distKm;
+      this.rame.wearLevel = this.train.wearLevel;
+    }
+    if (!this.train.breakdown) {
+      const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
+      const failureProb = (distKm / 25000) * wearMultiplier;
+      if (Math.random() < failureProb) {
+        this.train.breakdown = { type: 'panne', time: timeOfDay };
+      }
+    }
+  }
+
+  /**
    * Reset simulation state when starting a new movement leg.
    */
   _resetState() {
@@ -712,6 +734,8 @@ export class ActiveService {
 
     // --- STRICT ROUTE FOLLOWING: advance segment by segment ---
     let remaining = stepKm;
+    const preIndex = this._state.index;
+    const preProgress = this._state.progress;
 
     while (remaining > 0 && this._state.index < route.length - 1) {
       const idx = this._state.index;
@@ -781,39 +805,30 @@ export class ActiveService {
       this.position.lat = segFrom.lat + (segTo.lat - segFrom.lat) * p;
       this.position.lon = segFrom.lon + (segTo.lon - segFrom.lon) * p;
     } else {
-      // Reached end of route
+      // Reached end of route — track km before returning
       const lastPt = route[route.length - 1];
       this.position.lat = lastPt.lat;
       this.position.lon = lastPt.lon;
+      const finalDist = stepKm - remaining;
+      if (isFinite(finalDist) && finalDist > 0) {
+        this.totalDistance += finalDist;
+        this._trackWear(finalDist, timeOfDay);
+      }
       cantonManager.releaseAll(this.id);
       this.arriveAtStation(target, timeOfDay, this._economy);
       return;
     }
 
-    // Cap stepKm to prevent aberrant jumps (max 5 km per tick at 300 km/h)
-    const clampedStepKm = Math.min(stepKm, 0.5);
-    this.totalDistance += clampedStepKm;
+    // Actual distance traveled along route this tick (not clamped)
+    const actualDist = stepKm - remaining;
+    this.totalDistance += actualDist;
     this.train.speed = Math.round(this.speed);
     this.train.totalKm = this.totalDistance;
     this.train.state = this.speed > 0 ? 'moving' : 'stopped';
 
-    // S8/S14: Wear tracking + probabilistic failure (~1 per 25,000 km)
-    this.train.totalKmRun = (this.train.totalKmRun || 0) + clampedStepKm;
-    this.train.kmSinceLastMaint = (this.train.kmSinceLastMaint || 0) + clampedStepKm;
-    this.train.wearLevel = Math.min(100, (this.train.kmSinceLastMaint || 0) / 250); // 100% wear at 25,000km
-    // Sync km to persistent rame object (source of truth)
-    if (this.rame && clampedStepKm > 0) {
-      this.rame.totalKmRun = (this.rame.totalKmRun || 0) + clampedStepKm;
-      this.rame.kmSinceLastMaint = (this.rame.kmSinceLastMaint || 0) + clampedStepKm;
-      this.rame.wearLevel = this.train.wearLevel;
-    }
-    // Failure probability: scales with wear level (higher wear = more likely to break)
-    if (!this.train.breakdown && clampedStepKm > 0) {
-      const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25; // 1x at 0%, 5x at 100%
-      const failureProb = (clampedStepKm / 25000) * wearMultiplier;
-      if (Math.random() < failureProb) {
-        this.train.breakdown = { type: 'panne', time: timeOfDay };
-      }
+    // S8/S14: Wear tracking using actual route distance (no clamping)
+    if (isFinite(actualDist) && actualDist > 0) {
+      this._trackWear(actualDist, timeOfDay);
     }
 
     // --- REAL-TIME DELAY ---
@@ -966,10 +981,12 @@ export class ActiveService {
 
     const stepKm = this.speed * dt / 3600;
     if (dist > 0 && stepKm > 0) {
+      const actualMove = Math.min(stepKm, dist);
       const fraction = Math.min(stepKm / dist, 1);
       this.position.lat += (tLat - this.position.lat) * fraction;
       this.position.lon += (tLon - this.position.lon) * fraction;
-      this.totalDistance += stepKm;
+      this.totalDistance += actualMove;
+      this._trackWear(actualMove, timeOfDay);
     }
 
     this.train.speed = Math.round(this.speed);
@@ -1324,9 +1341,12 @@ export class ActiveService {
 
     // Final sync km to rame (use max to avoid overwriting higher values from other services)
     if (this.rame) {
-      this.rame.totalKmRun = Math.max(this.rame.totalKmRun || 0, this.train.totalKmRun || 0);
-      this.rame.kmSinceLastMaint = Math.max(this.rame.kmSinceLastMaint || 0, this.train.kmSinceLastMaint || 0);
-      this.rame.wearLevel = Math.max(this.rame.wearLevel || 0, this.train.wearLevel || 0);
+      const tKm = this.train.totalKmRun || 0;
+      const tMaint = this.train.kmSinceLastMaint || 0;
+      const tWear = this.train.wearLevel || 0;
+      if (isFinite(tKm)) this.rame.totalKmRun = Math.max(this.rame.totalKmRun || 0, tKm);
+      if (isFinite(tMaint)) this.rame.kmSinceLastMaint = Math.max(this.rame.kmSinceLastMaint || 0, tMaint);
+      if (isFinite(tWear)) this.rame.wearLevel = Math.max(this.rame.wearLevel || 0, tWear);
     }
 
     // Release all cantons
