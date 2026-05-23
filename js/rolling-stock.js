@@ -18,6 +18,7 @@ export class RollingStockItem {
     // S12: Train identification
     this.seriesName = data.seriesName || ''; // e.g. 'BB 26000'
     this.numberStart = data.numberStart || 1;  // e.g. 26001
+    this.purchasePrice = data.purchasePrice || 0; // euros
   }
 }
 
@@ -60,6 +61,7 @@ export class RollingStockManager {
       imageData: i.imageData,
       seriesName: i.seriesName || '',
       numberStart: i.numberStart || 1,
+      purchasePrice: i.purchasePrice || 0,
     }));
   }
 

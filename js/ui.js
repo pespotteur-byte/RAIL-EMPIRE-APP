@@ -818,6 +818,8 @@ export class UI {
   openStockModal() {
     document.getElementById('modal-add-stock')?.classList.remove('hidden');
     document.getElementById('stock-name').value = '';
+    const priceInput = document.getElementById('stock-price');
+    if (priceInput) priceInput.value = '0';
     document.getElementById('stock-image-preview')?.classList.add('hidden');
     this._stockImageData = null;
   }
@@ -859,6 +861,7 @@ export class UI {
       imageData: this._stockImageData,
       seriesName: document.getElementById('stock-series-name')?.value.trim() || '',
       numberStart: document.getElementById('stock-number-start')?.value.trim() || '',
+      purchasePrice: parseInt(document.getElementById('stock-price')?.value) || 0,
     });
     document.getElementById('modal-add-stock')?.classList.add('hidden');
     this.renderStockList();
@@ -880,6 +883,7 @@ export class UI {
           <b>Cat:</b> ${item.category} | <b>Tract:</b> ${item.traction}<br>
           <b>Vmax:</b> ${item.maxSpeed} km/h | <b>Long:</b> ${item.length}m<br>
           <b>Tonnage:</b> ${item.tonnage}t | <b>Masse:</b> ${item.mass}t${item.power ? ` | <b>P:</b> ${item.power}kW` : ''} | <b>Places:</b> ${item.passengerCapacity} | <b>Fret:</b> ${item.freightCapacity}t
+          ${item.purchasePrice ? `<br><b>Prix:</b> ${item.purchasePrice.toLocaleString('fr-FR')} €` : ''}
           ${item.seriesName ? `<br><b>Serie:</b> ${item.seriesName}${item.numberStart ? ' n°' + item.numberStart : ''}` : ''}
         </div>
         <div class="card-actions">
@@ -918,7 +922,7 @@ export class UI {
       : items.map(item => `
         <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')">
           ${item.imageData ? `<img src="${item.imageData}" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
-          <span>${item.name}</span>
+          <span>${item.name}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
         </div>
       `).join('');
   }
@@ -955,6 +959,7 @@ export class UI {
     const totalLen = this.currentRameElements.reduce((s, e) => s + e.length, 0);
     const totalTon = this.currentRameElements.reduce((s, e) => s + e.tonnage, 0);
     const totalCap = this.currentRameElements.reduce((s, e) => s + e.passengerCapacity, 0);
+    const totalPrice = this.currentRameElements.reduce((s, e) => s + (e.purchasePrice || 0), 0);
     const vmax = this.currentRameElements.length > 0 ? Math.min(...this.currentRameElements.map(e => e.maxSpeed)) : 0;
     const tractors = this.currentRameElements.filter(e => e.category === 'locomotive' || e.category === 'automotrice');
     const traction = tractors.length > 0 ? [...new Set(tractors.map(t => t.traction))].join('+') : '-';
@@ -964,6 +969,8 @@ export class UI {
     document.getElementById('rame-places').textContent = totalCap;
     document.getElementById('rame-vmax').textContent = vmax;
     document.getElementById('rame-traction').textContent = traction;
+    const priceEl = document.getElementById('rame-price');
+    if (priceEl) priceEl.textContent = totalPrice.toLocaleString('fr-FR');
 
     const fill = document.getElementById('rame-length-fill');
     if (fill) {
@@ -978,6 +985,14 @@ export class UI {
     if (!name) return alert('Nom requis');
     if (this.currentRameElements.length === 0) return alert('Ajoutez au moins un element');
 
+    const totalPrice = this.currentRameElements.reduce((s, e) => s + (e.purchasePrice || 0), 0);
+    if (totalPrice > 0) {
+      if (this.game.economy.balance < totalPrice) {
+        return alert(`Solde insuffisant ! Coût: ${totalPrice.toLocaleString('fr-FR')} € — Solde: ${Math.round(this.game.economy.balance).toLocaleString('fr-FR')} €`);
+      }
+      this.game.economy.addExpense(totalPrice, 'achat', `Achat rame ${name}`);
+    }
+
     this.game.rameManager.add({
       name,
       elements: this.currentRameElements.map(e => e.stockId),
@@ -987,6 +1002,7 @@ export class UI {
         mass: e.mass || e.tonnage, power: e.power || 0,
         passengerCapacity: e.passengerCapacity, freightCapacity: e.freightCapacity,
         length: e.length, imageData: e.imageData,
+        purchasePrice: e.purchasePrice || 0,
       })),
     });
     document.getElementById('modal-rame')?.classList.add('hidden');
@@ -1019,7 +1035,7 @@ export class UI {
           <b>Traction:</b> ${r.traction}
         </div>
         <div class="card-info" style="font-size:10px;color:var(--text3)">
-          <b>Mise en service:</b> ${r.createdDate} | <b>Km parcourus:</b> ${Math.round(r.totalKmRun || 0).toLocaleString('fr-FR')} km
+          <b>Mise en service:</b> ${r.createdDate} | <b>Km parcourus:</b> ${Math.round(r.totalKmRun || 0).toLocaleString('fr-FR')} km${r.elementDetails.some(e => e.purchasePrice) ? ` | <b>Valeur:</b> ${r.elementDetails.reduce((s,e) => s + (e.purchasePrice || 0), 0).toLocaleString('fr-FR')} €` : ''}
         </div>
       </div>
     `).join('');

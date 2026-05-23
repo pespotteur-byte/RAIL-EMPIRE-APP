@@ -531,6 +531,13 @@
               <input type="text" id="stock-number-start" placeholder="26001">
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Prix d'achat (€)</label>
+              <input type="number" id="stock-price" value="0" min="0" max="100000000" step="1000">
+            </div>
+            <div class="form-group"></div>
+          </div>
           <button id="btn-save-stock" class="btn-primary btn-full">Enregistrer</button>
         </div>
       </div>
@@ -552,6 +559,7 @@
             <span>Places: <b id="rame-places">0</b></span>
             <span>Vmax: <b id="rame-vmax">0</b> km/h</span>
             <span>Traction: <b id="rame-traction">-</b></span>
+            <span>Coût: <b id="rame-price" style="color:var(--orange)">0</b> €</span>
           </div>
           <div class="rame-assembly" id="rame-assembly">
             <p class="rame-empty">Cliquer sur un engin ci-dessous pour l'ajouter</p>
