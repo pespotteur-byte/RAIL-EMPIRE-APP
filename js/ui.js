@@ -860,13 +860,14 @@ export class UI {
 
     let html = '';
     for (const [catKey, cat] of Object.entries(cargoTypes.categories)) {
-      html += `<div style="margin-bottom:4px"><b style="font-size:10px;color:var(--text2)">${cat.name}</b></div>`;
+      html += `<div class="cargo-cat-header">${cat.name}</div><div class="cargo-cat-grid">`;
       for (const t of cat.types) {
-        html += `<label style="display:flex;align-items:center;gap:4px;font-size:10px;padding:1px 0;cursor:pointer">
-          <input type="checkbox" class="stock-cargo-cb" value="${t.type}" style="margin:0">
-          ${t.name} (${t.unit})
+        html += `<label class="cargo-cb-label">
+          <input type="checkbox" class="stock-cargo-cb" value="${t.type}">
+          ${t.name} <span class="cargo-cb-unit">${t.unit}</span>
         </label>`;
       }
+      html += `</div>`;
     }
     list.innerHTML = html;
   }

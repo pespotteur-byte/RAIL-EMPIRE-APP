@@ -279,7 +279,14 @@ header {
 .form-section .image-drop:hover { border-color: var(--blue); background: rgba(59,130,246,0.05); }
 
 /* Cargo types list improved */
-#stock-cargo-types-group .cargo-types-container { max-height: 260px; overflow-y: auto; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+#stock-cargo-types-group .cargo-types-container { max-height: 320px; overflow-y: auto; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+.cargo-cat-header { font-size: 11px; font-weight: 600; color: var(--blue); padding: 6px 8px 4px; margin-top: 6px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.3px; }
+.cargo-cat-header:first-child { margin-top: 0; }
+.cargo-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; padding: 4px 4px 4px 8px; }
+.cargo-cb-label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); padding: 4px 6px; border-radius: 4px; cursor: pointer; transition: background 0.12s; }
+.cargo-cb-label:hover { background: rgba(59,130,246,0.08); }
+.cargo-cb-label input[type="checkbox"] { margin: 0; width: 14px; height: 14px; accent-color: var(--blue); flex-shrink: 0; }
+.cargo-cb-unit { color: var(--text3); font-size: 9px; margin-left: 2px; }
 
 /* Save button improved */
 #modal-add-stock .btn-save-stock-enhanced { width: 100%; margin-top: 16px; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
