@@ -271,8 +271,8 @@ export class StaffManager {
     if (!container) return;
     const eco = game.economy;
     const activeServices = game.scheduleCreator?.getActiveServices() || [];
-    const stations = game.world?.getStations() || [];
-    const depots = game.depotManager?.depots || [];
+    const stations = game.world?.stations || [];
+    const depots = game.depotManager?.depots || game.depotManager?.getAll?.() || [];
 
     // KPIs
     const totalStaff = this.staff.length;
