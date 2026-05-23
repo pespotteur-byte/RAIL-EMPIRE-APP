@@ -645,7 +645,7 @@ class RailEmpire {
     }
 
     if (timeOfDay % 60 === 0) {
-      this.freightManager.maybeGenerate(this.world.stations, timeOfDay);
+      this.freightManager.maybeGenerate(this.world.stations, timeOfDay, this.cargoTypes);
     }
 
     // Periodic canton cleanup every 5 in-game minutes to prevent memory leaks

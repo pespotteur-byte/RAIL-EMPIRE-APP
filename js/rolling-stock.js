@@ -19,6 +19,7 @@ export class RollingStockItem {
     this.seriesName = data.seriesName || ''; // e.g. 'BB 26000'
     this.numberStart = data.numberStart || 1;  // e.g. 26001
     this.purchasePrice = data.purchasePrice || 0; // euros
+    this.cargoTypes = data.cargoTypes || []; // allowed cargo type keys (wagon only)
   }
 }
 
@@ -62,6 +63,7 @@ export class RollingStockManager {
       seriesName: i.seriesName || '',
       numberStart: i.numberStart || 1,
       purchasePrice: i.purchasePrice || 0,
+      cargoTypes: i.cargoTypes || [],
     }));
   }
 

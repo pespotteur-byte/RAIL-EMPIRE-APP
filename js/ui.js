@@ -838,6 +838,37 @@ export class UI {
     if (priceInput) priceInput.value = '0';
     document.getElementById('stock-image-preview')?.classList.add('hidden');
     this._stockImageData = null;
+
+    // Populate cargo types checkboxes
+    this._populateCargoTypesCheckboxes();
+
+    // Show/hide cargo types based on category
+    const catSel = document.getElementById('stock-category');
+    const cargoGroup = document.getElementById('stock-cargo-types-group');
+    if (catSel && cargoGroup) {
+      const showCargo = () => { cargoGroup.style.display = catSel.value === 'wagon' ? 'block' : 'none'; };
+      showCargo();
+      catSel.addEventListener('change', showCargo);
+    }
+  }
+
+  _populateCargoTypesCheckboxes() {
+    const list = document.getElementById('stock-cargo-types-list');
+    if (!list) return;
+    const cargoTypes = this.game.cargoTypes;
+    if (!cargoTypes) return;
+
+    let html = '';
+    for (const [catKey, cat] of Object.entries(cargoTypes.categories)) {
+      html += `<div style="margin-bottom:4px"><b style="font-size:10px;color:var(--text2)">${cat.name}</b></div>`;
+      for (const t of cat.types) {
+        html += `<label style="display:flex;align-items:center;gap:4px;font-size:10px;padding:1px 0;cursor:pointer">
+          <input type="checkbox" class="stock-cargo-cb" value="${t.type}" style="margin:0">
+          ${t.name} (${t.unit})
+        </label>`;
+      }
+    }
+    list.innerHTML = html;
   }
 
   loadStockImage(file) {
@@ -878,6 +909,7 @@ export class UI {
       seriesName: document.getElementById('stock-series-name')?.value.trim() || '',
       numberStart: document.getElementById('stock-number-start')?.value.trim() || '',
       purchasePrice: parseInt(document.getElementById('stock-price')?.value) || 0,
+      cargoTypes: Array.from(document.querySelectorAll('.stock-cargo-cb:checked')).map(cb => cb.value),
     });
     document.getElementById('modal-add-stock')?.classList.add('hidden');
     this.renderStockList();
@@ -901,6 +933,7 @@ export class UI {
           <b>Tonnage:</b> ${item.tonnage}t | <b>Masse:</b> ${item.mass}t${item.power ? ` | <b>P:</b> ${item.power}kW` : ''} | <b>Places:</b> ${item.passengerCapacity} | <b>Fret:</b> ${item.freightCapacity}t
           ${item.purchasePrice ? `<br><b>Prix:</b> ${item.purchasePrice.toLocaleString('fr-FR')} €` : ''}
           ${item.seriesName ? `<br><b>Serie:</b> ${item.seriesName}${item.numberStart ? ' n°' + item.numberStart : ''}` : ''}
+          ${item.cargoTypes?.length ? `<br><b>Chargements:</b> <span style="font-size:9px">${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return info?.name || ct; }).join(', ')}</span>` : ''}
         </div>
         <div class="card-actions">
           <button class="btn-sm danger" onclick="game.ui.deleteStock('${item.id}')">Supprimer</button>

@@ -3,7 +3,7 @@ let nextContractId = 1;
 export class FreightContract {
   constructor(data) {
     this.id = data.id || `fret-${nextContractId++}`;
-    this.cargoType = data.cargoType || 'containers';
+    this.cargoType = data.cargoType || 'containers-20';
     this.cargoName = data.cargoName || 'Conteneurs';
     this.quantity = data.quantity || 50;
     this.unit = data.unit || 't';
@@ -18,33 +18,27 @@ export class FreightContract {
   }
 }
 
-const CARGO_CATALOGUE = [
-  { type: 'containers', name: 'Conteneurs', unit: 'TEU', minQty: 20, maxQty: 100, pricePerUnit: 120 },
-  { type: 'cereals', name: 'Cereales', unit: 't', minQty: 40, maxQty: 150, pricePerUnit: 45 },
-  { type: 'cars', name: 'Automobiles', unit: 'unites', minQty: 10, maxQty: 80, pricePerUnit: 200 },
-  { type: 'steel', name: 'Acier', unit: 't', minQty: 30, maxQty: 120, pricePerUnit: 80 },
-  { type: 'fuel', name: 'Carburant', unit: 'm3', minQty: 20, maxQty: 80, pricePerUnit: 95 },
-  { type: 'timber', name: 'Bois', unit: 't', minQty: 30, maxQty: 120, pricePerUnit: 35 },
-  { type: 'chemicals', name: 'Chimie', unit: 't', minQty: 10, maxQty: 60, pricePerUnit: 150 },
-];
-
 export class FreightManager {
   constructor() {
     this.contracts = [];
     this.lastGenTime = 0;
   }
 
-  maybeGenerate(stations, absTime) {
+  maybeGenerate(stations, absTime, cargoTypes) {
     if (absTime < this.lastGenTime) this.lastGenTime = 0;
     if (absTime - this.lastGenTime < 120) return;
     this.lastGenTime = absTime;
 
     if (!stations || stations.length < 2) return;
-    if (this.contracts.filter(c => c.active && !c.industrialClientId).length >= 8) return;
+    if (this.contracts.filter(c => c.active && !c.industrialClientId).length >= 12) return;
     if (Math.random() > 0.3) return;
 
-    const cargo = CARGO_CATALOGUE[Math.floor(Math.random() * CARGO_CATALOGUE.length)];
-    const quantity = cargo.minQty + Math.floor(Math.random() * (cargo.maxQty - cargo.minQty));
+    // Use CargoTypeManager if available, otherwise fallback
+    const allTypes = cargoTypes?.getAllTypes?.() || [];
+    if (allTypes.length === 0) return;
+
+    const cargo = allTypes[Math.floor(Math.random() * allTypes.length)];
+    const quantity = 20 + Math.floor(Math.random() * 500);
     const from = stations[Math.floor(Math.random() * stations.length)];
     const others = stations.filter(s => s.id !== from.id);
     if (others.length === 0) return;
@@ -84,7 +78,7 @@ export class FreightManager {
   loadFromSave(arr) {
     this.contracts = arr.map(d => {
       const c = new FreightContract(d);
-      const num = parseInt(d.id?.replace('fret-', '') || '0');
+      const num = parseInt(d.id?.replace('fret-', '').replace('fret-ind-', '') || '0');
       if (num >= nextContractId) nextContractId = num + 1;
       return c;
     });
