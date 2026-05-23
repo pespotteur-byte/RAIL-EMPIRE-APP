@@ -83,6 +83,32 @@ const _svgs = {
 
   // Wood/timber
   wood: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg>`,
+
+  // Industry-specific icons
+  ind_cement: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21h16M6 21V9l3-6h2l1 6M14 21V6h3v15"/><path d="M14 3h3M14 6h5"/><circle cx="8" cy="15" r="1" fill="currentColor"/></svg>`,
+  ind_refinery: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21h16M6 21V10h4v11M14 21V6h4v15"/><path d="M8 6V3M16 3V1"/><path d="M6 14h4M14 10h4M14 14h4"/></svg>`,
+  ind_port: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><rect x="7" y="6" width="6" height="8" rx="1"/><path d="M10 6V3M5 14h14M7 10h6"/></svg>`,
+  ind_steel: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21h16M6 21V8l4-5h4l4 5v13"/><path d="M10 21v-6h4v6M8 12h8"/><path d="M9 3l3 2 3-2"/></svg>`,
+  ind_auto: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 18v2M17 18v2M3 12h18"/><path d="M8 9h2M14 9h2M8 15h2M14 15h2"/></svg>`,
+  ind_grain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21V11a4 4 0 018 0v10"/><path d="M8 15h8M8 18h8"/><path d="M5 21h14"/><path d="M12 7V3M10 5h4"/></svg>`,
+  ind_chemical: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6l-5 8.5a2 2 0 001.7 3h10.6a2 2 0 001.7-3L14 9V3"/><circle cx="10" cy="15" r="1" fill="currentColor"/><circle cx="14" cy="17" r="1" fill="currentColor"/></svg>`,
+  ind_paper: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21h16M6 21V8h12v13"/><path d="M6 8l3-5h6l3 5"/><path d="M9 12h6M9 15h6M9 18h4"/></svg>`,
+  ind_logistics: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="8" height="6" rx="1"/><rect x="14" y="4" width="8" height="6" rx="1"/><rect x="8" y="14" width="8" height="6" rx="1"/><path d="M6 10v4h2M18 10v4h-2M12 4v10"/></svg>`,
+  ind_power: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21h16M8 21V10h8v11"/><path d="M10 21v-5h4v5"/><path d="M12 10V6l3-3M12 6L9 3"/><path d="M6 15h2M16 15h2"/></svg>`,
+  ind_nuclear: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 5a7 7 0 014.9 2.1M12 5a7 7 0 00-4.9 2.1"/><path d="M7.1 19a7 7 0 010-9.8M16.9 19a7 7 0 000-9.8"/><path d="M7.1 19h9.8"/></svg>`,
+  ind_quarry: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-8 4 4 4-6 6 10H3z"/><path d="M7 13l2-4M15 11l3-5"/></svg>`,
+  ind_food: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V12a7 7 0 0114 0v9"/><path d="M8 16h8M8 19h8"/><circle cx="12" cy="8" r="2"/></svg>`,
+  ind_waste: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M5 6v14a2 2 0 002 2h10a2 2 0 002-2V6"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M10 11v6M14 11v6"/></svg>`,
+  ind_military: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2 4h4l-3 3 1 5-4-2-4 2 1-5-3-3h4l2-4z"/><path d="M4 21h16M8 17v4M16 17v4"/></svg>`,
+  ind_glass: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h8l2 8H6l2-8z"/><path d="M6 10v10a2 2 0 002 2h8a2 2 0 002-2V10"/><path d="M10 14h4M10 18h4"/></svg>`,
+  ind_wind: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12V22M8 22h8"/><circle cx="12" cy="10" r="2"/><path d="M12 8V2M14 10l5 3M10 10l-5 3"/></svg>`,
+  ind_pharma: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="8" width="14" height="12" rx="2"/><path d="M9 8V5a3 3 0 016 0v3"/><path d="M12 12v4M10 14h4"/></svg>`,
+  ind_textile: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 4l16 16M20 4L4 20"/><path d="M12 4v16M4 12h16"/></svg>`,
+  ind_electronics: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4"/></svg>`,
+  ind_aerospace: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L8 10h8l-4-8z"/><path d="M8 10v8l4 4 4-4v-8"/><path d="M4 14h4M16 14h4"/></svg>`,
+  ind_shipyard: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M4 16l8-12 8 12"/><path d="M12 4v12M8 10h8"/></svg>`,
+  ind_brewery: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 21V8a5 5 0 0110 0v13"/><path d="M17 12h2a2 2 0 010 4h-2"/><path d="M7 12h10M7 16h10"/></svg>`,
+  ind_mine: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M4 10h16M6 10l2 11h8l2-11"/><path d="M10 14h4M9 17h6"/><path d="M8 6l4-4 4 4"/></svg>`,
 };
 
 export function icon(name, size = 16, cls = '') {

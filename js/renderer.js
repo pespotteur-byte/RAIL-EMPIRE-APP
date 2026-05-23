@@ -90,6 +90,12 @@ export class Renderer {
     const showTrains = this._toggleEls.trains?.checked !== false;
     const showVoiePoints = this._toggleEls.voie?.checked !== false;
 
+    // Industries toggle
+    if (!this._toggleEls.industries) {
+      this._toggleEls.industries = document.getElementById('toggle-industries');
+    }
+    const showIndustries = this._toggleEls.industries?.checked === true;
+
     // Draw static layers directly to main ctx (tracks ~3ms, stations ~0.2ms = fast)
     this.drawTracks(ctx, world, lineManager);
     if (showStations) this.drawStations(ctx, world, platformManager, showNames);
@@ -98,6 +104,11 @@ export class Renderer {
     if (showVoiePoints && voiePointManager) {
       this.drawVoieTroncons(ctx, voiePointManager, world);
       this.drawVoiePoints(ctx, voiePointManager);
+    }
+
+    // Industry markers
+    if (showIndustries) {
+      this.drawIndustries(ctx);
     }
 
     // Cloud overlay (canvas-based fallback when tile data is unavailable)
@@ -344,6 +355,58 @@ export class Renderer {
       ctx.fillRect(p.x - 5, p.y + 8, 10, 6);
       ctx.strokeStyle = '#0f172a';
       ctx.strokeRect(p.x - 5, p.y + 8, 10, 6);
+    }
+  }
+
+  drawIndustries(ctx) {
+    const ic = window.game?.industrialClients;
+    if (!ic) return;
+
+    // Cache locations array (heavy to compute every frame)
+    if (!this._indLocs || this._indLocsTick !== (this._frameTick || 0)) {
+      this._indLocs = ic.getAllRealLocations();
+      this._indLocsTick = this._frameTick || 0;
+    }
+    const locs = this._indLocs;
+    if (!locs || locs.length === 0) return;
+
+    const zoom = this.tileMap?.zoomLevel || 10;
+    const w = this.logicalWidth;
+    const h = this.logicalHeight;
+
+    // Adaptive: at low zoom, only show every Nth site and skip labels
+    const showLabels = zoom >= 9;
+    const step = zoom < 7 ? 4 : zoom < 8 ? 2 : 1;
+    const dotSize = zoom >= 10 ? 5 : zoom >= 8 ? 4 : 3;
+
+    ctx.textAlign = 'center';
+    ctx.font = `${zoom >= 10 ? 9 : 8}px sans-serif`;
+
+    for (let i = 0; i < locs.length; i += step) {
+      const loc = locs[i];
+      const p = this.latLonToScreen(loc.lat, loc.lon);
+      if (p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) continue;
+
+      // Colored diamond marker
+      const color = loc.color || '#94a3b8';
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = color;
+      ctx.fillRect(-dotSize / 2, -dotSize / 2, dotSize, dotSize);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(-dotSize / 2, -dotSize / 2, dotSize, dotSize);
+      ctx.restore();
+
+      // Label at sufficient zoom
+      if (showLabels) {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.9;
+        const label = zoom >= 11 ? loc.name : loc.industryName;
+        ctx.fillText(label, p.x, p.y - dotSize - 3);
+        ctx.globalAlpha = 1;
+      }
     }
   }
 
