@@ -290,19 +290,19 @@ export class CantonManager {
    * Returns: null (green/clear), 30 (yellow/caution), or 0 (red/stop).
    */
   getSignalAspect(assignments, segmentIndex, trainId) {
-    const nextCanton = this.getNextCanton(assignments, segmentIndex);
-    if (!nextCanton) return null;
+    const current = this.getCantonForSegment(assignments, segmentIndex);
+    if (!current) return null;
+    const currentIdx = assignments.indexOf(current);
+    if (currentIdx < 0 || currentIdx >= assignments.length - 1) return null;
 
+    const nextCanton = assignments[currentIdx + 1];
     if (!this.isAvailable(nextCanton.cantonId, trainId)) {
       return 0;
     }
 
     // Two-block look-ahead for approach signaling
-    const nextIdx = assignments.indexOf(
-      assignments.find(a => a.startIndex === nextCanton.endIndex)
-    );
-    if (nextIdx >= 0 && nextIdx < assignments.length) {
-      const twoAhead = assignments[nextIdx];
+    if (currentIdx + 2 < assignments.length) {
+      const twoAhead = assignments[currentIdx + 2];
       if (!this.isAvailable(twoAhead.cantonId, trainId)) {
         return 30;
       }
