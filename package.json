@@ -1,0 +1,10 @@
+{
+  "name": "rail-empire-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A real-time railway simulation game running in the browser, powered by OpenRailwayMap data and realistic train physics.",
+  "scripts": {
+    "test": "node --test js/__tests__/*.test.js"
+  }
+}

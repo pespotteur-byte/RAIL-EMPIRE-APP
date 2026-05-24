@@ -73,7 +73,7 @@ The game is a single-page web application (HTML/CSS/JavaScript) with no backend 
 
 ### Persistence
 - **Auto-save** — every 10 seconds to `localStorage`
-- **Fast-forward on reload** — elapsed time since save is simulated (up to 24 h) so trains resume where they should be
+- **Mid-journey resume** — trains resume from their saved position and speed on reload, no time catchup
 - **Export / import** — download save as `.json` file, load from file at login or in-game
 
 ---
@@ -187,7 +187,7 @@ Routes are fetched from the [Overpass API](https://wiki.openstreetmap.org/wiki/O
 | Feature | Details |
 |---------|---------|
 | Auto-save | Every 10 seconds to `localStorage` |
-| Fast-forward | On reload, simulates elapsed time (max 24 h) |
+| Mid-journey resume | Trains resume from saved position and speed on reload |
 | File export | JSON download with company name and date |
 | File import | Load `.json` save from login screen or in-game |
 | Backward compatibility | New fields use fallback defaults when loading older saves |

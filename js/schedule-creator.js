@@ -1747,6 +1747,9 @@ export class ScheduleCreator {
           sp: Math.round((s.speed || 0) * 10) / 10,
           dl: Math.round((s.delay || 0) * 100) / 100,
         };
+        if (s.isReturnLeg) o._r.rl = true;
+        if (s.completed) o._r.cp = true;
+        if (s.completedDate) o._r.cd = s.completedDate;
         // Save position for mid-journey restore
         if (s.position) {
           o._r.pos = [Math.round(s.position.lat * 1e6) / 1e6, Math.round(s.position.lon * 1e6) / 1e6];
@@ -1819,6 +1822,9 @@ export class ScheduleCreator {
           speed: d._r.sp || 0,
           delay: d._r.dl || 0,
           position: d._r.pos || null,
+          isReturnLeg: d._r.rl || false,
+          completed: d._r.cp || false,
+          completedDate: d._r.cd || '',
           _adjustedStops: d._r.as ? d._r.as.map(s => ({
             stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
           })) : null,
@@ -1861,29 +1867,42 @@ export class ScheduleCreator {
       const savedSpeed = d._runtime?.speed || 0;
       const savedDelay = d._runtime?.delay || 0;
       const savedStopIdx = d._runtime?.currentStopIndex || 0;
+      const savedReturnLeg = d._runtime?.isReturnLeg || false;
+      const savedCompleted = d._runtime?.completed || false;
+      const savedCompletedDate = d._runtime?.completedDate || '';
+
+      svc.train.inMaintenance = rame ? (rame.inMaintenance || false) : false;
+      svc._nextDepartureTime = null;
+      svc._onboardPax = 0;
+      svc._onboardFreight = 0;
+      svc.revenueCollected = false;
 
       if ((savedState === 'moving' || savedState === 'stopped_at_station') && savedPos) {
-        // Restore mid-journey: train was in motion or at an intermediate station
         svc.state = savedState;
         svc.position = { lat: savedPos[0], lon: savedPos[1] };
         svc.speed = savedSpeed;
         svc.currentStopIndex = savedStopIdx;
         svc.delay = savedDelay;
-        svc.train.delay = Math.round(savedDelay) === 0 ? 0 : Math.round(savedDelay);
+        svc.train.delay = Math.round(savedDelay);
         svc.train.speed = savedSpeed;
         svc.train.state = savedState === 'moving' ? 'moving' : 'stopped_at_station';
         svc.train.blockedBy = false;
         svc.train.stoppedAt = null;
         svc.train._stoppedSinceGameTime = null;
         svc.completed = false;
-        svc.isReturnLeg = false;
+        svc.isReturnLeg = savedReturnLeg;
+        svc._atTerminus = false;
+        // Rebuild return stops if train was on the return leg
+        if (savedReturnLeg && svc.roundTrip) {
+          svc.returnStops = svc.buildReturnStops();
+        }
       } else {
-        // Default: train was waiting or state unknown
         svc.state = 'waiting';
         svc.position = null;
         svc.speed = 0;
         svc.currentStopIndex = 0;
-        svc.completed = false;
+        svc.completed = savedCompleted;
+        svc.completedDate = savedCompletedDate;
         svc.isReturnLeg = false;
         svc.delay = 0;
         svc.train.delay = 0;
@@ -1892,17 +1911,11 @@ export class ScheduleCreator {
         svc.train.blockedBy = false;
         svc.train.stoppedAt = null;
         svc.train._stoppedSinceGameTime = null;
+        svc._adjustedStops = null;
+        svc._tripCount = 0;
+        svc._atTerminus = false;
+        svc._resetState();
       }
-      svc.train.inMaintenance = rame ? (rame.inMaintenance || false) : false;
-      svc._nextDepartureTime = null;
-      svc._onboardPax = 0;
-      svc._onboardFreight = 0;
-      svc.revenueCollected = false;
-      // Clear multi-trip adjusted stops to use original schedule on reload
-      svc._adjustedStops = null;
-      svc._tripCount = 0;
-      svc._atTerminus = false;
-      svc._resetState();
 
       this.services.push(svc);
       const num = parseInt(d.id?.split('-')[1] || '0');
