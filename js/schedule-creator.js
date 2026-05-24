@@ -1,4 +1,4 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779616637';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779618711';
 
 let nextServiceId = 1;
 
@@ -1743,7 +1743,14 @@ export class ScheduleCreator {
           ci: s.currentStopIndex || 0,
           dir: s.direction || 1,
           tc: s._tripCount || 0,
+          st: s.state || 'waiting',
+          sp: Math.round((s.speed || 0) * 10) / 10,
+          dl: Math.round((s.delay || 0) * 100) / 100,
         };
+        // Save position for mid-journey restore
+        if (s.position) {
+          o._r.pos = [Math.round(s.position.lat * 1e6) / 1e6, Math.round(s.position.lon * 1e6) / 1e6];
+        }
         if (s._adjustedStops) {
           o._r.as = s._adjustedStops.map(st => ({
             si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime,
@@ -1807,6 +1814,11 @@ export class ScheduleCreator {
         expanded._runtime = {
           direction: d._r.dir || 1,
           _tripCount: d._r.tc || 0,
+          currentStopIndex: d._r.ci || 0,
+          state: d._r.st || 'waiting',
+          speed: d._r.sp || 0,
+          delay: d._r.dl || 0,
+          position: d._r.pos || null,
           _adjustedStops: d._r.as ? d._r.as.map(s => ({
             stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
           })) : null,
@@ -1843,19 +1855,44 @@ export class ScheduleCreator {
           ));
         }
       }
-      svc.state = 'waiting';
-      svc.position = null;
-      svc.speed = 0;
-      svc.currentStopIndex = 0;
-      svc.completed = false;
-      svc.isReturnLeg = false;
-      svc.delay = 0;
-      svc.train.delay = 0;
-      svc.train.speed = 0;
-      svc.train.state = 'waiting';
-      svc.train.blockedBy = false;
-      svc.train.stoppedAt = null;
-      svc.train._stoppedSinceGameTime = null;
+      // Restore mid-journey state if train was moving/stopped at station
+      const savedState = d._runtime?.state || 'waiting';
+      const savedPos = d._runtime?.position || null;
+      const savedSpeed = d._runtime?.speed || 0;
+      const savedDelay = d._runtime?.delay || 0;
+      const savedStopIdx = d._runtime?.currentStopIndex || 0;
+
+      if ((savedState === 'moving' || savedState === 'stopped_at_station') && savedPos) {
+        // Restore mid-journey: train was in motion or at an intermediate station
+        svc.state = savedState;
+        svc.position = { lat: savedPos[0], lon: savedPos[1] };
+        svc.speed = savedSpeed;
+        svc.currentStopIndex = savedStopIdx;
+        svc.delay = savedDelay;
+        svc.train.delay = Math.round(savedDelay) === 0 ? 0 : Math.round(savedDelay);
+        svc.train.speed = savedSpeed;
+        svc.train.state = savedState === 'moving' ? 'moving' : 'stopped_at_station';
+        svc.train.blockedBy = false;
+        svc.train.stoppedAt = null;
+        svc.train._stoppedSinceGameTime = null;
+        svc.completed = false;
+        svc.isReturnLeg = false;
+      } else {
+        // Default: train was waiting or state unknown
+        svc.state = 'waiting';
+        svc.position = null;
+        svc.speed = 0;
+        svc.currentStopIndex = 0;
+        svc.completed = false;
+        svc.isReturnLeg = false;
+        svc.delay = 0;
+        svc.train.delay = 0;
+        svc.train.speed = 0;
+        svc.train.state = 'waiting';
+        svc.train.blockedBy = false;
+        svc.train.stoppedAt = null;
+        svc.train._stoppedSinceGameTime = null;
+      }
       svc.train.inMaintenance = rame ? (rame.inMaintenance || false) : false;
       svc._nextDepartureTime = null;
       svc._onboardPax = 0;
