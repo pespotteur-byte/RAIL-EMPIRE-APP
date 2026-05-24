@@ -1,36 +1,36 @@
-import { SimulationEngine } from './engine.js?v=1779618711';
-import { World, createDefaultWorld } from './world.js?v=1779618711';
-import { Renderer } from './renderer.js?v=1779618711';
-import { UI } from './ui.js?v=1779618711';
-import { Economy } from './economy.js?v=1779618711';
-import { IncidentManager } from './incidents.js?v=1779618711';
-import { FreightManager } from './freight.js?v=1779618711';
-import { ScheduleManager } from './schedule.js?v=1779618711';
-import { GameStorage } from './storage.js?v=1779618711';
-import { AccountManager } from './account.js?v=1779618711';
-import { RollingStockManager } from './rolling-stock.js?v=1779618711';
-import { RameManager } from './rame.js?v=1779618711';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779618711';
-import { DepotManager } from './depot.js?v=1779618711';
-import { WorksManager } from './works.js?v=1779618711';
-import { ORMClient } from './orm.js?v=1779618711';
-import { LineManager, PlatformManager } from './line.js?v=1779618711';
-import { VoiePointManager } from './voie-points.js?v=1779618711';
-import { Dashboard } from './dashboard.js?v=1779618711';
-import { GraphMarche } from './graph-marche.js?v=1779618711';
-import { StaffManager } from './staff.js?v=1779618711';
-import { Tutorial } from './tutorial.js?v=1779618711';
-import { Bank } from './bank.js?v=1779618711';
-import { Weather } from './weather.js?v=1779618711';
-import { Unions } from './unions.js?v=1779618711';
-import { SeasonalSchedule } from './seasonal.js?v=1779618711';
-import { Connections } from './connections.js?v=1779618711';
-import { StationUpgrades } from './station-upgrades.js?v=1779618711';
-import { JunctionManager } from './junctions.js?v=1779618711';
-import { CargoTypeManager } from './cargo-types.js?v=1779618711';
-import { ITEModules } from './ite-modules.js?v=1779618711';
-import { IndustrialClients } from './industrial-clients.js?v=1779618711';
-import { ShuntingManager } from './shunting.js?v=1779618711';
+import { SimulationEngine } from './engine.js?v=1779619178';
+import { World, createDefaultWorld } from './world.js?v=1779619178';
+import { Renderer } from './renderer.js?v=1779619178';
+import { UI } from './ui.js?v=1779619178';
+import { Economy } from './economy.js?v=1779619178';
+import { IncidentManager } from './incidents.js?v=1779619178';
+import { FreightManager } from './freight.js?v=1779619178';
+import { ScheduleManager } from './schedule.js?v=1779619178';
+import { GameStorage } from './storage.js?v=1779619178';
+import { AccountManager } from './account.js?v=1779619178';
+import { RollingStockManager } from './rolling-stock.js?v=1779619178';
+import { RameManager } from './rame.js?v=1779619178';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779619178';
+import { DepotManager } from './depot.js?v=1779619178';
+import { WorksManager } from './works.js?v=1779619178';
+import { ORMClient } from './orm.js?v=1779619178';
+import { LineManager, PlatformManager } from './line.js?v=1779619178';
+import { VoiePointManager } from './voie-points.js?v=1779619178';
+import { Dashboard } from './dashboard.js?v=1779619178';
+import { GraphMarche } from './graph-marche.js?v=1779619178';
+import { StaffManager } from './staff.js?v=1779619178';
+import { Tutorial } from './tutorial.js?v=1779619178';
+import { Bank } from './bank.js?v=1779619178';
+import { Weather } from './weather.js?v=1779619178';
+import { Unions } from './unions.js?v=1779619178';
+import { SeasonalSchedule } from './seasonal.js?v=1779619178';
+import { Connections } from './connections.js?v=1779619178';
+import { StationUpgrades } from './station-upgrades.js?v=1779619178';
+import { JunctionManager } from './junctions.js?v=1779619178';
+import { CargoTypeManager } from './cargo-types.js?v=1779619178';
+import { ITEModules } from './ite-modules.js?v=1779619178';
+import { IndustrialClients } from './industrial-clients.js?v=1779619178';
+import { ShuntingManager } from './shunting.js?v=1779619178';
 
 class RailEmpire {
   constructor() {
@@ -195,18 +195,10 @@ class RailEmpire {
     if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
     this.autoSaveInterval = setInterval(() => this.saveState(), 10000);
 
-    // Save on tab hide, fast-forward on tab return
-    this._lastVisibleTime = Date.now();
+    // Save on tab hide
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         this.saveState();
-        this._lastVisibleTime = Date.now();
-      } else {
-        const elapsed = (Date.now() - this._lastVisibleTime) / 1000;
-        if (elapsed > 5 && elapsed < 86400) {
-          this._fastForward(elapsed);
-          this.saveState();
-        }
       }
     });
   }
@@ -309,103 +301,6 @@ class RailEmpire {
       this.platformManager.initStation(st.id, st.platforms || 2);
     }
 
-    // Fast-forward simulation based on elapsed time since save
-    if (s.saveTime) {
-      const elapsed = (Date.now() - s.saveTime) / 1000; // seconds
-      if (elapsed > 0 && elapsed < 86400) { // max 24h fast-forward
-        console.log(`Fast-forwarding simulation by ${Math.round(elapsed)}s`);
-        this._fastForward(elapsed);
-      }
-    }
-  }
-
-  _fastForward(elapsedSeconds) {
-    try {
-      // Cap fast-forward to prevent browser freeze (max 3600 iterations)
-      const maxSimSeconds = 3600;
-      const cappedElapsed = Math.min(elapsedSeconds, 86400);
-      const activeServices = this.scheduleCreator.getActiveServices();
-      const pt = this.engine.getParisTime();
-      const currentTimeOfDay = pt.hours * 60 + pt.minutes;
-      const dateStr = this.engine.getParisDate();
-
-      // Start from save time (current time minus elapsed), not current time
-      let timeOfDay = currentTimeOfDay - (cappedElapsed / 60);
-      if (timeOfDay < 0) timeOfDay += 1440;
-
-      // Adaptive step size: scale up for long absences to cap total iterations
-      const stepDt = Math.max(1, Math.ceil(cappedElapsed / maxSimSeconds));
-      let lastMinute = Math.floor(timeOfDay);
-
-      let remaining = cappedElapsed;
-      while (remaining > 0) {
-        const dt = Math.min(stepDt, remaining);
-        for (const svc of activeServices) {
-          svc.moveUpdate(dt, timeOfDay, activeServices);
-        }
-        remaining -= dt;
-        timeOfDay += (dt / 60);
-        if (timeOfDay >= 1440) timeOfDay -= 1440;
-
-        // Process schedule ticks + revenue each simulated minute
-        const currentMinute = Math.floor(timeOfDay);
-        if (currentMinute !== lastMinute) {
-          for (const svc of activeServices) {
-            svc.scheduleTick(currentMinute, dateStr, this.economy);
-          }
-          this.incidentManager.update(currentMinute, activeServices, this.depotManager, this.world);
-          if (currentMinute === 0) {
-            this.economy.processDailyCharges(activeServices, this.depotManager.getAll(), dateStr);
-          }
-          lastMinute = currentMinute;
-        }
-      }
-      console.log(`Fast-forward complete. Simulated ${Math.round(cappedElapsed)}s (step=${stepDt}s).`);
-      this._validateServiceStates(currentTimeOfDay, dateStr);
-    } catch (e) {
-      console.warn('Fast-forward error (ignored):', e);
-    }
-  }
-
-  _validateServiceStates(timeOfDay, dateStr) {
-    const services = this.scheduleCreator.getActiveServices();
-    for (const svc of services) {
-      if (!svc.active) continue;
-      const stops = svc.getCurrentStops();
-      if (!stops || stops.length < 2) continue;
-      const firstDep = stops[0]?.departureTime ?? 0;
-      const lastArr = stops[stops.length - 1]?.arrivalTime ?? firstDep + 120;
-
-      // Always clear stale blocked state after fast-forward
-      svc.train.blockedBy = false;
-      svc.train._stoppedSinceGameTime = null;
-
-      // Midnight-safe: is timeOfDay outside the service window?
-      const beforeDep = !this._timeGte(timeOfDay, firstDep);
-      const afterArr = this._timeGte(timeOfDay, lastArr + 31);
-
-      if (beforeDep || afterArr) {
-        svc.state = 'waiting';
-        svc.currentStopIndex = 0;
-        svc.speed = 0;
-        svc.train.speed = 0;
-        svc.train.stoppedAt = null;
-        svc.position = null;
-        svc._resetState();
-        if (afterArr) {
-          svc.completed = true;
-          svc.completedDate = dateStr;
-        }
-      }
-    }
-  }
-
-  // Midnight-safe time comparison
-  _timeGte(a, b) {
-    let d = a - b;
-    if (d > 720) d -= 1440;
-    else if (d < -720) d += 1440;
-    return d >= 0;
   }
 
   saveState() {
