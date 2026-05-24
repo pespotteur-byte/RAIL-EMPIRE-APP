@@ -630,6 +630,9 @@ export class ActiveService {
     // CRITICAL: effectiveSpeed = min(train speed, infrastructure speed)
     let effectiveMaxSpeed = Math.min(rameMaxSpeed, segMaxSpeed);
 
+    // Reset blockedBy at start of each tick — each check below will set it true if needed
+    this.train.blockedBy = false;
+
     // --- TRONCON CISAILLEMENT CHECK (runs first, overrides proximity if on troncon) ---
     let onTroncon = false;
     if (window.game?.voiePointManager && this.position) {
@@ -865,9 +868,27 @@ export class ActiveService {
       const myProgressKm = this._getRouteProgressKm(this.position, route, this._state.index);
       const MIN_SPACING = 0.15; // 150m minimum spacing
       const candidates = this._nearbyServices || allServices;
+      const vpmAO = window.game?.voiePointManager;
+      const myVoieAO = this.train.platform || (vpmAO ? vpmAO.getVoieAtPosition(this.position) : null);
       for (const other of candidates) {
         if (other.id === this.id || !other.position) continue;
         if (other.state === 'waiting' || other.state === 'completed') continue;
+        // Skip trains on different tracks
+        const otherVoieAO = other.train?.platform || (vpmAO && other.position ? vpmAO.getVoieAtPosition(other.position) : null);
+        if (myVoieAO && otherVoieAO && myVoieAO !== otherVoieAO) continue;
+        // Skip trains going in opposite direction (different track)
+        if (other._state?.cachedRoute && other._state.index < other._state.cachedRoute.length - 1) {
+          const oRoute = other._state.cachedRoute;
+          const oi = other._state.index;
+          const si = this._state.index;
+          if (si < route.length - 1) {
+            const myH = Math.atan2(route[si+1].lon - route[si].lon, route[si+1].lat - route[si].lat);
+            const oH = Math.atan2(oRoute[oi+1].lon - oRoute[oi].lon, oRoute[oi+1].lat - oRoute[oi].lat);
+            let hd = Math.abs(myH - oH);
+            if (hd > Math.PI) hd = 2 * Math.PI - hd;
+            if (hd > Math.PI / 2) continue;
+          }
+        }
         const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
         if (rawDist > 3) continue;
         const otherProgress = this._getRouteProgressKm(other.position, route, this._state.index);
@@ -950,33 +971,18 @@ export class ActiveService {
    */
   _updateContinuousDelay(timeOfDay) {
     const stops = this.getCurrentStops();
-    if (this.currentStopIndex <= 0 || this.currentStopIndex > stops.length) return;
+    if (this.currentStopIndex <= 0 || this.currentStopIndex >= stops.length) return;
 
-    // Find last actual arret (gare A) BEFORE current position
-    let gareAIdx = 0;
-    for (let i = this.currentStopIndex - 1; i >= 0; i--) {
-      const t = stops[i].type;
-      if (t === 'arret' || t === 'depart' || i === 0) { gareAIdx = i; break; }
-    }
-    const gareA = stops[gareAIdx];
+    // Use immediate previous and next stops for this segment
+    const prevStop = stops[this.currentStopIndex - 1];
+    const nextStop = stops[this.currentStopIndex];
 
-    // Find next actual arret (gare B) AT or AFTER current position
-    let gareBIdx = stops.length - 1;
-    for (let i = this.currentStopIndex; i < stops.length; i++) {
-      const t = stops[i].type;
-      if (t === 'arret' || t === 'terminus') { gareBIdx = i; break; }
-    }
-    const gareB = stops[gareBIdx];
-
-    const depA = gareA.departureTime || 0;
-    const arrB = gareB.arrivalTime || gareB.departureTime || (depA + 30);
-    const scheduledTravelTime = arrB - depA;
-    if (scheduledTravelTime <= 0) {
-      this.delay = timeDiff(timeOfDay, depA);
-      const rounded = Math.round(this.delay);
-      this.train.delay = rounded === 0 ? 0 : rounded;
-      return;
-    }
+    const depA = prevStop.departureTime ?? prevStop.arrivalTime ?? 0;
+    const arrB = nextStop.arrivalTime ?? nextStop.departureTime ?? (depA + 5);
+    let scheduledTravelTime = arrB - depA;
+    // Handle midnight crossing
+    if (scheduledTravelTime < 0) scheduledTravelTime += 1440;
+    if (scheduledTravelTime <= 0) scheduledTravelTime = 1;
 
     // Route-based progress using actual distance along the ORM route
     let progress = 0;
@@ -991,12 +997,12 @@ export class ActiveService {
       }
     } else if (this.position) {
       // Fallback if no cached route: use haversine between stations
-      const stA = gareA.stationId ? this.world?.getStationById(gareA.stationId) : null;
-      const stB = gareB.stationId ? this.world?.getStationById(gareB.stationId) : null;
-      const latA = stA ? stA.lat : (gareA.lat || this.position.lat);
-      const lonA = stA ? stA.lon : (gareA.lon || this.position.lon);
-      const latB = stB ? stB.lat : (gareB.lat || this.position.lat);
-      const lonB = stB ? stB.lon : (gareB.lon || this.position.lon);
+      const stA = prevStop.stationId ? this.world?.getStationById(prevStop.stationId) : null;
+      const stB = nextStop.stationId ? this.world?.getStationById(nextStop.stationId) : null;
+      const latA = stA ? stA.lat : this.position.lat;
+      const lonA = stA ? stA.lon : this.position.lon;
+      const latB = stB ? stB.lat : this.position.lat;
+      const lonB = stB ? stB.lon : this.position.lon;
       const totalDist = haversineDistance(latA, lonA, latB, lonB);
       if (totalDist > 0.01) {
         const distFromA = haversineDistance(latA, lonA, this.position.lat, this.position.lon);
