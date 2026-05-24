@@ -21,7 +21,7 @@ export class StaffManager {
   constructor() {
     this.staff = [];          // all personnel
     this.signalBoxes = [];    // { id, name, lat, lon, radiusKm, stationId? }
-    this.zones = [];          // { id, name } for regulateurs/controleurs
+    this.zones = [];          // { id, name, lat, lon, radiusKm } for regulateurs/controleurs
     // Legacy compat
     this.conductors = [];
     this.baseSalary = 120;
@@ -197,8 +197,8 @@ export class StaffManager {
     const z = {
       id: `zone-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
       name: name || `Zone ${this.zones.length + 1}`,
-      lat: lat || null,
-      lon: lon || null,
+      lat: lat != null ? lat : null,
+      lon: lon != null ? lon : null,
       radiusKm: radiusKm || 30,
     };
     this.zones.push(z);

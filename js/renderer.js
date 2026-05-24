@@ -411,16 +411,20 @@ export class Renderer {
     }
   }
 
+  _metersPerPixel(lat, zoom) {
+    return 156543.03 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom);
+  }
+
   drawSignalBoxes(ctx) {
     const sbs = window.game?.staffManager?.signalBoxes;
     if (!sbs || sbs.length === 0) return;
     const zoom = this.tileMap?.zoomLevel || 10;
     for (const sb of sbs) {
+      if (sb.lat == null || sb.lon == null) continue;
       const p = this.latLonToScreen(sb.lat, sb.lon);
-      if (p.x < -40 || p.x > this.logicalWidth + 40) continue;
-      // Draw radius circle
-      const metersPerPixel = 156543.03 * Math.cos(sb.lat * Math.PI / 180) / Math.pow(2, zoom);
-      const radiusPx = (sb.radiusKm * 1000) / metersPerPixel;
+      if (p.x < -40 || p.x > this.logicalWidth + 40 ||
+          p.y < -40 || p.y > this.logicalHeight + 40) continue;
+      const radiusPx = (sb.radiusKm * 1000) / this._metersPerPixel(sb.lat, zoom);
       ctx.beginPath();
       ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(168, 85, 247, 0.08)';
@@ -428,13 +432,11 @@ export class Renderer {
       ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
       ctx.lineWidth = 1;
       ctx.stroke();
-      // Draw icon
       ctx.fillStyle = '#a855f7';
       ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
       ctx.strokeStyle = '#1e1b4b';
       ctx.lineWidth = 1;
       ctx.strokeRect(p.x - 4, p.y - 4, 8, 8);
-      // Label
       if (zoom >= 9) {
         ctx.fillStyle = '#c4b5fd';
         ctx.font = '9px sans-serif';
@@ -449,12 +451,12 @@ export class Renderer {
     if (!zones || zones.length === 0) return;
     const zoom = this.tileMap?.zoomLevel || 10;
     for (const z of zones) {
-      if (!z.lat || !z.lon) continue;
+      if (z.lat == null || z.lon == null) continue;
       const p = this.latLonToScreen(z.lat, z.lon);
-      if (p.x < -100 || p.x > this.logicalWidth + 100) continue;
-      const metersPerPixel = 156543.03 * Math.cos(z.lat * Math.PI / 180) / Math.pow(2, zoom);
-      const radiusPx = ((z.radiusKm || 30) * 1000) / metersPerPixel;
-      // Draw radius circle
+      if (p.x < -100 || p.x > this.logicalWidth + 100 ||
+          p.y < -100 || p.y > this.logicalHeight + 100) continue;
+      const radiusPx = ((z.radiusKm || 30) * 1000) / this._metersPerPixel(z.lat, zoom);
+      ctx.save();
       ctx.beginPath();
       ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(14, 165, 233, 0.06)';
@@ -463,8 +465,7 @@ export class Renderer {
       ctx.lineWidth = 1.5;
       ctx.setLineDash([6, 4]);
       ctx.stroke();
-      ctx.setLineDash([]);
-      // Draw center marker
+      ctx.restore();
       ctx.beginPath();
       ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
       ctx.fillStyle = '#0ea5e9';
@@ -472,7 +473,6 @@ export class Renderer {
       ctx.strokeStyle = '#0c4a6e';
       ctx.lineWidth = 1;
       ctx.stroke();
-      // Label
       if (zoom >= 8) {
         ctx.fillStyle = '#7dd3fc';
         ctx.font = 'bold 10px sans-serif';

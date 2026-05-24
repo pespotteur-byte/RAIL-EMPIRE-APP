@@ -251,24 +251,15 @@ export class UI {
             radiusKm: pending.radiusKm,
           });
           this.game._pendingSignalBox = null;
-          this.game.saveState();
-          document.getElementById('game-canvas').style.cursor = 'grab';
-          this._hidePickHint();
-          const staffContainer = document.getElementById('staff-container');
-          if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
+          this._finishMapPlacement();
         }
-
         // Regulation zone placement mode
-        if (this.game._pendingRegZone) {
+        else if (this.game._pendingRegZone) {
           const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
           const pending = this.game._pendingRegZone;
           this.game.staffManager.addZone(pending.name, worldPos.lat, worldPos.lon, pending.radiusKm);
           this.game._pendingRegZone = null;
-          this.game.saveState();
-          document.getElementById('game-canvas').style.cursor = 'grab';
-          this._hidePickHint();
-          const staffContainer = document.getElementById('staff-container');
-          if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
+          this._finishMapPlacement();
         }
       }
       this.isDragging = false;
@@ -300,6 +291,13 @@ export class UI {
         if (this.tronconCreationMode) this.toggleTronconCreation();
         if (this.manualTronconMode) this.toggleManualTronconCreation();
         if (this.tracerLigneMode) this.toggleTracerLigne();
+        if (this.game._pendingSignalBox || this.game._pendingRegZone) {
+          this.game._pendingSignalBox = null;
+          this.game._pendingRegZone = null;
+          this._hidePickHint();
+          const c = document.getElementById('game-canvas');
+          if (c) c.style.cursor = 'grab';
+        }
       }
       if (e.key === 'Delete' && this._lastLineGroupId) {
         const removed = this.game.voiePointManager.deleteLineGroup(this._lastLineGroupId);
@@ -738,6 +736,14 @@ export class UI {
   _hidePickHint() {
     const hint = document.getElementById('pick-hint-overlay');
     if (hint) hint.style.display = 'none';
+  }
+
+  _finishMapPlacement() {
+    this.game.saveState();
+    document.getElementById('game-canvas').style.cursor = 'grab';
+    this._hidePickHint();
+    const staffContainer = document.getElementById('staff-container');
+    if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
   }
 
   handlePickConnection(station) {
@@ -4035,17 +4041,23 @@ export class UI {
 
     // Map buttons for signal box & regulation zone
     document.getElementById('btn-create-signalbox')?.addEventListener('click', () => {
-      const name = prompt('Nom du poste d\'aiguillage :') || '';
-      const radius = parseFloat(prompt('Rayon d\'influence (km) :', '10')) || 10;
-      this.game._pendingSignalBox = { name, radiusKm: radius };
+      const name = prompt('Nom du poste d\'aiguillage :');
+      if (name == null) return;
+      const radiusStr = prompt('Rayon d\'influence (km) :', '10');
+      if (radiusStr == null) return;
+      const radius = parseFloat(radiusStr) || 10;
+      this.game._pendingSignalBox = { name: name || `Poste ${(this.game.staffManager?.signalBoxes?.length || 0) + 1}`, radiusKm: radius };
       this.game._pendingRegZone = null;
       this._showPickHint('Cliquez sur la carte pour placer le poste d\'aiguillage');
       document.getElementById('game-canvas').style.cursor = 'crosshair';
     });
     document.getElementById('btn-create-regzone')?.addEventListener('click', () => {
-      const name = prompt('Nom de la zone de régulation :') || '';
-      const radius = parseFloat(prompt('Rayon de la zone (km) :', '30')) || 30;
-      this.game._pendingRegZone = { name, radiusKm: radius };
+      const name = prompt('Nom de la zone de régulation :');
+      if (name == null) return;
+      const radiusStr = prompt('Rayon de la zone (km) :', '30');
+      if (radiusStr == null) return;
+      const radius = parseFloat(radiusStr) || 30;
+      this.game._pendingRegZone = { name: name || `Zone ${(this.game.staffManager?.zones?.length || 0) + 1}`, radiusKm: radius };
       this.game._pendingSignalBox = null;
       this._showPickHint('Cliquez sur la carte pour placer la zone de régulation');
       document.getElementById('game-canvas').style.cursor = 'crosshair';
