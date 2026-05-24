@@ -1,34 +1,7 @@
 import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779618711';
+import { timeDiff, timeGte, isInServiceWindow } from './time-utils.js?v=1779618711';
 
 let nextServiceId = 1;
-
-// Midnight-safe time difference: handles wrapping around 00:00
-// Returns difference in minutes, clamped to [-720, 720]
-function timeDiff(timeA, timeB) {
-  let d = timeA - timeB;
-  if (d > 720) d -= 1440;
-  else if (d < -720) d += 1440;
-  return d;
-}
-
-// Midnight-safe "is timeA >= timeB"
-function timeGte(timeA, timeB) {
-  return timeDiff(timeA, timeB) >= 0;
-}
-
-// Check if timeOfDay falls within a service window [start, end]
-// Handles midnight-crossing services (e.g., depart 23:00, arrive 01:00)
-function isInServiceWindow(timeOfDay, start, end) {
-  // Normalize to [0, 1440)
-  start = ((start % 1440) + 1440) % 1440;
-  end = ((end % 1440) + 1440) % 1440;
-  if (start <= end) {
-    return timeOfDay >= start && timeOfDay <= end;
-  } else {
-    // Midnight-crossing
-    return timeOfDay >= start || timeOfDay <= end;
-  }
-}
 
 // Global canton manager shared across all services
 const cantonManager = new CantonManager();
@@ -1747,10 +1720,11 @@ export class ScheduleCreator {
           sp: Math.round((s.speed || 0) * 10) / 10,
           dl: Math.round((s.delay || 0) * 100) / 100,
         };
-        // Save position for mid-journey restore
+        // Save position and route index for mid-journey restore
         if (s.position) {
           o._r.pos = [Math.round(s.position.lat * 1e6) / 1e6, Math.round(s.position.lon * 1e6) / 1e6];
         }
+        if (s._state?.index > 0) o._r.si = s._state.index;
         if (s._adjustedStops) {
           o._r.as = s._adjustedStops.map(st => ({
             si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime,
@@ -1819,6 +1793,7 @@ export class ScheduleCreator {
           speed: d._r.sp || 0,
           delay: d._r.dl || 0,
           position: d._r.pos || null,
+          stateIndex: d._r.si || 0,
           _adjustedStops: d._r.as ? d._r.as.map(s => ({
             stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
           })) : null,
@@ -1861,6 +1836,7 @@ export class ScheduleCreator {
       const savedSpeed = d._runtime?.speed || 0;
       const savedDelay = d._runtime?.delay || 0;
       const savedStopIdx = d._runtime?.currentStopIndex || 0;
+      const savedStateIdx = d._runtime?.stateIndex || 0;
 
       if ((savedState === 'moving' || savedState === 'stopped_at_station') && savedPos) {
         // Restore mid-journey: train was in motion or at an intermediate station
@@ -1877,6 +1853,7 @@ export class ScheduleCreator {
         svc.train._stoppedSinceGameTime = null;
         svc.completed = false;
         svc.isReturnLeg = false;
+        if (savedStateIdx > 0) svc._state.index = savedStateIdx;
       } else {
         // Default: train was waiting or state unknown
         svc.state = 'waiting';
@@ -1898,11 +1875,21 @@ export class ScheduleCreator {
       svc._onboardPax = 0;
       svc._onboardFreight = 0;
       svc.revenueCollected = false;
-      // Clear multi-trip adjusted stops to use original schedule on reload
-      svc._adjustedStops = null;
-      svc._tripCount = 0;
       svc._atTerminus = false;
-      svc._resetState();
+
+      if ((savedState === 'moving' || savedState === 'stopped_at_station') && savedPos) {
+        // Mid-journey: keep _adjustedStops/_tripCount; only clear route cache
+        svc._state.legKey = null;
+        svc._state.cachedRoute = null;
+        svc._routeAnalysis = null;
+        svc._cantonAssignments = null;
+        svc._cachedTroncon = null;
+        svc._cachedTronconTime = null;
+      } else {
+        svc._adjustedStops = null;
+        svc._tripCount = 0;
+        svc._resetState();
+      }
 
       this.services.push(svc);
       const num = parseInt(d.id?.split('-')[1] || '0');
