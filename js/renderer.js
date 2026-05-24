@@ -101,6 +101,7 @@ export class Renderer {
     if (showStations) this.drawStations(ctx, world, platformManager, showNames);
     this.drawDepots(ctx, world, depotManager);
     this.drawSignalBoxes(ctx);
+    this.drawRegulationZones(ctx);
     if (showVoiePoints && voiePointManager) {
       this.drawVoieTroncons(ctx, voiePointManager, world);
       this.drawVoiePoints(ctx, voiePointManager);
@@ -439,6 +440,44 @@ export class Renderer {
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(sb.name, p.x, p.y - 8);
+      }
+    }
+  }
+
+  drawRegulationZones(ctx) {
+    const zones = window.game?.staffManager?.zones;
+    if (!zones || zones.length === 0) return;
+    const zoom = this.tileMap?.zoomLevel || 10;
+    for (const z of zones) {
+      if (!z.lat || !z.lon) continue;
+      const p = this.latLonToScreen(z.lat, z.lon);
+      if (p.x < -100 || p.x > this.logicalWidth + 100) continue;
+      const metersPerPixel = 156543.03 * Math.cos(z.lat * Math.PI / 180) / Math.pow(2, zoom);
+      const radiusPx = ((z.radiusKm || 30) * 1000) / metersPerPixel;
+      // Draw radius circle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(14, 165, 233, 0.06)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(14, 165, 233, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Draw center marker
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fill();
+      ctx.strokeStyle = '#0c4a6e';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Label
+      if (zoom >= 8) {
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(z.name, p.x, p.y - 10);
       }
     }
   }

@@ -193,8 +193,14 @@ export class StaffManager {
   getSignalBoxById(id) { return this.signalBoxes.find(sb => sb.id === id); }
 
   // ── Zones ──
-  addZone(name) {
-    const z = { id: `zone-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, name: name || `Zone ${this.zones.length + 1}` };
+  addZone(name, lat, lon, radiusKm) {
+    const z = {
+      id: `zone-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+      name: name || `Zone ${this.zones.length + 1}`,
+      lat: lat || null,
+      lon: lon || null,
+      radiusKm: radiusKm || 30,
+    };
     this.zones.push(z);
     return z;
   }

@@ -336,7 +336,7 @@ export class ActiveService {
           this.currentStopIndex = 1;
           this.speed = 0;
           this.revenueCollected = false;
-          this.delay = Math.max(0, timeDiff(timeOfDay, firstDep));
+          this.delay = Math.round(Math.max(0, timeDiff(timeOfDay, firstDep)));
           this.train.delay = this.delay;
           this.train.blockedBy = false;
           this.train.stoppedAt = null;
@@ -1012,10 +1012,8 @@ export class ActiveService {
 
     // Expected time at current position = depA + scheduledTravelTime * progress
     const expectedTime = depA + scheduledTravelTime * progress;
-    this.delay = timeDiff(timeOfDay, expectedTime);
-
-    const rounded = Math.round(this.delay);
-    this.train.delay = rounded === 0 ? 0 : rounded;
+    this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
+    this.train.delay = this.delay;
   }
 
   /**
@@ -1292,10 +1290,9 @@ export class ActiveService {
     if (stop?.type === 'arret') {
       const expectedTime = stop.arrivalTime;
       if (expectedTime != null) {
-        this.delay = timeDiff(timeOfDay, expectedTime);
+        this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
       }
-      const roundedDelay = Math.round(this.delay);
-      this.train.delay = roundedDelay === 0 ? 0 : roundedDelay;
+      this.train.delay = this.delay;
     }
     // Use voie point coords for arrival position
     let arrivalLat = station.lat, arrivalLon = station.lon;
@@ -1745,7 +1742,7 @@ export class ScheduleCreator {
           tc: s._tripCount || 0,
           st: s.state || 'waiting',
           sp: Math.round((s.speed || 0) * 10) / 10,
-          dl: Math.round((s.delay || 0) * 100) / 100,
+          dl: Math.round(s.delay || 0),
         };
         // Save position for mid-journey restore
         if (s.position) {

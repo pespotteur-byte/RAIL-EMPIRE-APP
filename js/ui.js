@@ -252,6 +252,21 @@ export class UI {
           });
           this.game._pendingSignalBox = null;
           this.game.saveState();
+          document.getElementById('game-canvas').style.cursor = 'grab';
+          this._hidePickHint();
+          const staffContainer = document.getElementById('staff-container');
+          if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
+        }
+
+        // Regulation zone placement mode
+        if (this.game._pendingRegZone) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          const pending = this.game._pendingRegZone;
+          this.game.staffManager.addZone(pending.name, worldPos.lat, worldPos.lon, pending.radiusKm);
+          this.game._pendingRegZone = null;
+          this.game.saveState();
+          document.getElementById('game-canvas').style.cursor = 'grab';
+          this._hidePickHint();
           const staffContainer = document.getElementById('staff-container');
           if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
         }
@@ -4017,6 +4032,24 @@ export class UI {
     document.getElementById('btn-delete-vp')?.addEventListener('click', () => {
       this._deleteVoiePoint();
     });
+
+    // Map buttons for signal box & regulation zone
+    document.getElementById('btn-create-signalbox')?.addEventListener('click', () => {
+      const name = prompt('Nom du poste d\'aiguillage :') || '';
+      const radius = parseFloat(prompt('Rayon d\'influence (km) :', '10')) || 10;
+      this.game._pendingSignalBox = { name, radiusKm: radius };
+      this.game._pendingRegZone = null;
+      this._showPickHint('Cliquez sur la carte pour placer le poste d\'aiguillage');
+      document.getElementById('game-canvas').style.cursor = 'crosshair';
+    });
+    document.getElementById('btn-create-regzone')?.addEventListener('click', () => {
+      const name = prompt('Nom de la zone de régulation :') || '';
+      const radius = parseFloat(prompt('Rayon de la zone (km) :', '30')) || 30;
+      this.game._pendingRegZone = { name, radiusKm: radius };
+      this.game._pendingSignalBox = null;
+      this._showPickHint('Cliquez sur la carte pour placer la zone de régulation');
+      document.getElementById('game-canvas').style.cursor = 'crosshair';
+    });
   }
 
   toggleVoiePointCreation() {
@@ -4599,8 +4632,8 @@ export class UI {
         const lineIds = station?.lineIds || [];
         const line = lineIds.length > 0 ? this.game.lineManager.getLine(lineIds[0]) : null;
 
-        // Delay
-        const delay = svc.delay || 0;
+        // Delay (integer minutes)
+        const delay = Math.round(svc.delay || 0);
 
         results.push({
           svcId: svc.id,

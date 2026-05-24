@@ -79,7 +79,7 @@ export class Dashboard {
       else delayed++;
       totalDelay += d;
     }
-    const avgDelay = movingServices.length > 0 ? (totalDelay / movingServices.length).toFixed(1) : '0';
+    const avgDelay = movingServices.length > 0 ? Math.round(totalDelay / movingServices.length) : 0;
     const punctPct = movingServices.length > 0 ? Math.round((onTime / movingServices.length) * 100) : 100;
 
     // Rames stats
