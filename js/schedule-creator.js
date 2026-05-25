@@ -1012,7 +1012,8 @@ export class ActiveService {
 
     // Expected time at current position = depA + scheduledTravelTime * progress
     const expectedTime = depA + scheduledTravelTime * progress;
-    this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
+    // Clamp to 0 minimum: trains cannot be "en avance"
+    this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
     this.train.delay = this.delay;
   }
 
@@ -1290,7 +1291,7 @@ export class ActiveService {
     if (stop?.type === 'arret') {
       const expectedTime = stop.arrivalTime;
       if (expectedTime != null) {
-        this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
+        this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
       }
       this.train.delay = this.delay;
     }
