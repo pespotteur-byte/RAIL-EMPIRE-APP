@@ -537,6 +537,47 @@ export class UI {
       };
     }
 
+    // Type change: show/hide fields for poste types
+    const typeSelect = document.getElementById('station-type');
+    const radiusGroup = document.getElementById('station-radius-group');
+    const platformsRow = document.getElementById('station-platforms-row');
+    const platformNamesGroup = document.getElementById('station-platform-names')?.closest('.form-group');
+    const closedGroup = document.getElementById('station-closed')?.closest('.form-group');
+    const modalTitle = document.getElementById('modal-station-title');
+    const nameInput = document.getElementById('station-name');
+    const _updateTypeFields = () => {
+      const val = typeSelect.value;
+      const isPoste = val === 'poste_aiguillage' || val === 'poste_regulation';
+      if (radiusGroup) radiusGroup.classList.toggle('hidden', !isPoste);
+      if (platformsRow) platformsRow.style.display = isPoste ? 'none' : '';
+      if (platformNamesGroup) platformNamesGroup.style.display = isPoste ? 'none' : '';
+      if (connectGroup) connectGroup.style.display = isPoste ? 'none' : '';
+      if (terminusGroup) terminusGroup.style.display = isPoste ? 'none' : '';
+      if (closedGroup) closedGroup.style.display = isPoste ? 'none' : '';
+      if (val === 'poste_aiguillage') {
+        if (modalTitle) modalTitle.textContent = "Créer un poste d'aiguillage";
+        if (saveBtn) saveBtn.textContent = "Créer le poste d'aiguillage";
+        if (nameInput) nameInput.placeholder = "ex: Poste Paris-Nord";
+      } else if (val === 'poste_regulation') {
+        if (modalTitle) modalTitle.textContent = 'Créer un poste de régulation';
+        if (saveBtn) saveBtn.textContent = 'Créer le poste de régulation';
+        if (nameInput) nameInput.placeholder = 'ex: Régulation Île-de-France';
+      } else {
+        if (modalTitle) modalTitle.textContent = this._editingStationId ? 'Modifier la gare' : 'Creer une gare';
+        if (saveBtn) saveBtn.textContent = this._editingStationId ? 'Modifier la gare' : 'Creer la gare';
+        if (nameInput) nameInput.placeholder = 'ex: Paris Gare du Nord';
+      }
+      const radiusInput = document.getElementById('station-radius');
+      if (radiusInput && isPoste) {
+        radiusInput.value = val === 'poste_regulation' ? '30' : '10';
+      }
+    };
+    if (typeSelect) {
+      typeSelect.value = 'voyageur';
+      typeSelect.onchange = _updateTypeFields;
+    }
+    _updateTypeFields();
+
     const loadingEl = document.getElementById('station-loading');
     if (loadingEl) loadingEl.classList.add('hidden');
     document.getElementById('modal-station')?.classList.remove('hidden');
@@ -553,6 +594,19 @@ export class UI {
     const platformNames = platformNamesRaw ? platformNamesRaw.split(',').map(s => s.trim()).filter(s => s) : [];
 
     const closed = document.getElementById('station-closed')?.checked || false;
+
+    // Handle poste types — create in staffManager, not as a station
+    if (type === 'poste_aiguillage' || type === 'poste_regulation') {
+      const radiusKm = parseFloat(document.getElementById('station-radius')?.value) || (type === 'poste_regulation' ? 30 : 10);
+      if (type === 'poste_aiguillage') {
+        this.game.staffManager.addSignalBox({ name, lat, lon, radiusKm });
+      } else {
+        this.game.staffManager.addZone(name, lat, lon, radiusKm);
+      }
+      document.getElementById('modal-station')?.classList.add('hidden');
+      this.game.saveState();
+      return;
+    }
 
     // Handle edit mode
     if (this._editingStationId) {
