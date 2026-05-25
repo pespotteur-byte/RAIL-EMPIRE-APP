@@ -345,6 +345,7 @@ export class StaffManager {
     if (members.length === 0 && role !== 'conducteur') return '';
 
     let assignOptions = '';
+    let noTargetMsg = '';
     if (def.assignTo === 'service') {
       assignOptions = activeServices.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     } else if (def.assignTo === 'station') {
@@ -353,8 +354,10 @@ export class StaffManager {
       assignOptions = depots.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
     } else if (def.assignTo === 'zone') {
       assignOptions = this.zones.map(z => `<option value="${z.id}">${z.name}</option>`).join('');
+      if (this.zones.length === 0) noTargetMsg = 'Créez un poste de régulation sur la carte (type "Poste de régulation") pour pouvoir affecter.';
     } else if (def.assignTo === 'signalbox') {
       assignOptions = this.signalBoxes.map(sb => `<option value="${sb.id}">${sb.name}</option>`).join('');
+      if (this.signalBoxes.length === 0) noTargetMsg = "Créez un poste d'aiguillage sur la carte (type \"Poste d'aiguillage\") pour pouvoir affecter.";
     }
 
     const extraCol = role === 'controleur' ? '<span>PV</span><span>Recettes</span>' : (role === 'conducteur' ? '<span>Trajets</span><span>Service</span>' : '');
@@ -368,6 +371,7 @@ export class StaffManager {
       <div class="dash-section">
         <h3>${def.label}s (${members.length})</h3>
         ${roleNote}
+        ${noTargetMsg ? `<p style="font-size:10px;color:#f59e0b;margin:0 0 6px;padding:4px 8px;background:rgba(245,158,11,0.1);border-radius:4px">⚠ ${noTargetMsg}</p>` : ''}
         <div class="dash-train-table">
           <div class="dash-train-header" style="grid-template-columns:repeat(${colCount},1fr)">
             <span>Nom</span><span>Statut</span><span>Affecté à</span>${extraCol}<span>Actions</span>
