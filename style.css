@@ -419,35 +419,102 @@ header {
 /* RESPONSIVE - TABLET */
 @media (max-width: 900px) {
   .nav-tabs { gap: 0; }
-  .nav-btn { padding: 4px 6px; font-size: 10px; }
+  .nav-btn { padding: 6px 8px; font-size: 10px; min-height: 36px; }
   .company-name { font-size: 12px; }
   #sidebar { width: 220px; }
   .map-controls { flex-wrap: wrap; gap: 4px; }
   .card-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .dash-kpi-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .dash-kpi-value { font-size: 15px; }
+  .dash-train-header, .dash-train-row { font-size: 10px; gap: 3px; padding: 5px 6px; }
+  .btn-sm { min-height: 32px; min-width: 32px; padding: 4px 8px; }
+  .btn-sm.danger { min-height: 32px; }
+  select, input[type="text"], input[type="number"], input[type="time"] { min-height: 36px; font-size: 14px; }
+  .staff-fire-btn { min-height: 32px !important; min-width: 70px !important; }
 }
 
 /* RESPONSIVE - MOBILE */
 @media (max-width: 600px) {
+  body { overflow: auto; height: auto; min-height: 100vh; }
+  .screen { height: auto; min-height: 100vh; }
+  .screen.active { min-height: 100vh; }
   header { height: auto; flex-wrap: wrap; padding: 6px 8px; gap: 4px; }
   .header-left { width: 100%; justify-content: space-between; }
-  .nav-toggle { display: block; }
+  .nav-toggle { display: block; min-height: 36px; min-width: 36px; font-size: 20px; }
   .nav-tabs { display: none; flex-direction: column; position: absolute; top: 44px; left: 0; right: 0; background: var(--bg2); border-bottom: 1px solid var(--border); z-index: 50; padding: 4px; }
   .nav-tabs.open { display: flex; }
-  .nav-btn { padding: 10px 12px; font-size: 13px; text-align: left; }
+  .nav-btn { padding: 12px 14px; font-size: 14px; text-align: left; min-height: 44px; }
   .header-right { width: 100%; justify-content: space-between; font-size: 11px; }
   #page-map { flex-direction: column; }
-  #sidebar { width: 100%; height: 40vh; border-left: none; border-top: 1px solid var(--border); flex-shrink: 0; }
-  #main-area { flex: none; height: 55vh; }
-  .map-controls { flex-wrap: wrap; gap: 3px; max-width: 70%; }
-  .btn-map-action { font-size: 8px; padding: 3px 5px; }
+  #sidebar { width: 100%; height: 35vh; border-left: none; border-top: 1px solid var(--border); flex-shrink: 0; overflow-y: auto; }
+  #main-area { flex: none; height: 60vh; }
+  .map-controls { flex-wrap: wrap; gap: 3px; max-width: 60%; }
+  .btn-map-action { font-size: 9px; padding: 6px 8px; min-height: 36px; }
   .map-toggles { flex-wrap: wrap; gap: 3px; padding: 2px 4px; font-size: 9px; }
-  .map-search { width: 160px; }
-  .modal-content { width: 95%; max-width: 95vw; padding: 14px; }
+  .map-search { width: 140px; }
+  .map-search input { min-height: 36px; font-size: 14px; }
+  .modal-content { width: 96%; max-width: 96vw; padding: 12px; max-height: 90vh; }
   .card-grid { grid-template-columns: 1fr; }
-  .page-content { padding: 10px; }
-  .sched-map-container { height: 40vh; }
+  .page-content { padding: 8px; overflow-y: auto; }
+  .page { overflow-y: auto; }
+  .sched-map-container { height: 35vh; }
   .eco-stats { grid-template-columns: 1fr 1fr; }
   .sched-stop-row { font-size: 10px; }
+
+  /* Dashboard mobile */
+  .dash-section { margin-bottom: 12px; }
+  .dash-section h3 { font-size: 13px; }
+  .dash-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .dash-kpi { padding: 8px; }
+  .dash-kpi-value { font-size: 14px; }
+  .dash-kpi-label { font-size: 9px; }
+  .dash-train-header, .dash-train-row { grid-template-columns: 1.5fr 1fr 0.8fr !important; font-size: 9px; padding: 4px 6px; gap: 2px; }
+  .dash-train-header span:nth-child(n+4), .dash-train-row span:nth-child(n+4) { display: none; }
+  .dash-train-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Touch-friendly buttons */
+  .btn-primary, .btn-secondary { min-height: 44px; font-size: 14px; padding: 12px 18px; }
+  .btn-sm { min-height: 36px; min-width: 36px; padding: 6px 10px; font-size: 11px; }
+  .btn-sm.danger { min-height: 36px; min-width: 70px; }
+  button { min-height: 36px; }
+  select, input[type="text"], input[type="number"], input[type="time"] { min-height: 40px; font-size: 16px !important; }
+  textarea { min-height: 60px; font-size: 16px !important; }
+
+  /* Staff page mobile */
+  .staff-fire-btn { min-height: 36px !important; min-width: 80px !important; font-size: 11px !important; }
+  .staff-unassign-btn { min-height: 36px !important; }
+
+  /* Modals mobile */
+  .modal-content h3 { font-size: 16px; }
+  .modal-content label { font-size: 13px; }
+
+  /* Cards mobile */
+  .card { padding: 10px; }
+  .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .card-actions button { flex: 1; min-width: 80px; }
+
+  /* Rame assembly mobile */
+  .rame-assembly-images { flex-wrap: wrap; }
+  .rame-element-img { max-height: 40px; }
+
+  /* Schedule stops mobile */
+  .sched-stop-row { padding: 6px 4px; }
+  .btn-remove-stop { min-width: 28px; min-height: 28px; font-size: 16px; }
+
+  /* Line route preview */
+  .line-route-preview { gap: 3px; }
+  .line-stop-tag { padding: 3px 8px; font-size: 11px; }
+
+  /* Login mobile */
+  .logo { font-size: 28px; }
+  .login-subtitle { font-size: 12px; }
+  .login-form input { min-height: 44px; font-size: 16px; }
+
+  /* Tab bar mobile */
+  .tab-btn { min-height: 36px; padding: 8px 12px; font-size: 12px; }
+
+  /* Checkboxes mobile */
+  input[type="checkbox"] { min-width: 18px; min-height: 18px; }
 }
 
 /* ============================================================

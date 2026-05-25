@@ -1013,7 +1013,9 @@ export class UI {
   }
 
   deleteStock(id) {
+    if (!confirm('Supprimer cet engin ?')) return;
     this.game.rollingStock.remove(id);
+    this.game.saveState();
     this.renderStockList();
   }
 
@@ -1161,7 +1163,9 @@ export class UI {
   }
 
   deleteRame(id) {
+    if (!confirm('Supprimer cette rame ?')) return;
     this.game.rameManager.remove(id);
+    this.game.saveState();
     this.renderRamesList();
   }
 
@@ -2264,7 +2268,9 @@ export class UI {
   }
 
   deleteSchedule(id) {
+    if (!confirm('Supprimer ce service ?')) return;
     this.game.scheduleCreator.removeService(id);
+    this.game.saveState();
     this.renderSchedulesList();
   }
 
@@ -2939,7 +2945,9 @@ export class UI {
   }
 
   deleteDepot(id) {
+    if (!confirm('Supprimer ce d\u00e9p\u00f4t ?')) return;
     this.game.depotManager.remove(id);
+    this.game.saveState();
     this.renderDepotsList();
   }
 
