@@ -296,10 +296,10 @@ export class ActiveService {
       }
 
       if (this.currentStopIndex === 0 && timeGte(timeOfDay, firstDep)) {
-        // Don't start a train if departure was missed by more than 5 minutes
-        // (prevents all trains starting late after JSON reload)
+        // Don't start a train if departure was missed by more than 1 minute
+        // (prevents trains starting late after reload)
         const minutesLate = timeDiff(timeOfDay, firstDep);
-        if (minutesLate > 5) {
+        if (minutesLate > 1) {
           this.completed = true;
           this.completedDate = dateStr;
           this.position = null;
@@ -1852,6 +1852,10 @@ export class ScheduleCreator {
           ));
         }
       }
+      // Compute current game time for validation
+      const now = new Date();
+      const currentTimeOfDay = now.getHours() * 60 + now.getMinutes();
+
       // Restore mid-journey state if train was moving/stopped at station
       const savedState = d._runtime?.state || 'waiting';
       const savedPos = d._runtime?.position || null;
@@ -1859,36 +1863,80 @@ export class ScheduleCreator {
       const savedDelay = d._runtime?.delay || 0;
       const savedStopIdx = d._runtime?.currentStopIndex || 0;
 
+      // Check if service window has expired for this train
+      const svcStops = svc.getCurrentStops();
+      const svcFirstDep = svcStops[0]?.departureTime ?? 0;
+      const svcLastArr = svcStops[svcStops.length - 1]?.arrivalTime ?? svcFirstDep + 120;
+      const minutesPastDep = timeDiff(currentTimeOfDay, svcFirstDep);
+      const minutesPastEnd = timeDiff(currentTimeOfDay, svcLastArr);
+
       if ((savedState === 'moving' || savedState === 'stopped_at_station') && savedPos) {
-        // Restore mid-journey: train was in motion or at an intermediate station
-        svc.state = savedState;
-        svc.position = { lat: savedPos[0], lon: savedPos[1] };
-        svc.speed = savedSpeed;
-        svc.currentStopIndex = savedStopIdx;
-        svc.delay = savedDelay;
-        svc.train.delay = Math.round(savedDelay) === 0 ? 0 : Math.round(savedDelay);
-        svc.train.speed = savedSpeed;
-        svc.train.state = savedState === 'moving' ? 'moving' : 'stopped_at_station';
-        svc.train.blockedBy = false;
-        svc.train.stoppedAt = null;
-        svc.train._stoppedSinceGameTime = null;
-        svc.completed = false;
-        svc.isReturnLeg = false;
+        // If the service end time has passed, mark completed instead of restoring
+        if (minutesPastEnd > 5) {
+          svc.state = 'waiting';
+          svc.position = null;
+          svc.speed = 0;
+          svc.currentStopIndex = 0;
+          svc.completed = true;
+          svc.completedDate = now.toISOString().slice(0, 10);
+          svc.isReturnLeg = false;
+          svc.delay = 0;
+          svc.train.delay = 0;
+          svc.train.speed = 0;
+          svc.train.state = 'waiting';
+          svc.train.blockedBy = false;
+          svc.train.stoppedAt = null;
+          svc.train._stoppedSinceGameTime = null;
+        } else {
+          // Service window still active — restore mid-journey
+          svc.state = savedState;
+          svc.position = { lat: savedPos[0], lon: savedPos[1] };
+          svc.speed = savedSpeed;
+          svc.currentStopIndex = savedStopIdx;
+          svc.delay = savedDelay;
+          svc.train.delay = Math.round(savedDelay) === 0 ? 0 : Math.round(savedDelay);
+          svc.train.speed = savedSpeed;
+          svc.train.state = savedState === 'moving' ? 'moving' : 'stopped_at_station';
+          svc.train.blockedBy = false;
+          svc.train.stoppedAt = null;
+          svc.train._stoppedSinceGameTime = null;
+          svc.completed = false;
+          svc.isReturnLeg = false;
+        }
       } else {
-        // Default: train was waiting or state unknown
-        svc.state = 'waiting';
-        svc.position = null;
-        svc.speed = 0;
-        svc.currentStopIndex = 0;
-        svc.completed = false;
-        svc.isReturnLeg = false;
-        svc.delay = 0;
-        svc.train.delay = 0;
-        svc.train.speed = 0;
-        svc.train.state = 'waiting';
-        svc.train.blockedBy = false;
-        svc.train.stoppedAt = null;
-        svc.train._stoppedSinceGameTime = null;
+        // Train was waiting — check if departure has already passed
+        if (minutesPastDep > 1) {
+          // Departure was more than 1 min ago: mark completed, don't start late
+          svc.state = 'waiting';
+          svc.position = null;
+          svc.speed = 0;
+          svc.currentStopIndex = 0;
+          svc.completed = true;
+          svc.completedDate = now.toISOString().slice(0, 10);
+          svc.isReturnLeg = false;
+          svc.delay = 0;
+          svc.train.delay = 0;
+          svc.train.speed = 0;
+          svc.train.state = 'waiting';
+          svc.train.blockedBy = false;
+          svc.train.stoppedAt = null;
+          svc.train._stoppedSinceGameTime = null;
+        } else {
+          // Departure is in the future or within 1 min: normal waiting state
+          svc.state = 'waiting';
+          svc.position = null;
+          svc.speed = 0;
+          svc.currentStopIndex = 0;
+          svc.completed = false;
+          svc.isReturnLeg = false;
+          svc.delay = 0;
+          svc.train.delay = 0;
+          svc.train.speed = 0;
+          svc.train.state = 'waiting';
+          svc.train.blockedBy = false;
+          svc.train.stoppedAt = null;
+          svc.train._stoppedSinceGameTime = null;
+        }
       }
       svc.train.inMaintenance = rame ? (rame.inMaintenance || false) : false;
       svc._nextDepartureTime = null;
