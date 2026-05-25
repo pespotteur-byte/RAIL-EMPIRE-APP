@@ -91,20 +91,59 @@ export class Dashboard {
     }
     avgWear = rames.length > 0 ? (avgWear / rames.length).toFixed(1) : '0';
 
+    // Financial breakdown
+    const revBreak = eco.getRevenueBreakdown();
+    const expBreak = eco.getExpenseBreakdown();
+    const profit = eco.revenue - eco.expenses;
+    const margin = eco.revenue > 0 ? Math.round((profit / eco.revenue) * 100) : 0;
+
+    // Total km
+    let totalKm = 0;
+    for (const r of rames) totalKm += r.totalKmRun || 0;
+    const costPerKm = totalKm > 0 ? (eco.expenses / totalKm).toFixed(2) : '0';
+    const revPerKm = totalKm > 0 ? (eco.revenue / totalKm).toFixed(2) : '0';
+
+    // Revenue bar data
+    const revCategories = [
+      { key: 'voyageurs', label: 'Voyageurs', color: '#22c55e' },
+      { key: 'fret', label: 'Fret', color: '#38bdf8' },
+      { key: 'amendes', label: 'Amendes', color: '#f59e0b' },
+      { key: 'emprunt', label: 'Emprunts', color: '#a78bfa' },
+    ];
+    const expCategories = [
+      { key: 'exploitation', label: 'Exploitation', color: '#ef4444' },
+      { key: 'salaires', label: 'Salaires', color: '#f97316' },
+      { key: 'maintenance', label: 'Maintenance', color: '#facc15' },
+      { key: 'achat', label: 'Achats', color: '#e879f9' },
+      { key: 'penalty', label: 'P\u00e9nalit\u00e9s', color: '#fb7185' },
+      { key: 'remboursement', label: 'Remboursements', color: '#94a3b8' },
+    ];
+
+    // Line profitability
+    const lines = game.lineManager ? game.lineManager.getAll() : [];
+    const lineProfit = lines.map(l => {
+      const p = eco.getLineProfitability(l.id);
+      return { name: l.name, code: l.code, ...p };
+    }).filter(l => l.revenue > 0 || l.expense > 0).sort((a, b) => b.profit - a.profit);
+
+    // Format helpers
+    const fmt = n => Math.round(n).toLocaleString('fr-FR');
+    const fmtE = n => fmt(n) + ' \u20ac';
+
     container.innerHTML = `
       <div class="dash-section">
-        <h3>Tableau de bord</h3>
+        <h3>Exploitation</h3>
         <div class="dash-kpi-grid">
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Ponctualit&eacute;</div>
+            <div class="dash-kpi-label">Ponctualit\u00e9</div>
             <div class="dash-kpi-value" style="color:${punctPct >= 90 ? 'var(--green)' : punctPct >= 70 ? '#facc15' : '#ef4444'}">${punctPct}%</div>
           </div>
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Trains en circulation</div>
+            <div class="dash-kpi-label">En circulation</div>
             <div class="dash-kpi-value" style="color:#38bdf8">${movingServices.length}</div>
           </div>
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Trains en attente</div>
+            <div class="dash-kpi-label">En attente</div>
             <div class="dash-kpi-value" style="color:#a78bfa">${waitingServices.length}</div>
           </div>
           <div class="dash-kpi">
@@ -112,45 +151,180 @@ export class Dashboard {
             <div class="dash-kpi-value" style="color:${parseFloat(avgDelay) <= 2 ? 'var(--green)' : '#facc15'}">${avgDelay} min</div>
           </div>
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Rames disponibles</div>
+            <div class="dash-kpi-label">Rames dispo</div>
             <div class="dash-kpi-value" style="color:#34d399">${ramesAvailable}</div>
           </div>
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Rames en maintenance</div>
+            <div class="dash-kpi-label">En maintenance</div>
             <div class="dash-kpi-value" style="color:#f97316">${ramesInMaint}</div>
           </div>
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Usure moyenne</div>
+            <div class="dash-kpi-label">Usure moy.</div>
             <div class="dash-kpi-value" style="color:${parseFloat(avgWear) < 50 ? 'var(--green)' : '#ef4444'}">${avgWear}%</div>
           </div>
           <div class="dash-kpi">
-            <div class="dash-kpi-label">Solde</div>
-            <div class="dash-kpi-value" style="color:${eco.balance >= 0 ? 'var(--green)' : '#ef4444'}">${eco.formatAmount(eco.balance)}</div>
+            <div class="dash-kpi-label">Km parcourus</div>
+            <div class="dash-kpi-value" style="color:#38bdf8">${fmt(totalKm)}</div>
           </div>
         </div>
       </div>
 
       <div class="dash-section">
-        <h3>Ponctualit&eacute; (24h)</h3>
-        <canvas id="dash-chart-punctuality" width="600" height="180" style="width:100%;max-width:100%;height:auto"></canvas>
+        <h3>Billetterie</h3>
+        <div class="dash-kpi-grid">
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Billets vendus</div>
+            <div class="dash-kpi-value" style="color:#22c55e">${fmt(eco.totalTicketsSold)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Recettes billets</div>
+            <div class="dash-kpi-value" style="color:#22c55e">${fmtE(eco.totalTicketRevenue)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Tarif / km</div>
+            <div class="dash-kpi-value" style="color:#38bdf8">${eco.ticketPricePerKm.toFixed(2)} \u20ac</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Voyageurs total</div>
+            <div class="dash-kpi-value" style="color:#a78bfa">${fmt(eco.totalPassengers)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Fret (tonnes)</div>
+            <div class="dash-kpi-value" style="color:#f97316">${fmt(eco.totalFreightTonnes)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Taux fraude</div>
+            <div class="dash-kpi-value" style="color:#ef4444">${(eco.fraudRate * 100).toFixed(0)}%</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Amendes PV</div>
+            <div class="dash-kpi-value" style="color:#f59e0b">${fmtE(revBreak.amendes || 0)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Recette / km</div>
+            <div class="dash-kpi-value" style="color:#22c55e">${revPerKm} \u20ac</div>
+          </div>
+        </div>
       </div>
 
       <div class="dash-section">
-        <h3>Revenus cumul&eacute;s (24h)</h3>
-        <canvas id="dash-chart-revenue" width="600" height="180" style="width:100%;max-width:100%;height:auto"></canvas>
+        <h3>Finances</h3>
+        <div class="dash-kpi-grid">
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Solde</div>
+            <div class="dash-kpi-value" style="color:${eco.balance >= 0 ? 'var(--green)' : '#ef4444'}">${fmtE(eco.balance)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Revenus totaux</div>
+            <div class="dash-kpi-value" style="color:#22c55e">${fmtE(eco.revenue)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">D\u00e9penses totales</div>
+            <div class="dash-kpi-value" style="color:#ef4444">${fmtE(eco.expenses)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">R\u00e9sultat net</div>
+            <div class="dash-kpi-value" style="color:${profit >= 0 ? 'var(--green)' : '#ef4444'}">${profit >= 0 ? '+' : ''}${fmtE(profit)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Marge</div>
+            <div class="dash-kpi-value" style="color:${margin >= 0 ? 'var(--green)' : '#ef4444'}">${margin}%</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Co\u00fbt / km</div>
+            <div class="dash-kpi-value" style="color:#f97316">${costPerKm} \u20ac</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">P\u00e9nalit\u00e9s</div>
+            <div class="dash-kpi-value" style="color:#ef4444">${fmtE(eco.penalties)}</div>
+          </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Salaires / jour</div>
+            <div class="dash-kpi-value" style="color:#f97316">${fmtE(game.staffManager ? game.staffManager.getDailySalaryExpense() : 0)}</div>
+          </div>
+        </div>
       </div>
 
       <div class="dash-section">
-        <h3>Trains en temps r&eacute;el</h3>
+        <h3>R\u00e9partition des revenus</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          ${revCategories.map(c => {
+            const val = revBreak[c.key] || 0;
+            const pct = eco.revenue > 0 ? Math.round((val / eco.revenue) * 100) : 0;
+            return val > 0 ? `<div style="flex:1;min-width:120px;background:var(--bg2);border-radius:6px;padding:8px;border-left:3px solid ${c.color}">
+              <div style="font-size:9px;color:var(--text3);text-transform:uppercase">${c.label}</div>
+              <div style="font-size:14px;font-weight:700;color:${c.color}">${fmtE(val)}</div>
+              <div style="font-size:9px;color:var(--text3)">${pct}%</div>
+            </div>` : '';
+          }).join('')}
+        </div>
+        <canvas id="dash-chart-rev-bar" width="600" height="100" style="width:100%;max-width:100%;height:auto"></canvas>
+      </div>
+
+      <div class="dash-section">
+        <h3>R\u00e9partition des d\u00e9penses</h3>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          ${expCategories.map(c => {
+            const val = expBreak[c.key] || 0;
+            const pct = eco.expenses > 0 ? Math.round((val / eco.expenses) * 100) : 0;
+            return val > 0 ? `<div style="flex:1;min-width:120px;background:var(--bg2);border-radius:6px;padding:8px;border-left:3px solid ${c.color}">
+              <div style="font-size:9px;color:var(--text3);text-transform:uppercase">${c.label}</div>
+              <div style="font-size:14px;font-weight:700;color:${c.color}">${fmtE(val)}</div>
+              <div style="font-size:9px;color:var(--text3)">${pct}%</div>
+            </div>` : '';
+          }).join('')}
+        </div>
+        <canvas id="dash-chart-exp-bar" width="600" height="100" style="width:100%;max-width:100%;height:auto"></canvas>
+      </div>
+
+      ${lineProfit.length > 0 ? `
+      <div class="dash-section">
+        <h3>Rentabilit\u00e9 par ligne</h3>
+        <div class="dash-train-table">
+          <div class="dash-train-header" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr">
+            <span>Ligne</span><span>Revenus</span><span>D\u00e9penses</span><span>Profit</span><span>Marge</span>
+          </div>
+          ${lineProfit.map(l => `<div class="dash-train-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr">
+            <span style="font-weight:600">${l.name}${l.code ? ' (' + l.code + ')' : ''}</span>
+            <span style="color:#22c55e">${fmtE(l.revenue)}</span>
+            <span style="color:#ef4444">${fmtE(l.expense)}</span>
+            <span style="color:${l.profit >= 0 ? 'var(--green)' : '#ef4444'}">${l.profit >= 0 ? '+' : ''}${fmtE(l.profit)}</span>
+            <span style="color:${l.margin >= 0 ? 'var(--green)' : '#ef4444'}">${l.margin}%</span>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <div class="dash-section">
+        <h3>Ponctualit\u00e9 (24h)</h3>
+        <canvas id="dash-chart-punctuality" width="600" height="150" style="width:100%;max-width:100%;height:auto"></canvas>
+      </div>
+
+      <div class="dash-section">
+        <h3>Revenus cumul\u00e9s (24h)</h3>
+        <canvas id="dash-chart-revenue" width="600" height="150" style="width:100%;max-width:100%;height:auto"></canvas>
+      </div>
+
+      ${eco.dailySnapshots.length > 1 ? `
+      <div class="dash-section">
+        <h3>Profit journalier (30 derniers jours)</h3>
+        <canvas id="dash-chart-daily-profit" width="600" height="150" style="width:100%;max-width:100%;height:auto"></canvas>
+      </div>
+      <div class="dash-section">
+        <h3>\u00c9volution du solde</h3>
+        <canvas id="dash-chart-balance" width="600" height="150" style="width:100%;max-width:100%;height:auto"></canvas>
+      </div>` : ''}
+
+      <div class="dash-section">
+        <h3>Trains en temps r\u00e9el</h3>
         <div class="dash-train-table">
           <div class="dash-train-header">
-            <span>Train</span><span>Rame</span><span>&Eacute;tat</span><span>Retard</span><span>Vitesse</span><span>Prochain arr&ecirc;t</span>
+            <span>Train</span><span>Rame</span><span>\u00c9tat</span><span>Retard</span><span>Vitesse</span><span>Prochain arr\u00eat</span>
           </div>
           ${activeServices.map(svc => {
-            const state = svc.state === 'moving' ? `${icon('dot_green', 10)} En route` : svc.state === 'waiting' ? `${icon('dot_yellow', 10)} Attente` : `${icon('dot_gray', 10)} Terminé`;
+            const state = svc.state === 'moving' ? `${icon('dot_green', 10)} En route` : svc.state === 'waiting' ? `${icon('dot_yellow', 10)} Attente` : `${icon('dot_gray', 10)} Termin\u00e9`;
             const delay = svc.train?.delay || 0;
-            const delayStr = delay > 0 ? `+${delay.toFixed(0)} min` : delay < -1 ? `${delay.toFixed(0)} min` : 'À l\'heure';
-            const delayColor = Math.abs(delay) <= 5 ? 'var(--green)' : delay > 0 ? '#ef4444' : '#38bdf8';
+            const delayStr = delay > 0 ? `+${delay.toFixed(0)} min` : '\u00c0 l\'heure';
+            const delayColor = Math.abs(delay) <= 5 ? 'var(--green)' : '#ef4444';
             const speed = svc.train?.speed ? `${Math.round(svc.train.speed)} km/h` : '-';
             const nextStop = svc.stops?.[svc.currentStopIndex]?.name || '-';
             const rameName = svc.rame?.name || '-';
@@ -165,11 +339,46 @@ export class Dashboard {
           }).join('') || '<div style="padding:8px;color:var(--text3)">Aucun service actif</div>'}
         </div>
       </div>
+
+      <div class="dash-section">
+        <h3>Historique financier (derniers mouvements)</h3>
+        <div class="dash-train-table">
+          <div class="dash-train-header" style="grid-template-columns:1fr 2fr 1fr 1fr">
+            <span>Cat\u00e9gorie</span><span>Description</span><span>Montant</span><span>Type</span>
+          </div>
+          ${eco.history.slice(-20).reverse().map(h => `<div class="dash-train-row" style="grid-template-columns:1fr 2fr 1fr 1fr">
+            <span style="text-transform:capitalize;font-size:10px">${h.category || '-'}</span>
+            <span style="font-size:10px;color:var(--text3)">${h.description || ''}</span>
+            <span style="color:${h.type === 'revenue' ? '#22c55e' : '#ef4444'};font-weight:600">${h.type === 'revenue' ? '+' : '-'}${fmtE(h.amount)}</span>
+            <span style="font-size:10px">${h.type === 'revenue' ? '\u25b2 Revenu' : '\u25bc D\u00e9pense'}</span>
+          </div>`).join('') || '<div style="padding:8px;color:var(--text3)">Aucun mouvement</div>'}
+        </div>
+      </div>
     `;
 
     // Draw charts
     this._drawLineChart('dash-chart-punctuality', this.punctualityHistory, '%', '#22c55e', 0, 100);
-    this._drawLineChart('dash-chart-revenue', this.revenueHistory, '€', '#38bdf8');
+    this._drawLineChart('dash-chart-revenue', this.revenueHistory, '\u20ac', '#38bdf8');
+
+    // Revenue breakdown bar
+    this._drawHorizontalBar('dash-chart-rev-bar', revCategories.filter(c => (revBreak[c.key] || 0) > 0).map(c => ({
+      label: c.label, value: revBreak[c.key] || 0, color: c.color
+    })));
+
+    // Expense breakdown bar
+    this._drawHorizontalBar('dash-chart-exp-bar', expCategories.filter(c => (expBreak[c.key] || 0) > 0).map(c => ({
+      label: c.label, value: expBreak[c.key] || 0, color: c.color
+    })));
+
+    // Daily profit chart
+    if (eco.dailySnapshots.length > 1) {
+      this._drawBarChart('dash-chart-daily-profit', eco.dailySnapshots.map(d => ({
+        label: d.date, value: d.profit
+      })), '\u20ac');
+      this._drawLineChart('dash-chart-balance', eco.dailySnapshots.map(d => ({
+        time: d.date, value: d.balance
+      })), '\u20ac', '#a78bfa');
+    }
   }
 
   /**
@@ -258,6 +467,104 @@ export class Dashboard {
     const b = parseInt(color.slice(5, 7), 16);
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.1)`;
     ctx.fill();
+  }
+
+  _drawHorizontalBar(canvasId, data) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || data.length === 0) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, W, H);
+
+    const total = data.reduce((s, d) => s + d.value, 0);
+    if (total <= 0) return;
+
+    const barH = 30;
+    const barY = (H - barH) / 2 - 8;
+    let x = 10;
+    const barW = W - 20;
+
+    for (const d of data) {
+      const w = (d.value / total) * barW;
+      if (w < 1) continue;
+      ctx.fillStyle = d.color;
+      ctx.fillRect(x, barY, w, barH);
+      if (w > 40) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.round((d.value / total) * 100)}%`, x + w / 2, barY + barH / 2 + 4);
+      }
+      x += w;
+    }
+
+    // Legend
+    let lx = 10;
+    const ly = barY + barH + 18;
+    ctx.font = '9px sans-serif';
+    for (const d of data) {
+      ctx.fillStyle = d.color;
+      ctx.fillRect(lx, ly - 7, 8, 8);
+      ctx.fillStyle = '#94a3b8';
+      ctx.textAlign = 'left';
+      const label = `${d.label} (${Math.round(d.value).toLocaleString('fr-FR')}\u20ac)`;
+      ctx.fillText(label, lx + 11, ly);
+      lx += ctx.measureText(label).width + 22;
+      if (lx > W - 50) { lx = 10; }
+    }
+  }
+
+  _drawBarChart(canvasId, data, unit) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || data.length < 1) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const pad = { top: 20, right: 15, bottom: 30, left: 65 };
+    const chartW = W - pad.left - pad.right;
+    const chartH = H - pad.top - pad.bottom;
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, W, H);
+
+    const values = data.map(d => d.value);
+    const maxV = Math.max(...values, 0);
+    const minV = Math.min(...values, 0);
+    const range = maxV - minV || 1;
+    const zeroY = pad.top + chartH - ((-minV) / range) * chartH;
+
+    // Grid
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (chartH * i / 4);
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+      const val = maxV - (range * i / 4);
+      ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(Math.round(val).toLocaleString('fr-FR') + unit, pad.left - 5, y + 4);
+    }
+
+    // Zero line
+    if (minV < 0) {
+      ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(W - pad.right, zeroY); ctx.stroke();
+    }
+
+    const barWidth = Math.max(4, chartW / data.length - 2);
+    for (let i = 0; i < data.length; i++) {
+      const x = pad.left + (i / data.length) * chartW + 1;
+      const val = data[i].value;
+      const barH2 = Math.abs(val / range) * chartH;
+      const y = val >= 0 ? zeroY - barH2 : zeroY;
+      ctx.fillStyle = val >= 0 ? '#22c55e' : '#ef4444';
+      ctx.fillRect(x, y, barWidth, barH2);
+
+      if (data.length <= 15) {
+        ctx.fillStyle = '#94a3b8'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(data[i].label, x + barWidth / 2, H - 5);
+      }
+    }
   }
 
   toSave() {

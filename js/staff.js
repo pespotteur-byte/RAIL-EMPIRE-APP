@@ -215,26 +215,28 @@ export class StaffManager {
   // ── Contrôleur logic ──
   tickControleurs(economy, activeServices, gameTimeMin) {
     const controleurs = this.staff.filter(s => s.role === 'controleur' && s.assignedTo);
-    if (controleurs.length === 0) return;
+    const hasControleur = controleurs.length > 0;
+    const effectiveFraudRate = economy.getEffectiveFraudRate(hasControleur);
 
     const paxServices = activeServices.filter(s =>
       s.state === 'moving' && s.rame && s.rame.totalCapacity > 0
     );
     if (paxServices.length === 0) return;
 
+    if (!hasControleur) return;
+
     for (const ctrl of controleurs) {
-      // Each contrôleur inspects one random train per ~30 min game time
-      if (Math.random() > 0.033) continue; // ~1/30 chance per tick
+      if (Math.random() > 0.033) continue;
       const svc = paxServices[Math.floor(Math.random() * paxServices.length)];
       const paxCount = svc._onboardPax || 0;
       if (paxCount <= 0) continue;
-      // ~5% of passengers don't have a ticket
-      const frauders = Math.floor(paxCount * 0.05);
+      const frauders = Math.floor(paxCount * effectiveFraudRate);
       if (frauders <= 0) continue;
       const fineAmount = frauders * 50;
       ctrl.totalFines += frauders;
       ctrl.totalFineRevenue += fineAmount;
-      economy.addRevenue(fineAmount, 'amendes', `Contrôle ${ctrl.name}: ${frauders} PV × 50€ (${svc.name})`);
+      economy.totalFraudFines += fineAmount;
+      economy.addRevenue(fineAmount, 'amendes', `Contr\u00f4le ${ctrl.name}: ${frauders} PV \u00d7 50\u20ac (${svc.name})`);
     }
   }
 
