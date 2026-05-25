@@ -1,4 +1,4 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779619178';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779724771';
 
 let nextServiceId = 1;
 
