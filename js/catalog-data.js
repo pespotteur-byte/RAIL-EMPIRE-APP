@@ -1,6 +1,17 @@
-// AUTO-GENERATED — Catalogue de matériel roulant (essai série BB 7200)
-// Source dessins : MLG Traffic (CC BY-NC-SA 3.0). Specs : fr.wikipedia.org/wiki/BB_7200 (recoupé).
-// Ne pas éditer à la main — régénéré par le pipeline d'enrichissement.
+// AUTO-GENERATED — Catalogue de matériel roulant (essai)
+// Dessins : MLG Traffic (CC BY-NC-SA 3.0). Specs recoupées sur le web (voir _source).
+// Régénéré par le pipeline d'enrichissement — ne pas éditer à la main.
+export const CATALOG_CARGO_TYPES = [
+  {
+    "category": "liquides",
+    "type": "sulphur",
+    "name": "Soufre liquide",
+    "unit": "t",
+    "pricePerUnit": 60,
+    "hazard": true
+  }
+];
+
 export const CATALOG = [
   {
     "id": "cat-BB7200_GC_Bou_R",
@@ -476,5 +487,171 @@ export const CATALOG = [
     "purchasePrice": 4040000,
     "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA) + fr.wikipedia.org/wiki/BB_7200"
+  },
+  {
+    "id": "cat-Wascosa_Zacns98_R",
+    "name": "Wagon-citerne Zacns (Wascosa)",
+    "category": "wagon",
+    "traction": "none",
+    "maxSpeed": 100,
+    "power": 0,
+    "mass": 24,
+    "tonnage": 24,
+    "passengerCapacity": 0,
+    "freightCapacity": 66,
+    "length": 16.4,
+    "imageData": "img/catalog/Loueurs/Wascosa_Zacns98_R.gif",
+    "seriesName": "Zacns",
+    "numberStart": "",
+    "purchasePrice": 0,
+    "cargoTypes": [
+      "diesel",
+      "gasoline",
+      "fuel-oil",
+      "chemicals-liq"
+    ],
+    "_source": "MLG Traffic (CC BY-NC-SA) + tatravagonka.sk / railtrans.eu (Zacns 88 m³)"
+  },
+  {
+    "id": "cat-AAE_Sgnss735_R",
+    "name": "Wagon porte-conteneurs Sgnss (AAE)",
+    "category": "wagon",
+    "traction": "none",
+    "maxSpeed": 120,
+    "power": 0,
+    "mass": 19,
+    "tonnage": 19,
+    "passengerCapacity": 0,
+    "freightCapacity": 71,
+    "length": 19.7,
+    "imageData": "img/catalog/Loueurs/AAE_Sgnss735_R.gif",
+    "seriesName": "Sgnss 60'",
+    "numberStart": "",
+    "purchasePrice": 0,
+    "cargoTypes": [
+      "containers-20",
+      "containers-40",
+      "swap-bodies",
+      "semi-trailers"
+    ],
+    "_source": "MLG Traffic (CC BY-NC-SA) + ermewa.com / euro-wagon.com (Sgnss 60')"
+  },
+  {
+    "id": "cat-Ermewa_Tagnpps_AFR95_P_R",
+    "name": "Wagon-trémie céréalier Tagnpps (Ermewa)",
+    "category": "wagon",
+    "traction": "none",
+    "maxSpeed": 100,
+    "power": 0,
+    "mass": 21,
+    "tonnage": 21,
+    "passengerCapacity": 0,
+    "freightCapacity": 69,
+    "length": 15.1,
+    "imageData": "img/catalog/Loueurs/Ermewa_Tagnpps_AFR95_P_R.gif",
+    "seriesName": "Tagnpps",
+    "numberStart": "",
+    "purchasePrice": 0,
+    "cargoTypes": [
+      "wheat",
+      "corn",
+      "barley",
+      "rapeseed",
+      "soybeans",
+      "animal-feed"
+    ],
+    "_source": "MLG Traffic (CC BY-NC-SA) + tatravagonka.sk / gatx.eu (Tagnpps 101 m³)"
+  },
+  {
+    "id": "cat-DB_Shimms708_R",
+    "name": "Wagon à coils Shimms (DB)",
+    "category": "wagon",
+    "traction": "none",
+    "maxSpeed": 100,
+    "power": 0,
+    "mass": 22,
+    "tonnage": 22,
+    "passengerCapacity": 0,
+    "freightCapacity": 58,
+    "length": 12.1,
+    "imageData": "img/catalog/DB/W/DB_Shimms708_R.gif",
+    "seriesName": "Shimms",
+    "numberStart": "",
+    "purchasePrice": 0,
+    "cargoTypes": [
+      "steel-coils",
+      "steel-sheet"
+    ],
+    "_source": "MLG Traffic (CC BY-NC-SA) + ermewa.com / vtg.com / lokotrans.eu (Shimm(n)s)"
+  },
+  {
+    "id": "cat-DB_Eaos051_Y25H_K_R",
+    "name": "Wagon tombereau Eaos (DB)",
+    "category": "wagon",
+    "traction": "none",
+    "maxSpeed": 120,
+    "power": 0,
+    "mass": 22,
+    "tonnage": 22,
+    "passengerCapacity": 0,
+    "freightCapacity": 58,
+    "length": 14.3,
+    "imageData": "img/catalog/DB/W/DB_Eaos051_Y25H_K_R.gif",
+    "seriesName": "Eaos",
+    "numberStart": "",
+    "purchasePrice": 0,
+    "cargoTypes": [
+      "coal",
+      "ore",
+      "scrap-metal",
+      "timber",
+      "gravel"
+    ],
+    "_source": "MLG Traffic (CC BY-NC-SA) + gueterwagenkatalog.dbcargo.com (Eaos-x 051)"
+  },
+  {
+    "id": "cat-SNCF_I87_Fruits_R",
+    "name": "Wagon frigorifique Ies (SNCF, primeurs)",
+    "category": "wagon",
+    "traction": "none",
+    "maxSpeed": 100,
+    "power": 0,
+    "mass": 20,
+    "tonnage": 20,
+    "passengerCapacity": 0,
+    "freightCapacity": 40,
+    "length": 16.7,
+    "imageData": "img/catalog/SNCF/W/SNCF_I87_Fruits_R.gif",
+    "seriesName": "Ies / I87",
+    "numberStart": "",
+    "purchasePrice": 0,
+    "cargoTypes": [
+      "fresh-produce",
+      "frozen-food",
+      "meat",
+      "dairy"
+    ],
+    "_source": "MLG Traffic (CC BY-NC-SA) + MLG Traffic + estimation (type ancien)"
+  },
+  {
+    "id": "cat-CitSoufre_FG68_R",
+    "name": "Wagon-citerne à soufre liquide (FG68)",
+    "category": "wagon",
+    "traction": "none",
+    "maxSpeed": 90,
+    "power": 0,
+    "mass": 16,
+    "tonnage": 16,
+    "passengerCapacity": 0,
+    "freightCapacity": 30,
+    "length": 10.7,
+    "imageData": "img/catalog/F_WP/CitSoufre_FG68_R.gif",
+    "seriesName": "Citerne soufre",
+    "numberStart": "",
+    "purchasePrice": 0,
+    "cargoTypes": [
+      "sulphur"
+    ],
+    "_source": "MLG Traffic (CC BY-NC-SA) + MLG Traffic + estimation"
   }
 ];

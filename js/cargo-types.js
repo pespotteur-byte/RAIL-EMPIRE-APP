@@ -272,6 +272,33 @@ export class CargoTypeManager {
     };
   }
 
+  // Add a cargo type if it is not already present (idempotent).
+  // Used when importing catalog material that references a cargo not yet in the game.
+  // Returns true if a new type was actually added.
+  ensureType(categoryKey, typeObj) {
+    if (!categoryKey || !typeObj || !typeObj.type) return false;
+    if (this.getTypeInfo(typeObj.type)) return false;
+    let cat = this.categories[categoryKey];
+    if (!cat) {
+      cat = this.categories[categoryKey] = {
+        name: typeObj.categoryName || categoryKey,
+        icon: typeObj.icon || 'cargo',
+        description: typeObj.description || '',
+        wagonType: typeObj.wagonType || 'spécial',
+        loadingTime: typeObj.loadingTime || 15,
+        types: [],
+      };
+    }
+    cat.types.push({
+      type: typeObj.type,
+      name: typeObj.name || typeObj.type,
+      unit: typeObj.unit || 't',
+      pricePerUnit: typeObj.pricePerUnit ?? 0,
+      hazard: !!typeObj.hazard,
+    });
+    return true;
+  }
+
   getAllTypes() {
     const all = [];
     for (const [catKey, cat] of Object.entries(this.categories)) {

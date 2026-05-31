@@ -27,11 +27,11 @@ import { SeasonalSchedule } from './seasonal.js?v=1779724771';
 import { Connections } from './connections.js?v=1779724771';
 import { StationUpgrades } from './station-upgrades.js?v=1779724771';
 import { JunctionManager } from './junctions.js?v=1779724771';
-import { CargoTypeManager } from './cargo-types.js?v=1779724771';
+import { CargoTypeManager } from './cargo-types.js?v=1780300000';
 import { ITEModules } from './ite-modules.js?v=1779724771';
 import { IndustrialClients } from './industrial-clients.js?v=1779724771';
 import { ShuntingManager } from './shunting.js?v=1779724771';
-import { CATALOG } from './catalog-data.js?v=1779724771';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780300000';
 
 class RailEmpire {
   constructor() {
@@ -207,7 +207,13 @@ class RailEmpire {
   }
 
   // Seed the built-in rolling-stock catalog (idempotent: only adds missing entries by id).
+  // Also auto-adds any cargo type referenced by the catalog that the game doesn't know yet.
   seedCatalog() {
+    // 1) Ensure cargo types declared by the catalog exist (add the missing ones).
+    if (Array.isArray(CATALOG_CARGO_TYPES) && this.cargoTypes?.ensureType) {
+      for (const ct of CATALOG_CARGO_TYPES) this.cargoTypes.ensureType(ct.category, ct);
+    }
+    // 2) Seed the rolling-stock entries.
     if (!Array.isArray(CATALOG)) return;
     const existing = new Set(this.rollingStock.getAll().map(i => i.id));
     let added = 0;
