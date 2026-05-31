@@ -135,7 +135,19 @@
             <h2>Materiel Roulant</h2>
             <button id="btn-add-stock" class="btn-primary">+ Ajouter un engin</button>
           </div>
+          <div class="stock-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <input id="stock-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:200px;padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+            <select id="stock-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+              <option value="">Toutes catégories</option>
+              <option value="locomotive">Locomotives</option>
+              <option value="automotrice">Automotrices</option>
+              <option value="voiture">Voitures</option>
+              <option value="wagon">Wagons</option>
+            </select>
+            <span id="stock-count" style="opacity:.7;font-size:13px;"></span>
+          </div>
           <div id="stock-list" class="card-grid"></div>
+          <div id="stock-pager" style="display:flex;justify-content:center;margin:16px 0;"></div>
         </div>
       </div>
 
@@ -454,7 +466,7 @@
         <button class="modal-close">&times;</button>
         <h3>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="3"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><line x1="6" y1="6" x2="6" y2="12"/><line x1="12" y1="6" x2="12" y2="12"/></svg>
-          Ajouter un engin
+          <span id="stock-modal-title">Ajouter un engin</span>
         </h3>
         <div class="modal-body">
 
@@ -1003,6 +1015,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1780300000"></script>
+  <script type="module" src="js/main.js?v=1780400000"></script>
 </body>
 </html>

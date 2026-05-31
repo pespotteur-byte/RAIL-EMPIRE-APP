@@ -898,27 +898,93 @@ export class UI {
     });
     input?.addEventListener('change', () => { if (input.files[0]) this.loadStockImage(input.files[0]); });
     document.getElementById('btn-save-stock')?.addEventListener('click', () => this.saveStock());
+    const search = document.getElementById('stock-search');
+    const catFilter = document.getElementById('stock-cat-filter');
+    search?.addEventListener('input', () => { this._stockPage = 0; this.renderStockList(); });
+    catFilter?.addEventListener('change', () => { this._stockPage = 0; this.renderStockList(); });
   }
 
   openStockModal() {
+    this._editingStockId = null;
+    const title = document.getElementById('stock-modal-title');
+    if (title) title.textContent = 'Ajouter un engin';
+    const saveBtn = document.getElementById('btn-save-stock');
+    if (saveBtn) saveBtn.textContent = "Enregistrer l'engin";
+
     document.getElementById('modal-add-stock')?.classList.remove('hidden');
-    document.getElementById('stock-name').value = '';
-    const priceInput = document.getElementById('stock-price');
-    if (priceInput) priceInput.value = '0';
+    // Reset all fields to defaults (a previous edit may have left values).
+    this._setStockField('stock-name', '');
+    this._setStockField('stock-series-name', '');
+    this._setStockField('stock-number-start', '');
+    this._setStockField('stock-category', 'locomotive');
+    this._setStockField('stock-traction', 'none');
+    this._setStockField('stock-speed', '160');
+    this._setStockField('stock-power', '0');
+    this._setStockField('stock-length', '20');
+    this._setStockField('stock-mass', '80');
+    this._setStockField('stock-tonnage', '80');
+    this._setStockField('stock-capacity', '0');
+    this._setStockField('stock-freight-cap', '0');
+    this._setStockField('stock-price', '0');
     document.getElementById('stock-image-preview')?.classList.add('hidden');
     this._stockImageData = null;
 
     // Populate cargo types checkboxes
     this._populateCargoTypesCheckboxes();
+    this._wireStockCategoryToggle();
+  }
 
-    // Show/hide cargo types based on category
+  _setStockField(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  }
+
+  // Wire the category->cargo-types visibility toggle (idempotent: replaces the node's listener).
+  _wireStockCategoryToggle() {
     const catSel = document.getElementById('stock-category');
     const cargoGroup = document.getElementById('stock-cargo-types-group');
-    if (catSel && cargoGroup) {
-      const showCargo = () => { cargoGroup.style.display = catSel.value === 'wagon' ? 'block' : 'none'; };
-      showCargo();
-      catSel.addEventListener('change', showCargo);
+    if (!catSel || !cargoGroup) return;
+    const showCargo = () => { cargoGroup.style.display = catSel.value === 'wagon' ? 'block' : 'none'; };
+    catSel.onchange = showCargo;
+    showCargo();
+  }
+
+  // Open the modal pre-filled to edit an existing engin.
+  editStock(id) {
+    const item = this.game.rollingStock.getById(id);
+    if (!item) return;
+    this._editingStockId = id;
+    const title = document.getElementById('stock-modal-title');
+    if (title) title.textContent = "Modifier l'engin";
+    const saveBtn = document.getElementById('btn-save-stock');
+    if (saveBtn) saveBtn.textContent = 'Enregistrer les modifications';
+
+    document.getElementById('modal-add-stock')?.classList.remove('hidden');
+    this._setStockField('stock-name', item.name || '');
+    this._setStockField('stock-series-name', item.seriesName || '');
+    this._setStockField('stock-number-start', item.numberStart != null ? item.numberStart : '');
+    this._setStockField('stock-category', item.category || 'locomotive');
+    this._setStockField('stock-traction', item.traction || 'none');
+    this._setStockField('stock-speed', item.maxSpeed ?? 160);
+    this._setStockField('stock-power', item.power ?? 0);
+    this._setStockField('stock-length', item.length ?? 20);
+    this._setStockField('stock-mass', item.mass ?? 80);
+    this._setStockField('stock-tonnage', item.tonnage ?? 80);
+    this._setStockField('stock-capacity', item.passengerCapacity ?? 0);
+    this._setStockField('stock-freight-cap', item.freightCapacity ?? 0);
+    this._setStockField('stock-price', item.purchasePrice ?? 0);
+
+    this._stockImageData = item.imageData || null;
+    const preview = document.getElementById('stock-image-preview');
+    if (preview) {
+      if (item.imageData) { preview.src = item.imageData; preview.classList.remove('hidden'); }
+      else preview.classList.add('hidden');
     }
+
+    this._populateCargoTypesCheckboxes();
+    const sel = new Set(item.cargoTypes || []);
+    document.querySelectorAll('.stock-cargo-cb').forEach(cb => { cb.checked = sel.has(cb.value); });
+    this._wireStockCategoryToggle();
   }
 
   _populateCargoTypesCheckboxes() {
@@ -964,7 +1030,7 @@ export class UI {
     const name = document.getElementById('stock-name').value.trim();
     if (!name) return alert('Nom requis');
     const tonnage = parseInt(document.getElementById('stock-tonnage').value) || 80;
-    this.game.rollingStock.add({
+    const data = {
       name,
       category: document.getElementById('stock-category').value,
       traction: document.getElementById('stock-traction').value,
@@ -980,22 +1046,55 @@ export class UI {
       numberStart: document.getElementById('stock-number-start')?.value.trim() || '',
       purchasePrice: parseInt(document.getElementById('stock-price')?.value) || 0,
       cargoTypes: Array.from(document.querySelectorAll('.stock-cargo-cb:checked')).map(cb => cb.value),
-    });
+    };
+    if (this._editingStockId) {
+      this.game.rollingStock.update(this._editingStockId, data);
+      this._editingStockId = null;
+    } else {
+      this.game.rollingStock.add(data);
+    }
     document.getElementById('modal-add-stock')?.classList.add('hidden');
+    this.game.saveState?.();
     this.renderStockList();
   }
 
   renderStockList() {
     const container = document.getElementById('stock-list');
     if (!container) return;
-    const items = this.game.rollingStock.getAll();
-    if (items.length === 0) {
+    const pager = document.getElementById('stock-pager');
+    const countEl = document.getElementById('stock-count');
+    const all = this.game.rollingStock.getAll();
+    if (all.length === 0) {
       container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucun materiel. Cliquer "+ Ajouter un engin" pour importer.</p>';
+      if (pager) pager.innerHTML = '';
+      if (countEl) countEl.textContent = '';
       return;
     }
-    container.innerHTML = items.map(item => `
+    const q = (document.getElementById('stock-search')?.value || '').trim().toLowerCase();
+    const cat = document.getElementById('stock-cat-filter')?.value || '';
+    let items = all;
+    if (cat) items = items.filter(i => i.category === cat);
+    if (q) items = items.filter(i =>
+      (i.name || '').toLowerCase().includes(q) ||
+      (i.seriesName || '').toLowerCase().includes(q) ||
+      (i.category || '').toLowerCase().includes(q) ||
+      (i.traction || '').toLowerCase().includes(q));
+    const PAGE = 60;
+    const total = items.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE));
+    if (this._stockPage == null) this._stockPage = 0;
+    if (this._stockPage >= pages) this._stockPage = pages - 1;
+    const start = this._stockPage * PAGE;
+    const view = items.slice(start, start + PAGE);
+    if (countEl) countEl.textContent = `${total} engin${total > 1 ? 's' : ''}` + (total !== all.length ? ` / ${all.length}` : '');
+    if (total === 0) {
+      container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucun résultat pour cette recherche.</p>';
+      if (pager) pager.innerHTML = '';
+      return;
+    }
+    container.innerHTML = view.map(item => `
       <div class="card">
-        ${item.imageData ? `<img src="${item.imageData}" class="card-img" alt="${item.name}">` : ''}
+        ${item.imageData ? `<img src="${item.imageData}" loading="lazy" class="card-img" alt="${item.name}">` : ''}
         <div class="card-title">${item.name}</div>
         <div class="card-info">
           <b>Cat:</b> ${item.category} | <b>Tract:</b> ${item.traction}<br>
@@ -1006,10 +1105,26 @@ export class UI {
           ${item.cargoTypes?.length ? `<br><b>Chargements:</b> <span style="font-size:9px">${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return info?.name || ct; }).join(', ')}</span>` : ''}
         </div>
         <div class="card-actions">
+          <button class="btn-sm" onclick="game.ui.editStock('${item.id}')">Modifier</button>
           <button class="btn-sm danger" onclick="game.ui.deleteStock('${item.id}')">Supprimer</button>
         </div>
       </div>
     `).join('');
+    if (pager) {
+      if (pages <= 1) { pager.innerHTML = ''; }
+      else {
+        pager.innerHTML = `
+          <button class="btn-sm" ${this._stockPage === 0 ? 'disabled' : ''} onclick="game.ui.stockPageGo(${this._stockPage - 1})">‹ Préc.</button>
+          <span style="margin:0 12px;align-self:center;font-size:13px">Page ${this._stockPage + 1} / ${pages}</span>
+          <button class="btn-sm" ${this._stockPage >= pages - 1 ? 'disabled' : ''} onclick="game.ui.stockPageGo(${this._stockPage + 1})">Suiv. ›</button>`;
+      }
+    }
+  }
+
+  stockPageGo(p) {
+    this._stockPage = p;
+    this.renderStockList();
+    document.getElementById('stock-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   deleteStock(id) {
