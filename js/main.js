@@ -31,6 +31,7 @@ import { CargoTypeManager } from './cargo-types.js?v=1779724771';
 import { ITEModules } from './ite-modules.js?v=1779724771';
 import { IndustrialClients } from './industrial-clients.js?v=1779724771';
 import { ShuntingManager } from './shunting.js?v=1779724771';
+import { CATALOG } from './catalog-data.js?v=1779724771';
 
 class RailEmpire {
   constructor() {
@@ -186,6 +187,8 @@ class RailEmpire {
       e.target.value = '';
     });
 
+    this.seedCatalog();
+
     this.engine.paused = false;
     this.running = true;
     this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
@@ -201,6 +204,19 @@ class RailEmpire {
         this.saveState();
       }
     });
+  }
+
+  // Seed the built-in rolling-stock catalog (idempotent: only adds missing entries by id).
+  seedCatalog() {
+    if (!Array.isArray(CATALOG)) return;
+    const existing = new Set(this.rollingStock.getAll().map(i => i.id));
+    let added = 0;
+    for (const entry of CATALOG) {
+      if (existing.has(entry.id)) continue;
+      this.rollingStock.add(entry);
+      added++;
+    }
+    if (added && this.ui) this.ui.renderStockList();
   }
 
   async exportSaveFile() {
