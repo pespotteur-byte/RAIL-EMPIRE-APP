@@ -1,14 +1,14 @@
 import { SimulationEngine } from './engine.js?v=1779724771';
 import { World, createDefaultWorld } from './world.js?v=1779724771';
 import { Renderer } from './renderer.js?v=1779724771';
-import { UI } from './ui.js?v=1780500000';
-import { Economy } from './economy.js?v=1779724771';
+import { UI } from './ui.js?v=1780600000';
+import { Economy } from './economy.js?v=1780600000';
 import { IncidentManager } from './incidents.js?v=1779724771';
 import { FreightManager } from './freight.js?v=1779724771';
 import { ScheduleManager } from './schedule.js?v=1779724771';
 import { GameStorage } from './storage.js?v=1779724771';
 import { AccountManager } from './account.js?v=1779724771';
-import { RollingStockManager } from './rolling-stock.js?v=1780500000';
+import { RollingStockManager } from './rolling-stock.js?v=1780600000';
 import { RameManager } from './rame.js?v=1779724771';
 import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779724771';
 import { DepotManager } from './depot.js?v=1779724771';
@@ -27,11 +27,11 @@ import { SeasonalSchedule } from './seasonal.js?v=1779724771';
 import { Connections } from './connections.js?v=1779724771';
 import { StationUpgrades } from './station-upgrades.js?v=1779724771';
 import { JunctionManager } from './junctions.js?v=1779724771';
-import { CargoTypeManager } from './cargo-types.js?v=1780500000';
+import { CargoTypeManager } from './cargo-types.js?v=1780600000';
 import { ITEModules } from './ite-modules.js?v=1779724771';
 import { IndustrialClients } from './industrial-clients.js?v=1779724771';
 import { ShuntingManager } from './shunting.js?v=1779724771';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780500000';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780600000';
 
 class RailEmpire {
   constructor() {

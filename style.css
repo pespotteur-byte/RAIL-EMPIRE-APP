@@ -190,6 +190,12 @@ header {
 .rame-card-images .rame-text-el { font-size: 8px; padding: 2px 4px; background: var(--bg3); border-radius: 2px; height: 20px; display: flex; align-items: center; }
 
 /* RAME ASSEMBLY in modal */
+.rame-assembly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0;
+}
 .rame-assembly {
   background: var(--bg);
   border: 1px solid var(--border);

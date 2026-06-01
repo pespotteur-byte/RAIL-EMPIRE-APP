@@ -1,6 +1,6 @@
 export class Economy {
   constructor() {
-    this.balance = 500000;
+    this.balance = 50000000000;
     this.revenue = 0;
     this.expenses = 0;
     this.penalties = 0;
@@ -255,7 +255,7 @@ export class Economy {
 
   loadFromSave(s) {
     if (!s) return;
-    this.balance = s.balance ?? 500000;
+    this.balance = s.balance ?? 50000000000;
     this.revenue = s.revenue || 0;
     this.expenses = s.expenses || 0;
     this.penalties = s.penalties || 0;

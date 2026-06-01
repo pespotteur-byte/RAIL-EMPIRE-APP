@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1779746122">
+  <link rel="stylesheet" href="style.css?v=1780600000">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -628,6 +628,10 @@
             <span>Traction: <b id="rame-traction">-</b></span>
             <span>Coût: <b id="rame-price" style="color:var(--orange)">0</b> €</span>
           </div>
+          <div class="rame-assembly-header">
+            <h4 style="margin:0">Composition</h4>
+            <button id="btn-clear-rame" class="btn-sm danger" type="button">Vider</button>
+          </div>
           <div class="rame-assembly" id="rame-assembly">
             <p class="rame-empty">Cliquer sur un engin ci-dessous pour l'ajouter</p>
           </div>
@@ -635,7 +639,22 @@
             <div id="rame-length-fill" class="rame-length-fill"></div>
           </div>
           <h4>Materiel disponible</h4>
+          <div class="stock-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <input id="rame-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:180px;padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+            <select id="rame-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+              <option value="">Toutes catégories</option>
+              <option value="locomotive">Locomotives</option>
+              <option value="automotrice">Automotrices</option>
+              <option value="voiture">Voitures</option>
+              <option value="wagon">Wagons</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;">Qté
+              <input id="rame-qty" type="number" value="1" min="1" max="50" style="width:54px;padding:6px 8px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+            </label>
+            <span id="rame-picker-count" style="opacity:.7;font-size:12px;"></span>
+          </div>
           <div id="rame-stock-picker" class="stock-picker"></div>
+          <div id="rame-picker-pager" style="display:flex;justify-content:center;margin:10px 0;"></div>
           <button id="btn-save-rame" class="btn-primary btn-full">Enregistrer la rame</button>
         </div>
       </div>
@@ -1015,6 +1034,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1780500000"></script>
+  <script type="module" src="js/main.js?v=1780600000"></script>
 </body>
 </html>

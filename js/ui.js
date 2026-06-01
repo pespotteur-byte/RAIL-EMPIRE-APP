@@ -1138,12 +1138,23 @@ export class UI {
   setupRamePage() {
     document.getElementById('btn-new-rame')?.addEventListener('click', () => this.openRameModal());
     document.getElementById('btn-save-rame')?.addEventListener('click', () => this.saveRame());
+    const search = document.getElementById('rame-search');
+    if (search) search.addEventListener('input', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
+    document.getElementById('rame-cat-filter')?.addEventListener('change', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
+    document.getElementById('btn-clear-rame')?.addEventListener('click', () => {
+      this.currentRameElements = [];
+      this.renderRameAssembly();
+    });
   }
 
   openRameModal() {
     this.currentRameElements = [];
     this.editingRameId = null;
+    this._ramePickerPage = 0;
     document.getElementById('rame-name').value = '';
+    const s = document.getElementById('rame-search'); if (s) s.value = '';
+    const c = document.getElementById('rame-cat-filter'); if (c) c.value = '';
+    const q = document.getElementById('rame-qty'); if (q) q.value = '1';
     document.getElementById('modal-rame')?.classList.remove('hidden');
     this.renderRamePicker();
     this.renderRameAssembly();
@@ -1152,23 +1163,75 @@ export class UI {
   renderRamePicker() {
     const container = document.getElementById('rame-stock-picker');
     if (!container) return;
-    const items = this.game.rollingStock.getAll();
-    container.innerHTML = items.length === 0
-      ? '<p style="color:var(--text3);font-size:11px">Aucun materiel. Ajoutez-en d\'abord dans la page Materiel.</p>'
-      : items.map(item => `
-        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')">
-          ${item.imageData ? `<img src="${item.imageData}" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
+    const pager = document.getElementById('rame-picker-pager');
+    const countEl = document.getElementById('rame-picker-count');
+    const all = this.game.rollingStock.getAll();
+    if (all.length === 0) {
+      container.innerHTML = '<p style="color:var(--text3);font-size:11px">Aucun materiel. Ajoutez-en d\'abord dans la page Materiel.</p>';
+      if (pager) pager.innerHTML = '';
+      if (countEl) countEl.textContent = '';
+      return;
+    }
+    const query = (document.getElementById('rame-search')?.value || '').trim().toLowerCase();
+    const cat = document.getElementById('rame-cat-filter')?.value || '';
+    let items = all;
+    if (cat) items = items.filter(i => i.category === cat);
+    if (query) items = items.filter(i =>
+      (i.name || '').toLowerCase().includes(query) ||
+      (i.seriesName || '').toLowerCase().includes(query) ||
+      (i.category || '').toLowerCase().includes(query) ||
+      (i.traction || '').toLowerCase().includes(query));
+    const PAGE = 60;
+    const total = items.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE));
+    if (this._ramePickerPage == null) this._ramePickerPage = 0;
+    if (this._ramePickerPage >= pages) this._ramePickerPage = pages - 1;
+    const start = this._ramePickerPage * PAGE;
+    const view = items.slice(start, start + PAGE);
+    if (countEl) countEl.textContent = `${total} engin${total > 1 ? 's' : ''}` + (total !== all.length ? ` / ${all.length}` : '');
+    if (total === 0) {
+      container.innerHTML = '<p style="color:var(--text3);font-size:11px;grid-column:1/-1">Aucun résultat.</p>';
+      if (pager) pager.innerHTML = '';
+      return;
+    }
+    container.innerHTML = view.map(item => `
+        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')" title="${item.name} — ${item.category}, ${item.maxSpeed} km/h, ${item.length}m">
+          ${item.imageData ? `<img src="${item.imageData}" loading="lazy" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
           <span>${item.name}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
         </div>
       `).join('');
+    if (pager) {
+      pager.innerHTML = pages <= 1 ? '' : `
+        <button class="btn-sm" ${this._ramePickerPage === 0 ? 'disabled' : ''} onclick="game.ui.ramePickerPageGo(${this._ramePickerPage - 1})">‹ Préc.</button>
+        <span style="margin:0 12px;align-self:center;font-size:12px">Page ${this._ramePickerPage + 1} / ${pages}</span>
+        <button class="btn-sm" ${this._ramePickerPage >= pages - 1 ? 'disabled' : ''} onclick="game.ui.ramePickerPageGo(${this._ramePickerPage + 1})">Suiv. ›</button>`;
+    }
+  }
+
+  ramePickerPageGo(p) {
+    this._ramePickerPage = p;
+    this.renderRamePicker();
+    document.getElementById('rame-stock-picker')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   addToRame(stockId) {
     const item = this.game.rollingStock.getById(stockId);
     if (!item) return;
-    const currentLength = this.currentRameElements.reduce((s, e) => s + e.length, 0);
-    if (currentLength + item.length > 750) return alert('Longueur maximale de 750m atteinte !');
-    this.currentRameElements.push({ ...item, stockId: item.id });
+    let qty = parseInt(document.getElementById('rame-qty')?.value || '1', 10);
+    if (!isFinite(qty) || qty < 1) qty = 1;
+    let currentLength = this.currentRameElements.reduce((s, e) => s + e.length, 0);
+    let added = 0;
+    for (let n = 0; n < qty; n++) {
+      if (currentLength + item.length > 750) break;
+      this.currentRameElements.push({ ...item, stockId: item.id });
+      currentLength += item.length;
+      added++;
+    }
+    if (added < qty) {
+      alert(added === 0
+        ? 'Longueur maximale de 750m atteinte !'
+        : `Longueur max 750m atteinte : ${added}/${qty} engin(s) ajouté(s).`);
+    }
     this.renderRameAssembly();
   }
 
