@@ -334,13 +334,13 @@ export class CargoTypeManager {
     return info?.loadingTime || 10;
   }
 
-  recordContract(cargoType, quantity, revenue) {
-    this.stats.totalContracts++;
+  recordContract(cargoType, quantity, revenue, countContract = true) {
+    if (countContract) this.stats.totalContracts++;
     this.stats.totalTonnage += quantity;
     this.stats.totalRevenue += revenue;
     const cat = this.getCategoryForType(cargoType) || 'other';
     if (!this.stats.byCategory[cat]) this.stats.byCategory[cat] = { contracts: 0, tonnage: 0, revenue: 0 };
-    this.stats.byCategory[cat].contracts++;
+    if (countContract) this.stats.byCategory[cat].contracts++;
     this.stats.byCategory[cat].tonnage += quantity;
     this.stats.byCategory[cat].revenue += revenue;
   }
