@@ -1,7 +1,7 @@
 import { SimulationEngine } from './engine.js?v=1779724771';
 import { World, createDefaultWorld } from './world.js?v=1779724771';
 import { Renderer } from './renderer.js?v=1779724771';
-import { UI } from './ui.js?v=1780600000';
+import { UI } from './ui.js?v=1780700000';
 import { Economy } from './economy.js?v=1780700000';
 import { IncidentManager } from './incidents.js?v=1779724771';
 import { FreightManager } from './freight.js?v=1780700000';

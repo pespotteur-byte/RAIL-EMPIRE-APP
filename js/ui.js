@@ -1539,29 +1539,48 @@ export class UI {
         ctx.fillText(st.name, p.x + 10, p.y + 4);
       }
 
-      // Draw route between selected stops (yellow)
+      // Draw the REAL route between consecutive stops (yellow), passing through
+      // waypoints. Mirrors the save-time routing priority so the preview equals
+      // the path the train will actually run.
       if (this.schedStops.length > 1) {
         ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
+        const drawGeom = (geom) => {
+          if (!geom || geom.length < 2) return false;
+          const step = Math.max(1, Math.floor(geom.length / 80));
+          ctx.beginPath();
+          const p0 = tileMap.worldToScreen(geom[0].lat, geom[0].lon, canvas.width, canvas.height);
+          ctx.moveTo(p0.x, p0.y);
+          for (let r = step; r < geom.length; r += step) {
+            const pr = tileMap.worldToScreen(geom[r].lat, geom[r].lon, canvas.width, canvas.height);
+            ctx.lineTo(pr.x, pr.y);
+          }
+          const pL = tileMap.worldToScreen(geom[geom.length - 1].lat, geom[geom.length - 1].lon, canvas.width, canvas.height);
+          ctx.lineTo(pL.x, pL.y);
+          ctx.stroke();
+          return true;
+        };
         for (let i = 0; i < this.schedStops.length - 1; i++) {
-          const sa = world.getStationById(this.schedStops[i].stationId);
-          const sb = world.getStationById(this.schedStops[i + 1].stationId);
-          if (!sa || !sb) continue;
-          const track = world.getTrackBetween(sa.id, sb.id);
-          if (track && track.route && track.route.length > 2) {
-            const step = Math.max(1, Math.floor(track.route.length / 80));
-            ctx.beginPath();
-            const p0 = tileMap.worldToScreen(track.route[0].lat, track.route[0].lon, canvas.width, canvas.height);
-            ctx.moveTo(p0.x, p0.y);
-            for (let r = step; r < track.route.length; r += step) {
-              const pr = tileMap.worldToScreen(track.route[r].lat, track.route[r].lon, canvas.width, canvas.height);
-              ctx.lineTo(pr.x, pr.y);
+          const stopA = this.schedStops[i], stopB = this.schedStops[i + 1];
+          const ca = this._getStopCoords(stopA), cb = this._getStopCoords(stopB);
+          if (!ca || !cb) continue;
+          // Priority 1: tronçon graph (exact player infrastructure, via waypoints)
+          let geom = null;
+          const trc = this.game.voiePointManager?.findTronconRoute(ca.lat, ca.lon, cb.lat, cb.lon);
+          if (trc && trc.route && trc.route.length >= 2) geom = trc.route;
+          // Priority 2: existing world track between two stations
+          if (!geom && stopA.stationId && stopB.stationId) {
+            const sa = world.getStationById(stopA.stationId), sb = world.getStationById(stopB.stationId);
+            if (sa && sb) {
+              const track = world.getTrackBetween(sa.id, sb.id);
+              if (track && track.route && track.route.length > 1) {
+                geom = (track.stationA !== sa.id) ? [...track.route].reverse() : track.route;
+              }
             }
-            const pL = tileMap.worldToScreen(track.route[track.route.length - 1].lat, track.route[track.route.length - 1].lon, canvas.width, canvas.height);
-            ctx.lineTo(pL.x, pL.y);
-            ctx.stroke();
-          } else {
-            const pa = tileMap.worldToScreen(sa.lat, sa.lon, canvas.width, canvas.height);
-            const pb = tileMap.worldToScreen(sb.lat, sb.lon, canvas.width, canvas.height);
+          }
+          // Priority 3: straight fallback
+          if (!drawGeom(geom)) {
+            const pa = tileMap.worldToScreen(ca.lat, ca.lon, canvas.width, canvas.height);
+            const pb = tileMap.worldToScreen(cb.lat, cb.lon, canvas.width, canvas.height);
             ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
           }
         }
@@ -1667,12 +1686,36 @@ export class UI {
     let schedDrag = false, schedDragStart = null, totalDragDist = 0;
 
     canvas.onmousedown = (e) => {
+      const x = e.offsetX, y = e.offsetY;
+      // Grab an existing waypoint marker to drag it (reshape the route)
+      let hit = null, hitD = Infinity;
+      for (let i = 0; i < this.schedStops.length; i++) {
+        const s = this.schedStops[i];
+        if (s.type !== 'waypoint' || !s.voiePointId) continue;
+        const c = this._getStopCoords(s);
+        if (!c) continue;
+        const p = tileMap.worldToScreen(c.lat, c.lon, canvas.width, canvas.height);
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < hitD && d < 10) { hitD = d; hit = { index: i, vpId: s.voiePointId }; }
+      }
+      if (hit) {
+        this._draggingWp = hit;
+        this._wpMoved = false;
+        schedDrag = false; schedDragStart = null; totalDragDist = 0;
+        return;
+      }
       schedDrag = true;
-      schedDragStart = { x: e.offsetX, y: e.offsetY };
+      schedDragStart = { x, y };
       totalDragDist = 0;
     };
 
     canvas.onmousemove = (e) => {
+      if (this._draggingWp) {
+        const w = tileMap.screenToWorld(e.offsetX, e.offsetY, canvas.width, canvas.height);
+        const vp = this.game.voiePointManager?.getVoiePointById(this._draggingWp.vpId);
+        if (vp) { vp.lat = w.lat; vp.lon = w.lon; this._wpMoved = true; requestDraw(); }
+        return;
+      }
       if (schedDrag && schedDragStart) {
         const dx = e.offsetX - schedDragStart.x;
         const dy = e.offsetY - schedDragStart.y;
@@ -1680,10 +1723,40 @@ export class UI {
         tileMap.pan(dx, dy);
         schedDragStart = { x: e.offsetX, y: e.offsetY };
         requestDraw();
+        return;
       }
+      // Hover feedback: grab cursor when over a draggable waypoint
+      let overWp = false;
+      for (const s of this.schedStops) {
+        if (s.type !== 'waypoint' || !s.voiePointId) continue;
+        const c = this._getStopCoords(s);
+        if (!c) continue;
+        const p = tileMap.worldToScreen(c.lat, c.lon, canvas.width, canvas.height);
+        if (Math.hypot(p.x - e.offsetX, p.y - e.offsetY) < 10) { overWp = true; break; }
+      }
+      canvas.style.cursor = overWp ? 'grab' : 'default';
     };
 
     canvas.onmouseup = (e) => {
+      if (this._draggingWp) {
+        const dw = this._draggingWp; this._draggingWp = null;
+        const vp = this.game.voiePointManager?.getVoiePointById(dw.vpId);
+        if (vp && this._wpMoved) {
+          const snapped = this._snapToTrack(vp.lat, vp.lon);
+          if (snapped) { vp.lat = snapped.lat; vp.lon = snapped.lon; }
+          const stop = this.schedStops[dw.index];
+          if (stop) stop.stationName = `Waypoint (${vp.lat.toFixed(4)}, ${vp.lon.toFixed(4)})`;
+          this.recalcStopsFrom(dw.index).then(() => {
+            this.renderSchedStops();
+            if (this._drawSchedMap) this._drawSchedMap();
+          });
+          this.game.saveState();
+        }
+        this._wpMoved = false;
+        if (this._drawSchedMap) this._drawSchedMap();
+        schedDrag = false; schedDragStart = null;
+        return;
+      }
       if (totalDragDist < 5) {
         const x = e.offsetX, y = e.offsetY;
 
@@ -2123,6 +2196,24 @@ export class UI {
       if (st) return { lat: st.lat, lon: st.lon };
     }
     return null;
+  }
+
+  // Snap a coordinate to the nearest tronçon route point (sync). Returns null
+  // if no track is within ~5 km. Used when a dragged waypoint is released so it
+  // sticks to the real rail, mirroring _addMapWaypoint's snapping.
+  _snapToTrack(lat, lon) {
+    const vpm = this.game.voiePointManager;
+    if (!vpm) return null;
+    let best = null, bestDist = Infinity;
+    const cosLat = Math.cos(lat * Math.PI / 180);
+    for (const trc of vpm.getAllTroncons()) {
+      if (!trc.route) continue;
+      for (const pt of trc.route) {
+        const d = Math.sqrt(Math.pow((pt.lat - lat) * 111, 2) + Math.pow((pt.lon - lon) * 111 * cosLat, 2));
+        if (d < bestDist) { bestDist = d; best = { lat: pt.lat, lon: pt.lon }; }
+      }
+    }
+    return (best && bestDist <= 5) ? best : null;
   }
 
   async _getSegmentTravelTime(prevStop, curStop, rameSpeed) {
