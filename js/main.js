@@ -4,7 +4,7 @@ import { Renderer } from './renderer.js?v=1779724771';
 import { UI } from './ui.js?v=1780600000';
 import { Economy } from './economy.js?v=1780600000';
 import { IncidentManager } from './incidents.js?v=1779724771';
-import { FreightManager } from './freight.js?v=1779724771';
+import { FreightManager } from './freight.js?v=1780700000';
 import { ScheduleManager } from './schedule.js?v=1779724771';
 import { GameStorage } from './storage.js?v=1779724771';
 import { AccountManager } from './account.js?v=1779724771';
@@ -562,7 +562,7 @@ class RailEmpire {
     }
 
     if (timeOfDay % 60 === 0) {
-      this.freightManager.maybeGenerate(this.world.stations, timeOfDay, this.cargoTypes);
+      this.freightManager.maybeGenerate(this.world.stations, timeOfDay, this.cargoTypes, this.industrialClients);
     }
 
     // Periodic canton cleanup every 5 in-game minutes to prevent memory leaks
