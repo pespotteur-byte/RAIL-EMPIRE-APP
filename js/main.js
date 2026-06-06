@@ -1,7 +1,7 @@
 import { SimulationEngine } from './engine.js?v=1779724771';
 import { World, createDefaultWorld } from './world.js?v=1779724771';
-import { Renderer } from './renderer.js?v=1779724771';
-import { UI } from './ui.js?v=1780700000';
+import { Renderer } from './renderer.js?v=1780800000';
+import { UI } from './ui.js?v=1780800000';
 import { Economy } from './economy.js?v=1780700000';
 import { IncidentManager } from './incidents.js?v=1779724771';
 import { FreightManager } from './freight.js?v=1780700000';
@@ -27,9 +27,9 @@ import { SeasonalSchedule } from './seasonal.js?v=1779724771';
 import { Connections } from './connections.js?v=1779724771';
 import { StationUpgrades } from './station-upgrades.js?v=1779724771';
 import { JunctionManager } from './junctions.js?v=1779724771';
-import { CargoTypeManager } from './cargo-types.js?v=1780700000';
+import { CargoTypeManager } from './cargo-types.js?v=1780800000';
 import { ITEModules } from './ite-modules.js?v=1779724771';
-import { IndustrialClients } from './industrial-clients.js?v=1779724771';
+import { IndustrialClients } from './industrial-clients.js?v=1780800000';
 import { ShuntingManager } from './shunting.js?v=1779724771';
 import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780600000';
 

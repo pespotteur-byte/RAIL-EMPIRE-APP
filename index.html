@@ -1033,7 +1033,45 @@
       </div>
     </div>
 
+    <!-- Modal: Créer un type de marchandise/cargo -->
+    <div id="modal-cargo-type" class="modal hidden">
+      <div class="modal-content" style="max-width:380px">
+        <button class="modal-close">&times;</button>
+        <h3>Créer un type de marchandise</h3>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select id="cargo-type-category" style="font-size:11px"></select>
+          </div>
+          <div class="form-group hidden" id="cargo-type-newcat-group">
+            <label>Nom de la nouvelle catégorie</label>
+            <input type="text" id="cargo-type-newcat" placeholder="Ex: Produits spéciaux" style="font-size:11px">
+          </div>
+          <div class="form-group">
+            <label>Nom de la marchandise</label>
+            <input type="text" id="cargo-type-name" placeholder="Ex: Hydrogène liquide" style="font-size:11px">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Unité</label>
+              <input type="text" id="cargo-type-unit" value="t" style="font-size:11px">
+            </div>
+            <div class="form-group">
+              <label>Prix / unité (€)</label>
+              <input type="number" id="cargo-type-price" value="0" min="0" style="font-size:11px">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px">
+              <input type="checkbox" id="cargo-type-hazard"> Matière dangereuse (TMD)
+            </label>
+          </div>
+          <button id="btn-save-cargo-type" class="btn-primary btn-full">Créer le type</button>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <script type="module" src="js/main.js?v=1780700000"></script>
+  <script type="module" src="js/main.js?v=1780800000"></script>
 </body>
 </html>

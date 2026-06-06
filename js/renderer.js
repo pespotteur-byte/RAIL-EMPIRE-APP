@@ -974,4 +974,19 @@ export class Renderer {
     }
     return null;
   }
+
+  // Hit-test an industry marker (uses the per-frame cached locations). Returns
+  // the nearest industry loc within the hit radius, or null.
+  getIndustryAt(x, y) {
+    const locs = this._indLocs;
+    if (!locs || locs.length === 0) return null;
+    const hitR = 'ontouchstart' in window ? 22 : 12;
+    let best = null, bestD = hitR;
+    for (const loc of locs) {
+      const p = this.latLonToScreen(loc.lat, loc.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestD) { bestD = d; best = loc; }
+    }
+    return best;
+  }
 }

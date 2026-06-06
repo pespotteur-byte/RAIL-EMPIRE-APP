@@ -132,6 +132,12 @@ export class UI {
         canvas.style.cursor = 'move';
         return;
       }
+      // Industry drag-to-move (shift+click)
+      if (e.shiftKey && this._hoveredIndustry) {
+        this._draggingIndustry = this._hoveredIndustry;
+        canvas.style.cursor = 'move';
+        return;
+      }
       this.isDragging = true;
       this.dragStart = { x: e.clientX, y: e.clientY };
       this.dragMoved = false;
@@ -156,6 +162,16 @@ export class UI {
         const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
         this._draggingVoiePoint.lat = worldPos.lat;
         this._draggingVoiePoint.lon = worldPos.lon;
+        return;
+      }
+      // Industry dragging (mutates the cached loc for live feedback)
+      if (this._draggingIndustry && this.game.renderer) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+        this._draggingIndustry.lat = worldPos.lat;
+        this._draggingIndustry.lon = worldPos.lon;
         return;
       }
       if (this.isDragging && this.game.renderer) {
@@ -183,6 +199,15 @@ export class UI {
       if (this._draggingVoiePoint) {
         this._draggingVoiePoint = null;
         canvas.style.cursor = 'grab';
+        this.game.saveState();
+        return;
+      }
+      // Finish industry drag — persist the new location
+      if (this._draggingIndustry) {
+        const ind = this._draggingIndustry;
+        this._draggingIndustry = null;
+        canvas.style.cursor = 'grab';
+        this.game.industrialClients.setLocationOverride(ind._key, ind.lat, ind.lon);
         this.game.saveState();
         return;
       }
@@ -367,6 +392,7 @@ export class UI {
   handleMapHover(x, y) {
     const renderer = this.game.renderer;
     if (!renderer) return;
+    this._hoveredIndustry = null;
     const tooltip = document.getElementById('tooltip');
     const station = renderer.getStationAt(x, y, this.game.world.stations);
     if (station) {
@@ -400,6 +426,19 @@ export class UI {
       }
     }
     this._hoveredVoiePoint = null;
+
+    // Industry markers (only interactive when the layer is shown)
+    if (document.getElementById('toggle-industries')?.checked) {
+      const ind = renderer.getIndustryAt(x, y);
+      if (ind) {
+        tooltip.innerHTML = `<div class="tt-name">${ind.name}</div><div class="tt-info">${ind.industryName}</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Shift+drag pour deplacer</div>`;
+        tooltip.style.left = (x + 15) + 'px';
+        tooltip.style.top = (y - 10) + 'px';
+        tooltip.classList.remove('hidden');
+        this._hoveredIndustry = ind;
+        return;
+      }
+    }
     tooltip.classList.add('hidden');
   }
 
@@ -5478,7 +5517,47 @@ export class UI {
     try {
       const container = document.getElementById('cargo-types-container');
       this.game.cargoTypes.render(container, this.game);
+      document.getElementById('btn-create-cargo-type')?.addEventListener('click', () => this.openCargoTypeModal());
     } catch(e) { console.warn('CargoTypes render error:', e); }
+  }
+
+  openCargoTypeModal() {
+    const modal = document.getElementById('modal-cargo-type');
+    if (!modal) return;
+    const catSel = document.getElementById('cargo-type-category');
+    if (catSel) {
+      catSel.innerHTML = Object.entries(this.game.cargoTypes.categories)
+        .map(([key, cat]) => `<option value="${key}">${cat.name}</option>`).join('')
+        + `<option value="__new__">+ Nouvelle catégorie…</option>`;
+    }
+    const newcatGroup = document.getElementById('cargo-type-newcat-group');
+    const toggleNewcat = () => { if (newcatGroup) newcatGroup.style.display = catSel.value === '__new__' ? 'block' : 'none'; };
+    if (catSel) catSel.onchange = toggleNewcat;
+    toggleNewcat();
+    this._setStockField('cargo-type-newcat', '');
+    this._setStockField('cargo-type-name', '');
+    this._setStockField('cargo-type-unit', 't');
+    this._setStockField('cargo-type-price', '0');
+    const hz = document.getElementById('cargo-type-hazard'); if (hz) hz.checked = false;
+    const saveBtn = document.getElementById('btn-save-cargo-type');
+    if (saveBtn) saveBtn.onclick = () => this.saveCargoType();
+    modal.classList.remove('hidden');
+  }
+
+  saveCargoType() {
+    const catSel = document.getElementById('cargo-type-category');
+    const res = this.game.cargoTypes.addCustomType({
+      categoryKey: catSel?.value,
+      categoryName: document.getElementById('cargo-type-newcat')?.value,
+      name: document.getElementById('cargo-type-name')?.value,
+      unit: document.getElementById('cargo-type-unit')?.value || 't',
+      pricePerUnit: document.getElementById('cargo-type-price')?.value,
+      hazard: document.getElementById('cargo-type-hazard')?.checked,
+    });
+    if (!res.ok) { alert(res.error || 'Erreur'); return; }
+    this.game.saveState();
+    document.getElementById('modal-cargo-type')?.classList.add('hidden');
+    this.renderCargoTypesPage();
   }
 
   // ==================== ITE MODULES ====================
