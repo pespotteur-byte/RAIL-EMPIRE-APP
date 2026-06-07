@@ -78,12 +78,7 @@ class Canton {
  * Higher speeds require longer blocks for safe braking distance.
  */
 function getBlockLength(speed) {
-  if (speed <= 60) return 0.4;
-  if (speed <= 80) return 0.6;
-  if (speed <= 120) return 0.8;
-  if (speed <= 160) return 1.0;
-  if (speed <= 220) return 1.5;
-  return 1.8;
+  return 0.8;
 }
 
 /**

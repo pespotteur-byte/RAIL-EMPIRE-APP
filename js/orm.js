@@ -790,13 +790,7 @@ export class ORMClient {
     let accDist = 0, lastSignalDist = 0;
     for (const seg of segments) {
       const speed = seg.maxSpeed;
-      let blockLength;
-      if (speed <= 60) blockLength = 0.4;
-      else if (speed <= 80) blockLength = 0.6;
-      else if (speed <= 120) blockLength = 0.8;
-      else if (speed <= 160) blockLength = 1.0;
-      else if (speed <= 220) blockLength = 1.5;
-      else blockLength = 1.8;
+      const blockLength = 0.8;
       accDist += seg.distance;
       while (accDist - lastSignalDist >= blockLength) {
         lastSignalDist += blockLength;
