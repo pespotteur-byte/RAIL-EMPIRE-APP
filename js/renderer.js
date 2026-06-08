@@ -62,10 +62,17 @@ export class Renderer {
         names: document.getElementById('toggle-station-names'),
         trains: document.getElementById('toggle-trains'),
         voie: document.getElementById('toggle-voie-points'),
+        orm: document.getElementById('toggle-orm'),
         radar: document.getElementById('toggle-radar'),
         satellite: document.getElementById('toggle-satellite'),
         clouds: document.getElementById('toggle-clouds'),
       };
+      if (this._toggleEls.orm) {
+        this._toggleEls.orm.addEventListener('change', () => {
+          this.tileMap.railEnabled = this._toggleEls.orm.checked;
+          this.tileMap.markDirty();
+        });
+      }
       if (this._toggleEls.radar) {
         this._toggleEls.radar.addEventListener('change', () => {
           this.tileMap.radarEnabled = this._toggleEls.radar.checked;

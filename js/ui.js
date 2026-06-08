@@ -311,9 +311,14 @@ export class UI {
       }
     });
 
-    // Escape key cancels pick-connection mode and voie point modes
+    // Escape key cancels pick-connection mode, creation modes, multi-creation, and closes modals
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        // Exit multi-creation mode
+        if (this._multiCreateMode) {
+          this._multiCreateMode = null;
+          document.querySelectorAll('.btn-map-action').forEach(b => b.classList.remove('multi-mode'));
+        }
         if (this._pickConnectionMode) {
           this._pickConnectionMode = false;
           this._hidePickHint();
@@ -321,16 +326,32 @@ export class UI {
           if (c) c.style.cursor = 'grab';
           document.getElementById('modal-station')?.classList.remove('hidden');
         }
+        if (this.stationCreationMode) this.toggleStationCreation();
         if (this.voiePointCreationMode) this.toggleVoiePointCreation();
         if (this.tronconCreationMode) this.toggleTronconCreation();
         if (this.manualTronconMode) this.toggleManualTronconCreation();
         if (this.tracerLigneMode) this.toggleTracerLigne();
+        // Close any open modal
+        const openModal = document.querySelector('.modal:not(.hidden)');
+        if (openModal) openModal.classList.add('hidden');
       }
-      if (e.key === 'Delete' && this._lastLineGroupId) {
-        const removed = this.game.voiePointManager.deleteLineGroup(this._lastLineGroupId);
-        this._lastLineGroupId = null;
-        this.game.saveState();
-        this._showPickHint(`Supprimé: ${removed} éléments. Cliquer pour un nouveau tracé ou Echap.`);
+      if (e.key === 'Delete') {
+        if (this._lastLineGroupId) {
+          const removed = this.game.voiePointManager.deleteLineGroup(this._lastLineGroupId);
+          this._lastLineGroupId = null;
+          this.game.saveState();
+          this._showPickHint(`Supprimé: ${removed} éléments. Cliquer pour un nouveau tracé ou Echap.`);
+        } else if (this._hoveredStation && this.activePage === 'map') {
+          if (confirm(`Supprimer la gare "${this._hoveredStation.name}" ?`)) {
+            this.game.world.removeStation(this._hoveredStation.id);
+            this._hoveredStation = null;
+            this.game.saveState();
+          }
+        } else if (this._hoveredVoiePoint && this.activePage === 'map') {
+          this.game.voiePointManager.remove(this._hoveredVoiePoint.id);
+          this._hoveredVoiePoint = null;
+          this.game.saveState();
+        }
       }
     });
 
@@ -458,14 +479,17 @@ export class UI {
     document.querySelectorAll('.modal-close').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.modal')?.classList.add('hidden'));
     });
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
-    });
+    // Modals do NOT close on outside click (player feedback)
   }
 
   // --- STATION CREATION ---
   toggleStationCreation() {
     this.stationCreationMode = !this.stationCreationMode;
+    if (!this.stationCreationMode && this._multiCreateMode === 'station') {
+      // Single click to deactivate clears multi-mode too
+      this._multiCreateMode = null;
+      document.getElementById('btn-create-station')?.classList.remove('multi-mode');
+    }
     const btn = document.getElementById('btn-create-station');
     if (btn) {
       btn.textContent = this.stationCreationMode ? '✕ Annuler' : '+ Creer une gare';
@@ -814,6 +838,10 @@ export class UI {
 
     document.getElementById('modal-station')?.classList.add('hidden');
     this.game.saveState();
+    // Multi-creation: re-enter station creation mode
+    if (this._multiCreateMode === 'station') {
+      setTimeout(() => this.toggleStationCreation(), 100);
+    }
   }
 
   _showPickHint(text) {
@@ -4387,8 +4415,18 @@ export class UI {
     document.getElementById('btn-create-voie-point')?.addEventListener('click', () => {
       this.toggleVoiePointCreation();
     });
+    document.getElementById('btn-create-voie-point')?.addEventListener('dblclick', () => {
+      this._multiCreateMode = 'voiepoint';
+      if (!this.voiePointCreationMode) this.toggleVoiePointCreation();
+      document.getElementById('btn-create-voie-point')?.classList.add('multi-mode');
+    });
     document.getElementById('btn-create-troncon')?.addEventListener('click', () => {
       this.toggleTronconCreation();
+    });
+    document.getElementById('btn-create-troncon')?.addEventListener('dblclick', () => {
+      this._multiCreateMode = 'troncon';
+      if (!this.tronconCreationMode) this.toggleTronconCreation();
+      document.getElementById('btn-create-troncon')?.classList.add('multi-mode');
     });
     document.getElementById('btn-create-troncon-manual')?.addEventListener('click', () => {
       this.toggleManualTronconCreation();
@@ -5531,7 +5569,7 @@ export class UI {
         + `<option value="__new__">+ Nouvelle catégorie…</option>`;
     }
     const newcatGroup = document.getElementById('cargo-type-newcat-group');
-    const toggleNewcat = () => { if (newcatGroup) newcatGroup.style.display = catSel.value === '__new__' ? 'block' : 'none'; };
+    const toggleNewcat = () => { if (newcatGroup) newcatGroup.classList.toggle('hidden', catSel.value !== '__new__'); };
     if (catSel) catSel.onchange = toggleNewcat;
     toggleNewcat();
     this._setStockField('cargo-type-newcat', '');
