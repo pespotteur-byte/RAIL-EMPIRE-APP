@@ -77,6 +77,17 @@ export class Economy {
     if (!service || !service.rame) return;
     if (distFromPrev <= 0 && !isFirst) return;
 
+    // Per-segment operating cost: energy + wear (charged each time the train stops)
+    if (!isFirst && distFromPrev > 0) {
+      const tonnage = service.rame.totalTonnage || 100;
+      // ~2€/km per tonne (energy + track access + wear), scaled down for gameplay
+      const opCost = Math.round(distFromPrev * tonnage * 0.5);
+      if (opCost > 0) {
+        this.addExpense(opCost, 'exploitation', `Trajet ${Math.round(distFromPrev)} km — ${service.name}`);
+        if (service.lineId) this.addLineExpense(service.lineId, opCost);
+      }
+    }
+
     const maxPax = service.rame.totalCapacity || 0;
     const maxFreight = service.rame.totalFreightCapacity || 0;
 

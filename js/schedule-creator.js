@@ -1314,25 +1314,35 @@ export class ActiveService {
       const isTerminus = this.currentStopIndex === lastArretIdx;
       // Compute distance from last 'arret' stop (sum all route segments since then)
       let distFromPrev = 0;
-      if (!isFirst && this.routes) {
-        // Find the previous 'arret' stop index
-        let prevArretIdx = this.currentStopIndex - 1;
-        while (prevArretIdx > 0 && stops[prevArretIdx]?.type !== 'arret') {
-          prevArretIdx--;
-        }
-        // Sum all route segments from prevArretIdx to currentStopIndex
-        for (let seg = prevArretIdx; seg < this.currentStopIndex; seg++) {
-          const routeIdx = this.isReturnLeg
-            ? this.routes.length - 1 - seg
-            : seg;
-          const route = this.routes[Math.max(0, Math.min(routeIdx, this.routes.length - 1))];
-          if (route && route.length >= 2) {
-            for (let k = 1; k < route.length; k++) {
-              distFromPrev += haversineDistance(route[k - 1].lat, route[k - 1].lon, route[k].lat, route[k].lon);
+      if (!isFirst) {
+        if (this.routes && this.routes.length > 0) {
+          // Find the previous 'arret' stop index
+          let prevArretIdx = this.currentStopIndex - 1;
+          while (prevArretIdx > 0 && stops[prevArretIdx]?.type !== 'arret') {
+            prevArretIdx--;
+          }
+          // Sum all route segments from prevArretIdx to currentStopIndex
+          for (let seg = prevArretIdx; seg < this.currentStopIndex; seg++) {
+            const routeIdx = this.isReturnLeg
+              ? this.routes.length - 1 - seg
+              : seg;
+            const route = this.routes[Math.max(0, Math.min(routeIdx, this.routes.length - 1))];
+            if (route && route.length >= 2) {
+              for (let k = 1; k < route.length; k++) {
+                distFromPrev += haversineDistance(route[k - 1].lat, route[k - 1].lon, route[k].lat, route[k].lon);
+              }
             }
           }
         }
-        if (distFromPrev <= 0) distFromPrev = 20; // fallback
+        // Fallback: haversine between previous and current station
+        if (distFromPrev <= 0) {
+          const prevStop = stops[this.currentStopIndex - 1];
+          const prevStation = prevStop?.stationId ? this.world?.getStationById(prevStop.stationId) : null;
+          if (prevStation && station) {
+            distFromPrev = haversineDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
+          }
+          if (distFromPrev <= 0) distFromPrev = 20; // ultimate fallback
+        }
       }
       economy.processStopRevenue(this, station.name, distFromPrev, isFirst, isTerminus);
     }
