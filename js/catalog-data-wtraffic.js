@@ -24930,7 +24930,7 @@ export function getWTrafficCatalog() {
       passengerCapacity: s.pax,
       freightCapacity: s.frt,
       length: s.l,
-      imageData: 'img/wt/' + path,
+      imageData: 'https://raw.githubusercontent.com/pespotteur-byte/RAIL-EMPIRE-APP/devin/1780231310-catalog-bb7200/img/wt/' + path,
       seriesName: s.s,
       numberStart: '',
       purchasePrice: s.px,
