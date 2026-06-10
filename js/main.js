@@ -33,6 +33,7 @@ import { IndustrialClients } from './industrial-clients.js?v=1780824000';
 import { ShuntingManager } from './shunting.js?v=1779724771';
 import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780600000';
 import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1780900000';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1780900000';
 
 class RailEmpire {
   constructor() {
@@ -225,6 +226,7 @@ class RailEmpire {
       const wt = getWTrafficCatalog();
       if (Array.isArray(wt)) allCatalog.push(...wt);
     } catch(e) { console.warn('WTraffic catalog load error:', e); }
+    if (Array.isArray(CATALOG_PACK_RE)) allCatalog.push(...CATALOG_PACK_RE);
     const existing = new Set(this.rollingStock.getAll().map(i => i.id));
     let added = 0;
     for (const entry of allCatalog) {
