@@ -32,6 +32,7 @@ import { ITEModules } from './ite-modules.js?v=1779724771';
 import { IndustrialClients } from './industrial-clients.js?v=1780824000';
 import { ShuntingManager } from './shunting.js?v=1779724771';
 import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780600000';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1780900000';
 
 class RailEmpire {
   constructor() {
@@ -218,11 +219,15 @@ class RailEmpire {
     if (Array.isArray(CATALOG_CARGO_TYPES) && this.cargoTypes?.ensureType) {
       for (const ct of CATALOG_CARGO_TYPES) this.cargoTypes.ensureType(ct.category, ct);
     }
-    // 2) Seed the rolling-stock entries.
-    if (!Array.isArray(CATALOG)) return;
+    // 2) Seed the rolling-stock entries (MLG + WTraffic).
+    const allCatalog = [...(Array.isArray(CATALOG) ? CATALOG : [])];
+    try {
+      const wt = getWTrafficCatalog();
+      if (Array.isArray(wt)) allCatalog.push(...wt);
+    } catch(e) { console.warn('WTraffic catalog load error:', e); }
     const existing = new Set(this.rollingStock.getAll().map(i => i.id));
     let added = 0;
-    for (const entry of CATALOG) {
+    for (const entry of allCatalog) {
       if (existing.has(entry.id)) continue;
       this.rollingStock.add({ ...entry, _catalog: true });
       added++;
