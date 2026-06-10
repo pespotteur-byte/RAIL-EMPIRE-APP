@@ -249,9 +249,9 @@ class RailEmpire {
     let allCatalog = [...(Array.isArray(CATALOG) ? CATALOG : [])];
     try {
       const wt = getWTrafficCatalog();
-      if (Array.isArray(wt)) allCatalog.push(...wt);
+      if (Array.isArray(wt)) allCatalog = allCatalog.concat(wt);
     } catch(e) { console.warn('WTraffic catalog load error:', e); }
-    if (Array.isArray(CATALOG_PACK_RE)) allCatalog.push(...CATALOG_PACK_RE);
+    if (Array.isArray(CATALOG_PACK_RE)) allCatalog = allCatalog.concat(CATALOG_PACK_RE);
     // 3) Apply admin overrides (modifications, deletions, imports published by admin)
     allCatalog = adminSync.applyCatalogOverrides(allCatalog);
     const existing = new Set(this.rollingStock.getAll().map(i => i.id));
