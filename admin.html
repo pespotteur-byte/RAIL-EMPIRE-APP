@@ -116,6 +116,8 @@ th:nth-child(12),td:nth-child(12){width:90px}
   <button class="btn btn-green" id="btn-export">Exporter JSON</button>
   <button class="btn btn-orange" id="btn-export-csv">Exporter CSV</button>
   <button class="btn btn-red" id="btn-delete-selected">Supprimer sélection</button>
+  <button class="btn btn-blue" id="btn-incidents" style="margin-left:8px">Incidents</button>
+  <button class="btn btn-green" id="btn-publish" style="font-weight:700">Publier pour tous</button>
   <a href="index.html" class="btn btn-ghost">Retour au jeu</a>
 </div>
 
@@ -231,6 +233,91 @@ th:nth-child(12),td:nth-child(12){width:90px}
     <div class="modal-actions">
       <button class="btn btn-ghost" id="import-cancel">Fermer</button>
       <button class="btn btn-green" id="import-confirm" style="display:none">Ajouter au catalogue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Incidents Modal -->
+<div class="modal-overlay" id="modal-incidents">
+  <div class="modal" style="width:800px">
+    <h2>Gestion des incidents</h2>
+    <p style="color:var(--text2);font-size:.85em;margin-bottom:12px">Créez des incidents qui apparaîtront aléatoirement chez les joueurs qui l'ont activé.</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-green" id="incident-add">+ Nouvel incident</button>
+    </div>
+    <div id="incidents-list" style="max-height:400px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="incidents-close">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Incident Edit Modal -->
+<div class="modal-overlay" id="modal-incident-edit">
+  <div class="modal" style="width:550px">
+    <h2 id="incident-edit-title">Nouvel incident</h2>
+    <div class="form-row">
+      <label>Nom <input type="text" id="inc-name" placeholder="Ex: Grève SNCF"></label>
+    </div>
+    <div class="form-row">
+      <label>Description <input type="text" id="inc-desc" placeholder="Ex: Perturbation du trafic pendant 2h"></label>
+    </div>
+    <div class="form-row">
+      <label>Effet
+        <select id="inc-effect">
+          <option value="speed_reduction">Réduction de vitesse (-50%)</option>
+          <option value="line_blocked">Ligne bloquée</option>
+          <option value="extra_cost">Surcoût (+30%)</option>
+          <option value="delay">Retards (+15 min)</option>
+          <option value="revenue_bonus">Bonus recette (+20%)</option>
+        </select>
+      </label>
+      <label>Sévérité
+        <select id="inc-severity">
+          <option value="low">Faible</option>
+          <option value="medium" selected>Moyenne</option>
+          <option value="high">Élevée</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-row">
+      <label>Durée (minutes) <input type="number" id="inc-duration" value="60" min="5" max="480"></label>
+      <label>Probabilité (%/heure) <input type="number" id="inc-probability" value="5" min="1" max="50"></label>
+    </div>
+    <div class="form-row">
+      <label>Heure début (0-23) <input type="number" id="inc-hour-start" value="6" min="0" max="23"></label>
+      <label>Heure fin (0-23) <input type="number" id="inc-hour-end" value="22" min="0" max="23"></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="incident-edit-cancel">Annuler</button>
+      <button class="btn btn-blue" id="incident-edit-save">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish / GitHub Token Modal -->
+<div class="modal-overlay" id="modal-publish">
+  <div class="modal" style="width:500px">
+    <h2>Publier les modifications</h2>
+    <p style="color:var(--text2);font-size:.85em;margin-bottom:12px">
+      Ceci va enregistrer tes modifications (catalogue + incidents) pour <b>tous les joueurs</b>.
+      Les joueurs verront les changements au prochain chargement du jeu.
+    </p>
+    <div id="publish-token-section">
+      <div class="form-row">
+        <label>Token GitHub (Personal Access Token)
+          <input type="password" id="gh-token" placeholder="ghp_xxxxx...">
+        </label>
+      </div>
+      <p style="color:var(--text2);font-size:.75em;margin-bottom:8px">
+        Le token est stocké uniquement dans TON navigateur. Les joueurs ne le verront jamais.
+        <a href="https://github.com/settings/tokens/new?scopes=repo&description=Rail+Empire+Admin" target="_blank" style="color:var(--blue)">Créer un token ici</a>
+      </p>
+    </div>
+    <div id="publish-status" style="display:none;padding:12px;border-radius:8px;margin-top:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="publish-cancel">Annuler</button>
+      <button class="btn btn-green" id="publish-confirm">Publier</button>
     </div>
   </div>
 </div>
@@ -739,6 +826,195 @@ document.addEventListener('keydown', e => {
 // Close modal clicking overlay
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+});
+
+// ============ INCIDENTS MANAGEMENT ============
+let incidents = JSON.parse(localStorage.getItem('admin_incidents') || '[]');
+let editingIncident = null;
+
+document.getElementById('btn-incidents').addEventListener('click', () => {
+  renderIncidentsList();
+  document.getElementById('modal-incidents').classList.add('active');
+});
+document.getElementById('incidents-close').addEventListener('click', () => document.getElementById('modal-incidents').classList.remove('active'));
+
+function renderIncidentsList() {
+  const list = document.getElementById('incidents-list');
+  if (incidents.length === 0) {
+    list.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px">Aucun incident créé. Clique sur "+ Nouvel incident" pour commencer.</p>';
+    return;
+  }
+  let html = '<table style="width:100%"><thead><tr><th>Nom</th><th>Effet</th><th>Sévérité</th><th>Durée</th><th>Prob.</th><th>Horaires</th><th>Actions</th></tr></thead><tbody>';
+  for (const inc of incidents) {
+    const effectLabels = {speed_reduction:'Vitesse -50%',line_blocked:'Ligne bloquée',extra_cost:'Surcoût +30%',delay:'Retard +15min',revenue_bonus:'Bonus +20%'};
+    const sevColors = {low:'var(--green)',medium:'var(--orange)',high:'var(--red)'};
+    html += `<tr>
+      <td><b>${inc.name}</b><br><span style="font-size:.75em;color:var(--text2)">${inc.description||''}</span></td>
+      <td>${effectLabels[inc.effect]||inc.effect}</td>
+      <td><span style="color:${sevColors[inc.severity]||'var(--text)'}">${inc.severity}</span></td>
+      <td>${inc.duration} min</td>
+      <td>${inc.probability}%/h</td>
+      <td>${inc.hourStart}h - ${inc.hourEnd}h</td>
+      <td>
+        <button class="btn btn-ghost" style="padding:3px 8px;font-size:.75em" onclick="window._editIncident('${inc.id}')">Modifier</button>
+        <button class="btn btn-red" style="padding:3px 8px;font-size:.75em" onclick="window._deleteIncident('${inc.id}')">Supprimer</button>
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  list.innerHTML = html;
+}
+
+document.getElementById('incident-add').addEventListener('click', () => {
+  editingIncident = null;
+  document.getElementById('incident-edit-title').textContent = 'Nouvel incident';
+  document.getElementById('inc-name').value = '';
+  document.getElementById('inc-desc').value = '';
+  document.getElementById('inc-effect').value = 'speed_reduction';
+  document.getElementById('inc-severity').value = 'medium';
+  document.getElementById('inc-duration').value = 60;
+  document.getElementById('inc-probability').value = 5;
+  document.getElementById('inc-hour-start').value = 6;
+  document.getElementById('inc-hour-end').value = 22;
+  document.getElementById('modal-incident-edit').classList.add('active');
+});
+
+window._editIncident = function(id) {
+  editingIncident = incidents.find(i => i.id === id);
+  if (!editingIncident) return;
+  document.getElementById('incident-edit-title').textContent = 'Modifier : ' + editingIncident.name;
+  document.getElementById('inc-name').value = editingIncident.name;
+  document.getElementById('inc-desc').value = editingIncident.description || '';
+  document.getElementById('inc-effect').value = editingIncident.effect;
+  document.getElementById('inc-severity').value = editingIncident.severity;
+  document.getElementById('inc-duration').value = editingIncident.duration;
+  document.getElementById('inc-probability').value = editingIncident.probability;
+  document.getElementById('inc-hour-start').value = editingIncident.hourStart;
+  document.getElementById('inc-hour-end').value = editingIncident.hourEnd;
+  document.getElementById('modal-incident-edit').classList.add('active');
+};
+
+window._deleteIncident = function(id) {
+  if (!confirm('Supprimer cet incident ?')) return;
+  incidents = incidents.filter(i => i.id !== id);
+  localStorage.setItem('admin_incidents', JSON.stringify(incidents));
+  renderIncidentsList();
+};
+
+document.getElementById('incident-edit-cancel').addEventListener('click', () => document.getElementById('modal-incident-edit').classList.remove('active'));
+document.getElementById('incident-edit-save').addEventListener('click', () => {
+  const name = document.getElementById('inc-name').value.trim();
+  if (!name) return alert('Le nom est obligatoire');
+  const data = {
+    name,
+    description: document.getElementById('inc-desc').value.trim(),
+    effect: document.getElementById('inc-effect').value,
+    severity: document.getElementById('inc-severity').value,
+    duration: +document.getElementById('inc-duration').value,
+    probability: +document.getElementById('inc-probability').value,
+    hourStart: +document.getElementById('inc-hour-start').value,
+    hourEnd: +document.getElementById('inc-hour-end').value,
+  };
+  if (editingIncident) {
+    Object.assign(editingIncident, data);
+  } else {
+    data.id = 'inc-' + Date.now();
+    incidents.push(data);
+  }
+  localStorage.setItem('admin_incidents', JSON.stringify(incidents));
+  document.getElementById('modal-incident-edit').classList.remove('active');
+  renderIncidentsList();
+});
+
+// ============ PUBLISH FOR ALL PLAYERS ============
+const REPO_OWNER = 'pespotteur-byte';
+const REPO_NAME = 'RAIL-EMPIRE-APP';
+const BRANCH = 'devin/1780231310-catalog-bb7200';
+const OVERRIDE_PATH = 'data/admin-overrides.json';
+
+document.getElementById('btn-publish').addEventListener('click', () => {
+  const savedToken = localStorage.getItem('admin_gh_token') || '';
+  document.getElementById('gh-token').value = savedToken;
+  document.getElementById('publish-status').style.display = 'none';
+  document.getElementById('modal-publish').classList.add('active');
+});
+document.getElementById('publish-cancel').addEventListener('click', () => document.getElementById('modal-publish').classList.remove('active'));
+
+document.getElementById('publish-confirm').addEventListener('click', async () => {
+  const token = document.getElementById('gh-token').value.trim();
+  if (!token) return alert('Token GitHub requis');
+  localStorage.setItem('admin_gh_token', token);
+  
+  const statusEl = document.getElementById('publish-status');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'rgba(59,130,246,.15)';
+  statusEl.style.color = 'var(--blue)';
+  statusEl.textContent = 'Préparation des données...';
+  
+  // Build override data
+  const mods = JSON.parse(localStorage.getItem('admin_catalog_mods') || '[]');
+  const deletedIds = JSON.parse(localStorage.getItem('admin_catalog_deleted') || '[]');
+  const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+  
+  const overrideData = {
+    version: Date.now(),
+    publishedAt: new Date().toISOString(),
+    modifications: mods,
+    deletions: deletedIds,
+    imports: imported.map(i => ({...i, imageData: undefined, _importBlob: undefined})),
+    incidents: incidents,
+  };
+  
+  const content = JSON.stringify(overrideData, null, 2);
+  const contentBase64 = btoa(unescape(encodeURIComponent(content)));
+  
+  try {
+    statusEl.textContent = 'Vérification du fichier existant...';
+    
+    // Check if file already exists to get its SHA
+    let sha = null;
+    try {
+      const check = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDE_PATH}?ref=${BRANCH}`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (check.ok) {
+        const data = await check.json();
+        sha = data.sha;
+      }
+    } catch(e) {}
+    
+    statusEl.textContent = 'Publication en cours...';
+    
+    const body = {
+      message: `[Admin] Mise à jour catalogue + incidents (${new Date().toLocaleString('fr-FR')})`,
+      content: contentBase64,
+      branch: BRANCH,
+    };
+    if (sha) body.sha = sha;
+    
+    const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDE_PATH}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Erreur GitHub API');
+    }
+    
+    statusEl.style.background = 'rgba(34,197,94,.15)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✓ Publié avec succès ! Les joueurs verront les changements au prochain chargement.';
+    
+  } catch(e) {
+    statusEl.style.background = 'rgba(239,68,68,.15)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = `Erreur : ${e.message}`;
+  }
 });
 
 // ============ INIT ============

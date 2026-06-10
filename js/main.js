@@ -34,6 +34,7 @@ import { ShuntingManager } from './shunting.js?v=1779724771';
 import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780600000';
 import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1780900000';
 import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1780900000';
+import { adminSync } from './admin-sync.js?v=1780900000';
 
 class RailEmpire {
   constructor() {
@@ -196,6 +197,30 @@ class RailEmpire {
 
     this.seedCatalog();
 
+    // Load admin overrides (async, non-blocking)
+    adminSync.loadOverrides().then(() => {
+      if (adminSync.loaded) {
+        // Re-seed catalog with overrides applied
+        this.seedCatalog();
+        // Start incident loop
+        adminSync.startIncidentLoop(() => new Date());
+      }
+    });
+
+    // Settings modal
+    this._setupSettings();
+
+    // Incident toast notifications
+    window.addEventListener('admin-incident', (e) => {
+      const inc = e.detail;
+      const toast = document.getElementById('incident-toast');
+      document.getElementById('incident-toast-title').textContent = inc.name;
+      document.getElementById('incident-toast-desc').textContent = inc.description || '';
+      document.getElementById('incident-toast-duration').textContent = `Durée : ${inc.duration} min`;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 8000);
+    });
+
     this.engine.paused = false;
     this.running = true;
     this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
@@ -221,12 +246,14 @@ class RailEmpire {
       for (const ct of CATALOG_CARGO_TYPES) this.cargoTypes.ensureType(ct.category, ct);
     }
     // 2) Seed the rolling-stock entries (MLG + WTraffic).
-    const allCatalog = [...(Array.isArray(CATALOG) ? CATALOG : [])];
+    let allCatalog = [...(Array.isArray(CATALOG) ? CATALOG : [])];
     try {
       const wt = getWTrafficCatalog();
       if (Array.isArray(wt)) allCatalog.push(...wt);
     } catch(e) { console.warn('WTraffic catalog load error:', e); }
     if (Array.isArray(CATALOG_PACK_RE)) allCatalog.push(...CATALOG_PACK_RE);
+    // 3) Apply admin overrides (modifications, deletions, imports published by admin)
+    allCatalog = adminSync.applyCatalogOverrides(allCatalog);
     const existing = new Set(this.rollingStock.getAll().map(i => i.id));
     let added = 0;
     for (const entry of allCatalog) {
@@ -235,6 +262,66 @@ class RailEmpire {
       added++;
     }
     if (added && this.ui) this.ui.renderStockList();
+  }
+
+  _setupSettings() {
+    const modal = document.getElementById('modal-settings');
+    const btnSettings = document.getElementById('btn-settings');
+    const nameInput = document.getElementById('settings-company-name');
+    const logoInput = document.getElementById('settings-logo-url');
+    const colorInput = document.getElementById('settings-company-color');
+    const incidentsToggle = document.getElementById('settings-incidents-enabled');
+    const saveBtn = document.getElementById('settings-save');
+
+    // Load saved settings
+    const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
+
+    btnSettings.addEventListener('click', () => {
+      nameInput.value = this.account.companyName || '';
+      logoInput.value = settings.logoUrl || '';
+      colorInput.value = settings.companyColor || '#3b82f6';
+      incidentsToggle.checked = settings.incidentsEnabled !== false;
+      modal.classList.remove('hidden');
+    });
+
+    modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+
+    saveBtn.addEventListener('click', () => {
+      const newName = nameInput.value.trim();
+      if (newName) {
+        this.account.companyName = newName;
+        document.getElementById('company-name').textContent = newName;
+      }
+      const logoUrl = logoInput.value.trim();
+      const color = colorInput.value;
+      const incEnabled = incidentsToggle.checked;
+
+      // Save settings
+      const s = { logoUrl, companyColor: color, incidentsEnabled: incEnabled };
+      localStorage.setItem('re_player_settings', JSON.stringify(s));
+
+      // Apply logo
+      const logoEl = document.getElementById('company-logo');
+      if (logoUrl) {
+        logoEl.src = logoUrl;
+        logoEl.style.display = 'inline-block';
+      } else {
+        logoEl.style.display = 'none';
+      }
+
+      // Apply incidents opt-in
+      adminSync.setOptIn(incEnabled);
+
+      modal.classList.add('hidden');
+      this.saveState();
+    });
+
+    // Apply logo on load if saved
+    if (settings.logoUrl) {
+      const logoEl = document.getElementById('company-logo');
+      logoEl.src = settings.logoUrl;
+      logoEl.style.display = 'inline-block';
+    }
   }
 
   async exportSaveFile() {
