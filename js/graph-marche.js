@@ -1,15 +1,13 @@
 /**
- * Graphique de Marche — Time-distance diagram for Rail Empire.
- * Records train positions and draws the classic railway operations chart.
- * Pure read-only module: observes game state, never modifies it.
+ * Graphique de Marche — JTTrainGraph-style time-distance diagram.
+ * Select station A and station B to see theoretical (from schedules)
+ * and live (real-time) train paths between those stations.
  */
 export class GraphMarche {
   constructor() {
-    // Buffer: { serviceId, time (minutes of day), km, name, color }
     this.records = [];
     this.maxRecords = 10000;
     this._lastRecordTime = -1;
-    // Service color assignments
     this._colorMap = {};
     this._colorIdx = 0;
     this._colors = [
@@ -17,193 +15,391 @@ export class GraphMarche {
       '#facc15', '#34d399', '#ec4899', '#06b6d4', '#84cc16',
       '#e879f9', '#fb923c', '#2dd4bf', '#f43f5e', '#818cf8',
     ];
-    // Selected line filter
-    this.selectedLineId = null;
+    this.stationAId = null;
+    this.stationBId = null;
+    this.mode = 'theoretical'; // 'theoretical' or 'live'
   }
 
-  /**
-   * Record current positions of all moving trains.
-   * Called from main.js tick() every in-game minute.
-   */
+  /** Record live train positions each minute */
   record(game, timeOfDay) {
-    // Record every minute
     if (timeOfDay === this._lastRecordTime) return;
     this._lastRecordTime = timeOfDay;
-
     const activeServices = game.scheduleCreator.getActiveServices();
     for (const svc of activeServices) {
-      if (svc.state !== 'moving' || !svc.train) continue;
-
-      // Filter by selected line if set
-      if (this.selectedLineId && svc.lineId !== this.selectedLineId) continue;
-
-      // Assign color
+      if (!svc.active || !svc.train) continue;
       if (!this._colorMap[svc.id]) {
         this._colorMap[svc.id] = this._colors[this._colorIdx % this._colors.length];
         this._colorIdx++;
       }
-
-      const km = svc.train.totalKmRun || 0;
-
+      // Record position + current stop info for live plotting
+      const stops = svc.getCurrentStops();
+      const curIdx = svc.currentStopIndex;
       this.records.push({
         serviceId: svc.id,
         name: svc.name,
         time: timeOfDay,
-        km: km,
+        lat: svc.position?.lat,
+        lon: svc.position?.lon,
+        stopIndex: curIdx,
+        totalStops: stops?.length || 0,
+        stops: stops?.map(s => s.stationId) || [],
         color: this._colorMap[svc.id],
+        state: svc.state,
       });
     }
-
-    // Cap buffer
-    while (this.records.length > this.maxRecords) {
-      this.records.splice(0, 500);
-    }
+    while (this.records.length > this.maxRecords) this.records.splice(0, 500);
   }
 
-  /**
-   * Render the graphique de marche into a container.
-   */
+  /** Get all stations referenced by any service */
+  _getServiceStations(game) {
+    const stationSet = new Set();
+    for (const svc of game.scheduleCreator.getActiveServices()) {
+      for (const stop of svc.stops) stationSet.add(stop.stationId);
+    }
+    return [...stationSet].map(id => game.world.getStationById(id)).filter(Boolean);
+  }
+
+  /** Find services that pass through both station A and B */
+  _findServicesThrough(game, stAId, stBId) {
+    const results = [];
+    for (const svc of game.scheduleCreator.getActiveServices()) {
+      const stops = svc.stops;
+      const idxA = stops.findIndex(s => s.stationId === stAId);
+      const idxB = stops.findIndex(s => s.stationId === stBId);
+      if (idxA >= 0 && idxB >= 0) {
+        results.push({ svc, idxA, idxB, direction: idxA < idxB ? 1 : -1 });
+      }
+    }
+    return results;
+  }
+
+  /** Build ordered station list between A and B from a service's stops */
+  _getStationsBetween(svc, idxA, idxB) {
+    const start = Math.min(idxA, idxB);
+    const end = Math.max(idxA, idxB);
+    return svc.stops.slice(start, end + 1);
+  }
+
+  /** Calculate cumulative distances between stations (using lat/lon) */
+  _calcDistances(stationStops, game) {
+    const dists = [0];
+    for (let i = 1; i < stationStops.length; i++) {
+      const prev = game.world.getStationById(stationStops[i - 1].stationId);
+      const curr = game.world.getStationById(stationStops[i].stationId);
+      if (!prev || !curr) { dists.push(dists[i - 1]); continue; }
+      const d = this._haversine(prev.lat, prev.lon, curr.lat, curr.lon);
+      dists.push(dists[i - 1] + d);
+    }
+    return dists;
+  }
+
+  _haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
   render(container, game) {
     if (!container) return;
 
-    const lines = game.lineManager.getAll();
-    const lineOptions = lines.map(l =>
-      `<option value="${l.id}" ${l.id === this.selectedLineId ? 'selected' : ''}>${l.name}</option>`
+    // Gather all stations used in services
+    const allStations = this._getServiceStations(game);
+    // Also add all world stations if no services yet
+    const worldStations = game.world.stations;
+    const stationMap = new Map();
+    for (const s of worldStations) stationMap.set(s.id, s);
+    for (const s of allStations) stationMap.set(s.id, s);
+    const sortedStations = [...stationMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+    const optionsHtml = sortedStations.map(s =>
+      `<option value="${s.id}">${s.name}</option>`
     ).join('');
 
     container.innerHTML = `
       <div class="dash-section">
         <h3>Graphique de Marche</h3>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-          <label style="font-size:11px;color:var(--text3)">Ligne :</label>
-          <select id="gm-line-select" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
-            <option value="">Toutes les lignes</option>
-            ${lineOptions}
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <label style="font-size:11px;color:var(--text3)">Gare A :</label>
+          <select id="gm-station-a" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;max-width:180px">
+            <option value="">-- Choisir --</option>
+            ${optionsHtml}
           </select>
-          <button id="gm-clear" class="btn-sm" style="font-size:9px;background:#334155">Effacer</button>
-          <span style="font-size:10px;color:var(--text3);margin-left:auto">Axe X = temps (hh:mm) · Axe Y = km parcourus</span>
+          <label style="font-size:11px;color:var(--text3)">Gare B :</label>
+          <select id="gm-station-b" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;max-width:180px">
+            <option value="">-- Choisir --</option>
+            ${optionsHtml}
+          </select>
+          <div style="display:flex;gap:4px;margin-left:8px">
+            <button id="gm-mode-theo" class="btn-sm" style="font-size:10px;padding:4px 10px;border-radius:4px">Théorique</button>
+            <button id="gm-mode-live" class="btn-sm" style="font-size:10px;padding:4px 10px;border-radius:4px">Live</button>
+          </div>
+          <button id="gm-clear" class="btn-sm" style="font-size:9px;background:#334155;margin-left:auto">Effacer live</button>
         </div>
-        <canvas id="gm-canvas" width="800" height="400" style="width:100%;max-width:100%;height:auto;border-radius:6px"></canvas>
+        <canvas id="gm-canvas" width="900" height="450" style="width:100%;max-width:100%;height:auto;border-radius:6px"></canvas>
       </div>
-
       <div class="dash-section">
-        <h3>L&eacute;gende</h3>
+        <h3>Légende</h3>
         <div id="gm-legend" style="display:flex;flex-wrap:wrap;gap:8px"></div>
       </div>
     `;
 
-    // Event handlers
-    document.getElementById('gm-line-select')?.addEventListener('change', (e) => {
-      this.selectedLineId = e.target.value || null;
-    });
+    // Restore selections
+    const selA = document.getElementById('gm-station-a');
+    const selB = document.getElementById('gm-station-b');
+    if (this.stationAId) selA.value = this.stationAId;
+    if (this.stationBId) selB.value = this.stationBId;
+
+    // Mode buttons
+    const btnTheo = document.getElementById('gm-mode-theo');
+    const btnLive = document.getElementById('gm-mode-live');
+    const updateModeUI = () => {
+      btnTheo.style.background = this.mode === 'theoretical' ? '#3b82f6' : '#334155';
+      btnTheo.style.color = this.mode === 'theoretical' ? '#fff' : '#94a3b8';
+      btnLive.style.background = this.mode === 'live' ? '#22c55e' : '#334155';
+      btnLive.style.color = this.mode === 'live' ? '#fff' : '#94a3b8';
+    };
+    updateModeUI();
+
+    btnTheo.addEventListener('click', () => { this.mode = 'theoretical'; updateModeUI(); this._draw(game); });
+    btnLive.addEventListener('click', () => { this.mode = 'live'; updateModeUI(); this._draw(game); });
+
+    selA.addEventListener('change', () => { this.stationAId = selA.value || null; this._draw(game); });
+    selB.addEventListener('change', () => { this.stationBId = selB.value || null; this._draw(game); });
+
     document.getElementById('gm-clear')?.addEventListener('click', () => {
       this.records = [];
       this._colorMap = {};
       this._colorIdx = 0;
-      this.render(container, game);
+      this._draw(game);
     });
 
-    this._drawChart();
-    this._drawLegend();
+    this._draw(game);
   }
 
-  _drawChart() {
+  _draw(game) {
     const canvas = document.getElementById('gm-canvas');
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
-    const pad = { top: 20, right: 20, bottom: 35, left: 55 };
+    const W = canvas.width, H = canvas.height;
+    const pad = { top: 20, right: 30, bottom: 35, left: 80 };
     const chartW = W - pad.left - pad.right;
     const chartH = H - pad.top - pad.bottom;
 
-    // Background
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, W, H);
 
-    if (this.records.length < 2) {
+    if (!this.stationAId || !this.stationBId) {
       ctx.fillStyle = '#64748b';
       ctx.font = '13px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('En attente de données... Les trains en circulation apparaîtront ici.', W / 2, H / 2);
+      ctx.fillText('Sélectionnez une Gare A et une Gare B pour afficher le graphique.', W / 2, H / 2);
+      this._drawLegend([]);
       return;
     }
 
-    // Find time and km ranges
-    const times = this.records.map(r => r.time);
-    let minTime = Math.min(...times);
-    let maxTime = Math.max(...times);
-    // Handle midnight crossing
-    if (maxTime - minTime > 720) {
-      // Normalize: shift values < 720 up by 1440
-      minTime = Math.min(...times.map(t => t < 720 ? t + 1440 : t));
-      maxTime = Math.max(...times.map(t => t < 720 ? t + 1440 : t));
+    if (this.stationAId === this.stationBId) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Les gares A et B doivent être différentes.', W / 2, H / 2);
+      this._drawLegend([]);
+      return;
     }
+
+    const matches = this._findServicesThrough(game, this.stationAId, this.stationBId);
+    if (matches.length === 0) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Aucun service ne relie ces deux gares.', W / 2, H / 2);
+      this._drawLegend([]);
+      return;
+    }
+
+    // Build station list from first match (longest path)
+    const ref = matches.reduce((best, m) => Math.abs(m.idxB - m.idxA) > Math.abs(best.idxB - best.idxA) ? m : best, matches[0]);
+    const refStops = this._getStationsBetween(ref.svc, ref.idxA, ref.idxB);
+    const refDists = this._calcDistances(refStops, game);
+    const totalDist = refDists[refDists.length - 1] || 1;
+
+    // Station labels on Y axis
+    const stationNames = refStops.map(s => {
+      const st = game.world.getStationById(s.stationId);
+      return st ? st.name : '?';
+    });
+
+    // Time range: 0-1440 (full day) or adapt to services
+    let minTime = 1440, maxTime = 0;
+    for (const m of matches) {
+      const start = Math.min(m.idxA, m.idxB);
+      const end = Math.max(m.idxA, m.idxB);
+      for (let i = start; i <= end; i++) {
+        const dep = m.svc.stops[i].departureTime ?? 0;
+        const arr = m.svc.stops[i].arrivalTime ?? dep;
+        if (dep < minTime) minTime = dep;
+        if (arr < minTime) minTime = arr;
+        if (dep > maxTime) maxTime = dep;
+        if (arr > maxTime) maxTime = arr;
+      }
+    }
+    // Add padding
+    minTime = Math.max(0, minTime - 30);
+    maxTime = Math.min(1440, maxTime + 30);
     const timeRange = maxTime - minTime || 1;
 
-    const maxKm = Math.max(...this.records.map(r => r.km), 1);
-
-    // Grid lines - time axis (every hour)
+    // Draw grid — Y axis (stations)
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 0.5;
-    const startHour = Math.floor(minTime / 60);
-    const endHour = Math.ceil(maxTime / 60);
-    for (let h = startHour; h <= endHour; h++) {
-      const t = h * 60;
-      const x = pad.left + ((t - minTime) / timeRange) * chartW;
-      if (x < pad.left || x > W - pad.right) continue;
-      ctx.beginPath();
-      ctx.moveTo(x, pad.top);
-      ctx.lineTo(x, H - pad.bottom);
-      ctx.stroke();
-
-      // Label
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      const displayH = h % 24;
-      ctx.fillText(`${String(displayH).padStart(2, '0')}:00`, x, H - 8);
-    }
-
-    // Grid lines - km axis
-    const kmStep = maxKm > 200 ? 50 : maxKm > 100 ? 20 : maxKm > 50 ? 10 : 5;
-    for (let km = 0; km <= maxKm; km += kmStep) {
-      const y = pad.top + chartH - (km / maxKm) * chartH;
-      ctx.strokeStyle = '#1e293b';
+    for (let i = 0; i < refStops.length; i++) {
+      const y = pad.top + (refDists[i] / totalDist) * chartH;
       ctx.beginPath();
       ctx.moveTo(pad.left, y);
       ctx.lineTo(W - pad.right, y);
       ctx.stroke();
-
+      // Station name
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '10px sans-serif';
+      ctx.font = '9px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(`${km} km`, pad.left - 5, y + 4);
+      const name = stationNames[i].length > 12 ? stationNames[i].substring(0, 11) + '…' : stationNames[i];
+      ctx.fillText(name, pad.left - 4, y + 3);
     }
 
-    // Draw traces per service
-    const byService = {};
-    for (const r of this.records) {
-      if (!byService[r.serviceId]) byService[r.serviceId] = [];
-      byService[r.serviceId].push(r);
-    }
-
-    for (const [, recs] of Object.entries(byService)) {
-      if (recs.length < 2) continue;
-      ctx.strokeStyle = recs[0].color;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      let started = false;
-      for (const r of recs) {
-        let t = r.time;
-        if (t < 720 && maxTime > 1440) t += 1440;
+    // Draw grid — X axis (time, every 30 min)
+    const startHour = Math.floor(minTime / 60);
+    const endHour = Math.ceil(maxTime / 60);
+    for (let h = startHour; h <= endHour; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        const t = h * 60 + m;
+        if (t < minTime || t > maxTime) continue;
         const x = pad.left + ((t - minTime) / timeRange) * chartW;
-        const y = pad.top + chartH - (r.km / maxKm) * chartH;
-        if (!started) { ctx.moveTo(x, y); started = true; }
-        else ctx.lineTo(x, y);
+        ctx.strokeStyle = m === 0 ? '#1e293b' : 'rgba(30,41,59,0.5)';
+        ctx.lineWidth = m === 0 ? 0.8 : 0.3;
+        ctx.beginPath();
+        ctx.moveTo(x, pad.top);
+        ctx.lineTo(x, H - pad.bottom);
+        ctx.stroke();
+        if (m === 0) {
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${String(h % 24).padStart(2, '0')}:00`, x, H - 8);
+        }
       }
-      ctx.stroke();
+    }
+
+    // Axis border
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pad.left, pad.top, chartW, chartH);
+
+    const legendItems = [];
+
+    if (this.mode === 'theoretical') {
+      // Draw theoretical sillons from schedule times
+      for (const m of matches) {
+        const start = Math.min(m.idxA, m.idxB);
+        const end = Math.max(m.idxA, m.idxB);
+        const color = this._getSvcColor(m.svc.id);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        for (let i = start; i <= end; i++) {
+          const stop = m.svc.stops[i];
+          // Find this station in our ref list
+          const refIdx = refStops.findIndex(rs => rs.stationId === stop.stationId);
+          if (refIdx < 0) continue;
+          const dist = refDists[refIdx];
+          const y = pad.top + (dist / totalDist) * chartH;
+
+          const arr = stop.arrivalTime ?? stop.departureTime ?? 0;
+          const dep = stop.departureTime ?? arr;
+
+          // Arrival point
+          const xArr = pad.left + ((arr - minTime) / timeRange) * chartW;
+          if (!started) { ctx.moveTo(xArr, y); started = true; }
+          else ctx.lineTo(xArr, y);
+
+          // If dwell time (arr != dep), draw horizontal line
+          if (dep !== arr) {
+            const xDep = pad.left + ((dep - minTime) / timeRange) * chartW;
+            ctx.lineTo(xDep, y);
+          }
+        }
+        ctx.stroke();
+
+        // Station dots
+        for (let i = start; i <= end; i++) {
+          const stop = m.svc.stops[i];
+          const refIdx = refStops.findIndex(rs => rs.stationId === stop.stationId);
+          if (refIdx < 0) continue;
+          const dist = refDists[refIdx];
+          const y = pad.top + (dist / totalDist) * chartH;
+          const dep = stop.departureTime ?? stop.arrivalTime ?? 0;
+          const x = pad.left + ((dep - minTime) / timeRange) * chartW;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        legendItems.push({ name: m.svc.name, color });
+      }
+    } else {
+      // Live mode — plot recorded positions for services passing through A-B
+      const serviceIds = new Set(matches.map(m => m.svc.id));
+      const byService = {};
+      for (const r of this.records) {
+        if (!serviceIds.has(r.serviceId)) continue;
+        if (!byService[r.serviceId]) byService[r.serviceId] = [];
+        byService[r.serviceId].push(r);
+      }
+
+      // For each service, interpolate position to distance along route
+      for (const m of matches) {
+        const recs = byService[m.svc.id];
+        if (!recs || recs.length < 2) continue;
+        const start = Math.min(m.idxA, m.idxB);
+        const end = Math.max(m.idxA, m.idxB);
+        // Build station coords for distance interpolation
+        const routeCoords = [];
+        for (let i = start; i <= end; i++) {
+          const st = game.world.getStationById(m.svc.stops[i].stationId);
+          const refIdx = refStops.findIndex(rs => rs.stationId === m.svc.stops[i].stationId);
+          if (st && refIdx >= 0) routeCoords.push({ lat: st.lat, lon: st.lon, dist: refDists[refIdx] });
+        }
+
+        const color = this._getSvcColor(m.svc.id);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        let started = false;
+        for (const r of recs) {
+          if (r.lat == null || r.lon == null) continue;
+          if (r.time < minTime || r.time > maxTime) continue;
+          // Find closest segment and interpolate distance
+          const dist = this._interpolateDist(r.lat, r.lon, routeCoords);
+          if (dist === null) continue;
+          const x = pad.left + ((r.time - minTime) / timeRange) * chartW;
+          const y = pad.top + (dist / totalDist) * chartH;
+          if (!started) { ctx.moveTo(x, y); started = true; }
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        legendItems.push({ name: m.svc.name + ' (live)', color });
+      }
+
+      if (legendItems.length === 0) {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('En attente de données live... Les trains en circulation apparaîtront ici.', W / 2, H / 2);
+      }
     }
 
     // Axis labels
@@ -214,25 +410,53 @@ export class GraphMarche {
     ctx.save();
     ctx.translate(12, H / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Distance (km)', 0, 0);
+    ctx.fillText('Gares (distance)', 0, 0);
     ctx.restore();
+
+    this._drawLegend(legendItems);
   }
 
-  _drawLegend() {
+  _interpolateDist(lat, lon, routeCoords) {
+    if (routeCoords.length < 2) return null;
+    let bestDist = Infinity, bestVal = null;
+    for (let i = 0; i < routeCoords.length - 1; i++) {
+      const a = routeCoords[i], b = routeCoords[i + 1];
+      // Project point onto segment a-b
+      const dx = b.lat - a.lat, dy = b.lon - a.lon;
+      const len2 = dx * dx + dy * dy;
+      let t = len2 > 0 ? ((lat - a.lat) * dx + (lon - a.lon) * dy) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      const projLat = a.lat + t * dx, projLon = a.lon + t * dy;
+      const d = Math.hypot(lat - projLat, lon - projLon);
+      if (d < bestDist) {
+        bestDist = d;
+        bestVal = a.dist + t * (b.dist - a.dist);
+      }
+    }
+    return bestVal;
+  }
+
+  _getSvcColor(id) {
+    if (!this._colorMap[id]) {
+      this._colorMap[id] = this._colors[this._colorIdx % this._colors.length];
+      this._colorIdx++;
+    }
+    return this._colorMap[id];
+  }
+
+  _drawLegend(items) {
     const legendEl = document.getElementById('gm-legend');
     if (!legendEl) return;
-
-    const seen = new Set();
-    let html = '';
-    for (const r of this.records) {
-      if (seen.has(r.serviceId)) continue;
-      seen.add(r.serviceId);
-      html += `<div style="display:flex;align-items:center;gap:4px;font-size:11px">
-        <div style="width:12px;height:3px;background:${r.color};border-radius:1px"></div>
-        <span>${r.name}</span>
-      </div>`;
+    if (!items || items.length === 0) {
+      legendEl.innerHTML = '<span style="color:var(--text3);font-size:11px">Aucun train à afficher</span>';
+      return;
     }
-    legendEl.innerHTML = html || '<span style="color:var(--text3);font-size:11px">Aucun train enregistré</span>';
+    legendEl.innerHTML = items.map(it =>
+      `<div style="display:flex;align-items:center;gap:4px;font-size:11px">
+        <div style="width:14px;height:3px;background:${it.color};border-radius:1px"></div>
+        <span>${it.name}</span>
+      </div>`
+    ).join('');
   }
 
   toSave() {
@@ -240,6 +464,9 @@ export class GraphMarche {
       records: this.records.slice(-this.maxRecords),
       colorMap: this._colorMap,
       colorIdx: this._colorIdx,
+      stationAId: this.stationAId,
+      stationBId: this.stationBId,
+      mode: this.mode,
     };
   }
 
@@ -248,5 +475,8 @@ export class GraphMarche {
     this.records = s.records || [];
     this._colorMap = s.colorMap || {};
     this._colorIdx = s.colorIdx || 0;
+    this.stationAId = s.stationAId || null;
+    this.stationBId = s.stationBId || null;
+    this.mode = s.mode || 'theoretical';
   }
 }
