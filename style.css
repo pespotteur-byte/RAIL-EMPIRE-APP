@@ -69,9 +69,33 @@ header {
 .nav-tabs::-webkit-scrollbar-track { background: var(--bg); border-radius: 5px; }
 .nav-tabs::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 5px; border: 2px solid var(--bg); }
 .nav-tabs::-webkit-scrollbar-thumb:hover { background: #64748b; }
-.nav-btn { padding: 6px 12px; background: rgba(30,41,59,0.6); border: 1px solid transparent; color: var(--text3); cursor: pointer; font-size: 11px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; transition: all 0.15s ease; font-weight: 500; }
-.nav-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border-color: transparent; box-shadow: 0 2px 8px rgba(59,130,246,0.3); font-weight: 600; }
-.nav-btn:hover:not(.active) { background: var(--bg3); color: var(--text); border-color: var(--border); transform: translateY(-1px); }
+.nav-btn { padding: 6px 12px; background: rgba(30,41,59,0.6); border: 1px solid transparent; color: var(--text3); cursor: pointer; font-size: 11px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; transition: all 0.15s ease; font-weight: 500; border-left: 3px solid var(--nav-color, transparent); }
+.nav-btn.active { background: linear-gradient(135deg, var(--nav-color, #3b82f6), color-mix(in srgb, var(--nav-color, #3b82f6) 80%, #000)); color: #fff; border-color: transparent; border-left-color: transparent; box-shadow: 0 2px 8px rgba(0,0,0,0.25); font-weight: 600; }
+.nav-btn:hover:not(.active) { background: var(--bg3); color: var(--text); border-color: var(--border); border-left-color: var(--nav-color, var(--border)); transform: translateY(-1px); }
+/* Nav button colors */
+.nav-btn[data-page="map"]{ --nav-color: #3b82f6; }
+.nav-btn[data-page="rolling-stock"]{ --nav-color: #ef4444; }
+.nav-btn[data-page="rames"]{ --nav-color: #f97316; }
+.nav-btn[data-page="schedules"]{ --nav-color: #eab308; }
+.nav-btn[data-page="lines"]{ --nav-color: #22c55e; }
+.nav-btn[data-page="depots"]{ --nav-color: #14b8a6; }
+.nav-btn[data-page="incidents"]{ --nav-color: #dc2626; }
+.nav-btn[data-page="economy"]{ --nav-color: #10b981; }
+.nav-btn[data-page="infogare"]{ --nav-color: #06b6d4; }
+.nav-btn[data-page="dashboard"]{ --nav-color: #8b5cf6; }
+.nav-btn[data-page="graph-marche"]{ --nav-color: #a855f7; }
+.nav-btn[data-page="staff"]{ --nav-color: #ec4899; }
+.nav-btn[data-page="bank"]{ --nav-color: #84cc16; }
+.nav-btn[data-page="weather"]{ --nav-color: #38bdf8; }
+.nav-btn[data-page="unions"]{ --nav-color: #f43f5e; }
+.nav-btn[data-page="seasonal"]{ --nav-color: #fb923c; }
+.nav-btn[data-page="connections"]{ --nav-color: #2dd4bf; }
+.nav-btn[data-page="station-upgrades"]{ --nav-color: #c084fc; }
+.nav-btn[data-page="junctions"]{ --nav-color: #fbbf24; }
+.nav-btn[data-page="cargo-types"]{ --nav-color: #f87171; }
+.nav-btn[data-page="ite-modules"]{ --nav-color: #34d399; }
+.nav-btn[data-page="industrial-clients"]{ --nav-color: #818cf8; }
+.nav-btn[data-page="shunting"]{ --nav-color: #fb7185; }
 .header-right { display: flex; align-items: center; gap: 8px; font-size: 12px; flex-shrink: 0; }
 .balance { color: var(--green); font-weight: 700; white-space: nowrap; }
 .btn-header { background: transparent; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 14px; padding: 4px 8px; line-height: 1; color: #fff; filter: grayscale(1) brightness(2); }
@@ -411,10 +435,10 @@ header {
 .line-stop-tag { background: var(--bg3); color: var(--text); font-size: 10px; padding: 2px 6px; border-radius: 3px; }
 
 /* MAP SEARCH */
-.map-search { position: absolute; top: 8px; right: 8px; z-index: 10; width: 220px; }
+.map-search { position: absolute; bottom: 12px; right: 8px; z-index: 10; width: 220px; }
 .map-search input { width: 100%; padding: 6px 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 11px; }
 .map-search input::placeholder { color: var(--text3); }
-.map-search-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 0 0 4px 4px; max-height: 200px; overflow-y: auto; }
+.map-search-results { position: absolute; bottom: 100%; left: 0; right: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px 4px 0 0; max-height: 200px; overflow-y: auto; }
 .map-search-results.hidden { display: none; }
 .map-search-result { padding: 6px 10px; font-size: 11px; cursor: pointer; border-bottom: 1px solid var(--bg3); }
 .map-search-result:hover { background: var(--bg3); }
