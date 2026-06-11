@@ -103,12 +103,18 @@ export class Renderer {
     }
     const showIndustries = this._toggleEls.industries?.checked === true;
 
+    // Zones toggle (signal boxes + regulation zones)
+    if (!this._toggleEls.zones) {
+      this._toggleEls.zones = document.getElementById('toggle-zones');
+    }
+    const showZones = this._toggleEls.zones?.checked !== false;
+
     // Draw static layers directly to main ctx (tracks ~3ms, stations ~0.2ms = fast)
     this.drawTracks(ctx, world, lineManager);
     if (showStations) this.drawStations(ctx, world, platformManager, showNames);
     this.drawDepots(ctx, world, depotManager);
-    this.drawSignalBoxes(ctx);
-    this.drawRegulationZones(ctx);
+    if (showZones) this.drawSignalBoxes(ctx);
+    if (showZones) this.drawRegulationZones(ctx);
     if (showVoiePoints && voiePointManager) {
       this.drawVoieTroncons(ctx, voiePointManager, world);
       this.drawVoiePoints(ctx, voiePointManager);
