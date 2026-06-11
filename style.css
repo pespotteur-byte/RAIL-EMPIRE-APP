@@ -96,12 +96,14 @@ header {
 .nav-btn[data-page="ite-modules"]{ --nav-color: #1d8de5; }
 .nav-btn[data-page="industrial-clients"]{ --nav-color: #0ea5e9; }
 .nav-btn[data-page="shunting"]{ --nav-color: #38bdf8; }
+.header-brand { color: rgba(59,130,246,0.98); font-weight: 700; font-size: 11px; white-space: nowrap; text-shadow: 0 0 6px rgba(59,130,246,0.2); -webkit-text-stroke: 0.3px rgba(255,255,255,0.98); }
+.header-brand-version { font-size: 9px; color: rgba(255,255,255,0.7); -webkit-text-stroke: 0; }
 .header-right { display: flex; align-items: center; gap: 8px; font-size: 12px; flex-shrink: 0; }
 .balance { color: var(--green); font-weight: 700; white-space: nowrap; }
 .btn-header { background: transparent; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 14px; padding: 4px 8px; line-height: 1; color: #fff; filter: grayscale(1) brightness(2); }
 .btn-header:hover { background: var(--bg3); filter: none; }
 .clock { color: var(--orange); font-weight: 700; font-size: 14px; }
-.date { color: var(--text3); font-size: 11px; }
+.date { color: rgba(255,255,255,0.98); font-size: 11px; }
 
 /* ALERT BANNERS - Dual system */
 .alert-banner { padding: 4px 12px; font-size: 11px; font-weight: 600; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
