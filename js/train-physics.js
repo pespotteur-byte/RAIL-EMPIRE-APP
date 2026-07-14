@@ -160,6 +160,7 @@ export function simulateProfile(segments, params = {}) {
         let d = dist;
         for (let j = i; j < N && d < dist + L; j++) {
           holdUntilDist[j] = Math.max(holdUntilDist[j], oldLimit); // store old cap
+          d += cells[j].ds;
         }
       }
       dist += cells[i].ds;

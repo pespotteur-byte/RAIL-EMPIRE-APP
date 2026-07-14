@@ -2335,7 +2335,7 @@ export class UI {
     return (best && bestDist <= 5) ? best : null;
   }
 
-  async _getSegmentTravelTime(prevStop, curStop, rameSpeed) {
+  async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null) {
     const prevCoords = this._getStopCoords(prevStop);
     const curCoords = this._getStopCoords(curStop);
     if (!prevCoords || !curCoords) return 15;
@@ -2374,7 +2374,7 @@ export class UI {
       const prevStop = this.schedStops[i - 1];
       const curStop = this.schedStops[i];
 
-      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed);
+      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame);
 
       curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
       curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
