@@ -308,17 +308,17 @@
 ## NAV — CONSOLIDATION DES PAGES  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| NAV-01 | Fusion Finances → Dashboard | P1 | A1.1/A1.2 | [ ] |
-| NAV-02 | Fusion Banque → Dashboard | P1 | A1.2 | [ ] |
-| NAV-03 | Fusion Syndicats → Personnel | P1 | A1.2 | [ ] |
-| NAV-04 | Fusion Saisons → Météo | P1 | A1.2 | [ ] |
-| NAV-05 | Suppression page Correspondances | P1 | A1.2 | [ ] |
-| NAV-06 | Suppression page Gares+ (fonction relogée dans détail gare) | P1 | A1.2 | [ ] |
-| NAV-07 | Suppression page Aiguillages (logique → graphe orienté) | P1 | A1.2 | [ ] |
-| NAV-08 | Suppression page ITE+ (doublon Dépôts/ITE) | P1 | A1.2 | [ ] |
-| NAV-09 | Suppression page Triage (lieu conservé via ORM service=yard) | P1 | A1.2, A2.2 | [ ] |
-| NAV-10 | Barre de nav cible = 15 pages (au lieu de ~26) | P1 | A1.1 | [ ] |
-| NAV-11 | Incidents CONSERVÉE (page), seule la création manuelle supprimée | P1 | A2.1 | [ ] |
+| NAV-01 | Fusion Finances → Dashboard | P1 | A1.1/A1.2 | [x] PR6 (sous-onglet Finances sous Dashboard) |
+| NAV-02 | Fusion Banque → Dashboard | P1 | A1.2 | [x] PR6 (sous-onglet Banque sous Dashboard) |
+| NAV-03 | Fusion Syndicats → Personnel | P1 | A1.2 | [x] PR6 (sous-onglet Syndicats sous Personnel) |
+| NAV-04 | Fusion Saisons → Météo | P1 | A1.2 | [x] PR6 (sous-onglet Saisons sous Météo) |
+| NAV-05 | Suppression page Correspondances | P1 | A1.2 | [x] PR6 (bouton nav retiré) |
+| NAV-06 | Suppression page Gares+ (fonction relogée dans détail gare) | P1 | A1.2 | [x] PR6 (bouton nav retiré ; page atteignable via détail gare) |
+| NAV-07 | Suppression page Aiguillages (logique → graphe orienté) | P1 | A1.2 | [x] PR6 (bouton nav retiré) |
+| NAV-08 | Suppression page ITE+ (doublon Dépôts/ITE) | P1 | A1.2 | [x] PR6 (bouton nav retiré) |
+| NAV-09 | Suppression page Triage (lieu conservé via ORM service=yard) | P1 | A1.2, A2.2 | [x] PR6 (bouton nav retiré ; lieu ORM conservé) |
+| NAV-10 | Barre de nav cible = 15 pages (au lieu de ~26) | P1 | A1.1 | [x] PR6 (24 → 14 boutons de nav) |
+| NAV-11 | Incidents CONSERVÉE (page), seule la création manuelle supprimée | P1 | A2.1 | [x] page Incidents conservée dans la nav |
 
 ## SAV — SAUVEGARDE  (P0)
 | ID | Exigence | Prio | Source | Statut |

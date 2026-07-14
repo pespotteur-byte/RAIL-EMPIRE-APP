@@ -2,6 +2,17 @@
 const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b' };
 const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux' };
 
+// NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
+// contenu mais sont regroupées sous une page parente via des sous-onglets.
+// child -> parent (le bouton de nav du parent reste actif sur l'enfant).
+const PAGE_PARENT = { economy: 'dashboard', bank: 'dashboard', unions: 'staff', seasonal: 'weather' };
+// Groupes de sous-onglets injectés en tête des pages membres.
+const PAGE_GROUPS = [
+  [['dashboard', 'Dashboard'], ['economy', 'Finances'], ['bank', 'Banque']],
+  [['staff', 'Personnel'], ['unions', 'Syndicats']],
+  [['weather', 'Météo'], ['seasonal', 'Saisons']],
+];
+
 export class UI {
   constructor(game) {
     this.game = game;
@@ -85,12 +96,36 @@ export class UI {
         try { this.game.tutorial.start(this.game); } catch(e) { console.warn('Tutorial error:', e); }
       });
     }
+
+    this._setupPageGroups();
+  }
+
+  // NAV-01/02/03/04 — injecte une barre de sous-onglets en tête de chaque page
+  // membre d'un groupe fusionné, pour naviguer entre parent et enfants.
+  _setupPageGroups() {
+    for (const tabs of PAGE_GROUPS) {
+      const barHtml = `<div class="subnav">${tabs
+        .map(([p, l]) => `<button class="subnav-btn" data-page="${p}">${l}</button>`)
+        .join('')}</div>`;
+      for (const [pageId] of tabs) {
+        const pageEl = document.getElementById(`page-${pageId}`);
+        if (pageEl && !pageEl.querySelector(':scope > .subnav')) {
+          pageEl.insertAdjacentHTML('afterbegin', barHtml);
+        }
+      }
+    }
+    document.querySelectorAll('.subnav-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.switchPage(btn.dataset.page));
+    });
   }
 
   switchPage(page) {
     this.activePage = page;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.nav-btn[data-page="${page}"]`)?.classList.add('active');
+    // NAV — un enfant fusionné garde le bouton de nav de son parent actif.
+    const navKey = PAGE_PARENT[page] || page;
+    document.querySelector(`.nav-btn[data-page="${navKey}"]`)?.classList.add('active');
+    document.querySelectorAll('.subnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(`page-${page}`)?.classList.add('active');
 

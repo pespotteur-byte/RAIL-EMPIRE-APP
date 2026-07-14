@@ -784,4 +784,10 @@ header {
 .lvp-stop-times { font-variant-numeric:tabular-nums; color:var(--text2); font-size:10px; }
 .lvp-legend { padding:4px 10px; font-size:8px; color:var(--text3); border-top:1px solid var(--border); }
 .train-card-fixed.tc-selected { outline:2px solid #facc15; outline-offset:-1px; }
+
+/* NAV-01/02/03/04 — sous-onglets des pages fusionnées */
+.subnav { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:8px; }
+.subnav-btn { background:var(--bg3); color:var(--text2); border:1px solid var(--border); border-radius:6px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+.subnav-btn:hover { color:var(--text); }
+.subnav-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
 .ig-pban-sit-text { color:#555; font-size:10px; margin-top:2px; line-height:1.3; }
