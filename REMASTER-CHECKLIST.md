@@ -93,8 +93,8 @@
 ## OCC — OCCUPATION VOIES & PRIORITÉS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [ ] |
-| OCC-02 | 2 trains même voie n'entrent pas ensemble en gare (sauf points ≠) | P0 | A3.5 | [ ] |
+| OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [~] PR6 (voie point occupé + probe voies libres à l'arrivée) |
+| OCC-02 | 2 trains même voie n'entrent pas ensemble en gare (sauf points ≠) | P0 | A3.5 | [x] PR6 (arrivée bloquée si aucune voie libre → attente en approche) |
 | OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [ ] |
 | OCC-04 | Priorité en ligne : plus rapide = prioritaire | P1 | A3.5, réponse #3 | [ ] |
 | OCC-05 | Écart recommandé ≥ 2 min entre 2 trains (peut descendre au bloc) | P1 | A3.5 | [ ] |
@@ -353,8 +353,8 @@
 | BUG-03 | Aller-retour aléatoire (cf. SC-04) | P0 | A14#3 | [ ] |
 | BUG-04 | Auto 24h sans effet (cf. SC-05) | P0 | A14#4 | [ ] |
 | BUG-05 | Points random ajoutés (cf. R-09) | P0 | A14#5 | [ ] |
-| BUG-06 | Bug de minuit → horloge en minutes absolues | P0 | A14#6 | [ ] |
-| BUG-07 | Bug 1440 min → modulo 24h propre | P0 | A14#7 | [ ] |
+| BUG-06 | Bug de minuit → horloge en minutes absolues | P0 | A14#6 | [x] comparaisons midnight-safe (timeDiff/timeGte/isInServiceWindow) + horloge Paris |
+| BUG-07 | Bug 1440 min → modulo 24h propre | P0 | A14#7 | [x] normalisation ((m%1440)+1440)%1440 partout (affichage + fenêtres service) |
 | BUG-08 | Horaires non MAJ → recalcul auto à l'édition | P0 | A14#8 | [ ] |
 | BUG-09 | "objectif avance 0%" → corriger calcul d'avancement | P1 | A14#9 | [ ] |
 | BUG-10 | Gares créées invisibles (cf. LVM-05) | P0 | A14#10 | [ ] |

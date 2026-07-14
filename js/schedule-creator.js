@@ -1328,6 +1328,24 @@ export class ActiveService {
     if (!economy) economy = this._economy;
     const stops = this.getCurrentStops();
     const stop = stops[this.currentStopIndex];
+
+    // OCC-01/02 — occupation des voies en gare : un train ne peut PAS entrer
+    // si aucune voie n'est libre (sauf voie forcée/point de voie précis).
+    // Il patiente en approche (bloqué) et ré-essaie au tick suivant.
+    if (station && stop && stop.type === 'arret' && !stop.platform && !stop.voiePointId
+        && window.game?.platformManager) {
+      const pm = window.game.platformManager;
+      pm.initStation(station.id, station.platforms || 2);
+      const held = pm.getPlatformForTrain(station.id, this.id);
+      if (!held && pm.getFreePlatforms(station.id) <= 0) {
+        this.speed = 0;
+        this.train.speed = 0;
+        this.train.blockedBy = true;
+        this.state = 'moving'; // reste en approche, ré-essaie au prochain tick
+        return;
+      }
+    }
+
     // Only update delay based on actual arret stops, not waypoints/passages
     if (stop?.type === 'arret') {
       const expectedTime = stop.arrivalTime;
