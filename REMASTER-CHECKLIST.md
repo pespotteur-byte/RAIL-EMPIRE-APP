@@ -34,22 +34,22 @@
 ## PH — PHYSIQUE DE TRACTION  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| PH-01 | Accél/décél selon puissance moteur + masse totale + pente | P0 | A3.1 | [ ] |
-| PH-02 | Résistance type Davis R=A+B·v+C·v² + composante pente | P0 | A3.1 | [ ] |
-| PH-03 | Force traction bornée par puissance/vitesse et par adhérence | P0 | A3.1 | [ ] |
-| PH-04 | Freinage borné par taux de freinage rame + adhérence (météo) | P0 | A3.1, A3.4 | [ ] |
-| PH-05 | Fret chargé accélère/freine visiblement plus lentement qu'un voyageur | P0 | A3.1, A18 | [ ] |
-| PH-06 | Masse fret = selon charge réelle par wagon | P0 | A3.1 | [ ] |
-| PH-07 | Arrivée ≈ horaire théorique (fin du bug "trains en avance") | P0 | A14#1, A18 | [ ] |
+| PH-01 | Accél/décél selon puissance moteur + masse totale + pente | P0 | A3.1 | [~] PR2 (module + temps de parcours ; marche animée en PR ultérieure) |
+| PH-02 | Résistance type Davis R=A+B·v+C·v² + composante pente | P0 | A3.1 | [x] PR2 |
+| PH-03 | Force traction bornée par puissance/vitesse et par adhérence | P0 | A3.1 | [x] PR2 |
+| PH-04 | Freinage borné par taux de freinage rame + adhérence (météo) | P0 | A3.1, A3.4 | [x] PR2 |
+| PH-05 | Fret chargé accélère/freine visiblement plus lentement qu'un voyageur | P0 | A3.1, A18 | [~] PR2 (dans le temps de parcours ; marche animée en PR ultérieure) |
+| PH-06 | Masse fret = selon charge réelle par wagon | P0 | A3.1 | [~] PR2 (masse+payload via getTotalMassWithPayload) |
+| PH-07 | Arrivée ≈ horaire théorique (fin du bug "trains en avance") | P0 | A14#1, A18 | [~] PR2 (temps planifiés réalistes ; validation en jeu à venir) |
 
 ## VIT — VITESSES & TRANSITIONS  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| VIT-01 | Vitesse par tronçon lue depuis ORM (par sous-segment) | P0 | A3.3, A12 | [ ] |
-| VIT-02 | Transition POSITIVE : accélère seulement quand toute la rame (queue) a franchi le point | P0 | A3.3 | [ ] |
-| VIT-03 | Transition NÉGATIVE : nouvelle vitesse atteinte 50-150 m avant la zone plus lente | P0 | A3.3 | [ ] |
-| VIT-04 | Voie sans vitesse ORM = 30 km/h **uniquement** sur service=yard/siding/spur | P0 | A3.3, réponse #2 doc | [~] PR1 (pondération routage ; à appliquer à la marche physique en PR2) |
-| VIT-05 | Voie principale (usage=main/branch) non taguée = défaut élevé (pas 30) | P0 | A3.3 | [ ] |
+| VIT-01 | Vitesse par tronçon lue depuis ORM (par sous-segment) | P0 | A3.3, A12 | [x] PR2 |
+| VIT-02 | Transition POSITIVE : accélère seulement quand toute la rame (queue) a franchi le point | P0 | A3.3 | [~] PR2 (dans le calcul de temps ; marche animée en PR ultérieure) |
+| VIT-03 | Transition NÉGATIVE : nouvelle vitesse atteinte 50-150 m avant la zone plus lente | P0 | A3.3 | [~] PR2 (dans le calcul de temps ; marche animée en PR ultérieure) |
+| VIT-04 | Voie sans vitesse ORM = 30 km/h **uniquement** sur service=yard/siding/spur | P0 | A3.3, réponse #2 doc | [~] PR1 (pondération routage ; à appliquer à la marche physique en PR ultérieure) |
+| VIT-05 | Voie principale (usage=main/branch) non taguée = défaut élevé (pas 30) | P0 | A3.3 | [x] PR1 |
 
 ## SIG — CANTONNEMENT & SIGNALISATION  (P0)
 | ID | Exigence | Prio | Source | Statut |

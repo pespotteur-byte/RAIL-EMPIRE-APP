@@ -1,6 +1,8 @@
 // OpenRailwayMap data integration via Overpass API — ORM Direct architecture
 // Uses OSM way graph directly as the game's routing infrastructure.
 // No conversion to intermediate tronçons — the OSM graph IS the network.
+import { segmentsFromRoute, simulateProfile } from './train-physics.js';
+
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
 function haversine(lat1, lon1, lat2, lon2) {
@@ -904,7 +906,16 @@ export class ORMClient {
     return segments;
   }
 
-  calculateTravelTime(route, rameMaxSpeed) {
+  // Travel time (minutes) for a route.
+  // `rame` may be a number (max speed km/h — legacy zone estimate) or a Rame-like
+  // object (totalMass/totalPower/totalLength/maxSpeed) → realistic traction
+  // physics via train-physics.js (PH-01→PH-07, VIT-02/03).
+  calculateTravelTime(route, rame, opts = null) {
+    if (rame && typeof rame === 'object') {
+      const physical = this._physicalTravelTime(route, rame, opts);
+      if (physical !== null) return physical;
+    }
+    const rameMaxSpeed = typeof rame === 'number' ? rame : (rame && rame.maxSpeed) || 160;
     const segments = this.getRouteSegments(route);
     if (segments.length === 0) return 1;
 
@@ -947,6 +958,29 @@ export class ORMClient {
 
     const totalMinutes = totalSeconds / 60;
     return Math.round(totalMinutes) || 1;
+  }
+
+  // Realistic travel time (minutes) using traction physics. Returns null when
+  // the rame lacks the data needed (falls back to the zone estimate).
+  _physicalTravelTime(route, rame, opts = null) {
+    const massKg = ((rame.getTotalMassWithPayload
+      ? rame.getTotalMassWithPayload(opts?.loadFactor ?? 0.7)
+      : (rame.totalMass || rame.totalTonnage)) || 0) * 1000;
+    const powerW = (rame.totalPower || 0) * 1000;
+    if (massKg <= 0 || powerW <= 0) return null;
+
+    const maxSpeedKmh = rame.maxSpeed || 160;
+    const segs = segmentsFromRoute(route, maxSpeedKmh, haversine);
+    if (segs.length === 0) return null;
+
+    const res = simulateProfile(segs, {
+      massKg,
+      powerW,
+      lengthM: rame.totalLength || 200,
+      weather: opts?.weather,
+      brakeServiceMs2: opts?.brakeServiceMs2,
+    });
+    return Math.round(res.timeSec / 60) || 1;
   }
 
   generateSignalBlocks(route) {
