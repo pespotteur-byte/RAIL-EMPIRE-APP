@@ -66,20 +66,20 @@
 ## SC — SCHEDULE CREATOR  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| SC-01 | Définitions Gare / Waypoint / Aller-retour respectées | P0 | A4.1 | [ ] |
+| SC-01 | Définitions Gare / Waypoint / Aller-retour respectées | P0 | A4.1 | [x] PR5 (types arret/passage/waypoint + A/R) |
 | SC-02 | Heure de passage calculée à **CHAQUE gare réelle** rencontrée (point g) | P0 | A4.3, annexe 5 | [~] PR4 (interpolatePassageTimes + tests ; affichage des passages à brancher) |
 | SC-03 | Numérotation auto impair (aller) / pair (retour) | P0 | A4.3 | [x] PR4 (schedule-logic + ActiveService) |
-| SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [~] PR4 (support returnRoutes/returnStops côté modèle ; UI de tracé retour à faire) |
-| SC-05 | Auto 24h génère les **duplicata réels** (pas juste un décompte) | P0 | A4.3, A14#4 | [ ] |
+| SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [~] PR4/PR5 (modèle + propagation duplicata ; UI de tracé retour distinct à faire) |
+| SC-05 | Auto 24h génère les **duplicata réels** (pas juste un décompte) | P0 | A4.3, A14#4 | [~] PR5 (duplicateService = duplicata réels + numéros auto ; bouton Auto 24h reste un décompte multiDepartures) |
 | SC-06 | Attente terminus minimum 5 min, modifiable par le joueur | P0 | A4.3, réponse #5 doc | [x] PR4 (défaut 5 min, modifiable) |
-| SC-07 | Tableau horaires : 50 trajets par défaut, tri chronologique (départ A) | P1 | A4.3 | [ ] |
-| SC-08 | Clic ligne = menu déroulant détaillé du trajet | P1 | A4.3 | [ ] |
-| SC-09 | Traçage manuel d'itinéraire | P0 | A4.3 | [ ] |
-| SC-10 | Insertion de waypoint intermédiaire **sans supprimer** les suivants | P1 | A4.3 | [ ] |
-| SC-11 | Affichage du VRAI tracé (voies ORM), pas des traits 1-2-3 | P0 | A4.3, annexe 10b | [ ] |
-| SC-12 | Nouvelle interface : carte à gauche, formulaire à droite | P1 | annexe 10a | [ ] |
-| SC-13 | Champs menu : Rame, Nom service, Nom retour si ≠, A/R, Nb A/R + Auto 24h, Attente terminus, Train travaux, Jours circ., Dates spécifiques | P1 | annexe 9 | [ ] |
-| SC-14 | Légende heures par gare (départ/passage/arrivée) aller ET retour | P1 | annexe 10a | [ ] |
+| SC-07 | Tableau horaires : 50 trajets par défaut, tri chronologique (départ A) | P1 | A4.3 | [x] PR5 (tri chrono par défaut) |
+| SC-08 | Clic ligne = menu déroulant détaillé du trajet | P1 | A4.3 | [x] PR5 (toggleSchedDetail, détail repliable) |
+| SC-09 | Traçage manuel d'itinéraire | P0 | A4.3 | [x] PR5 (waypoints cliquables/déplaçables snap voie) |
+| SC-10 | Insertion de waypoint intermédiaire **sans supprimer** les suivants | P1 | A4.3 | [x] PR5 (insertion au segment le plus proche + recalcStopsFrom) |
+| SC-11 | Affichage du VRAI tracé (voies ORM), pas des traits 1-2-3 | P0 | A4.3, annexe 10b | [x] PR5 (géométrie tronçon/voie ORM, fallback droit seulement si absent) |
+| SC-12 | Nouvelle interface : carte à gauche, formulaire à droite | P1 | annexe 10a | [x] PR5 (.sched-layout carte-gauche/form-droite) |
+| SC-13 | Champs menu : Rame, Nom service, Nom retour si ≠, A/R, Nb A/R + Auto 24h, Attente terminus, Train travaux, Jours circ., Dates spécifiques | P1 | annexe 9 | [x] PR5 (tous les champs présents) |
+| SC-14 | Légende heures par gare (départ/passage/arrivée) aller ET retour | P1 | annexe 10a | [x] PR5 (heures + légende sur aller ET retour) |
 
 ## ARR — TYPES D'ARRÊT  (P2 gameplay)
 | ID | Exigence | Prio | Source | Statut |

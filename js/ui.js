@@ -2063,7 +2063,22 @@ export class UI {
     const rame = this.game.rameManager.getById(rameId);
     const rameSpeed = rame ? rame.maxSpeed : 160;
 
-    const prevStop = this.schedStops[this.schedStops.length - 1];
+    // SC-10 — insert the waypoint on the nearest INTERIOR segment so the
+    // following stops are preserved; append only when the click is past the end.
+    let insertIndex = this.schedStops.length;
+    if (this.schedStops.length >= 2) {
+      let best = Infinity, bestSeg = -1, bestT = 0;
+      for (let i = 0; i < this.schedStops.length - 1; i++) {
+        const a = this._getStopCoords(this.schedStops[i]);
+        const b = this._getStopCoords(this.schedStops[i + 1]);
+        if (!a || !b) continue;
+        const r = this._pointSegDistKm(snappedLat, snappedLon, a, b);
+        if (r.dist < best) { best = r.dist; bestSeg = i; bestT = r.t; }
+      }
+      if (bestSeg >= 0 && bestT > 0.05 && bestT < 0.95) insertIndex = bestSeg + 1;
+    }
+
+    const prevStop = this.schedStops[insertIndex - 1];
     const prevCoords = this._getStopCoords(prevStop);
     let travelTime = 5;
     if (prevCoords) {
@@ -2075,9 +2090,9 @@ export class UI {
         travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
       }
     }
-    const arrTimeMin = prevStop.depTimeMin + travelTime;
+    const arrTimeMin = (prevStop.depTimeMin || 0) + travelTime;
 
-    this.schedStops.push({
+    this.schedStops.splice(insertIndex, 0, {
       stationId: null,
       voiePointId: vpId,
       stationName: `Waypoint (${snappedLat.toFixed(4)}, ${snappedLon.toFixed(4)})`,
@@ -2089,9 +2104,28 @@ export class UI {
       platform: '',
     });
 
+    // Recompute the stops that follow the inserted waypoint (none are removed).
+    if (insertIndex < this.schedStops.length - 1) {
+      await this.recalcStopsFrom(insertIndex + 1);
+    }
+
     this.renderSchedStops();
     if (this._drawSchedMap) this._drawSchedMap();
     this.game.saveState();
+  }
+
+  // Perpendicular distance (km) from a point to segment AB, plus the clamped
+  // projection parameter t in [0,1] (used by SC-10 waypoint insertion).
+  _pointSegDistKm(lat, lon, a, b) {
+    const kx = 111 * Math.cos(lat * Math.PI / 180), ky = 111;
+    const ax = a.lon * kx, ay = a.lat * ky, bx = b.lon * kx, by = b.lat * ky;
+    const px = lon * kx, py = lat * ky;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    let t = len2 > 0 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    return { dist: Math.hypot(px - cx, py - cy), t };
   }
 
   minToTimeStr(m) {
@@ -2193,6 +2227,26 @@ export class UI {
     const rtChecked = document.getElementById('sched-round-trip')?.checked;
     if (rtChecked && this.schedStops.length >= 2) {
       const reversed = [...this.schedStops].reverse();
+      const n = this.schedStops.length;
+      // SC-14 — mirror the forward segment/dwell durations onto the return leg,
+      // anchored at (terminus arrival + terminus wait), to show heures aller ET
+      // retour (départ / passage / arrivée) per station.
+      const termWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+      const lastArr = this.schedStops[n - 1].arrTimeMin ?? this.schedStops[n - 1].depTimeMin ?? 0;
+      const fmt = (t) => this.minToTimeStr(((Math.round(t) % 1440) + 1440) % 1440);
+      const retTimes = [];
+      for (let j = 0; j < n; j++) {
+        if (j === 0) { retTimes.push({ arr: lastArr + termWait, dep: lastArr + termWait }); continue; }
+        // Forward travel of this segment = arr[later station] - dep[earlier station];
+        // the return leg reuses the same duration in reverse.
+        const arrLater = this.schedStops[n - j].arrTimeMin ?? this.schedStops[n - j].depTimeMin ?? 0;
+        const depEarlier = this.schedStops[n - 1 - j].depTimeMin ?? this.schedStops[n - 1 - j].arrTimeMin ?? 0;
+        const travel = Math.max(0, arrLater - depEarlier);
+        const arr = retTimes[j - 1].dep + travel;
+        const here = this.schedStops[n - 1 - j];
+        const dwell = Math.max(0, (here.depTimeMin ?? here.arrTimeMin ?? 0) - (here.arrTimeMin ?? here.depTimeMin ?? 0));
+        retTimes.push({ arr, dep: arr + dwell });
+      }
       const returnHtml = reversed.map((stop, i) => {
         const station = this.game.world.getStationById(stop.stationId);
         const stName = station?.name || stop.stationName || '?';
@@ -2200,6 +2254,14 @@ export class UI {
         const isLast = i === reversed.length - 1;
         const typeLabel = stop.type === 'waypoint' ? 'passage' : (isFirst ? 'depart' : (isLast ? 'terminus' : stop.type));
         const typeColor = typeLabel === 'depart' ? '#22c55e' : (typeLabel === 'terminus' ? '#ef4444' : (typeLabel === 'passage' ? '#8b5cf6' : 'var(--text3)'));
+
+        const rt = retTimes[i] || { arr: 0, dep: 0 };
+        let timeStr;
+        if (stop.type === 'waypoint') timeStr = '';
+        else if (isFirst) timeStr = `Dep ${fmt(rt.dep)}`;
+        else if (isLast) timeStr = `Arr ${fmt(rt.arr)}`;
+        else if (typeLabel === 'passage') timeStr = `Pass ${fmt(rt.arr)}`;
+        else timeStr = `${fmt(rt.arr)}-${fmt(rt.dep)}`;
 
         // Platform selector
         let platformSelect = '';
@@ -2219,12 +2281,14 @@ export class UI {
           <span style="color:var(--text3);font-size:10px;min-width:14px">${i + 1}</span>
           <span style="color:${typeColor};font-size:9px;min-width:50px">${typeLabel}</span>
           <span class="stop-name" style="flex:1">${stName}</span>
+          <span style="font-size:9px;color:var(--text2);min-width:74px;text-align:right">${timeStr}</span>
           ${platformSelect}
         </div>`;
       }).join('');
       if (returnHtml) {
         container.innerHTML += `<div style="margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">
-          <div style="font-size:10px;color:#f59e0b;font-weight:600;margin-bottom:4px">↩ Trajet retour (${reversed.length} arrets)</div>
+          <div style="font-size:10px;color:#f59e0b;font-weight:600;margin-bottom:4px">↩ Trajet retour (${reversed.length} arrets, attente terminus ${termWait} min)</div>
+          <div style="font-size:8px;color:var(--text3);margin-bottom:3px">Legende : <span style="color:#22c55e">depart</span> / <span style="color:#8b5cf6">passage</span> / <span style="color:#ef4444">arrivee</span></div>
           ${returnHtml}
         </div>`;
       }
@@ -2610,26 +2674,43 @@ export class UI {
       }
 
       const depTime = this.minToTimeStr(svc.stops[0]?.departureTime || 0);
+      // SC-03 — numéro de service : aller impair / retour pair.
+      const numLabel = svc.number != null
+        ? `<span style="color:#fbbf24;font-size:10px;font-weight:700;min-width:34px" title="N° aller${svc.roundTrip ? ' / retour' : ''}">N°${svc.number}${svc.roundTrip && svc.returnNumber != null ? '/' + svc.returnNumber : ''}</span>`
+        : '';
 
       return `${groupHeader}
         <div class="sched-item">
-          <div class="sched-item-header">
+          <div class="sched-item-header" onclick="game.ui.toggleSchedDetail('${svc.id}')" style="cursor:pointer">
+            <span class="sched-caret" id="sched-caret-${svc.id}" style="color:var(--text3);font-size:10px;width:12px;transition:transform .15s">▸</span>
             <span style="color:var(--text3);font-size:10px;min-width:38px">${depTime}</span>
+            ${numLabel}
             <span class="sched-item-name">${svc.name}${statusLabel}</span>
             <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
             <span style="color:var(--text3);font-size:10px">${Math.round(svc.plannedDistance || svc.totalDistance)} km${tripInfo}</span>
             <span style="color:#60a5fa;font-size:9px">${daysLabel}${datesLabel}</span>
-            <button class="btn-sm" onclick="game.ui.editSchedule('${svc.id}')">Modifier</button>
-            <button class="btn-sm" onclick="game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
-            <button class="btn-sm" onclick="game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
-            <button class="btn-sm danger" onclick="game.ui.deleteSchedule('${svc.id}')">Supprimer</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.editSchedule('${svc.id}')">Modifier</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
+            <button class="btn-sm danger" onclick="event.stopPropagation();game.ui.deleteSchedule('${svc.id}')">Supprimer</button>
           </div>
-          <div style="font-size:10px;color:var(--text2);margin-bottom:2px">${dirLabel}</div>
-          <div class="sched-stops-preview">${stopsPreview}</div>
-          ${returnPreview}
+          <div class="sched-detail hidden" id="sched-detail-${svc.id}">
+            <div style="font-size:10px;color:var(--text2);margin:4px 0 2px">${dirLabel}</div>
+            <div class="sched-stops-preview">${stopsPreview}</div>
+            ${returnPreview}
+          </div>
         </div>
       `;
     }).join('');
+  }
+
+  // SC-08 — clic sur une ligne = menu déroulant détaillé du trajet.
+  toggleSchedDetail(id) {
+    const detail = document.getElementById(`sched-detail-${id}`);
+    const caret = document.getElementById(`sched-caret-${id}`);
+    if (!detail) return;
+    const open = detail.classList.toggle('hidden');
+    if (caret) caret.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
   }
 
   toggleSchedule(id) {

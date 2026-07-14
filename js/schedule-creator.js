@@ -1710,6 +1710,10 @@ export class ScheduleCreator {
         plannedDistance: src.plannedDistance,
         isWorkTrain: src.isWorkTrain, returnName: src.returnName,
         returnPlatforms: src.returnPlatforms,
+        // SC-04 — propagate the independent return geometry/timetable so each
+        // real duplicate keeps the same return path (fresh auto number).
+        returnRoutes: src._returnRoutes, returnStops: src._returnStopsData,
+        runDays: src.runDays, runDates: src.runDates,
       }, rame, world);
       created.push(svc);
     }
@@ -1801,7 +1805,10 @@ export class ScheduleCreator {
         const o = { id: s.id, n: s.name, ri: s.rameId, st: compactStops, rt: safeRoutes };
         if (s.roundTrip) o.rnd = true;
         if (s.multiDepartures > 1) o.md = s.multiDepartures;
-        if (s.terminusWait !== 10) o.tw = s.terminusWait;
+        if (s.terminusWait !== DEFAULT_TERMINUS_WAIT_MIN) o.tw = s.terminusWait;
+        // SC-03 — persist auto numbers so they survive reloads.
+        if (s.number != null) o.num = s.number;
+        if (s.returnNumber != null) o.rnum = s.returnNumber;
         o.td = Math.round((s.totalDistance || 0) * 100) / 100;
         if (s.plannedDistance) o.pd = s.plannedDistance;
         if (!s.active) o.act = false;
@@ -1873,7 +1880,9 @@ export class ScheduleCreator {
         routes: this._decodeRoutes(d.rt || []),
         roundTrip: d.rnd || false,
         multiDepartures: d.md || 1,
-        terminusWait: d.tw ?? 10,
+        terminusWait: d.tw ?? DEFAULT_TERMINUS_WAIT_MIN,
+        number: d.num,
+        returnNumber: d.rnum,
         totalDistance: d.td || 0,
         plannedDistance: d.pd || 0,
         active: d.act !== false,

@@ -343,6 +343,11 @@ header {
 
 /* SCHEDULE */
 .sched-hint { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
+/* SC-12 — carte a gauche, formulaire a droite (annexe 10a) */
+.sched-layout { display: flex; gap: 16px; align-items: flex-start; }
+.sched-map-col { flex: 1 1 56%; min-width: 0; }
+.sched-form-col { flex: 1 1 44%; min-width: 340px; max-height: 76vh; overflow-y: auto; padding-right: 4px; }
+.sched-layout .sched-map-container { height: 72vh; margin-bottom: 8px; }
 .sched-map-container { height: 55vh; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 10px; overflow: hidden; position: relative; }
 .sched-map-container canvas { width: 100%; height: 100%; display: block; }
 .sched-stops { margin-bottom: 10px; }
@@ -503,6 +508,9 @@ header {
   .page-content { padding: 8px; overflow-y: auto; }
   .page { overflow-y: auto; }
   .sched-map-container { height: 35vh; }
+  .sched-layout { flex-direction: column; }
+  .sched-form-col { min-width: 0; max-height: none; overflow-y: visible; }
+  .sched-layout .sched-map-container { height: 40vh; }
   .eco-stats { grid-template-columns: 1fr 1fr; }
   .sched-stop-row { font-size: 10px; }
 

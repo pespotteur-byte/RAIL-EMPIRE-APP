@@ -189,8 +189,8 @@
           <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
             <label style="color:var(--text2);font-size:11px">Trier par :</label>
             <select id="sched-sort" style="background:var(--bg2);color:var(--text1);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px">
+              <option value="departure" selected>Heure de depart</option>
               <option value="creation">Ordre de creation</option>
-              <option value="departure">Heure de depart</option>
               <option value="rame">Rame affectee</option>
               <option value="name">Nom du service</option>
               <option value="route">Itineraire</option>
@@ -683,65 +683,71 @@
         <button class="modal-close">&times;</button>
         <h3>Creer un trajet</h3>
         <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Rame</label>
-              <select id="sched-rame"></select>
-            </div>
-            <div class="form-group">
-              <label>Nom du service</label>
-              <input type="text" id="sched-name" placeholder="ex: TGV 8001">
-            </div>
-            <div class="form-group">
-              <label>Nom retour <span style="font-size:9px;color:var(--text3)">(si different)</span></label>
-              <input type="text" id="sched-return-name" placeholder="ex: TGV 8002">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label><input type="checkbox" id="sched-round-trip"> Aller-retour</label>
-            </div>
-            <div class="form-group">
-              <label>Nb allers-retours</label>
-              <div style="display:flex;gap:4px;align-items:center">
-                <input type="number" id="sched-multi-departures" value="1" min="1" max="50" style="flex:1">
-                <button type="button" id="btn-auto-ar" class="btn-sm" title="Calcul auto pour ne pas depasser 24h" style="font-size:9px;padding:3px 6px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Auto 24h</button>
+          <div class="sched-layout">
+            <div class="sched-map-col">
+              <div class="sched-map-container">
+                <canvas id="sched-map-canvas"></canvas>
               </div>
+              <p class="sched-hint">Cliquer sur les gares de la carte pour definir le trajet. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.<br><span style="color:#fbbf24;font-size:10px">Astuce : Ajoutez des gares intermediaires en "Waypoint" pour forcer le passage par un raccordement precis (ex: via Troyes au lieu de Nancy).</span></p>
             </div>
-            <div class="form-group">
-              <label>Attente au terminus (min)</label>
-              <input type="number" id="sched-terminus-wait" value="5" min="1" max="120">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label><input type="checkbox" id="sched-work-train"> Train de travaux <span style="font-size:9px;color:var(--text3)">(non affecte par les travaux)</span></label>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1">
-              <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Jours de circulation</label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
+            <div class="sched-form-col">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Rame</label>
+                  <select id="sched-rame"></select>
+                </div>
+                <div class="form-group">
+                  <label>Nom du service</label>
+                  <input type="text" id="sched-name" placeholder="ex: TGV 8001">
+                </div>
+                <div class="form-group">
+                  <label>Nom retour <span style="font-size:9px;color:var(--text3)">(si different)</span></label>
+                  <input type="text" id="sched-return-name" placeholder="ex: TGV 8002">
+                </div>
               </div>
-            </div>
-            <div class="form-group" style="flex:1">
-              <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Dates specifiques <span style="font-size:9px;color:var(--text3)">(vide = tous les jours)</span></label>
-              <input type="text" id="sched-run-dates" placeholder="2026-01-15, 2026-03-20, ..." style="font-size:10px;width:100%">
+              <div class="form-row">
+                <div class="form-group">
+                  <label><input type="checkbox" id="sched-round-trip"> Aller-retour</label>
+                </div>
+                <div class="form-group">
+                  <label>Nb allers-retours</label>
+                  <div style="display:flex;gap:4px;align-items:center">
+                    <input type="number" id="sched-multi-departures" value="1" min="1" max="50" style="flex:1">
+                    <button type="button" id="btn-auto-ar" class="btn-sm" title="Calcul auto pour ne pas depasser 24h" style="font-size:9px;padding:3px 6px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Auto 24h</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Attente au terminus (min)</label>
+                  <input type="number" id="sched-terminus-wait" value="5" min="1" max="120">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label><input type="checkbox" id="sched-work-train"> Train de travaux <span style="font-size:9px;color:var(--text3)">(non affecte par les travaux)</span></label>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:1">
+                  <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Jours de circulation</label>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
+                  </div>
+                </div>
+                <div class="form-group" style="flex:1">
+                  <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Dates specifiques <span style="font-size:9px;color:var(--text3)">(vide = tous les jours)</span></label>
+                  <input type="text" id="sched-run-dates" placeholder="2026-01-15, 2026-03-20, ..." style="font-size:10px;width:100%">
+                </div>
+              </div>
+              <div id="sched-stops-list" class="sched-stops"></div>
+              <button id="btn-save-schedule" class="btn-primary btn-full">Enregistrer le trajet</button>
             </div>
           </div>
-          <p class="sched-hint">Cliquer sur les gares de la carte pour definir le trajet. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.<br><span style="color:#fbbf24;font-size:10px">Astuce : Ajoutez des gares intermediaires en "Waypoint" pour forcer le passage par un raccordement precis (ex: via Troyes au lieu de Nancy).</span></p>
-          <div class="sched-map-container">
-            <canvas id="sched-map-canvas"></canvas>
-          </div>
-          <div id="sched-stops-list" class="sched-stops"></div>
-          <button id="btn-save-schedule" class="btn-primary btn-full">Enregistrer le trajet</button>
         </div>
       </div>
     </div>
