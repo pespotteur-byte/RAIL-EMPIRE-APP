@@ -54,13 +54,13 @@
 ## SIG — CANTONNEMENT & SIGNALISATION  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| SIG-01 | Taille de canton fonction de la vitesse ligne (barème A3.2) | P0 | A3.2 | [ ] |
-| SIG-02 | Un seul train par canton | P0 | A3.2, A18 | [ ] |
-| SIG-03 | État "voie libre" = vitesse limite du tronçon | P0 | A3.2 | [ ] |
-| SIG-04 | État "avertissement" = réduire pour pouvoir s'arrêter + alerte régulation | P0 | A3.2 | [ ] |
-| SIG-05 | État "carré/fermé" = arrêt obligatoire 25-50 m en amont + alerte | P0 | A3.2, annexe 3B | [ ] |
-| SIG-06 | VISA : 30 km/h à 300 m, 20 à 200 m, 10 à 100 m du carré | P0 | A3.2 | [ ] |
-| SIG-07 | Repartir d'un carré ouvert à l'avertissement : ≤60 km/h puis VISA | P0 | A3.2 | [ ] |
+| SIG-01 | Taille de canton fonction de la vitesse ligne (barème A3.2) | P0 | A3.2 | [x] PR3 (cantonLengthKm branché sur CantonManager) |
+| SIG-02 | Un seul train par canton | P0 | A3.2, A18 | [x] PR3 (CantonManager occupancy, existant + confirmé) |
+| SIG-03 | État "voie libre" = vitesse limite du tronçon | P0 | A3.2 | [x] PR3 |
+| SIG-04 | État "avertissement" = réduire pour pouvoir s'arrêter + alerte régulation | P0 | A3.2 | [~] PR3 (cap ≤60 sur avertissement ; alerte régulation en PR ultérieure) |
+| SIG-05 | État "carré/fermé" = arrêt obligatoire 25-50 m en amont + alerte | P0 | A3.2, annexe 3B | [~] PR3 (arrêt ~30 m via VISA=0 ; alerte régulation en PR ultérieure) |
+| SIG-06 | VISA : 30 km/h à 300 m, 20 à 200 m, 10 à 100 m du carré | P0 | A3.2 | [x] PR3 |
+| SIG-07 | Repartir d'un carré ouvert à l'avertissement : ≤60 km/h puis VISA | P0 | A3.2 | [~] PR3 (cap ≤60 ; séquence de redémarrage complète à affiner en marche) |
 | SIG-08 | Signaux ajoutables par le joueur (facultatif) | P2 | A15 P2 | [ ] |
 
 ## SC — SCHEDULE CREATOR  (P0)

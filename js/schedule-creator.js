@@ -1,4 +1,5 @@
 import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779724771';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
 
 let nextServiceId = 1;
 
@@ -682,9 +683,24 @@ export class ActiveService {
         const signalAspect = cantonManager.getSignalAspect(
           this._cantonAssignments, segIdx, this.id
         );
-        if (signalAspect !== null) {
-          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, signalAspect);
-          this.train.blockedBy = signalAspect === 0;
+        if (signalAspect === 0) {
+          // Carré ahead: apply VISA steps (30/20/10) toward the blocked canton
+          // boundary and stop ~30 m upstream (SIG-05/SIG-06).
+          const nextCanton = cantonManager.getNextCanton(this._cantonAssignments, segIdx);
+          let distM = 0;
+          if (nextCanton && this._state.segDists && this._state.cumDist) {
+            const distKm = (1 - this._state.progress) * (this._state.segDists[segIdx] || 0)
+              + ((this._state.cumDist[segIdx + 1] || 0) - (this._state.cumDist[nextCanton.startIndex] || 0));
+            distM = Math.max(0, distKm * 1000);
+          }
+          const cap = visaSpeedCapKmh(distM);
+          const visaCap = (cap === null) ? RESTART_SPEED_KMH : cap;
+          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, visaCap);
+          this.train.blockedBy = visaCap === 0;
+        } else if (signalAspect !== null) {
+          // Avertissement: be ready to stop at the next signal (SIG-04/SIG-07).
+          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, RESTART_SPEED_KMH);
+          this.train.blockedBy = false;
         } else {
           this.train.blockedBy = false;
         }

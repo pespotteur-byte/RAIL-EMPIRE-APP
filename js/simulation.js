@@ -1,4 +1,5 @@
 // simulation.js - High-fidelity railway physics and infrastructure simulation layer
+import { cantonLengthKm } from './signaling.js';
 
 /**
  * Precise geodesic distance using Haversine formula.
@@ -74,11 +75,11 @@ class Canton {
 }
 
 /**
- * Determines the target block length based on line speed.
+ * Determines the target block length (km) based on line speed (SIG-01).
  * Higher speeds require longer blocks for safe braking distance.
  */
 function getBlockLength(speed) {
-  return 0.8;
+  return cantonLengthKm(speed);
 }
 
 /**
