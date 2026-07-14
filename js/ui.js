@@ -1946,11 +1946,11 @@ export class UI {
       if (prevStation) {
         const existingTrack = this.game.world.getTrackBetween(prevStation.id, station.id);
         if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-          travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
+          travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
         } else {
           try {
             const route = await this.game.orm.findRoute(prevStation.lat, prevStation.lon, station.lat, station.lon);
-            travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+            travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
           } catch (e) {
             const dist = this._approxRailDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
             travelTime = Math.round((dist / rameSpeed) * 60) || 1;
@@ -1995,7 +1995,7 @@ export class UI {
       if (prevCoords) {
         try {
           const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
-          travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+          travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
         } catch (e) {
           const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
           travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
@@ -2069,7 +2069,7 @@ export class UI {
     if (prevCoords) {
       try {
         const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
-        travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+        travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
       } catch (e) {
         const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
         travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
@@ -2335,7 +2335,7 @@ export class UI {
     return (best && bestDist <= 5) ? best : null;
   }
 
-  async _getSegmentTravelTime(prevStop, curStop, rameSpeed) {
+  async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null) {
     const prevCoords = this._getStopCoords(prevStop);
     const curCoords = this._getStopCoords(curStop);
     if (!prevCoords || !curCoords) return 15;
@@ -2346,12 +2346,12 @@ export class UI {
     if (prevStation && curStation) {
       const existingTrack = this.game.world.getTrackBetween(prevStation.id, curStation.id);
       if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-        return this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
+        return this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
       }
     }
     try {
       const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
-      return this.game.orm.calculateTravelTime(route, rameSpeed);
+      return this.game.orm.calculateTravelTime(route, rame || rameSpeed);
     } catch (e) {
       const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
       return Math.round((dist / rameSpeed) * 60) || 1;
@@ -2374,7 +2374,7 @@ export class UI {
       const prevStop = this.schedStops[i - 1];
       const curStop = this.schedStops[i];
 
-      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed);
+      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame);
 
       curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
       curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
