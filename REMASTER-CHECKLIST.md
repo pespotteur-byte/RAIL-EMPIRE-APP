@@ -67,11 +67,11 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | SC-01 | Définitions Gare / Waypoint / Aller-retour respectées | P0 | A4.1 | [ ] |
-| SC-02 | Heure de passage calculée à **CHAQUE gare réelle** rencontrée (point g) | P0 | A4.3, annexe 5 | [ ] |
-| SC-03 | Numérotation auto impair (aller) / pair (retour) | P0 | A4.3 | [ ] |
-| SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [ ] |
+| SC-02 | Heure de passage calculée à **CHAQUE gare réelle** rencontrée (point g) | P0 | A4.3, annexe 5 | [~] PR4 (interpolatePassageTimes + tests ; affichage des passages à brancher) |
+| SC-03 | Numérotation auto impair (aller) / pair (retour) | P0 | A4.3 | [x] PR4 (schedule-logic + ActiveService) |
+| SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [~] PR4 (support returnRoutes/returnStops côté modèle ; UI de tracé retour à faire) |
 | SC-05 | Auto 24h génère les **duplicata réels** (pas juste un décompte) | P0 | A4.3, A14#4 | [ ] |
-| SC-06 | Attente terminus minimum 5 min, modifiable par le joueur | P0 | A4.3, réponse #5 doc | [ ] |
+| SC-06 | Attente terminus minimum 5 min, modifiable par le joueur | P0 | A4.3, réponse #5 doc | [x] PR4 (défaut 5 min, modifiable) |
 | SC-07 | Tableau horaires : 50 trajets par défaut, tri chronologique (départ A) | P1 | A4.3 | [ ] |
 | SC-08 | Clic ligne = menu déroulant détaillé du trajet | P1 | A4.3 | [ ] |
 | SC-09 | Traçage manuel d'itinéraire | P0 | A4.3 | [ ] |
@@ -84,11 +84,11 @@
 ## ARR — TYPES D'ARRÊT  (P2 gameplay)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| ARR-01 | C = Circulation, S = Service | P1 | A3.8, réponse #1 | [ ] |
-| ARR-02 | Sautable uniquement entre crochets [C] / [S] | P1 | A3.8, réponse #1 | [ ] |
-| ARR-03 | Arrêt non crocheté = incompressible (toujours marqué) | P1 | A3.8 | [ ] |
-| ARR-04 | Probabilité de saut 25 % | P2 | A3.8 | [ ] |
-| ARR-05 | Tirage rejoué **à chaque circulation** (indépendant du seed) | P2 | A3.8, A17, réponse #2 | [ ] |
+| ARR-01 | C = Circulation, S = Service | P1 | A3.8, réponse #1 | [x] PR4 (parseStopType) |
+| ARR-02 | Sautable uniquement entre crochets [C] / [S] | P1 | A3.8, réponse #1 | [x] PR4 (parseStopType.skippable) |
+| ARR-03 | Arrêt non crocheté = incompressible (toujours marqué) | P1 | A3.8 | [x] PR4 (bare C/S = non skippable) |
+| ARR-04 | Probabilité de saut 25 % | P2 | A3.8 | [~] PR4 (rollSkip/shouldSkipStop 25% ; intégration circulation à faire) |
+| ARR-05 | Tirage rejoué **à chaque circulation** (indépendant du seed) | P2 | A3.8, A17, réponse #2 | [~] PR4 (RNG injectable rejoué ; intégration circulation à faire) |
 
 ## OCC — OCCUPATION VOIES & PRIORITÉS  (P1)
 | ID | Exigence | Prio | Source | Statut |

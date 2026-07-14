@@ -1501,7 +1501,7 @@ export class UI {
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = editService.roundTrip;
       document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
-      document.getElementById('sched-terminus-wait').value = editService.terminusWait || 10;
+      document.getElementById('sched-terminus-wait').value = editService.terminusWait || 5;
       // Populate run days
       const editDays = editService.runDays || [0,1,2,3,4,5,6];
       document.querySelectorAll('.sched-run-day').forEach(cb => {
@@ -1516,7 +1516,7 @@ export class UI {
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = false;
       document.getElementById('sched-multi-departures').value = '1';
-      document.getElementById('sched-terminus-wait').value = '10';
+      document.getElementById('sched-terminus-wait').value = '5';
       // Default: all days checked, no specific dates
       document.querySelectorAll('.sched-run-day').forEach(cb => { cb.checked = true; });
       document.getElementById('sched-run-dates').value = '';
@@ -1542,7 +1542,7 @@ export class UI {
     const lastArr = this.schedStops[this.schedStops.length - 1].arrTimeMin;
     const oneWayMin = lastArr - firstDep;
     if (oneWayMin <= 0) return;
-    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 10;
+    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
     // One round trip = oneWay + terminusWait + oneWay + terminusWait
     const oneRoundTrip = (oneWayMin * 2) + (terminusWait * 2);
     const maxAR = Math.max(1, Math.floor((24 * 60) / oneRoundTrip));
@@ -2407,7 +2407,7 @@ export class UI {
     const rame = this.game.rameManager.getById(rameId);
     const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
-    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 10;
+    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
 
     // Build route requests in parallel for speed
     const routePromises = [];
