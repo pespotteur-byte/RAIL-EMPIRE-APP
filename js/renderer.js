@@ -1,5 +1,12 @@
 import { TileMap } from './map.js?v=1779724771';
 
+// LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
+export const LIVEMAP_CATEGORY_COLORS = {
+  voyageur: '#3b82f6', // bleu
+  fret: '#22c55e',     // vert
+  travaux: '#f59e0b',  // orange
+};
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -566,7 +573,19 @@ export class Renderer {
       const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
       if (p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) continue;
 
-      const color = svc.state === 'waiting' ? '#475569' : (svc.train.color || '#22d3ee');
+      // LVM-01 — 3 déclinaisons couleur par catégorie (annexe 2a).
+      const catColor = LIVEMAP_CATEGORY_COLORS[svc.category || svc.train.category]
+        || svc.train.color || '#22d3ee';
+      const color = svc.state === 'waiting' ? '#475569' : catColor;
+
+      // LVM-06 — anneau de sélection autour du train choisi.
+      if (window.game?.ui?.selectedService?.id === svc.id) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, bs * 2.2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       if (svc.state === 'moving') {
         ctx.fillStyle = color;

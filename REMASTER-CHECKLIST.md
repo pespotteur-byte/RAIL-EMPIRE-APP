@@ -266,12 +266,12 @@
 ## LVM — LIVEMAP & AFFICHAGE  (P1)  [schémas annexes 1-5]
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| LVM-01 | Icônes train en 3 déclinaisons couleur : Voyageur / Fret / Travaux | P1 | annexe 2a | [ ] |
-| LVM-02 | Langage carte : voies 1/1bis/2/2bis, points de voie, tronçon [AB] | P1 | annexe 3A | [ ] |
-| LVM-03 | Bandeau train : indications qui défilent + barre de rame sensible même en marche | P1 | annexe 4 | [ ] |
-| LVM-04 | Clic sur train → panneau détail (arrêts + heures arr/dép) | P1 | annexe 5 | [ ] |
-| LVM-05 | Gares créées apparaissent sur la livemap (bug actuel) | P0 | A5.2, A14#10 | [ ] |
-| LVM-06 | Sélection train depuis carte → affiché en haut du bandeau | P1 | annexe 4-5 | [ ] |
+| LVM-01 | Icônes train en 3 déclinaisons couleur : Voyageur / Fret / Travaux | P1 | annexe 2a | [x] PR6 (LIVEMAP_CATEGORY_COLORS + catégorie ActiveService + légende) |
+| LVM-02 | Langage carte : voies 1/1bis/2/2bis, points de voie, tronçon [AB] | P1 | annexe 3A | [x] existant (voie points étiquetés + tronçons rendus) |
+| LVM-03 | Bandeau train : indications qui défilent + barre de rame sensible même en marche | P1 | annexe 4 | [x] PR6 (bandeau défilant .lvp-bandeau + images rame sidebar) |
+| LVM-04 | Clic sur train → panneau détail (arrêts + heures arr/dép) | P1 | annexe 5 | [x] PR6 (_findServiceAtScreen + panneau arrêts/horaires) |
+| LVM-05 | Gares créées apparaissent sur la livemap (bug actuel) | P0 | A5.2, A14#10 | [x] drawStations lit world.stations en direct (rendu live) |
+| LVM-06 | Sélection train depuis carte → affiché en haut du bandeau | P1 | annexe 4-5 | [x] PR6 (panneau + anneau sélection + clic depuis la liste) |
 
 ## IG — INFOGARE  (P2)  [schémas styles]
 | ID | Exigence | Prio | Source | Statut |

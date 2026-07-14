@@ -1,3 +1,7 @@
+// LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
+const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b' };
+const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux' };
+
 export class UI {
   constructor(game) {
     this.game = game;
@@ -216,6 +220,18 @@ export class UI {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
+        // LVM-04/06 — clic sur un train : sélection + panneau détail.
+        const _anyMode = this._pickConnectionMode || this.tronconCreationMode
+          || this.manualTronconMode || this.tracerLigneMode || this.voiePointCreationMode
+          || this.stationCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
+        if (!_anyMode && this.activePage === 'map') {
+          const picked = this._findServiceAtScreen(x, y);
+          if (picked) { this.selectService(picked); this.isDragging = false; return; }
+          if (this.selectedService && !this._hoveredStation && !this._hoveredVoiePoint) {
+            this.deselectService();
+          }
+        }
+
         // Pick-connection mode: clicking on an existing station to connect
         if (this._pickConnectionMode) {
           const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
@@ -416,6 +432,18 @@ export class UI {
         const rect = canvas.getBoundingClientRect();
         const x = touchStart.x - rect.left;
         const y = touchStart.y - rect.top;
+        // LVM-04/06 — tap sur un train : sélection + panneau détail.
+        const _tapMode = this._pickConnectionMode || this.tronconCreationMode
+          || this.manualTronconMode || this.tracerLigneMode || this.voiePointCreationMode
+          || this.stationCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
+        if (!_tapMode && this.activePage === 'map') {
+          const picked = this._findServiceAtScreen(x, y);
+          if (picked) {
+            this.selectService(picked);
+            touchStart = null; touchDist = null; touchMoved = false;
+            return;
+          }
+        }
         if (this._pickConnectionMode) {
           const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
           let closest = null, minDist = Infinity;
@@ -513,6 +541,138 @@ export class UI {
       }
     }
     tooltip.classList.add('hidden');
+  }
+
+  // LVM-04 — trouve le service (train) le plus proche du clic écran (rayon px).
+  _findServiceAtScreen(x, y) {
+    const renderer = this.game.renderer;
+    if (!renderer || !this.game.scheduleCreator) return null;
+    const services = this.game.scheduleCreator.getActiveServices();
+    let best = null, bestD = 16; // seuil px
+    for (const svc of services) {
+      if (!svc.position || svc.state === 'completed') continue;
+      if (svc.state === 'waiting' && !svc.train?.stoppedAt) continue;
+      const p = renderer.latLonToScreen(svc.position.lat, svc.position.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestD) { bestD = d; best = svc; }
+    }
+    return best;
+  }
+
+  selectService(svc) {
+    this.selectedService = svc;
+    this._lvpKey = null; // force un rebuild complet
+    this._syncLivemapPanel();
+  }
+
+  // Appelé à chaque frame (updateTrainsList) : rebuild seulement si le trajet
+  // change (leg aller/retour, nb d'arrêts), sinon simple rafraîchissement léger
+  // pour ne pas casser le bandeau défilant ni le bouton fermer.
+  _syncLivemapPanel() {
+    const svc = this.selectedService;
+    const panel = document.getElementById('livemap-train-panel');
+    if (!panel) return;
+    if (!svc || !svc.train || !this.game.scheduleCreator?.services.includes(svc)) {
+      this.selectedService = null;
+      this._lvpKey = null;
+      panel.classList.add('hidden');
+      return;
+    }
+    const stops = typeof svc.getCurrentStops === 'function'
+      ? svc.getCurrentStops()
+      : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
+    const key = `${svc.id}|${svc.isReturnLeg ? 'R' : 'A'}|${stops.length}`;
+    if (key !== this._lvpKey) {
+      this._lvpKey = key;
+      this._renderLivemapPanel();
+      return;
+    }
+    // Rafraîchissement léger
+    const t = svc.train;
+    const sp = document.getElementById('lvp-speed');
+    if (sp) sp.textContent = `${Math.round(t.speed)} km/h`;
+    const dl = document.getElementById('lvp-delay');
+    if (dl) {
+      const d = Math.round(t.delay || 0);
+      dl.className = d > 0 ? 'late' : d < 0 ? 'early' : 'ok';
+      dl.textContent = d > 0 ? `+${d} min` : d < 0 ? `- ${Math.abs(d)} min` : `à l'heure`;
+    }
+    const cur = svc.currentStopIndex || 0;
+    panel.querySelectorAll('.lvp-stop').forEach((el, i) => {
+      el.classList.toggle('cur', i === cur);
+    });
+  }
+
+  selectServiceById(id) {
+    const svc = this.game.scheduleCreator?.services.find(s => s.id === id);
+    if (svc) this.selectService(svc);
+  }
+
+  deselectService() {
+    this.selectedService = null;
+    document.getElementById('livemap-train-panel')?.classList.add('hidden');
+  }
+
+  // LVM-03/04/06 — panneau détail du train sélectionné (annexes 4-5).
+  _renderLivemapPanel() {
+    const panel = document.getElementById('livemap-train-panel');
+    if (!panel) return;
+    const svc = this.selectedService;
+    // Le service a pu se terminer / disparaître : on referme.
+    if (!svc || !svc.train || !this.game.scheduleCreator?.services.includes(svc)) {
+      this.selectedService = null;
+      panel.classList.add('hidden');
+      return;
+    }
+    const t = svc.train;
+    const cat = svc.category || t.category || 'voyageur';
+    const catColor = LVM_CAT_COLORS[cat] || t.color || '#22d3ee';
+    const displayName = t.seriesName ? `${t.seriesName} ${t.number || ''}`.trim() : svc.name;
+    const numLabel = svc.number != null
+      ? `<span class="lvp-num">N°${svc.number}${svc.roundTrip && svc.returnNumber != null ? '/' + svc.returnNumber : ''}</span>`
+      : '';
+    const d = Math.round(t.delay || 0);
+
+    const stops = typeof svc.getCurrentStops === 'function'
+      ? svc.getCurrentStops()
+      : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
+    const world = this.game.world;
+    const fmt = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
+
+    const rows = stops.map((s, i) => {
+      const isWp = s.type === 'waypoint' || !s.stationId;
+      const name = isWp ? 'Waypoint' : (world.getStationById(s.stationId)?.name || '—');
+      const arr = s.arrivalTime ?? s.departureTime ?? 0;
+      const dep = s.departureTime ?? s.arrivalTime ?? 0;
+      let times;
+      if (i === 0) times = `dép ${fmt(dep)}`;
+      else if (i === stops.length - 1) times = `arr ${fmt(arr)}`;
+      else if (isWp) times = `pass ${fmt(arr)}`;
+      else times = `${fmt(arr)}–${fmt(dep)}`;
+      const cur = i === svc.currentStopIndex ? ' cur' : '';
+      const plat = s.platform ? ` V${s.platform}` : '';
+      return `<div class="lvp-stop${cur}"><span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${times}</span></div>`;
+    }).join('');
+
+    const upcoming = stops.slice(svc.currentStopIndex || 0)
+      .filter(s => s.stationId)
+      .map(s => world.getStationById(s.stationId)?.name)
+      .filter(Boolean);
+    const bandeau = upcoming.length ? `Prochains arrêts : ${upcoming.join('  •  ')}` : 'Service terminé';
+
+    panel.innerHTML = `
+      <div class="lvp-header" style="background:${catColor}">
+        <span class="lvp-cat"></span>
+        <span class="lvp-title">${displayName}</span>
+        ${numLabel}
+        <button class="lvp-close" onclick="game.ui.deselectService()" title="Fermer">×</button>
+      </div>
+      <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
+      <div class="lvp-bandeau"><span class="lvp-bandeau-track">${bandeau}</span></div>
+      <div class="lvp-stops">${rows}</div>
+      <div class="lvp-legend">dép = départ · pass = passage · arr = arrivée</div>
+    `;
+    panel.classList.remove('hidden');
   }
 
   setupTabs() {
@@ -4418,10 +4578,12 @@ export class UI {
       const rameKm = svc.rame ? (svc.rame.totalKmRun || 0) : (t.totalKmRun || 0);
       const wearHtml = rameKm > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(rameWear)}% · Total: ${Math.round(rameKm)} km</span></div>` : '';
 
+      const catColor = LVM_CAT_COLORS[svc.category || t.category] || t.color;
+      const selCls = this.selectedService?.id === svc.id ? ' tc-selected' : '';
       return `
-        <div class="train-card-fixed">
+        <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${svc.id}')">
           <div class="tc-line tc-header">
-            <span class="train-color" style="background:${t.color}"></span>
+            <span class="train-color" style="background:${catColor}"></span>
             <span class="tc-name">${displayName}</span>
           </div>
           ${imageHtml}
@@ -4440,6 +4602,9 @@ export class UI {
     }).join('');
     // S10: Only update DOM if content actually changed to avoid flicker
     if (container.innerHTML !== html) container.innerHTML = html;
+
+    // LVM-06 — garde le panneau du train sélectionné à jour chaque frame.
+    this._syncLivemapPanel();
   }
 
   garageService(svcId) {

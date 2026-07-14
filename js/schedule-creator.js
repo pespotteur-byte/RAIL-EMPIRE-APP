@@ -145,10 +145,16 @@ export class ActiveService {
       }
     }
 
+    // LVM-01 — livemap category (annexe 2a) : Voyageur / Fret / Travaux.
+    this.category = this.isWorkTrain
+      ? 'travaux'
+      : (rame && rame.totalFreightCapacity > rame.totalCapacity ? 'fret' : 'voyageur');
+
     this.train = {
       id: this.id,
       name: this.name,
       color: this.getColor(),
+      category: this.category,
       maxSpeed: rame ? rame.maxSpeed : 160,
       speed: 0,
       delay: 0,
