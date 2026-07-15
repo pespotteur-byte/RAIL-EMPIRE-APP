@@ -1696,6 +1696,12 @@ export class ActiveService {
         return track.worksSpeedLimit || 40;
       }
     }
+
+    // SIG-08 — signaux ajoutables par le joueur sur un tronçon
+    const signalLimit = window.game?.signalManager?.getSpeedLimit(prevId, nextId);
+    if (signalLimit === 0) return 0;
+    if (Number.isFinite(signalLimit) && signalLimit > 0) return signalLimit;
+
     return null;
   }
 

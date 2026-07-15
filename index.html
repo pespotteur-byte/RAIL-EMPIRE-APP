@@ -210,6 +210,40 @@
             </div>
           </div>
           <div id="network-state" class="dash-section" style="margin-bottom:12px"></div>
+          <!-- SIG-08 : signaux ajoutables par le joueur -->
+          <div id="signals-section" class="dash-section" style="margin-bottom:12px">
+            <h3 style="margin:0 0 8px;font-size:13px">Signaux (SIG-08)</h3>
+            <div class="form-row" style="font-size:12px">
+              <div class="form-group" style="flex:2">
+                <label>Nom</label>
+                <input type="text" id="signal-name" placeholder="Signal 1">
+              </div>
+              <div class="form-group" style="flex:2">
+                <label>Gare A</label>
+                <select id="signal-station-a"><option value="">—</option></select>
+              </div>
+              <div class="form-group" style="flex:2">
+                <label>Gare B</label>
+                <select id="signal-station-b"><option value="">—</option></select>
+              </div>
+              <div class="form-group" style="flex:1">
+                <label>Type</label>
+                <select id="signal-type">
+                  <option value="ralentissement">Ralentissement</option>
+                  <option value="avertissement">Avertissement</option>
+                  <option value="arret">Arret</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1">
+                <label>Vitesse (km/h)</label>
+                <input type="number" id="signal-speed" value="60" min="0" max="300">
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end">
+                <button id="btn-add-signal" class="btn-primary" style="padding:6px 10px">+</button>
+              </div>
+            </div>
+            <div id="signals-list" style="margin-top:8px"></div>
+          </div>
           <!-- Inline station creator -->
           <div id="lines-station-creator" class="hidden" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
             <h3 style="margin:0 0 8px;font-size:13px">Nouvelle gare</h3>

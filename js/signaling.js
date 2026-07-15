@@ -89,3 +89,69 @@ export function aspectSpeedCapKmh(aspect, lineSpeedKmh, distToSignalM = Infinity
       return lineSpeedKmh;
   }
 }
+
+// SIG-08 — signaux ajoutables par le joueur (facultatif)
+let nextSignalId = 1;
+export class PlayerSignal {
+  constructor(data) {
+    this.id = data.id || `sig-${nextSignalId++}`;
+    this.name = data.name || `Signal ${this.id}`;
+    this.stationA = data.stationA || '';
+    this.stationB = data.stationB || '';
+    this.type = data.type || 'ralentissement'; // 'ralentissement' | 'avertissement' | 'arret'
+    this.speedLimit = data.speedLimit || 40; // km/h (pour ralentissement)
+    this.active = data.active !== false;
+    this.xKm = data.xKm || 0; // distance depuis stationA
+  }
+}
+
+export class PlayerSignalManager {
+  constructor() {
+    this.signals = [];
+  }
+
+  add(data) {
+    const s = new PlayerSignal(data);
+    this.signals.push(s);
+    return s;
+  }
+
+  remove(id) {
+    this.signals = this.signals.filter(s => s.id !== id);
+  }
+
+  getAll() {
+    return this.signals;
+  }
+
+  // Renvoie la limitation imposée par un signal actif sur le tronçon A-B (dans n'importe quel sens)
+  getSpeedLimit(stationA, stationB) {
+    let limit = null;
+    for (const s of this.signals) {
+      if (!s.active) continue;
+      const onSegment = (s.stationA === stationA && s.stationB === stationB) ||
+                        (s.stationA === stationB && s.stationB === stationA);
+      if (!onSegment) continue;
+      if (s.type === 'arret') return 0;
+      if (s.type === 'avertissement') limit = Math.min(limit ?? Infinity, 60);
+      if (s.type === 'ralentissement' && s.speedLimit > 0) limit = Math.min(limit ?? Infinity, s.speedLimit);
+    }
+    return limit;
+  }
+
+  toSave() {
+    return this.signals.map(s => ({
+      id: s.id, name: s.name, stationA: s.stationA, stationB: s.stationB,
+      type: s.type, speedLimit: s.speedLimit, active: s.active, xKm: s.xKm,
+    }));
+  }
+
+  loadFromSave(arr) {
+    this.signals = (arr || []).map(d => {
+      const s = new PlayerSignal(d);
+      const n = parseInt(d.id?.replace('sig-', '') || '0');
+      if (n >= nextSignalId) nextSignalId = n + 1;
+      return s;
+    });
+  }
+}
