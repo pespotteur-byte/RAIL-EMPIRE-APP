@@ -165,6 +165,7 @@ export class ActiveService {
       incident: null,
       breakdown: null,
       blockedBy: false,
+      signalAlert: null, // 'caution' | 'closed' | null
       accel,
       decel,
       seriesName,
@@ -708,8 +709,9 @@ export class ActiveService {
     // CRITICAL: effectiveSpeed = min(train speed, infrastructure speed)
     let effectiveMaxSpeed = Math.min(rameMaxSpeed, segMaxSpeed);
 
-    // Reset blockedBy at start of each tick — each check below will set it true if needed
+    // Reset blockedBy/signal alert at start of each tick — each check below will set it if needed
     this.train.blockedBy = false;
+    this.train.signalAlert = null;
 
     // --- TRONCON CISAILLEMENT CHECK (runs first, overrides proximity if on troncon) ---
     let onTroncon = false;
@@ -763,6 +765,7 @@ export class ActiveService {
         if (signalAspect === 0) {
           // Carré ahead: apply VISA steps (30/20/10) toward the blocked canton
           // boundary and stop ~30 m upstream (SIG-05/SIG-06).
+          this.train.signalAlert = 'closed';
           const nextCanton = cantonManager.getNextCanton(this._cantonAssignments, segIdx);
           let distM = 0;
           if (nextCanton && this._state.segDists && this._state.cumDist) {
@@ -776,9 +779,11 @@ export class ActiveService {
           this.train.blockedBy = visaCap === 0;
         } else if (signalAspect !== null) {
           // Avertissement: be ready to stop at the next signal (SIG-04/SIG-07).
+          this.train.signalAlert = 'caution';
           effectiveMaxSpeed = Math.min(effectiveMaxSpeed, RESTART_SPEED_KMH);
           this.train.blockedBy = false;
         } else {
+          this.train.signalAlert = null;
           this.train.blockedBy = false;
         }
       }

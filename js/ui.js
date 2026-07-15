@@ -4507,7 +4507,10 @@ export class UI {
           contextLabel = stName ? `À quai — ${stName}${voie}` : 'À quai';
           contextClass = 'ctx-quai';
         }
-      } else if (t.blockedBy) {
+      } else if (t.signalAlert === 'closed') {
+        contextLabel = 'Arrêt pour signal fermé';
+        contextClass = 'ctx-signal-closed';
+      } else if (t.blockedBy || t.signalAlert === 'caution') {
         contextLabel = 'Régulation du trafic';
         contextClass = 'ctx-regulation';
       } else if (svc.state === 'moving' && t.speed > 0) {
