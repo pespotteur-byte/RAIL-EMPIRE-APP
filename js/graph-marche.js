@@ -20,6 +20,26 @@ export class GraphMarche {
     this.mode = 'theoretical'; // 'theoretical' or 'live'
   }
 
+  // GM-04 — style de trait selon le type de convoi et épaisseur selon le nombre de voies
+  _styleForService(svc, ctx) {
+    const type = svc.serviceType || (svc.isWorkTrain ? 'work' : 'passager');
+    const avgTracks = svc.routes?.length
+      ? Math.round((svc.routes.reduce((sum, r) => sum + (r?.[0]?.tracks || 1), 0) / svc.routes.length) || 1)
+      : 1;
+    const lineWidth = Math.min(3, 1 + avgTracks * 0.4);
+    switch (type) {
+      case 'fret': case 'w':
+        ctx.setLineDash([6, 3]);
+        break;
+      case 'work': case 'hlp': case 'tm':
+        ctx.setLineDash([2, 3]);
+        break;
+      default:
+        ctx.setLineDash([]);
+    }
+    ctx.lineWidth = lineWidth;
+  }
+
   /** Record live train positions each minute */
   record(game, timeOfDay) {
     if (timeOfDay === this._lastRecordTime) return;
@@ -308,7 +328,7 @@ export class GraphMarche {
         const end = Math.max(m.idxA, m.idxB);
         const color = this._getSvcColor(m.svc.id);
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
+        this._styleForService(m.svc, ctx);
         ctx.beginPath();
         let started = false;
         for (let i = start; i <= end; i++) {
@@ -398,8 +418,7 @@ export class GraphMarche {
 
         const color = this._getSvcColor(m.svc.id);
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 3]);
+        this._styleForService(m.svc, ctx);
         ctx.beginPath();
         let started = false;
         for (const r of recs) {
