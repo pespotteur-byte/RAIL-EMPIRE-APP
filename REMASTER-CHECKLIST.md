@@ -61,7 +61,7 @@
 | SIG-05 | État "carré/fermé" = arrêt obligatoire 25-50 m en amont + alerte | P0 | A3.2, annexe 3B | [x] PR? (arrêt ~30 m via VISA=0 + signalAlert='closed' → 'Arrêt pour signal fermé') |
 | SIG-06 | VISA : 30 km/h à 300 m, 20 à 200 m, 10 à 100 m du carré | P0 | A3.2 | [x] PR3 |
 | SIG-07 | Repartir d'un carré ouvert à l'avertissement : ≤60 km/h puis VISA | P0 | A3.2 | [x] PR? (cap ≤60 en avertissement, VISA ensuite) |
-| SIG-08 | Signaux ajoutables par le joueur (facultatif) | P2 | A15 P2 | [ ] |
+| SIG-08 | Signaux ajoutables par le joueur (facultatif) | P2 | A15 P2 | [x] PR? (page Lignes/Réseau : ajout/suppression signaux + limitation vitesse persistante) |
 
 ## SC — SCHEDULE CREATOR  (P0)
 | ID | Exigence | Prio | Source | Statut |
