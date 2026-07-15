@@ -486,6 +486,22 @@ export class ActiveService {
             return;
           }
 
+          // OCC-03 : priorité au départ au voyageur dont le départ est le plus tôt
+          const depStationId = currentStops[0]?.stationId;
+          const myDep = currentStops[0]?.departureTime;
+          if (depStationId && myDep != null && this.serviceType === 'passager' && window.game?.scheduleCreator) {
+            const others = window.game.scheduleCreator.getActiveServices();
+            const earlier = others.find(s =>
+              s.id !== this.id &&
+              s.serviceType === 'passager' &&
+              !s.completed &&
+              s.state !== 'moving' &&
+              s.stops?.[0]?.stationId === depStationId &&
+              (s.stops[0]?.departureTime ?? Infinity) < myDep
+            );
+            if (earlier) return;
+          }
+
           // Ensure position is set (may not have been set by pre-departure positioning)
           if (!this.position) {
             const depStation = this.world?.getStationById(currentStops[0]?.stationId);
