@@ -39,6 +39,13 @@ export class VoiePointManager {
     this.troncons = [];
     this._vpMap = new Map(); // O(1) lookup by id
     this._trcMap = new Map(); // O(1) lookup by id
+    this.onChange = null; // R-08 : callback quand les tronçons/aiguillages changent
+  }
+
+  _notifyChange() {
+    if (typeof this.onChange === 'function') {
+      try { this.onChange(); } catch (e) { /* ignore */ }
+    }
   }
 
   _rebuildMaps() {
@@ -54,6 +61,7 @@ export class VoiePointManager {
     const vp = new VoiePoint(data);
     this.voiePoints.push(vp);
     this._vpMap.set(vp.id, vp);
+    this._notifyChange();
     return vp;
   }
 
@@ -63,6 +71,7 @@ export class VoiePointManager {
     this.voiePoints = this.voiePoints.filter(vp => vp.id !== id);
     this._vpMap.delete(id);
     this._rebuildMaps();
+    this._notifyChange();
   }
 
   deleteLineGroup(lineGroupId) {
@@ -72,6 +81,7 @@ export class VoiePointManager {
     this.troncons = this.troncons.filter(t => t.lineGroupId !== lineGroupId);
     this.voiePoints = this.voiePoints.filter(vp => vp.lineGroupId !== lineGroupId);
     this._rebuildMaps();
+    this._notifyChange();
     return (vpsBefore - this.voiePoints.length) + (trcsBefore - this.troncons.length);
   }
 
@@ -121,12 +131,14 @@ export class VoiePointManager {
     const trc = new Troncon(data);
     this.troncons.push(trc);
     this._trcMap.set(trc.id, trc);
+    this._notifyChange();
     return trc;
   }
 
   removeTroncon(id) {
     this.troncons = this.troncons.filter(t => t.id !== id);
     this._trcMap.delete(id);
+    this._notifyChange();
   }
 
   getTronconById(id) {

@@ -79,6 +79,9 @@ export class ORMClient {
     this._stationsOSM = []; // detected OSM stations
     this._graphDirty = true;
 
+    // R-08 : aiguillages branchés au routage — tronçons utilisateur injectés dans le graphe
+    this._userTronconProvider = null;
+
     // Spatial index cell size (degrees) for nearest-node queries ~2 km
     this._cellSize = 0.02;
     // Routing tuning (directed graph)
@@ -211,6 +214,17 @@ export class ORMClient {
   // No filtering: yards, sidings, spurs all included.
   // ============================================================
 
+  // R-08 : fournisseur de tronçons utilisateur pour les intégrer au graphe de routage
+  setUserTronconProvider(providerFn) {
+    this._userTronconProvider = providerFn;
+    this.markGraphDirty();
+  }
+
+  markGraphDirty() {
+    this._graphDirty = true;
+    this.routeCache.clear();
+  }
+
   _ensureGraph() {
     if (!this._graphDirty && this._graph) return this._graph;
     this._graph = this._buildUnifiedGraph();
@@ -242,6 +256,35 @@ export class ORMClient {
         nodes.get(bKey).edges.push(reverseEdge);
       }
     }
+
+    // R-08 : injecter les tronçons / aiguillages créés par le joueur dans le graphe de routage
+    try {
+      const userTroncons = typeof this._userTronconProvider === 'function'
+        ? this._userTronconProvider()
+        : null;
+      if (Array.isArray(userTroncons)) {
+        for (const trc of userTroncons) {
+          const route = trc?.route;
+          if (!route || route.length < 2) continue;
+          for (let i = 0; i < route.length - 1; i++) {
+            const a = route[i], b = route[i + 1];
+            if (!a || !b || a.lat == null || a.lon == null || b.lat == null || b.lon == null) continue;
+            const aKey = `${a.lat.toFixed(6)},${a.lon.toFixed(6)}`;
+            const bKey = `${b.lat.toFixed(6)},${b.lon.toFixed(6)}`;
+            if (aKey === bKey) continue;
+            if (!nodes.has(aKey)) nodes.set(aKey, { key: aKey, lat: a.lat, lon: a.lon, edges: [] });
+            if (!nodes.has(bKey)) nodes.set(bKey, { key: bKey, lat: b.lat, lon: b.lon, edges: [] });
+            const dist = haversine(a.lat, a.lon, b.lat, b.lon);
+            const maxSpeed = a.maxSpeed || b.maxSpeed || 30;
+            const edge = { from: aKey, to: bKey, dist, maxSpeed, electrified: false, tracks: 1, usage: 'main', service: '', wayId: trc.id || 'user-trc' };
+            const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed, electrified: false, tracks: 1, usage: 'main', service: '', wayId: trc.id || 'user-trc' };
+            nodes.get(aKey).edges.push(edge);
+            nodes.get(bKey).edges.push(reverseEdge);
+          }
+        }
+      }
+    } catch (e) { /* graceful */ }
+
     const graph = { nodes };
     graph._index = this._buildSpatialIndex(nodes);
     return graph;

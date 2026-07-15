@@ -57,6 +57,9 @@ class RailEmpire {
     this.sillonManager = new SillonManager();
     this.platformManager = new PlatformManager();
     this.voiePointManager = new VoiePointManager();
+    // R-08 : brancher les aiguillages/tronçons utilisateur au graphe de routage ORM
+    this.orm.setUserTronconProvider(() => this.voiePointManager.getAllTroncons());
+    this.voiePointManager.onChange = () => this.orm.markGraphDirty();
     this.dashboard = new Dashboard();
     this.graphMarche = new GraphMarche();
     this.staffManager = new StaffManager();
