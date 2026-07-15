@@ -755,6 +755,10 @@ export class UI {
     document.querySelectorAll('.modal-close').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.modal')?.classList.add('hidden'));
     });
+    // BUG-12 : validation du point de voie avec Entrée (découplée du focus souris)
+    document.getElementById('modal-voie-point')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); this._saveVoiePoint(); }
+    });
     // Modals do NOT close on outside click (player feedback)
   }
 
