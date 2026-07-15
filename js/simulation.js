@@ -36,7 +36,8 @@ export function analyzeRoute(route, trainMaxSpeed) {
     const from = route[i];
     const to = route[i + 1];
     const distance = haversineDistance(from.lat, from.lon, to.lat, to.lon);
-    const segmentMaxSpeed = to.maxSpeed || from.maxSpeed || 160;
+    // Annexe 3A — absence d'indication de vitesse → 30 km/h.
+    const segmentMaxSpeed = to.maxSpeed || from.maxSpeed || 30;
     const effectiveSpeed = Math.min(trainMaxSpeed, segmentMaxSpeed);
     const timeMinutes = effectiveSpeed > 0 ? (distance / effectiveSpeed) * 60 : 0;
 
@@ -131,7 +132,8 @@ export class CantonManager {
         route[i].lat, route[i].lon,
         route[i + 1].lat, route[i + 1].lon
       );
-      const speed = route[i + 1].maxSpeed || route[i].maxSpeed || 160;
+      // Annexe 3A — absence d'indication de vitesse → 30 km/h.
+      const speed = route[i + 1].maxSpeed || route[i].maxSpeed || 30;
       const targetBlockLength = getBlockLength(speed);
 
       blockDist += segDist;

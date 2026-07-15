@@ -141,18 +141,28 @@ export class ORMClient {
     if (!data.elements) return [];
     return data.elements
       .filter(el => el.type === 'way' && el.geometry)
-      .map(el => ({
-        id: el.id,
-        maxSpeed: parseInt(el.tags?.maxspeed) || 160,
-        electrified: el.tags?.electrified !== 'no',
-        tracks: parseInt(el.tags?.tracks) || 1,
-        usage: el.tags?.usage || 'main',
-        service: el.tags?.service || '',
-        name: el.tags?.name || '',
-        ref: el.tags?.ref || '',
-        geometry: el.geometry.map(p => ({ lat: p.lat, lon: p.lon })),
-        nodeIds: el.nodes || [],
-      }));
+      .map(el => {
+        const usage = el.tags?.usage || '';
+        const service = el.tags?.service || '';
+        const isMainOrBranch = usage === 'main' || usage === 'branch';
+        // Annexe 3A / §IV — voie sans indication de vitesse :
+        //   • si ORM distingue voie principale (main/branch), défaut élevé (160);
+        //   • sinon (pas d’usage/service, ou service/triage) défaut sécuritaire 30 km/h.
+        const hasSpeed = el.tags?.maxspeed && !Number.isNaN(parseInt(el.tags.maxspeed));
+        const maxSpeed = hasSpeed ? parseInt(el.tags.maxspeed) : (isMainOrBranch ? 160 : 30);
+        return {
+          id: el.id,
+          maxSpeed,
+          electrified: el.tags?.electrified !== 'no',
+          tracks: parseInt(el.tags?.tracks) || 1,
+          usage: el.tags?.usage || 'main',
+          service,
+          name: el.tags?.name || '',
+          ref: el.tags?.ref || '',
+          geometry: el.geometry.map(p => ({ lat: p.lat, lon: p.lon })),
+          nodeIds: el.nodes || [],
+        };
+      });
   }
 
   _parseStations(data) {
@@ -315,7 +325,10 @@ export class ORMClient {
   // Effective running speed on an edge (km/h). Service tracks (yards,
   // sidings, spurs) are capped low so routing avoids them unless required.
   _effectiveSpeed(edge) {
-    let v = edge.maxSpeed || 160;
+    // Annexe 3A / §IV — défaut conditionnel : 160 pour voie principale/branch,
+    // 30 si absence d’usage/service (on ne peut pas distinguer) ou service/triage.
+    const isMainOrBranch = edge.usage === 'main' || edge.usage === 'branch';
+    let v = edge.maxSpeed != null ? edge.maxSpeed : (isMainOrBranch ? 160 : 30);
     const isService = (edge.service && edge.service !== '') ||
       (edge.usage && edge.usage !== 'main' && edge.usage !== 'branch');
     if (isService) v = Math.min(v, this._serviceSpeedKmh);
@@ -898,7 +911,7 @@ export class ORMClient {
       segments.push({
         from: route[i - 1], to: route[i],
         distance: dist,
-        maxSpeed: route[i].maxSpeed || route[i - 1].maxSpeed || 160,
+        maxSpeed: route[i].maxSpeed || route[i - 1].maxSpeed || 30,
         electrified: route[i].electrified !== false,
         tracks: route[i].tracks || 1,
       });

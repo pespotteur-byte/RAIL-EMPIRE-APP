@@ -33,18 +33,19 @@ const VISA_STEPS = [
 ];
 
 // SIG-01 — target block (canton) length in km as a function of line speed.
-// Faster lines need longer blocks so braking distance fits inside one canton.
-// Tunable to match the doc barème (A3.2).
+// Doc barème (Annexe 3A):
+//   < 60 km/h      → 500 m
+//   60-100 km/h    → 900 m
+//   100-160 km/h   → 1200 m
+//   160-200 km/h   → 1500 m
+//   > 200 km/h     → 2000 m
 export function cantonLengthKm(lineSpeedKmh) {
   const v = lineSpeedKmh || 0;
-  if (v <= 40) return 0.5;
-  if (v <= 60) return 0.8;
-  if (v <= 100) return 1.2;
-  if (v <= 120) return 1.5;
-  if (v <= 160) return 2.0;
-  if (v <= 200) return 2.7;
-  if (v <= 250) return 3.5;
-  return 4.0;
+  if (v < 60) return 0.5;
+  if (v <= 100) return 0.9;
+  if (v <= 160) return 1.2;
+  if (v <= 200) return 1.5;
+  return 2.0;
 }
 
 // SIG-06 / SIG-05 — VISA speed cap (km/h) as a function of the distance (m)

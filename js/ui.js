@@ -5131,6 +5131,13 @@ export class UI {
     // S10: Only update DOM if content actually changed to avoid flicker
     if (container.innerHTML !== html) container.innerHTML = html;
 
+    // LVM-06 — le train sélectionné reste visible en haut du bandeau.
+    if (this.selectedService && this._lastSelectedForScroll !== this.selectedService.id) {
+      this._lastSelectedForScroll = this.selectedService.id;
+      const selectedCard = container.querySelector('.tc-selected');
+      if (selectedCard) selectedCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     // LVM-06 — garde le panneau du train sélectionné à jour chaque frame.
     this._syncLivemapPanel();
   }
@@ -5599,7 +5606,7 @@ export class UI {
     const vpm = this.game.voiePointManager;
     const ptA = this._manualTronconPointA;
     const route = this._manualTronconWaypoints.map(wp => ({
-      lat: wp.lat, lon: wp.lon, maxSpeed: wp.maxSpeed || 160,
+      lat: wp.lat, lon: wp.lon, maxSpeed: wp.maxSpeed || 30,
     }));
 
     // Calculate distance from waypoints

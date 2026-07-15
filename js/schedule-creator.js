@@ -276,6 +276,70 @@ export class ActiveService {
     return this._adjustedStops || this.stops;
   }
 
+  // Annexe 3A — A. changements de vitesse : vitesse minimale sur la portion de
+  // voie occupée par le train (de l’avant jusqu’à la queue, trainLength en m).
+  _getInfraSpeedLimit(route, segIdx, progress, trainLengthM) {
+    const segDists = this._state?.segDists;
+    const cumDist = this._state?.cumDist;
+    if (!segDists || !cumDist || !route?.length) return route[segIdx]?.maxSpeed || route[segIdx + 1]?.maxSpeed || 30;
+    const trainLenKm = Math.max(0, trainLengthM) / 1000;
+    const totalDist = cumDist[0];
+    const frontDist = totalDist - cumDist[segIdx] + progress * segDists[segIdx];
+    const step = 0.01; // km (10 m)
+    let minSpeed = Infinity;
+    for (let dBack = 0; dBack <= trainLenKm; dBack += step) {
+      const target = frontDist - dBack;
+      if (target <= 0) {
+        minSpeed = Math.min(minSpeed, route[0].maxSpeed || 30);
+        break;
+      }
+      if (target >= totalDist) {
+        minSpeed = Math.min(minSpeed, route[route.length - 1].maxSpeed || 30);
+        continue;
+      }
+      // find the segment containing target
+      let i = 0;
+      for (; i < route.length - 1; i++) {
+        const segStart = totalDist - cumDist[i];
+        const segEnd = totalDist - cumDist[i + 1];
+        if (target >= segStart && target < segEnd) break;
+      }
+      if (i >= route.length - 1) i = route.length - 2;
+      minSpeed = Math.min(minSpeed, route[i].maxSpeed || 30);
+    }
+    return Number.isFinite(minSpeed) ? minSpeed : (route[segIdx]?.maxSpeed || 30);
+  }
+
+  // Annexe 3A — B. changement négatif : ralentir pour être à la nouvelle vitesse
+  // 50-150 m avant le point de transition (on retient 100 m de marge).
+  _getNegativeTransitionCap(route, segIdx, progress, currentSpeed) {
+    const segDists = this._state?.segDists;
+    const cumDist = this._state?.cumDist;
+    if (!segDists || !cumDist || currentSpeed <= 0) return null;
+    const totalDist = cumDist[0];
+    const frontDist = totalDist - cumDist[segIdx] + progress * segDists[segIdx];
+    const bufferKm = 0.10; // 100 m (50-150 m)
+    let cap = Infinity;
+    for (let i = segIdx + 1; i < route.length; i++) {
+      const nextSpeed = route[i].maxSpeed || 30;
+      if (nextSpeed >= currentSpeed) continue;
+      const pointDist = totalDist - cumDist[i];
+      const distToPoint = pointDist - frontDist;
+      if (distToPoint <= 0) {
+        cap = Math.min(cap, nextSpeed);
+        continue;
+      }
+      const brakingNeeded = Math.max(0, (currentSpeed * currentSpeed - nextSpeed * nextSpeed) / (2 * this.train.decel * 3600));
+      if (distToPoint <= brakingNeeded + bufferKm) {
+        // speed required to be exactly at nextSpeed at (pointDist - bufferKm)
+        const targetDist = Math.max(0, distToPoint - bufferKm);
+        const reqSpeed = Math.sqrt(Math.max(0, nextSpeed * nextSpeed + 2 * this.train.decel * 3600 * targetDist));
+        cap = Math.min(cap, reqSpeed);
+      }
+    }
+    return Number.isFinite(cap) ? cap : null;
+  }
+
   // Called every minute - handles schedule logic (departures, arrivals, state transitions)
   scheduleTick(timeOfDay, dateStr, economy) {
     if (!this.active || this.stops.length < 2) return;
@@ -692,7 +756,11 @@ export class ActiveService {
     }
 
     // Infrastructure speed limit from ORM data
-    let segMaxSpeed = to.maxSpeed || from.maxSpeed || 160;
+    // Annexe 3A — limite sur la portion de voie occupée + transitions +/-.
+    const trainLength = this.rame ? this.rame.totalLength : (this.train.length || 20);
+    const infraLimit = this._getInfraSpeedLimit(route, segIdx, this._state.progress, trainLength);
+    const negativeCap = this._getNegativeTransitionCap(route, segIdx, this._state.progress, this.speed);
+    let segMaxSpeed = negativeCap != null ? Math.min(infraLimit, negativeCap) : infraLimit;
     // Train physical speed limit
     const rameMaxSpeed = this.rame ? this.rame.maxSpeed : this.train.maxSpeed;
 
@@ -825,30 +893,6 @@ export class ActiveService {
             this.train.blockedBy = true;
           }
         }
-      }
-    }
-
-    // --- ANTICIPATORY BRAKING FOR SPEED ZONE CHANGES ---
-    // Look ahead: if a lower speed zone is coming, start braking before entering it
-    if (this.speed > 0 && effectiveMaxSpeed > 0) {
-      let lookDist = 0;
-      for (let li = segIdx + 1; li < route.length - 1; li++) {
-        const ld = (this._state.segDists && this._state.segDists[li]) || haversineDistance(route[li].lat, route[li].lon, route[li + 1].lat, route[li + 1].lon);
-        lookDist += ld;
-        const nextSpeed = Math.min(rameMaxSpeed, route[li + 1].maxSpeed || route[li].maxSpeed || 160);
-        if (nextSpeed < this.speed) {
-          // Distance from current position to this zone boundary
-          const segRemain = segDistance * (1 - this._state.progress);
-          const distToZone = segRemain + lookDist - ld;
-          // Braking distance needed: (v² - v_target²) / (2 * decel)
-          const brakingNeeded = Math.max(0, (this.speed * this.speed - nextSpeed * nextSpeed) / (2 * this.train.decel * 3600));
-          if (distToZone <= brakingNeeded + 0.1) {
-            const targetNow = Math.sqrt(Math.max(nextSpeed * nextSpeed, nextSpeed * nextSpeed + 2 * this.train.decel * 3600 * distToZone));
-            effectiveMaxSpeed = Math.min(effectiveMaxSpeed, targetNow);
-          }
-          break;
-        }
-        if (lookDist > 5) break;
       }
     }
 
@@ -1348,7 +1392,8 @@ export class ActiveService {
     if (this._state.cachedRoute && this._state.index < this._state.cachedRoute.length - 1) {
       const route = this._state.cachedRoute;
       const idx = this._state.index;
-      return route[idx + 1].maxSpeed || route[idx].maxSpeed || 160;
+      // Annexe 3A — absence d'indication de vitesse → 30 km/h.
+      return route[idx + 1].maxSpeed || route[idx].maxSpeed || 30;
     }
 
     // Fallback: find nearest point on route
@@ -1362,7 +1407,8 @@ export class ActiveService {
       const d = haversineDistance(this.position.lat, this.position.lon, pt.lat, pt.lon);
       if (d < minDist) {
         minDist = d;
-        bestSpeed = pt.maxSpeed || 160;
+        // Annexe 3A — absence d'indication de vitesse → 30 km/h.
+        bestSpeed = pt.maxSpeed || 30;
       }
     }
     return bestSpeed;
@@ -1923,12 +1969,12 @@ export class ScheduleCreator {
             else { coords.push(lat5 - prevLat, lon5 - prevLon); }
             prevLat = lat5; prevLon = lon5;
           }
-          // Speed segments: only store when speed changes from 160
+          // Speed segments: only store when speed differs from the 30 km/h default.
           const speeds = [];
           let hasCustomSpeed = false;
           for (const pt of pts) {
-            const sp = pt.maxSpeed || 160;
-            if (sp !== 160) hasCustomSpeed = true;
+            const sp = pt.maxSpeed || 30;
+            if (sp !== 30) hasCustomSpeed = true;
             speeds.push(sp);
           }
           const o = { c: coords };
@@ -1957,8 +2003,8 @@ export class ScheduleCreator {
           const speeds = [];
           let hasCustomSpeed = false;
           for (const pt of pts) {
-            const sp = pt.maxSpeed || 160;
-            if (sp !== 160) hasCustomSpeed = true;
+            const sp = pt.maxSpeed || 30;
+            if (sp !== 30) hasCustomSpeed = true;
             speeds.push(sp);
           }
           const o = { c: coords };
@@ -2034,7 +2080,8 @@ export class ScheduleCreator {
         for (let i = 0; i < r.c.length; i += 2) {
           if (i === 0) { lat = r.c[0]; lon = r.c[1]; }
           else { lat += r.c[i]; lon += r.c[i + 1]; }
-          const pt = { lat: lat / 1e5, lon: lon / 1e5, maxSpeed: 160, electrified: true, tracks: 1 };
+          // Annexe 3A — absence d'indication de vitesse → 30 km/h.
+          const pt = { lat: lat / 1e5, lon: lon / 1e5, maxSpeed: 30, electrified: true, tracks: 1 };
           if (r.s && r.s[i / 2] !== undefined) pt.maxSpeed = r.s[i / 2];
           pts.push(pt);
         }

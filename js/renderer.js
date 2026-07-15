@@ -7,6 +7,22 @@ export const LIVEMAP_CATEGORY_COLORS = {
   travaux: '#f59e0b',  // orange
 };
 
+// LVM-01 — icônes de train reproduites à l'identique des annexes 2a (image2-5).
+const TRAIN_ICON_SRC = {
+  generic: 'img/livemap/train_generic.png',
+  voyageur: 'img/livemap/train_voyageur.png',
+  fret: 'img/livemap/train_fret.png',
+  travaux: 'img/livemap/train_travaux.png',
+};
+const TRAIN_ICON_IMAGES = {};
+if (typeof Image !== 'undefined') {
+  for (const [k, src] of Object.entries(TRAIN_ICON_SRC)) {
+    const img = new Image();
+    img.src = src;
+    TRAIN_ICON_IMAGES[k] = img;
+  }
+}
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -574,8 +590,8 @@ export class Renderer {
       if (p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) continue;
 
       // LVM-01 — 3 déclinaisons couleur par catégorie (annexe 2a).
-      const catColor = LIVEMAP_CATEGORY_COLORS[svc.category || svc.train.category]
-        || svc.train.color || '#22d3ee';
+      const cat = svc.category || svc.train.category || 'voyageur';
+      const catColor = LIVEMAP_CATEGORY_COLORS[cat] || svc.train.color || '#22d3ee';
       const color = svc.state === 'waiting' ? '#475569' : catColor;
 
       // LVM-06 — anneau de sélection autour du train choisi.
@@ -583,29 +599,20 @@ export class Renderer {
         ctx.strokeStyle = '#facc15';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, bs * 2.2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, bs * 3.5, 0, Math.PI * 2);
         ctx.stroke();
       }
 
       if (svc.state === 'moving') {
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.3;
+        ctx.globalAlpha = 0.25;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, bs * 1.2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, bs * 2.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1.0;
       }
 
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y - bs);
-      ctx.lineTo(p.x + bsW, p.y + bsH);
-      ctx.lineTo(p.x - bsW, p.y + bsH);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      this._drawTrainIcon(ctx, p, cat, color, bs, svc.state);
 
       if (svc.train.breakdown) {
         ctx.fillStyle = '#ef4444';
@@ -637,6 +644,43 @@ export class Renderer {
           ctx.fillText(`- ${Math.abs(svc.train.delay)} min`, p.x + bs + 4, p.y + 22);
         }
       }
+    }
+  }
+
+  // LVM-01 — dessine l'icône de train issue des assets (annexe 2a).
+  // L'ancre est la pointe de la flèche, donc l'icône est centrée horizontalement
+  // et positionnée au-dessus du point (x,y).
+  _drawTrainIcon(ctx, p, cat, color, bs, state) {
+    const iconKey = (cat === 'voyageur' || cat === 'fret' || cat === 'travaux') ? cat : 'generic';
+    const img = TRAIN_ICON_IMAGES[iconKey];
+    const iconH = bs * 5.5;
+    const iconW = iconH * (149 / 225);
+    const x = p.x - iconW / 2;
+    const y = p.y - iconH;
+    if (img && img.complete && img.naturalWidth) {
+      ctx.save();
+      if (state === 'waiting') {
+        ctx.filter = 'grayscale(100%) brightness(0.55)';
+      }
+      ctx.drawImage(img, x, y, iconW, iconH);
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y - iconH / 2, iconW / 2, iconH / 2.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // flèche de rappel vers le point
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - iconW / 4, p.y - iconH / 4);
+      ctx.lineTo(p.x + iconW / 4, p.y - iconH / 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
   }
 
