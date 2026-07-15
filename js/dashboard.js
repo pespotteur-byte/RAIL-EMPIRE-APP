@@ -130,7 +130,27 @@ export class Dashboard {
     const fmt = n => (Math.round(n * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
     const fmtE = n => fmt(n) + ' \u20ac';
 
-    container.innerHTML = `
+    // INC-05 — bulletins spéciaux incidents à côté du récap compagnie
+    const bulletins = game.incidentManager?.getBulletins() || [];
+    const bulletinsHtml = bulletins.length === 0 ? '' : `
+      <div class="dash-section" style="border-left:3px solid #ef4444;padding-left:14px">
+        <h3 style="margin-top:0">Bulletins spéciaux</h3>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${bulletins.map(b => `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:6px;border-left:3px solid ${b.effect === 'stop' ? '#ef4444' : '#f59e0b'}">
+              <span style="font-size:16px">${b.effect === 'stop' ? '⛔' : '⚠️'}</span>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:600;color:var(--text)">${b.name}</div>
+                <div style="font-size:10px;color:var(--text3)">${b.location} — ${b.remaining} min restantes</div>
+              </div>
+              <span style="font-size:10px;font-weight:700;color:${b.effect === 'stop' ? '#ef4444' : '#f59e0b'}">${b.effect === 'stop' ? 'Interruption' : 'Ralenti ' + b.speedLimit + ' km/h'}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = `${bulletinsHtml}
       <div class="dash-section">
         <h3>Exploitation</h3>
         <div class="dash-kpi-grid">

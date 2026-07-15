@@ -460,6 +460,18 @@ export class IncidentManager {
     return this.activeIncidents;
   }
 
+  // INC-05 — bulletins spéciaux à côté du récap de compagnie
+  getBulletins() {
+    return this.activeIncidents.filter(i => i.active).map(i => ({
+      id: i.id,
+      name: i.name,
+      location: i.trackName || (i.stationAName && i.stationBName ? `${i.stationAName} — ${i.stationBName}` : 'Zone inconnue'),
+      remaining: Math.max(0, Math.ceil(i.remaining)),
+      effect: i.effect,
+      speedLimit: i.speedLimit || 30,
+    }));
+  }
+
   getCustomTypes() { return []; }
   loadCustomTypes() {}
 
