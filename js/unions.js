@@ -2,6 +2,8 @@
  * Unions — Strike risk system based on company conditions.
  * Reads game state to compute risk. Strikes disable random % of services.
  */
+import { getGlobalRng } from './rng.js?v=1779724771';
+
 export class Unions {
   constructor() {
     this.satisfaction = 75;       // 0-100
@@ -55,15 +57,16 @@ export class Unions {
     // Clamp
     this.satisfaction = Math.max(0, Math.min(100, sat));
 
-    // Strike risk check
+    // Strike risk check (RH-05)
     if (!this.strikeActive && conductors > 0) {
       let strikeChance = 0;
       if (this.satisfaction < 30) strikeChance = 0.25;
       else if (this.satisfaction < 50) strikeChance = 0.10;
       else if (this.satisfaction < 65) strikeChance = 0.03;
 
-      if (Math.random() < strikeChance) {
-        this._startStrike(game);
+      const rng = getGlobalRng();
+      if (rng.random() < strikeChance) {
+        this._startStrike(game, rng);
       }
     }
 
@@ -79,9 +82,9 @@ export class Unions {
     this._generateDemands(game);
   }
 
-  _startStrike(game) {
+  _startStrike(game, rng = getGlobalRng()) {
     this.strikeActive = true;
-    this.strikeDaysLeft = Math.floor(Math.random() * 3) + 1; // 1-3 days
+    this.strikeDaysLeft = Math.floor(rng.random() * 3) + 1; // 1-3 days
     this.strikePercent = this.satisfaction < 30 ? 80 : this.satisfaction < 50 ? 50 : 30;
 
     const cause = this.satisfaction < 30 ? 'Conditions de travail déplorables' :

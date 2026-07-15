@@ -471,6 +471,14 @@ export class ActiveService {
       }
     }
 
+    // RH-05 : grève — bloque le départ des services concernés
+    if (window.game?.unions?.isServiceBlocked(this.id)) {
+      this.train.delayReason = 'grève';
+      return;
+    } else if (this.train.delayReason === 'grève') {
+      this.train.delayReason = '';
+    }
+
     const currentStops = this.getCurrentStops();
     const firstDep = currentStops[0]?.departureTime ?? 0;
     this._cachedFirstDep = firstDep;
@@ -822,6 +830,16 @@ export class ActiveService {
    */
   moveUpdate(dt, timeOfDay, allServices) {
     if (!this.active || this.state !== 'moving') return;
+
+    // RH-05 : grève — les services affectés s'arrêtent sur place
+    if (window.game?.unions?.isServiceBlocked(this.id)) {
+      this.speed = 0;
+      this.train.speed = 0;
+      this.train.delayReason = 'grève';
+      this._updateContinuousDelay(timeOfDay);
+      return;
+    }
+
     cantonManager.setTime(timeOfDay);
     this._updateRegulationFactor();
 
