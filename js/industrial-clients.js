@@ -4487,6 +4487,25 @@ export class IndustrialClients {
     this.clients = this.clients.filter(c => c.id !== clientId);
   }
 
+  // IND-01 : modification des paramètres d'un client
+  updateClient(clientId, data) {
+    const client = this.clients.find(c => c.id === clientId);
+    if (!client) return null;
+    if (data.name != null) client.name = data.name;
+    if (data.dailyTonnage != null) client.dailyTonnage = Math.max(0, parseInt(data.dailyTonnage) || 0);
+    if (data.satisfaction != null) client.satisfaction = Math.max(0, Math.min(100, parseFloat(data.satisfaction) || 0));
+    return client;
+  }
+
+  // IND-01 : déplacer un client vers une autre gare avec ITE
+  moveClient(clientId, stationId, depotId) {
+    const client = this.clients.find(c => c.id === clientId);
+    if (!client) return null;
+    client.stationId = stationId;
+    if (depotId != null) client.depotId = depotId;
+    return client;
+  }
+
   getClientsByStation(stationId) {
     return this.clients.filter(c => c.stationId === stationId && c.active);
   }
@@ -4633,7 +4652,11 @@ export class IndustrialClients {
                 <span style="color:#38bdf8">${c.dailyTonnage.toLocaleString('fr-FR')} t</span>
                 <span style="color:${satColor}">${Math.floor(c.satisfaction)}%</span>
                 <span style="color:#a78bfa">${Math.floor(c.marketShare || 5)}%</span>
-                <span><button class="btn-primary industrial-remove" data-id="${c.id}" style="font-size:9px;padding:3px 6px;background:#991b1b">Résilier</button></span>
+                <span style="display:flex;gap:4px;flex-wrap:wrap">
+                  <button class="btn-primary industrial-edit" data-id="${c.id}" style="font-size:9px;padding:3px 6px;background:#3b82f6">Modifier</button>
+                  <button class="btn-primary industrial-move" data-id="${c.id}" style="font-size:9px;padding:3px 6px;background:#6366f1">Déplacer</button>
+                  <button class="btn-primary industrial-remove" data-id="${c.id}" style="font-size:9px;padding:3px 6px;background:#991b1b">Résilier</button>
+                </span>
               </div>
             `;
           }).join('')}
@@ -4718,6 +4741,45 @@ export class IndustrialClients {
           this.removeClient(btn.dataset.id);
           this.render(container, game);
         }
+      });
+    });
+
+    // IND-01 : modification / déplacement
+    container.querySelectorAll('.industrial-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const client = this.clients.find(c => c.id === btn.dataset.id);
+        if (!client) return;
+        const name = prompt('Nom du client :', client.name);
+        if (name === null) return;
+        const tonnage = prompt('Tonnage journalier :', String(client.dailyTonnage));
+        if (tonnage === null) return;
+        const sat = prompt('Satisfaction (0-100) :', String(Math.floor(client.satisfaction)));
+        if (sat === null) return;
+        this.updateClient(client.id, {
+          name: name.trim() || client.name,
+          dailyTonnage,
+          satisfaction: sat,
+        });
+        this.render(container, game);
+      });
+    });
+
+    container.querySelectorAll('.industrial-move').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const client = this.clients.find(c => c.id === btn.dataset.id);
+        if (!client) return;
+        const ites = (game.depotManager?.getITEs?.() || []);
+        if (ites.length === 0) { alert('Aucune ITE disponible'); return; }
+        const opts = ites.map(ite => {
+          const st = game.world?.stations.find(s => s.id === ite.stationId);
+          return `${ite.stationId}|${ite.id} — ${st?.name || '?'} — ${ite.name}`;
+        }).join('\n');
+        const choice = prompt(`Choisir la nouvelle gare/ITE :\n${opts}`, `${client.stationId}|${client.depotId || ''}`);
+        if (!choice) return;
+        const [stationId, depotId] = choice.split('|');
+        if (!stationId) return;
+        this.moveClient(client.id, stationId, depotId);
+        this.render(container, game);
       });
     });
 
