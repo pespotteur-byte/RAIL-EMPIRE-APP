@@ -729,6 +729,7 @@ export class UI {
       </div>
       <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
       <div style="padding:5px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border)">${situation}</div>
+      ${t.delayReason ? `<div style="padding:4px 10px;font-size:10px;background:#7f1d1d;color:#fff;border-bottom:1px solid var(--border)">${t.delayReason}</div>` : ''}
       <div style="padding:4px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border)">Prochain: <b>${nextName}</b> · Destination: <b>${destName}</b></div>
       ${composition}
       <div class="lvp-bandeau"><span class="lvp-bandeau-track">${bandeau}</span></div>

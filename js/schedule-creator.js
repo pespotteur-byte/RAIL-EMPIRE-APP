@@ -1173,6 +1173,9 @@ export class ActiveService {
       this._trackWear(actualDist, timeOfDay);
     }
 
+    // RET-04 : motif de retard si bloqué par un autre train / signal / incident
+    this._updateDelayReason();
+
     // --- REAL-TIME DELAY ---
     this._updateContinuousDelay(timeOfDay);
   }
@@ -1210,6 +1213,20 @@ export class ActiveService {
    *  - speed < maxSpeed (infrastructure/incident constraints)
    *  - waiting for canton (blocked, speed = 0)
    */
+  // RET-04 : motive le retard courant pour bilan de trajet et bandeau Livemap
+  _updateDelayReason() {
+    const t = this.train;
+    if (!t) return;
+    if (this._rescueDispatched || t.state === 'en panne') { t.delayReason = 'Panne — attente secours'; return; }
+    if (t.breakdown) { t.delayReason = `Panne ${t.breakdown.type}`; return; }
+    if (t.incident) { t.delayReason = t.incident.name || 'Incident'; return; }
+    if (t.signalAlert === 'closed') { t.delayReason = 'Arrêt pour signal fermé'; return; }
+    if (t.signalAlert === 'caution' || t.blockedBy) { t.delayReason = 'Régulation du trafic'; return; }
+    if (this._iteCargoMismatch) { t.delayReason = 'ITE : cargaison incompatible'; return; }
+    if (this._iteDwellExtra > 0) { t.delayReason = 'ITE : manœuvres / chargement'; return; }
+    t.delayReason = '';
+  }
+
   _updateContinuousDelay(timeOfDay) {
     const stops = this.getCurrentStops();
     if (this.currentStopIndex <= 0 || this.currentStopIndex >= stops.length) return;
