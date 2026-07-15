@@ -270,6 +270,77 @@ export class CargoTypeManager {
       totalRevenue: 0,
       byCategory: {},
     };
+
+    // Player-defined cargo types (persisted across reloads).
+    this.customTypes = [];
+  }
+
+  // Create a player-defined cargo type (and optionally a new category).
+  // Persisted via customTypes so it survives reload, and immediately selectable
+  // in the rolling-stock (matériel) creation form.
+  addCustomType(opts = {}) {
+    const slug = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const name = (opts.name || '').trim();
+    if (!name) return { ok: false, error: 'Nom requis' };
+
+    let categoryKey = opts.categoryKey;
+    let categoryName = (opts.categoryName || '').trim();
+    if (categoryKey === '__new__' || !categoryKey) {
+      if (!categoryName) return { ok: false, error: 'Nom de catégorie requis' };
+      categoryKey = 'cat-' + (slug(categoryName) || Date.now().toString(36));
+    }
+    if (!this.categories[categoryKey]) {
+      this.categories[categoryKey] = {
+        name: categoryName || categoryKey,
+        icon: 'cargo',
+        description: opts.description || 'Catégorie personnalisée',
+        wagonType: opts.wagonType || 'spécial',
+        loadingTime: opts.loadingTime || 15,
+        types: [],
+      };
+    }
+
+    const typeId = opts.type || ('custom-' + (slug(name) || 'type') + '-' + Date.now().toString(36));
+    if (this.getTypeInfo(typeId)) return { ok: false, error: 'Ce type existe déjà' };
+
+    const typeObj = {
+      type: typeId,
+      name,
+      unit: opts.unit || 't',
+      pricePerUnit: Number(opts.pricePerUnit) || 0,
+      hazard: !!opts.hazard,
+    };
+    this.categories[categoryKey].types.push(typeObj);
+    this.customTypes.push({ categoryKey, categoryName: this.categories[categoryKey].name, ...typeObj });
+    return { ok: true, type: typeId, categoryKey };
+  }
+
+  // Add a cargo type if it is not already present (idempotent).
+  // Used when importing catalog material that references a cargo not yet in the game.
+  // Returns true if a new type was actually added.
+  ensureType(categoryKey, typeObj) {
+    if (!categoryKey || !typeObj || !typeObj.type) return false;
+    if (this.getTypeInfo(typeObj.type)) return false;
+    let cat = this.categories[categoryKey];
+    if (!cat) {
+      cat = this.categories[categoryKey] = {
+        name: typeObj.categoryName || categoryKey,
+        icon: typeObj.icon || 'cargo',
+        description: typeObj.description || '',
+        wagonType: typeObj.wagonType || 'spécial',
+        loadingTime: typeObj.loadingTime || 15,
+        types: [],
+      };
+    }
+    cat.types.push({
+      type: typeObj.type,
+      name: typeObj.name || typeObj.type,
+      unit: typeObj.unit || 't',
+      pricePerUnit: typeObj.pricePerUnit ?? 0,
+      hazard: !!typeObj.hazard,
+    });
+    return true;
   }
 
   getAllTypes() {
@@ -307,13 +378,13 @@ export class CargoTypeManager {
     return info?.loadingTime || 10;
   }
 
-  recordContract(cargoType, quantity, revenue) {
-    this.stats.totalContracts++;
+  recordContract(cargoType, quantity, revenue, countContract = true) {
+    if (countContract) this.stats.totalContracts++;
     this.stats.totalTonnage += quantity;
     this.stats.totalRevenue += revenue;
     const cat = this.getCategoryForType(cargoType) || 'other';
     if (!this.stats.byCategory[cat]) this.stats.byCategory[cat] = { contracts: 0, tonnage: 0, revenue: 0 };
-    this.stats.byCategory[cat].contracts++;
+    if (countContract) this.stats.byCategory[cat].contracts++;
     this.stats.byCategory[cat].tonnage += quantity;
     this.stats.byCategory[cat].revenue += revenue;
   }
@@ -326,8 +397,11 @@ export class CargoTypeManager {
 
     container.innerHTML = `
       <div class="dash-section">
-        <h3>Types de Marchandises</h3>
-        <div class="dash-kpi-grid">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <h3 style="margin:0">Types de Marchandises</h3>
+          <button id="btn-create-cargo-type" class="btn-primary btn-sm">+ Créer un type</button>
+        </div>
+        <div class="dash-kpi-grid" style="margin-top:10px">
           <div class="dash-kpi">
             <div class="dash-kpi-label">Catégories</div>
             <div class="dash-kpi-value" style="color:#38bdf8">${Object.keys(this.categories).length}</div>
@@ -387,11 +461,31 @@ export class CargoTypeManager {
   }
 
   toSave() {
-    return { stats: this.stats };
+    return { stats: this.stats, customTypes: this.customTypes };
   }
 
   loadFromSave(s) {
     if (!s) return;
     this.stats = s.stats || { totalContracts: 0, totalTonnage: 0, totalRevenue: 0, byCategory: {} };
+    this.customTypes = s.customTypes || [];
+    // Re-create player-defined categories/types so they remain selectable.
+    for (const ct of this.customTypes) {
+      if (!this.categories[ct.categoryKey]) {
+        this.categories[ct.categoryKey] = {
+          name: ct.categoryName || ct.categoryKey,
+          icon: 'cargo',
+          description: 'Catégorie personnalisée',
+          wagonType: 'spécial',
+          loadingTime: 15,
+          types: [],
+        };
+      }
+      if (!this.getTypeInfo(ct.type)) {
+        this.categories[ct.categoryKey].types.push({
+          type: ct.type, name: ct.name, unit: ct.unit,
+          pricePerUnit: ct.pricePerUnit, hazard: !!ct.hazard,
+        });
+      }
+    }
   }
 }

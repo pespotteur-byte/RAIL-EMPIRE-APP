@@ -1,6 +1,6 @@
 export class Economy {
   constructor() {
-    this.balance = 500000;
+    this.balance = 50000000000;
     this.revenue = 0;
     this.expenses = 0;
     this.penalties = 0;
@@ -77,6 +77,17 @@ export class Economy {
     if (!service || !service.rame) return;
     if (distFromPrev <= 0 && !isFirst) return;
 
+    // Per-segment operating cost: energy + wear (charged each time the train stops)
+    if (!isFirst && distFromPrev > 0) {
+      const tonnage = service.rame.totalTonnage || 100;
+      // ~2€/km per tonne (energy + track access + wear), scaled down for gameplay
+      const opCost = Math.round(distFromPrev * tonnage * 0.5);
+      if (opCost > 0) {
+        this.addExpense(opCost, 'exploitation', `Trajet ${Math.round(distFromPrev)} km — ${service.name}`);
+        if (service.lineId) this.addLineExpense(service.lineId, opCost);
+      }
+    }
+
     const maxPax = service.rame.totalCapacity || 0;
     const maxFreight = service.rame.totalFreightCapacity || 0;
 
@@ -129,6 +140,22 @@ export class Economy {
           this.addRevenue(frtRevenue, 'fret', `${stationName}: ${freightUnload}t déch. (${Math.round(distFromPrev)} km) — ${service.name}`);
           if (service.lineId) this.addLineRevenue(service.lineId, frtRevenue);
         }
+        // Fret hors contrat : le tonnage réellement déchargé par un train du
+        // joueur alimente aussi les stats Marchandises + Industrie. Le type de
+        // chargement est déduit des wagons de la rame. Le "contrat" n'est
+        // compté qu'au terminus (1 acheminement = 1 contrat réalisé).
+        try {
+          const g = window.game;
+          if (g?.cargoTypes?.recordContract) {
+            const cType = this._rameCargoType(service.rame);
+            g.cargoTypes.recordContract(cType, freightUnload, frtRevenue, isTerminus);
+            if (g.industrialClients?.stats) {
+              if (isTerminus) g.industrialClients.stats.contractsGenerated++;
+              g.industrialClients.stats.totalTonnage += freightUnload;
+              g.industrialClients.stats.totalRevenue += frtRevenue;
+            }
+          }
+        } catch (e) { /* graceful */ }
       }
 
       service._onboardPax -= paxDescend;
@@ -147,6 +174,17 @@ export class Economy {
       service._onboardPax += paxBoard;
       service._onboardFreight += freightLoad;
     }
+  }
+
+  // Type de chargement représentatif d'une rame (1er cargo des wagons fret).
+  // Sert à attribuer les stats du fret hors contrat à une catégorie de
+  // marchandise. Repli sur conteneurs si aucun wagon ne précise son chargement.
+  _rameCargoType(rame) {
+    const els = rame?.elementDetails || [];
+    for (const e of els) {
+      if (Array.isArray(e.cargoTypes) && e.cargoTypes.length > 0) return e.cargoTypes[0];
+    }
+    return 'containers-20';
   }
 
   processDailyCharges(services, depots, dateKey) {
@@ -255,7 +293,7 @@ export class Economy {
 
   loadFromSave(s) {
     if (!s) return;
-    this.balance = s.balance ?? 500000;
+    this.balance = s.balance ?? 50000000000;
     this.revenue = s.revenue || 0;
     this.expenses = s.expenses || 0;
     this.penalties = s.penalties || 0;

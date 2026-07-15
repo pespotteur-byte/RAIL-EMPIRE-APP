@@ -62,6 +62,8 @@ export class TileMap {
       'https://c.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png',
     ];
 
+    this.railEnabled = true; // ORM layer visible by default
+
     // Weather radar overlay (RainViewer)
     this.radarEnabled = false;
     this._radarTileUrl = null;
@@ -341,7 +343,7 @@ export class TileMap {
     const baseUrls = this.satelliteEnabled ? this.satelliteTileUrls : this.baseTileUrls;
     const layers = [baseUrls];
     if (this.satelliteEnabled) layers.push(this.labelTileUrls);
-    layers.push(this.railTileUrls);
+    if (this.railEnabled) layers.push(this.railTileUrls);
     if (this.radarEnabled && this._radarTileUrl) {
       layers.push([this._radarTileUrl]);
     }

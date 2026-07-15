@@ -1,6 +1,12 @@
 import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779724771';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
+import {
+  DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor,
+} from './schedule-logic.js';
 
 let nextServiceId = 1;
+// SC-03 — running odd counter so each new service gets an odd (aller) number.
+let nextServiceNumber = 1;
 
 // Midnight-safe time difference: handles wrapping around 00:00
 // Returns difference in minutes, clamped to [-720, 720]
@@ -58,7 +64,22 @@ export class ActiveService {
     this.world = world;
     this.roundTrip = data.roundTrip || false;
     this.multiDepartures = data.multiDepartures || 1;
-    this.terminusWait = data.terminusWait || 10;
+    this.terminusWait = data.terminusWait || DEFAULT_TERMINUS_WAIT_MIN; // SC-06
+
+    // SC-03 — auto numbering: aller = impair, retour = pair (aller+1).
+    this.number = toOdd(data.number != null ? data.number : nextServiceNumber);
+    if (data.number != null) {
+      nextServiceNumber = Math.max(nextServiceNumber, this.number + 2);
+    } else {
+      nextServiceNumber = this.number + 2;
+    }
+    this.returnNumber = data.returnNumber != null
+      ? data.returnNumber : returnNumberFor(this.number);
+
+    // SC-04 — optional independent return geometry/stops (falls back to the
+    // reversed forward leg when absent, keeping old saves working).
+    this._returnRoutes = data.returnRoutes || null;
+    this._returnStopsData = data.returnStops || null;
     this.totalDistance = data.totalDistance || 0;
     this.plannedDistance = data.plannedDistance || 0;
     this.active = data.active !== false;
@@ -124,10 +145,16 @@ export class ActiveService {
       }
     }
 
+    // LVM-01 — livemap category (annexe 2a) : Voyageur / Fret / Travaux.
+    this.category = this.isWorkTrain
+      ? 'travaux'
+      : (rame && rame.totalFreightCapacity > rame.totalCapacity ? 'fret' : 'voyageur');
+
     this.train = {
       id: this.id,
       name: this.name,
       color: this.getColor(),
+      category: this.category,
       maxSpeed: rame ? rame.maxSpeed : 160,
       speed: 0,
       delay: 0,
@@ -140,7 +167,7 @@ export class ActiveService {
       accel,
       decel,
       seriesName,
-      number: trainNumber,
+      number: this.number != null ? String(this.number) : trainNumber,
       platform: null,
       // S14: Wear tracking — initialize from rame (persists across services)
       totalKmRun: rame ? (rame.totalKmRun || 0) : 0,
@@ -682,9 +709,24 @@ export class ActiveService {
         const signalAspect = cantonManager.getSignalAspect(
           this._cantonAssignments, segIdx, this.id
         );
-        if (signalAspect !== null) {
-          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, signalAspect);
-          this.train.blockedBy = signalAspect === 0;
+        if (signalAspect === 0) {
+          // Carré ahead: apply VISA steps (30/20/10) toward the blocked canton
+          // boundary and stop ~30 m upstream (SIG-05/SIG-06).
+          const nextCanton = cantonManager.getNextCanton(this._cantonAssignments, segIdx);
+          let distM = 0;
+          if (nextCanton && this._state.segDists && this._state.cumDist) {
+            const distKm = (1 - this._state.progress) * (this._state.segDists[segIdx] || 0)
+              + ((this._state.cumDist[segIdx + 1] || 0) - (this._state.cumDist[nextCanton.startIndex] || 0));
+            distM = Math.max(0, distKm * 1000);
+          }
+          const cap = visaSpeedCapKmh(distM);
+          const visaCap = (cap === null) ? RESTART_SPEED_KMH : cap;
+          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, visaCap);
+          this.train.blockedBy = visaCap === 0;
+        } else if (signalAspect !== null) {
+          // Avertissement: be ready to stop at the next signal (SIG-04/SIG-07).
+          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, RESTART_SPEED_KMH);
+          this.train.blockedBy = false;
         } else {
           this.train.blockedBy = false;
         }
@@ -1163,14 +1205,7 @@ export class ActiveService {
 
     if (nearestAheadDist === Infinity) return null;
 
-    const lineSpeed = this.getLineSpeedAtPosition();
-    let blockLength;
-    if (lineSpeed <= 60) blockLength = 0.4;
-    else if (lineSpeed <= 80) blockLength = 0.6;
-    else if (lineSpeed <= 120) blockLength = 0.8;
-    else if (lineSpeed <= 160) blockLength = 1.0;
-    else if (lineSpeed <= 220) blockLength = 1.5;
-    else blockLength = 1.8;
+    const blockLength = 0.8;
 
     if (nearestAheadDist < blockLength) return 0;
     if (nearestAheadDist < blockLength * 2) return Math.min(nearestAheadSpeed, 30);
@@ -1219,13 +1254,19 @@ export class ActiveService {
   }
 
   getCurrentRoute() {
-    if (!this.routes || this.routes.length === 0) return null;
     const idx = Math.max(0, this.currentStopIndex - 1);
     if (this.isReturnLeg) {
+      // SC-04 — use an independent return geometry when provided; otherwise
+      // fall back to reversing the forward legs.
+      if (this._returnRoutes && this._returnRoutes.length) {
+        return this._returnRoutes[idx] || null;
+      }
+      if (!this.routes || this.routes.length === 0) return null;
       const routeIdx = this.routes.length - 1 - idx;
       const route = this.routes[routeIdx];
       return route ? [...route].reverse() : null;
     }
+    if (!this.routes || this.routes.length === 0) return null;
     return this.routes[idx] || null;
   }
 
@@ -1287,6 +1328,24 @@ export class ActiveService {
     if (!economy) economy = this._economy;
     const stops = this.getCurrentStops();
     const stop = stops[this.currentStopIndex];
+
+    // OCC-01/02 — occupation des voies en gare : un train ne peut PAS entrer
+    // si aucune voie n'est libre (sauf voie forcée/point de voie précis).
+    // Il patiente en approche (bloqué) et ré-essaie au tick suivant.
+    if (station && stop && stop.type === 'arret' && !stop.platform && !stop.voiePointId
+        && window.game?.platformManager) {
+      const pm = window.game.platformManager;
+      pm.initStation(station.id, station.platforms || 2);
+      const held = pm.getPlatformForTrain(station.id, this.id);
+      if (!held && pm.getFreePlatforms(station.id) <= 0) {
+        this.speed = 0;
+        this.train.speed = 0;
+        this.train.blockedBy = true;
+        this.state = 'moving'; // reste en approche, ré-essaie au prochain tick
+        return;
+      }
+    }
+
     // Only update delay based on actual arret stops, not waypoints/passages
     if (stop?.type === 'arret') {
       const expectedTime = stop.arrivalTime;
@@ -1321,25 +1380,35 @@ export class ActiveService {
       const isTerminus = this.currentStopIndex === lastArretIdx;
       // Compute distance from last 'arret' stop (sum all route segments since then)
       let distFromPrev = 0;
-      if (!isFirst && this.routes) {
-        // Find the previous 'arret' stop index
-        let prevArretIdx = this.currentStopIndex - 1;
-        while (prevArretIdx > 0 && stops[prevArretIdx]?.type !== 'arret') {
-          prevArretIdx--;
-        }
-        // Sum all route segments from prevArretIdx to currentStopIndex
-        for (let seg = prevArretIdx; seg < this.currentStopIndex; seg++) {
-          const routeIdx = this.isReturnLeg
-            ? this.routes.length - 1 - seg
-            : seg;
-          const route = this.routes[Math.max(0, Math.min(routeIdx, this.routes.length - 1))];
-          if (route && route.length >= 2) {
-            for (let k = 1; k < route.length; k++) {
-              distFromPrev += haversineDistance(route[k - 1].lat, route[k - 1].lon, route[k].lat, route[k].lon);
+      if (!isFirst) {
+        if (this.routes && this.routes.length > 0) {
+          // Find the previous 'arret' stop index
+          let prevArretIdx = this.currentStopIndex - 1;
+          while (prevArretIdx > 0 && stops[prevArretIdx]?.type !== 'arret') {
+            prevArretIdx--;
+          }
+          // Sum all route segments from prevArretIdx to currentStopIndex
+          for (let seg = prevArretIdx; seg < this.currentStopIndex; seg++) {
+            const routeIdx = this.isReturnLeg
+              ? this.routes.length - 1 - seg
+              : seg;
+            const route = this.routes[Math.max(0, Math.min(routeIdx, this.routes.length - 1))];
+            if (route && route.length >= 2) {
+              for (let k = 1; k < route.length; k++) {
+                distFromPrev += haversineDistance(route[k - 1].lat, route[k - 1].lon, route[k].lat, route[k].lon);
+              }
             }
           }
         }
-        if (distFromPrev <= 0) distFromPrev = 20; // fallback
+        // Fallback: haversine between previous and current station
+        if (distFromPrev <= 0) {
+          const prevStop = stops[this.currentStopIndex - 1];
+          const prevStation = prevStop?.stationId ? this.world?.getStationById(prevStop.stationId) : null;
+          if (prevStation && station) {
+            distFromPrev = haversineDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
+          }
+          if (distFromPrev <= 0) distFromPrev = 20; // ultimate fallback
+        }
       }
       economy.processStopRevenue(this, station.name, distFromPrev, isFirst, isTerminus);
     }
@@ -1459,6 +1528,8 @@ export class ActiveService {
       this._tripCount = (this._tripCount || 0) + 1;
       // Switch to return name if defined
       if (this.returnName) this.train.name = this.returnName;
+      // SC-03 — return leg shows the even number.
+      if (this.returnNumber != null) this.train.number = String(this.returnNumber);
       // Start the return leg immediately (schedule as stopped_at_station for terminus wait)
       this.state = 'stopped_at_station';
       this.speed = 0;
@@ -1480,6 +1551,8 @@ export class ActiveService {
       this.currentStopIndex = 0;
       // Switch back to forward name
       this.train.name = this.name;
+      // SC-03 — forward leg shows the odd number.
+      if (this.number != null) this.train.number = String(this.number);
       this.state = 'stopped_at_station';
       this.speed = 0;
       this.train.speed = 0;
@@ -1539,6 +1612,13 @@ export class ActiveService {
   buildReturnStops() {
     const fwdStops = this._adjustedStops || this.stops;
     if (!fwdStops || fwdStops.length === 0) return [];
+
+    // SC-04 — independent return timetable when the player defined one:
+    // preserve its own inter-stop deltas, anchored at terminus + wait.
+    if (this._returnStopsData && this._returnStopsData.length) {
+      return this._buildIndependentReturnStops(fwdStops);
+    }
+
     const reversed = [...fwdStops].reverse();
     const lastStop = fwdStops[fwdStops.length - 1];
     const lastArrival = lastStop.arrivalTime || lastStop.departureTime || 0;
@@ -1582,6 +1662,25 @@ export class ActiveService {
       }
       const rs = new ServiceStop(stop.stationId, stop.type, depTime, arrTime, stop.voiePointId, returnPlat);
       return rs;
+    });
+  }
+
+  // SC-04 — build the return leg from a player-defined, independent stop list.
+  // Times keep their own relative deltas, re-anchored at (terminus arrival +
+  // terminus wait). Wraps around midnight like _rebuildStopsFromTime.
+  _buildIndependentReturnStops(fwdStops) {
+    const lastStop = fwdStops[fwdStops.length - 1];
+    const lastArrival = (lastStop?.arrivalTime ?? lastStop?.departureTime ?? 0);
+    const anchor = lastArrival + this.terminusWait;
+    const data = this._returnStopsData;
+    const base = data[0]?.departureTime ?? data[0]?.arrivalTime ?? 0;
+    const wrap = (t) => { const m = t % 1440; return m < 0 ? m + 1440 : m; };
+    return data.map(s => {
+      const dep = anchor + ((s.departureTime ?? s.arrivalTime ?? 0) - base);
+      const arr = anchor + ((s.arrivalTime ?? s.departureTime ?? 0) - base);
+      return new ServiceStop(
+        s.stationId, s.type, wrap(dep), wrap(arr), s.voiePointId, s.platform
+      );
     });
   }
 }
@@ -1635,6 +1734,10 @@ export class ScheduleCreator {
         plannedDistance: src.plannedDistance,
         isWorkTrain: src.isWorkTrain, returnName: src.returnName,
         returnPlatforms: src.returnPlatforms,
+        // SC-04 — propagate the independent return geometry/timetable so each
+        // real duplicate keeps the same return path (fresh auto number).
+        returnRoutes: src._returnRoutes, returnStops: src._returnStopsData,
+        runDays: src.runDays, runDates: src.runDates,
       }, rame, world);
       created.push(svc);
     }
@@ -1726,7 +1829,10 @@ export class ScheduleCreator {
         const o = { id: s.id, n: s.name, ri: s.rameId, st: compactStops, rt: safeRoutes };
         if (s.roundTrip) o.rnd = true;
         if (s.multiDepartures > 1) o.md = s.multiDepartures;
-        if (s.terminusWait !== 10) o.tw = s.terminusWait;
+        if (s.terminusWait !== DEFAULT_TERMINUS_WAIT_MIN) o.tw = s.terminusWait;
+        // SC-03 — persist auto numbers so they survive reloads.
+        if (s.number != null) o.num = s.number;
+        if (s.returnNumber != null) o.rnum = s.returnNumber;
         o.td = Math.round((s.totalDistance || 0) * 100) / 100;
         if (s.plannedDistance) o.pd = s.plannedDistance;
         if (!s.active) o.act = false;
@@ -1798,7 +1904,9 @@ export class ScheduleCreator {
         routes: this._decodeRoutes(d.rt || []),
         roundTrip: d.rnd || false,
         multiDepartures: d.md || 1,
-        terminusWait: d.tw ?? 10,
+        terminusWait: d.tw ?? DEFAULT_TERMINUS_WAIT_MIN,
+        number: d.num,
+        returnNumber: d.rnum,
         totalDistance: d.td || 0,
         plannedDistance: d.pd || 0,
         active: d.act !== false,

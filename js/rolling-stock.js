@@ -20,6 +20,12 @@ export class RollingStockItem {
     this.numberStart = data.numberStart || 1;  // e.g. 26001
     this.purchasePrice = data.purchasePrice || 0; // euros
     this.cargoTypes = data.cargoTypes || []; // allowed cargo type keys (wagon only)
+    // Catalog bookkeeping: pristine catalog items are re-seeded from catalog-data.js
+    // on every load, so they are NOT persisted to the save (keeps localStorage small).
+    // Once a catalog item is edited, _edited is set and it IS persisted.
+    this._catalog = !!data._catalog;
+    this._edited = !!data._edited;
+    this._source = data._source || null;
   }
 }
 
@@ -38,6 +44,21 @@ export class RollingStockManager {
     this.items = this.items.filter(i => i.id !== id);
   }
 
+  // Update an existing item in place (used by the "Modifier" feature).
+  // Only overwrites provided fields; keeps id and any untouched fields.
+  update(id, data) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return null;
+    const editable = ['name', 'category', 'traction', 'maxSpeed', 'tonnage', 'mass',
+      'power', 'passengerCapacity', 'freightCapacity', 'length', 'imageData',
+      'seriesName', 'numberStart', 'purchasePrice', 'cargoTypes'];
+    for (const k of editable) {
+      if (k in data && data[k] !== undefined) item[k] = data[k];
+    }
+    if (item._catalog) item._edited = true;
+    return item;
+  }
+
   getById(id) {
     return this.items.find(i => i.id === id);
   }
@@ -47,7 +68,8 @@ export class RollingStockManager {
   }
 
   toSave() {
-    return this.items.map(i => ({
+    // Skip pristine catalog items (re-seeded from catalog-data.js on load).
+    return this.items.filter(i => !(i._catalog && !i._edited)).map(i => ({
       id: i.id,
       name: i.name,
       category: i.category,
@@ -64,6 +86,9 @@ export class RollingStockManager {
       numberStart: i.numberStart || 1,
       purchasePrice: i.purchasePrice || 0,
       cargoTypes: i.cargoTypes || [],
+      _catalog: i._catalog || undefined,
+      _edited: i._edited || undefined,
+      _source: i._source || undefined,
     }));
   }
 

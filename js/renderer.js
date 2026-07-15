@@ -1,5 +1,12 @@
 import { TileMap } from './map.js?v=1779724771';
 
+// LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
+export const LIVEMAP_CATEGORY_COLORS = {
+  voyageur: '#3b82f6', // bleu
+  fret: '#22c55e',     // vert
+  travaux: '#f59e0b',  // orange
+};
+
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
@@ -62,10 +69,17 @@ export class Renderer {
         names: document.getElementById('toggle-station-names'),
         trains: document.getElementById('toggle-trains'),
         voie: document.getElementById('toggle-voie-points'),
+        orm: document.getElementById('toggle-orm'),
         radar: document.getElementById('toggle-radar'),
         satellite: document.getElementById('toggle-satellite'),
         clouds: document.getElementById('toggle-clouds'),
       };
+      if (this._toggleEls.orm) {
+        this._toggleEls.orm.addEventListener('change', () => {
+          this.tileMap.railEnabled = this._toggleEls.orm.checked;
+          this.tileMap.markDirty();
+        });
+      }
       if (this._toggleEls.radar) {
         this._toggleEls.radar.addEventListener('change', () => {
           this.tileMap.radarEnabled = this._toggleEls.radar.checked;
@@ -96,12 +110,18 @@ export class Renderer {
     }
     const showIndustries = this._toggleEls.industries?.checked === true;
 
+    // Zones toggle (signal boxes + regulation zones)
+    if (!this._toggleEls.zones) {
+      this._toggleEls.zones = document.getElementById('toggle-zones');
+    }
+    const showZones = this._toggleEls.zones?.checked !== false;
+
     // Draw static layers directly to main ctx (tracks ~3ms, stations ~0.2ms = fast)
     this.drawTracks(ctx, world, lineManager);
     if (showStations) this.drawStations(ctx, world, platformManager, showNames);
     this.drawDepots(ctx, world, depotManager);
-    this.drawSignalBoxes(ctx);
-    this.drawRegulationZones(ctx);
+    if (showZones) this.drawSignalBoxes(ctx);
+    if (showZones) this.drawRegulationZones(ctx);
     if (showVoiePoints && voiePointManager) {
       this.drawVoieTroncons(ctx, voiePointManager, world);
       this.drawVoiePoints(ctx, voiePointManager);
@@ -553,7 +573,19 @@ export class Renderer {
       const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
       if (p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) continue;
 
-      const color = svc.state === 'waiting' ? '#475569' : (svc.train.color || '#22d3ee');
+      // LVM-01 — 3 déclinaisons couleur par catégorie (annexe 2a).
+      const catColor = LIVEMAP_CATEGORY_COLORS[svc.category || svc.train.category]
+        || svc.train.color || '#22d3ee';
+      const color = svc.state === 'waiting' ? '#475569' : catColor;
+
+      // LVM-06 — anneau de sélection autour du train choisi.
+      if (window.game?.ui?.selectedService?.id === svc.id) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, bs * 2.2, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       if (svc.state === 'moving') {
         ctx.fillStyle = color;
@@ -973,5 +1005,20 @@ export class Renderer {
       if (Math.hypot(p.x - x, p.y - y) < hitR) return st;
     }
     return null;
+  }
+
+  // Hit-test an industry marker (uses the per-frame cached locations). Returns
+  // the nearest industry loc within the hit radius, or null.
+  getIndustryAt(x, y) {
+    const locs = this._indLocs;
+    if (!locs || locs.length === 0) return null;
+    const hitR = 'ontouchstart' in window ? 22 : 12;
+    let best = null, bestD = hitR;
+    for (const loc of locs) {
+      const p = this.latLonToScreen(loc.lat, loc.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestD) { bestD = d; best = loc; }
+    }
+    return best;
   }
 }

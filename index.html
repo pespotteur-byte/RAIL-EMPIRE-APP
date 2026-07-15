@@ -18,14 +18,22 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1779746122">
+  <link rel="stylesheet" href="style.css?v=1780600000">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
   <div id="screen-login" class="screen active">
     <div class="login-box">
-      <h1 class="logo">RAIL EMPIRE</h1>
-      <p class="login-subtitle">Simulateur Ferroviaire</p>
+      <div class="logo-container">
+        <svg class="logo-svg" viewBox="0 0 320 70" xmlns="http://www.w3.org/2000/svg">
+          <!-- Title: RAIL   EMPIRE — first E of EMPIRE at x=160 (center) -->
+          <text x="152" y="28" font-family="'Segoe UI', system-ui, sans-serif" font-size="28" font-weight="800" fill="rgba(255,255,255,0.98)" letter-spacing="4" text-anchor="end">RAIL</text>
+          <text x="160" y="28" font-family="'Segoe UI', system-ui, sans-serif" font-size="28" font-weight="800" fill="#3b82f6" letter-spacing="4">EMPIRE</text>
+          <!-- V1.0 centered below title -->
+          <text x="160" y="58" font-family="'Segoe UI', system-ui, sans-serif" font-size="22" font-weight="900" fill="rgba(255,255,255,0.98)" letter-spacing="2" text-anchor="middle">V1.0</text>
+        </svg>
+      </div>
+      <p class="login-subtitle">Simulateur de Gestion de compagnie ferroviaire</p>
       <div class="login-form">
         <input type="text" id="login-name" placeholder="Nom de compagnie" maxlength="30">
         <button id="btn-new-game" class="btn-primary">Nouvelle Partie</button>
@@ -50,22 +58,13 @@
           <button class="nav-btn" data-page="lines">Lignes</button>
           <button class="nav-btn" data-page="depots">Depots/ITE</button>
           <button class="nav-btn" data-page="incidents">Incidents</button>
-          <button class="nav-btn" data-page="economy">Finances</button>
           <button class="nav-btn" data-page="infogare">Infogare</button>
           <button class="nav-btn" data-page="dashboard">Dashboard</button>
           <button class="nav-btn" data-page="graph-marche">Graphique</button>
           <button class="nav-btn" data-page="staff">Personnel</button>
-          <button class="nav-btn" data-page="bank">Banque</button>
           <button class="nav-btn" data-page="weather">Météo</button>
-          <button class="nav-btn" data-page="unions">Syndicats</button>
-          <button class="nav-btn" data-page="seasonal">Saisons</button>
-          <button class="nav-btn" data-page="connections">Correspondances</button>
-          <button class="nav-btn" data-page="station-upgrades">Gares+</button>
-          <button class="nav-btn" data-page="junctions">Aiguillages</button>
           <button class="nav-btn" data-page="cargo-types">Marchandises</button>
-          <button class="nav-btn" data-page="ite-modules">ITE+</button>
           <button class="nav-btn" data-page="industrial-clients">Industriels</button>
-          <button class="nav-btn" data-page="shunting">Triage</button>
         </nav>
       </div>
       <div class="header-right">
@@ -74,9 +73,16 @@
         <span id="balance" class="balance">500 k&euro;</span>
         <span id="clock" class="clock">--:--</span>
         <span id="date-display" class="date"></span>
-        <button id="btn-tutorial" class="btn-header" title="Tutoriel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 015.12-2.13A3 3 0 0112 14v1"/><circle cx="12" cy="19" r="0.5" fill="currentColor"/></svg></button>
-        <button id="btn-save-file" class="btn-header" title="Sauvegarder sur PC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
-        <button id="btn-load-file" class="btn-header" title="Charger depuis fichier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></button>
+        <div class="header-icons-stack">
+          <span class="header-brand"><span class="header-brand-rail">Rail</span> <span class="header-brand-empire">Empire</span> <span class="header-brand-version">V1.0</span></span>
+          <div class="header-icons-row">
+            <button id="btn-settings" class="btn-header" title="Paramètres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+            <button id="btn-admin" class="btn-header" title="Admin Catalogue" onclick="if(confirm('⚠️ ZONE DANGEREUSE !\n\nUNIQUEMENT autorisé au créateur du jeu.\nMERCI DE NE PAS ALLER DESSUS.\n\nContinuer ?')){window.location.href='admin.html'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></button>
+            <button id="btn-tutorial" class="btn-header" title="Tutoriel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 015.12-2.13A3 3 0 0112 14v1"/><circle cx="12" cy="19" r="0.5" fill="currentColor"/></svg></button>
+            <button id="btn-save-file" class="btn-header" title="Sauvegarder sur PC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
+            <button id="btn-load-file" class="btn-header" title="Charger depuis fichier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></button>
+          </div>
+        </div>
         <input type="file" id="load-file-input" accept=".json,.json.gz,.gz" style="display:none">
       </div>
     </header>
@@ -90,6 +96,14 @@
         <div id="main-area">
           <canvas id="game-canvas"></canvas>
           <div id="tooltip" class="tooltip hidden"></div>
+          <!-- LVM-03/04/06 — panneau détail du train sélectionné (annexes 4-5) -->
+          <div id="livemap-train-panel" class="livemap-panel hidden"></div>
+          <!-- LVM-01 — légende des 3 catégories de train (annexe 2a) -->
+          <div id="livemap-legend" class="livemap-legend">
+            <span><i style="background:#3b82f6"></i>Voyageur</span>
+            <span><i style="background:#22c55e"></i>Fret</span>
+            <span><i style="background:#f59e0b"></i>Travaux</span>
+          </div>
           <div class="map-controls">
             <button id="btn-create-station" class="btn-sm btn-map-action">+ Creer une gare</button>
             <button id="btn-create-voie-point" class="btn-sm btn-map-action" style="background:#334155">+ Point de voie</button>
@@ -104,10 +118,12 @@
             <label><input type="checkbox" id="toggle-station-names" checked> Noms</label>
             <label><input type="checkbox" id="toggle-trains" checked> Trains</label>
             <label><input type="checkbox" id="toggle-voie-points"> Points voie</label>
+            <label><input type="checkbox" id="toggle-orm" checked> ORM</label>
             <label><input type="checkbox" id="toggle-satellite"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3l-1.4-1.4M17.7 6.3l1.4-1.4M6.3 17.7l-1.4 1.4M17.7 17.7l1.4 1.4"/><path d="M3 12h2M19 12h2M12 3v2M12 19v2"/></svg> Satellite</label>
             <label><input type="checkbox" id="toggle-radar"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><path d="M12 12l4-8"/><circle cx="12" cy="12" r="2"/><path d="M4.9 19.1A10 10 0 0112 2a10 10 0 017.1 17.1"/><path d="M7.8 16.2A6 6 0 0112 6a6 6 0 014.2 10.2"/></svg> Radar</label>
             <label><input type="checkbox" id="toggle-clouds"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><path d="M18 10a5 5 0 00-9.3-2.3A4 4 0 006 15h12a3 3 0 000-6z"/></svg> Nuages</label>
             <label><input type="checkbox" id="toggle-industries"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><path d="M2 20h20M4 20V8l6 4V8l6 4V4h4v16"/><path d="M8 16h.01M14 16h.01"/></svg> Industries</label>
+            <label><input type="checkbox" id="toggle-zones" checked> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><circle cx="12" cy="12" r="9" stroke-dasharray="4 3"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg> Zones</label>
           </div>
           <div class="map-search">
             <input type="text" id="map-search-input" placeholder="Rechercher un lieu..." autocomplete="off">
@@ -135,7 +151,19 @@
             <h2>Materiel Roulant</h2>
             <button id="btn-add-stock" class="btn-primary">+ Ajouter un engin</button>
           </div>
+          <div class="stock-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+            <input id="stock-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:200px;padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+            <select id="stock-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+              <option value="">Toutes catégories</option>
+              <option value="locomotive">Locomotives</option>
+              <option value="automotrice">Automotrices</option>
+              <option value="voiture">Voitures</option>
+              <option value="wagon">Wagons</option>
+            </select>
+            <span id="stock-count" style="opacity:.7;font-size:13px;"></span>
+          </div>
           <div id="stock-list" class="card-grid"></div>
+          <div id="stock-pager" style="display:flex;justify-content:center;margin:16px 0;"></div>
         </div>
       </div>
 
@@ -160,8 +188,8 @@
           <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
             <label style="color:var(--text2);font-size:11px">Trier par :</label>
             <select id="sched-sort" style="background:var(--bg2);color:var(--text1);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px">
+              <option value="departure" selected>Heure de depart</option>
               <option value="creation">Ordre de creation</option>
-              <option value="departure">Heure de depart</option>
               <option value="rame">Rame affectee</option>
               <option value="name">Nom du service</option>
               <option value="route">Itineraire</option>
@@ -454,7 +482,7 @@
         <button class="modal-close">&times;</button>
         <h3>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="3"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><line x1="6" y1="6" x2="6" y2="12"/><line x1="12" y1="6" x2="12" y2="12"/></svg>
-          Ajouter un engin
+          <span id="stock-modal-title">Ajouter un engin</span>
         </h3>
         <div class="modal-body">
 
@@ -616,6 +644,10 @@
             <span>Traction: <b id="rame-traction">-</b></span>
             <span>Coût: <b id="rame-price" style="color:var(--orange)">0</b> €</span>
           </div>
+          <div class="rame-assembly-header">
+            <h4 style="margin:0">Composition</h4>
+            <button id="btn-clear-rame" class="btn-sm danger" type="button">Vider</button>
+          </div>
           <div class="rame-assembly" id="rame-assembly">
             <p class="rame-empty">Cliquer sur un engin ci-dessous pour l'ajouter</p>
           </div>
@@ -623,7 +655,22 @@
             <div id="rame-length-fill" class="rame-length-fill"></div>
           </div>
           <h4>Materiel disponible</h4>
+          <div class="stock-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+            <input id="rame-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:180px;padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+            <select id="rame-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+              <option value="">Toutes catégories</option>
+              <option value="locomotive">Locomotives</option>
+              <option value="automotrice">Automotrices</option>
+              <option value="voiture">Voitures</option>
+              <option value="wagon">Wagons</option>
+            </select>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;">Qté
+              <input id="rame-qty" type="number" value="1" min="1" max="50" style="width:54px;padding:6px 8px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+            </label>
+            <span id="rame-picker-count" style="opacity:.7;font-size:12px;"></span>
+          </div>
           <div id="rame-stock-picker" class="stock-picker"></div>
+          <div id="rame-picker-pager" style="display:flex;justify-content:center;margin:10px 0;"></div>
           <button id="btn-save-rame" class="btn-primary btn-full">Enregistrer la rame</button>
         </div>
       </div>
@@ -635,65 +682,71 @@
         <button class="modal-close">&times;</button>
         <h3>Creer un trajet</h3>
         <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Rame</label>
-              <select id="sched-rame"></select>
-            </div>
-            <div class="form-group">
-              <label>Nom du service</label>
-              <input type="text" id="sched-name" placeholder="ex: TGV 8001">
-            </div>
-            <div class="form-group">
-              <label>Nom retour <span style="font-size:9px;color:var(--text3)">(si different)</span></label>
-              <input type="text" id="sched-return-name" placeholder="ex: TGV 8002">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label><input type="checkbox" id="sched-round-trip"> Aller-retour</label>
-            </div>
-            <div class="form-group">
-              <label>Nb allers-retours</label>
-              <div style="display:flex;gap:4px;align-items:center">
-                <input type="number" id="sched-multi-departures" value="1" min="1" max="50" style="flex:1">
-                <button type="button" id="btn-auto-ar" class="btn-sm" title="Calcul auto pour ne pas depasser 24h" style="font-size:9px;padding:3px 6px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Auto 24h</button>
+          <div class="sched-layout">
+            <div class="sched-map-col">
+              <div class="sched-map-container">
+                <canvas id="sched-map-canvas"></canvas>
               </div>
+              <p class="sched-hint">Cliquer sur les gares de la carte pour definir le trajet. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.<br><span style="color:#fbbf24;font-size:10px">Astuce : Ajoutez des gares intermediaires en "Waypoint" pour forcer le passage par un raccordement precis (ex: via Troyes au lieu de Nancy).</span></p>
             </div>
-            <div class="form-group">
-              <label>Attente au terminus (min)</label>
-              <input type="number" id="sched-terminus-wait" value="10" min="1" max="120">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label><input type="checkbox" id="sched-work-train"> Train de travaux <span style="font-size:9px;color:var(--text3)">(non affecte par les travaux)</span></label>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="flex:1">
-              <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Jours de circulation</label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
-                <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
+            <div class="sched-form-col">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Rame</label>
+                  <select id="sched-rame"></select>
+                </div>
+                <div class="form-group">
+                  <label>Nom du service</label>
+                  <input type="text" id="sched-name" placeholder="ex: TGV 8001">
+                </div>
+                <div class="form-group">
+                  <label>Nom retour <span style="font-size:9px;color:var(--text3)">(si different)</span></label>
+                  <input type="text" id="sched-return-name" placeholder="ex: TGV 8002">
+                </div>
               </div>
-            </div>
-            <div class="form-group" style="flex:1">
-              <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Dates specifiques <span style="font-size:9px;color:var(--text3)">(vide = tous les jours)</span></label>
-              <input type="text" id="sched-run-dates" placeholder="2026-01-15, 2026-03-20, ..." style="font-size:10px;width:100%">
+              <div class="form-row">
+                <div class="form-group">
+                  <label><input type="checkbox" id="sched-round-trip"> Aller-retour</label>
+                </div>
+                <div class="form-group">
+                  <label>Nb allers-retours</label>
+                  <div style="display:flex;gap:4px;align-items:center">
+                    <input type="number" id="sched-multi-departures" value="1" min="1" max="50" style="flex:1">
+                    <button type="button" id="btn-auto-ar" class="btn-sm" title="Calcul auto pour ne pas depasser 24h" style="font-size:9px;padding:3px 6px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Auto 24h</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Attente au terminus (min)</label>
+                  <input type="number" id="sched-terminus-wait" value="5" min="1" max="120">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label><input type="checkbox" id="sched-work-train"> Train de travaux <span style="font-size:9px;color:var(--text3)">(non affecte par les travaux)</span></label>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:1">
+                  <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Jours de circulation</label>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
+                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
+                  </div>
+                </div>
+                <div class="form-group" style="flex:1">
+                  <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Dates specifiques <span style="font-size:9px;color:var(--text3)">(vide = tous les jours)</span></label>
+                  <input type="text" id="sched-run-dates" placeholder="2026-01-15, 2026-03-20, ..." style="font-size:10px;width:100%">
+                </div>
+              </div>
+              <div id="sched-stops-list" class="sched-stops"></div>
+              <button id="btn-save-schedule" class="btn-primary btn-full">Enregistrer le trajet</button>
             </div>
           </div>
-          <p class="sched-hint">Cliquer sur les gares de la carte pour definir le trajet. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.<br><span style="color:#fbbf24;font-size:10px">Astuce : Ajoutez des gares intermediaires en "Waypoint" pour forcer le passage par un raccordement precis (ex: via Troyes au lieu de Nancy).</span></p>
-          <div class="sched-map-container">
-            <canvas id="sched-map-canvas"></canvas>
-          </div>
-          <div id="sched-stops-list" class="sched-stops"></div>
-          <button id="btn-save-schedule" class="btn-primary btn-full">Enregistrer le trajet</button>
         </div>
       </div>
     </div>
@@ -1002,7 +1055,91 @@
       </div>
     </div>
 
+    <!-- Modal: Créer un type de marchandise/cargo -->
+    <div id="modal-cargo-type" class="modal hidden">
+      <div class="modal-content" style="max-width:380px">
+        <button class="modal-close">&times;</button>
+        <h3>Créer un type de marchandise</h3>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select id="cargo-type-category" style="font-size:11px"></select>
+          </div>
+          <div class="form-group hidden" id="cargo-type-newcat-group">
+            <label>Nom de la nouvelle catégorie</label>
+            <input type="text" id="cargo-type-newcat" placeholder="Ex: Produits spéciaux" style="font-size:11px">
+          </div>
+          <div class="form-group">
+            <label>Nom de la marchandise</label>
+            <input type="text" id="cargo-type-name" placeholder="Ex: Hydrogène liquide" style="font-size:11px">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Unité</label>
+              <input type="text" id="cargo-type-unit" value="t" style="font-size:11px">
+            </div>
+            <div class="form-group">
+              <label>Prix / unité (€)</label>
+              <input type="number" id="cargo-type-price" value="0" min="0" style="font-size:11px">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px">
+              <input type="checkbox" id="cargo-type-hazard"> Matière dangereuse (TMD)
+            </label>
+          </div>
+          <button id="btn-save-cargo-type" class="btn-primary btn-full">Créer le type</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings" class="modal hidden">
+      <div class="modal-content" style="max-width:450px">
+        <button class="modal-close">&times;</button>
+        <h2 class="modal-header" style="display:flex;align-items:center;gap:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Paramètres
+        </h2>
+        <div class="modal-body" style="padding:16px">
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="font-weight:600;font-size:.9em">Nom de la compagnie</label>
+            <input type="text" id="settings-company-name" maxlength="30" style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em;margin-top:4px">
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="font-weight:600;font-size:.9em">Logo (URL image)</label>
+            <input type="text" id="settings-logo-url" placeholder="https://..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em;margin-top:4px">
+            <p style="font-size:.75em;color:#94a3b8;margin-top:3px">Laisser vide pour pas de logo</p>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="font-weight:600;font-size:.9em">Couleur compagnie</label>
+            <input type="color" id="settings-company-color" value="#3b82f6" style="width:50px;height:32px;border:none;background:none;cursor:pointer;margin-top:4px">
+          </div>
+          <hr style="border-color:#334155;margin:16px 0">
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:.9em;cursor:pointer">
+              <input type="checkbox" id="settings-incidents-enabled" checked style="width:18px;height:18px">
+              Activer les incidents admin
+            </label>
+            <p style="font-size:.75em;color:#94a3b8;margin-top:3px">Si activé, les incidents créés par l'administrateur apparaîtront aléatoirement dans ton jeu.</p>
+          </div>
+          <hr style="border-color:#334155;margin:16px 0">
+          <button id="settings-save" class="btn-primary btn-full" style="padding:10px;font-size:.9em;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;width:100%">Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Incident Notification Toast -->
+    <div id="incident-toast" style="display:none;position:fixed;top:60px;right:20px;z-index:9999;background:#1e293b;border:1px solid #f59e0b;border-radius:10px;padding:12px 18px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:slideIn .3s ease">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-size:1.2em">⚠️</span>
+        <b id="incident-toast-title" style="color:#f59e0b;font-size:.9em"></b>
+      </div>
+      <p id="incident-toast-desc" style="color:#94a3b8;font-size:.8em;margin:0"></p>
+      <p id="incident-toast-duration" style="color:#64748b;font-size:.75em;margin-top:4px"></p>
+    </div>
+
   </div>
-  <script type="module" src="js/main.js?v=1779746122"></script>
+  <script type="module" src="js/main.js?v=1780824000"></script>
 </body>
 </html>

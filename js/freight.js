@@ -24,7 +24,7 @@ export class FreightManager {
     this.lastGenTime = 0;
   }
 
-  maybeGenerate(stations, absTime, cargoTypes) {
+  maybeGenerate(stations, absTime, cargoTypes, industrialClients) {
     if (absTime < this.lastGenTime) this.lastGenTime = 0;
     if (absTime - this.lastGenTime < 120) return;
     this.lastGenTime = absTime;
@@ -44,6 +44,7 @@ export class FreightManager {
     if (others.length === 0) return;
     const to = others[Math.floor(Math.random() * others.length)];
 
+    const payment = quantity * cargo.pricePerUnit;
     this.contracts.push(new FreightContract({
       cargoType: cargo.type,
       cargoName: cargo.name,
@@ -53,8 +54,18 @@ export class FreightManager {
       fromId: from.id,
       to: to.name,
       toId: to.id,
-      payment: quantity * cargo.pricePerUnit,
+      payment,
     }));
+
+    // Non-ITE freight (incl. custom cargo categories like "Cargo") feeds the
+    // Marchandises page stats and the Industrie page totals, just like ITE
+    // contracts already do at generation time.
+    try { cargoTypes?.recordContract?.(cargo.type, quantity, payment); } catch (e) { /* graceful */ }
+    if (industrialClients?.stats) {
+      industrialClients.stats.contractsGenerated++;
+      industrialClients.stats.totalTonnage += quantity;
+      industrialClients.stats.totalRevenue += payment;
+    }
   }
 
   toSave() {

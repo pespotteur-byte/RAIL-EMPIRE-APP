@@ -4409,6 +4409,14 @@ export class IndustrialClients {
       totalRevenue: 0,
       contractsGenerated: 0,
     };
+    // Player-moved industry sites: key `${type}|${name}` -> {lat, lon}.
+    this.locationOverrides = {};
+  }
+
+  // Persist a player-moved industry location (keyed by type|name).
+  setLocationOverride(key, lat, lon) {
+    if (!key) return;
+    this.locationOverrides[key] = { lat, lon };
   }
 
   getIndustryTypes() { return INDUSTRY_TYPES; }
@@ -4424,12 +4432,17 @@ export class IndustrialClients {
     for (const ind of INDUSTRY_TYPES) {
       if (!ind.realLocations) continue;
       for (const loc of ind.realLocations) {
+        const key = ind.type + '|' + loc.name;
+        const ov = this.locationOverrides[key];
         locs.push({
           ...loc,
+          lat: ov ? ov.lat : loc.lat,
+          lon: ov ? ov.lon : loc.lon,
           industryType: ind.type,
           industryName: ind.name,
           industryIcon: ind.icon,
           color: INDUSTRY_COLORS[ind.type] || '#94a3b8',
+          _key: key,
         });
       }
     }
@@ -4744,6 +4757,7 @@ export class IndustrialClients {
       clients: this.clients,
       stats: this.stats,
       _nextClientId: nextClientId,
+      locationOverrides: this.locationOverrides,
     };
   }
 
@@ -4752,5 +4766,6 @@ export class IndustrialClients {
     this.clients = s.clients || [];
     this.stats = s.stats || { totalClients: 0, totalTonnage: 0, totalRevenue: 0, contractsGenerated: 0 };
     if (s._nextClientId) nextClientId = s._nextClientId;
+    this.locationOverrides = s.locationOverrides || {};
   }
 }

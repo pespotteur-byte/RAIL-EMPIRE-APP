@@ -1,3 +1,18 @@
+// LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
+const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b' };
+const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux' };
+
+// NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
+// contenu mais sont regroupées sous une page parente via des sous-onglets.
+// child -> parent (le bouton de nav du parent reste actif sur l'enfant).
+const PAGE_PARENT = { economy: 'dashboard', bank: 'dashboard', unions: 'staff', seasonal: 'weather' };
+// Groupes de sous-onglets injectés en tête des pages membres.
+const PAGE_GROUPS = [
+  [['dashboard', 'Dashboard'], ['economy', 'Finances'], ['bank', 'Banque']],
+  [['staff', 'Personnel'], ['unions', 'Syndicats']],
+  [['weather', 'Météo'], ['seasonal', 'Saisons']],
+];
+
 export class UI {
   constructor(game) {
     this.game = game;
@@ -81,12 +96,36 @@ export class UI {
         try { this.game.tutorial.start(this.game); } catch(e) { console.warn('Tutorial error:', e); }
       });
     }
+
+    this._setupPageGroups();
+  }
+
+  // NAV-01/02/03/04 — injecte une barre de sous-onglets en tête de chaque page
+  // membre d'un groupe fusionné, pour naviguer entre parent et enfants.
+  _setupPageGroups() {
+    for (const tabs of PAGE_GROUPS) {
+      const barHtml = `<div class="subnav">${tabs
+        .map(([p, l]) => `<button class="subnav-btn" data-page="${p}">${l}</button>`)
+        .join('')}</div>`;
+      for (const [pageId] of tabs) {
+        const pageEl = document.getElementById(`page-${pageId}`);
+        if (pageEl && !pageEl.querySelector(':scope > .subnav')) {
+          pageEl.insertAdjacentHTML('afterbegin', barHtml);
+        }
+      }
+    }
+    document.querySelectorAll('.subnav-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.switchPage(btn.dataset.page));
+    });
   }
 
   switchPage(page) {
     this.activePage = page;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.nav-btn[data-page="${page}"]`)?.classList.add('active');
+    // NAV — un enfant fusionné garde le bouton de nav de son parent actif.
+    const navKey = PAGE_PARENT[page] || page;
+    document.querySelector(`.nav-btn[data-page="${navKey}"]`)?.classList.add('active');
+    document.querySelectorAll('.subnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(`page-${page}`)?.classList.add('active');
 
@@ -132,6 +171,12 @@ export class UI {
         canvas.style.cursor = 'move';
         return;
       }
+      // Industry drag-to-move (shift+click)
+      if (e.shiftKey && this._hoveredIndustry) {
+        this._draggingIndustry = this._hoveredIndustry;
+        canvas.style.cursor = 'move';
+        return;
+      }
       this.isDragging = true;
       this.dragStart = { x: e.clientX, y: e.clientY };
       this.dragMoved = false;
@@ -156,6 +201,16 @@ export class UI {
         const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
         this._draggingVoiePoint.lat = worldPos.lat;
         this._draggingVoiePoint.lon = worldPos.lon;
+        return;
+      }
+      // Industry dragging (mutates the cached loc for live feedback)
+      if (this._draggingIndustry && this.game.renderer) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+        this._draggingIndustry.lat = worldPos.lat;
+        this._draggingIndustry.lon = worldPos.lon;
         return;
       }
       if (this.isDragging && this.game.renderer) {
@@ -186,10 +241,31 @@ export class UI {
         this.game.saveState();
         return;
       }
+      // Finish industry drag — persist the new location
+      if (this._draggingIndustry) {
+        const ind = this._draggingIndustry;
+        this._draggingIndustry = null;
+        canvas.style.cursor = 'grab';
+        this.game.industrialClients.setLocationOverride(ind._key, ind.lat, ind.lon);
+        this.game.saveState();
+        return;
+      }
       if (!this.dragMoved && this.game.renderer) {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
+
+        // LVM-04/06 — clic sur un train : sélection + panneau détail.
+        const _anyMode = this._pickConnectionMode || this.tronconCreationMode
+          || this.manualTronconMode || this.tracerLigneMode || this.voiePointCreationMode
+          || this.stationCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
+        if (!_anyMode && this.activePage === 'map') {
+          const picked = this._findServiceAtScreen(x, y);
+          if (picked) { this.selectService(picked); this.isDragging = false; return; }
+          if (this.selectedService && !this._hoveredStation && !this._hoveredVoiePoint) {
+            this.deselectService();
+          }
+        }
 
         // Pick-connection mode: clicking on an existing station to connect
         if (this._pickConnectionMode) {
@@ -286,9 +362,14 @@ export class UI {
       }
     });
 
-    // Escape key cancels pick-connection mode and voie point modes
+    // Escape key cancels pick-connection mode, creation modes, multi-creation, and closes modals
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        // Exit multi-creation mode
+        if (this._multiCreateMode) {
+          this._multiCreateMode = null;
+          document.querySelectorAll('.btn-map-action').forEach(b => b.classList.remove('multi-mode'));
+        }
         if (this._pickConnectionMode) {
           this._pickConnectionMode = false;
           this._hidePickHint();
@@ -296,16 +377,32 @@ export class UI {
           if (c) c.style.cursor = 'grab';
           document.getElementById('modal-station')?.classList.remove('hidden');
         }
+        if (this.stationCreationMode) this.toggleStationCreation();
         if (this.voiePointCreationMode) this.toggleVoiePointCreation();
         if (this.tronconCreationMode) this.toggleTronconCreation();
         if (this.manualTronconMode) this.toggleManualTronconCreation();
         if (this.tracerLigneMode) this.toggleTracerLigne();
+        // Close any open modal
+        const openModal = document.querySelector('.modal:not(.hidden)');
+        if (openModal) openModal.classList.add('hidden');
       }
-      if (e.key === 'Delete' && this._lastLineGroupId) {
-        const removed = this.game.voiePointManager.deleteLineGroup(this._lastLineGroupId);
-        this._lastLineGroupId = null;
-        this.game.saveState();
-        this._showPickHint(`Supprimé: ${removed} éléments. Cliquer pour un nouveau tracé ou Echap.`);
+      if (e.key === 'Delete') {
+        if (this._lastLineGroupId) {
+          const removed = this.game.voiePointManager.deleteLineGroup(this._lastLineGroupId);
+          this._lastLineGroupId = null;
+          this.game.saveState();
+          this._showPickHint(`Supprimé: ${removed} éléments. Cliquer pour un nouveau tracé ou Echap.`);
+        } else if (this._hoveredStation && this.activePage === 'map') {
+          if (confirm(`Supprimer la gare "${this._hoveredStation.name}" ?`)) {
+            this.game.world.removeStation(this._hoveredStation.id);
+            this._hoveredStation = null;
+            this.game.saveState();
+          }
+        } else if (this._hoveredVoiePoint && this.activePage === 'map') {
+          this.game.voiePointManager.remove(this._hoveredVoiePoint.id);
+          this._hoveredVoiePoint = null;
+          this.game.saveState();
+        }
       }
     });
 
@@ -335,13 +432,15 @@ export class UI {
     });
 
     // Touch events for mobile
-    let touchStart = null, touchDist = null;
+    let touchStart = null, touchDist = null, touchMoved = false;
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       if (e.touches.length === 1) {
         touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        touchMoved = false;
       } else if (e.touches.length === 2) {
         touchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+        touchMoved = true;
       }
     }, { passive: false });
     canvas.addEventListener('touchmove', (e) => {
@@ -349,9 +448,11 @@ export class UI {
       if (e.touches.length === 1 && touchStart && this.game.renderer) {
         const dx = e.touches[0].clientX - touchStart.x;
         const dy = e.touches[0].clientY - touchStart.y;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) touchMoved = true;
         this.game.renderer.tileMap.pan(dx, dy);
         touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       } else if (e.touches.length === 2 && touchDist !== null && this.game.renderer) {
+        touchMoved = true;
         const newDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
         const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
         const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -361,12 +462,73 @@ export class UI {
         touchDist = newDist;
       }
     }, { passive: false });
-    canvas.addEventListener('touchend', () => { touchStart = null; touchDist = null; });
+    canvas.addEventListener('touchend', (e) => {
+      if (!touchMoved && touchStart && this.game.renderer) {
+        const rect = canvas.getBoundingClientRect();
+        const x = touchStart.x - rect.left;
+        const y = touchStart.y - rect.top;
+        // LVM-04/06 — tap sur un train : sélection + panneau détail.
+        const _tapMode = this._pickConnectionMode || this.tronconCreationMode
+          || this.manualTronconMode || this.tracerLigneMode || this.voiePointCreationMode
+          || this.stationCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
+        if (!_tapMode && this.activePage === 'map') {
+          const picked = this._findServiceAtScreen(x, y);
+          if (picked) {
+            this.selectService(picked);
+            touchStart = null; touchDist = null; touchMoved = false;
+            return;
+          }
+        }
+        if (this._pickConnectionMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          let closest = null, minDist = Infinity;
+          for (const st of this.game.world.stations) {
+            const d = Math.hypot(st.lat - worldPos.lat, st.lon - worldPos.lon);
+            if (d < minDist) { minDist = d; closest = st; }
+          }
+          if (closest && minDist < 0.5) this.handlePickConnection(closest);
+        } else if (this.tronconCreationMode) {
+          this._handleTronconClick(x, y);
+        } else if (this.manualTronconMode) {
+          this._handleManualTronconClick(x, y);
+        } else if (this.tracerLigneMode) {
+          this._handleTracerLigneClick(x, y);
+        } else if (this.voiePointCreationMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          this.openVoiePointModal(worldPos.lat, worldPos.lon);
+        } else if (this.stationCreationMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          this.openStationCreationModal(worldPos.lat, worldPos.lon);
+        } else if (this.game._pendingSignalBox) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          const pending = this.game._pendingSignalBox;
+          this.game.staffManager.addSignalBox({ name: pending.name, lat: worldPos.lat, lon: worldPos.lon, radiusKm: pending.radiusKm });
+          this.game._pendingSignalBox = null;
+          this.game.saveState();
+          canvas.style.cursor = 'grab';
+          this._hidePickHint();
+          const staffContainer = document.getElementById('staff-container');
+          if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
+        } else if (this.game._pendingRegZone) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          const pending = this.game._pendingRegZone;
+          this.game.staffManager.addZone(pending.name, worldPos.lat, worldPos.lon, pending.radiusKm);
+          this.game._pendingRegZone = null;
+          this.game.saveState();
+          canvas.style.cursor = 'grab';
+          this._hidePickHint();
+          const staffContainer = document.getElementById('staff-container');
+          if (staffContainer) this.game.staffManager.render(staffContainer, this.game);
+        }
+      }
+      touchStart = null; touchDist = null; touchMoved = false;
+    });
   }
 
   handleMapHover(x, y) {
     const renderer = this.game.renderer;
     if (!renderer) return;
+    this._hoveredIndustry = null;
     const tooltip = document.getElementById('tooltip');
     const station = renderer.getStationAt(x, y, this.game.world.stations);
     if (station) {
@@ -400,7 +562,152 @@ export class UI {
       }
     }
     this._hoveredVoiePoint = null;
+
+    // Industry markers (only interactive when the layer is shown)
+    if (document.getElementById('toggle-industries')?.checked) {
+      const ind = renderer.getIndustryAt(x, y);
+      if (ind) {
+        tooltip.innerHTML = `<div class="tt-name">${ind.name}</div><div class="tt-info">${ind.industryName}</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Shift+drag pour deplacer</div>`;
+        tooltip.style.left = (x + 15) + 'px';
+        tooltip.style.top = (y - 10) + 'px';
+        tooltip.classList.remove('hidden');
+        this._hoveredIndustry = ind;
+        return;
+      }
+    }
     tooltip.classList.add('hidden');
+  }
+
+  // LVM-04 — trouve le service (train) le plus proche du clic écran (rayon px).
+  _findServiceAtScreen(x, y) {
+    const renderer = this.game.renderer;
+    if (!renderer || !this.game.scheduleCreator) return null;
+    const services = this.game.scheduleCreator.getActiveServices();
+    let best = null, bestD = 16; // seuil px
+    for (const svc of services) {
+      if (!svc.position || svc.state === 'completed') continue;
+      if (svc.state === 'waiting' && !svc.train?.stoppedAt) continue;
+      const p = renderer.latLonToScreen(svc.position.lat, svc.position.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestD) { bestD = d; best = svc; }
+    }
+    return best;
+  }
+
+  selectService(svc) {
+    this.selectedService = svc;
+    this._lvpKey = null; // force un rebuild complet
+    this._syncLivemapPanel();
+  }
+
+  // Appelé à chaque frame (updateTrainsList) : rebuild seulement si le trajet
+  // change (leg aller/retour, nb d'arrêts), sinon simple rafraîchissement léger
+  // pour ne pas casser le bandeau défilant ni le bouton fermer.
+  _syncLivemapPanel() {
+    const svc = this.selectedService;
+    const panel = document.getElementById('livemap-train-panel');
+    if (!panel) return;
+    if (!svc || !svc.train || !this.game.scheduleCreator?.services.includes(svc)) {
+      this.selectedService = null;
+      this._lvpKey = null;
+      panel.classList.add('hidden');
+      return;
+    }
+    const stops = typeof svc.getCurrentStops === 'function'
+      ? svc.getCurrentStops()
+      : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
+    const key = `${svc.id}|${svc.isReturnLeg ? 'R' : 'A'}|${stops.length}`;
+    if (key !== this._lvpKey) {
+      this._lvpKey = key;
+      this._renderLivemapPanel();
+      return;
+    }
+    // Rafraîchissement léger
+    const t = svc.train;
+    const sp = document.getElementById('lvp-speed');
+    if (sp) sp.textContent = `${Math.round(t.speed)} km/h`;
+    const dl = document.getElementById('lvp-delay');
+    if (dl) {
+      const d = Math.round(t.delay || 0);
+      dl.className = d > 0 ? 'late' : d < 0 ? 'early' : 'ok';
+      dl.textContent = d > 0 ? `+${d} min` : d < 0 ? `- ${Math.abs(d)} min` : `à l'heure`;
+    }
+    const cur = svc.currentStopIndex || 0;
+    panel.querySelectorAll('.lvp-stop').forEach((el, i) => {
+      el.classList.toggle('cur', i === cur);
+    });
+  }
+
+  selectServiceById(id) {
+    const svc = this.game.scheduleCreator?.services.find(s => s.id === id);
+    if (svc) this.selectService(svc);
+  }
+
+  deselectService() {
+    this.selectedService = null;
+    document.getElementById('livemap-train-panel')?.classList.add('hidden');
+  }
+
+  // LVM-03/04/06 — panneau détail du train sélectionné (annexes 4-5).
+  _renderLivemapPanel() {
+    const panel = document.getElementById('livemap-train-panel');
+    if (!panel) return;
+    const svc = this.selectedService;
+    // Le service a pu se terminer / disparaître : on referme.
+    if (!svc || !svc.train || !this.game.scheduleCreator?.services.includes(svc)) {
+      this.selectedService = null;
+      panel.classList.add('hidden');
+      return;
+    }
+    const t = svc.train;
+    const cat = svc.category || t.category || 'voyageur';
+    const catColor = LVM_CAT_COLORS[cat] || t.color || '#22d3ee';
+    const displayName = t.seriesName ? `${t.seriesName} ${t.number || ''}`.trim() : svc.name;
+    const numLabel = svc.number != null
+      ? `<span class="lvp-num">N°${svc.number}${svc.roundTrip && svc.returnNumber != null ? '/' + svc.returnNumber : ''}</span>`
+      : '';
+    const d = Math.round(t.delay || 0);
+
+    const stops = typeof svc.getCurrentStops === 'function'
+      ? svc.getCurrentStops()
+      : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
+    const world = this.game.world;
+    const fmt = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
+
+    const rows = stops.map((s, i) => {
+      const isWp = s.type === 'waypoint' || !s.stationId;
+      const name = isWp ? 'Waypoint' : (world.getStationById(s.stationId)?.name || '—');
+      const arr = s.arrivalTime ?? s.departureTime ?? 0;
+      const dep = s.departureTime ?? s.arrivalTime ?? 0;
+      let times;
+      if (i === 0) times = `dép ${fmt(dep)}`;
+      else if (i === stops.length - 1) times = `arr ${fmt(arr)}`;
+      else if (isWp) times = `pass ${fmt(arr)}`;
+      else times = `${fmt(arr)}–${fmt(dep)}`;
+      const cur = i === svc.currentStopIndex ? ' cur' : '';
+      const plat = s.platform ? ` V${s.platform}` : '';
+      return `<div class="lvp-stop${cur}"><span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${times}</span></div>`;
+    }).join('');
+
+    const upcoming = stops.slice(svc.currentStopIndex || 0)
+      .filter(s => s.stationId)
+      .map(s => world.getStationById(s.stationId)?.name)
+      .filter(Boolean);
+    const bandeau = upcoming.length ? `Prochains arrêts : ${upcoming.join('  •  ')}` : 'Service terminé';
+
+    panel.innerHTML = `
+      <div class="lvp-header" style="background:${catColor}">
+        <span class="lvp-cat"></span>
+        <span class="lvp-title">${displayName}</span>
+        ${numLabel}
+        <button class="lvp-close" onclick="game.ui.deselectService()" title="Fermer">×</button>
+      </div>
+      <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
+      <div class="lvp-bandeau"><span class="lvp-bandeau-track">${bandeau}</span></div>
+      <div class="lvp-stops">${rows}</div>
+      <div class="lvp-legend">dép = départ · pass = passage · arr = arrivée</div>
+    `;
+    panel.classList.remove('hidden');
   }
 
   setupTabs() {
@@ -419,14 +726,17 @@ export class UI {
     document.querySelectorAll('.modal-close').forEach(btn => {
       btn.addEventListener('click', () => btn.closest('.modal')?.classList.add('hidden'));
     });
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
-    });
+    // Modals do NOT close on outside click (player feedback)
   }
 
   // --- STATION CREATION ---
   toggleStationCreation() {
     this.stationCreationMode = !this.stationCreationMode;
+    if (!this.stationCreationMode && this._multiCreateMode === 'station') {
+      // Single click to deactivate clears multi-mode too
+      this._multiCreateMode = null;
+      document.getElementById('btn-create-station')?.classList.remove('multi-mode');
+    }
     const btn = document.getElementById('btn-create-station');
     if (btn) {
       btn.textContent = this.stationCreationMode ? '✕ Annuler' : '+ Creer une gare';
@@ -775,6 +1085,10 @@ export class UI {
 
     document.getElementById('modal-station')?.classList.add('hidden');
     this.game.saveState();
+    // Multi-creation: re-enter station creation mode
+    if (this._multiCreateMode === 'station') {
+      setTimeout(() => this.toggleStationCreation(), 100);
+    }
   }
 
   _showPickHint(text) {
@@ -898,27 +1212,93 @@ export class UI {
     });
     input?.addEventListener('change', () => { if (input.files[0]) this.loadStockImage(input.files[0]); });
     document.getElementById('btn-save-stock')?.addEventListener('click', () => this.saveStock());
+    const search = document.getElementById('stock-search');
+    const catFilter = document.getElementById('stock-cat-filter');
+    search?.addEventListener('input', () => { this._stockPage = 0; this.renderStockList(); });
+    catFilter?.addEventListener('change', () => { this._stockPage = 0; this.renderStockList(); });
   }
 
   openStockModal() {
+    this._editingStockId = null;
+    const title = document.getElementById('stock-modal-title');
+    if (title) title.textContent = 'Ajouter un engin';
+    const saveBtn = document.getElementById('btn-save-stock');
+    if (saveBtn) saveBtn.textContent = "Enregistrer l'engin";
+
     document.getElementById('modal-add-stock')?.classList.remove('hidden');
-    document.getElementById('stock-name').value = '';
-    const priceInput = document.getElementById('stock-price');
-    if (priceInput) priceInput.value = '0';
+    // Reset all fields to defaults (a previous edit may have left values).
+    this._setStockField('stock-name', '');
+    this._setStockField('stock-series-name', '');
+    this._setStockField('stock-number-start', '');
+    this._setStockField('stock-category', 'locomotive');
+    this._setStockField('stock-traction', 'none');
+    this._setStockField('stock-speed', '160');
+    this._setStockField('stock-power', '0');
+    this._setStockField('stock-length', '20');
+    this._setStockField('stock-mass', '80');
+    this._setStockField('stock-tonnage', '80');
+    this._setStockField('stock-capacity', '0');
+    this._setStockField('stock-freight-cap', '0');
+    this._setStockField('stock-price', '0');
     document.getElementById('stock-image-preview')?.classList.add('hidden');
     this._stockImageData = null;
 
     // Populate cargo types checkboxes
     this._populateCargoTypesCheckboxes();
+    this._wireStockCategoryToggle();
+  }
 
-    // Show/hide cargo types based on category
+  _setStockField(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  }
+
+  // Wire the category->cargo-types visibility toggle (idempotent: replaces the node's listener).
+  _wireStockCategoryToggle() {
     const catSel = document.getElementById('stock-category');
     const cargoGroup = document.getElementById('stock-cargo-types-group');
-    if (catSel && cargoGroup) {
-      const showCargo = () => { cargoGroup.style.display = catSel.value === 'wagon' ? 'block' : 'none'; };
-      showCargo();
-      catSel.addEventListener('change', showCargo);
+    if (!catSel || !cargoGroup) return;
+    const showCargo = () => { cargoGroup.style.display = catSel.value === 'wagon' ? 'block' : 'none'; };
+    catSel.onchange = showCargo;
+    showCargo();
+  }
+
+  // Open the modal pre-filled to edit an existing engin.
+  editStock(id) {
+    const item = this.game.rollingStock.getById(id);
+    if (!item) return;
+    this._editingStockId = id;
+    const title = document.getElementById('stock-modal-title');
+    if (title) title.textContent = "Modifier l'engin";
+    const saveBtn = document.getElementById('btn-save-stock');
+    if (saveBtn) saveBtn.textContent = 'Enregistrer les modifications';
+
+    document.getElementById('modal-add-stock')?.classList.remove('hidden');
+    this._setStockField('stock-name', item.name || '');
+    this._setStockField('stock-series-name', item.seriesName || '');
+    this._setStockField('stock-number-start', item.numberStart != null ? item.numberStart : '');
+    this._setStockField('stock-category', item.category || 'locomotive');
+    this._setStockField('stock-traction', item.traction || 'none');
+    this._setStockField('stock-speed', item.maxSpeed ?? 160);
+    this._setStockField('stock-power', item.power ?? 0);
+    this._setStockField('stock-length', item.length ?? 20);
+    this._setStockField('stock-mass', item.mass ?? 80);
+    this._setStockField('stock-tonnage', item.tonnage ?? 80);
+    this._setStockField('stock-capacity', item.passengerCapacity ?? 0);
+    this._setStockField('stock-freight-cap', item.freightCapacity ?? 0);
+    this._setStockField('stock-price', item.purchasePrice ?? 0);
+
+    this._stockImageData = item.imageData || null;
+    const preview = document.getElementById('stock-image-preview');
+    if (preview) {
+      if (item.imageData) { preview.src = item.imageData; preview.classList.remove('hidden'); }
+      else preview.classList.add('hidden');
     }
+
+    this._populateCargoTypesCheckboxes();
+    const sel = new Set(item.cargoTypes || []);
+    document.querySelectorAll('.stock-cargo-cb').forEach(cb => { cb.checked = sel.has(cb.value); });
+    this._wireStockCategoryToggle();
   }
 
   _populateCargoTypesCheckboxes() {
@@ -964,7 +1344,7 @@ export class UI {
     const name = document.getElementById('stock-name').value.trim();
     if (!name) return alert('Nom requis');
     const tonnage = parseInt(document.getElementById('stock-tonnage').value) || 80;
-    this.game.rollingStock.add({
+    const data = {
       name,
       category: document.getElementById('stock-category').value,
       traction: document.getElementById('stock-traction').value,
@@ -980,22 +1360,55 @@ export class UI {
       numberStart: document.getElementById('stock-number-start')?.value.trim() || '',
       purchasePrice: parseInt(document.getElementById('stock-price')?.value) || 0,
       cargoTypes: Array.from(document.querySelectorAll('.stock-cargo-cb:checked')).map(cb => cb.value),
-    });
+    };
+    if (this._editingStockId) {
+      this.game.rollingStock.update(this._editingStockId, data);
+      this._editingStockId = null;
+    } else {
+      this.game.rollingStock.add(data);
+    }
     document.getElementById('modal-add-stock')?.classList.add('hidden');
+    this.game.saveState?.();
     this.renderStockList();
   }
 
   renderStockList() {
     const container = document.getElementById('stock-list');
     if (!container) return;
-    const items = this.game.rollingStock.getAll();
-    if (items.length === 0) {
+    const pager = document.getElementById('stock-pager');
+    const countEl = document.getElementById('stock-count');
+    const all = this.game.rollingStock.getAll();
+    if (all.length === 0) {
       container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucun materiel. Cliquer "+ Ajouter un engin" pour importer.</p>';
+      if (pager) pager.innerHTML = '';
+      if (countEl) countEl.textContent = '';
       return;
     }
-    container.innerHTML = items.map(item => `
+    const q = (document.getElementById('stock-search')?.value || '').trim().toLowerCase();
+    const cat = document.getElementById('stock-cat-filter')?.value || '';
+    let items = all;
+    if (cat) items = items.filter(i => i.category === cat);
+    if (q) items = items.filter(i =>
+      (i.name || '').toLowerCase().includes(q) ||
+      (i.seriesName || '').toLowerCase().includes(q) ||
+      (i.category || '').toLowerCase().includes(q) ||
+      (i.traction || '').toLowerCase().includes(q));
+    const PAGE = 60;
+    const total = items.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE));
+    if (this._stockPage == null) this._stockPage = 0;
+    if (this._stockPage >= pages) this._stockPage = pages - 1;
+    const start = this._stockPage * PAGE;
+    const view = items.slice(start, start + PAGE);
+    if (countEl) countEl.textContent = `${total} engin${total > 1 ? 's' : ''}` + (total !== all.length ? ` / ${all.length}` : '');
+    if (total === 0) {
+      container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucun résultat pour cette recherche.</p>';
+      if (pager) pager.innerHTML = '';
+      return;
+    }
+    container.innerHTML = view.map(item => `
       <div class="card">
-        ${item.imageData ? `<img src="${item.imageData}" class="card-img" alt="${item.name}">` : ''}
+        ${item.imageData ? `<img src="${item.imageData}" loading="lazy" class="card-img" alt="${item.name}">` : ''}
         <div class="card-title">${item.name}</div>
         <div class="card-info">
           <b>Cat:</b> ${item.category} | <b>Tract:</b> ${item.traction}<br>
@@ -1006,10 +1419,26 @@ export class UI {
           ${item.cargoTypes?.length ? `<br><b>Chargements:</b> <span style="font-size:9px">${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return info?.name || ct; }).join(', ')}</span>` : ''}
         </div>
         <div class="card-actions">
+          <button class="btn-sm" onclick="game.ui.editStock('${item.id}')">Modifier</button>
           <button class="btn-sm danger" onclick="game.ui.deleteStock('${item.id}')">Supprimer</button>
         </div>
       </div>
     `).join('');
+    if (pager) {
+      if (pages <= 1) { pager.innerHTML = ''; }
+      else {
+        pager.innerHTML = `
+          <button class="btn-sm" ${this._stockPage === 0 ? 'disabled' : ''} onclick="game.ui.stockPageGo(${this._stockPage - 1})">‹ Préc.</button>
+          <span style="margin:0 12px;align-self:center;font-size:13px">Page ${this._stockPage + 1} / ${pages}</span>
+          <button class="btn-sm" ${this._stockPage >= pages - 1 ? 'disabled' : ''} onclick="game.ui.stockPageGo(${this._stockPage + 1})">Suiv. ›</button>`;
+      }
+    }
+  }
+
+  stockPageGo(p) {
+    this._stockPage = p;
+    this.renderStockList();
+    document.getElementById('stock-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   deleteStock(id) {
@@ -1023,12 +1452,23 @@ export class UI {
   setupRamePage() {
     document.getElementById('btn-new-rame')?.addEventListener('click', () => this.openRameModal());
     document.getElementById('btn-save-rame')?.addEventListener('click', () => this.saveRame());
+    const search = document.getElementById('rame-search');
+    if (search) search.addEventListener('input', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
+    document.getElementById('rame-cat-filter')?.addEventListener('change', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
+    document.getElementById('btn-clear-rame')?.addEventListener('click', () => {
+      this.currentRameElements = [];
+      this.renderRameAssembly();
+    });
   }
 
   openRameModal() {
     this.currentRameElements = [];
     this.editingRameId = null;
+    this._ramePickerPage = 0;
     document.getElementById('rame-name').value = '';
+    const s = document.getElementById('rame-search'); if (s) s.value = '';
+    const c = document.getElementById('rame-cat-filter'); if (c) c.value = '';
+    const q = document.getElementById('rame-qty'); if (q) q.value = '1';
     document.getElementById('modal-rame')?.classList.remove('hidden');
     this.renderRamePicker();
     this.renderRameAssembly();
@@ -1037,23 +1477,75 @@ export class UI {
   renderRamePicker() {
     const container = document.getElementById('rame-stock-picker');
     if (!container) return;
-    const items = this.game.rollingStock.getAll();
-    container.innerHTML = items.length === 0
-      ? '<p style="color:var(--text3);font-size:11px">Aucun materiel. Ajoutez-en d\'abord dans la page Materiel.</p>'
-      : items.map(item => `
-        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')">
-          ${item.imageData ? `<img src="${item.imageData}" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
+    const pager = document.getElementById('rame-picker-pager');
+    const countEl = document.getElementById('rame-picker-count');
+    const all = this.game.rollingStock.getAll();
+    if (all.length === 0) {
+      container.innerHTML = '<p style="color:var(--text3);font-size:11px">Aucun materiel. Ajoutez-en d\'abord dans la page Materiel.</p>';
+      if (pager) pager.innerHTML = '';
+      if (countEl) countEl.textContent = '';
+      return;
+    }
+    const query = (document.getElementById('rame-search')?.value || '').trim().toLowerCase();
+    const cat = document.getElementById('rame-cat-filter')?.value || '';
+    let items = all;
+    if (cat) items = items.filter(i => i.category === cat);
+    if (query) items = items.filter(i =>
+      (i.name || '').toLowerCase().includes(query) ||
+      (i.seriesName || '').toLowerCase().includes(query) ||
+      (i.category || '').toLowerCase().includes(query) ||
+      (i.traction || '').toLowerCase().includes(query));
+    const PAGE = 60;
+    const total = items.length;
+    const pages = Math.max(1, Math.ceil(total / PAGE));
+    if (this._ramePickerPage == null) this._ramePickerPage = 0;
+    if (this._ramePickerPage >= pages) this._ramePickerPage = pages - 1;
+    const start = this._ramePickerPage * PAGE;
+    const view = items.slice(start, start + PAGE);
+    if (countEl) countEl.textContent = `${total} engin${total > 1 ? 's' : ''}` + (total !== all.length ? ` / ${all.length}` : '');
+    if (total === 0) {
+      container.innerHTML = '<p style="color:var(--text3);font-size:11px;grid-column:1/-1">Aucun résultat.</p>';
+      if (pager) pager.innerHTML = '';
+      return;
+    }
+    container.innerHTML = view.map(item => `
+        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')" title="${item.name} — ${item.category}, ${item.maxSpeed} km/h, ${item.length}m">
+          ${item.imageData ? `<img src="${item.imageData}" loading="lazy" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
           <span>${item.name}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
         </div>
       `).join('');
+    if (pager) {
+      pager.innerHTML = pages <= 1 ? '' : `
+        <button class="btn-sm" ${this._ramePickerPage === 0 ? 'disabled' : ''} onclick="game.ui.ramePickerPageGo(${this._ramePickerPage - 1})">‹ Préc.</button>
+        <span style="margin:0 12px;align-self:center;font-size:12px">Page ${this._ramePickerPage + 1} / ${pages}</span>
+        <button class="btn-sm" ${this._ramePickerPage >= pages - 1 ? 'disabled' : ''} onclick="game.ui.ramePickerPageGo(${this._ramePickerPage + 1})">Suiv. ›</button>`;
+    }
+  }
+
+  ramePickerPageGo(p) {
+    this._ramePickerPage = p;
+    this.renderRamePicker();
+    document.getElementById('rame-stock-picker')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   addToRame(stockId) {
     const item = this.game.rollingStock.getById(stockId);
     if (!item) return;
-    const currentLength = this.currentRameElements.reduce((s, e) => s + e.length, 0);
-    if (currentLength + item.length > 750) return alert('Longueur maximale de 750m atteinte !');
-    this.currentRameElements.push({ ...item, stockId: item.id });
+    let qty = parseInt(document.getElementById('rame-qty')?.value || '1', 10);
+    if (!isFinite(qty) || qty < 1) qty = 1;
+    let currentLength = this.currentRameElements.reduce((s, e) => s + e.length, 0);
+    let added = 0;
+    for (let n = 0; n < qty; n++) {
+      if (currentLength + item.length > 750) break;
+      this.currentRameElements.push({ ...item, stockId: item.id });
+      currentLength += item.length;
+      added++;
+    }
+    if (added < qty) {
+      alert(added === 0
+        ? 'Longueur maximale de 750m atteinte !'
+        : `Longueur max 750m atteinte : ${added}/${qty} engin(s) ajouté(s).`);
+    }
     this.renderRameAssembly();
   }
 
@@ -1204,7 +1696,7 @@ export class UI {
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = editService.roundTrip;
       document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
-      document.getElementById('sched-terminus-wait').value = editService.terminusWait || 10;
+      document.getElementById('sched-terminus-wait').value = editService.terminusWait || 5;
       // Populate run days
       const editDays = editService.runDays || [0,1,2,3,4,5,6];
       document.querySelectorAll('.sched-run-day').forEach(cb => {
@@ -1219,7 +1711,7 @@ export class UI {
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = false;
       document.getElementById('sched-multi-departures').value = '1';
-      document.getElementById('sched-terminus-wait').value = '10';
+      document.getElementById('sched-terminus-wait').value = '5';
       // Default: all days checked, no specific dates
       document.querySelectorAll('.sched-run-day').forEach(cb => { cb.checked = true; });
       document.getElementById('sched-run-dates').value = '';
@@ -1245,7 +1737,7 @@ export class UI {
     const lastArr = this.schedStops[this.schedStops.length - 1].arrTimeMin;
     const oneWayMin = lastArr - firstDep;
     if (oneWayMin <= 0) return;
-    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 10;
+    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
     // One round trip = oneWay + terminusWait + oneWay + terminusWait
     const oneRoundTrip = (oneWayMin * 2) + (terminusWait * 2);
     const maxAR = Math.max(1, Math.floor((24 * 60) / oneRoundTrip));
@@ -1361,29 +1853,48 @@ export class UI {
         ctx.fillText(st.name, p.x + 10, p.y + 4);
       }
 
-      // Draw route between selected stops (yellow)
+      // Draw the REAL route between consecutive stops (yellow), passing through
+      // waypoints. Mirrors the save-time routing priority so the preview equals
+      // the path the train will actually run.
       if (this.schedStops.length > 1) {
         ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
+        const drawGeom = (geom) => {
+          if (!geom || geom.length < 2) return false;
+          const step = Math.max(1, Math.floor(geom.length / 80));
+          ctx.beginPath();
+          const p0 = tileMap.worldToScreen(geom[0].lat, geom[0].lon, canvas.width, canvas.height);
+          ctx.moveTo(p0.x, p0.y);
+          for (let r = step; r < geom.length; r += step) {
+            const pr = tileMap.worldToScreen(geom[r].lat, geom[r].lon, canvas.width, canvas.height);
+            ctx.lineTo(pr.x, pr.y);
+          }
+          const pL = tileMap.worldToScreen(geom[geom.length - 1].lat, geom[geom.length - 1].lon, canvas.width, canvas.height);
+          ctx.lineTo(pL.x, pL.y);
+          ctx.stroke();
+          return true;
+        };
         for (let i = 0; i < this.schedStops.length - 1; i++) {
-          const sa = world.getStationById(this.schedStops[i].stationId);
-          const sb = world.getStationById(this.schedStops[i + 1].stationId);
-          if (!sa || !sb) continue;
-          const track = world.getTrackBetween(sa.id, sb.id);
-          if (track && track.route && track.route.length > 2) {
-            const step = Math.max(1, Math.floor(track.route.length / 80));
-            ctx.beginPath();
-            const p0 = tileMap.worldToScreen(track.route[0].lat, track.route[0].lon, canvas.width, canvas.height);
-            ctx.moveTo(p0.x, p0.y);
-            for (let r = step; r < track.route.length; r += step) {
-              const pr = tileMap.worldToScreen(track.route[r].lat, track.route[r].lon, canvas.width, canvas.height);
-              ctx.lineTo(pr.x, pr.y);
+          const stopA = this.schedStops[i], stopB = this.schedStops[i + 1];
+          const ca = this._getStopCoords(stopA), cb = this._getStopCoords(stopB);
+          if (!ca || !cb) continue;
+          // Priority 1: tronçon graph (exact player infrastructure, via waypoints)
+          let geom = null;
+          const trc = this.game.voiePointManager?.findTronconRoute(ca.lat, ca.lon, cb.lat, cb.lon);
+          if (trc && trc.route && trc.route.length >= 2) geom = trc.route;
+          // Priority 2: existing world track between two stations
+          if (!geom && stopA.stationId && stopB.stationId) {
+            const sa = world.getStationById(stopA.stationId), sb = world.getStationById(stopB.stationId);
+            if (sa && sb) {
+              const track = world.getTrackBetween(sa.id, sb.id);
+              if (track && track.route && track.route.length > 1) {
+                geom = (track.stationA !== sa.id) ? [...track.route].reverse() : track.route;
+              }
             }
-            const pL = tileMap.worldToScreen(track.route[track.route.length - 1].lat, track.route[track.route.length - 1].lon, canvas.width, canvas.height);
-            ctx.lineTo(pL.x, pL.y);
-            ctx.stroke();
-          } else {
-            const pa = tileMap.worldToScreen(sa.lat, sa.lon, canvas.width, canvas.height);
-            const pb = tileMap.worldToScreen(sb.lat, sb.lon, canvas.width, canvas.height);
+          }
+          // Priority 3: straight fallback
+          if (!drawGeom(geom)) {
+            const pa = tileMap.worldToScreen(ca.lat, ca.lon, canvas.width, canvas.height);
+            const pb = tileMap.worldToScreen(cb.lat, cb.lon, canvas.width, canvas.height);
             ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
           }
         }
@@ -1489,12 +2000,36 @@ export class UI {
     let schedDrag = false, schedDragStart = null, totalDragDist = 0;
 
     canvas.onmousedown = (e) => {
+      const x = e.offsetX, y = e.offsetY;
+      // Grab an existing waypoint marker to drag it (reshape the route)
+      let hit = null, hitD = Infinity;
+      for (let i = 0; i < this.schedStops.length; i++) {
+        const s = this.schedStops[i];
+        if (s.type !== 'waypoint' || !s.voiePointId) continue;
+        const c = this._getStopCoords(s);
+        if (!c) continue;
+        const p = tileMap.worldToScreen(c.lat, c.lon, canvas.width, canvas.height);
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < hitD && d < 10) { hitD = d; hit = { index: i, vpId: s.voiePointId }; }
+      }
+      if (hit) {
+        this._draggingWp = hit;
+        this._wpMoved = false;
+        schedDrag = false; schedDragStart = null; totalDragDist = 0;
+        return;
+      }
       schedDrag = true;
-      schedDragStart = { x: e.offsetX, y: e.offsetY };
+      schedDragStart = { x, y };
       totalDragDist = 0;
     };
 
     canvas.onmousemove = (e) => {
+      if (this._draggingWp) {
+        const w = tileMap.screenToWorld(e.offsetX, e.offsetY, canvas.width, canvas.height);
+        const vp = this.game.voiePointManager?.getVoiePointById(this._draggingWp.vpId);
+        if (vp) { vp.lat = w.lat; vp.lon = w.lon; this._wpMoved = true; requestDraw(); }
+        return;
+      }
       if (schedDrag && schedDragStart) {
         const dx = e.offsetX - schedDragStart.x;
         const dy = e.offsetY - schedDragStart.y;
@@ -1502,10 +2037,40 @@ export class UI {
         tileMap.pan(dx, dy);
         schedDragStart = { x: e.offsetX, y: e.offsetY };
         requestDraw();
+        return;
       }
+      // Hover feedback: grab cursor when over a draggable waypoint
+      let overWp = false;
+      for (const s of this.schedStops) {
+        if (s.type !== 'waypoint' || !s.voiePointId) continue;
+        const c = this._getStopCoords(s);
+        if (!c) continue;
+        const p = tileMap.worldToScreen(c.lat, c.lon, canvas.width, canvas.height);
+        if (Math.hypot(p.x - e.offsetX, p.y - e.offsetY) < 10) { overWp = true; break; }
+      }
+      canvas.style.cursor = overWp ? 'grab' : 'default';
     };
 
     canvas.onmouseup = (e) => {
+      if (this._draggingWp) {
+        const dw = this._draggingWp; this._draggingWp = null;
+        const vp = this.game.voiePointManager?.getVoiePointById(dw.vpId);
+        if (vp && this._wpMoved) {
+          const snapped = this._snapToTrack(vp.lat, vp.lon);
+          if (snapped) { vp.lat = snapped.lat; vp.lon = snapped.lon; }
+          const stop = this.schedStops[dw.index];
+          if (stop) stop.stationName = `Waypoint (${vp.lat.toFixed(4)}, ${vp.lon.toFixed(4)})`;
+          this.recalcStopsFrom(dw.index).then(() => {
+            this.renderSchedStops();
+            if (this._drawSchedMap) this._drawSchedMap();
+          });
+          this.game.saveState();
+        }
+        this._wpMoved = false;
+        if (this._drawSchedMap) this._drawSchedMap();
+        schedDrag = false; schedDragStart = null;
+        return;
+      }
       if (totalDragDist < 5) {
         const x = e.offsetX, y = e.offsetY;
 
@@ -1576,11 +2141,11 @@ export class UI {
       if (prevStation) {
         const existingTrack = this.game.world.getTrackBetween(prevStation.id, station.id);
         if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-          travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
+          travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
         } else {
           try {
             const route = await this.game.orm.findRoute(prevStation.lat, prevStation.lon, station.lat, station.lon);
-            travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+            travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
           } catch (e) {
             const dist = this._approxRailDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
             travelTime = Math.round((dist / rameSpeed) * 60) || 1;
@@ -1625,7 +2190,7 @@ export class UI {
       if (prevCoords) {
         try {
           const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
-          travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+          travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
         } catch (e) {
           const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
           travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
@@ -1693,21 +2258,36 @@ export class UI {
     const rame = this.game.rameManager.getById(rameId);
     const rameSpeed = rame ? rame.maxSpeed : 160;
 
-    const prevStop = this.schedStops[this.schedStops.length - 1];
+    // SC-10 — insert the waypoint on the nearest INTERIOR segment so the
+    // following stops are preserved; append only when the click is past the end.
+    let insertIndex = this.schedStops.length;
+    if (this.schedStops.length >= 2) {
+      let best = Infinity, bestSeg = -1, bestT = 0;
+      for (let i = 0; i < this.schedStops.length - 1; i++) {
+        const a = this._getStopCoords(this.schedStops[i]);
+        const b = this._getStopCoords(this.schedStops[i + 1]);
+        if (!a || !b) continue;
+        const r = this._pointSegDistKm(snappedLat, snappedLon, a, b);
+        if (r.dist < best) { best = r.dist; bestSeg = i; bestT = r.t; }
+      }
+      if (bestSeg >= 0 && bestT > 0.05 && bestT < 0.95) insertIndex = bestSeg + 1;
+    }
+
+    const prevStop = this.schedStops[insertIndex - 1];
     const prevCoords = this._getStopCoords(prevStop);
     let travelTime = 5;
     if (prevCoords) {
       try {
         const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
-        travelTime = this.game.orm.calculateTravelTime(route, rameSpeed);
+        travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
       } catch (e) {
         const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
         travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
       }
     }
-    const arrTimeMin = prevStop.depTimeMin + travelTime;
+    const arrTimeMin = (prevStop.depTimeMin || 0) + travelTime;
 
-    this.schedStops.push({
+    this.schedStops.splice(insertIndex, 0, {
       stationId: null,
       voiePointId: vpId,
       stationName: `Waypoint (${snappedLat.toFixed(4)}, ${snappedLon.toFixed(4)})`,
@@ -1719,9 +2299,28 @@ export class UI {
       platform: '',
     });
 
+    // Recompute the stops that follow the inserted waypoint (none are removed).
+    if (insertIndex < this.schedStops.length - 1) {
+      await this.recalcStopsFrom(insertIndex + 1);
+    }
+
     this.renderSchedStops();
     if (this._drawSchedMap) this._drawSchedMap();
     this.game.saveState();
+  }
+
+  // Perpendicular distance (km) from a point to segment AB, plus the clamped
+  // projection parameter t in [0,1] (used by SC-10 waypoint insertion).
+  _pointSegDistKm(lat, lon, a, b) {
+    const kx = 111 * Math.cos(lat * Math.PI / 180), ky = 111;
+    const ax = a.lon * kx, ay = a.lat * ky, bx = b.lon * kx, by = b.lat * ky;
+    const px = lon * kx, py = lat * ky;
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    let t = len2 > 0 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    return { dist: Math.hypot(px - cx, py - cy), t };
   }
 
   minToTimeStr(m) {
@@ -1823,6 +2422,26 @@ export class UI {
     const rtChecked = document.getElementById('sched-round-trip')?.checked;
     if (rtChecked && this.schedStops.length >= 2) {
       const reversed = [...this.schedStops].reverse();
+      const n = this.schedStops.length;
+      // SC-14 — mirror the forward segment/dwell durations onto the return leg,
+      // anchored at (terminus arrival + terminus wait), to show heures aller ET
+      // retour (départ / passage / arrivée) per station.
+      const termWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+      const lastArr = this.schedStops[n - 1].arrTimeMin ?? this.schedStops[n - 1].depTimeMin ?? 0;
+      const fmt = (t) => this.minToTimeStr(((Math.round(t) % 1440) + 1440) % 1440);
+      const retTimes = [];
+      for (let j = 0; j < n; j++) {
+        if (j === 0) { retTimes.push({ arr: lastArr + termWait, dep: lastArr + termWait }); continue; }
+        // Forward travel of this segment = arr[later station] - dep[earlier station];
+        // the return leg reuses the same duration in reverse.
+        const arrLater = this.schedStops[n - j].arrTimeMin ?? this.schedStops[n - j].depTimeMin ?? 0;
+        const depEarlier = this.schedStops[n - 1 - j].depTimeMin ?? this.schedStops[n - 1 - j].arrTimeMin ?? 0;
+        const travel = Math.max(0, arrLater - depEarlier);
+        const arr = retTimes[j - 1].dep + travel;
+        const here = this.schedStops[n - 1 - j];
+        const dwell = Math.max(0, (here.depTimeMin ?? here.arrTimeMin ?? 0) - (here.arrTimeMin ?? here.depTimeMin ?? 0));
+        retTimes.push({ arr, dep: arr + dwell });
+      }
       const returnHtml = reversed.map((stop, i) => {
         const station = this.game.world.getStationById(stop.stationId);
         const stName = station?.name || stop.stationName || '?';
@@ -1830,6 +2449,14 @@ export class UI {
         const isLast = i === reversed.length - 1;
         const typeLabel = stop.type === 'waypoint' ? 'passage' : (isFirst ? 'depart' : (isLast ? 'terminus' : stop.type));
         const typeColor = typeLabel === 'depart' ? '#22c55e' : (typeLabel === 'terminus' ? '#ef4444' : (typeLabel === 'passage' ? '#8b5cf6' : 'var(--text3)'));
+
+        const rt = retTimes[i] || { arr: 0, dep: 0 };
+        let timeStr;
+        if (stop.type === 'waypoint') timeStr = '';
+        else if (isFirst) timeStr = `Dep ${fmt(rt.dep)}`;
+        else if (isLast) timeStr = `Arr ${fmt(rt.arr)}`;
+        else if (typeLabel === 'passage') timeStr = `Pass ${fmt(rt.arr)}`;
+        else timeStr = `${fmt(rt.arr)}-${fmt(rt.dep)}`;
 
         // Platform selector
         let platformSelect = '';
@@ -1849,12 +2476,14 @@ export class UI {
           <span style="color:var(--text3);font-size:10px;min-width:14px">${i + 1}</span>
           <span style="color:${typeColor};font-size:9px;min-width:50px">${typeLabel}</span>
           <span class="stop-name" style="flex:1">${stName}</span>
+          <span style="font-size:9px;color:var(--text2);min-width:74px;text-align:right">${timeStr}</span>
           ${platformSelect}
         </div>`;
       }).join('');
       if (returnHtml) {
         container.innerHTML += `<div style="margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">
-          <div style="font-size:10px;color:#f59e0b;font-weight:600;margin-bottom:4px">↩ Trajet retour (${reversed.length} arrets)</div>
+          <div style="font-size:10px;color:#f59e0b;font-weight:600;margin-bottom:4px">↩ Trajet retour (${reversed.length} arrets, attente terminus ${termWait} min)</div>
+          <div style="font-size:8px;color:var(--text3);margin-bottom:3px">Legende : <span style="color:#22c55e">depart</span> / <span style="color:#8b5cf6">passage</span> / <span style="color:#ef4444">arrivee</span></div>
           ${returnHtml}
         </div>`;
       }
@@ -1947,7 +2576,25 @@ export class UI {
     return null;
   }
 
-  async _getSegmentTravelTime(prevStop, curStop, rameSpeed) {
+  // Snap a coordinate to the nearest tronçon route point (sync). Returns null
+  // if no track is within ~5 km. Used when a dragged waypoint is released so it
+  // sticks to the real rail, mirroring _addMapWaypoint's snapping.
+  _snapToTrack(lat, lon) {
+    const vpm = this.game.voiePointManager;
+    if (!vpm) return null;
+    let best = null, bestDist = Infinity;
+    const cosLat = Math.cos(lat * Math.PI / 180);
+    for (const trc of vpm.getAllTroncons()) {
+      if (!trc.route) continue;
+      for (const pt of trc.route) {
+        const d = Math.sqrt(Math.pow((pt.lat - lat) * 111, 2) + Math.pow((pt.lon - lon) * 111 * cosLat, 2));
+        if (d < bestDist) { bestDist = d; best = { lat: pt.lat, lon: pt.lon }; }
+      }
+    }
+    return (best && bestDist <= 5) ? best : null;
+  }
+
+  async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null) {
     const prevCoords = this._getStopCoords(prevStop);
     const curCoords = this._getStopCoords(curStop);
     if (!prevCoords || !curCoords) return 15;
@@ -1958,12 +2605,12 @@ export class UI {
     if (prevStation && curStation) {
       const existingTrack = this.game.world.getTrackBetween(prevStation.id, curStation.id);
       if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-        return this.game.orm.calculateTravelTime(existingTrack.route, rameSpeed);
+        return this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
       }
     }
     try {
       const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
-      return this.game.orm.calculateTravelTime(route, rameSpeed);
+      return this.game.orm.calculateTravelTime(route, rame || rameSpeed);
     } catch (e) {
       const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
       return Math.round((dist / rameSpeed) * 60) || 1;
@@ -1986,7 +2633,7 @@ export class UI {
       const prevStop = this.schedStops[i - 1];
       const curStop = this.schedStops[i];
 
-      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed);
+      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame);
 
       curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
       curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
@@ -2019,7 +2666,7 @@ export class UI {
     const rame = this.game.rameManager.getById(rameId);
     const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
-    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 10;
+    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
 
     // Build route requests in parallel for speed
     const routePromises = [];
@@ -2222,26 +2869,43 @@ export class UI {
       }
 
       const depTime = this.minToTimeStr(svc.stops[0]?.departureTime || 0);
+      // SC-03 — numéro de service : aller impair / retour pair.
+      const numLabel = svc.number != null
+        ? `<span style="color:#fbbf24;font-size:10px;font-weight:700;min-width:34px" title="N° aller${svc.roundTrip ? ' / retour' : ''}">N°${svc.number}${svc.roundTrip && svc.returnNumber != null ? '/' + svc.returnNumber : ''}</span>`
+        : '';
 
       return `${groupHeader}
         <div class="sched-item">
-          <div class="sched-item-header">
+          <div class="sched-item-header" onclick="game.ui.toggleSchedDetail('${svc.id}')" style="cursor:pointer">
+            <span class="sched-caret" id="sched-caret-${svc.id}" style="color:var(--text3);font-size:10px;width:12px;transition:transform .15s">▸</span>
             <span style="color:var(--text3);font-size:10px;min-width:38px">${depTime}</span>
+            ${numLabel}
             <span class="sched-item-name">${svc.name}${statusLabel}</span>
             <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
             <span style="color:var(--text3);font-size:10px">${Math.round(svc.plannedDistance || svc.totalDistance)} km${tripInfo}</span>
             <span style="color:#60a5fa;font-size:9px">${daysLabel}${datesLabel}</span>
-            <button class="btn-sm" onclick="game.ui.editSchedule('${svc.id}')">Modifier</button>
-            <button class="btn-sm" onclick="game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
-            <button class="btn-sm" onclick="game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
-            <button class="btn-sm danger" onclick="game.ui.deleteSchedule('${svc.id}')">Supprimer</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.editSchedule('${svc.id}')">Modifier</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
+            <button class="btn-sm danger" onclick="event.stopPropagation();game.ui.deleteSchedule('${svc.id}')">Supprimer</button>
           </div>
-          <div style="font-size:10px;color:var(--text2);margin-bottom:2px">${dirLabel}</div>
-          <div class="sched-stops-preview">${stopsPreview}</div>
-          ${returnPreview}
+          <div class="sched-detail hidden" id="sched-detail-${svc.id}">
+            <div style="font-size:10px;color:var(--text2);margin:4px 0 2px">${dirLabel}</div>
+            <div class="sched-stops-preview">${stopsPreview}</div>
+            ${returnPreview}
+          </div>
         </div>
       `;
     }).join('');
+  }
+
+  // SC-08 — clic sur une ligne = menu déroulant détaillé du trajet.
+  toggleSchedDetail(id) {
+    const detail = document.getElementById(`sched-detail-${id}`);
+    const caret = document.getElementById(`sched-caret-${id}`);
+    if (!detail) return;
+    const open = detail.classList.toggle('hidden');
+    if (caret) caret.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
   }
 
   toggleSchedule(id) {
@@ -3949,10 +4613,12 @@ export class UI {
       const rameKm = svc.rame ? (svc.rame.totalKmRun || 0) : (t.totalKmRun || 0);
       const wearHtml = rameKm > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(rameWear)}% · Total: ${Math.round(rameKm)} km</span></div>` : '';
 
+      const catColor = LVM_CAT_COLORS[svc.category || t.category] || t.color;
+      const selCls = this.selectedService?.id === svc.id ? ' tc-selected' : '';
       return `
-        <div class="train-card-fixed">
+        <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${svc.id}')">
           <div class="tc-line tc-header">
-            <span class="train-color" style="background:${t.color}"></span>
+            <span class="train-color" style="background:${catColor}"></span>
             <span class="tc-name">${displayName}</span>
           </div>
           ${imageHtml}
@@ -3971,6 +4637,9 @@ export class UI {
     }).join('');
     // S10: Only update DOM if content actually changed to avoid flicker
     if (container.innerHTML !== html) container.innerHTML = html;
+
+    // LVM-06 — garde le panneau du train sélectionné à jour chaque frame.
+    this._syncLivemapPanel();
   }
 
   garageService(svcId) {
@@ -4079,8 +4748,18 @@ export class UI {
     document.getElementById('btn-create-voie-point')?.addEventListener('click', () => {
       this.toggleVoiePointCreation();
     });
+    document.getElementById('btn-create-voie-point')?.addEventListener('dblclick', () => {
+      this._multiCreateMode = 'voiepoint';
+      if (!this.voiePointCreationMode) this.toggleVoiePointCreation();
+      document.getElementById('btn-create-voie-point')?.classList.add('multi-mode');
+    });
     document.getElementById('btn-create-troncon')?.addEventListener('click', () => {
       this.toggleTronconCreation();
+    });
+    document.getElementById('btn-create-troncon')?.addEventListener('dblclick', () => {
+      this._multiCreateMode = 'troncon';
+      if (!this.tronconCreationMode) this.toggleTronconCreation();
+      document.getElementById('btn-create-troncon')?.classList.add('multi-mode');
     });
     document.getElementById('btn-create-troncon-manual')?.addEventListener('click', () => {
       this.toggleManualTronconCreation();
@@ -5209,7 +5888,47 @@ export class UI {
     try {
       const container = document.getElementById('cargo-types-container');
       this.game.cargoTypes.render(container, this.game);
+      document.getElementById('btn-create-cargo-type')?.addEventListener('click', () => this.openCargoTypeModal());
     } catch(e) { console.warn('CargoTypes render error:', e); }
+  }
+
+  openCargoTypeModal() {
+    const modal = document.getElementById('modal-cargo-type');
+    if (!modal) return;
+    const catSel = document.getElementById('cargo-type-category');
+    if (catSel) {
+      catSel.innerHTML = Object.entries(this.game.cargoTypes.categories)
+        .map(([key, cat]) => `<option value="${key}">${cat.name}</option>`).join('')
+        + `<option value="__new__">+ Nouvelle catégorie…</option>`;
+    }
+    const newcatGroup = document.getElementById('cargo-type-newcat-group');
+    const toggleNewcat = () => { if (newcatGroup) newcatGroup.classList.toggle('hidden', catSel.value !== '__new__'); };
+    if (catSel) catSel.onchange = toggleNewcat;
+    toggleNewcat();
+    this._setStockField('cargo-type-newcat', '');
+    this._setStockField('cargo-type-name', '');
+    this._setStockField('cargo-type-unit', 't');
+    this._setStockField('cargo-type-price', '0');
+    const hz = document.getElementById('cargo-type-hazard'); if (hz) hz.checked = false;
+    const saveBtn = document.getElementById('btn-save-cargo-type');
+    if (saveBtn) saveBtn.onclick = () => this.saveCargoType();
+    modal.classList.remove('hidden');
+  }
+
+  saveCargoType() {
+    const catSel = document.getElementById('cargo-type-category');
+    const res = this.game.cargoTypes.addCustomType({
+      categoryKey: catSel?.value,
+      categoryName: document.getElementById('cargo-type-newcat')?.value,
+      name: document.getElementById('cargo-type-name')?.value,
+      unit: document.getElementById('cargo-type-unit')?.value || 't',
+      pricePerUnit: document.getElementById('cargo-type-price')?.value,
+      hazard: document.getElementById('cargo-type-hazard')?.checked,
+    });
+    if (!res.ok) { alert(res.error || 'Erreur'); return; }
+    this.game.saveState();
+    document.getElementById('modal-cargo-type')?.classList.add('hidden');
+    this.renderCargoTypesPage();
   }
 
   // ==================== ITE MODULES ====================

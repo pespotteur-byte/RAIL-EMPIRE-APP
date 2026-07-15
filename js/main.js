@@ -1,14 +1,14 @@
 import { SimulationEngine } from './engine.js?v=1779724771';
 import { World, createDefaultWorld } from './world.js?v=1779724771';
-import { Renderer } from './renderer.js?v=1779724771';
-import { UI } from './ui.js?v=1779724771';
-import { Economy } from './economy.js?v=1779724771';
+import { Renderer } from './renderer.js?v=1780824000';
+import { UI } from './ui.js?v=1780824000';
+import { Economy } from './economy.js?v=1780700000';
 import { IncidentManager } from './incidents.js?v=1779724771';
-import { FreightManager } from './freight.js?v=1779724771';
+import { FreightManager } from './freight.js?v=1780700000';
 import { ScheduleManager } from './schedule.js?v=1779724771';
 import { GameStorage } from './storage.js?v=1779724771';
 import { AccountManager } from './account.js?v=1779724771';
-import { RollingStockManager } from './rolling-stock.js?v=1779724771';
+import { RollingStockManager } from './rolling-stock.js?v=1780600000';
 import { RameManager } from './rame.js?v=1779724771';
 import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1779724771';
 import { DepotManager } from './depot.js?v=1779724771';
@@ -27,10 +27,14 @@ import { SeasonalSchedule } from './seasonal.js?v=1779724771';
 import { Connections } from './connections.js?v=1779724771';
 import { StationUpgrades } from './station-upgrades.js?v=1779724771';
 import { JunctionManager } from './junctions.js?v=1779724771';
-import { CargoTypeManager } from './cargo-types.js?v=1779724771';
+import { CargoTypeManager } from './cargo-types.js?v=1780824000';
 import { ITEModules } from './ite-modules.js?v=1779724771';
-import { IndustrialClients } from './industrial-clients.js?v=1779724771';
+import { IndustrialClients } from './industrial-clients.js?v=1780824000';
 import { ShuntingManager } from './shunting.js?v=1779724771';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1780600000';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1780900000';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1780900000';
+import { adminSync } from './admin-sync.js?v=1780900000';
 
 class RailEmpire {
   constructor() {
@@ -142,9 +146,14 @@ class RailEmpire {
     this.ui = new UI(this);
     this.ui.setupAll();
 
-    // Setup station creation button
+    // Setup station creation button (double-click = multi-creation mode)
     document.getElementById('btn-create-station')?.addEventListener('click', () => {
       this.ui.toggleStationCreation();
+    });
+    document.getElementById('btn-create-station')?.addEventListener('dblclick', () => {
+      this.ui._multiCreateMode = 'station';
+      if (!this.ui.stationCreationMode) this.ui.toggleStationCreation();
+      document.getElementById('btn-create-station')?.classList.add('multi-mode');
     });
     document.getElementById('btn-save-station')?.addEventListener('click', () => {
       this.ui.saveStation();
@@ -186,6 +195,32 @@ class RailEmpire {
       e.target.value = '';
     });
 
+    this.seedCatalog();
+
+    // Load admin overrides (async, non-blocking)
+    adminSync.loadOverrides().then(() => {
+      if (adminSync.loaded) {
+        // Re-seed catalog with overrides applied
+        this.seedCatalog();
+        // Start incident loop
+        adminSync.startIncidentLoop(() => new Date());
+      }
+    });
+
+    // Settings modal
+    this._setupSettings();
+
+    // Incident toast notifications
+    window.addEventListener('admin-incident', (e) => {
+      const inc = e.detail;
+      const toast = document.getElementById('incident-toast');
+      document.getElementById('incident-toast-title').textContent = inc.name;
+      document.getElementById('incident-toast-desc').textContent = inc.description || '';
+      document.getElementById('incident-toast-duration').textContent = `Durée : ${inc.duration} min`;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 8000);
+    });
+
     this.engine.paused = false;
     this.running = true;
     this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
@@ -201,6 +236,92 @@ class RailEmpire {
         this.saveState();
       }
     });
+  }
+
+  // Seed the built-in rolling-stock catalog (idempotent: only adds missing entries by id).
+  // Also auto-adds any cargo type referenced by the catalog that the game doesn't know yet.
+  seedCatalog() {
+    // 1) Ensure cargo types declared by the catalog exist (add the missing ones).
+    if (Array.isArray(CATALOG_CARGO_TYPES) && this.cargoTypes?.ensureType) {
+      for (const ct of CATALOG_CARGO_TYPES) this.cargoTypes.ensureType(ct.category, ct);
+    }
+    // 2) Seed the rolling-stock entries (MLG + WTraffic).
+    let allCatalog = [...(Array.isArray(CATALOG) ? CATALOG : [])];
+    try {
+      const wt = getWTrafficCatalog();
+      if (Array.isArray(wt)) allCatalog = allCatalog.concat(wt);
+    } catch(e) { console.warn('WTraffic catalog load error:', e); }
+    if (Array.isArray(CATALOG_PACK_RE)) allCatalog = allCatalog.concat(CATALOG_PACK_RE);
+    // 3) Apply admin overrides (modifications, deletions, imports published by admin)
+    allCatalog = adminSync.applyCatalogOverrides(allCatalog);
+    const existing = new Set(this.rollingStock.getAll().map(i => i.id));
+    let added = 0;
+    for (const entry of allCatalog) {
+      if (existing.has(entry.id)) continue;
+      this.rollingStock.add({ ...entry, _catalog: true });
+      added++;
+    }
+    if (added && this.ui) this.ui.renderStockList();
+  }
+
+  _setupSettings() {
+    const modal = document.getElementById('modal-settings');
+    const btnSettings = document.getElementById('btn-settings');
+    const nameInput = document.getElementById('settings-company-name');
+    const logoInput = document.getElementById('settings-logo-url');
+    const colorInput = document.getElementById('settings-company-color');
+    const incidentsToggle = document.getElementById('settings-incidents-enabled');
+    const saveBtn = document.getElementById('settings-save');
+
+    // Load saved settings
+    const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
+
+    btnSettings.addEventListener('click', () => {
+      nameInput.value = this.account.companyName || '';
+      logoInput.value = settings.logoUrl || '';
+      colorInput.value = settings.companyColor || '#3b82f6';
+      incidentsToggle.checked = settings.incidentsEnabled !== false;
+      modal.classList.remove('hidden');
+    });
+
+    modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.add('hidden'));
+
+    saveBtn.addEventListener('click', () => {
+      const newName = nameInput.value.trim();
+      if (newName) {
+        this.account.companyName = newName;
+        document.getElementById('company-name').textContent = newName;
+      }
+      const logoUrl = logoInput.value.trim();
+      const color = colorInput.value;
+      const incEnabled = incidentsToggle.checked;
+
+      // Save settings
+      const s = { logoUrl, companyColor: color, incidentsEnabled: incEnabled };
+      localStorage.setItem('re_player_settings', JSON.stringify(s));
+
+      // Apply logo
+      const logoEl = document.getElementById('company-logo');
+      if (logoUrl) {
+        logoEl.src = logoUrl;
+        logoEl.style.display = 'inline-block';
+      } else {
+        logoEl.style.display = 'none';
+      }
+
+      // Apply incidents opt-in
+      adminSync.setOptIn(incEnabled);
+
+      modal.classList.add('hidden');
+      this.saveState();
+    });
+
+    // Apply logo on load if saved
+    if (settings.logoUrl) {
+      const logoEl = document.getElementById('company-logo');
+      logoEl.src = settings.logoUrl;
+      logoEl.style.display = 'inline-block';
+    }
   }
 
   async exportSaveFile() {
@@ -540,7 +661,7 @@ class RailEmpire {
     }
 
     if (timeOfDay % 60 === 0) {
-      this.freightManager.maybeGenerate(this.world.stations, timeOfDay, this.cargoTypes);
+      this.freightManager.maybeGenerate(this.world.stations, timeOfDay, this.cargoTypes, this.industrialClients);
     }
 
     // Periodic canton cleanup every 5 in-game minutes to prevent memory leaks

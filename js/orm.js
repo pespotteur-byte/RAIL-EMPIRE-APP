@@ -1,6 +1,8 @@
 // OpenRailwayMap data integration via Overpass API — ORM Direct architecture
 // Uses OSM way graph directly as the game's routing infrastructure.
 // No conversion to intermediate tronçons — the OSM graph IS the network.
+import { segmentsFromRoute, simulateProfile } from './train-physics.js';
+
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
 function haversine(lat1, lon1, lat2, lon2) {
@@ -11,6 +13,21 @@ function haversine(lat1, lon1, lat2, lon2) {
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// Initial bearing (degrees, 0-360) from A to B — used for turn-angle penalty
+function bearing(lat1, lon1, lat2, lon2) {
+  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
+// Smallest absolute difference between two bearings (0-180)
+function angleBetween(b1, b2) {
+  let d = Math.abs(b1 - b2) % 360;
+  return d > 180 ? 360 - d : d;
 }
 
 // --- Binary Heap for Dijkstra (fixes O(n²) sort bug) ---
@@ -56,11 +73,19 @@ export class ORMClient {
     this.loading = false;
 
     // ORM Direct: unified graph from all loaded areas
-    this._graph = null; // { nodes: Map, adjacency: Map }
+    this._graph = null; // { nodes: Map, adjacency: Map, _index }
     this._ways = new Map(); // wayId -> way object (all loaded ways)
     this._loadedBboxes = []; // track which areas have been loaded
     this._stationsOSM = []; // detected OSM stations
     this._graphDirty = true;
+
+    // Spatial index cell size (degrees) for nearest-node queries ~2 km
+    this._cellSize = 0.02;
+    // Routing tuning (directed graph)
+    this._serviceSpeedKmh = 30; // yards/sidings default speed cap
+    this._turnPenaltyDeg = 100; // above this angle a movement counts as a reversal
+    this._reversalPenaltyH = 6;  // ~6h penalty ≫ any real leg → forbids arbitrary back-up
+    this._maxFallbackKm = 1.0;   // only fabricate straight connectors up to 1 km (R-03)
   }
 
   // ============================================================
@@ -200,17 +225,19 @@ export class ORMClient {
 
         const dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
 
-        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, wayId: way.id };
-        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, wayId: way.id };
+        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
+        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
 
         nodes.get(aKey).edges.push(edge);
         nodes.get(bKey).edges.push(reverseEdge);
       }
     }
-    return { nodes };
+    const graph = { nodes };
+    graph._index = this._buildSpatialIndex(nodes);
+    return graph;
   }
 
-  // Legacy buildGraph (used by findRoute)
+  // Legacy buildGraph (used by importInfrastructure)
   buildGraph(ways) {
     const nodes = new Map();
     for (const way of ways) {
@@ -222,72 +249,197 @@ export class ORMClient {
         if (!nodes.has(aKey)) nodes.set(aKey, { key: aKey, lat: geom[i].lat, lon: geom[i].lon, edges: [] });
         if (!nodes.has(bKey)) nodes.set(bKey, { key: bKey, lat: geom[i + 1].lat, lon: geom[i + 1].lon, edges: [] });
         const dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
-        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, wayId: way.id };
-        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, wayId: way.id };
+        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
+        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
         nodes.get(aKey).edges.push(edge);
         nodes.get(bKey).edges.push(reverseEdge);
       }
     }
-    return { nodes };
+    const graph = { nodes };
+    graph._index = this._buildSpatialIndex(nodes);
+    return graph;
   }
 
   // ============================================================
-  // DIJKSTRA WITH BINARY HEAP — O(E log V)
-  // Supports optional waypoint constraints (forced ways)
+  // SPATIAL INDEX — grid buckets for O(1) nearest-node lookup
+  // Replaces the O(n) linear scan (enables routing at 1200+ km)
   // ============================================================
 
-  dijkstra(graph, startKey, endKey, constraintWayIds = null) {
+  _buildSpatialIndex(nodes) {
+    const cs = this._cellSize;
+    const cells = new Map(); // "cLat:cLon" -> [node,...]
+    for (const [, node] of nodes) {
+      const ck = Math.floor(node.lat / cs) + ':' + Math.floor(node.lon / cs);
+      let bucket = cells.get(ck);
+      if (!bucket) { bucket = []; cells.set(ck, bucket); }
+      bucket.push(node);
+    }
+    return { cells, cs };
+  }
+
+  _nearestViaIndex(graph, lat, lon, maxDistKm) {
+    const { cells, cs } = graph._index;
+    const cLat = Math.floor(lat / cs), cLon = Math.floor(lon / cs);
+    let best = null, bestDist = Infinity, foundRing = -1;
+    // Cap the search radius (in rings) to avoid scanning the whole grid
+    const ringCap = maxDistKm === Infinity ? 400 : Math.ceil(maxDistKm / (cs * 60)) + 3;
+    for (let ring = 0; ring <= ringCap; ring++) {
+      for (let dLat = -ring; dLat <= ring; dLat++) {
+        for (let dLon = -ring; dLon <= ring; dLon++) {
+          // only the border cells of the current ring
+          if (Math.max(Math.abs(dLat), Math.abs(dLon)) !== ring) continue;
+          const bucket = cells.get((cLat + dLat) + ':' + (cLon + dLon));
+          if (!bucket) continue;
+          for (const node of bucket) {
+            const d = haversine(lat, lon, node.lat, node.lon);
+            if (d < bestDist && d <= maxDistKm) { bestDist = d; best = node; if (foundRing < 0) foundRing = ring; }
+          }
+        }
+      }
+      // Once found, scan two extra rings (closer node may sit in a neighbour cell) then stop
+      if (best && ring >= foundRing + 2) break;
+    }
+    return best ? { node: best, dist: bestDist } : null;
+  }
+
+  // ============================================================
+  // DIRECTED ROUTING — edge-state A* on the oriented graph
+  //  • edges carry a running direction (from -> to)
+  //  • cost = travel time (dist / effective speed), not raw distance
+  //  • turn-angle penalty forbids arbitrary reversals / wrong-way moves
+  //    (a train may only turn back where a planned reversal makes it
+  //     the sole option; sharp turns cost _reversalPenaltyH hours)
+  //  • A* with an admissible time heuristic → fast even at 1200+ km
+  // ============================================================
+
+  // Effective running speed on an edge (km/h). Service tracks (yards,
+  // sidings, spurs) are capped low so routing avoids them unless required.
+  _effectiveSpeed(edge) {
+    let v = edge.maxSpeed || 160;
+    const isService = (edge.service && edge.service !== '') ||
+      (edge.usage && edge.usage !== 'main' && edge.usage !== 'branch');
+    if (isService) v = Math.min(v, this._serviceSpeedKmh);
+    return Math.max(5, v);
+  }
+
+  // Travel time across an edge, in hours
+  _edgeCost(edge) {
+    return edge.dist / this._effectiveSpeed(edge);
+  }
+
+  _edgeBearing(graph, edge) {
+    const a = graph.nodes.get(edge.from);
+    const b = graph.nodes.get(edge.to);
+    if (!a || !b) return 0;
+    return bearing(a.lat, a.lon, b.lat, b.lon);
+  }
+
+  // Penalty (hours) for chaining edge `into` after edge `from`.
+  // A near-U-turn (angle > _turnPenaltyDeg) is treated as a reversal.
+  _turnPenalty(graph, fromEdge, intoEdge, directed) {
+    if (!directed || !fromEdge) return 0;
+    // Same physical track, opposite direction = pure back-up: always forbid
+    if (intoEdge.to === fromEdge.from && intoEdge.wayId === fromEdge.wayId) {
+      return Infinity;
+    }
+    const b1 = this._edgeBearing(graph, fromEdge);
+    const b2 = this._edgeBearing(graph, intoEdge);
+    const turn = angleBetween(b1, b2);
+    if (turn > this._turnPenaltyDeg) return this._reversalPenaltyH;
+    return 0;
+  }
+
+  // Public entry point kept for backward compatibility (callers pass keys).
+  // `directed` defaults to true; pass { directed:false } for a raw shortest path.
+  dijkstra(graph, startKey, endKey, opts = null) {
+    const directed = !(opts && opts.directed === false);
+    return this._route(graph, startKey, endKey, directed);
+  }
+
+  _route(graph, startKey, endKey, directed = true) {
     if (!startKey || !endKey) return null;
     if (!graph.nodes.has(startKey) || !graph.nodes.has(endKey)) return null;
+    const endNode = graph.nodes.get(endKey);
+    if (startKey === endKey) {
+      const n = graph.nodes.get(startKey);
+      return [{ lat: n.lat, lon: n.lon, maxSpeed: 160, electrified: true, tracks: 1 }];
+    }
 
-    const dist = new Map();
-    const prev = new Map();
-    const visited = new Set();
+    // Admissible heuristic: straight-line time to goal at the max plausible speed
+    const MAX_V = 320;
+    const h = (key) => {
+      const n = graph.nodes.get(key);
+      return haversine(n.lat, n.lon, endNode.lat, endNode.lon) / MAX_V;
+    };
+
+    const gScore = new Map(); // stateKey ("from>to") -> best cost
+    const cameFrom = new Map(); // stateKey -> { prev, edge }
+    const settled = new Set();
     const heap = new MinHeap();
 
-    dist.set(startKey, 0);
-    heap.push({ key: startKey, d: 0 });
+    const startNode = graph.nodes.get(startKey);
+    for (const edge of startNode.edges) {
+      const g = this._edgeCost(edge);
+      const sk = edge.from + '>' + edge.to;
+      if (g < (gScore.get(sk) ?? Infinity)) {
+        gScore.set(sk, g);
+        cameFrom.set(sk, { prev: null, edge });
+        heap.push({ key: sk, d: g + h(edge.to) });
+      }
+    }
 
+    let endStateKey = null;
     while (heap.size > 0) {
-      const { key: u } = heap.pop();
-      if (visited.has(u)) continue;
-      visited.add(u);
-      if (u === endKey) break;
+      const cur = heap.pop();
+      if (settled.has(cur.key)) continue;
+      settled.add(cur.key);
 
-      const node = graph.nodes.get(u);
+      const toKey = cur.key.slice(cur.key.indexOf('>') + 1);
+      if (toKey === endKey) { endStateKey = cur.key; break; }
+
+      const node = graph.nodes.get(toKey);
       if (!node) continue;
+      const inEdge = cameFrom.get(cur.key).edge;
+      const gCur = gScore.get(cur.key);
 
       for (const edge of node.edges) {
-        if (visited.has(edge.to)) continue;
-        const newDist = (dist.get(u) || 0) + edge.dist;
-        if (newDist < (dist.get(edge.to) || Infinity)) {
-          dist.set(edge.to, newDist);
-          prev.set(edge.to, { from: u, edge });
-          heap.push({ key: edge.to, d: newDist });
+        const pen = this._turnPenalty(graph, inEdge, edge, directed);
+        if (!isFinite(pen)) continue; // forbidden reversal
+        const sk = edge.from + '>' + edge.to;
+        if (settled.has(sk)) continue;
+        const g = gCur + this._edgeCost(edge) + pen;
+        if (g < (gScore.get(sk) ?? Infinity)) {
+          gScore.set(sk, g);
+          cameFrom.set(sk, { prev: cur.key, edge });
+          heap.push({ key: sk, d: g + h(edge.to) });
         }
       }
     }
 
-    if (!prev.has(endKey) && startKey !== endKey) return null;
+    if (!endStateKey) return null;
 
-    const path = [];
-    let current = endKey;
-    while (current && current !== startKey) {
-      const p = prev.get(current);
-      if (!p) break;
-      const node = graph.nodes.get(current);
-      path.unshift({
-        lat: node.lat, lon: node.lon,
-        maxSpeed: p.edge.maxSpeed, electrified: p.edge.electrified,
-        tracks: p.edge.tracks, wayId: p.edge.wayId,
-      });
-      current = p.from;
+    // Reconstruct the edge chain
+    const edges = [];
+    let sk = endStateKey;
+    while (sk) {
+      const cf = cameFrom.get(sk);
+      if (!cf) break;
+      edges.unshift(cf.edge);
+      sk = cf.prev;
     }
-    const startNode = graph.nodes.get(startKey);
-    if (startNode) {
-      path.unshift({
-        lat: startNode.lat, lon: startNode.lon,
-        maxSpeed: path[0]?.maxSpeed || 160, electrified: true, tracks: 1,
+    if (edges.length === 0) return null;
+
+    const path = [{
+      lat: startNode.lat, lon: startNode.lon,
+      maxSpeed: edges[0].maxSpeed, electrified: edges[0].electrified !== false,
+      tracks: edges[0].tracks || 1, wayId: edges[0].wayId,
+    }];
+    for (const e of edges) {
+      const n = graph.nodes.get(e.to);
+      path.push({
+        lat: n.lat, lon: n.lon,
+        maxSpeed: e.maxSpeed, electrified: e.electrified !== false,
+        tracks: e.tracks || 1, wayId: e.wayId, usage: e.usage, service: e.service,
       });
     }
     return path;
@@ -317,6 +469,8 @@ export class ORMClient {
   // ============================================================
 
   findNearestNode(graph, lat, lon, maxDistKm = Infinity) {
+    // Use the spatial grid when available (O(1) avg vs O(n) scan)
+    if (graph._index) return this._nearestViaIndex(graph, lat, lon, maxDistKm);
     let best = null, bestDist = Infinity;
     for (const [, node] of graph.nodes) {
       const d = haversine(lat, lon, node.lat, node.lon);
@@ -696,7 +850,15 @@ export class ORMClient {
     return path || this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
   }
 
+  // R-03: no more straight-line diagonal masquerading as real track.
+  // A synthetic straight segment is only produced for SHORT connectors
+  // (≤ _maxFallbackKm, e.g. a platform-to-rail stub) and every point is
+  // tagged `fallback:true` so the renderer/schedule can flag it. For any
+  // longer origin/destination pair with no ORM path we return null and let
+  // the caller surface "route introuvable" instead of faking geometry.
   makeFallbackRoute(fromLat, fromLon, toLat, toLon) {
+    const distKm = haversine(fromLat, fromLon, toLat, toLon);
+    if (distKm > this._maxFallbackKm) return null;
     const steps = 20;
     const route = [];
     for (let i = 0; i <= steps; i++) {
@@ -704,10 +866,15 @@ export class ORMClient {
       route.push({
         lat: fromLat + (toLat - fromLat) * t,
         lon: fromLon + (toLon - fromLon) * t,
-        maxSpeed: 160, electrified: true, tracks: 2,
+        maxSpeed: 160, electrified: true, tracks: 2, fallback: true,
       });
     }
     return route;
+  }
+
+  // Is this route a synthetic straight-line fallback (not real ORM track)?
+  isFallbackRoute(route) {
+    return Array.isArray(route) && route.length > 0 && route.some(p => p && p.fallback);
   }
 
   // ============================================================
@@ -715,6 +882,7 @@ export class ORMClient {
   // ============================================================
 
   getRouteDistance(route) {
+    if (!Array.isArray(route)) return 0;
     let total = 0;
     for (let i = 1; i < route.length; i++) {
       total += haversine(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
@@ -724,6 +892,7 @@ export class ORMClient {
 
   getRouteSegments(route) {
     const segments = [];
+    if (!Array.isArray(route)) return segments;
     for (let i = 1; i < route.length; i++) {
       const dist = haversine(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
       segments.push({
@@ -737,7 +906,16 @@ export class ORMClient {
     return segments;
   }
 
-  calculateTravelTime(route, rameMaxSpeed) {
+  // Travel time (minutes) for a route.
+  // `rame` may be a number (max speed km/h — legacy zone estimate) or a Rame-like
+  // object (totalMass/totalPower/totalLength/maxSpeed) → realistic traction
+  // physics via train-physics.js (PH-01→PH-07, VIT-02/03).
+  calculateTravelTime(route, rame, opts = null) {
+    if (rame && typeof rame === 'object') {
+      const physical = this._physicalTravelTime(route, rame, opts);
+      if (physical !== null) return physical;
+    }
+    const rameMaxSpeed = typeof rame === 'number' ? rame : (rame && rame.maxSpeed) || 160;
     const segments = this.getRouteSegments(route);
     if (segments.length === 0) return 1;
 
@@ -782,6 +960,29 @@ export class ORMClient {
     return Math.round(totalMinutes) || 1;
   }
 
+  // Realistic travel time (minutes) using traction physics. Returns null when
+  // the rame lacks the data needed (falls back to the zone estimate).
+  _physicalTravelTime(route, rame, opts = null) {
+    const massKg = ((rame.getTotalMassWithPayload
+      ? rame.getTotalMassWithPayload(opts?.loadFactor ?? 0.7)
+      : (rame.totalMass || rame.totalTonnage)) || 0) * 1000;
+    const powerW = (rame.totalPower || 0) * 1000;
+    if (massKg <= 0 || powerW <= 0) return null;
+
+    const maxSpeedKmh = rame.maxSpeed || 160;
+    const segs = segmentsFromRoute(route, maxSpeedKmh, haversine);
+    if (segs.length === 0) return null;
+
+    const res = simulateProfile(segs, {
+      massKg,
+      powerW,
+      lengthM: rame.totalLength || 200,
+      weather: opts?.weather,
+      brakeServiceMs2: opts?.brakeServiceMs2,
+    });
+    return Math.round(res.timeSec / 60) || 1;
+  }
+
   generateSignalBlocks(route) {
     const segments = this.getRouteSegments(route);
     const signals = [];
@@ -790,13 +991,7 @@ export class ORMClient {
     let accDist = 0, lastSignalDist = 0;
     for (const seg of segments) {
       const speed = seg.maxSpeed;
-      let blockLength;
-      if (speed <= 60) blockLength = 0.4;
-      else if (speed <= 80) blockLength = 0.6;
-      else if (speed <= 120) blockLength = 0.8;
-      else if (speed <= 160) blockLength = 1.0;
-      else if (speed <= 220) blockLength = 1.5;
-      else blockLength = 1.8;
+      const blockLength = 0.8;
       accDist += seg.distance;
       while (accDist - lastSignalDist >= blockLength) {
         lastSignalDist += blockLength;
@@ -809,7 +1004,7 @@ export class ORMClient {
   }
 
   getPointAtRatio(route, ratio) {
-    if (route.length < 2) return route[0] || { lat: 0, lon: 0 };
+    if (!Array.isArray(route) || route.length < 2) return (route && route[0]) || { lat: 0, lon: 0 };
     const r = Math.max(0, Math.min(1, ratio));
     let totalDist = 0;
     const segDists = [];
