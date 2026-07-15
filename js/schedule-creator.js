@@ -1721,7 +1721,12 @@ export class ActiveService {
       )?.cargoTypes?.[0] || '';
       const iteInfo = dm?.getITEInfo(station.id, trainLength, rameCargo);
       if (iteInfo?.isITE) {
-        this.train.iteInfo = { totalLength: iteInfo.totalLength, trainLength, trancheCount: iteInfo.trancheCount, canFit: iteInfo.canFit, cargoMatch: iteInfo.cargoMatch };
+        // ITE-07 : modules grues/portiques accélèrent le chargement / la manœuvre
+        const iteMods = window.game?.iteModules;
+        const loadingMult = iteMods?.getLoadingSpeedMultiplier(station.id) ?? 1;
+        const shuntingMult = iteMods?.getShuntingSpeedMultiplier(station.id) ?? 1;
+        const craneCount = iteMods?.getCraneCount ? iteMods.getCraneCount(station.id) : 0;
+        this.train.iteInfo = { totalLength: iteInfo.totalLength, trainLength, trancheCount: iteInfo.trancheCount, canFit: iteInfo.canFit, cargoMatch: iteInfo.cargoMatch, craneCount };
         this._iteCargoMismatch = iteInfo.cargoMatch === false;
         // ITE-06 : temps de manœuvre/déchargement/rechargement selon type de cargaison + longueur/tranches
         const cargo = (rameCargo || '').toLowerCase();
@@ -1729,8 +1734,8 @@ export class ActiveService {
         if (/citerne|gaz|gas|liquide/.test(cargo)) factor = 1.5;
         else if (/intermodal|container|conteneur|porte-auto|tomber/.test(cargo)) factor = 2.5;
         else if (/cereals|cereale|ciment|cement|silos|tremie|trémie/.test(cargo)) factor = 1.2;
-        const loadUnload = Math.ceil(factor * (trainLength / 100) * (iteInfo.canFit ? 1 : 1.2));
-        const trancheManeuver = iteInfo.canFit ? 0 : ((iteInfo.trancheCount - 1) * 10);
+        const loadUnload = Math.ceil(factor * (trainLength / 100) * (iteInfo.canFit ? 1 : 1.2) * loadingMult);
+        const trancheManeuver = iteInfo.canFit ? 0 : Math.ceil((iteInfo.trancheCount - 1) * 10 * shuntingMult);
         this._iteDwellExtra = loadUnload + trancheManeuver;
       } else {
         this._iteDwellExtra = 0;

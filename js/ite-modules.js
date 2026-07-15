@@ -209,6 +209,17 @@ export class ITEModules {
     return 1 / (1 + bonus);
   }
 
+  getCraneCount(depotId) {
+    const data = this.installations[depotId];
+    if (!data) return 0;
+    let count = 0;
+    for (const m of data.modules) {
+      const mod = this.availableModules[m.type];
+      if (mod?.icon === 'crane' || mod?.name?.toLowerCase().includes('grue') || mod?.name?.toLowerCase().includes('portique')) count++;
+    }
+    return count;
+  }
+
   getStorageCapacity(depotId) {
     const data = this.installations[depotId];
     if (!data) return 0;
