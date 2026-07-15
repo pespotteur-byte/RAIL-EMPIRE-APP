@@ -205,7 +205,7 @@
 ## RH — PERSONNEL & SOCIAL  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| RH-01 | Embauche multiple + noms auto (FR/DE/CH/ES/BE/NL/IT/CZ) | P1 | A9 | [ ] |
+| RH-01 | Embauche multiple + noms auto (FR/DE/CH/ES/BE/NL/IT/CZ) | P1 | A9 | [x] PR1 |
 | RH-02 | Chaque poste/fonction précis et réaliste | P1 | A9 | [ ] |
 | RH-03 | 3×8 : repos 24h/semaine + 8h entre services | P1 | A9 | [ ] |
 | RH-04 | Non-respect → risque de mouvement social accru | P1 | A9 | [ ] |
@@ -287,9 +287,9 @@
 ## DSH — DASHBOARD / FINANCE / BANQUE  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| DSH-01 | Dashboard reçoit Finances + Banque (fusion) | P1 | A1.1, A11.2 | [ ] |
-| DSH-02 | Schémas nets (fin du flou/pixélisé), MAJ temps réel, arrondi 0,1 | P1 | A11.2 | [ ] |
-| DSH-03 | Grandes valeurs : case s'agrandit pour ne pas disparaître | P1 | A11.2 | [ ] |
+| DSH-01 | Dashboard reçoit Finances + Banque (fusion) | P1 | A1.1, A11.2 | [x] PR1 |
+| DSH-02 | Schémas nets (fin du flou/pixélisé), MAJ temps réel, arrondi 0,1 | P1 | A11.2 | [~] PR1 (arrondi 0,1 + gros chiffres) |
+| DSH-03 | Grandes valeurs : case s'agrandit pour ne pas disparaître | P1 | A11.2 | [x] PR1 (word-break, overflow visible) |
 | DSH-04 | Vue synthèse + drill-down (rester lisible) | P1 | review | [ ] |
 
 ## GM — GRAPHIQUE DE MARCHE  (P1)  [schéma jTrainGraph]
