@@ -1695,19 +1695,24 @@ export class ActiveService {
       }
     }
 
-    // OCC-01/02 — occupation des voies en gare : un train ne peut PAS entrer
-    // si aucune voie n'est libre (sauf voie forcée/point de voie précis).
-    // Il patiente en approche (bloqué) et ré-essaie au tick suivant.
-    if (station && stop && stop.type === 'arret' && !stop.platform && !stop.voiePointId
-        && window.game?.platformManager) {
-      const pm = window.game.platformManager;
-      pm.initStation(station.id, station.platforms || 2);
-      const held = pm.getPlatformForTrain(station.id, this.id);
-      if (!held && pm.getFreePlatforms(station.id) <= 0) {
+    // OCC-01/02 — occupation de gare = occupation d'un point de voie.
+    // Si aucune voie n'est libre (et qu'aucune n'est imposée), le train
+    // patiente en approche et ré-essaie au prochain tick.
+    if (station && stop && stop.type === 'arret' && window.game?.voiePointManager) {
+      const vpm = window.game.voiePointManager;
+      let candidates = vpm.getStationVoiePoints(station.id)
+        .filter(vp => vp.occupiedBy === null || vp.occupiedBy === this.id);
+      if (stop.platform) candidates = candidates.filter(vp => vp.voie === stop.platform);
+      if (candidates.length > 0) {
+        const chosen = candidates[0];
+        stop.voiePointId = chosen.id;
+        stop.platform = chosen.voie;
+        vpm.occupyVoiePoint(chosen.id, this.id);
+      } else if (!stop.voiePointId && !stop.platform) {
         this.speed = 0;
         this.train.speed = 0;
         this.train.blockedBy = true;
-        this.state = 'moving'; // reste en approche, ré-essaie au prochain tick
+        this.state = 'moving';
         return;
       }
     }
