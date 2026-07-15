@@ -4447,6 +4447,28 @@ export class UI {
     const iteContainer = document.getElementById('ite-list');
     const depots = this.game.depotManager.getDepots();
     const ites = this.game.depotManager.getITEs();
+
+    // MNT-05 : notification de pièces détachées sous-stock
+    const lowStock = this.game.depotManager.getLowStockDepots(2);
+    const alertHtml = lowStock.length
+      ? `<div style="margin-bottom:10px;padding:8px;border-radius:4px;background:#451a1a;color:#fca5a5;font-size:11px">
+          <b>Stocks faibles de pièces détachées :</b> ${lowStock.map(x => `${x.depot.name} (${x.low.join(', ')})`).join(' ; ')}
+         </div>`
+      : '';
+    const bulkHtml = depots.length
+      ? `<div style="margin-bottom:10px;display:flex;gap:6px;align-items:center;font-size:11px">
+          <span style="color:var(--text3)">Livraison groupée :</span>
+          <select id="bulk-spare-type" style="font-size:10px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="moteur">Moteur</option>
+            <option value="freins">Freins</option>
+            <option value="climatisation">Climatisation</option>
+            <option value="portes">Portes</option>
+            <option value="fanaux">Fanaux</option>
+          </select>
+          <input id="bulk-spare-qty" type="number" value="2" min="1" style="width:50px;font-size:10px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px">
+          <button class="btn-sm" style="font-size:9px" onclick="game.ui.buyBulkSparePart()">Commander tous les dépôts</button>
+         </div>`
+      : '';
     const allStock = this.game.rollingStock.getAll().filter(s => s.category === 'locomotive' || s.category === 'automotrice');
 
     const renderDepotCard = (d) => {
@@ -4534,9 +4556,10 @@ export class UI {
     };
 
     if (depotsContainer) {
-      depotsContainer.innerHTML = depots.length === 0
+      const cards = depots.length === 0
         ? '<p style="color:var(--text3);font-size:11px;padding:10px">Aucun</p>'
         : depots.map(renderDepotCard).join('');
+      depotsContainer.innerHTML = alertHtml + bulkHtml + cards;
     }
     if (iteContainer) {
       iteContainer.innerHTML = ites.length === 0
@@ -4574,6 +4597,19 @@ export class UI {
       this.game.saveState();
       this.renderDepotsList();
     }
+  }
+
+  // MNT-05 : achat groupé de pièces détachées pour tous les dépôts
+  buyBulkSparePart() {
+    const typeSelect = document.getElementById('bulk-spare-type');
+    const qtyInput = document.getElementById('bulk-spare-qty');
+    if (!typeSelect || !qtyInput) return;
+    const type = typeSelect.value;
+    const qty = parseInt(qtyInput.value) || 1;
+    const res = this.game.depotManager.buyBulkSpareParts(type, qty, this.game.economy);
+    if (!res.ok) return alert(`Fonds insuffisants. Coût total : ${res.totalCost.toLocaleString('fr-FR')} €`);
+    this.game.saveState();
+    this.renderDepotsList();
   }
 
   deleteDepot(id) {

@@ -443,6 +443,31 @@ export class DepotManager {
     }
   }
 
+  // MNT-05 : liste des dépôts avec pièces détachées en sous-stock
+  getLowStockDepots(threshold = 2) {
+    const result = [];
+    for (const depot of this.depots) {
+      if (depot.type !== 'depot' || !depot.built) continue;
+      const low = Object.entries(depot.spareParts || {})
+        .filter(([, qty]) => qty < threshold)
+        .map(([type]) => type);
+      if (low.length > 0) result.push({ depot, low });
+    }
+    return result;
+  }
+
+  // MNT-05 : livraison groupée de pièces détachées vers plusieurs dépôts
+  buyBulkSpareParts(type, qty, economy) {
+    const prices = { moteur: 5000, freins: 3000, climatisation: 2000, portes: 1500, fanaux: 1000 };
+    const price = prices[type] || 1000;
+    const targets = this.depots.filter(d => d.type === 'depot' && d.built);
+    const totalCost = price * qty * targets.length;
+    if (economy.balance < totalCost) return { ok: false, totalCost };
+    economy.addExpense(totalCost, 'maintenance', `Livraison groupée pièces : ${type} x${qty} (${targets.length} dépôts)`);
+    for (const depot of targets) depot.addSpareParts(type, qty);
+    return { ok: true, totalCost, count: targets.length };
+  }
+
   // Send a RAME for preventive maintenance
   sendRameToMaintenance(rameId, rameName, depotId) {
     if (this.maintenanceQueue.some(m => m.rameId === rameId)) return false;
