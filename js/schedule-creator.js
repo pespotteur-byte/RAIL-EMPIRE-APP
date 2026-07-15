@@ -2124,7 +2124,7 @@ export class ScheduleCreator {
     const arrMin = wrap(firstDep - 2);
 
     const evoData = {
-      id: `evo-${svc.id}-${Date.now()}`,
+      id: `evo-${svc.id}-${nextServiceId++}`,
       name: `EVO ${svc.name}`,
       rameId: svc.rame.id,
       serviceType: 'evo',
