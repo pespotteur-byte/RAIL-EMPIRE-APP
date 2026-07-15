@@ -207,8 +207,8 @@
 |----|----------|------|--------|--------|
 | RH-01 | Embauche multiple + noms auto (FR/DE/CH/ES/BE/NL/IT/CZ) | P1 | A9 | [x] PR1 |
 | RH-02 | Chaque poste/fonction précis et réaliste | P1 | A9 | [ ] |
-| RH-03 | 3×8 : repos 24h/semaine + 8h entre services | P1 | A9 | [ ] |
-| RH-04 | Non-respect → risque de mouvement social accru | P1 | A9 | [ ] |
+| RH-03 | 3×8 : repos 24h/semaine + 8h entre services | P1 | A9 | [x] PR? (StaffManager.tickConductors, repos quotidien/hebdo) |
+| RH-04 | Non-respect → risque de mouvement social accru | P1 | A9 | [x] PR? (socialRisk accumulé si repos hebdo dépassé) |
 | RH-05 | Grèves/syndicats réalistes (page Personnel, ex-Syndicats fusionnée) | P1 | A9 | [ ] |
 | RH-06 | ⚠️ Congés TOTALEMENT écartés | — | A9, réponse #7 | [x] décidé |
 
@@ -219,7 +219,7 @@
 | INC-02 | Zone d'impact LINÉAIRE 5-10 km (pas un cercle) | P1 | A10.1 | [x] PR1 (track/station route-based bbox, pas cercle) |
 | INC-03 | Effets hors zone (bouchons en accordéon) | P1 | A10.1 | [ ] |
 | INC-04 | Motifs affichés dans bilans de trajet | P1 | A10.1 | [ ] |
-| INC-05 | Bulletins spéciaux à côté du récap de compagnie | P1 | A10.1 | [ ] |
+| INC-05 | Bulletins spéciaux à côté du récap de compagnie | P1 | A10.1 | [x] PR? (Dashboard.getBulletins + incidents.getBulletins) |
 
 ## TRV — TRAVAUX & RÉSEAU  (P1)
 | ID | Exigence | Prio | Source | Statut |
@@ -297,7 +297,7 @@
 |----|----------|------|--------|--------|
 | GM-01 | Graphique A↔B reproduisant le modèle jTrainGraph | P1 | A11.3, annexe finale | [ ] |
 | GM-02 | Une ligne par gare RÉELLE (alimenté par SC-02) | P1 | A11.3 | [ ] |
-| GM-03 | Axe 24h, bandes horaires, diagonales, labels train/heure | P1 | annexe finale | [ ] |
+| GM-03 | Axe 24h, bandes horaires, diagonales, labels train/heure | P1 | annexe finale | [x] PR? (GraphMarche.draw 24h + labels) |
 | GM-04 | Distance réelle (pas vol d'oiseau), styles trait par type, multi-voies, croisements | P1 | A11.3 note | [ ] |
 
 ## IND — INDUSTRIELS  (P1)
