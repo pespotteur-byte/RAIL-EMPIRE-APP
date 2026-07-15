@@ -4244,79 +4244,27 @@ export class UI {
 
   // --- INCIDENTS ---
   setupIncidentPage() {
-    document.getElementById('btn-add-incident-type')?.addEventListener('click', () => {
-      document.getElementById('inc-name').value = '';
-      document.getElementById('inc-impact').value = 'slow';
-      document.getElementById('inc-speed-limit').value = '30';
-      document.getElementById('inc-duration').value = '60';
-      document.getElementById('inc-speed-group').style.display = 'block';
-      // Populate station selectors (gare A and gare B)
-      const stations = this.game.world.stations || [];
-      const stationOpts = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-      const selectA = document.getElementById('inc-station-a');
-      const selectB = document.getElementById('inc-station-b');
-      if (selectA) selectA.innerHTML = stationOpts || '<option>Aucune gare</option>';
-      if (selectB) selectB.innerHTML = stationOpts || '<option>Aucune gare</option>';
-      // Default: select second station for B if available
-      if (selectB && stations.length > 1) selectB.selectedIndex = 1;
-      document.getElementById('modal-incident')?.classList.remove('hidden');
-    });
-    document.getElementById('inc-impact')?.addEventListener('change', (e) => {
-      document.getElementById('inc-speed-group').style.display = e.target.value === 'slow' ? 'block' : 'none';
-    });
-    document.getElementById('btn-save-incident')?.addEventListener('click', () => this.saveIncident());
     document.getElementById('btn-add-works')?.addEventListener('click', () => this.openWorksModal());
     document.getElementById('works-impact')?.addEventListener('change', (e) => {
       document.getElementById('works-speed-group').style.display = e.target.value === 'slow' ? 'block' : 'none';
     });
     document.getElementById('btn-save-works')?.addEventListener('click', () => this.saveWorks());
-  }
 
-  saveIncident() {
-    const name = document.getElementById('inc-name').value.trim() || 'Incident';
-    const stationAId = document.getElementById('inc-station-a').value;
-    const stationBId = document.getElementById('inc-station-b').value;
-    const effect = document.getElementById('inc-impact').value;
-    const speedLimit = parseInt(document.getElementById('inc-speed-limit').value) || 30;
-    const duration = parseInt(document.getElementById('inc-duration').value) || 60;
-    const pt = this.game.engine.getParisTime();
-    const timeOfDay = pt.hours * 60 + pt.minutes;
-
-    const stA = this.game.world.getStationById(stationAId);
-    const stB = this.game.world.getStationById(stationBId);
-    if (!stA || !stB) return alert('Sélectionnez deux gares valides');
-    if (stationAId === stationBId) return alert('Les deux gares doivent être différentes');
-
-    const trackName = `${stA.name} — ${stB.name}`;
-
-    // Find route between the two stations for precise impact zone
-    let route = null;
-    const existingTrack = this.game.world.getTrackBetween(stationAId, stationBId);
-    if (existingTrack?.route?.length > 1) {
-      route = existingTrack.route;
-    } else {
-      try {
-        route = this.game.orm.findRouteSync?.(stA.lat, stA.lon, stB.lat, stB.lon) || null;
-      } catch (e) { /* fallback below */ }
+    // Predefined incident type toggles (Annexe 11)
+    const typesTable = document.getElementById('incident-types-table');
+    if (typesTable && !typesTable._delegated) {
+      typesTable._delegated = true;
+      typesTable.addEventListener('change', (e) => {
+        const cb = e.target.closest('.incident-type-cb');
+        if (cb) {
+          this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked);
+          this.game.saveState();
+        }
+      });
     }
-
-    this.game.incidentManager.createIncident({
-      name,
-      trackName,
-      stationA: stationAId,
-      stationB: stationBId,
-      stationAName: stA.name,
-      stationBName: stB.name,
-      route,
-      effect,
-      speedLimit: effect === 'stop' ? 0 : speedLimit,
-      duration,
-      startTime: timeOfDay,
-    }, this.game.world);
-
-    document.getElementById('modal-incident')?.classList.add('hidden');
-    this.renderIncidentsPage();
   }
+
+  // Kept for backward compatibility / admin use; not exposed in normal UI.
 
   openWorksModal() {
     document.getElementById('modal-works')?.classList.remove('hidden');
@@ -4391,6 +4339,39 @@ export class UI {
               <button class="btn-sm danger incident-delete-btn" data-delete-incident="${inc.id}" title="Supprimer l'incident">✕</button>
             </div>
           `).join('');
+    }
+
+    const typesTable = document.getElementById('incident-types-table');
+    if (typesTable) {
+      const types = this.game.incidentManager.getAllTypes();
+      typesTable.innerHTML = `
+        <table class="incident-table">
+          <thead>
+            <tr>
+              <th>Actif</th>
+              <th>Nom</th>
+              <th>Impact</th>
+              <th>Conditions</th>
+              <th>Proba</th>
+              <th>Saisons</th>
+              <th>Duree</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${types.map(t => `
+              <tr>
+                <td><input type="checkbox" class="incident-type-cb" data-type-id="${t.id}" ${t.enabled ? 'checked' : ''}></td>
+                <td>${t.name}</td>
+                <td>${t.impact}</td>
+                <td style="font-size:10px;color:var(--text3)">${t.special}</td>
+                <td>${t.id === 'train-breakdown' ? `${t.probability}% hiver / ${t.summerProbability}% ete` : t.probability + '%'}</td>
+                <td>${t.seasons.join(', ')}</td>
+                <td>${t.durationMin}${t.durationMax !== t.durationMin ? '-' + t.durationMax : ''} min</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     }
 
     const works = this.game.worksManager.getAll();

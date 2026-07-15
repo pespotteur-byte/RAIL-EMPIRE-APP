@@ -335,6 +335,7 @@ class RailEmpire {
         schedules: this.scheduleCreator.toSave(),
         depots: this.depotManager.toSave(),
         activeIncidents: this.incidentManager.getActiveIncidentsSave(),
+        incidentEnabledTypes: this.incidentManager.getEnabledTypes(),
         works: this.worksManager.toSave(),
         freightContracts: this.freightManager.toSave(),
         ormRoutes: this.orm.toSave(),
@@ -394,6 +395,7 @@ class RailEmpire {
     if (s.schedules) this.scheduleCreator.loadFromSave(s.schedules, this.rameManager, this.world);
     if (s.depots) this.depotManager.loadFromSave(s.depots);
     if (s.activeIncidents) this.incidentManager.loadFromSave(s.activeIncidents, this.world);
+    if (s.incidentEnabledTypes) this.incidentManager.setEnabledTypes(s.incidentEnabledTypes);
     if (s.works) this.worksManager.loadFromSave(s.works);
     if (s.freightContracts) this.freightManager.loadFromSave(s.freightContracts);
     if (s.ormRoutes) this.orm.loadFromSave(s.ormRoutes);
@@ -453,6 +455,7 @@ class RailEmpire {
       schedules: this.scheduleCreator.toSave(),
       depots: this.depotManager.toSave(),
       activeIncidents: this.incidentManager.getActiveIncidentsSave(),
+      incidentEnabledTypes: this.incidentManager.getEnabledTypes(),
       works: this.worksManager.toSave(),
       freightContracts: this.freightManager.toSave(),
       ormRoutes: this.orm.toSave(),
@@ -632,7 +635,7 @@ class RailEmpire {
       svc.scheduleTick(timeOfDay, dateStr, this.economy);
     }
 
-    this.incidentManager.update(timeOfDay, activeSchedules, this.depotManager, this.world);
+    this.incidentManager.update(timeOfDay, activeSchedules, this.depotManager, this.world, dateStr, this.weather?.season);
     this.worksManager.update(dateStr, timeOfDay, this.world);
 
     // Update repair & maintenance queues

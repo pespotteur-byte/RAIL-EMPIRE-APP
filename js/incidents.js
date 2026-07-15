@@ -2,15 +2,119 @@ import { haversineDistance } from './simulation.js?v=1779724771';
 
 let nextIncId = 1;
 
+export const PREDEFINED_INCIDENT_TYPES = [
+  {
+    id: 'signal-failure',
+    name: 'Panne de signalisation',
+    impact: 'Ralentissement 30 km/h',
+    special: 'aucune',
+    probability: 15,
+    seasons: ['all'],
+    durationMin: 15,
+    durationMax: 30,
+    effect: 'slow',
+    speedLimit: 30,
+    scope: 'track',
+  },
+  {
+    id: 'person-accident',
+    name: 'Accident de personne',
+    impact: 'Interruption des circulations',
+    special: 'aucune',
+    probability: 2.5,
+    seasons: ['all'],
+    durationMin: 120,
+    durationMax: 240,
+    effect: 'stop',
+    speedLimit: 0,
+    scope: 'track',
+  },
+  {
+    id: 'power-failure',
+    name: 'Défaut d\'alimentation électrique',
+    impact: 'Interruption des circulations',
+    special: 'Ligne électrifiée',
+    probability: 7,
+    seasons: ['all'],
+    durationMin: 15,
+    durationMax: 30,
+    effect: 'stop',
+    speedLimit: 0,
+    scope: 'track',
+    requireElectrified: true,
+  },
+  {
+    id: 'door-problem',
+    name: 'Problème de porte',
+    impact: 'Interruption d\'un seul train, uniquement à l\'arrêt EN GARE',
+    special: 'Train de voyageur',
+    probability: 7,
+    seasons: ['all'],
+    durationMin: 5,
+    durationMax: 5,
+    effect: 'stop',
+    speedLimit: 0,
+    scope: 'train',
+    requirePassenger: true,
+    requireStopped: true,
+  },
+  {
+    id: 'crowding',
+    name: 'Forte affluence à bord',
+    impact: 'Interruption d\'un seul train, uniquement à l\'arrêt EN GARE',
+    special: 'Train de voyageur retardé ou effectuant des arrêts proches. Uniquement de 7h à 10h30 et de 16h30 à 20h30.',
+    probability: 7,
+    seasons: ['all'],
+    durationMin: 5,
+    durationMax: 10,
+    effect: 'slow',
+    speedLimit: 0,
+    scope: 'train',
+    requirePassenger: true,
+    requireStopped: true,
+    timeWindows: [[7 * 60, 10 * 60 + 30], [16 * 60 + 30, 20 * 60 + 30]],
+  },
+  {
+    id: 'train-breakdown',
+    name: 'Train en panne',
+    impact: 'Interruption d\'un seul train. Si le jeu considère la panne légère celui-ci pourra repartir. En cas contraire une DDS devra être effectuée.',
+    special: 'aucune',
+    probability: 4.5, // winter base
+    summerProbability: 7.5,
+    seasons: ['all'],
+    durationMin: 15,
+    durationMax: 45,
+    effect: 'stop',
+    speedLimit: 0,
+    scope: 'train',
+  },
+  {
+    id: 'abandoned-luggage',
+    name: 'Bagage abandonné',
+    impact: 'Interruption des circulations',
+    special: 'Uniquement aux gares',
+    probability: 7.5,
+    seasons: ['all'],
+    durationMin: 30,
+    durationMax: 60,
+    effect: 'stop',
+    speedLimit: 0,
+    scope: 'station',
+  },
+];
+
 export class Incident {
   constructor(data) {
     this.id = data.id || `inc-${nextIncId++}`;
+    this.typeId = data.typeId || '';
     this.name = data.name || 'Incident';
     this.trackName = data.trackName || '';
     this.stationA = data.stationA || null;
     this.stationB = data.stationB || null;
     this.stationAName = data.stationAName || '';
     this.stationBName = data.stationBName || '';
+    this.trainId = data.trainId || null;
+    this.serviceId = data.serviceId || null;
     this.effect = data.effect || 'slow';
     this.speedLimit = data.speedLimit || 0;
     this.route = data.route || null;
@@ -25,21 +129,31 @@ export class IncidentManager {
   constructor() {
     this.activeIncidents = [];
     this.lastCheck = -1;
+    this.predefinedTypes = PREDEFINED_INCIDENT_TYPES;
+    this.enabledTypes = new Set(PREDEFINED_INCIDENT_TYPES.map(t => t.id));
+    this.lastTriggerHour = -1;
+    this._incBboxVer = null;
+  }
+
+  isTypeEnabled(id) { return this.enabledTypes.has(id); }
+  getEnabledTypes() { return Array.from(this.enabledTypes); }
+  setEnabledTypes(ids) {
+    this.enabledTypes = new Set(Array.isArray(ids) ? ids : PREDEFINED_INCIDENT_TYPES.map(t => t.id));
+  }
+  toggleType(id, enabled) {
+    if (enabled) this.enabledTypes.add(id);
+    else this.enabledTypes.delete(id);
   }
 
   createIncident(data, world) {
     const inc = new Incident(data);
     this.activeIncidents.push(inc);
-
-    // Mark the specific track between stationA and stationB
-    if (world) this._markAffectedTracks(inc, world);
-
+    if (world && inc.stationA && inc.stationB) this._markAffectedTracks(inc, world);
     return inc;
   }
 
   _markAffectedTracks(inc, world) {
     if (!inc.stationA || !inc.stationB) return;
-    // Mark only the direct track between these two stations
     for (const track of world.tracks) {
       const matches = (track.stationA === inc.stationA && track.stationB === inc.stationB) ||
                       (track.stationA === inc.stationB && track.stationB === inc.stationA);
@@ -59,8 +173,13 @@ export class IncidentManager {
     if (inc) {
       inc.active = false;
       this._clearTrackFlags(inc, world);
+      if (inc.serviceId && inc.train) {
+        // legacy single-train incident cleanup if train reference attached
+        inc.train.incident = null;
+      }
     }
     this.activeIncidents = this.activeIncidents.filter(i => i.id !== id);
+    this._incBboxVer = null;
   }
 
   _clearTrackFlags(inc, world) {
@@ -78,20 +197,17 @@ export class IncidentManager {
     }
   }
 
-  // Check if a position is on the incident's route (within tolerance)
   _isOnRoute(lat, lon, route) {
     if (!route || route.length < 2) return false;
-    const tolerance = 0.5; // 500m
+    const tolerance = 0.5;
     for (let i = 0; i < route.length - 1; i++) {
       const aLat = route[i].lat, aLon = route[i].lon;
       const bLat = route[i + 1].lat, bLon = route[i + 1].lon;
-      // Point-to-segment distance using projection
       if (this._pointToSegmentDist(lat, lon, aLat, aLon, bLat, bLon) < tolerance) return true;
     }
     return false;
   }
 
-  // Approximate point-to-segment distance in km
   _pointToSegmentDist(pLat, pLon, aLat, aLon, bLat, bLon) {
     const cosLat = Math.cos(pLat * Math.PI / 180);
     const dx = (bLon - aLon) * 111 * cosLat;
@@ -105,25 +221,142 @@ export class IncidentManager {
     return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
   }
 
-  // Fallback: check if position is between stationA and stationB using bounding box
   _isBetweenStations(lat, lon, world, inc) {
     const stA = world.getStationById(inc.stationA);
     const stB = world.getStationById(inc.stationB);
     if (!stA || !stB) return false;
-    // Check if within the corridor between the two stations (1km buffer)
     const minLat = Math.min(stA.lat, stB.lat) - 0.01;
     const maxLat = Math.max(stA.lat, stB.lat) + 0.01;
     const minLon = Math.min(stA.lon, stB.lon) - 0.01;
     const maxLon = Math.max(stA.lon, stB.lon) + 0.01;
     if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon) return false;
-    // Also check proximity to the straight line between stations (max 2km off the line)
     const totalDist = haversineDistance(stA.lat, stA.lon, stB.lat, stB.lon);
     const dA = haversineDistance(lat, lon, stA.lat, stA.lon);
     const dB = haversineDistance(lat, lon, stB.lat, stB.lon);
     return (dA + dB) < totalDist + 2;
   }
 
-  update(timeOfDay, services, depotManager, world) {
+  // --- Random incident spawning (Annexe 11) ---
+
+  _randomDuration(min, max) {
+    return Math.floor(min + Math.random() * (max - min + 1));
+  }
+
+  _probabilityForType(type, season) {
+    if (type.id === 'train-breakdown') {
+      return season === 'summer' ? (type.summerProbability || type.probability) : type.probability;
+    }
+    return type.probability;
+  }
+
+  _inTimeWindow(type, timeOfDay) {
+    if (!type.timeWindows) return true;
+    return type.timeWindows.some(([start, end]) => timeOfDay >= start && timeOfDay < end);
+  }
+
+  _trySpawn(timeOfDay, services, world, season) {
+    const hour = Math.floor(timeOfDay / 60);
+    if (hour === this.lastTriggerHour) return;
+    this.lastTriggerHour = hour;
+
+    for (const type of this.predefinedTypes) {
+      if (!this.enabledTypes.has(type.id)) continue;
+      if (type.timeWindows && !this._inTimeWindow(type, timeOfDay)) continue;
+
+      const probability = this._probabilityForType(type, season);
+      if (Math.random() * 100 >= probability) continue;
+
+      try {
+        if (type.scope === 'track') this._spawnTrackIncident(type, world);
+        else if (type.scope === 'station') this._spawnStationIncident(type, world);
+        else if (type.scope === 'train') this._spawnTrainIncident(type, services, timeOfDay);
+      } catch (e) {
+        console.warn('Incident spawn failed for', type.id, e);
+      }
+    }
+  }
+
+  _spawnTrackIncident(type, world) {
+    if (!world || world.tracks.length === 0) return;
+    const candidates = type.requireElectrified
+      ? world.tracks.filter(t => t.electrified !== false)
+      : [...world.tracks];
+    if (candidates.length === 0) return;
+    const track = candidates[Math.floor(Math.random() * candidates.length)];
+    const duration = this._randomDuration(type.durationMin, type.durationMax);
+    const stA = world.getStationById(track.stationA);
+    const stB = world.getStationById(track.stationB);
+    const inc = new Incident({
+      typeId: type.id,
+      name: type.name,
+      trackName: track.name || `${stA?.name || ''} — ${stB?.name || ''}`,
+      stationA: track.stationA,
+      stationB: track.stationB,
+      stationAName: stA?.name || '',
+      stationBName: stB?.name || '',
+      route: track.route || null,
+      effect: type.effect,
+      speedLimit: type.speedLimit || 0,
+      duration,
+    });
+    this.activeIncidents.push(inc);
+    this._markAffectedTracks(inc, world);
+  }
+
+  _spawnStationIncident(type, world) {
+    if (!world || world.stations.length === 0) return;
+    const station = world.stations[Math.floor(Math.random() * world.stations.length)];
+    const duration = this._randomDuration(type.durationMin, type.durationMax);
+    // Station incidents block the immediate track(s) connected to the station
+    // to keep a 5–10 km impact zone as requested.
+    const track = world.tracks.find(t => t.stationA === station.id || t.stationB === station.id) || null;
+    const inc = new Incident({
+      typeId: type.id,
+      name: type.name,
+      trackName: track ? (track.name || `${station.name}`) : station.name,
+      stationA: track ? track.stationA : station.id,
+      stationB: track ? track.stationB : station.id,
+      stationAName: station.name,
+      stationBName: station.name,
+      route: track ? track.route : null,
+      effect: type.effect,
+      speedLimit: type.speedLimit || 0,
+      duration,
+    });
+    this.activeIncidents.push(inc);
+    if (track) this._markAffectedTracks(inc, world);
+  }
+
+  _spawnTrainIncident(type, services, timeOfDay) {
+    if (!services || services.length === 0) return;
+    let candidates = services.filter(s => s.train && s.position);
+    if (type.requirePassenger) {
+      candidates = candidates.filter(s => {
+        const rame = s.rame || (s.train ? s.train.rame : null);
+        return rame ? rame.totalCapacity > 0 : (s.train && s.train.totalCapacity > 0);
+      });
+    }
+    if (type.requireStopped) {
+      candidates = candidates.filter(s => s.state === 'stopped_at_station' || s.train?.stoppedAt);
+    }
+    if (candidates.length === 0) return;
+    const svc = candidates[Math.floor(Math.random() * candidates.length)];
+    const duration = this._randomDuration(type.durationMin, type.durationMax);
+    const inc = new Incident({
+      typeId: type.id,
+      name: type.name,
+      trainId: svc.train.id,
+      serviceId: svc.id,
+      effect: type.effect,
+      speedLimit: type.speedLimit || 0,
+      duration,
+    });
+    this.activeIncidents.push(inc);
+    // Apply immediately to the affected train
+    svc.train.incident = { effect: type.effect, speedLimit: type.speedLimit || 0, name: type.name };
+  }
+
+  update(timeOfDay, services, depotManager, world, dateStr, season) {
     if (timeOfDay !== this.lastCheck) {
       this.lastCheck = timeOfDay;
       for (const inc of this.activeIncidents) {
@@ -131,11 +364,17 @@ export class IncidentManager {
         if (inc.remaining <= 0) {
           inc.active = false;
           this._clearTrackFlags(inc, world);
+          if (inc.serviceId) {
+            const svc = services?.find(s => s.id === inc.serviceId);
+            if (svc && svc.train) svc.train.incident = null;
+          }
         }
       }
       this.activeIncidents = this.activeIncidents.filter(i => i.active);
+      this._incBboxVer = null;
     }
 
+    this._trySpawn(timeOfDay, services, world, season);
     this.checkTrainPositions(services, depotManager, world);
   }
 
@@ -147,12 +386,14 @@ export class IncidentManager {
       return;
     }
 
-    // Precompute incident bounding boxes for fast spatial skip
     if (!this._incBboxVer || this._incBboxVer !== this.activeIncidents.length) {
       this._incBboxVer = this.activeIncidents.length;
       for (const inc of this.activeIncidents) {
         if (inc._bbox) continue;
-        if (inc.route && inc.route.length >= 2) {
+        if (inc.serviceId) {
+          // train-specific incidents handled directly in update
+          inc._bbox = [-Infinity, Infinity, -Infinity, Infinity];
+        } else if (inc.route && inc.route.length >= 2) {
           let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
           for (const p of inc.route) {
             if (p.lat < minLat) minLat = p.lat; if (p.lat > maxLat) maxLat = p.lat;
@@ -172,7 +413,6 @@ export class IncidentManager {
 
     for (const svc of services) {
       if (!svc.train || !svc.position) continue;
-      // Skip trains that aren't moving (no need to recheck)
       if (svc.state !== 'moving') { if (!svc.train.incident) continue; }
       svc.train.incident = null;
 
@@ -180,7 +420,10 @@ export class IncidentManager {
       let worstIncident = null;
       for (const inc of this.activeIncidents) {
         if (!inc.active) continue;
-        // Fast bbox reject
+        if (inc.serviceId) {
+          if (inc.serviceId === svc.id) worstIncident = inc;
+          continue;
+        }
         if (inc._bbox && (lat < inc._bbox[0] || lat > inc._bbox[1] || lon < inc._bbox[2] || lon > inc._bbox[3])) continue;
         let affected = false;
         if (inc.route) {
@@ -219,17 +462,26 @@ export class IncidentManager {
 
   getCustomTypes() { return []; }
   loadCustomTypes() {}
-  getAllTypes() { return []; }
+
+  getAllTypes() {
+    return this.predefinedTypes.map(t => ({
+      ...t,
+      enabled: this.enabledTypes.has(t.id),
+    }));
+  }
 
   getActiveIncidentsSave() {
     return this.activeIncidents.map(inc => ({
       id: inc.id,
+      typeId: inc.typeId,
       name: inc.name,
       trackName: inc.trackName,
       stationA: inc.stationA,
       stationB: inc.stationB,
       stationAName: inc.stationAName,
       stationBName: inc.stationBName,
+      trainId: inc.trainId,
+      serviceId: inc.serviceId,
       effect: inc.effect,
       speedLimit: inc.speedLimit,
       route: inc.route,
@@ -248,7 +500,8 @@ export class IncidentManager {
       this.activeIncidents.push(inc);
       const num = parseInt(d.id?.split('-')[1] || '0');
       if (num >= nextIncId) nextIncId = num + 1;
-      if (world) this._markAffectedTracks(inc, world);
+      if (world && inc.stationA && inc.stationB) this._markAffectedTracks(inc, world);
     }
+    this._incBboxVer = null;
   }
 }
