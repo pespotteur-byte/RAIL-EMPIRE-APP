@@ -22,15 +22,29 @@ export function toOdd(n) {
   return v % 2 === 0 ? v + 1 : v;
 }
 
-// SC-03 — return-leg number for a given forward (odd) number: the next even.
+// SC-03 — return-leg number for a given forward (odd) number: the previous even
+// (aller 001 -> retour 000, aller 003 -> retour 002, etc.).
 export function returnNumberFor(forwardNumber) {
-  return toOdd(forwardNumber) + 1;
+  return Math.max(0, toOdd(forwardNumber) - 1);
 }
 
 // SC-03 — the k-th forward number after a base odd number (keeps it odd).
 // incrementForward(1, 1) => 3, incrementForward(1, 2) => 5 ...
 export function incrementForward(baseOdd, k = 1) {
   return toOdd(baseOdd) + 2 * Math.max(0, Math.floor(k));
+}
+
+// SC-03/SC-05 — increment the trailing digits of a service name by `delta`,
+// preserving the original padding. Returns the original name if there is no
+// trailing number.
+export function incrementTrailingNumber(name, delta = 2) {
+  const s = String(name || '');
+  const m = s.match(/^(.*?)(\d+)$/);
+  if (!m) return s;
+  const prefix = m[1];
+  const num = parseInt(m[2], 10);
+  const padLen = m[2].length;
+  return prefix + String(num + delta).padStart(padLen, '0');
 }
 
 // ARR-01/02/03 — parse a stop label into its circulation type and whether it

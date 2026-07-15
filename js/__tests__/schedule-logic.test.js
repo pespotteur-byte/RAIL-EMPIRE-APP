@@ -26,10 +26,10 @@ describe('SC-03 — odd (aller) / even (retour) numbering', () => {
     assert.equal(toOdd(4), 5);
   });
 
-  it('return number is the aller number + 1 (even)', () => {
-    assert.equal(returnNumberFor(1), 2);
-    assert.equal(returnNumberFor(3), 4);
-    assert.equal(returnNumberFor(2), 4); // 2 -> odd 3 -> 4
+  it('return number is the aller number - 1 (even)', () => {
+    assert.equal(returnNumberFor(1), 0);
+    assert.equal(returnNumberFor(3), 2);
+    assert.equal(returnNumberFor(2), 2); // 2 -> odd 1 -> 0
     assert.ok(returnNumberFor(7) % 2 === 0);
   });
 

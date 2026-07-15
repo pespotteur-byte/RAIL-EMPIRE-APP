@@ -2761,12 +2761,23 @@ export class UI {
     const runDatesStr = document.getElementById('sched-run-dates')?.value.trim() || '';
     const runDates = runDatesStr ? runDatesStr.split(',').map(d => d.trim()).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)) : [];
 
-    this.game.scheduleCreator.addService({
-      name, rameId, stops, routes, roundTrip, multiDepartures, terminusWait,
+    const firstDep = stops[0]?.departureTime || 0;
+    const lastArr = stops[stops.length - 1]?.arrivalTime || firstDep;
+    const oneWayMin = lastArr - firstDep;
+    const oneRoundTrip = roundTrip ? (oneWayMin * 2 + terminusWait * 2) : 0;
+
+    // SC-05 — create a single base service, then generate real duplicates for Auto 24h.
+    const baseService = this.game.scheduleCreator.addService({
+      name, rameId, stops, routes, roundTrip, multiDepartures: 1, terminusWait,
       totalDistance: 0, plannedDistance: Math.round(totalDist),
       isWorkTrain, returnName, returnPlatforms,
       runDays, runDates,
     }, rame, this.game.world);
+    if (roundTrip && multiDepartures > 1) {
+      this.game.scheduleCreator.createAutoRoundTripDuplicates(
+        baseService, multiDepartures, oneRoundTrip, rame, this.game.world
+      );
+    }
 
     this._editingScheduleId = null;
     if (this._schedMapInterval) { clearInterval(this._schedMapInterval); this._schedMapInterval = null; }

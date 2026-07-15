@@ -1,7 +1,7 @@
 import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779724771';
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
 import {
-  DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor,
+  DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
 } from './schedule-logic.js';
 
 let nextServiceId = 1;
@@ -1701,43 +1701,69 @@ export class ScheduleCreator {
     const src = this.services.find(s => s.id === id);
     if (!src) return [];
     const created = [];
-    // Naming: if name ends with digit, increment trailing number by 2 per copy
-    // If name ends with letter, keep name as-is
-    const srcName = src.name;
-    const endsWithDigit = /\d$/.test(srcName);
-    let trailingNum = 0, namePrefix = srcName;
-    if (endsWithDigit) {
-      const m = srcName.match(/^(.*?)(\d+)$/);
-      if (m) { namePrefix = m[1]; trailingNum = parseInt(m[2], 10); }
-    }
     for (let i = 1; i <= count; i++) {
       const offset = intervalMin * i;
-      let newName;
-      if (endsWithDigit) {
-        const newNum = trailingNum + 2 * i;
-        const padLen = (srcName.length - namePrefix.length);
-        newName = namePrefix + String(newNum).padStart(padLen, '0');
-      } else {
-        newName = srcName;
-      }
-      const newStops = src.stops.map(st => ({
+      const newName = incrementTrailingNumber(src.name, 2 * i);
+      const shiftStops = stops => stops.map(st => ({
         stationId: st.stationId, type: st.type,
-        departureTime: st.departureTime + offset,
-        arrivalTime: st.arrivalTime + offset,
+        departureTime: (st.departureTime ?? st.time) + offset,
+        arrivalTime: (st.arrivalTime ?? st.time) + offset,
         voiePointId: st.voiePointId || null, platform: st.platform || '',
       }));
+      const newStops = shiftStops(src.stops);
+      const newReturnStops = src._returnStopsData
+        ? shiftStops(src._returnStopsData)
+        : null;
       const svc = this.addService({
         name: newName,
         rameId: src.rameId, stops: newStops, routes: src.routes,
         roundTrip: src.roundTrip, multiDepartures: src.multiDepartures,
         terminusWait: src.terminusWait, totalDistance: 0,
         plannedDistance: src.plannedDistance,
-        isWorkTrain: src.isWorkTrain, returnName: src.returnName,
+        isWorkTrain: src.isWorkTrain,
+        returnName: src.returnName ? incrementTrailingNumber(src.returnName, 2 * i) : '',
         returnPlatforms: src.returnPlatforms,
         // SC-04 — propagate the independent return geometry/timetable so each
         // real duplicate keeps the same return path (fresh auto number).
-        returnRoutes: src._returnRoutes, returnStops: src._returnStopsData,
+        returnRoutes: src._returnRoutes, returnStops: newReturnStops,
         runDays: src.runDays, runDates: src.runDates,
+      }, rame, world);
+      created.push(svc);
+    }
+    return created;
+  }
+
+  // SC-05 — Auto 24h creates real, separate services. Each duplicate is one
+  // round trip (aller + retour), shifted by the full round-trip duration.
+  createAutoRoundTripDuplicates(baseService, requestedCount, oneRoundTripMin, rame, world) {
+    if (requestedCount <= 1) return [];
+    const created = [];
+    const shiftStops = (stops, offset) => stops.map(st => ({
+      stationId: st.stationId, type: st.type,
+      departureTime: (st.departureTime ?? st.time) + offset,
+      arrivalTime: (st.arrivalTime ?? st.time) + offset,
+      voiePointId: st.voiePointId || null, platform: st.platform || '',
+    }));
+    for (let i = 1; i < requestedCount; i++) {
+      const offset = oneRoundTripMin * i;
+      const newForwardName = incrementTrailingNumber(baseService.name, 2 * i);
+      const returnNameBase = baseService.returnName || incrementTrailingNumber(baseService.name, -1);
+      const newReturnName = incrementTrailingNumber(returnNameBase, 2 * i);
+      const newStops = shiftStops(baseService.stops, offset);
+      const newReturnStops = baseService._returnStopsData
+        ? shiftStops(baseService._returnStopsData, offset)
+        : null;
+      const svc = this.addService({
+        name: newForwardName,
+        rameId: baseService.rameId, stops: newStops, routes: baseService.routes,
+        roundTrip: baseService.roundTrip, multiDepartures: 1,
+        terminusWait: baseService.terminusWait, totalDistance: 0,
+        plannedDistance: baseService.plannedDistance,
+        isWorkTrain: baseService.isWorkTrain,
+        returnName: newReturnName,
+        returnPlatforms: baseService.returnPlatforms,
+        returnRoutes: baseService._returnRoutes, returnStops: newReturnStops,
+        runDays: baseService.runDays, runDates: baseService.runDates,
       }, rame, world);
       created.push(svc);
     }
