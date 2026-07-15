@@ -6,6 +6,8 @@ export class Bank {
   constructor() {
     this.loans = [];
     this.maxLoans = Infinity; // XII — emprunts max illimités
+    this.startingBalance = null; // ECO-07 : trésorerie de départ → plafond crédit
+    this.creditLimitRatio = 0.5; // plafond crédit = 50 % de la trésorerie de départ
     this.interestRates = {
       small:  { amount: 500000,  rate: 0.03, duration: 30, label: '500 000 €' },
       medium: { amount: 2000000, rate: 0.05, duration: 60, label: '2 000 000 €' },
@@ -19,8 +21,14 @@ export class Bank {
    */
   borrow(economy, type) {
     if (this.loans.length >= this.maxLoans) return null;
+    // ECO-07 : initialiser le plafond crédit sur la première trésorerie connue
+    if (this.startingBalance == null && economy?.balance != null) {
+      this.startingBalance = economy.balance;
+    }
     const config = this.interestRates[type];
     if (!config) return null;
+    const creditLimit = this.getCreditLimit();
+    if (this.getTotalDebt() + config.amount > creditLimit) return null;
 
     const loan = {
       id: `loan-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -71,6 +79,12 @@ export class Bank {
     return this.loans.reduce((sum, l) => sum + l.remaining, 0);
   }
 
+  getCreditLimit() {
+    // ECO-07 : plafond crédit proportionnel à la trésorerie de départ
+    if (this.startingBalance == null || this.startingBalance <= 0) return Infinity;
+    return Math.floor(this.startingBalance * this.creditLimitRatio);
+  }
+
   getTotalDailyPayment() {
     return this.loans.reduce((sum, l) => sum + l.dailyPayment, 0);
   }
@@ -102,17 +116,24 @@ export class Bank {
             <div class="dash-kpi-label">Solde actuel</div>
             <div class="dash-kpi-value" style="color:${eco.balance >= 0 ? 'var(--green)' : '#ef4444'}">${eco.formatAmount(eco.balance)}</div>
           </div>
+          <div class="dash-kpi">
+            <div class="dash-kpi-label">Plafond crédit</div>
+            <div class="dash-kpi-value" style="color:#94a3b8">${this.getCreditLimit().toLocaleString('fr-FR')} &euro;</div>
+          </div>
         </div>
       </div>
 
       <div class="dash-section">
         <h3>Emprunter</h3>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${Object.entries(this.interestRates).map(([key, cfg]) => `
-            <button class="bank-borrow-btn btn-primary" data-type="${key}" style="font-size:11px;padding:8px 14px">
+          ${Object.entries(this.interestRates).map(([key, cfg]) => {
+            const overLimit = this.getTotalDebt() + cfg.amount > this.getCreditLimit();
+            return `
+            <button class="bank-borrow-btn btn-primary" data-type="${key}" style="font-size:11px;padding:8px 14px;${overLimit ? 'opacity:0.4;cursor:not-allowed' : ''}">
               ${cfg.label}<br><span style="font-size:9px;opacity:0.7">${(cfg.rate * 100).toFixed(0)}% sur ${cfg.duration}j</span>
             </button>
-          `).join('')}
+          `;
+          }).join('')}
         </div>
       </div>
 
@@ -141,6 +162,10 @@ export class Bank {
       btn.addEventListener('click', () => {
         const type = btn.dataset.type;
         const cfg = this.interestRates[type];
+        if (this.getTotalDebt() + cfg.amount > this.getCreditLimit()) {
+          alert('Plafond de crédit atteint.');
+          return;
+        }
         if (confirm(`Emprunter ${cfg.label} à ${(cfg.rate*100).toFixed(0)}% sur ${cfg.duration} jours ?\nRemboursement quotidien: ~${Math.ceil(cfg.amount * (1 + cfg.rate) / cfg.duration).toLocaleString('fr-FR')} €`)) {
           this.borrow(eco, type);
           this.render(container, game);
@@ -150,11 +175,12 @@ export class Bank {
   }
 
   toSave() {
-    return { loans: this.loans };
+    return { loans: this.loans, startingBalance: this.startingBalance };
   }
 
   loadFromSave(s) {
     if (!s) return;
     this.loans = s.loans || [];
+    this.startingBalance = s.startingBalance ?? null;
   }
 }
