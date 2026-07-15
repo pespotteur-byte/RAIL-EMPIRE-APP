@@ -2907,7 +2907,7 @@ export class UI {
       return;
     }
 
-    const sortMode = document.getElementById('sched-sort')?.value || 'creation';
+    const sortMode = document.getElementById('sched-sort')?.value || 'departure';
     let sorted = [...services];
 
     if (sortMode === 'departure') {
