@@ -426,6 +426,23 @@ export class DepotManager {
     };
   }
 
+  // MNT-06 : vérification mensuelle de la maintenance préventive recommandée
+  checkPreventiveMaintenance(dateStr, rameManager) {
+    if (!dateStr || !rameManager) return;
+    const month = dateStr.slice(0, 7); // YYYY-MM
+    for (const rame of rameManager.getAll()) {
+      if (rame.inMaintenance || this.isRameInMaintenance(rame.id)) {
+        rame.recommendedMaintenance = false;
+        continue;
+      }
+      const noMaint = !rame.lastMaintenanceMonth;
+      const monthChanged = rame.lastMaintenanceMonth !== month;
+      const used = rame.kmSinceLastMaint > 2000 || rame.wearLevel > 20;
+      const needs = noMaint || (monthChanged && used);
+      rame.recommendedMaintenance = needs;
+    }
+  }
+
   // Send a RAME for preventive maintenance
   sendRameToMaintenance(rameId, rameName, depotId) {
     if (this.maintenanceQueue.some(m => m.rameId === rameId)) return false;

@@ -4604,7 +4604,14 @@ export class UI {
       !r.inMaintenance && !dm.isRameInMaintenance(r.id)
     );
     if (available.length === 0) return '';
-    const opts = available.map(r => `<option value="${r.id}">${r.name} (${Math.round(r.wearLevel)}%)</option>`).join('');
+    // MNT-06 : rames avec maintenance préventive recommandée en premier
+    const sorted = [...available].sort((a, b) => (b.recommendedMaintenance ? 1 : 0) - (a.recommendedMaintenance ? 1 : 0));
+    const opts = sorted.map(r => {
+      const badge = r.recommendedMaintenance ? ' [RECOMMANDÉ]' : '';
+      const wear = Math.round(r.wearLevel);
+      const km = Math.round(r.kmSinceLastMaint);
+      return `<option value="${r.id}">${r.name} (${wear}% / ${km} km)${badge}</option>`;
+    }).join('');
     return `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
       <div style="font-size:11px;font-weight:600;margin-bottom:4px">Entretien preventif (rame)</div>
       <div style="display:flex;gap:4px">

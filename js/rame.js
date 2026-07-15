@@ -12,6 +12,9 @@ export class Rame {
     this.kmSinceLastMaint = isFinite(data.kmSinceLastMaint) ? data.kmSinceLastMaint : 0;
     this.wearLevel = isFinite(data.wearLevel) ? data.wearLevel : 0;
     this.inMaintenance = data.inMaintenance ?? false;
+    // MNT-06 : suivi mensuel de la maintenance préventive recommandée
+    this.lastMaintenanceMonth = data.lastMaintenanceMonth || '';
+    this.recommendedMaintenance = data.recommendedMaintenance ?? false;
     this.depotId = data.depotId || '';
     // DEP-05 : localisation permanente de chaque engin
     this.currentLocation = data.currentLocation || {
@@ -117,6 +120,8 @@ export class RameManager {
       kmSinceLastMaint: r.kmSinceLastMaint,
       wearLevel: r.wearLevel,
       inMaintenance: r.inMaintenance,
+      lastMaintenanceMonth: r.lastMaintenanceMonth,
+      recommendedMaintenance: r.recommendedMaintenance,
       depotId: r.depotId,
       currentLocation: r.currentLocation,
     }));

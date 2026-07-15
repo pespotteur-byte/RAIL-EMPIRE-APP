@@ -720,6 +720,8 @@ class RailEmpire {
         rame.kmSinceLastMaint = 0;
         rame.wearLevel = 0;
         rame.inMaintenance = false;
+        rame.lastMaintenanceMonth = dateStr ? dateStr.slice(0, 7) : rame.lastMaintenanceMonth;
+        rame.recommendedMaintenance = false;
       }
       // Unblock all services using this rame
       for (const svc of activeSchedules) {
@@ -769,6 +771,8 @@ class RailEmpire {
         const iteMaint = this.iteModules.getTotalDailyMaintenance();
         if (iteMaint > 0) this.economy.addExpense(iteMaint, 'maintenance', 'Maintenance ITE');
       } catch(e) { /* graceful */ }
+      // MNT-06 : vérification mensuelle de l'entretien préventif recommandé
+      try { this.depotManager.checkPreventiveMaintenance(dateStr, this.rameManager); } catch(e) { /* graceful */ }
     }
 
     // Weather update every minute
