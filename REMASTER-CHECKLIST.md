@@ -138,7 +138,7 @@
 | LG-07 | Continuité : fin sillon N = début sillon N+1 ; refuser discontinu | P1 | A5.2 | [x] PR1 (gare B = gare A du segment suivant) |
 | LG-08 | Politique d'arrêt indépendante du sillon (arrêt/passage au raccord) | P1 | A5.2 | [x] PR1 (sillon ne force pas l'arrêt, stopCode libre) |
 | LG-09 | Réemploi de la page Lignes existante | P1 | A5 | [x] PR1 (section Sillons dans page Lignes) |
-| LG-10 | Mode création alternatif (liste/recherche) pour 200+ gares | P1 | A5.2 note | [ ] |
+| LG-10 | Mode création alternatif (liste/recherche) pour 200+ gares | P1 | A5.2 note | [x] PR? (barre de recherche filtre les gares de connexion) |
 
 ## DEP — DÉPÔTS & PARC  (P1)
 | ID | Exigence | Prio | Source | Statut |
