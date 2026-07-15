@@ -1196,10 +1196,15 @@ export class ActiveService {
     // brakingDistance = speed² / (2 * deceleration), convert km/h to km/s²
     const brakeDist = (this.speed * this.speed) / (2 * decel * 3600);
 
-    if (!isNextPassThrough && remainingDist < brakeDist + 0.3 && remainingDist > 0.01) {
-      // Progressive deceleration: no forced minimum speed
+    if (!isNextPassThrough && remainingDist < brakeDist + 0.3 && remainingDist > 0.001) {
+      // Progressive deceleration / approach: move speed toward the safe target
       const targetSpeed = Math.sqrt(Math.max(0, 2 * decel * 3600 * remainingDist));
-      this.speed = Math.max(0, Math.min(this.speed, targetSpeed));
+      if (this.speed > targetSpeed) {
+        this.speed = Math.max(targetSpeed, this.speed - decelDelta);
+      } else {
+        this.speed = Math.min(targetSpeed, this.speed + accelDelta);
+      }
+      this.speed = Math.max(0, Math.min(this.speed, effectiveMaxSpeed));
     } else if (effectiveMaxSpeed === 0) {
       this.speed = Math.max(0, this.speed - decelDelta);
     } else if (this.speed < effectiveMaxSpeed) {
@@ -1814,13 +1819,8 @@ export class ActiveService {
         stop.voiePointId = chosen.id;
         stop.platform = chosen.voie;
         vpm.occupyVoiePoint(chosen.id, this.id);
-      } else if (!stop.voiePointId && !stop.platform) {
-        this.speed = 0;
-        this.train.speed = 0;
-        this.train.blockedBy = true;
-        this.state = 'moving';
-        return;
       }
+      // If no voie point is defined, the station's platform manager is used as fallback.
     }
 
     // Only update delay based on actual arret stops, not waypoints/passages
@@ -2012,11 +2012,11 @@ export class ActiveService {
     this._resetState();
 
     if (this.currentStopIndex >= stops.length) {
-      this.completeService(economy);
+      this.completeService(economy, station, arrivalLat, arrivalLon);
     }
   }
 
-  completeService(economy) {
+  completeService(economy, station, arrivalLat, arrivalLon) {
     if (!this.revenueCollected && economy) {
       economy.processServiceRevenue(this);
       this.revenueCollected = true;
@@ -2061,13 +2061,13 @@ export class ActiveService {
         this.delay = 0; this.train.delay = 0;
         this.completed = true; this.completedDate = this._currentDate || '';
         this.train.stoppedAt = station || this.train.stoppedAt;
-        if (this.rame && station) {
+        if (this.rame) {
           this.rame.currentLocation = {
-            stationId: station.id,
+            stationId: station?.id || this.rame.currentLocation?.stationId || '',
             depotId: this.rame.depotId || '',
             serviceId: '',
-            lat: arrivalLat,
-            lon: arrivalLon,
+            lat: arrivalLat ?? this.rame.currentLocation?.lat ?? null,
+            lon: arrivalLon ?? this.rame.currentLocation?.lon ?? null,
           };
         }
         this.position = null;
@@ -2106,13 +2106,13 @@ export class ActiveService {
         this.delay = 0; this.train.delay = 0;
         this.completed = true; this.completedDate = this._currentDate || '';
         this.train.stoppedAt = station || this.train.stoppedAt;
-        if (this.rame && station) {
+        if (this.rame) {
           this.rame.currentLocation = {
-            stationId: station.id,
+            stationId: station?.id || this.rame.currentLocation?.stationId || '',
             depotId: this.rame.depotId || '',
             serviceId: '',
-            lat: arrivalLat,
-            lon: arrivalLon,
+            lat: arrivalLat ?? this.rame.currentLocation?.lat ?? null,
+            lon: arrivalLon ?? this.rame.currentLocation?.lon ?? null,
           };
         }
         this.position = null;
@@ -2164,13 +2164,13 @@ export class ActiveService {
     this._adjustedStops = null;
     this.train.stoppedAt = station || this.train.stoppedAt;
     // RET-03 : à la fin du trajet, la rame reste à la dernière gare pour le prochain service
-    if (this.rame && station) {
+    if (this.rame) {
       this.rame.currentLocation = {
-        stationId: station.id,
+        stationId: station?.id || this.rame.currentLocation?.stationId || '',
         depotId: this.rame.depotId || '',
         serviceId: '',
-        lat: arrivalLat,
-        lon: arrivalLon,
+        lat: arrivalLat ?? this.rame.currentLocation?.lat ?? null,
+        lon: arrivalLon ?? this.rame.currentLocation?.lon ?? null,
       };
     }
     this.position = null;

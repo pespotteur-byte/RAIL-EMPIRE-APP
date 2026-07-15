@@ -193,6 +193,16 @@ export class FreightManager {
     return this.contracts.filter(c => c.active);
   }
 
+  addContract(data) {
+    const c = new FreightContract(data);
+    this.contracts.push(c);
+    return c;
+  }
+
+  removeContract(id) {
+    this.contracts = this.contracts.filter(c => c.id !== id);
+  }
+
   loadFromSave(arr) {
     this.contracts = arr.map(d => {
       const c = new FreightContract(d);

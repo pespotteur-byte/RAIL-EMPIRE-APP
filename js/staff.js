@@ -197,27 +197,32 @@ export class StaffManager {
         continue;
       }
 
-      // If assigned, track shift time
+      // If assigned, track shift time only while actually driving
       if (c.assignedTo) {
-        if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
-        c.shiftWorkedMin += delta;
-        c.weeklyWorkMin += delta;
-
-        // Check if the assigned service completed or is waiting
         const svc = activeServices.find(s => s.id === c.assignedTo);
-        if (svc && (svc.completed || svc.state === 'waiting') && c.shiftWorkedMin > 0) {
+        if (svc && svc.state === 'moving') {
+          if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
+          c.shiftWorkedMin += delta;
+          c.weeklyWorkMin += delta;
+        }
+
+        // Service completed => release conductor and check rest
+        if (svc && svc.completed) {
           c.assignedTo = null;
           c.totalTrips++;
-          // After each service, check whether rest is needed
+          if (c.shiftWorkedMin >= SHIFT_DURATION) {
+            this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
+          }
+          continue;
         }
 
         // Enforce 8h max per shift then mandatory rest (RH-03)
         if (c.shiftWorkedMin >= SHIFT_DURATION) {
-          const svc = activeServices.find(s => s.id === c.assignedTo);
           if (!svc || svc.state !== 'moving') {
             c.assignedTo = null;
             c.totalTrips++;
             this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
+            continue;
           }
         }
 

@@ -57,6 +57,14 @@ export class Unions {
     // Clamp
     this.satisfaction = Math.max(0, Math.min(100, sat));
 
+    // Decrement any active strike first so a new one does not end immediately
+    if (this.strikeActive) {
+      this.strikeDaysLeft--;
+      if (this.strikeDaysLeft <= 0) {
+        this._endStrike();
+      }
+    }
+
     // Strike risk check (RH-05)
     if (!this.strikeActive && conductors > 0) {
       let strikeChance = 0;
@@ -67,14 +75,6 @@ export class Unions {
       const rng = getGlobalRng();
       if (rng.random() < strikeChance) {
         this._startStrike(game, rng);
-      }
-    }
-
-    // Decrement strike days
-    if (this.strikeActive) {
-      this.strikeDaysLeft--;
-      if (this.strikeDaysLeft <= 0) {
-        this._endStrike();
       }
     }
 
