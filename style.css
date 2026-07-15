@@ -828,3 +828,33 @@ header {
 .ig-flash-delay { color:#fbbf24; }
 .ig-flash-works { color:#60a5fa; }
 .ig-flash-ok { color:#4ade80; }
+
+/* === CATI 3-3 === */
+.ig-cati-board { background:#0a1428; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:3px solid #333; color:#fff; }
+.ig-cati-header { display:flex; justify-content:space-between; align-items:center; padding:8px 14px; background:#0d3a8f; }
+.ig-cati-station { font-weight:700; font-size:14px; }
+.ig-cati-title { text-transform:uppercase; letter-spacing:2px; font-size:13px; }
+.ig-cati-clock { font-family:'Courier New',monospace; font-size:14px; color:#fbbf24; }
+.ig-cati-cols { display:flex; gap:2px; background:#0a1428; padding:6px; }
+.ig-cati-col { flex:1; background:#0a1428; }
+.ig-cati-row { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid #1a2a4a; font-size:14px; }
+.ig-cati-row:hover { background:#132243; }
+.ig-cati-time { color:#fbbf24; font-weight:700; min-width:55px; font-family:'Courier New',monospace; }
+.ig-cati-dest { flex:1; padding-left:10px; font-weight:600; }
+.ig-cati-voie { background:#d4a017; color:#000; font-weight:900; min-width:30px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:3px; }
+.ig-cati-empty { color:#5577aa; padding:12px; text-align:center; font-size:12px; }
+.ig-cati-footer { padding:6px 14px; background:#0d3a8f; font-size:10px; color:#aac; text-align:center; }
+
+/* === AFL (Annonce Flash Lumineuse) === */
+.ig-afl-board { background:#1a1a2e; color:#fbbf24; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:4px solid #fbbf24; text-align:center; padding:20px; }
+.ig-afl-board.ig-afl-arr { color:#4ade80; border-color:#4ade80; }
+.ig-afl-header { display:flex; justify-content:space-between; align-items:center; color:#fff; font-size:14px; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,.2); padding-bottom:8px; }
+.ig-afl-station { font-size:16px; font-weight:700; color:#fff; margin-bottom:14px; }
+.ig-afl-prochain { text-transform:uppercase; letter-spacing:4px; font-size:13px; color:#fff; margin-bottom:6px; }
+.ig-afl-destination { font-size:36px; font-weight:900; margin-bottom:8px; }
+.ig-afl-via { font-size:14px; color:#ccc; margin-bottom:14px; }
+.ig-afl-line { font-size:22px; font-weight:700; color:#fff; margin-bottom:8px; }
+.ig-afl-delay { color:#ef4444; margin-left:12px; }
+.ig-afl-ontime { color:#4ade80; margin-left:12px; }
+.ig-afl-details { font-size:12px; color:#aaa; margin-top:10px; }
+.ig-afl-msg { color:#fff; padding:20px; }

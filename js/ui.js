@@ -6298,7 +6298,7 @@ export class UI {
     // IG-07 — scroll infini sur 24h : on garde les trains dans les prochaines 24h
     const wrap = t => (t % 1440 + 1440) % 1440;
 
-    if (mode === 'sncf-arr') {
+    if (mode === 'sncf-arr' || mode === 'afl-arrivee') {
       const arr = results.filter(r => r.isArrival && r.arrTime != null)
         .map(r => ({ ...r, waitMin: wrap(r.arrTime - now) }))
         .filter(r => r.waitMin <= 1440);
@@ -6347,6 +6347,9 @@ export class UI {
       case 'sncf-arr': board.innerHTML = this._renderSncfArr(station, trains, nowStr); break;
       case 'old-sncf': board.innerHTML = this._renderOldSncf(station, trains, nowStr); break;
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
+      case 'cati-3-3': board.innerHTML = this._renderCATI3_3(station, trains, nowStr); break;
+      case 'afl-depart': board.innerHTML = this._renderAFLDepart(station, trains, nowStr); break;
+      case 'afl-arrivee': board.innerHTML = this._renderAFLArrivee(station, trains, nowStr); break;
     }
 
     // Setup train click handlers for platform display
@@ -6586,6 +6589,63 @@ export class UI {
         ${works.map(w => `<div class="ig-flash-item ig-flash-works">Travaux : ${w.name || w.type || 'chantier'}</div>`).join('')}
         ${bulletins.length === 0 && delayed.length === 0 && works.length === 0 ? '<div class="ig-flash-item ig-flash-ok">Aucun incident signalé</div>' : ''}
       </div>
+    </div>`;
+  }
+
+  // --- CATI 3-3 : tableau 3+3 départs à 24h ---
+  _renderCATI3_3(station, trains, nowStr) {
+    const dep = trains.filter(r => r.isDeparture).slice(0, 6);
+    const left = dep.slice(0, 3);
+    const right = dep.slice(3, 6);
+    const cell = t => `<div class="ig-cati-row" data-svc-id="${t.svcId}">
+      <span class="ig-cati-time">${this._fmtTime(t.depTime)}</span>
+      <span class="ig-cati-dest">${t.destination}</span>
+      <span class="ig-cati-voie">${t.voie || '—'}</span>
+    </div>`;
+    const col = items => items.map(cell).join('') || '<div class="ig-cati-empty">Aucun départ</div>';
+    return `<div class="ig-cati-board">
+      <div class="ig-cati-header">
+        <span class="ig-cati-station">${station?.name || ''}</span>
+        <span class="ig-cati-title">Départs</span>
+        <span class="ig-cati-clock">${nowStr}</span>
+      </div>
+      <div class="ig-cati-cols">
+        <div class="ig-cati-col">${col(left)}</div>
+        <div class="ig-cati-col">${col(right)}</div>
+      </div>
+      <div class="ig-cati-footer">24h • Toutes destinations</div>
+    </div>`;
+  }
+
+  // --- AFL Départ : annonce lumineuse du prochain départ ---
+  _renderAFLDepart(station, trains, nowStr) {
+    const t = trains.find(r => r.isDeparture) || trains[0];
+    if (!t) return `<div class="ig-afl-board"><div class="ig-afl-station">${station?.name || ''}</div><div class="ig-afl-msg">Aucun départ prévu</div></div>`;
+    const delay = t.delay > 0 ? `<span class="ig-afl-delay">Retard ${t.delay} min</span>` : '<span class="ig-afl-ontime">à l\'heure</span>';
+    const via = t.servedStations?.slice(0, 4).join(' – ') || '';
+    return `<div class="ig-afl-board" data-svc-id="${t.svcId}">
+      <div class="ig-afl-header">${station?.name || ''} <span class="ig-afl-clock">${nowStr}</span></div>
+      <div class="ig-afl-prochain">Prochain départ</div>
+      <div class="ig-afl-destination">${t.destination}</div>
+      ${via ? `<div class="ig-afl-via">via ${via}</div>` : ''}
+      <div class="ig-afl-line">${this._fmtTime(t.depTime)} ${delay}</div>
+      <div class="ig-afl-details">Train ${t.name} — Voie ${t.voie || '—'}</div>
+    </div>`;
+  }
+
+  // --- AFL Arrivée : annonce lumineuse de la prochaine arrivée ---
+  _renderAFLArrivee(station, trains, nowStr) {
+    const t = trains.find(r => r.isArrival) || trains[0];
+    if (!t) return `<div class="ig-afl-board ig-afl-arr"><div class="ig-afl-station">${station?.name || ''}</div><div class="ig-afl-msg">Aucune arrivée prévue</div></div>`;
+    const status = t.state === 'stopped_at_station' && t.isLast ? 'Arrivé' : `dans ${this._fmtWait(t.waitMin) || '—'}`;
+    const from = t.fromStations?.slice(-3).join(' – ') || '';
+    return `<div class="ig-afl-board ig-afl-arr" data-svc-id="${t.svcId}">
+      <div class="ig-afl-header">${station?.name || ''} <span class="ig-afl-clock">${nowStr}</span></div>
+      <div class="ig-afl-prochain">Prochaine arrivée</div>
+      <div class="ig-afl-destination">${t.origin}</div>
+      ${from ? `<div class="ig-afl-via">depuis ${from}</div>` : ''}
+      <div class="ig-afl-line">${this._fmtTime(t.arrTime)} — ${status}</div>
+      <div class="ig-afl-details">Train ${t.name} — Voie ${t.voie || '—'}</div>
     </div>`;
   }
 
