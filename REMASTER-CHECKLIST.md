@@ -34,7 +34,7 @@
 ## PH — PHYSIQUE DE TRACTION  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| PH-01 | Accél/décél selon puissance moteur + masse totale + pente | P0 | A3.1 | [~] PR2 (module + temps de parcours ; marche animée en PR ultérieure) |
+| PH-01 | Accél/décél selon puissance moteur + masse totale + pente | P0 | A3.1 | [x] PR? (train-physics intégré au moveUpdate : masse, puissance, météo, adhérence ; pente grade=0 car données d'élévation non dispo) |
 | PH-02 | Résistance type Davis R=A+B·v+C·v² + composante pente | P0 | A3.1 | [x] PR2 |
 | PH-03 | Force traction bornée par puissance/vitesse et par adhérence | P0 | A3.1 | [x] PR2 |
 | PH-04 | Freinage borné par taux de freinage rame + adhérence (météo) | P0 | A3.1, A3.4 | [x] PR2 |
