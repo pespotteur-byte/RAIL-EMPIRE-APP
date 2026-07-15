@@ -316,6 +316,30 @@ export class ActiveService {
     cantonManager.setTrainSeparation(this.id, minutes);
   }
 
+  // MAT-08 — détermine si la rame est 100 % électrique (pas de Diesel/Vapeur)
+  _isElectricOnly() {
+    const traction = this.rame?.traction || 'none';
+    const parts = traction.split('+').map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (parts.length === 0 || parts.includes('none')) return false;
+    const electric = new Set(['1.5kv', '3kv', '15kv', '25kv', '3e rail', '3e_rail']);
+    const self = new Set(['diesel', 'vapeur', 'steam']);
+    if (parts.some(p => self.has(p))) return false;
+    if (parts.some(p => electric.has(p))) return true;
+    return false;
+  }
+
+  // MAT-08 — le segment courant est-il compatible avec la traction de la rame ?
+  _electrificationMismatch(route, segIdx) {
+    if (!route || !this.rame) return false;
+    const from = route[segIdx];
+    const to = route[segIdx + 1];
+    if (!from || !to) return false;
+    // Non électrifié seulement si explicitement false
+    const electrified = (from.electrified !== false) && (to.electrified !== false);
+    if (electrified) return false;
+    return this._isElectricOnly();
+  }
+
   // Annexe 3A — A. changements de vitesse : vitesse minimale sur la portion de
   // voie occupée par le train (de l’avant jusqu’à la queue, trainLength en m).
   _getInfraSpeedLimit(route, segIdx, progress, trainLengthM) {
@@ -903,6 +927,16 @@ export class ActiveService {
 
     // CRITICAL: effectiveSpeed = min(train speed, infrastructure speed)
     let effectiveMaxSpeed = Math.min(rameMaxSpeed, segMaxSpeed);
+
+    // MAT-08 : contrainte électrification ↔ traction
+    if (this._electrificationMismatch(route, segIdx)) {
+      this.speed = 0;
+      this.train.speed = 0;
+      this.train.blockedBy = true;
+      this.train.delayReason = 'tronçon non électrifié';
+      this._updateContinuousDelay(timeOfDay);
+      return;
+    }
 
     // MNT-03 : pannes bénignes (climatisation, portes) limitent la vitesse mais ne bloquent pas
     if (this.train.breakdown) {
