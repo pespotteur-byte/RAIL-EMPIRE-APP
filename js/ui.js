@@ -3608,6 +3608,18 @@ export class UI {
       const typeBadge = svc.serviceType && svc.serviceType !== 'passager'
         ? `<span style="display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;color:#94a3b8;margin-right:6px">${typeLabels[svc.serviceType] || svc.serviceType}</span>`
         : '';
+      // INC-04 — motifs de retard/panne/incident dans le bilan du trajet
+      const delayReason = svc.train?.delayReason || svc.delayReason || '';
+      const breakdown = svc.train?.breakdown;
+      const incident = svc.train?.incident;
+      const bilanRows = [];
+      if (svc.completed) bilanRows.push(`<span style="color:#22c55e">Terminé${svc.completedDate ? ' le ' + svc.completedDate : ''}</span>`);
+      if (delayReason) bilanRows.push(`<span style="color:#f59e0b">Retard : ${delayReason}</span>`);
+      if (breakdown?.type) bilanRows.push(`<span style="color:#ef4444">Panne : ${breakdown.type}</span>`);
+      if (incident?.name || incident?.effect) bilanRows.push(`<span style="color:#ef4444">Incident : ${incident.name || incident.effect}</span>`);
+      const bilanHtml = bilanRows.length > 0
+        ? `<div class="sched-bilan" style="margin-top:6px;padding:6px 8px;background:var(--bg3);border-radius:4px;font-size:10px;display:flex;flex-wrap:wrap;gap:8px">${bilanRows.join('')}</div>`
+        : '';
       const statusLabel = svc.isReturnLeg ? '<span style="color:#f59e0b;font-size:9px"> (retour)</span>' : '';
       // S11: Show trip count and direction names
       const firstSt = this.game.world.getStationById(svc.stops[0]?.stationId);
@@ -3653,6 +3665,7 @@ export class UI {
             <div class="sched-stops-preview">${stopsPreview}</div>
             ${passagePreview}
             ${returnPreview}
+            ${bilanHtml}
           </div>
         </div>
       `;
