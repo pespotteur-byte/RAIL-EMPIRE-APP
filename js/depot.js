@@ -216,12 +216,14 @@ export class DepotManager {
     depot.deployRescue(loco.stockId);
 
     const station = world.getStationById(depot.stationId);
+    const repairType = brokenService?.train?.breakdown?.type || 'moteur';
     const rescue = {
       id: `rescue-${nextRescueId++}`,
       depotId: depot.id,
       stockId: loco.stockId,
       stockName: loco.stockName,
       targetServiceId: brokenService.id,
+      repairType,
       state: 'en_route', // en_route -> recovering -> returning
       position: station ? { lat: station.lat, lon: station.lon } : null,
       targetPosition: { lat: brokenService.position.lat, lon: brokenService.position.lon },
@@ -353,6 +355,7 @@ export class DepotManager {
                 remainingMin: 30,
                 totalMin: 30,
                 serviceName: rescue.targetServiceId,
+                repairType: rescue.repairType || 'moteur',
               });
             }
           }
@@ -371,6 +374,7 @@ export class DepotManager {
                 remainingMin: 30,
                 totalMin: 30,
                 serviceName: rescue.targetServiceId,
+                repairType: rescue.repairType || 'moteur',
               });
             }
             continue;
@@ -397,7 +401,16 @@ export class DepotManager {
       if (r.remainingMin <= 0) finished.push(r);
     }
     for (const r of finished) {
-      this.repairQueue = this.repairQueue.filter(q => q.serviceId !== r.serviceId);
+      // Section VI — consommation de pièces détachées pour la réparation
+      const depot = this.depots.find(d => d.id === r.depotId);
+      const type = r.repairType || 'moteur';
+      const needed = { moteur: 1, freins: 1, climatisation: 1, portes: 1, fanaux: 1 };
+      if (depot && needed[type]) {
+        depot.consumeSpareParts({ [type]: needed[type] }) || (r.remainingMin = 60); // attendre pièces
+      }
+      if (r.remainingMin <= 0) {
+        this.repairQueue = this.repairQueue.filter(q => q.serviceId !== r.serviceId);
+      }
     }
     const finishedM = [];
     for (const m of this.maintenanceQueue) {
@@ -407,7 +420,10 @@ export class DepotManager {
     for (const m of finishedM) {
       this.maintenanceQueue = this.maintenanceQueue.filter(q => q.rameId !== m.rameId);
     }
-    return { repairedIds: finished.map(r => r.serviceId), maintainedIds: finishedM.map(m => m.rameId) };
+    return {
+      repaired: finished.filter(r => r.remainingMin <= 0).map(r => ({ serviceId: r.serviceId, depotId: r.depotId, repairType: r.repairType })),
+      maintainedIds: finishedM.map(m => m.rameId),
+    };
   }
 
   // Send a RAME for preventive maintenance

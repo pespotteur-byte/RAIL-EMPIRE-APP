@@ -645,10 +645,15 @@ class RailEmpire {
     this.worksManager.update(dateStr, timeOfDay, this.world);
 
     // Update repair & maintenance queues
-    const { repairedIds, maintainedIds } = this.depotManager.updateRepairs(1);
-    for (const sid of repairedIds) {
-      const svc = activeSchedules.find(s => s.id === sid);
-      if (svc) { svc.train.breakdown = null; svc.train.state = 'waiting'; svc.state = 'waiting'; }
+    const { repaired, maintainedIds } = this.depotManager.updateRepairs(1);
+    for (const { serviceId, repairType } of repaired) {
+      const svc = activeSchedules.find(s => s.id === serviceId);
+      if (svc) {
+        svc.train.breakdown = null;
+        svc._rescueDispatched = false;
+        svc.train.state = 'waiting';
+        svc.state = 'waiting';
+      }
     }
     for (const rameId of maintainedIds) {
       // Reset the rame itself

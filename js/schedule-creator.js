@@ -371,6 +371,11 @@ export class ActiveService {
       this.speed = 0;
       this.train.speed = 0;
       this.train.state = 'en panne';
+      // Section VI/DDS — demander un secours depuis le dépôt le plus proche
+      if (!this._rescueDispatched && this.position && window.game?.depotManager) {
+        window.game.depotManager.dispatchRescue(this.world, this);
+        this._rescueDispatched = true;
+      }
       return;
     }
 
@@ -652,7 +657,10 @@ export class ActiveService {
       const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
       const failureProb = (distKm / 25000) * wearMultiplier;
       if (Math.random() < failureProb) {
-        this.train.breakdown = { type: 'panne', time: timeOfDay };
+        const types = ['moteur', 'freins', 'climatisation', 'portes', 'fanaux'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        this.train.breakdown = { type, time: timeOfDay };
+        this._rescueDispatched = false;
       }
     }
   }
