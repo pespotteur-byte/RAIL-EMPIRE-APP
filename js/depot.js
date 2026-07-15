@@ -124,6 +124,21 @@ export class DepotManager {
     return depot ? depot.iteTracks.reduce((s, t) => s + (Number(t.length) || 0), 0) : 0;
   }
 
+  // Section VI — ITE : récupère le dépôt ITE lié à une gare (s'il existe)
+  getITEByStation(stationId) {
+    return this.depots.find(d => d.type.startsWith('ite') && d.stationId === stationId) || null;
+  }
+
+  // Section VI — longueur utile totale d'un ITE, et nombre de tranches nécessaires
+  getITEInfo(stationId, trainLengthM) {
+    const ite = this.getITEByStation(stationId);
+    if (!ite) return { isITE: false, totalLength: Infinity, trancheCount: 1 };
+    const totalLength = ite.iteTracks.reduce((s, t) => s + (Number(t.length) || 0), 0);
+    if (totalLength <= 0) return { isITE: true, totalLength: 0, trancheCount: 1 };
+    const trancheCount = Math.ceil((trainLengthM || 0) / totalLength);
+    return { isITE: true, totalLength, canFit: (trainLengthM || 0) <= totalLength, trancheCount };
+  }
+
   // Add a rescue loco to a depot — max 2 per depot (Annexe 9)
   addRescueLoco(depotId, stockId, stockName) {
     const depot = this.depots.find(d => d.id === depotId);

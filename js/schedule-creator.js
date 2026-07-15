@@ -568,8 +568,10 @@ export class ActiveService {
       if (!stop) { this.state = 'moving'; return; }
 
       const depTime = stop.departureTime;
+      const iteExtra = this._iteDwellExtra || 0;
+      const effectiveDep = depTime != null ? depTime + iteExtra : null;
       // Guard against undefined/NaN departureTime — depart immediately
-      if (stop.type === 'passage' || stop.type === 'waypoint' || depTime == null || isNaN(depTime) || timeGte(timeOfDay, depTime)) {
+      if (stop.type === 'passage' || stop.type === 'waypoint' || effectiveDep == null || isNaN(effectiveDep) || timeGte(timeOfDay, effectiveDep)) {
         // Release platform on departure
         if (this._platformAssignment && window.game?.platformManager) {
           window.game.platformManager.releasePlatform(
@@ -587,6 +589,8 @@ export class ActiveService {
         this.train.blockedBy = false;
         this.train.stoppedAt = null;
         this._lastTronconId = null;
+        this._iteDwellExtra = 0;
+        this.train.iteInfo = null;
         if (this.currentStopIndex >= stops.length) {
           this.completeService(economy);
         } else {
@@ -1514,6 +1518,24 @@ export class ActiveService {
     this.position = { lat: arrivalLat, lon: arrivalLon };
     this.train.blockedBy = false;
     this._lastArrivalTime = timeOfDay;
+
+    // Section VI — ITE : longueur utile et tranches
+    if (stop?.type === 'arret' && station) {
+      const dm = window.game?.depotManager;
+      const trainLength = this.rame ? this.rame.totalLength : (this.train.length || 20);
+      const iteInfo = dm?.getITEInfo(station.id, trainLength);
+      if (iteInfo?.isITE) {
+        this.train.iteInfo = { totalLength: iteInfo.totalLength, trainLength, trancheCount: iteInfo.trancheCount, canFit: iteInfo.canFit };
+        // Si le train est trop long, on simule le découpage en tranches par du temps de manœuvre supplémentaire (15 min/tranche)
+        this._iteDwellExtra = iteInfo.canFit ? 0 : (iteInfo.trancheCount * 15);
+      } else {
+        this._iteDwellExtra = 0;
+        this.train.iteInfo = null;
+      }
+    } else {
+      this._iteDwellExtra = 0;
+      this.train.iteInfo = null;
+    }
 
     // Per-stop revenue: montée/descente voyageurs + chargement/déchargement fret
     if (economy && stop?.type === 'arret') {
