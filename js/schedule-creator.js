@@ -277,6 +277,18 @@ export class ActiveService {
     return this._adjustedStops || this.stops;
   }
 
+  // MET-01/03/04/05/06 — météo locale au point courant
+  _getWeatherEffects() {
+    if (!this.weather) return { brakeFactor: 1.0, speedCap: Infinity, speedMult: 1.0, type: 'clear' };
+    let lat = this.position?.lat;
+    let lon = this.position?.lon;
+    if ((lat == null || lon == null) && this._state?.cachedRoute) {
+      const pt = this._state.cachedRoute[this._state.index || 0];
+      if (pt) { lat = pt.lat; lon = pt.lon; }
+    }
+    return this.weather.getSpeedEffectsAt(lat, lon, this.rame ? this.rame.maxSpeed : (this.train?.maxSpeed || 0));
+  }
+
   // Annexe 3A — A. changements de vitesse : vitesse minimale sur la portion de
   // voie occupée par le train (de l’avant jusqu’à la queue, trainLength en m).
   _getInfraSpeedLimit(route, segIdx, progress, trainLengthM) {
@@ -330,11 +342,13 @@ export class ActiveService {
         cap = Math.min(cap, nextSpeed);
         continue;
       }
-      const brakingNeeded = Math.max(0, (currentSpeed * currentSpeed - nextSpeed * nextSpeed) / (2 * this.train.decel * 3600));
+      const weather = this._getWeatherEffects();
+      const decel = this.train.decel * weather.brakeFactor;
+      const brakingNeeded = Math.max(0, (currentSpeed * currentSpeed - nextSpeed * nextSpeed) / (2 * decel * 3600));
       if (distToPoint <= brakingNeeded + bufferKm) {
         // speed required to be exactly at nextSpeed at (pointDist - bufferKm)
         const targetDist = Math.max(0, distToPoint - bufferKm);
-        const reqSpeed = Math.sqrt(Math.max(0, nextSpeed * nextSpeed + 2 * this.train.decel * 3600 * targetDist));
+        const reqSpeed = Math.sqrt(Math.max(0, nextSpeed * nextSpeed + 2 * decel * 3600 * targetDist));
         cap = Math.min(cap, reqSpeed);
       }
     }
@@ -791,6 +805,12 @@ export class ActiveService {
     // CRITICAL: effectiveSpeed = min(train speed, infrastructure speed)
     let effectiveMaxSpeed = Math.min(rameMaxSpeed, segMaxSpeed);
 
+    // MET-01/06 — météo locale : neige −20 km/h si V ≥ 140
+    const weather = this._getWeatherEffects();
+    if (Number.isFinite(weather.speedCap) && weather.speedCap < effectiveMaxSpeed) {
+      effectiveMaxSpeed = weather.speedCap;
+    }
+
     // Reset blockedBy/signal alert at start of each tick — each check below will set it if needed
     this.train.blockedBy = false;
     this.train.signalAlert = null;
@@ -898,8 +918,10 @@ export class ActiveService {
     }
 
     // --- ACCELERATION / DECELERATION PHYSICS ---
+    // MET-03/04/05/06 — météo locale : freinage plus tôt sous pluie/orage/neige
+    const decel = this.train.decel * weather.brakeFactor;
     const accelDelta = this.train.accel * dt;
-    const decelDelta = this.train.decel * dt;
+    const decelDelta = decel * dt;
 
     // Check if next stop is a waypoint or passage (no braking needed)
     const nextStopBrake = this.getNextStop();
@@ -908,11 +930,11 @@ export class ActiveService {
     // Braking distance check for approaching end of route (skip for pass-through stops)
     const remainingDist = this._getRemainingDistance(route);
     // brakingDistance = speed² / (2 * deceleration), convert km/h to km/s²
-    const brakeDist = (this.speed * this.speed) / (2 * this.train.decel * 3600);
+    const brakeDist = (this.speed * this.speed) / (2 * decel * 3600);
 
     if (!isNextPassThrough && remainingDist < brakeDist + 0.3 && remainingDist > 0.01) {
       // Progressive deceleration: no forced minimum speed
-      const targetSpeed = Math.sqrt(Math.max(0, 2 * this.train.decel * 3600 * remainingDist));
+      const targetSpeed = Math.sqrt(Math.max(0, 2 * decel * 3600 * remainingDist));
       this.speed = Math.max(0, Math.min(this.speed, targetSpeed));
     } else if (effectiveMaxSpeed === 0) {
       this.speed = Math.max(0, this.speed - decelDelta);
@@ -1207,12 +1229,17 @@ export class ActiveService {
     if (incident?.effect === 'slow') {
       rameMaxSpeed = Math.min(rameMaxSpeed, incident.speedLimit || 30);
     }
+
+    // MET-01/03/04/05/06 — météo locale en fallback direct
+    const weather = this._getWeatherEffects();
+    if (Number.isFinite(weather.speedCap) && weather.speedCap < rameMaxSpeed) rameMaxSpeed = weather.speedCap;
+    const decel = this.train.decel * weather.brakeFactor;
     const accelDelta = this.train.accel * dt;
-    const decelDelta = this.train.decel * dt;
-    const brakeDist = (this.speed * this.speed) / (2 * this.train.decel * 3600);
+    const decelDelta = decel * dt;
+    const brakeDist = (this.speed * this.speed) / (2 * decel * 3600);
 
     if (dist < brakeDist + 0.5 && dist > 0.01) {
-      const targetSpeed = Math.sqrt(Math.max(0, 2 * this.train.decel * 3600 * dist));
+      const targetSpeed = Math.sqrt(Math.max(0, 2 * decel * 3600 * dist));
       this.speed = Math.max(0, Math.min(this.speed, targetSpeed));
     } else if (this.speed < rameMaxSpeed) {
       this.speed = Math.min(rameMaxSpeed, this.speed + accelDelta);
