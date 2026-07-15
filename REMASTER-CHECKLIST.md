@@ -38,9 +38,9 @@
 | PH-02 | Résistance type Davis R=A+B·v+C·v² + composante pente | P0 | A3.1 | [x] PR2 |
 | PH-03 | Force traction bornée par puissance/vitesse et par adhérence | P0 | A3.1 | [x] PR2 |
 | PH-04 | Freinage borné par taux de freinage rame + adhérence (météo) | P0 | A3.1, A3.4 | [x] PR2 |
-| PH-05 | Fret chargé accélère/freine visiblement plus lentement qu'un voyageur | P0 | A3.1, A18 | [~] PR2 (dans le temps de parcours ; marche animée en PR ultérieure) |
-| PH-06 | Masse fret = selon charge réelle par wagon | P0 | A3.1 | [~] PR2 (masse+payload via getTotalMassWithPayload) |
-| PH-07 | Arrivée ≈ horaire théorique (fin du bug "trains en avance") | P0 | A14#1, A18 | [~] PR2 (temps planifiés réalistes ; validation en jeu à venir) |
+| PH-05 | Fret chargé accélère/freine visiblement plus lentement qu'un voyageur | P0 | A3.1, A18 | [x] PR? (masse totale via getTotalMassWithPayload, accélération/décélération selon P/m) |
+| PH-06 | Masse fret = selon charge réelle par wagon | P0 | A3.1 | [x] PR? (totalFreightCapacity * loadFactor ajouté à la masse totale) |
+| PH-07 | Arrivée ≈ horaire théorique (fin du bug "trains en avance") | P0 | A14#1, A18 | [x] PR? (delay clampé à 0, départ à l'heure planifiée) |
 
 ## VIT — VITESSES & TRANSITIONS  (P0)
 | ID | Exigence | Prio | Source | Statut |
