@@ -259,6 +259,8 @@ header {
   vertical-align: bottom;
 }
 .rame-assembly-images img.rame-element-img:hover { opacity: 0.7; }
+.rame-element-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.rame-element-label { font-size: 8px; color: var(--text2); margin-top: 2px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rame-element-placeholder {
   width: 60px; height: 50px; background: var(--bg3);
   display: flex; align-items: center; justify-content: center;
@@ -268,8 +270,9 @@ header {
 .rame-stats { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text2); margin-bottom: 8px; }
 .rame-length-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-bottom: 10px; }
 .rame-length-fill { height: 100%; border-radius: 2px; transition: width 0.2s; }
-.stock-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; margin-top: 6px; }
-.stock-picker-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--bg3); border-radius: 4px; padding: 6px; cursor: pointer; font-size: 9px; text-align: center; }
+/* Annexe 8 : picker matériel dispo assombri */
+.stock-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; margin-top: 6px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
+.stock-picker-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--bg3); border-radius: 4px; padding: 6px; cursor: pointer; font-size: 9px; text-align: center; color: var(--text); }
 .stock-picker-item:hover { background: var(--blue); }
 .stock-picker-item img { max-width: 100%; }
 
@@ -335,6 +338,12 @@ header {
 
 /* Save button improved */
 #modal-add-stock .btn-save-stock-enhanced { width: 100%; margin-top: 16px; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Traction multi-select + computed fields (Annexe 7) */
+.stock-multi-check { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; }
+.stock-multi-check label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text); cursor: pointer; }
+.stock-multi-check input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--blue); margin: 0; }
+.computed-field { padding: 8px 10px; background: var(--bg2); border: 1px dashed var(--border); border-radius: 5px; color: var(--text2); font-size: 12px; }
 
 /* IMAGE DROP */
 .image-drop { border: 2px dashed var(--border); border-radius: 6px; padding: 20px; text-align: center; cursor: pointer; color: var(--text3); font-size: 12px; }

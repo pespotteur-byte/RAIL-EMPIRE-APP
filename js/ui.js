@@ -1231,23 +1231,22 @@ export class UI {
     // Reset all fields to defaults (a previous edit may have left values).
     this._setStockField('stock-name', '');
     this._setStockField('stock-series-name', '');
-    this._setStockField('stock-number-start', '');
     this._setStockField('stock-category', 'locomotive');
-    this._setStockField('stock-traction', 'none');
     this._setStockField('stock-speed', '160');
     this._setStockField('stock-power', '0');
     this._setStockField('stock-length', '20');
     this._setStockField('stock-mass', '80');
-    this._setStockField('stock-tonnage', '80');
     this._setStockField('stock-capacity', '0');
     this._setStockField('stock-freight-cap', '0');
-    this._setStockField('stock-price', '0');
+    this._setStockWagonSubcat('');
+    this._setStockTraction(['Diesel']);
     document.getElementById('stock-image-preview')?.classList.add('hidden');
     this._stockImageData = null;
 
-    // Populate cargo types checkboxes
+    // Populate cargo types checkboxes and computed fields
     this._populateCargoTypesCheckboxes();
     this._wireStockCategoryToggle();
+    this._updateStockComputedFields();
   }
 
   _setStockField(id, val) {
@@ -1255,14 +1254,88 @@ export class UI {
     if (el) el.value = val;
   }
 
+  _setStockTraction(values) {
+    const checkboxes = document.querySelectorAll('.stock-traction-cb');
+    const set = new Set(values.map(v => v.toLowerCase()));
+    checkboxes.forEach(cb => { cb.checked = set.has(cb.value.toLowerCase()); });
+  }
+
+  _getStockTraction() {
+    return Array.from(document.querySelectorAll('.stock-traction-cb:checked')).map(cb => cb.value);
+  }
+
+  _getStockTractionString() {
+    const vals = this._getStockTraction();
+    if (vals.length === 0) return 'none';
+    return vals.join('+');
+  }
+
+  _setStockWagonSubcat(val) {
+    const el = document.getElementById('stock-wagon-subcat');
+    if (el) el.value = val;
+  }
+
+  _getStockWagonSubcat() {
+    return document.getElementById('stock-wagon-subcat')?.value || '';
+  }
+
+  _computeStockTonnage() {
+    const category = document.getElementById('stock-category')?.value || 'locomotive';
+    const mass = parseFloat(document.getElementById('stock-mass')?.value) || 0;
+    const freightCap = parseFloat(document.getElementById('stock-freight-cap')?.value) || 0;
+    return category === 'wagon' ? Math.round(mass + freightCap) : Math.round(mass);
+  }
+
+  _calculateStockPrice() {
+    const category = document.getElementById('stock-category')?.value || 'locomotive';
+    const mass = parseFloat(document.getElementById('stock-mass')?.value) || 0;
+    const maxSpeed = parseFloat(document.getElementById('stock-speed')?.value) || 0;
+    const power = parseFloat(document.getElementById('stock-power')?.value) || 0;
+    const capacity = parseFloat(document.getElementById('stock-capacity')?.value) || 0;
+    const freightCap = parseFloat(document.getElementById('stock-freight-cap')?.value) || 0;
+    const traction = this._getStockTraction();
+    // MAT-04 : calcul automatique du prix selon caractéristiques physiques.
+    // coefficients choisis pour rester cohérents à l'échelle du jeu (€).
+    let price = mass * 800 + maxSpeed * 100 + power * 150 + capacity * 1200 + freightCap * 80;
+    // légère surcote multi-courant
+    const nbTraction = Math.max(1, traction.length);
+    price *= (1 + (nbTraction - 1) * 0.08);
+    // les locomotives/automotrices coûtent plus cher que les wagons passifs
+    if (category === 'locomotive') price *= 1.3;
+    if (category === 'automotrice') price *= 1.15;
+    return Math.max(0, Math.round(price));
+  }
+
+  _updateStockComputedFields() {
+    const tonnage = this._computeStockTonnage();
+    const price = this._calculateStockPrice();
+    const tonEl = document.getElementById('stock-tonnage-display');
+    if (tonEl) tonEl.textContent = `${tonnage} t`;
+    const priceEl = document.getElementById('stock-price-display');
+    if (priceEl) priceEl.textContent = `${price.toLocaleString('fr-FR')} €`;
+  }
+
   // Wire the category->cargo-types visibility toggle (idempotent: replaces the node's listener).
   _wireStockCategoryToggle() {
     const catSel = document.getElementById('stock-category');
     const cargoGroup = document.getElementById('stock-cargo-types-group');
-    if (!catSel || !cargoGroup) return;
-    const showCargo = () => { cargoGroup.style.display = catSel.value === 'wagon' ? 'block' : 'none'; };
-    catSel.onchange = showCargo;
-    showCargo();
+    const subcatGroup = document.getElementById('stock-wagon-subcat-group');
+    if (!catSel) return;
+    const onChange = () => {
+      const isWagon = catSel.value === 'wagon';
+      if (cargoGroup) cargoGroup.style.display = isWagon ? 'block' : 'none';
+      if (subcatGroup) subcatGroup.style.display = isWagon ? 'block' : 'none';
+      this._updateStockComputedFields();
+    };
+    catSel.onchange = onChange;
+    onChange();
+    // recompute computed fields when any numeric input changes
+    ['stock-mass','stock-speed','stock-power','stock-capacity','stock-freight-cap'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', () => this._updateStockComputedFields());
+    });
+    document.querySelectorAll('.stock-traction-cb').forEach(cb => {
+      cb.addEventListener('change', () => this._updateStockComputedFields());
+    });
   }
 
   // Open the modal pre-filled to edit an existing engin.
@@ -1278,17 +1351,15 @@ export class UI {
     document.getElementById('modal-add-stock')?.classList.remove('hidden');
     this._setStockField('stock-name', item.name || '');
     this._setStockField('stock-series-name', item.seriesName || '');
-    this._setStockField('stock-number-start', item.numberStart != null ? item.numberStart : '');
     this._setStockField('stock-category', item.category || 'locomotive');
-    this._setStockField('stock-traction', item.traction || 'none');
+    this._setStockTraction((item.traction || 'none').split('+').map(s => s.trim()).filter(Boolean));
     this._setStockField('stock-speed', item.maxSpeed ?? 160);
     this._setStockField('stock-power', item.power ?? 0);
     this._setStockField('stock-length', item.length ?? 20);
     this._setStockField('stock-mass', item.mass ?? 80);
-    this._setStockField('stock-tonnage', item.tonnage ?? 80);
     this._setStockField('stock-capacity', item.passengerCapacity ?? 0);
     this._setStockField('stock-freight-cap', item.freightCapacity ?? 0);
-    this._setStockField('stock-price', item.purchasePrice ?? 0);
+    this._setStockWagonSubcat(item.wagonSubCategory || '');
 
     this._stockImageData = item.imageData || null;
     const preview = document.getElementById('stock-image-preview');
@@ -1301,6 +1372,7 @@ export class UI {
     const sel = new Set(item.cargoTypes || []);
     document.querySelectorAll('.stock-cargo-cb').forEach(cb => { cb.checked = sel.has(cb.value); });
     this._wireStockCategoryToggle();
+    this._updateStockComputedFields();
   }
 
   _populateCargoTypesCheckboxes() {
@@ -1345,23 +1417,26 @@ export class UI {
   saveStock() {
     const name = document.getElementById('stock-name').value.trim();
     if (!name) return alert('Nom requis');
-    const tonnage = parseInt(document.getElementById('stock-tonnage').value) || 80;
+    const category = document.getElementById('stock-category').value;
+    const mass = parseFloat(document.getElementById('stock-mass')?.value) || 80;
+    const freightCapacity = parseFloat(document.getElementById('stock-freight-cap').value) || 0;
+    const tonnage = category === 'wagon' ? Math.round(mass + freightCapacity) : Math.round(mass);
     const data = {
       name,
-      category: document.getElementById('stock-category').value,
-      traction: document.getElementById('stock-traction').value,
+      category,
+      traction: this._getStockTractionString(),
       maxSpeed: parseInt(document.getElementById('stock-speed').value) || 160,
       tonnage,
-      mass: parseInt(document.getElementById('stock-mass')?.value) || tonnage,
+      mass,
       power: parseInt(document.getElementById('stock-power')?.value) || 0,
       passengerCapacity: parseInt(document.getElementById('stock-capacity').value) || 0,
-      freightCapacity: parseInt(document.getElementById('stock-freight-cap').value) || 0,
+      freightCapacity,
       length: parseFloat(document.getElementById('stock-length').value) || 20,
       imageData: this._stockImageData,
       seriesName: document.getElementById('stock-series-name')?.value.trim() || '',
-      numberStart: document.getElementById('stock-number-start')?.value.trim() || '',
-      purchasePrice: parseInt(document.getElementById('stock-price')?.value) || 0,
+      purchasePrice: this._calculateStockPrice(),
       cargoTypes: Array.from(document.querySelectorAll('.stock-cargo-cb:checked')).map(cb => cb.value),
+      wagonSubCategory: this._getStockWagonSubcat(),
     };
     if (this._editingStockId) {
       this.game.rollingStock.update(this._editingStockId, data);
@@ -1413,11 +1488,11 @@ export class UI {
         ${item.imageData ? `<img src="${item.imageData}" loading="lazy" class="card-img" alt="${item.name}">` : ''}
         <div class="card-title">${item.name}</div>
         <div class="card-info">
-          <b>Cat:</b> ${item.category} | <b>Tract:</b> ${item.traction}<br>
+          <b>Cat:</b> ${item.category}${item.wagonSubCategory ? ` — ${item.wagonSubCategory}` : ''} | <b>Tract:</b> ${item.traction}<br>
           <b>Vmax:</b> ${item.maxSpeed} km/h | <b>Long:</b> ${item.length}m<br>
           <b>Tonnage:</b> ${item.tonnage}t | <b>Masse:</b> ${item.mass}t${item.power ? ` | <b>P:</b> ${item.power}kW` : ''} | <b>Places:</b> ${item.passengerCapacity} | <b>Fret:</b> ${item.freightCapacity}t
           ${item.purchasePrice ? `<br><b>Prix:</b> ${item.purchasePrice.toLocaleString('fr-FR')} €` : ''}
-          ${item.seriesName ? `<br><b>Serie:</b> ${item.seriesName}${item.numberStart ? ' n°' + item.numberStart : ''}` : ''}
+          ${item.seriesName ? `<br><b>Serie:</b> ${item.seriesName}` : ''}
           ${item.cargoTypes?.length ? `<br><b>Chargements:</b> <span style="font-size:9px">${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return info?.name || ct; }).join(', ')}</span>` : ''}
         </div>
         <div class="card-actions">
@@ -1539,7 +1614,12 @@ export class UI {
     let added = 0;
     for (let n = 0; n < qty; n++) {
       if (currentLength + item.length > 750) break;
-      this.currentRameElements.push({ ...item, stockId: item.id });
+      // Annexe 8 : numérotation automatique par série dans la rame.
+      const instanceNumber = item.seriesName
+        ? this.game.rollingStock.nextSeriesNumber(item.seriesName)
+        : null;
+      const instanceName = instanceNumber || item.name;
+      this.currentRameElements.push({ ...item, stockId: item.id, instanceName, instanceNumber });
       currentLength += item.length;
       added++;
     }
@@ -1564,10 +1644,11 @@ export class UI {
       container.innerHTML = '<p class="rame-empty">Cliquer sur un engin ci-dessous pour l\'ajouter</p>';
     } else {
       container.innerHTML = '<div class="rame-assembly-images">' + this.currentRameElements.map((el, i) => {
-        if (el.imageData) {
-          return `<img src="${el.imageData}" alt="${el.name}" title="${el.name} (clic = retirer)" onclick="game.ui.removeFromRame(${i})" class="rame-element-img">`;
-        }
-        return `<div class="rame-element-placeholder" title="${el.name}" onclick="game.ui.removeFromRame(${i})">${el.name}</div>`;
+        const label = el.instanceName || el.name;
+        const inner = el.imageData
+          ? `<img src="${el.imageData}" alt="${label}" title="${label} (clic = retirer)" onclick="game.ui.removeFromRame(${i})" class="rame-element-img">`
+          : `<div class="rame-element-placeholder" title="${label}" onclick="game.ui.removeFromRame(${i})">${label}</div>`;
+        return `<div class="rame-element-wrap">${inner}<span class="rame-element-label">${label}</span></div>`;
       }).join('') + '</div>';
     }
 
@@ -1612,12 +1693,14 @@ export class UI {
       name,
       elements: this.currentRameElements.map(e => e.stockId),
       elementDetails: this.currentRameElements.map(e => ({
-        name: e.name, category: e.category, traction: e.traction,
+        name: e.name, instanceName: e.instanceName, seriesName: e.seriesName,
+        category: e.category, traction: e.traction,
         maxSpeed: e.maxSpeed, tonnage: e.tonnage,
         mass: e.mass || e.tonnage, power: e.power || 0,
         passengerCapacity: e.passengerCapacity, freightCapacity: e.freightCapacity,
         length: e.length, imageData: e.imageData,
         purchasePrice: e.purchasePrice || 0,
+        wagonSubCategory: e.wagonSubCategory || '',
       })),
     });
     document.getElementById('modal-rame')?.classList.add('hidden');
@@ -1639,10 +1722,12 @@ export class UI {
           <button class="btn-sm danger" onclick="game.ui.deleteRame('${r.id}')">Supprimer</button>
         </div>
         <div class="rame-card-images">
-          ${r.elementDetails.map(e => e.imageData
-            ? `<img src="${e.imageData}" alt="${e.name}" title="${e.name}">`
-            : `<span class="rame-text-el">${e.name}</span>`
-          ).join('')}
+          ${r.elementDetails.map(e => {
+            const label = e.instanceName || e.name;
+            return e.imageData
+              ? `<img src="${e.imageData}" alt="${label}" title="${label}">`
+              : `<span class="rame-text-el">${label}</span>`;
+          }).join('')}
         </div>
         <div class="card-info">
           <b>Long:</b> ${r.totalLength.toFixed(1)}m | <b>Tonnage:</b> ${r.totalTonnage}t |

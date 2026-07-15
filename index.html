@@ -524,13 +524,9 @@
               </div>
             </div>
             <div class="form-row">
-              <div class="form-group">
+              <div class="form-group" style="flex:1">
                 <label>Série <span class="label-hint">(ex: BB 26000)</span></label>
                 <input type="text" id="stock-series-name" placeholder="BB 26000">
-              </div>
-              <div class="form-group">
-                <label>Numéro <span class="label-hint">(ex: 26001)</span></label>
-                <input type="text" id="stock-number-start" placeholder="26001">
               </div>
             </div>
           </div>
@@ -542,16 +538,17 @@
               <h4>Caractéristiques techniques</h4>
             </div>
             <div class="form-row">
-              <div class="form-group">
-                <label>Traction</label>
-                <select id="stock-traction">
-                  <option value="none">Aucune (remorque)</option>
-                  <option value="1500V">1500V DC</option>
-                  <option value="25kV">25kV AC</option>
-                  <option value="bi">Bicourant</option>
-                  <option value="tri">Tricourant</option>
-                  <option value="diesel">Diesel</option>
-                </select>
+              <div class="form-group" style="flex:1">
+                <label>Traction <span class="label-hint">(plusieurs choix possibles)</span></label>
+                <div id="stock-traction-options" class="stock-multi-check">
+                  <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="Diesel"> Diesel</label>
+                  <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="Vapeur"> Vapeur</label>
+                  <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="1.5kV"> 1,5 kV</label>
+                  <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="3kV"> 3 kV</label>
+                  <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="15kV"> 15 kV</label>
+                  <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="25kV"> 25 kV</label>
+                  <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="3e Rail"> 3e Rail</label>
+                </div>
               </div>
               <div class="form-group">
                 <label>Vitesse max <span class="label-hint">(km/h)</span></label>
@@ -574,8 +571,8 @@
                 <input type="number" id="stock-mass" value="80" min="1" max="500">
               </div>
               <div class="form-group">
-                <label>Tonnage <span class="label-hint">(t)</span></label>
-                <input type="number" id="stock-tonnage" value="80" min="1" max="500">
+                <label>Tonnage calculé <span class="label-hint">(masse + fret / masse seule)</span></label>
+                <div id="stock-tonnage-display" class="computed-field">—</div>
               </div>
             </div>
           </div>
@@ -598,6 +595,34 @@
             </div>
           </div>
 
+          <!-- SECTION: Wagon subcategory (wagons only) -->
+          <div class="form-section" id="stock-wagon-subcat-group" style="display:none">
+            <div class="form-section-header">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              <h4>Type de wagon <span class="label-hint" style="text-transform:none">(un seul choix)</span></h4>
+            </div>
+            <div class="form-group">
+              <select id="stock-wagon-subcat">
+                <option value="">— Sélectionner —</option>
+                <option value="tomber">Tombeau</option>
+                <option value="citerne">Citerne</option>
+                <option value="gaz">Gaz</option>
+                <option value="porte-auto">Porte-Auto</option>
+                <option value="tremie">Trémie</option>
+                <option value="cerealier">Céréalier</option>
+                <option value="ciment">Ciment</option>
+                <option value="silos">Silos</option>
+                <option value="plat">Plat</option>
+                <option value="ttx">TTX</option>
+                <option value="intermodal">Intermodal</option>
+                <option value="speciaux">Spéciaux</option>
+                <option value="couvert">Couvert</option>
+                <option value="bache">Bâché</option>
+                <option value="infra">Infra</option>
+              </select>
+            </div>
+          </div>
+
           <!-- SECTION: Chargements (wagons only) -->
           <div class="form-section" id="stock-cargo-types-group" style="display:none">
             <div class="form-section-header">
@@ -616,8 +641,8 @@
               <h4>Tarification</h4>
             </div>
             <div class="form-group">
-              <label>Prix d'achat <span class="label-hint">(€)</span></label>
-              <input type="number" id="stock-price" value="0" min="0" max="100000000" step="1000">
+              <label>Prix d'achat <span class="label-hint">(calcul automatique)</span></label>
+              <div id="stock-price-display" class="computed-field">0 €</div>
             </div>
           </div>
 

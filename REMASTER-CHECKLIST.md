@@ -247,21 +247,21 @@
 ## MAT — PAGE MATÉRIEL  (P1)  [schémas annexes 6-7]
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| MAT-01 | Fenêtre création : Visuel / Identification / Caractéristiques / Capacités / Tarification | P1 | annexe 6b | [ ] |
-| MAT-02 | Suppression du champ "Numéro" dans Identification | P1 | annexe 7 | [ ] |
-| MAT-03 | Traction en **multi-sélection** | P1 | annexe 7 | [ ] |
-| MAT-04 | Valeurs traction : Diesel, Vapeur, 1,5 kV, 3 kV, 15 kV, 25 kV, 3e rail | P1 | annexe 7 | [ ] |
-| MAT-05 | Tonnage supprimé → calculé auto (masse à vide + capacité) | P1 | annexe 7 | [ ] |
-| MAT-06 | Prix d'achat supprimé → calcul automatique | P1 | annexe 7 | [ ] |
-| MAT-07 | Sous-catégories wagon si "wagon" : tombereau, citerne, gazier, porte-auto, trémie, céréalier, ciment, silos, plat, TTX, intermodal, spéciaux, couvert, bâchés, infra | P1 | annexe 7 | [ ] |
+| MAT-01 | Fenêtre création : Visuel / Identification / Caractéristiques / Capacités / Tarification | P1 | annexe 6b | [x] PR1 (sections conservées, tarif auto) |
+| MAT-02 | Suppression du champ "Numéro" dans Identification | P1 | annexe 7 | [x] PR1 (champ retiré du modal) |
+| MAT-03 | Traction en **multi-sélection** | P1 | annexe 7 | [x] PR1 (checkboxes stock-traction-cb) |
+| MAT-04 | Valeurs traction : Diesel, Vapeur, 1,5 kV, 3 kV, 15 kV, 25 kV, 3e rail | P1 | annexe 7 | [x] PR1 (7 cases à cocher) |
+| MAT-05 | Tonnage supprimé → calculé auto (masse à vide + capacité) | P1 | annexe 7 | [x] PR1 (RollingStockItem.tonnage auto + UI) |
+| MAT-06 | Prix d'achat supprimé → calcul automatique | P1 | annexe 7 | [x] PR1 (formule physiques UI/rolling-stock) |
+| MAT-07 | Sous-catégories wagon si "wagon" : tombereau, citerne, gazier, porte-auto, trémie, céréalier, ciment, silos, plat, TTX, intermodal, spéciaux, couvert, bâchés, infra | P1 | annexe 7 | [x] PR1 (select stock-wagon-subcat) |
 | MAT-08 | Contrainte électrification tronçon ↔ traction engin (multi-systèmes) | P1 | A21.2, A3.3 | [ ] |
 
 ## RAM — PAGE RAMES  (P1)  [schéma annexe 8]
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| RAM-01 | "Composer une rame" : recherche + catégories + grille matériel | P1 | annexe 8 | [ ] |
-| RAM-02 | Agrégats direct : Vmax / tonnage / places / coût | P1 | annexe 8 | [ ] |
-| RAM-03 | N° de série auto +1 | P1 | A1.1 | [ ] |
+| RAM-01 | "Composer une rame" : recherche + catégories + grille matériel | P1 | annexe 8 | [x] PR1 (picker assombri + filtres) |
+| RAM-02 | Agrégats direct : Vmax / tonnage / places / coût | P1 | annexe 8 | [x] PR1 (stats rame live) |
+| RAM-03 | N° de série auto +1 | P1 | A1.1 | [x] PR1 (nextSeriesNumber par série) |
 
 ## LVM — LIVEMAP & AFFICHAGE  (P1)  [schémas annexes 1-5]
 | ID | Exigence | Prio | Source | Statut |
