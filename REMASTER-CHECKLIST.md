@@ -103,8 +103,8 @@
 ## REG — RÉGULATION  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| REG-01 | Régulateur : zone d'axe ~150 km | P1 | A3.6 | [ ] |
-| REG-02 | Agent Circulation (AC) : zone 10-30 km sous supervision | P1 | A3.6 | [ ] |
+| REG-01 | Régulateur : zone d'axe ~150 km | P1 | A3.6 | [x] PR? (StaffManager.getRegulationEffects) |
+| REG-02 | Agent Circulation (AC) : zone 10-30 km sous supervision | P1 | A3.6 | [x] PR? (signal box + agents réduit écart canton) |
 | REG-03 | Décisions (garage, ordre passage) prises par le JEU ; joueur embauche seulement | P1 | A3.6 | [ ] |
 | REG-04 | Suppression des cercles d'influence des postes (découpage par axe) | P1 | A3.6 | [ ] |
 
@@ -124,7 +124,7 @@
 | RET-01 | Rame en retard au terminus : rouler retour en retard OU supprimer | P1 | A3.9 | [x] PR? |
 | RET-02 | Loi : 1/3 supprimer, 2/3 rouler en retard | P1 | A3.9 | [x] PR? |
 | RET-03 | Si supprimé : repart au prochain trajet prévu depuis cette gare | P1 | A3.9 | [ ] |
-| RET-04 | Retard causé par train devant = motif "régulation du trafic" | P1 | A3.9 | [ ] |
+| RET-04 | Retard causé par train devant = motif "régulation du trafic" | P1 | A3.9 | [x] PR? (train.delayReason + panneau Livemap) |
 
 ## LG — PAGE LIGNE / SILLONS AUTO  (P1)
 | ID | Exigence | Prio | Source | Statut |
@@ -185,7 +185,7 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | FRT-01 | Train complet = 1 type de wagon ; MLMC = wagons variés (diffus) | P1 | A7 | [ ] |
-| FRT-02 | Clients = entreprises ; but = qualité de service / parts de marché | P1 | A7 | [ ] |
+| FRT-02 | Clients = entreprises ; but = qualité de service / parts de marché | P1 | A7 | [x] PR? (marketShare par client, tonnage/fiabilité, affichage) |
 | FRT-03 | Contrat = besoins matériels + lieu livraison (ITE), assignable à un service | P1 | A7 | [x] PR? (picker contrat dans Horaires + fulfillment) |
 | FRT-04 | Retard → pénalité 25 % | P1 | A7, A18 | [x] PR? (sur contrat et fret générique) |
 | FRT-05 | Avance/fiabilité → confiance accrue → plus d'offres | P1 | A7 | [x] PR? (satisfaction + tonnage offres liés) |
