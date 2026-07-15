@@ -92,6 +92,11 @@ export class StaffManager {
         shiftStartMin: -1,
         shiftWorkedMin: 0,
         resting: false,
+        restRemainingMin: 0,
+        restType: null,          // 'daily' | 'weekly'
+        weeklyWorkMin: 0,
+        lastWeeklyRestDate: null,
+        socialRisk: 0,
       };
 
       economy.addExpense(def.hiringCost, 'personnel', `Embauche: ${member.name} (${def.label})`);
@@ -155,21 +160,38 @@ export class StaffManager {
   getAvailable() { return this.getAvailableByRole('conducteur'); }
 
   // ── Auto-assignment of conductors ──
-  tickConductors(activeServices, timeOfDay) {
+  // RH-03 : 8h entre services ; RH-03/04 : repos 24h/semaine sinon risque social.
+  tickConductors(activeServices, timeOfDay, dateStr = '') {
     const conducteurs = this.getByRole('conducteur');
     if (conducteurs.length === 0) return;
 
-    const SHIFT_DURATION = 480; // 8h in minutes
-    const REST_DURATION = 480;  // 8h rest
+    // Avoid processing the same minute twice and handle fast-forward jumps
+    if (this._lastTickTime == null) this._lastTickTime = timeOfDay;
+    let delta = 0;
+    if (timeOfDay >= this._lastTickTime) delta = timeOfDay - this._lastTickTime;
+    else delta = (1440 - this._lastTickTime) + timeOfDay; // day wrap
+    this._lastTickTime = timeOfDay;
+    this._lastTickDate = dateStr;
+    if (delta <= 0) return;
+
+    const SHIFT_DURATION = 480; // 8h
+    const DAILY_REST = 480;     // 8h
+    const WEEKLY_REST = 1440;   // 24h
+    const WEEKLY_WORK_LIMIT = 6 * SHIFT_DURATION; // 48h over a week
 
     for (const c of conducteurs) {
       // Handle resting conductors
       if (c.resting) {
-        c.shiftWorkedMin++;
-        if (c.shiftWorkedMin >= REST_DURATION) {
+        c.restRemainingMin -= delta;
+        if (c.restRemainingMin <= 0) {
           c.resting = false;
           c.shiftWorkedMin = 0;
           c.shiftStartMin = -1;
+          if (c.restType === 'weekly') {
+            c.weeklyWorkMin = 0;
+            c.lastWeeklyRestDate = dateStr;
+          }
+          c.restType = null;
         }
         continue;
       }
@@ -177,44 +199,43 @@ export class StaffManager {
       // If assigned, track shift time
       if (c.assignedTo) {
         if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
-        c.shiftWorkedMin++;
+        c.shiftWorkedMin += delta;
+        c.weeklyWorkMin += delta;
 
-        // Check if shift exceeded 8h
-        if (c.shiftWorkedMin >= SHIFT_DURATION) {
-          // Check if the assigned service is still moving — wait for it to finish
-          const svc = activeServices.find(s => s.id === c.assignedTo);
-          if (!svc || svc.state !== 'moving') {
-            c.assignedTo = null;
-            c.resting = true;
-            c.shiftWorkedMin = 0;
-            c.totalTrips++;
-          }
-          // If still moving, let them finish this service before resting
-        }
-
-        // Check if the assigned service completed
+        // Check if the assigned service completed or is waiting
         const svc = activeServices.find(s => s.id === c.assignedTo);
         if (svc && (svc.completed || svc.state === 'waiting') && c.shiftWorkedMin > 0) {
           c.assignedTo = null;
           c.totalTrips++;
-          // Don't rest yet — try to take another service within the shift
+          // After each service, check whether rest is needed
         }
+
+        // Enforce 8h max per shift then mandatory rest (RH-03)
+        if (c.shiftWorkedMin >= SHIFT_DURATION) {
+          const svc = activeServices.find(s => s.id === c.assignedTo);
+          if (!svc || svc.state !== 'moving') {
+            c.assignedTo = null;
+            c.totalTrips++;
+            this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
+          }
+        }
+
+        // RH-04 — accumulate social risk if weekly rest is overdue
+        const overdue = this._isWeeklyRestOverdue(c, dateStr, WEEKLY_WORK_LIMIT);
+        if (overdue) c.socialRisk = Math.min(100, c.socialRisk + 0.05 * delta);
+        else c.socialRisk = Math.max(0, c.socialRisk - 0.01 * delta);
         continue;
       }
 
-      // Available conductor: try to auto-assign to a service that needs one
-      if (c.shiftWorkedMin < SHIFT_DURATION) {
-        // Find services about to depart or currently without a conductor
+      // Available conductor: try to take another service within the same shift
+      if (c.shiftWorkedMin < SHIFT_DURATION && !c.resting) {
         const needsConductor = activeServices.filter(svc => {
           if (!svc.active || svc.completed) return false;
-          // Only passenger/freight services that are about to move or waiting
           if (svc.state !== 'waiting' && svc.state !== 'stopped_at_station') return false;
-          // Check if already has a conductor
           return !conducteurs.some(cc => cc.assignedTo === svc.id);
         });
 
         if (needsConductor.length > 0) {
-          // Pick a random service
           const pick = needsConductor[Math.floor(Math.random() * needsConductor.length)];
           c.assignedTo = pick.id;
           if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
@@ -222,6 +243,28 @@ export class StaffManager {
       }
     }
     this._syncLegacy();
+  }
+
+  _startRest(c, dateStr, dailyRest, weeklyRest, weeklyWorkLimit) {
+    c.resting = true;
+    c.restRemainingMin = this._isWeeklyRestOverdue(c, dateStr, weeklyWorkLimit) ? weeklyRest : dailyRest;
+    c.restType = c.restRemainingMin === weeklyRest ? 'weekly' : 'daily';
+    if (c.restType === 'weekly') {
+      c.weeklyWorkMin = 0;
+      c.lastWeeklyRestDate = dateStr;
+    }
+  }
+
+  _isWeeklyRestOverdue(c, dateStr, weeklyWorkLimit) {
+    if (!dateStr) return false;
+    if (c.lastWeeklyRestDate == null || c.weeklyWorkMin >= weeklyWorkLimit) return true;
+    const days = this._daysBetween(c.lastWeeklyRestDate, dateStr);
+    return days >= 6;
+  }
+
+  _daysBetween(a, b) {
+    const parse = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+    try { return Math.floor((parse(b) - parse(a)) / 86400000); } catch { return 0; }
   }
 
   // ── Signal Boxes ──
@@ -434,7 +477,7 @@ export class StaffManager {
     const colCount = role === 'controleur' ? 6 : (role === 'conducteur' ? 6 : 4);
 
     const roleNote = (role === 'conducteur')
-      ? '<p style="font-size:10px;color:var(--text3);margin:0 0 6px">Affectation automatique aux services. Service de 8h puis repos obligatoire de 8h.</p>'
+      ? '<p style="font-size:10px;color:var(--text3);margin:0 0 6px">Affectation automatique aux services. Service de 8h puis repos de 8h ; 24h consécutifs obligatoires une fois par semaine.</p>'
       : '';
 
     return `
@@ -475,12 +518,16 @@ export class StaffManager {
             } else {
               statusStr = isAssigned ? `${icon('dot_green', 10)} En poste` : `${icon('dot_yellow', 10)} Disponible`;
             }
+            const restLabel = (m.resting && m.restType === 'weekly') ? '24h' : (m.resting ? '8h' : '8h00');
             const shiftInfo = (role === 'conducteur')
-              ? `<span>${Math.floor((m.shiftWorkedMin || 0) / 60)}h${String((m.shiftWorkedMin || 0) % 60).padStart(2,'0')}/${m.resting ? 'repos' : '8h00'}</span>`
+              ? `<span>${Math.floor((m.shiftWorkedMin || 0) / 60)}h${String((m.shiftWorkedMin || 0) % 60).padStart(2,'0')}/${restLabel}</span>`
+              : '';
+            const riskInfo = (role === 'conducteur' && (m.socialRisk || 0) > 0)
+              ? ` <span style="color:${(m.socialRisk||0) > 60 ? '#ef4444' : '#f59e0b'};font-size:10px">Risque ${Math.round(m.socialRisk||0)}%</span>`
               : '';
             const extraVals = role === 'controleur'
               ? `<span>${m.totalFines || 0}</span><span>${(m.totalFineRevenue || 0).toLocaleString('fr-FR')}€</span>`
-              : (role === 'conducteur' ? `<span>${m.totalTrips || 0}</span>${shiftInfo}` : '');
+              : (role === 'conducteur' ? `<span>${m.totalTrips || 0}</span>${shiftInfo}${riskInfo}` : '');
 
             return `<div class="dash-train-row" style="grid-template-columns:repeat(${colCount},1fr)">
               <span style="font-weight:600">${m.name}</span>
@@ -670,6 +717,11 @@ export class StaffManager {
         shiftStartMin: s.shiftStartMin ?? -1,
         shiftWorkedMin: s.shiftWorkedMin || 0,
         resting: s.resting || false,
+        restRemainingMin: s.restRemainingMin || 0,
+        restType: s.restType || null,
+        weeklyWorkMin: s.weeklyWorkMin || 0,
+        lastWeeklyRestDate: s.lastWeeklyRestDate || null,
+        socialRisk: s.socialRisk || 0,
       })),
       signalBoxes: this.signalBoxes,
       zones: this.zones,
@@ -699,6 +751,11 @@ export class StaffManager {
         shiftStartMin: m.shiftStartMin ?? -1,
         shiftWorkedMin: m.shiftWorkedMin || 0,
         resting: m.resting || false,
+        restRemainingMin: m.restRemainingMin || 0,
+        restType: m.restType || null,
+        weeklyWorkMin: m.weeklyWorkMin || 0,
+        lastWeeklyRestDate: m.lastWeeklyRestDate || null,
+        socialRisk: m.socialRisk || 0,
       }));
     } else if (s.conductors && s.conductors.length > 0) {
       // Migrate from old format
@@ -715,6 +772,11 @@ export class StaffManager {
         shiftStartMin: -1,
         shiftWorkedMin: 0,
         resting: false,
+        restRemainingMin: 0,
+        restType: null,
+        weeklyWorkMin: 0,
+        lastWeeklyRestDate: null,
+        socialRisk: 0,
       }));
     } else {
       this.staff = [];
