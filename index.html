@@ -795,8 +795,16 @@
                 </div>
               </div>
               <div class="form-row">
-                <div class="form-group">
-                  <label><input type="checkbox" id="sched-work-train"> Train de travaux <span style="font-size:9px;color:var(--text3)">(non affecte par les travaux)</span></label>
+                <div class="form-group" style="flex:1">
+                  <label>Type de convoi</label>
+                  <select id="sched-service-type">
+                    <option value="passager">Voyageur</option>
+                    <option value="w">W — Vide voyageur</option>
+                    <option value="hlp">HLP — Haut le pied (max 2 locos)</option>
+                    <option value="tm">TM — Train de machines (3-12 locos)</option>
+                    <option value="evo">EVO — Évolution</option>
+                    <option value="work">Train de travaux</option>
+                  </select>
                 </div>
               </div>
               <div class="form-row">

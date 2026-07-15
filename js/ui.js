@@ -1857,6 +1857,8 @@ export class UI {
       if (rtCheck) rtCheck.checked = editService.roundTrip;
       document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
       document.getElementById('sched-terminus-wait').value = editService.terminusWait || 5;
+      const typeSelect = document.getElementById('sched-service-type');
+      if (typeSelect) typeSelect.value = editService.serviceType || (editService.isWorkTrain ? 'work' : 'passager');
       // Populate run days
       const editDays = editService.runDays || [0,1,2,3,4,5,6];
       document.querySelectorAll('.sched-run-day').forEach(cb => {
@@ -1875,6 +1877,8 @@ export class UI {
       if (rtCheck) rtCheck.checked = false;
       document.getElementById('sched-multi-departures').value = '1';
       document.getElementById('sched-terminus-wait').value = '5';
+      const typeSelectNew = document.getElementById('sched-service-type');
+      if (typeSelectNew) typeSelectNew.value = 'passager';
       // Default: all days checked, no specific dates
       document.querySelectorAll('.sched-run-day').forEach(cb => { cb.checked = true; });
       document.getElementById('sched-run-dates').value = '';
@@ -3389,7 +3393,23 @@ export class UI {
       this.game.scheduleCreator.removeService(this._editingScheduleId);
     }
 
-    const isWorkTrain = document.getElementById('sched-work-train')?.checked || false;
+    const serviceType = document.getElementById('sched-service-type')?.value || 'passager';
+    const isWorkTrain = serviceType === 'work';
+
+    // Section VI — validation des types de convois (HLP / TM)
+    if (serviceType === 'hlp') {
+      const locoCount = rame.elementDetails.filter(e => e.category === 'locomotive' || e.category === 'automotrice').length;
+      if (locoCount > 2 || rame.elementDetails.length !== locoCount) {
+        return alert('Un HLP (Haut le pied) est un convoi de locomotives seules, maximum 2.');
+      }
+    }
+    if (serviceType === 'tm') {
+      const locoCount = rame.elementDetails.filter(e => e.category === 'locomotive' || e.category === 'automotrice').length;
+      if (locoCount < 3 || locoCount > 12 || rame.elementDetails.length !== locoCount) {
+        return alert('Un TM (Train de machines) compte 3 à 12 locomotives, rien d’autre.');
+      }
+    }
+
     const returnName = document.getElementById('sched-return-name')?.value.trim() || '';
     const returnPlatforms = this._schedReturnPlatforms || {};
 
@@ -3418,7 +3438,7 @@ export class UI {
       name, rameId, stops, routes, returnStops: returnStopsData, returnRoutes,
       roundTrip, multiDepartures: 1, terminusWait,
       totalDistance: 0, plannedDistance: Math.round(totalDist),
-      isWorkTrain, returnName, returnPlatforms,
+      serviceType, isWorkTrain, returnName, returnPlatforms,
       runDays, runDates,
     }, rame, this.game.world);
     if (roundTrip && multiDepartures > 1) {
