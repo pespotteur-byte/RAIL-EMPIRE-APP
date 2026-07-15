@@ -276,13 +276,13 @@
 ## IG — INFOGARE  (P2)  [schémas styles]
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| IG-01 | CATI : versions 3-3 / complète / arrivée (retard + voie) | P2 | A11.1, annexes | [ ] |
-| IG-02 | AFL départ (retardé X min / supprimé + texte incident) | P2 | A11.1, annexes | [ ] |
-| IG-03 | AFL arrivée (colonne Voie) | P2 | A11.1, annexes | [ ] |
-| IG-04 | Palettes animées (horloge + perturbation, liste arrêts défilante) | P2 | A11.1, annexes | [ ] |
-| IG-05 | Info train (1 train) | P2 | A11.1 | [ ] |
-| IG-06 | Flash circulation (panneau bleu perturbation) | P2 | A11.1, annexes | [ ] |
-| IG-07 | Scroll infini sur 24h | P2 | A11.1 | [ ] |
+| IG-01 | CATI : versions 3-3 / complète / arrivée (retard + voie) | P2 | A11.1, annexes | [x] PR? (CATI 3-3 + arrivals SNCF) |
+| IG-02 | AFL départ (retardé X min / supprimé + texte incident) | P2 | A11.1, annexes | [x] PR? |
+| IG-03 | AFL arrivée (colonne Voie) | P2 | A11.1, annexes | [x] PR? |
+| IG-04 | Palettes animées (horloge + perturbation, liste arrêts défilante) | P2 | A11.1, annexes | [x] PR? (Old SNCF split-flap + Solari) |
+| IG-05 | Info train (1 train) | P2 | A11.1 | [x] PR? (clic sur train → plateforme GL/banlieue) |
+| IG-06 | Flash circulation (panneau bleu perturbation) | P2 | A11.1, annexes | [x] PR? |
+| IG-07 | Scroll infini sur 24h | P2 | A11.1 | [x] PR? |
 
 ## DSH — DASHBOARD / FINANCE / BANQUE  (P1)
 | ID | Exigence | Prio | Source | Statut |
