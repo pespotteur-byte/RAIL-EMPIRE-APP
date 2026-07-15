@@ -57,20 +57,20 @@
 | SIG-01 | Taille de canton fonction de la vitesse ligne (barème A3.2) | P0 | A3.2 | [x] PR3 (cantonLengthKm branché sur CantonManager) |
 | SIG-02 | Un seul train par canton | P0 | A3.2, A18 | [x] PR3 (CantonManager occupancy, existant + confirmé) |
 | SIG-03 | État "voie libre" = vitesse limite du tronçon | P0 | A3.2 | [x] PR3 |
-| SIG-04 | État "avertissement" = réduire pour pouvoir s'arrêter + alerte régulation | P0 | A3.2 | [~] PR3 (cap ≤60 sur avertissement ; alerte régulation en PR ultérieure) |
-| SIG-05 | État "carré/fermé" = arrêt obligatoire 25-50 m en amont + alerte | P0 | A3.2, annexe 3B | [~] PR3 (arrêt ~30 m via VISA=0 ; alerte régulation en PR ultérieure) |
+| SIG-04 | État "avertissement" = réduire pour pouvoir s'arrêter + alerte régulation | P0 | A3.2 | [x] PR? (cap ≤60 + signalAlert='caution' → 'Régulation du trafic') |
+| SIG-05 | État "carré/fermé" = arrêt obligatoire 25-50 m en amont + alerte | P0 | A3.2, annexe 3B | [x] PR? (arrêt ~30 m via VISA=0 + signalAlert='closed' → 'Arrêt pour signal fermé') |
 | SIG-06 | VISA : 30 km/h à 300 m, 20 à 200 m, 10 à 100 m du carré | P0 | A3.2 | [x] PR3 |
-| SIG-07 | Repartir d'un carré ouvert à l'avertissement : ≤60 km/h puis VISA | P0 | A3.2 | [~] PR3 (cap ≤60 ; séquence de redémarrage complète à affiner en marche) |
+| SIG-07 | Repartir d'un carré ouvert à l'avertissement : ≤60 km/h puis VISA | P0 | A3.2 | [x] PR? (cap ≤60 en avertissement, VISA ensuite) |
 | SIG-08 | Signaux ajoutables par le joueur (facultatif) | P2 | A15 P2 | [ ] |
 
 ## SC — SCHEDULE CREATOR  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | SC-01 | Définitions Gare / Waypoint / Aller-retour respectées | P0 | A4.1 | [x] PR5 (types arret/passage/waypoint + A/R) |
-| SC-02 | Heure de passage calculée à **CHAQUE gare réelle** rencontrée (point g) | P0 | A4.3, annexe 5 | [~] PR4 (interpolatePassageTimes + tests ; affichage des passages à brancher) |
+| SC-02 | Heure de passage calculée à **CHAQUE gare réelle** rencontrée (point g) | P0 | A4.3, annexe 5 | [x] PR? (ActiveService._computePassageStops + affichage dans la liste) |
 | SC-03 | Numérotation auto impair (aller) / pair (retour) | P0 | A4.3 | [x] PR4 (schedule-logic + ActiveService) |
 | SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [~] PR4/PR5 (modèle + propagation duplicata ; UI de tracé retour distinct à faire) |
-| SC-05 | Auto 24h génère les **duplicata réels** (pas juste un décompte) | P0 | A4.3, A14#4 | [~] PR5 (duplicateService = duplicata réels + numéros auto ; bouton Auto 24h reste un décompte multiDepartures) |
+| SC-05 | Auto 24h génère les **duplicata réels** (pas juste un décompte) | P0 | A4.3, A14#4 | [x] PR? (createAutoRoundTripDuplicates + duplicateService shift return stops + numéros) |
 | SC-06 | Attente terminus minimum 5 min, modifiable par le joueur | P0 | A4.3, réponse #5 doc | [x] PR4 (défaut 5 min, modifiable) |
 | SC-07 | Tableau horaires : 50 trajets par défaut, tri chronologique (départ A) | P1 | A4.3 | [x] PR5 (tri chrono par défaut) |
 | SC-08 | Clic ligne = menu déroulant détaillé du trajet | P1 | A4.3 | [x] PR5 (toggleSchedDetail, détail repliable) |
