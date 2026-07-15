@@ -1576,6 +1576,7 @@ export class UI {
     this.editingRameId = null;
     this._ramePickerPage = 0;
     document.getElementById('rame-name').value = '';
+    const ser = document.getElementById('rame-serial'); if (ser) ser.value = '';
     const s = document.getElementById('rame-search'); if (s) s.value = '';
     const c = document.getElementById('rame-cat-filter'); if (c) c.value = '';
     const q = document.getElementById('rame-qty'); if (q) q.value = '1';
@@ -1728,8 +1729,10 @@ export class UI {
     }
 
     const depotId = document.getElementById('rame-depot')?.value || '';
+    const serialNumber = document.getElementById('rame-serial')?.value.trim() || '';
     this.game.rameManager.add({
       name,
+      serialNumber,
       depotId,
       elements: this.currentRameElements.map(e => e.stockId),
       elementDetails: this.currentRameElements.map(e => ({
@@ -1758,7 +1761,7 @@ export class UI {
     container.innerHTML = rames.map(r => `
       <div class="rame-card">
         <div class="rame-card-header">
-          <span class="card-title">${r.name}</span>
+          <span class="card-title">${r.name}${r.serialNumber ? ` <span style="font-size:11px;color:var(--text3);font-weight:400">(${r.serialNumber})</span>` : ''}</span>
           <button class="btn-sm danger" onclick="game.ui.deleteRame('${r.id}')">Supprimer</button>
         </div>
         <div class="rame-card-images">

@@ -3,6 +3,7 @@ let nextRameId = 1;
 export class Rame {
   constructor(data) {
     this.id = data.id || `rame-${nextRameId++}`;
+    this.serialNumber = data.serialNumber || ''; // DEP-03 : n° de série (optionnel, distinct de l'ID interne)
     this.name = data.name || 'Sans nom';
     this.elements = data.elements || []; // array of RollingStockItem ids
     this.elementDetails = data.elementDetails || []; // cached details
@@ -107,6 +108,7 @@ export class RameManager {
   toSave() {
     return this.rames.map(r => ({
       id: r.id,
+      serialNumber: r.serialNumber,
       name: r.name,
       elements: r.elements,
       elementDetails: r.elementDetails,
