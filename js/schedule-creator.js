@@ -1585,7 +1585,7 @@ export class ActiveService {
           if (distFromPrev <= 0) distFromPrev = 20; // ultimate fallback
         }
       }
-      economy.processStopRevenue(this, station.name, distFromPrev, isFirst, isTerminus);
+      economy.processStopRevenue(this, station.name, distFromPrev, isFirst, isTerminus, station.id);
     }
 
     // For passage and waypoint stops, maintain speed (no stop-and-go)

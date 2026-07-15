@@ -73,7 +73,7 @@ export class Economy {
    * - Passengers: some descend (revenue for their trip), new ones board
    * - Freight: some unloaded (revenue), new freight loaded
    */
-  processStopRevenue(service, stationName, distFromPrev, isFirst, isTerminus) {
+  processStopRevenue(service, stationName, distFromPrev, isFirst, isTerminus, stationId) {
     if (!service || !service.rame) return;
     if (distFromPrev <= 0 && !isFirst) return;
 
@@ -128,9 +128,9 @@ export class Economy {
       else priceMult = 2.5;
 
       let paxRevenue = Math.round(paxDescend * distFromPrev * this.ticketPricePerKm * priceMult);
-      let frtRevenue = Math.round(freightUnload * distFromPrev * this.freightPricePerTKm);
+      let frtRevenue = 0; // calcul fret (contrat + générique) plus bas
 
-      // Delay penalty: reduce revenue by 25% (not double-dip)
+      // Delay penalty: reduce passenger revenue by 25% (freight handled below)
       if (service.train && service.train.delay >= 30) {
         const totalRev = paxRevenue + frtRevenue;
         const reducedTotal = Math.round(totalRev * 0.75);
@@ -154,9 +154,22 @@ export class Economy {
       }
       if (freightUnload > 0) {
         this.totalFreightTonnes += freightUnload;
-        if (frtRevenue > 0) {
-          this.addRevenue(frtRevenue, 'fret', `${stationName}: ${freightUnload}t déch. (${Math.round(distFromPrev)} km) — ${service.name}`);
-          if (service.lineId) this.addLineRevenue(service.lineId, frtRevenue);
+        // Section X — écoulement des contrats fret en gare destination
+        let fulfilledQty = 0, contractRevenue = 0;
+        if (isTerminus && stationId && typeof window !== 'undefined' && window.game?.freightManager?.fulfillAtStation) {
+          const isDelayed = (service.train?.delay || 0) >= 30;
+          const res = window.game.freightManager.fulfillAtStation(service, stationId, freightUnload, isDelayed);
+          fulfilledQty = Math.max(0, freightUnload - (res.remainingTonnes || 0));
+          contractRevenue = (res.fulfilled || []).reduce((s, f) => s + (f.payment || 0), 0);
+        }
+        const genericUnload = freightUnload - fulfilledQty;
+        let genericRevenue = genericUnload > 0 ? Math.round(genericUnload * distFromPrev * this.freightPricePerTKm) : 0;
+        const isDelayed = (service.train?.delay || 0) >= 30;
+        if (isDelayed && genericRevenue > 0) genericRevenue = Math.round(genericRevenue * 0.75); // pénalité retard 25%
+        const totalFrtRevenue = contractRevenue + genericRevenue;
+        if (totalFrtRevenue > 0) {
+          this.addRevenue(totalFrtRevenue, 'fret', `${stationName}: ${freightUnload}t déch. (${Math.round(distFromPrev)} km) — ${service.name}`);
+          if (service.lineId) this.addLineRevenue(service.lineId, totalFrtRevenue);
         }
         // Fret hors contrat : le tonnage réellement déchargé par un train du
         // joueur alimente aussi les stats Marchandises + Industrie. Le type de

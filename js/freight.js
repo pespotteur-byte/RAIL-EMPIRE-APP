@@ -12,6 +12,7 @@ export class FreightContract {
     this.to = data.to || '';
     this.toId = data.toId || '';
     this.payment = data.payment || 5000;
+    this.unitPrice = data.unitPrice || (data.quantity ? data.payment / data.quantity : 0);
     this.active = data.active !== false;
     this.progress = data.progress || 0;
     this.industrialClientId = data.industrialClientId || null;
@@ -80,10 +81,54 @@ export class FreightManager {
       to: c.to,
       toId: c.toId,
       payment: c.payment,
+      unitPrice: c.unitPrice,
       active: c.active,
       progress: c.progress,
       industrialClientId: c.industrialClientId || null,
     }));
+  }
+
+  // Section X — résolution des contrats fret lors d'un arrêt en gare ITE/destination
+  // Renvoie { fulfilled: [...], remainingTonnes }
+  fulfillAtStation(service, stationId, freightUnload, isDelayed = false) {
+    const g = typeof window !== 'undefined' ? window.game : null;
+    if (!g || !service?.rame || !stationId || freightUnload <= 0) return { fulfilled: [], remainingTonnes: freightUnload };
+
+    // Représente le type de fret du convoi (premier cargo trouvé dans les wagons)
+    let rameCargoType = service.rame.elementDetails?.find(e =>
+      Array.isArray(e.cargoTypes) && e.cargoTypes.length > 0
+    )?.cargoTypes?.[0];
+    if (!rameCargoType) rameCargoType = 'containers-20';
+
+    let remaining = freightUnload;
+    const fulfilled = [];
+    for (const c of this.contracts) {
+      if (!c.active) continue;
+      if (c.toId !== stationId) continue;
+      if (c.cargoType !== rameCargoType && !c.cargoType?.startsWith(rameCargoType?.split('-')[0])) continue;
+      if (remaining <= 0) break;
+
+      const qty = Math.min(remaining, c.quantity);
+      c.quantity -= qty;
+      remaining -= qty;
+      if (c.quantity <= 0) {
+        c.active = false;
+        c.progress = 1;
+      } else {
+        c.progress = (c.payment - (c.quantity * c.unitPrice || 0)) / c.payment;
+      }
+      let payment = Math.round(qty * (c.payment / (c.quantity + qty || 1)));
+      if (isDelayed && payment > 0) payment = Math.round(payment * 0.75); // pénalité retard 25%
+      fulfilled.push({ id: c.id, quantity: qty, payment });
+
+      if (c.quantity <= 0 && c.industrialClientId) {
+        const client = g.industrialClients?.clients?.find(cl => cl.id === c.industrialClientId);
+        if (client) {
+          client.satisfaction = Math.min(100, (client.satisfaction || 80) + (isDelayed ? 0 : 5));
+        }
+      }
+    }
+    return { fulfilled, remainingTonnes: remaining };
   }
 
   loadFromSave(arr) {
