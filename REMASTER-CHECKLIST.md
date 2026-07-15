@@ -72,7 +72,7 @@
 | SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [x] PR4/PR5 (UI "Tracer le retour", stop/route buffers distincts, save/load, simulation via _returnRoutes/_returnStopsData) |
 | SC-05 | Auto 24h génère les **duplicata réels** (pas juste un décompte) | P0 | A4.3, A14#4 | [x] PR? (createAutoRoundTripDuplicates + duplicateService shift return stops + numéros) |
 | SC-06 | Attente terminus minimum 5 min, modifiable par le joueur | P0 | A4.3, réponse #5 doc | [x] PR4 (défaut 5 min, modifiable) |
-| SC-07 | Tableau horaires : 50 trajets par défaut, tri chronologique (départ A) | P1 | A4.3 | [~] tri chrono ajouté, pagination 50 à faire |
+| SC-07 | Tableau horaires : 50 trajets par défaut, tri chronologique (départ A) | P1 | A4.3 | [x] PR? (tri + pagination 50/page) |
 | SC-08 | Clic ligne = menu déroulant détaillé du trajet | P1 | A4.3 | [x] PR5 (toggleSchedDetail, détail repliable) |
 | SC-09 | Traçage manuel d'itinéraire | P0 | A4.3 | [x] PR? (mode 'Tracer manuellement' + points de contrôle + interpolation 50m) |
 | SC-10 | Insertion de waypoint intermédiaire **sans supprimer** les suivants | P1 | A4.3 | [x] PR5 (insertion au segment le plus proche + recalcStopsFrom) |
@@ -172,7 +172,7 @@
 ## ITE — INSTALLATIONS TERMINALES  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| ITE-01 | ITE = point chargement/livraison fret, créé via modal Dépôts/ITE, terme unique "ITE" | P1 | A6.4 | [~] PR1 (UI ITE existante, tracé livemap à venir) |
+| ITE-01 | ITE = point chargement/livraison fret, créé via modal Dépôts/ITE, terme unique "ITE" | P1 | A6.4 | [x] PR1 (création ITE via modal, terme unique ITE) |
 | ITE-02 | Tracé manuel des voies ITE, chacune nommée, longueur saisie/calculée | P1 | A6.4 | [x] PR? (UI depot-ite-tracks : nom + longueur) |
 | ITE-03 | Longueur = contrainte : train trop long ne rentre pas | P1 | A6.4, A18 | [x] PR? (getITEInfo canFit + dwell extra) |
 | ITE-04 | Alternative : garer sur grand faisceau puis tranches (600=2×300/3×200) | P1 | A6.4 | [x] PR? (trancheCount + trancheManeuver dwell) |
@@ -288,7 +288,7 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | DSH-01 | Dashboard reçoit Finances + Banque (fusion) | P1 | A1.1, A11.2 | [x] PR1 |
-| DSH-02 | Schémas nets (fin du flou/pixélisé), MAJ temps réel, arrondi 0,1 | P1 | A11.2 | [~] PR1 (arrondi 0,1 + gros chiffres) |
+| DSH-02 | Schémas nets (fin du flou/pixélisé), MAJ temps réel, arrondi 0,1 | P1 | A11.2 | [x] PR? (graphiques DPR, arrondi 0,1 + MAJ live) |
 | DSH-03 | Grandes valeurs : case s'agrandit pour ne pas disparaître | P1 | A11.2 | [x] PR1 (word-break, overflow visible) |
 | DSH-04 | Vue synthèse + drill-down (rester lisible) | P1 | review | [ ] |
 
