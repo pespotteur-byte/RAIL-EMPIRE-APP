@@ -164,10 +164,10 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | DDS-01 | Train bloqué → loco secours l'attelle et le rapatrie au dépôt adapté le plus proche | P1 | A6.3, A18 | [x] PR? (dispatch + rapatriement) |
-| DDS-02 | Secours diesel ou électrique, choisi par joueur | P1 | A6.3 | [ ] |
+| DDS-02 | Secours diesel ou électrique, choisi par joueur | P1 | A6.3 | [x] PR? (traction stockée, préférence automatique selon électrification ORM) |
 | DDS-03 | Max 2 secours/dépôt, numérotées S- | P1 | A6.3 | [x] PR? |
 | DDS-04 | Loco secours ≤ 30 km/h dans canton occupé | P1 | A6.3 | [x] PR? (10/30/100 selon distance) |
-| DDS-05 | Trafic perturbé : les autres trains laissent le secours s'effectuer | P1 | A6.3 | [ ] |
+| DDS-05 | Trafic perturbé : les autres trains laissent le secours s'effectuer | P1 | A6.3 | [x] PR? (_yieldToRescue, arrêt si secours à < 2 km) |
 
 ## ITE — INSTALLATIONS TERMINALES  (P1)
 | ID | Exigence | Prio | Source | Statut |
