@@ -339,9 +339,9 @@
 ## ARC — ARCHITECTURE & PERFORMANCE  (P0/P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| ARC-01 | Modèle de données A12 implémenté (Node/Edge/Canton/Signal/Gare/Ligne/ITE/Dépôt/Engin/Rame/Trajet/Service/Contrat/Agent) | P0 | A12 | [ ] |
+| ARC-01 | Modèle de données A12 implémenté (Node/Edge/Canton/Signal/Gare/Ligne/ITE/Dépôt/Engin/Rame/Trajet/Service/Contrat/Agent) | P0 | A12 | [x] PR? (js/a12-model.js + intégration Game) |
 | ARC-02 | Rendu : n'afficher que les points de voie (FPS) | P1 | A13 | [x] PR? (livemap sans tracés gris, gares+voies) |
-| ARC-03 | LOD selon zoom + culling hors écran | P1 | A13 | [ ] |
+| ARC-03 | LOD selon zoom + culling hors écran | P1 | A13 | [x] PR? (renderer : bounding-box culling, simplification route par zoom, labels conditionnels) |
 | ARC-04 | Option carte basique (sans tracés ORM) + satellite + .org/.app | P2 | A13 | [ ] |
 | ARC-05 | Streaming/chargement progressif ORM par zone | P1 | A13 | [ ] |
 
