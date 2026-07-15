@@ -157,7 +157,7 @@
 | MNT-02 | Risque de panne par pièce + alerte bandeau train | P1 | A6.2 | [x] PR? (breakdown aléatoire par type + delayReason panne) |
 | MNT-03 | Pannes bénignes (clim, portes) : pas de technicentre obligatoire | P1 | A6.2 | [x] PR? (limité à 80 km/h, réparé en gare avec +5 min retard) |
 | MNT-04 | Pannes moteur/freins : arrêt urgence (plus long si freins) → DDS | P1 | A6.2 | [x] PR? (panne → arrêt → secours) |
-| MNT-05 | Notification d'achat pièces à valider + livraisons groupées multi-dépôts | P1 | A6.2 | [ ] |
+| MNT-05 | Notification d'achat pièces à valider + livraisons groupées multi-dépôts | P1 | A6.2 | [x] PR? (alerte low-stock + commande groupée tous dépôts) |
 | MNT-06 | Maintenance préventive mensuelle recommandée | P1 | A6.2 | [x] PR? (flag recommendedMaintenance, tri UI dépôt, reset mensuel) |
 
 ## DDS — DEMANDE DE SECOURS  (P1)
