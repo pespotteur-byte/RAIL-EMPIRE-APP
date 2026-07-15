@@ -522,6 +522,8 @@ export class Renderer {
 
   drawServices(ctx, world, services) {
     const zoom = this.tileMap?.zoomLevel || 10;
+    // DEP-06 : trains en maintenance absents de la Livemap ET du bandeau train
+    services = services.filter(svc => !svc.train?.inMaintenance && !(svc.rame && svc.rame.inMaintenance));
     const len = services.length;
     if (len === 0) return;
 

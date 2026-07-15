@@ -5336,13 +5336,14 @@ export class UI {
     const container = document.getElementById('trains-list');
     if (!container) return;
 
-    // Show only active trains (moving or stopped at station) + rescue services + in repair/maintenance
+    // Show only active trains (moving or stopped at station) + rescue services + breakdowns
+    // DEP-06 : trains en maintenance absents du bandeau train
     const activeTrains = services.filter(svc =>
-      svc && svc.train && (
+      svc && svc.train && !svc.train.inMaintenance && !(svc.rame && svc.rame.inMaintenance) && (
         svc.isRescue ||
         svc.state === 'moving' || svc.state === 'stopped_at_station' ||
         svc.train.speed > 0 ||
-        svc.train.breakdown || svc.train.inMaintenance
+        svc.train.breakdown
       )
     );
 
