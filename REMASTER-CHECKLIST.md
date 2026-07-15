@@ -123,7 +123,7 @@
 |----|----------|------|--------|--------|
 | RET-01 | Rame en retard au terminus : rouler retour en retard OU supprimer | P1 | A3.9 | [x] PR? |
 | RET-02 | Loi : 1/3 supprimer, 2/3 rouler en retard | P1 | A3.9 | [x] PR? |
-| RET-03 | Si supprimé : repart au prochain trajet prévu depuis cette gare | P1 | A3.9 | [ ] |
+| RET-03 | Si supprimé : repart au prochain trajet prévu depuis cette gare | P1 | A3.9 | [x] PR? (rame.currentLocation mis à jour sur annulation/fin) |
 | RET-04 | Retard causé par train devant = motif "régulation du trafic" | P1 | A3.9 | [x] PR? (train.delayReason + panneau Livemap) |
 
 ## LG — PAGE LIGNE / SILLONS AUTO  (P1)
