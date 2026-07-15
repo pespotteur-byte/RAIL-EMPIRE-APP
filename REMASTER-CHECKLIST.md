@@ -143,7 +143,7 @@
 ## DEP — DÉPÔTS & PARC  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| DEP-01 | Infrastructure dépôt : remisage / rotondes / technicentres | P1 | A6.1 | [ ] |
+| DEP-01 | Infrastructure dépôt : remisage / rotondes / technicentres | P1 | A6.1 | [x] PR? (modal ITE : infrastructures checkboxes, durée maintenance impactée) |
 | DEP-02 | Affectation engin à un dépôt à l'achat | P1 | A6.1 | [x] PR1 (depotId dans Rame, dropdown achat, liste dépôt) |
 | DEP-03 | ID interne jeu EN PLUS du n° série (n° série non obligatoire) | P1 | A6.1 | [x] PR? (Rame.id + Rame.serialNumber) |
 | DEP-04 | Localisation permanente de chaque engin + rame d'affectation | P0 | A6.1 | [x] PR1 (depotId persistant, rames listées sur fiche dépôt) |
