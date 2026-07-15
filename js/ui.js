@@ -3536,6 +3536,12 @@ export class UI {
       }
 
       const rame = this.game.rameManager.getById(svc.rameId);
+      const typeLabels = {
+        passager: 'Voy', w: 'W', hlp: 'HLP', tm: 'TM', evo: 'EVO', work: 'Travaux'
+      };
+      const typeBadge = svc.serviceType && svc.serviceType !== 'passager'
+        ? `<span style="display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;color:#94a3b8;margin-right:6px">${typeLabels[svc.serviceType] || svc.serviceType}</span>`
+        : '';
       const statusLabel = svc.isReturnLeg ? '<span style="color:#f59e0b;font-size:9px"> (retour)</span>' : '';
       // S11: Show trip count and direction names
       const firstSt = this.game.world.getStationById(svc.stops[0]?.stationId);
@@ -3566,6 +3572,7 @@ export class UI {
             <span class="sched-caret" id="sched-caret-${svc.id}" style="color:var(--text3);font-size:10px;width:12px;transition:transform .15s">▸</span>
             <span style="color:var(--text3);font-size:10px;min-width:38px">${depTime}</span>
             ${numLabel}
+            ${typeBadge}
             <span class="sched-item-name">${svc.name}${statusLabel}</span>
             <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
             <span style="color:var(--text3);font-size:10px">${Math.round(svc.plannedDistance || svc.totalDistance)} km${tripInfo}</span>
