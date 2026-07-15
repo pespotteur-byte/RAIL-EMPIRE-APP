@@ -133,6 +133,7 @@ export class IncidentManager {
     this.enabledTypes = new Set(PREDEFINED_INCIDENT_TYPES.map(t => t.id));
     this.lastTriggerHour = -1;
     this._incBboxVer = null;
+    this.accordionHorizonKm = 3.0; // INC-03 : effet accordéon avant la zone d'incident
   }
 
   isTypeEnabled(id) { return this.enabledTypes.has(id); }
@@ -234,6 +235,83 @@ export class IncidentManager {
     const dA = haversineDistance(lat, lon, stA.lat, stA.lon);
     const dB = haversineDistance(lat, lon, stB.lat, stB.lon);
     return (dA + dB) < totalDist + 2;
+  }
+
+  // INC-03 : distance en avant du train jusqu'au point cible le long du trajet de service
+  _distanceAheadOnRoute(svc, targetLat, targetLon) {
+    const route = svc._state?.cachedRoute;
+    const segDists = svc._state?.segDists;
+    if (!route || route.length < 2 || svc._state.index >= route.length - 1) return null;
+    let minDist = Infinity, bestSeg = -1, bestT = 0, bestAhead = Infinity;
+    for (let i = svc._state.index; i < route.length - 1; i++) {
+      const a = route[i], b = route[i + 1];
+      const d = this._pointToSegmentDist(targetLat, targetLon, a.lat, a.lon, b.lat, b.lon);
+      if (d < minDist) {
+        minDist = d;
+        bestSeg = i;
+        // recompute projection t
+        const cosLat = Math.cos(a.lat * Math.PI / 180);
+        const dx = (b.lon - a.lon) * 111 * cosLat;
+        const dy = (b.lat - a.lat) * 111;
+        const px = (targetLon - a.lon) * 111 * cosLat;
+        const py = (targetLat - a.lat) * 111;
+        const segLenSq = dx * dx + dy * dy;
+        bestT = segLenSq < 0.0001 ? 0 : Math.max(0, Math.min(1, (px * dx + py * dy) / segLenSq));
+      }
+    }
+    if (bestSeg < 0) return null;
+    if (bestSeg === svc._state.index && bestT < svc._state.progress) return null; // derrière le train
+    let ahead = 0;
+    const curSegDist = (segDists && segDists[svc._state.index]) || haversineDistance(route[svc._state.index].lat, route[svc._state.index].lon, route[svc._state.index + 1].lat, route[svc._state.index + 1].lon);
+    ahead += (1 - svc._state.progress) * curSegDist;
+    for (let i = svc._state.index + 1; i < bestSeg; i++) {
+      ahead += (segDists && segDists[i]) || haversineDistance(route[i].lat, route[i].lon, route[i + 1].lat, route[i + 1].lon);
+    }
+    if (bestSeg > svc._state.index) {
+      ahead += bestT * ((segDists && segDists[bestSeg]) || haversineDistance(route[bestSeg].lat, route[bestSeg].lon, route[bestSeg + 1].lat, route[bestSeg + 1].lon));
+    } else {
+      ahead -= (svc._state.progress - bestT) * curSegDist;
+    }
+    return minDist < 1.0 ? ahead : null; // tolérance 1 km pour matcher le tracé ORM
+  }
+
+  // INC-03 : effet accordéon — ralentissement progressif avant l'incident
+  getApproachingIncident(svc, world) {
+    if (svc.state !== 'moving' || !svc._state?.cachedRoute || this.activeIncidents.length === 0) return null;
+    const horizon = this.accordionHorizonKm;
+    let best = null;
+    let bestDist = Infinity;
+    for (const inc of this.activeIncidents) {
+      if (!inc.active || inc.serviceId) continue; // incidents mono-train gérés directement
+      if (inc.effect !== 'stop' && inc.effect !== 'slow') continue;
+      const points = [];
+      if (inc.route && inc.route.length) points.push(...inc.route);
+      else if (world) {
+        const stA = world.getStationById(inc.stationA);
+        const stB = world.getStationById(inc.stationB);
+        if (stA) points.push({ lat: stA.lat, lon: stA.lon });
+        if (stB) points.push({ lat: stB.lat, lon: stB.lon });
+      }
+      if (points.length === 0) continue;
+      let minDist = Infinity;
+      for (const p of points) {
+        const d = this._distanceAheadOnRoute(svc, p.lat, p.lon);
+        if (d != null && d < minDist) minDist = d;
+      }
+      if (minDist <= horizon && minDist < bestDist) {
+        bestDist = minDist;
+        best = inc;
+      }
+    }
+    if (!best || bestDist > horizon) return null;
+    // Ralentissement : 30 km/h à l'horizon, jusqu'à l'arrêt complet à < 0,3 km
+    const slowLimit = Math.max(0, Math.round(30 * (bestDist / horizon)));
+    if (best.effect === 'stop') {
+      if (bestDist < 0.3) return { effect: 'stop', speedLimit: 0, name: best.name, approaching: true };
+      return { effect: 'slow', speedLimit: Math.max(5, slowLimit), name: `Approche incident : ${best.name}`, approaching: true };
+    }
+    const base = best.speedLimit || 30;
+    return { effect: 'slow', speedLimit: Math.max(5, Math.min(base, slowLimit + base * 0.2)), name: `Approche incident : ${best.name}`, approaching: true };
   }
 
   // --- Random incident spawning (Annexe 11) ---
@@ -451,6 +529,14 @@ export class IncidentManager {
           if (!alreadyRescued) {
             depotManager.dispatchRescue(world, svc);
           }
+        }
+      }
+
+      // INC-03 : si aucun incident direct, ralentissement progressif en approche
+      if (!worstIncident && svc.state === 'moving') {
+        const approaching = this.getApproachingIncident(svc, world);
+        if (approaching) {
+          svc.train.incident = approaching;
         }
       }
     }
