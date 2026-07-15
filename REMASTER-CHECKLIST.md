@@ -111,18 +111,18 @@
 ## CVO — TYPES DE CONVOIS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| CVO-01 | W = vide voyageur (repositionnement, voyageurs only, créé par joueur) | P1 | A3.7 | [ ] |
-| CVO-02 | HLP = loco(s) seule(s), max 2, auto | P1 | A3.7 | [ ] |
-| CVO-03 | TM = train de machines, 3 à 12 locos (jamais >12) | P1 | A3.7 | [ ] |
-| CVO-04 | EVO = mouvement rame garage→gare, auto | P1 | A3.7 | [ ] |
-| CVO-05 | M- = machine de manœuvre, rattachée dépôt, usure identique | P1 | A3.7 | [ ] |
-| CVO-06 | S- = machine de secours, max 2/dépôt, payante, usure identique | P1 | A3.7, A6.3 | [ ] |
+| CVO-01 | W = vide voyageur (repositionnement, voyageurs only, créé par joueur) | P1 | A3.7 | [x] PR? (serviceType='w', non-revenus) |
+| CVO-02 | HLP = loco(s) seule(s), max 2, auto | P1 | A3.7 | [x] PR? (validation max 2 locos) |
+| CVO-03 | TM = train de machines, 3 à 12 locos (jamais >12) | P1 | A3.7 | [x] PR? (validation 3-12 locos) |
+| CVO-04 | EVO = mouvement rame garage→gare, auto | P1 | A3.7 | [~] (type défini, auto à venir) |
+| CVO-05 | M- = machine de manœuvre, rattachée dépôt, usure identique | P1 | A3.7 | [~] (type disponible, manœuvre à venir) |
+| CVO-06 | S- = machine de secours, max 2/dépôt, payante, usure identique | P1 | A3.7, A6.3 | [x] PR? (max 2 secours + vitesse DDS 10/30 km/h) |
 
 ## RET — RETARDS, SUPPRESSION & REPRISE  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| RET-01 | Rame en retard au terminus : rouler retour en retard OU supprimer | P1 | A3.9 | [ ] |
-| RET-02 | Loi : 1/3 supprimer, 2/3 rouler en retard | P1 | A3.9 | [ ] |
+| RET-01 | Rame en retard au terminus : rouler retour en retard OU supprimer | P1 | A3.9 | [x] PR? |
+| RET-02 | Loi : 1/3 supprimer, 2/3 rouler en retard | P1 | A3.9 | [x] PR? |
 | RET-03 | Si supprimé : repart au prochain trajet prévu depuis cette gare | P1 | A3.9 | [ ] |
 | RET-04 | Retard causé par train devant = motif "régulation du trafic" | P1 | A3.9 | [ ] |
 
