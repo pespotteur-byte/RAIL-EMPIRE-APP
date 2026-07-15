@@ -303,7 +303,7 @@
 ## IND — INDUSTRIELS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| IND-01 | Page Industriels : création/modif/suppression/déplacement clients sur livemap | P1 | A7, A1.1 | [ ] |
+| IND-01 | Page Industriels : création/modif/suppression/déplacement clients sur livemap | P1 | A7, A1.1 | [x] PR? ( IndustrialClients.updateClient / moveClient + UI modifier/déplacer/résilier) |
 
 ## NAV — CONSOLIDATION DES PAGES  (P1)
 | ID | Exigence | Prio | Source | Statut |
