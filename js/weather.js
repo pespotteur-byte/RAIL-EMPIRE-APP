@@ -37,6 +37,12 @@ export class Weather {
     this._lastRadarFetch = 0;
     this._radarFetchCooldown = 600000; // 10 min
 
+    // MET-01 — cache météo par point lat/lon (jusqu'à 500 points, 10 min)
+    this._pointCache = new Map();
+    this._pointFetchQueue = [];
+    this._maxPointCache = 500;
+    this._pointCooldown = 600000;
+
     this._effects = {
       clear:  { speedMult: 1.0,  icon: 'sun',         label: 'Dégagé',      color: '#fbbf24' },
       rain:   { speedMult: 0.90, icon: 'rain',        label: 'Pluie',       color: '#60a5fa' },
@@ -215,6 +221,112 @@ export class Weather {
 
   getSpeedMultiplier() {
     return this._effects[this.current]?.speedMult ?? 1.0;
+  }
+
+  // MET-01 — cache météo par point
+  _pointKey(lat, lon) {
+    const k = 100;
+    return `${Math.round(lat * k)},${Math.round(lon * k)}`;
+  }
+
+  _globalPointState() {
+    return {
+      type: this.current,
+      temperature: this.temperature,
+      windSpeed: this.windSpeed,
+      precipitation: this.precipitation,
+      label: this._wmoDescription || (this._effects[this.current]?.label || 'Dégagé'),
+      live: this._liveDataAvailable,
+    };
+  }
+
+  getAt(lat, lon) {
+    if (lat == null || lon == null) return this._globalPointState();
+    const key = this._pointKey(lat, lon);
+    const cached = this._pointCache.get(key);
+    if (cached && Date.now() < cached.expiresAt) return cached.state;
+    this._queuePointFetch(lat, lon);
+    return this._globalPointState();
+  }
+
+  _queuePointFetch(lat, lon) {
+    const key = this._pointKey(lat, lon);
+    if (this._pointFetchQueue.some(p => p.key === key)) return;
+    this._pointFetchQueue.push({ key, lat, lon, ts: Date.now() });
+    if (this._pointFetchQueue.length > this._maxPointCache) this._pointFetchQueue.shift();
+    if (!this._pointFetchTimer) {
+      this._pointFetchTimer = setTimeout(() => this._processPointFetchQueue(), 200);
+    }
+  }
+
+  async _processPointFetchQueue() {
+    this._pointFetchTimer = null;
+    const item = this._pointFetchQueue.shift();
+    if (!item) return;
+    try {
+      const state = await this._fetchLiveWeatherFor(item.lat, item.lon);
+      this._pointCache.set(item.key, { state, expiresAt: Date.now() + this._pointCooldown });
+      if (this._pointCache.size > this._maxPointCache) {
+        const oldest = this._pointCache.keys().next().value;
+        this._pointCache.delete(oldest);
+      }
+    } catch (e) {
+      // console.warn('Point weather fetch failed', e.message);
+    }
+    if (this._pointFetchQueue.length > 0) {
+      this._pointFetchTimer = setTimeout(() => this._processPointFetchQueue(), 500);
+    }
+  }
+
+  async _fetchLiveWeatherFor(lat, lon) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&timezone=auto`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    const cur = data.current || {};
+    const wmoCode = cur.weather_code ?? 0;
+    const wmo = this._wmoMapping[wmoCode] || this._wmoMapping[0];
+    let type = wmo.type;
+    const temp = Math.round(cur.temperature_2m ?? this.temperature);
+    if (temp > 35 && type === 'clear') type = 'heat';
+    return {
+      type,
+      temperature: temp,
+      windSpeed: Math.round(cur.wind_speed_10m ?? this.windSpeed),
+      precipitation: cur.precipitation ?? 0,
+      label: wmo.desc,
+      live: true,
+    };
+  }
+
+  /** Returns the local weather effects at a lat/lon for a train:
+   *  - speedCap: an absolute km/h cap to subtract for snow (MET-06)
+   *  - brakeFactor: multiplier on deceleration (lower = brake earlier)
+   *  - speedMult: multiplier on top speed (kept for display)
+   *  - type: weather type
+   */
+  getSpeedEffectsAt(lat, lon, trainSpeedKmh = 0) {
+    const state = this.getAt(lat, lon);
+    const type = state.type;
+    let speedCap = Infinity;
+    let brakeFactor = 1.0;
+    // MET-06 — neige : −20 km/h si V ≥ 140 + freinage dégradé
+    if (type === 'snow') {
+      if (trainSpeedKmh >= 140) speedCap = trainSpeedKmh - 20;
+      brakeFactor = 0.55;
+    } else if (type === 'rain') {
+      // MET-03/04 : pluie = freiner plus tôt (pas de baisse de vitesse)
+      brakeFactor = state.precipitation > 2.5 ? 0.80 : 0.92;
+    } else if (type === 'storm') {
+      // MET-05 : orage/tempête = freiner encore plus tôt
+      brakeFactor = 0.60;
+    } else if (type === 'fog') {
+      brakeFactor = 0.85;
+    } else if (type === 'heat') {
+      brakeFactor = 1.0;
+    }
+    const speedMult = this._effects[type]?.speedMult ?? 1.0;
+    return { type, speedCap, brakeFactor, speedMult, label: state.label };
   }
 
   getDisplay() {

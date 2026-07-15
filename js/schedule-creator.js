@@ -54,7 +54,7 @@ export class ServiceStop {
 }
 
 export class ActiveService {
-  constructor(data, rame, world) {
+  constructor(data, rame, world, weather) {
     this.id = data.id || `svc-${nextServiceId++}`;
     this.name = data.name || 'Service';
     this.rameId = data.rameId;
@@ -64,6 +64,7 @@ export class ActiveService {
     );
     this.routes = data.routes || [];
     this.world = world;
+    this.weather = weather;
     this.roundTrip = data.roundTrip || false;
     this.multiDepartures = data.multiDepartures || 1;
     this.terminusWait = data.terminusWait || DEFAULT_TERMINUS_WAIT_MIN; // SC-06
@@ -1824,10 +1825,11 @@ export class ActiveService {
 export class ScheduleCreator {
   constructor() {
     this.services = [];
+    this.weather = null; // set by game
   }
 
   addService(data, rame, world) {
-    const svc = new ActiveService(data, rame, world);
+    const svc = new ActiveService(data, rame, world, this.weather);
     this.services.push(svc);
     this._invalidateActiveCache();
     return svc;
@@ -2154,7 +2156,7 @@ export class ScheduleCreator {
     for (let d of arr) {
       d = this._expandCompactService(d);
       const rame = rameManager.getById(d.rameId);
-      const svc = new ActiveService(d, rame, world);
+      const svc = new ActiveService(d, rame, world, this.weather);
       svc.totalDistance = d.totalDistance || 0;
       svc.active = d.active !== false;
 

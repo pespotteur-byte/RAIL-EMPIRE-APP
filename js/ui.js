@@ -6665,10 +6665,14 @@ export class UI {
   }
 
   // ==================== WEATHER ====================
+  // MET-08 / NAV-04 : Saisons fusionnées dans la page Météo
   renderWeatherPage() {
     try {
       const container = document.getElementById('weather-container');
-      this.game.weather.render(container);
+      if (!container) return;
+      container.innerHTML = '<div id="weather-content"></div><div id="weather-seasonal" style="margin-top:16px"></div>';
+      this.game.weather.render(document.getElementById('weather-content'));
+      this.game.seasonal.render(document.getElementById('weather-seasonal'), this.game);
     } catch(e) { console.warn('Weather render error:', e); }
   }
 

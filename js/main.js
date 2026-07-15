@@ -63,6 +63,7 @@ class RailEmpire {
     this.tutorial = new Tutorial();
     this.bank = new Bank();
     this.weather = new Weather();
+    this.scheduleCreator.weather = this.weather;
     this.unions = new Unions();
     this.seasonal = new SeasonalSchedule();
     this.connections = new Connections();
