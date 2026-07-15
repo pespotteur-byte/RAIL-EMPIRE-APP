@@ -10,6 +10,8 @@ export class Depot {
     this.tracks = data.tracks || 4;
     this.cost = data.cost || 50000;
     this.built = data.built || false;
+    // DEP-01 : infrastructures dépôt (remisage, rotonde, technicentre)
+    this.infrastructure = Array.isArray(data.infrastructure) ? data.infrastructure : [];
     this.ramesStored = data.ramesStored || [];
     // ITE track footprints: array of { name, length, cargoType }
     this.iteTracks = Array.isArray(data.iteTracks) ? data.iteTracks : [];
@@ -57,6 +59,17 @@ export class Depot {
 
   getMaintenanceCost() {
     return this.tracks * 200;
+  }
+
+  hasInfrastructure(type) {
+    return Array.isArray(this.infrastructure) && this.infrastructure.includes(type);
+  }
+
+  // DEP-01 : technicentre nécessaire pour maintenance lourde ; rotonde réduit le temps
+  getMaintenanceDuration(baseMinutes) {
+    if (!this.hasInfrastructure('technicentre')) return baseMinutes * 2;
+    if (this.hasInfrastructure('rotonde')) return Math.max(5, Math.round(baseMinutes * 0.8));
+    return baseMinutes;
   }
 
   // Can dispatch rescue locomotive (has available non-deployed locos)
@@ -487,11 +500,13 @@ export class DepotManager {
   // Send a RAME for preventive maintenance
   sendRameToMaintenance(rameId, rameName, depotId) {
     if (this.maintenanceQueue.some(m => m.rameId === rameId)) return false;
+    const depot = this.depots.find(d => d.id === depotId);
+    const duration = depot ? depot.getMaintenanceDuration(20) : 20;
     this.maintenanceQueue.push({
       rameId,
       depotId,
-      remainingMin: 20, // 20 min for preventive maintenance
-      totalMin: 20,
+      remainingMin: duration,
+      totalMin: duration,
       rameName: rameName || rameId,
     });
     return true;
@@ -545,6 +560,7 @@ export class DepotManager {
         tracks: d.tracks,
         cost: d.cost,
         built: d.built,
+        infrastructure: d.infrastructure,
         ramesStored: d.ramesStored,
         iteTracks: d.iteTracks,
         iteCargoTypes: d.iteCargoTypes,

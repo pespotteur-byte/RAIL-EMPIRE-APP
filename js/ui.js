@@ -4449,12 +4449,14 @@ export class UI {
     const type = document.getElementById('depot-type')?.value || 'depot';
     const stationId = document.getElementById('depot-station')?.value;
     if (!stationId) return alert('Sélectionnez une gare');
+    const infra = [...document.querySelectorAll('.depot-infra:checked')].map(cb => cb.value);
     const data = {
       type,
       name: document.getElementById('depot-name')?.value.trim() || 'Depot',
       stationId,
       tracks: parseInt(document.getElementById('depot-tracks')?.value) || 4,
       cost: parseInt(document.getElementById('depot-cost')?.value) || 50000,
+      infrastructure: type === 'depot' ? infra : [],
       iteTracks: type.startsWith('ite') ? (this._pendingITETracks || []) : [],
       iteCargoTypes: type.startsWith('ite') ? [...new Set((this._pendingITETracks || []).map(t => t.cargoType).filter(Boolean))] : [],
     };
@@ -4523,7 +4525,7 @@ export class UI {
           <div class="card-info">
             <b>Type:</b> ${d.getTypeLabel()}<br>
             <b>Gare:</b> ${station ? station.name : d.stationId}<br>
-            <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR
+            <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR${d.infrastructure?.length ? '<br><b>Infra:</b> ' + d.infrastructure.join(', ') : ''}
           </div>
           ${ramesList}
           ${d.type === 'depot' ? `
