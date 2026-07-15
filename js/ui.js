@@ -3537,7 +3537,7 @@ export class UI {
 
     // SC-05 — create a single base service, then generate real duplicates for Auto 24h.
     const baseService = this.game.scheduleCreator.addService({
-      name, rameId, stops, routes, returnStops: returnStopsData, returnRoutes,
+      name, rameId, stops, routes: forwardRoutes, returnStops: returnStopsData, returnRoutes,
       roundTrip, multiDepartures: 1, terminusWait,
       totalDistance: 0, plannedDistance: Math.round(totalDist),
       serviceType, isWorkTrain, assignedContractId, returnName, returnPlatforms,
