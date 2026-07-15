@@ -28,7 +28,7 @@
 | R-05 | Routage fonctionne sur longue distance (**≥1200 km** vérifié) | P0 | annexe 10b | [x] PR1 |
 | R-06 | Index spatial (grille/quadtree/R-tree) pour requêtes "edges proches" | P0 | A13 | [x] PR1 |
 | R-07 | Plafonnement vitesse routage à V160 (matériel joueur) | P1 | A13 | [ ] |
-| R-08 | Aiguillages branchés au routage (fin des aiguillages décoratifs) | P0 | A14#13, annexe 10d | [ ] |
+| R-08 | Aiguillages branchés au routage (fin des aiguillages décoratifs) | P0 | A14#13, annexe 10d | [x] PR? (tronçons utilisateur injectés dans le graphe ORM) |
 | R-09 | Points auto tous les 50 m maîtrisés (pas de points parasites) | P0 | A4.2 (d), A14#5 | [x] PR? (densification 50m, points editables/supprimables) |
 
 ## PH — PHYSIQUE DE TRACTION  (P0)
@@ -360,7 +360,7 @@
 | BUG-10 | Gares créées invisibles (cf. LVM-05) | P0 | A14#10 | [x] PR? (world.addStation + renderer.drawStations) |
 | BUG-11 | Images Dashboard/Graphique zoomées → recadrage/responsive | P1 | A14#11 | [ ] |
 | BUG-12 | Point de voie qui s'efface (souris hors cadre) → découpler validation du focus + Échap/Entrée | P1 | A14#12 | [x] PR? (validation Entrée dans le modal) |
-| BUG-13 | Aiguillages décoratifs (cf. R-08) | P0 | A14#13 | [ ] |
+| BUG-13 | Aiguillages décoratifs (cf. R-08) | P0 | A14#13 | [x] PR? (R-08 intégration graphe) |
 
 ---
 
