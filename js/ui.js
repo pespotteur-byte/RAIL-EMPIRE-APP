@@ -4574,7 +4574,7 @@ export class UI {
     const stock = this.game.rollingStock.getAll().find(s => s.id === select.value);
     if (!stock) return;
     const displayName = stock.seriesName ? `${stock.seriesName} ${stock.numberStart || ''}`.trim() : stock.name;
-    const ok = this.game.depotManager.addRescueLoco(depotId, stock.id, displayName);
+    const ok = this.game.depotManager.addRescueLoco(depotId, stock.id, displayName, stock.traction);
     if (!ok) return alert('Maximum 2 machines de secours par dépôt.');
     this.game.saveState();
     this.renderDepotsList();

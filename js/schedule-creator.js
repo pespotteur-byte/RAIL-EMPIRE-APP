@@ -406,6 +406,22 @@ export class ActiveService {
     return Number.isFinite(cap) ? cap : null;
   }
 
+  // DDS-05 : les trains à proximité d'un secours en intervention s'arrêtent pour le laisser passer
+  _yieldToRescue() {
+    const dm = window.game?.depotManager;
+    if (!dm || !this.position) return;
+    for (const rescue of dm.activeRescues || []) {
+      if (!rescue.position || (rescue.state !== 'en_route' && rescue.state !== 'recovering')) continue;
+      const d = haversineDistance(this.position.lat, this.position.lon, rescue.position.lat, rescue.position.lon);
+      if (d < 2.0) {
+        this.speed = 0;
+        this.train.speed = 0;
+        this.train.blockedBy = true;
+        return;
+      }
+    }
+  }
+
   // Called every minute - handles schedule logic (departures, arrivals, state transitions)
   scheduleTick(timeOfDay, dateStr, economy) {
     if (!this.active || this.stops.length < 2) return;
@@ -1199,6 +1215,9 @@ export class ActiveService {
       this.arriveAtStation(target, timeOfDay, this._economy);
       return;
     }
+
+    // DDS-05 : céder le passage aux secours en intervention
+    this._yieldToRescue();
 
     // --- ANTI-OVERTAKE: clamp position behind nearest train ahead on same route ---
     if (allServices && allServices.length > 1) {

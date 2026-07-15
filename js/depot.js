@@ -18,6 +18,7 @@ export class Depot {
     this.rescueLocos = (data.rescueLocos || []).map(r => ({
       stockId: r.stockId,
       stockName: r.stockName || '',
+      traction: r.traction || '',
       deployed: r.deployed || false,
     }));
     // Section VI — stocks de pièces détachées pour la maintenance
@@ -64,7 +65,11 @@ export class Depot {
   }
 
   // Get first available rescue loco
-  getAvailableRescueLoco() {
+  getAvailableRescueLoco(preferredTraction) {
+    if (preferredTraction) {
+      const match = this.rescueLocos.find(r => !r.deployed && r.traction && r.traction.toLowerCase().includes(preferredTraction.toLowerCase()));
+      if (match) return match;
+    }
     return this.rescueLocos.find(r => !r.deployed);
   }
 
@@ -171,11 +176,11 @@ export class DepotManager {
   }
 
   // Add a rescue loco to a depot — max 2 per depot (Annexe 9)
-  addRescueLoco(depotId, stockId, stockName) {
+  addRescueLoco(depotId, stockId, stockName, traction) {
     const depot = this.depots.find(d => d.id === depotId);
     if (depot) {
       if (depot.rescueLocos.length >= 2) return false;
-      depot.rescueLocos.push({ stockId, stockName, deployed: false });
+      depot.rescueLocos.push({ stockId, stockName, traction: traction || '', deployed: false });
       return true;
     }
     return false;
@@ -205,12 +210,23 @@ export class DepotManager {
   }
 
   // Dispatch rescue for a broken-down train
+  // DDS-02 : choisir un secours diesel si le tronçon est non électrifié, électrique sinon
   dispatchRescue(world, brokenService) {
     if (!brokenService?.position) return null;
     const depot = this.findNearestRescueDepot(world, brokenService.position.lat, brokenService.position.lon);
     if (!depot) return null;
 
-    const loco = depot.getAvailableRescueLoco();
+    let preferred = '';
+    const route = (typeof brokenService.getCurrentRoute === 'function' && brokenService.getCurrentRoute()) ||
+                  brokenService._state?.cachedRoute;
+    if (route?.length > 1) {
+      const electCount = route.filter(p => p.electrified !== false).length;
+      const nonElectCount = route.filter(p => p.electrified === false).length;
+      if (nonElectCount > electCount) preferred = 'diesel';
+      else if (electCount > 0) preferred = 'kv';
+    }
+
+    const loco = depot.getAvailableRescueLoco(preferred);
     if (!loco) return null;
 
     depot.deployRescue(loco.stockId);
