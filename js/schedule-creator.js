@@ -1572,8 +1572,15 @@ export class ActiveService {
       if (iteInfo?.isITE) {
         this.train.iteInfo = { totalLength: iteInfo.totalLength, trainLength, trancheCount: iteInfo.trancheCount, canFit: iteInfo.canFit, cargoMatch: iteInfo.cargoMatch };
         this._iteCargoMismatch = iteInfo.cargoMatch === false;
-        // Si le train est trop long, on simule le découpage en tranches par du temps de manœuvre supplémentaire (15 min/tranche)
-        this._iteDwellExtra = iteInfo.canFit ? 0 : (iteInfo.trancheCount * 15);
+        // ITE-06 : temps de manœuvre/déchargement/rechargement selon type de cargaison + longueur/tranches
+        const cargo = (rameCargo || '').toLowerCase();
+        let factor = 1.0; // minutes par 100 m de train
+        if (/citerne|gaz|gas|liquide/.test(cargo)) factor = 1.5;
+        else if (/intermodal|container|conteneur|porte-auto|tomber/.test(cargo)) factor = 2.5;
+        else if (/cereals|cereale|ciment|cement|silos|tremie|trémie/.test(cargo)) factor = 1.2;
+        const loadUnload = Math.ceil(factor * (trainLength / 100) * (iteInfo.canFit ? 1 : 1.2));
+        const trancheManeuver = iteInfo.canFit ? 0 : ((iteInfo.trancheCount - 1) * 10);
+        this._iteDwellExtra = loadUnload + trancheManeuver;
       } else {
         this._iteDwellExtra = 0;
         this._iteCargoMismatch = false;
