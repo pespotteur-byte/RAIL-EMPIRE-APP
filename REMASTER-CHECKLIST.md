@@ -95,10 +95,10 @@
 |----|----------|------|--------|--------|
 | OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [~] PR6 (voie point occupé + probe voies libres à l'arrivée) |
 | OCC-02 | 2 trains même voie n'entrent pas ensemble en gare (sauf points ≠) | P0 | A3.5 | [x] PR6 (arrivée bloquée si aucune voie libre → attente en approche) |
-| OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [ ] |
+| OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [x] PR? (voyageur avec départ le plus tôt en priorité) |
 | OCC-04 | Priorité en ligne : plus rapide = prioritaire | P1 | A3.5, réponse #3 | [ ] |
-| OCC-05 | Écart recommandé ≥ 2 min entre 2 trains (peut descendre au bloc) | P1 | A3.5 | [ ] |
-| OCC-06 | Plafond d'attente : max 2 h sur voie de garage → reprise forcée au-delà | P1 | A3.5, réponse #3 | [ ] |
+| OCC-05 | Écart recommandé ≥ 2 min entre 2 trains (peut descendre au bloc) | P1 | A3.5 | [x] PR? (2 min après libération du canton) |
+| OCC-06 | Plafond d'attente : max 2 h sur voie de garage → reprise forcée au-delà | P1 | A3.5, réponse #3 | [x] PR? (départ forcé après 120 min) |
 
 ## REG — RÉGULATION  (P1)
 | ID | Exigence | Prio | Source | Statut |
@@ -156,17 +156,17 @@
 | MNT-01 | Stock pièces : moteur / clim / fanaux / freins / portes | P1 | A6.2 | [ ] |
 | MNT-02 | Risque de panne par pièce + alerte bandeau train | P1 | A6.2 | [ ] |
 | MNT-03 | Pannes bénignes (clim, portes) : pas de technicentre obligatoire | P1 | A6.2 | [ ] |
-| MNT-04 | Pannes moteur/freins : arrêt urgence (plus long si freins) → DDS | P1 | A6.2 | [ ] |
+| MNT-04 | Pannes moteur/freins : arrêt urgence (plus long si freins) → DDS | P1 | A6.2 | [x] PR? (panne → arrêt → secours) |
 | MNT-05 | Notification d'achat pièces à valider + livraisons groupées multi-dépôts | P1 | A6.2 | [ ] |
 | MNT-06 | Maintenance préventive mensuelle recommandée | P1 | A6.2 | [ ] |
 
 ## DDS — DEMANDE DE SECOURS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| DDS-01 | Train bloqué → loco secours l'attelle et le rapatrie au dépôt adapté le plus proche | P1 | A6.3, A18 | [ ] |
+| DDS-01 | Train bloqué → loco secours l'attelle et le rapatrie au dépôt adapté le plus proche | P1 | A6.3, A18 | [x] PR? (dispatch + rapatriement) |
 | DDS-02 | Secours diesel ou électrique, choisi par joueur | P1 | A6.3 | [ ] |
-| DDS-03 | Max 2 secours/dépôt, numérotées S- | P1 | A6.3 | [ ] |
-| DDS-04 | Loco secours ≤ 30 km/h dans canton occupé | P1 | A6.3 | [ ] |
+| DDS-03 | Max 2 secours/dépôt, numérotées S- | P1 | A6.3 | [x] PR? |
+| DDS-04 | Loco secours ≤ 30 km/h dans canton occupé | P1 | A6.3 | [x] PR? (10/30/100 selon distance) |
 | DDS-05 | Trafic perturbé : les autres trains laissent le secours s'effectuer | P1 | A6.3 | [ ] |
 
 ## ITE — INSTALLATIONS TERMINALES  (P1)
@@ -177,7 +177,7 @@
 | ITE-03 | Longueur = contrainte : train trop long ne rentre pas | P1 | A6.4, A18 | [~] PR1 (modèle stocké, validation gameplay à venir) |
 | ITE-04 | Alternative : garer sur grand faisceau puis tranches (600=2×300/3×200) | P1 | A6.4 | [ ] |
 | ITE-05 | Types d'ITE selon cargaison (ex. intermodal) | P1 | A6.4 | [x] PR1 (type ITE + cargoType par voie) |
-| ITE-06 | Temps en ITE : arrivée/coupe/déchargement/rechargement selon type+longueur | P1 | A6.4 | [ ] |
+| ITE-06 | Temps en ITE : arrivée/coupe/déchargement/rechargement selon type+longueur | P1 | A6.4 | [x] PR? (dwell selon cargo/longueur/tranches) |
 | ITE-07 | Intermodal : simuler grues/portiques | P1 | A6.4 | [ ] |
 | ITE-08 | ⚠️ Synchronisation bateaux ANNULÉE ; fret peut partir vide | — | A6.4, réponse #6 | [x] décidé |
 
@@ -188,7 +188,7 @@
 | FRT-02 | Clients = entreprises ; but = qualité de service / parts de marché | P1 | A7 | [ ] |
 | FRT-03 | Contrat = besoins matériels + lieu livraison (ITE), assignable à un service | P1 | A7 | [x] PR? (picker contrat dans Horaires + fulfillment) |
 | FRT-04 | Retard → pénalité 25 % | P1 | A7, A18 | [x] PR? (sur contrat et fret générique) |
-| FRT-05 | Avance/fiabilité → confiance accrue → plus d'offres | P1 | A7 | [ ] |
+| FRT-05 | Avance/fiabilité → confiance accrue → plus d'offres | P1 | A7 | [x] PR? (satisfaction + tonnage offres liés) |
 | FRT-06 | La demande peut manquer : fret peut partir vide | P1 | A7 | [x] PR? (chargement aléatoire 20-70%) |
 
 ## ECO — ÉCONOMIE  (P1)
