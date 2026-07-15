@@ -2,6 +2,7 @@ import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
+  interpolatePassageTimes,
 } from './schedule-logic.js';
 
 let nextServiceId = 1;
@@ -180,6 +181,56 @@ export class ActiveService {
 
     // Position will be set by scheduleTick when in pre-departure window
     // (don't set here to avoid ghost trains on the map)
+
+    // SC-02 — pre-compute passage times at every real station encountered on
+    // each leg, even if it is not a scheduled stop or waypoint.
+    this._passageStops = this._computePassageStops();
+  }
+
+  _computePassageStops() {
+    if (!this.world || !this.world.stations || this.stops.length < 2) return [];
+    const passages = [];
+    const thresholdKm = 0.5;
+    const stopsByStation = new Set();
+    for (const s of this.stops) if (s.stationId) stopsByStation.add(s.stationId);
+
+    for (let leg = 0; leg < this.stops.length - 1; leg++) {
+      const route = this.routes[leg];
+      if (!route || route.length < 2) continue;
+      const stopA = this.stops[leg];
+      const stopB = this.stops[leg + 1];
+      const depTime = stopA.departureTime;
+      const arrTime = stopB.arrivalTime;
+      const cumDists = [0];
+      for (let i = 1; i < route.length; i++) {
+        cumDists[i] = cumDists[i - 1] + haversineDistance(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
+      }
+      const totalDist = cumDists[cumDists.length - 1];
+      if (totalDist <= 0) continue;
+      for (const st of this.world.stations) {
+        if (stopsByStation.has(st.id)) continue;
+        let bestIdx = -1, bestDist = Infinity;
+        for (let i = 0; i < route.length; i++) {
+          const d = haversineDistance(st.lat, st.lon, route[i].lat, route[i].lon);
+          if (d < bestDist) { bestDist = d; bestIdx = i; }
+        }
+        if (bestDist <= thresholdKm && bestIdx >= 0) {
+          const dFromStart = cumDists[bestIdx];
+          const times = interpolatePassageTimes(depTime, arrTime, [0, dFromStart, totalDist]);
+          passages.push({ stationId: st.id, name: st.name, time: times[1], leg, distKm: dFromStart });
+        }
+      }
+    }
+    const byStation = new Map();
+    for (const p of passages) {
+      const existing = byStation.get(p.stationId);
+      if (!existing || p.distKm < existing.distKm) byStation.set(p.stationId, p);
+    }
+    return Array.from(byStation.values()).sort((a, b) => a.time - b.time);
+  }
+
+  getPassageStops() {
+    return this._passageStops;
   }
 
   async garageToVoiePoint(vpId) { return; }

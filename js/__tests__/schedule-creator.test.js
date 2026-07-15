@@ -1,6 +1,32 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { ScheduleCreator } from '../schedule-creator.js';
+import { ScheduleCreator, ActiveService } from '../schedule-creator.js';
+
+describe('SC-02 — passage times for intermediate stations', () => {
+  it('computes passage time for a station on the route', () => {
+    const world = {
+      stations: [
+        { id: 'A', name: 'Paris', lat: 0, lon: 0 },
+        { id: 'B', name: 'Lyon', lat: 0.2, lon: 0 }, // ~22 km at equator
+        { id: 'C', name: 'Dijon', lat: 0.1, lon: 0 }, // midpoint
+      ],
+    };
+    const svc = new ActiveService({
+      name: 'TGV 1',
+      rameId: 'r1',
+      stops: [
+        { stationId: 'A', type: 'departure', departureTime: 600, arrivalTime: 600 },
+        { stationId: 'B', type: 'arrival', departureTime: 630, arrivalTime: 630 },
+      ],
+      routes: [[{ lat: 0, lon: 0 }, { lat: 0.05, lon: 0 }, { lat: 0.1, lon: 0 }, { lat: 0.15, lon: 0 }, { lat: 0.2, lon: 0 }]],
+    }, null, world);
+    const passages = svc.getPassageStops();
+    assert.equal(passages.length, 1);
+    assert.equal(passages[0].stationId, 'C');
+    assert.equal(passages[0].name, 'Dijon');
+    assert.equal(passages[0].time, 615);
+  });
+});
 
 describe('SC-05 — Auto 24h creates real round-trip duplicates', () => {
   it('creates separate services with independent aller/retour numbers', () => {

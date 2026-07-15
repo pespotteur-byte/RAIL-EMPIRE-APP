@@ -2846,6 +2846,13 @@ export class UI {
         return `<span class="sched-stop-tag ${s.type}">${s.type === 'passage' ? arr : `${arr}-${dep}`} ${name}</span>`;
       }).join('<span style="color:var(--text3)"> → </span>');
 
+      // SC-02 — display computed passage times for every real station on the route.
+      const passagePreview = (svc._passageStops?.length)
+        ? `<div class="sched-stops-preview" style="margin-top:4px"><span style="color:#22c55e;font-size:9px;margin-right:4px">Passages :</span>${svc._passageStops.map(p => {
+          return `<span class="sched-stop-tag passage">${this.minToTimeStr(p.time)} ${p.name}</span>`;
+        }).join('<span style="color:var(--text3)"> → </span>')}</div>`
+        : '';
+
       let returnPreview = '';
       if (svc.roundTrip) {
         const retStops = svc.buildReturnStops();
@@ -2903,6 +2910,7 @@ export class UI {
           <div class="sched-detail hidden" id="sched-detail-${svc.id}">
             <div style="font-size:10px;color:var(--text2);margin:4px 0 2px">${dirLabel}</div>
             <div class="sched-stops-preview">${stopsPreview}</div>
+            ${passagePreview}
             ${returnPreview}
           </div>
         </div>
