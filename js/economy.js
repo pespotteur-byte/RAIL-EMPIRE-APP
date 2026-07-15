@@ -77,13 +77,17 @@ export class Economy {
     if (!service || !service.rame) return;
     if (distFromPrev <= 0 && !isFirst) return;
 
-    // Per-segment operating cost: energy + wear (charged each time the train stops)
+    // Per-segment operating cost: péage + distance + vitesse max + usure
     if (!isFirst && distFromPrev > 0) {
       const tonnage = service.rame.totalTonnage || 100;
-      // ~2€/km per tonne (energy + track access + wear), scaled down for gameplay
-      const opCost = Math.round(distFromPrev * tonnage * 0.5);
+      const maxSpeed = service.rame.maxSpeed || 100;
+      // base énergie/usure (€/t·km), péage (fixe €/km), surcoût vitesse (>100 km/h)
+      const energyCost = Math.round(distFromPrev * tonnage * 0.5);
+      const tollCost = Math.round(distFromPrev * 2.0);
+      const speedCost = Math.round(distFromPrev * Math.max(0, maxSpeed - 100) / 50);
+      const opCost = energyCost + tollCost + speedCost;
       if (opCost > 0) {
-        this.addExpense(opCost, 'exploitation', `Trajet ${Math.round(distFromPrev)} km — ${service.name}`);
+        this.addExpense(opCost, 'exploitation', `Trajet ${Math.round(distFromPrev)} km — ${service.name} (${maxSpeed} km/h)`);
         if (service.lineId) this.addLineExpense(service.lineId, opCost);
       }
     }
@@ -109,7 +113,16 @@ export class Economy {
       const freightUnload = Math.round(service._onboardFreight * freightUnloadRate);
 
       // Revenue = descended passengers * distance they traveled * ticket price
-      let paxRevenue = Math.round(paxDescend * distFromPrev * this.ticketPricePerKm);
+      // Section X — prix au km différencié selon la classification (vitesse max)
+      const maxSpeed = service.rame.maxSpeed || 100;
+      let priceMult = 1.0;
+      if (maxSpeed <= 120) priceMult = 0.8;
+      else if (maxSpeed <= 160) priceMult = 1.0;
+      else if (maxSpeed <= 200) priceMult = 1.3;
+      else if (maxSpeed <= 250) priceMult = 1.8;
+      else priceMult = 2.5;
+
+      let paxRevenue = Math.round(paxDescend * distFromPrev * this.ticketPricePerKm * priceMult);
       let frtRevenue = Math.round(freightUnload * distFromPrev * this.freightPricePerTKm);
 
       // Delay penalty: reduce revenue by 25% (not double-dip)
