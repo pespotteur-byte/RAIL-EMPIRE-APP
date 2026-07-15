@@ -184,7 +184,7 @@
 ## FRT — FRET, CLIENTS & CONTRATS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| FRT-01 | Train complet = 1 type de wagon ; MLMC = wagons variés (diffus) | P1 | A7 | [ ] |
+| FRT-01 | Train complet = 1 type de wagon ; MLMC = wagons variés (diffus) | P1 | A7 | [x] PR? (flag diffuse + cargoTypes multiples, fulfillment par wagon) |
 | FRT-02 | Clients = entreprises ; but = qualité de service / parts de marché | P1 | A7 | [x] PR? (marketShare par client, tonnage/fiabilité, affichage) |
 | FRT-03 | Contrat = besoins matériels + lieu livraison (ITE), assignable à un service | P1 | A7 | [x] PR? (picker contrat dans Horaires + fulfillment) |
 | FRT-04 | Retard → pénalité 25 % | P1 | A7, A18 | [x] PR? (sur contrat et fret générique) |
