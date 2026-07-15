@@ -20,6 +20,28 @@ export class Depot {
       stockName: r.stockName || '',
       deployed: r.deployed || false,
     }));
+    // Section VI — stocks de pièces détachées pour la maintenance
+    this.spareParts = data.spareParts || {
+      moteur: 0, climatisation: 0, fanaux: 0, freins: 0, portes: 0
+    };
+  }
+
+  // Add spare parts to the depot (purchase action)
+  addSpareParts(type, qty) {
+    if (!this.spareParts.hasOwnProperty(type)) return false;
+    this.spareParts[type] = (this.spareParts[type] || 0) + qty;
+    return true;
+  }
+
+  // Consume spare parts (returns true if enough stock)
+  consumeSpareParts(parts) {
+    for (const [type, qty] of Object.entries(parts || {})) {
+      if ((this.spareParts[type] || 0) < qty) return false;
+    }
+    for (const [type, qty] of Object.entries(parts || {})) {
+      this.spareParts[type] -= qty;
+    }
+    return true;
   }
 
   getTypeLabel() {
@@ -444,6 +466,7 @@ export class DepotManager {
         iteTracks: d.iteTracks,
         iteCargoTypes: d.iteCargoTypes,
         rescueLocos: d.rescueLocos,
+        spareParts: d.spareParts,
       })),
       activeRescues: this.activeRescues,
       repairQueue: this.repairQueue,
