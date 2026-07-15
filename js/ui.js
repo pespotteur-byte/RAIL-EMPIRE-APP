@@ -6346,6 +6346,7 @@ export class UI {
       case 'sncf-dep': board.innerHTML = this._renderSncfDep(station, trains, nowStr); break;
       case 'sncf-arr': board.innerHTML = this._renderSncfArr(station, trains, nowStr); break;
       case 'old-sncf': board.innerHTML = this._renderOldSncf(station, trains, nowStr); break;
+      case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
     }
 
     // Setup train click handlers for platform display
@@ -6547,6 +6548,45 @@ export class UI {
       el.classList.add('ig-solari-flip');
       el.style.animationDelay = `${Math.floor(idx / 5) * 0.12}s`;
     });
+  }
+
+  // --- Flash Circulation : bandeau d'info trafic réseau ---
+  _renderFlashCirculation(station, nowStr) {
+    const im = this.game.incidentManager;
+    const incidents = im?.getActiveIncidents?.() || [];
+    const bulletins = im?.getBulletins?.() || [];
+    const services = this.game.scheduleCreator?.services || [];
+    const delayed = services.filter(s => s.active && s.delay >= 15).slice(0, 6);
+    const pt = this.game.engine?.getParisTime?.();
+    const timeOfDay = pt ? (pt.hours * 60 + pt.minutes) : 0;
+    const dateStr = this.game.engine?.currentDate || this.game.engine?.getParisDate?.() || '';
+    const works = this.game.worksManager?.getActive?.(dateStr, timeOfDay) || [];
+
+    let messages = [];
+    for (const b of bulletins) {
+      messages.push(`${b.name} — ${b.description || 'perturbation en cours'}`);
+    }
+    for (const d of delayed) {
+      messages.push(`Retard ${d.delay} min — ${d.name}`);
+    }
+    if (works.length > 0) messages.push(`Travaux en cours : ${works.length} intervention(s)`);
+    if (messages.length === 0) messages.push('Trafic fluide sur le réseau.');
+
+    const marqueeText = messages.join('  +++  ');
+    return `<div class="ig-flash-board">
+      <div class="ig-flash-header">
+        <span class="ig-flash-title">Flash Circulation</span>
+        <span class="ig-flash-station">${station?.name || ''}</span>
+        <span class="ig-flash-clock">${nowStr}</span>
+      </div>
+      <div class="ig-flash-marquee"><div class="ig-flash-track">${marqueeText}</div></div>
+      <div class="ig-flash-list">
+        ${bulletins.map(b => `<div class="ig-flash-item ig-flash-alert"><strong>${b.name}</strong> : ${b.description || ''} — ${b.severity || 'info'}</div>`).join('')}
+        ${delayed.map(d => `<div class="ig-flash-item ig-flash-delay">${d.name} — retard ${Math.round(d.delay)} min</div>`).join('')}
+        ${works.map(w => `<div class="ig-flash-item ig-flash-works">Travaux : ${w.name || w.type || 'chantier'}</div>`).join('')}
+        ${bulletins.length === 0 && delayed.length === 0 && works.length === 0 ? '<div class="ig-flash-item ig-flash-ok">Aucun incident signalé</div>' : ''}
+      </div>
+    </div>`;
   }
 
   // --- PLATFORM DISPLAY (click on a train) ---
