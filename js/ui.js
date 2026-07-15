@@ -697,6 +697,29 @@ export class UI {
       .filter(Boolean);
     const bandeau = upcoming.length ? `Prochains arrêts : ${upcoming.join('  •  ')}` : 'Service terminé';
 
+    // Annex 5 — detailed situational info
+    const curIdx = svc.currentStopIndex || 0;
+    const prevStop = stops[curIdx - 1];
+    const curStop = stops[curIdx];
+    const nextStop = stops[curIdx + 1];
+    const prevName = prevStop?.stationId ? (world.getStationById(prevStop.stationId)?.name || '—') : (prevStop ? 'Waypoint' : '—');
+    const curName = curStop?.stationId ? (world.getStationById(curStop.stationId)?.name || '—') : (curStop ? 'Waypoint' : '—');
+    const nextName = nextStop?.stationId ? (world.getStationById(nextStop.stationId)?.name || '—') : (nextStop ? 'Waypoint' : '—');
+    const destName = stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—';
+    const situation = t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)
+      ? `Arrêt en gare de <b>${curName}</b>`
+      : (curIdx > 0 && curIdx < stops.length)
+        ? `Se situe entre <b>${prevName}</b> et <b>${curName}</b>`
+        : (curIdx === 0 ? `Au départ de <b>${curName}</b>` : `Service terminé`);
+
+    const rame = svc.rame;
+    const composition = rame
+      ? `<div style="padding:6px 10px;font-size:10px;color:var(--text2);border-bottom:1px solid var(--border);background:var(--bg3)">
+           <b>Composition :</b> ${rame.name}<br>
+           Long: ${rame.totalLength.toFixed(1)}m · Tonnage: ${rame.totalTonnage}t · Vmax: ${rame.maxSpeed} km/h · Traction: ${rame.traction}
+         </div>`
+      : '';
+
     panel.innerHTML = `
       <div class="lvp-header" style="background:${catColor}">
         <span class="lvp-cat"></span>
@@ -705,6 +728,9 @@ export class UI {
         <button class="lvp-close" onclick="game.ui.deselectService()" title="Fermer">×</button>
       </div>
       <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
+      <div style="padding:5px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border)">${situation}</div>
+      <div style="padding:4px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border)">Prochain: <b>${nextName}</b> · Destination: <b>${destName}</b></div>
+      ${composition}
       <div class="lvp-bandeau"><span class="lvp-bandeau-track">${bandeau}</span></div>
       <div class="lvp-stops">${rows}</div>
       <div class="lvp-legend">dép = départ · pass = passage · arr = arrivée</div>
