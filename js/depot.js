@@ -215,7 +215,15 @@ export class DepotManager {
     for (const rescue of this.activeRescues) {
       if (!rescue.position || !rescue.targetPosition) continue;
 
-      const maxSpeed = 100; // km/h for rescue loco
+      // Section VI/DDS — max 30 km/h à l'approche du train en panne, 10 km/h très proche
+      let maxSpeed = 100; // km/h for rescue loco
+      const cosLat = Math.cos(rescue.position.lat * Math.PI / 180);
+      const dLat = (rescue.targetPosition.lat - rescue.position.lat) * 111;
+      const dLon = (rescue.targetPosition.lon - rescue.position.lon) * 111 * cosLat;
+      const distToTarget = Math.sqrt(dLat * dLat + dLon * dLon);
+      if (distToTarget < 0.5) maxSpeed = 10;
+      else if (distToTarget < 2.0) maxSpeed = 30;
+
       const accel = 2.0; // km/h/s
 
       if (rescue.state === 'en_route') {
