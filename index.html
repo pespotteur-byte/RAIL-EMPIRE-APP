@@ -1080,12 +1080,13 @@
           </div>
           <div class="form-group">
             <label>Connecter a (gare de raccordement)</label>
+            <input type="text" id="station-connect-search" placeholder="Filtrer les gares..." style="margin-bottom:4px;width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit">
             <div style="display:flex;gap:4px;align-items:center">
               <select id="station-connect" style="flex:1">
                 <option value="_nearest">La plus proche (auto)</option>
                 <option value="">Aucune connexion</option>
               </select>
-              <button type="button" id="btn-pick-connect-map" class="btn-sm" title="Choisir sur la carte" style="white-space:nowrap;font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">&#x1F5FA; Carte</button>
+              <button type="button" id="btn-pick-connect-map" class="btn-sm" title="Choisir sur la carte" style="white-space:nowrap;font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Carte</button>
             </div>
             <span id="station-connect-info" style="font-size:9px;color:var(--text3)"></span>
           </div>

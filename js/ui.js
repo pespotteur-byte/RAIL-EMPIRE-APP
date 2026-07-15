@@ -814,6 +814,7 @@ export class UI {
     // Populate connection selector with existing stations sorted by distance
     const connectSelect = document.getElementById('station-connect');
     const connectInfo = document.getElementById('station-connect-info');
+    const connectSearch = document.getElementById('station-connect-search');
     if (connectSelect) {
       const existing = this.game.world.stations.map(s => {
         const d = Math.sqrt(
@@ -823,11 +824,26 @@ export class UI {
         return { ...s, dist: d };
       }).sort((a, b) => a.dist - b.dist);
 
-      connectSelect.innerHTML = '<option value="_nearest">La plus proche (auto)</option>' +
-        '<option value="">Aucune connexion</option>' +
-        existing.map(s =>
-          `<option value="${s.id}">${s.name} (${Math.round(s.dist)} km)</option>`
-        ).join('');
+      this._stationConnectOptions = existing;
+
+      const renderOptions = (filter = '') => {
+        const term = filter.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const filtered = existing.filter(s => {
+          const name = s.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          return name.includes(term);
+        });
+        connectSelect.innerHTML = '<option value="_nearest">La plus proche (auto)</option>' +
+          '<option value="">Aucune connexion</option>' +
+          filtered.map(s =>
+            `<option value="${s.id}">${s.name} (${Math.round(s.dist)} km)</option>`
+          ).join('');
+      };
+      renderOptions();
+
+      if (connectSearch) {
+        connectSearch.value = '';
+        connectSearch.oninput = () => renderOptions(connectSearch.value);
+      }
 
       if (connectInfo) {
         if (existing.length > 0) {
