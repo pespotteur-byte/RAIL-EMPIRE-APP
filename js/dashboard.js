@@ -150,7 +150,33 @@ export class Dashboard {
       </div>
     `;
 
-    container.innerHTML = `${bulletinsHtml}
+    // DSH-04 — vue synthèse + drill-down
+    const syntheseHtml = `
+      <div class="dash-section">
+        <h3>Vue synthese</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin-bottom:8px">
+          <span>Services actifs : <b>${activeServices.length}</b></span>
+          <span>En circulation : <b>${movingServices.length}</b></span>
+          <span>Retard moyen : <b>${avgDelay} min</b></span>
+          <span>Solde : <b style="color:${eco.balance >= 0 ? 'var(--green)' : '#ef4444'}">${fmtE(eco.balance)}</b></span>
+          <span>Resultat net : <b style="color:${profit >= 0 ? 'var(--green)' : '#ef4444'}">${profit >= 0 ? '+' : ''}${fmtE(profit)}</b></span>
+        </div>
+        <details style="font-size:11px;color:var(--text3)">
+          <summary style="cursor:pointer;color:var(--text);font-weight:600">Details rapide</summary>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+            ${activeServices.slice(0, 8).map(svc => {
+              const d = svc.train?.delay || 0;
+              return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
+                <span>${svc.name}</span>
+                <span style="color:${Math.abs(d) <= 5 ? 'var(--green)' : '#ef4444'}">${d > 0 ? '+' + d + ' min' : 'A l\'heure'}</span>
+              </div>`;
+            }).join('') || '<span>Aucun service actif</span>'}
+          </div>
+        </details>
+      </div>
+    `;
+
+    container.innerHTML = `${bulletinsHtml}${syntheseHtml}
       <div class="dash-section">
         <h3>Exploitation</h3>
         <div class="dash-kpi-grid">
