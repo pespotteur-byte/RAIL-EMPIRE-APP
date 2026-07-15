@@ -633,6 +633,13 @@ class RailEmpire {
     this.timeOfDay = timeOfDay;
     const activeSchedules = this.scheduleCreator.getActiveServices();
 
+    // CVO-04 : création automatique des services EVO (garage/gare → gare de départ)
+    for (let i = 0; i < activeSchedules.length; i++) {
+      const svc = activeSchedules[i];
+      if (svc.state === 'moving' || svc.state === 'departing') continue;
+      this.scheduleCreator.ensureEVOForService(svc, this.world, timeOfDay);
+    }
+
     // scheduleTick: moving trains already have their state managed by moveUpdate,
     // so only call scheduleTick on non-moving trains (waiting, stopped_at_station, etc.)
     for (let i = 0; i < activeSchedules.length; i++) {

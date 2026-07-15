@@ -155,7 +155,7 @@ export class ActiveService {
     // LVM-01 — livemap category (annexe 2a) : Voyageur / Fret / Travaux / Machines.
     this.category = this.isWorkTrain
       ? 'travaux'
-      : (['hlp','tm','m-'].includes(this.serviceType)
+      : (['hlp','tm','m-','evo'].includes(this.serviceType)
         ? 'machine'
         : (rame && rame.totalFreightCapacity > rame.totalCapacity ? 'fret' : 'voyageur'));
 
@@ -462,6 +462,20 @@ export class ActiveService {
       // Compute service window
       const lastStop = currentStops[currentStops.length - 1];
       const endTime = lastStop?.arrivalTime ?? firstDep + 120;
+
+      // CVO-04 : attendre l'arrivée de l'EVO avant le premier départ
+      if (this.serviceType !== 'evo' && this._evoServiceId && !this._evoCompleted) {
+        const evo = window.game?.scheduleCreator?.services.find(s => s.id === this._evoServiceId);
+        if (evo && !evo.completed && evo.state !== 'completed') {
+          this.delay = Math.max(0, timeDiff(timeOfDay, firstDep));
+          this.train.delay = this.delay;
+          this.train.state = 'waiting_evo';
+          return;
+        } else {
+          this._evoCompleted = true;
+          this._evoServiceId = null;
+        }
+      }
 
       // Don't show train if not in service window (uses direct comparison, no ±720 wrapping)
       if (this.currentStopIndex === 0 && !isInServiceWindow(timeOfDay, firstDep - 1, endTime + 31)) {
@@ -1594,6 +1608,15 @@ export class ActiveService {
     const stops = this.getCurrentStops();
     const stop = stops[this.currentStopIndex];
 
+    // CVO-04 : quand un EVO arrive à destination, le service principal peut partir
+    if (this.serviceType === 'evo' && this._evoForServiceId) {
+      const passenger = window.game?.scheduleCreator?.services.find(s => s.id === this._evoForServiceId);
+      if (passenger) {
+        passenger._evoCompleted = true;
+        passenger._evoServiceId = null;
+      }
+    }
+
     // OCC-01/02 — occupation des voies en gare : un train ne peut PAS entrer
     // si aucune voie n'est libre (sauf voie forcée/point de voie précis).
     // Il patiente en approche (bloqué) et ré-essaie au tick suivant.
@@ -2048,6 +2071,81 @@ export class ScheduleCreator {
     this.services.push(svc);
     this._invalidateActiveCache();
     return svc;
+  }
+
+  // CVO-04 : génère automatiquement un service EVO (garage/gare → gare de départ) si la rame n'est pas sur place
+  ensureEVOForService(svc, world, timeOfDay) {
+    if (svc.serviceType === 'evo' || svc._evoCreated || svc._evoCompleted) return null;
+    if (!svc.rame || !svc.stops?.length || !svc.active) { svc._evoCreated = true; return null; }
+    const firstStop = svc.stops[0];
+    if (!firstStop?.stationId) { svc._evoCreated = true; return null; }
+    const targetStation = world?.getStationById(firstStop.stationId);
+    if (!targetStation) { svc._evoCreated = true; return null; }
+    const current = svc.rame.currentLocation || {};
+    if (current.stationId === targetStation.id) { svc._evoCompleted = true; return null; }
+
+    const depotManager = window.game?.depotManager;
+    let fromStation = current.stationId ? world.getStationById(current.stationId) : null;
+    let fromLat = current.lat ?? null;
+    let fromLon = current.lon ?? null;
+    if (!fromStation && current.depotId && depotManager) {
+      const depot = depotManager.getDepotById(current.depotId);
+      if (depot?.stationId) fromStation = world.getStationById(depot.stationId);
+    }
+    if (!fromStation && svc.rame.depotId && depotManager) {
+      const depot = depotManager.getDepotById(svc.rame.depotId);
+      if (depot?.stationId) fromStation = world.getStationById(depot.stationId);
+    }
+    if (!fromStation) { svc._evoCreated = true; return null; }
+    if (fromLat == null || fromLon == null) { fromLat = fromStation.lat; fromLon = fromStation.lon; }
+
+    // Resolve route (ORM if available, else direct)
+    let route = [];
+    const orm = window.game?.orm;
+    if (orm?.findRoute) {
+      try {
+        const resolved = orm.findRoute(fromLat, fromLon, targetStation.lat, targetStation.lon);
+        if (Array.isArray(resolved) && resolved.length >= 2) route = resolved;
+      } catch (e) { route = []; }
+    }
+    if (route.length < 2) route = [{ lat: fromLat, lon: fromLon }, { lat: targetStation.lat, lon: targetStation.lon }];
+
+    let distKm = 0;
+    for (let i = 1; i < route.length; i++) {
+      distKm += haversineDistance(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
+    }
+    const avgSpeed = 30;
+    const travelMin = Math.max(5, Math.ceil((distKm / avgSpeed) * 60) + 5);
+    const firstDep = firstStop.departureTime;
+    if (timeGte(timeOfDay, firstDep)) { svc._evoCreated = true; return null; } // too late
+
+    const wrap = (t) => { const m = t % 1440; return m < 0 ? m + 1440 : m; };
+    const depMin = wrap(firstDep - travelMin);
+    const arrMin = wrap(firstDep - 2);
+
+    const evoData = {
+      id: `evo-${svc.id}-${Date.now()}`,
+      name: `EVO ${svc.name}`,
+      rameId: svc.rame.id,
+      serviceType: 'evo',
+      stops: [
+        { stationId: fromStation.id, type: 'passage', departureTime: depMin, arrivalTime: depMin, voiePointId: null, platform: '', stopCode: '' },
+        { stationId: targetStation.id, type: 'arret', departureTime: firstDep, arrivalTime: arrMin, voiePointId: firstStop.voiePointId || null, platform: firstStop.platform || '', stopCode: firstStop.stopCode || '' },
+      ],
+      routes: [route],
+      active: true,
+      runDays: svc.runDays,
+      runDates: svc.runDates,
+      multiDepartures: 1,
+      roundTrip: false,
+      terminusWait: 0,
+    };
+    const evo = this.addService(evoData, svc.rame, world);
+    evo._evoForServiceId = svc.id;
+    evo._isEVO = true;
+    svc._evoCreated = true;
+    svc._evoServiceId = evo.id;
+    return evo;
   }
 
   duplicateService(id, intervalMin, count, rame, world) {
