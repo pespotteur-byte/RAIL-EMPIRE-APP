@@ -4242,6 +4242,38 @@ export class UI {
       }
     }
 
+    // TRV-07 — état du réseau (lignes, usure, incidents)
+    const networkContainer = document.getElementById('network-state');
+    if (networkContainer) {
+      const troncons = this.game.voiePointManager?.troncons || [];
+      const avgWear = troncons.length > 0 ? (troncons.reduce((s, t) => s + (t.wear || 0), 0) / troncons.length).toFixed(1) : '0';
+      const maxWear = troncons.length > 0 ? Math.max(...troncons.map(t => t.wear || 0)).toFixed(1) : '0';
+      const closedTracks = troncons.filter(t => t.closed).length;
+      const lineRows = this.game.lineManager.getAll().map(line => {
+        const stA = this.game.world.getStationById(line.stops[0]);
+        const stB = this.game.world.getStationById(line.stops[line.stops.length - 1]);
+        const label = (stA?.name || '?') + ' ↔ ' + (stB?.name || '?');
+        const tracks = line.trackIds.map(id => this.game.world.tracks.find(t => t.id === id) || this.game.voiePointManager?.getTronconById(id)).filter(Boolean);
+        const wear = tracks.length ? (tracks.reduce((s, t) => s + (t.wear || 0), 0) / tracks.length).toFixed(1) : '-';
+        const incidents = this.game.incidentManager?.getActiveIncidentsOnLine(line.stops) || [];
+        const status = incidents.length ? '<span style="color:#ef4444">Perturbé</span>' : '<span style="color:#22c55e">Ouvert</span>';
+        return `<div class="dash-train-row" style="grid-template-columns:2fr 2fr 1fr 1fr"><span>${line.name}</span><span style="color:var(--text3);font-size:10px">${label}</span><span>${wear}%</span><span>${status}</span></div>`;
+      }).join('') || '<div style="padding:8px;color:var(--text3)">Aucune ligne</div>';
+      networkContainer.innerHTML = `
+        <h3 style="margin:0 0 8px;font-size:13px">Etat du reseau</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:12px">
+          <span>Troncons : <b>${troncons.length}</b></span>
+          <span>Usure moyenne : <b>${avgWear}%</b></span>
+          <span>Usure max : <b style="color:${parseFloat(maxWear) > 50 ? '#ef4444' : '#22c55e'}">${maxWear}%</b></span>
+          ${closedTracks ? `<span style="color:#ef4444">Fermes : ${closedTracks}</span>` : ''}
+        </div>
+        <div class="dash-train-table" style="margin-top:8px">
+          <div class="dash-train-header" style="grid-template-columns:2fr 2fr 1fr 1fr"><span>Ligne</span><span>Axe A↔B</span><span>Usure</span><span>Etat</span></div>
+          ${lineRows}
+        </div>
+      `;
+    }
+
     const container = document.getElementById('lines-list');
     if (!container) return;
     const lines = this.game.lineManager.getAll();

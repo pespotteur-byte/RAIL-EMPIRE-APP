@@ -546,6 +546,14 @@ export class IncidentManager {
     return this.activeIncidents;
   }
 
+  // TRV-07 — incidents actifs affectant une ligne (par stationA/B ou trackName)
+  getActiveIncidentsOnLine(lineStops = []) {
+    const stopSet = new Set(lineStops);
+    return this.activeIncidents.filter(i =>
+      i.active && (stopSet.has(i.stationA) || stopSet.has(i.stationB) || (i.trackName && lineStops.some(sid => i.trackName.includes(sid))))
+    );
+  }
+
   // INC-05 — bulletins spéciaux à côté du récap de compagnie
   getBulletins() {
     return this.activeIncidents.filter(i => i.active).map(i => ({

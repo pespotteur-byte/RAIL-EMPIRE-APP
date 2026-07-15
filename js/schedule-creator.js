@@ -752,6 +752,16 @@ export class ActiveService {
       this.rame.kmSinceLastMaint = (this.rame.kmSinceLastMaint || 0) + distKm;
       this.rame.wearLevel = this.train.wearLevel;
     }
+    // TRV-01 : usure des voies par le trafic (tonnage + distance)
+    const vpm = window.game?.voiePointManager;
+    if (vpm && this.position) {
+      const trc = this._cachedTroncon || vpm.getTronconAtPosition(this.position, 0.3, this.train.platform);
+      if (trc) {
+        const mass = this.rame?.getTotalMassWithPayload ? this.rame.getTotalMassWithPayload() : 400;
+        trc.wear = Math.min(100, (trc.wear || 0) + distKm * (mass / 400) * 0.005);
+      }
+    }
+
     if (!this.train.breakdown) {
       const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
       const breakdownMult = (typeof window !== 'undefined' && window.game?.realismSettings?.breakdown) ?? 1;
