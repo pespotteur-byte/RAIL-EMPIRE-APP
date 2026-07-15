@@ -254,7 +254,7 @@
 | MAT-05 | Tonnage supprimé → calculé auto (masse à vide + capacité) | P1 | annexe 7 | [x] PR1 (RollingStockItem.tonnage auto + UI) |
 | MAT-06 | Prix d'achat supprimé → calcul automatique | P1 | annexe 7 | [x] PR1 (formule physiques UI/rolling-stock) |
 | MAT-07 | Sous-catégories wagon si "wagon" : tombereau, citerne, gazier, porte-auto, trémie, céréalier, ciment, silos, plat, TTX, intermodal, spéciaux, couvert, bâchés, infra | P1 | annexe 7 | [x] PR1 (select stock-wagon-subcat) |
-| MAT-08 | Contrainte électrification tronçon ↔ traction engin (multi-systèmes) | P1 | A21.2, A3.3 | [ ] |
+| MAT-08 | Contrainte électrification tronçon ↔ traction engin (multi-systèmes) | P1 | A21.2, A3.3 | [x] PR? (rames électriques seules bloquées sur tronçon non électrifié) |
 
 ## RAM — PAGE RAMES  (P1)  [schéma annexe 8]
 | ID | Exigence | Prio | Source | Statut |
