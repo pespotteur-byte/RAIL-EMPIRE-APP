@@ -46,9 +46,9 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | VIT-01 | Vitesse par tronçon lue depuis ORM (par sous-segment) | P0 | A3.3, A12 | [x] PR2 |
-| VIT-02 | Transition POSITIVE : accélère seulement quand toute la rame (queue) a franchi le point | P0 | A3.3 | [~] PR2 (dans le calcul de temps ; marche animée en PR ultérieure) |
-| VIT-03 | Transition NÉGATIVE : nouvelle vitesse atteinte 50-150 m avant la zone plus lente | P0 | A3.3 | [~] PR2 (dans le calcul de temps ; marche animée en PR ultérieure) |
-| VIT-04 | Voie sans vitesse ORM = 30 km/h **uniquement** sur service=yard/siding/spur | P0 | A3.3, réponse #2 doc | [~] PR1 (pondération routage ; à appliquer à la marche physique en PR ultérieure) |
+| VIT-02 | Transition POSITIVE : accélère seulement quand toute la rame (queue) a franchi le point | P0 | A3.3 | [x] PR1 (_getInfraSpeedLimit min sur longueur train) |
+| VIT-03 | Transition NÉGATIVE : nouvelle vitesse atteinte 50-150 m avant la zone plus lente | P0 | A3.3 | [x] PR1 (_getNegativeTransitionCap marge 100m) |
+| VIT-04 | Voie sans vitesse ORM = 30 km/h **uniquement** sur service=yard/siding/spur | P0 | A3.3, réponse #2 doc | [x] PR1 (parseWays : main/branch→160, autre/sans tag→30) |
 | VIT-05 | Voie principale (usage=main/branch) non taguée = défaut élevé (pas 30) | P0 | A3.3 | [x] PR1 |
 
 ## SIG — CANTONNEMENT & SIGNALISATION  (P0)
@@ -266,12 +266,12 @@
 ## LVM — LIVEMAP & AFFICHAGE  (P1)  [schémas annexes 1-5]
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| LVM-01 | Icônes train en 3 déclinaisons couleur : Voyageur / Fret / Travaux | P1 | annexe 2a | [x] PR6 (LIVEMAP_CATEGORY_COLORS + catégorie ActiveService + légende) |
+| LVM-01 | Icônes train en 3 déclinaisons couleur + générique : Voyageur / Fret / Travaux | P1 | annexe 2a | [x] PR1 (assets img/livemap + _drawTrainIcon) |
 | LVM-02 | Langage carte : voies 1/1bis/2/2bis, points de voie, tronçon [AB] | P1 | annexe 3A | [x] existant (voie points étiquetés + tronçons rendus) |
 | LVM-03 | Bandeau train : indications qui défilent + barre de rame sensible même en marche | P1 | annexe 4 | [x] PR6 (bandeau défilant .lvp-bandeau + images rame sidebar) |
 | LVM-04 | Clic sur train → panneau détail (arrêts + heures arr/dép) | P1 | annexe 5 | [x] PR6 (_findServiceAtScreen + panneau arrêts/horaires) |
 | LVM-05 | Gares créées apparaissent sur la livemap (bug actuel) | P0 | A5.2, A14#10 | [x] drawStations lit world.stations en direct (rendu live) |
-| LVM-06 | Sélection train depuis carte → affiché en haut du bandeau | P1 | annexe 4-5 | [x] PR6 (panneau + anneau sélection + clic depuis la liste) |
+| LVM-06 | Sélection train depuis carte → affiché en haut du bandeau | P1 | annexe 4-5 | [x] PR1 (tc-selected + scrollIntoView start) |
 
 ## IG — INFOGARE  (P2)  [schémas styles]
 | ID | Exigence | Prio | Source | Statut |
