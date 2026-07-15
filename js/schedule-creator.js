@@ -385,15 +385,20 @@ export class ActiveService {
     this._economy = economy;
 
     if (this.train.breakdown) {
-      this.speed = 0;
-      this.train.speed = 0;
-      this.train.state = 'en panne';
-      // Section VI/DDS — demander un secours depuis le dépôt le plus proche
-      if (!this._rescueDispatched && this.position && window.game?.depotManager) {
-        window.game.depotManager.dispatchRescue(this.world, this);
-        this._rescueDispatched = true;
+      const BENIGN_TYPES = ['climatisation', 'portes'];
+      // MNT-03 : pannes bénignes ne nécessitent pas de technicentre (train continue, limité en vitesse, réparé en gare)
+      if (!BENIGN_TYPES.includes(this.train.breakdown.type)) {
+        this.speed = 0;
+        this.train.speed = 0;
+        this.train.state = 'en panne';
+        // Section VI/DDS — demander un secours depuis le dépôt le plus proche
+        if (!this._rescueDispatched && this.position && window.game?.depotManager) {
+          window.game.depotManager.dispatchRescue(this.world, this);
+          this._rescueDispatched = true;
+        }
+        return;
       }
-      return;
+      this.train.state = 'anomalie legere';
     }
 
     if (this.train.inMaintenance) {
@@ -877,6 +882,14 @@ export class ActiveService {
 
     // CRITICAL: effectiveSpeed = min(train speed, infrastructure speed)
     let effectiveMaxSpeed = Math.min(rameMaxSpeed, segMaxSpeed);
+
+    // MNT-03 : pannes bénignes (climatisation, portes) limitent la vitesse mais ne bloquent pas
+    if (this.train.breakdown) {
+      const BENIGN_TYPES = ['climatisation', 'portes'];
+      if (BENIGN_TYPES.includes(this.train.breakdown.type)) {
+        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, 80);
+      }
+    }
 
     // MET-01/06 — météo locale : neige −20 km/h si V ≥ 140
     const weather = this._getWeatherEffects();
@@ -1716,6 +1729,12 @@ export class ActiveService {
       this.state = 'stopped_at_station';
       if (!this.train._stoppedSinceGameTime) {
         this.train._stoppedSinceGameTime = timeOfDay;
+      }
+      // MNT-03 : pannes bénignes réparables en gare sans technicentre
+      if (this.train.breakdown && ['climatisation', 'portes'].includes(this.train.breakdown.type)) {
+        this.delay = (this.delay || 0) + 5;
+        this.train.delay = this.delay;
+        this.train.breakdown = null;
       }
     }
 
