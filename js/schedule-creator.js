@@ -1031,6 +1031,7 @@ export class ActiveService {
       this.speed = 0;
       this.train.speed = 0;
       this.train.state = 'travaux';
+      this.train.delayReason = 'travaux';
       this._updateContinuousDelay(timeOfDay);
       return;
     }

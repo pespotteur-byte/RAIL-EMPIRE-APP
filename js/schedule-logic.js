@@ -35,12 +35,18 @@ export function incrementForward(baseOdd, k = 1) {
 }
 
 // SC-03/SC-05 — increment the trailing digits of a service name by `delta`,
-// preserving the original padding. Returns the original name if there is no
-// trailing number.
+// preserving the original padding. If the name has no trailing number, treat the
+// implicit base forward number as 1 and append `1 + delta` (so a duplicate at
+// step 2 becomes "Nom 3", the matching return becomes "Nom 2", etc.).
 export function incrementTrailingNumber(name, delta = 2) {
   const s = String(name || '');
   const m = s.match(/^(.*?)(\d+)$/);
-  if (!m) return s;
+  if (!m) {
+    // No trailing digits: assume base forward number is 1, so append 1 + delta.
+    const n = 1 + delta;
+    if (n < 0) return s;
+    return `${s} ${n}`;
+  }
   const prefix = m[1];
   const num = parseInt(m[2], 10);
   const padLen = m[2].length;

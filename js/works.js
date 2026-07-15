@@ -35,10 +35,14 @@ export class PlannedWorks {
     if (this.recurrence === 'weekly' && !this.daysOfWeek.includes(this._dayOfWeek(dateStr))) return false;
 
     // Check daily active hours
-    const [sh, sm] = this.startTime.split(':').map(Number);
-    const [eh, em] = this.endTime.split(':').map(Number);
-    const startMinutes = sh * 60 + (sm || 0);
-    const endMinutes = eh * 60 + (em || 0);
+    const parseTime = (t) => {
+      if (typeof t === 'number') return t;
+      if (typeof t !== 'string' || !t.includes(':')) return 0;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + (m || 0);
+    };
+    const startMinutes = parseTime(this.startTime);
+    const endMinutes = parseTime(this.endTime);
 
     if (startMinutes <= endMinutes) {
       // Same-day window (e.g. 08:00 - 18:00)
