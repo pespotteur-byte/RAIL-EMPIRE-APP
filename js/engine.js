@@ -9,6 +9,10 @@ export class SimulationEngine {
     this.moveInterval = 100; // 0.1 seconds for smooth movement
     this._ptCache = null;
     this._ptCacheTime = 0;
+    // DET-04 : pas de simulation fixe découplé du rendu
+    this._lastFrameTime = 0;
+    this._accumulator = 0;
+    this._maxFrameDt = 0.25; // éviter le saut de temps si onglet inactif
   }
 
   getParisTime() {
@@ -52,13 +56,16 @@ export class SimulationEngine {
       }
     }
 
-    // Movement tick for smooth train movement (every ~100ms)
-    if (now - this.lastMoveTime >= this.moveInterval) {
-      const dt = Math.min((now - this.lastMoveTime) / 1000, 1.0); // delta in seconds, cap at 1s
-      this.lastMoveTime = now;
-
+    // DET-04 : pas de simulation fixe découplé du rendu
+    if (!this._lastFrameTime) this._lastFrameTime = now;
+    const frameDt = Math.min((now - this._lastFrameTime) / 1000, this._maxFrameDt);
+    this._lastFrameTime = now;
+    const step = this.moveInterval / 1000; // 0.1 s
+    this._accumulator += frameDt;
+    while (this._accumulator >= step) {
+      this._accumulator -= step;
       if (this.onMoveTick) {
-        this.onMoveTick(dt, currentMinute);
+        this.onMoveTick(step, currentMinute);
       }
     }
   }
