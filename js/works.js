@@ -5,6 +5,9 @@ export class PlannedWorks {
     this.id = data.id || `works-${nextWorksId++}`;
     this.name = data.name || 'Travaux';
     this.trackId = data.trackId || '';
+    // TRV-03 : fermeture d'un tronçon entre deux gares (portion de ligne)
+    this.stationA = data.stationA || '';
+    this.stationB = data.stationB || '';
     this.startDate = data.startDate || '';
     this.startTime = data.startTime || '22:00';
     this.endDate = data.endDate || '';
@@ -75,6 +78,16 @@ export class WorksManager {
     return this.works;
   }
 
+  // TRV-03 : travaux actifs fermant le tronçon entre deux gares
+  getActiveClosuresBetween(stationA, stationB, dateStr, timeOfDay) {
+    if (!stationA || !stationB || !dateStr || timeOfDay == null) return [];
+    return this.works.filter(w =>
+      w.isActiveAt(dateStr, timeOfDay) &&
+      ((w.stationA === stationA && w.stationB === stationB) ||
+       (w.stationA === stationB && w.stationB === stationA))
+    );
+  }
+
   getActive(dateStr, timeOfDay) {
     return this.works.filter(w => w.isActiveAt(dateStr, timeOfDay));
   }
@@ -116,6 +129,7 @@ export class WorksManager {
   toSave() {
     return this.works.map(w => ({
       id: w.id, name: w.name, trackId: w.trackId,
+      stationA: w.stationA, stationB: w.stationB,
       startDate: w.startDate, startTime: w.startTime,
       endDate: w.endDate, endTime: w.endTime,
       impact: w.impact, speedLimit: w.speedLimit,

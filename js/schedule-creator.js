@@ -1728,6 +1728,17 @@ export class ActiveService {
       }
     }
 
+    // TRV-03 : fermeture de portion entre deux gares (indépendamment du trackId)
+    const worksMgr = window.game?.worksManager;
+    if (worksMgr) {
+      const closures = worksMgr.getActiveClosuresBetween(prevId, nextId, this._currentDate, timeOfDay);
+      if (closures.length > 0) {
+        // Pire impact
+        if (closures.some(w => w.impact === 'stop')) return 0;
+        return Math.min(...closures.map(w => w.speedLimit || 40));
+      }
+    }
+
     // SIG-08 — signaux ajoutables par le joueur sur un tronçon
     const signalLimit = window.game?.signalManager?.getSpeedLimit(prevId, nextId);
     if (signalLimit === 0) return 0;

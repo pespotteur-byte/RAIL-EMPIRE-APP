@@ -3298,11 +3298,27 @@ export class UI {
 
     // Priority 3: ORM (never return a straight-line fallback — R-03)
     // R-07 : plafond vitesse routage à V160 (matériel joueur)
+    // TRV-03/06 : éviter les tronçons fermés entre les deux gares
     try {
       const rameId = document.getElementById('sched-rame')?.value;
       const rame = rameId ? this.game.rameManager.getById(rameId) : null;
       const routingSpeed = rame ? Math.min(rame.maxSpeed || 160, 160) : 160;
-      return await this.game.orm.findRoute(ca.lat, ca.lon, cb.lat, cb.lon, { maxSpeed: routingSpeed });
+      const pt = this.game.engine.getParisTime();
+      const now = pt.hours * 60 + pt.minutes;
+      const dateStr = this.game.engine.currentDate || this.game.engine.getParisDate();
+      const closures = [];
+      if (sa && sb) {
+        closures.push(...this.game.worksManager.getActiveClosuresBetween(sa.id, sb.id, dateStr, now));
+      }
+      const avoidPairs = closures.map(w => {
+        const sta = this.game.world.getStationById(w.stationA);
+        const stb = this.game.world.getStationById(w.stationB);
+        if (!sta || !stb) return null;
+        return { latA: sta.lat, lonA: sta.lon, latB: stb.lat, lonB: stb.lon };
+      }).filter(Boolean);
+      const opts = { maxSpeed: routingSpeed };
+      if (avoidPairs.length) opts.avoidStationPairs = avoidPairs;
+      return await this.game.orm.findRoute(ca.lat, ca.lon, cb.lat, cb.lon, opts);
     } catch (e) {
       return null;
     }

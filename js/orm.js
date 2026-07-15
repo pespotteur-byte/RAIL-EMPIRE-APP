@@ -415,12 +415,13 @@ export class ORMClient {
   // `directed` defaults to true; pass { directed:false } for a raw shortest path.
   // `opts.maxSpeed` plafonne la vitesse utilisée pour le calcul d'itinéraire (R-07).
   dijkstra(graph, startKey, endKey, opts = null) {
-    const directed = !(opts && opts.directed === false);
-    const maxSpeed = opts?.maxSpeed ?? null;
-    return this._route(graph, startKey, endKey, directed, maxSpeed);
+    return this._route(graph, startKey, endKey, opts);
   }
 
-  _route(graph, startKey, endKey, directed = true, routingMaxSpeed = null) {
+  _route(graph, startKey, endKey, opts = null) {
+    const directed = !(opts && opts.directed === false);
+    const routingMaxSpeed = opts?.maxSpeed ?? null;
+    const avoidEdges = opts?.avoidEdges || new Set();
     if (!startKey || !endKey) return null;
     if (!graph.nodes.has(startKey) || !graph.nodes.has(endKey)) return null;
     const endNode = graph.nodes.get(endKey);
@@ -443,6 +444,7 @@ export class ORMClient {
 
     const startNode = graph.nodes.get(startKey);
     for (const edge of startNode.edges) {
+      if (avoidEdges.has(edge.from + '>' + edge.to)) continue;
       const g = this._edgeCost(edge, routingMaxSpeed);
       const sk = edge.from + '>' + edge.to;
       if (g < (gScore.get(sk) ?? Infinity)) {
@@ -467,6 +469,7 @@ export class ORMClient {
       const gCur = gScore.get(cur.key);
 
       for (const edge of node.edges) {
+        if (avoidEdges.has(edge.from + '>' + edge.to)) continue;
         const pen = this._turnPenalty(graph, inEdge, edge, directed);
         if (!isFinite(pen)) continue; // forbidden reversal
         const sk = edge.from + '>' + edge.to;
@@ -798,18 +801,40 @@ export class ORMClient {
   // ROUTE FINDING — uses unified graph or area-specific graph
   // ============================================================
 
+  // TRV-03/06 : construit un set d'arêtes à éviter à partir de paires de stations
+  _avoidEdgesForPairs(graph, pairs) {
+    const avoid = new Set();
+    if (!graph || !Array.isArray(pairs)) return avoid;
+    for (const p of pairs) {
+      if (p == null) continue;
+      const a = this.findNearestNode(graph, p.latA ?? p.lat, p.lonA ?? p.lon, 5);
+      const b = this.findNearestNode(graph, p.latB ?? p.lat2, p.lonB ?? p.lon2, 5);
+      if (!a || !b) continue;
+      avoid.add(a.node.key + '>' + b.node.key);
+      avoid.add(b.node.key + '>' + a.node.key);
+    }
+    return avoid;
+  }
+
   async findRoute(fromLat, fromLon, toLat, toLon, opts = null) {
     const speedSuffix = opts?.maxSpeed ? `v${Math.round(opts.maxSpeed)}` : 'v160';
-    const cacheKey = `${fromLat.toFixed(4)},${fromLon.toFixed(4)}-${toLat.toFixed(4)},${toLon.toFixed(4)}-${speedSuffix}`;
+    const avoidSuffix = opts?.avoidStationPairs?.length
+      ? `-a${opts.avoidStationPairs.length}`
+      : '';
+    const cacheKey = `${fromLat.toFixed(4)},${fromLon.toFixed(4)}-${toLat.toFixed(4)},${toLon.toFixed(4)}-${speedSuffix}${avoidSuffix}`;
     if (this.routeCache.has(cacheKey)) return this.routeCache.get(cacheKey);
 
     // First try the unified graph (pre-loaded areas)
     const uGraph = this._ensureGraph();
+    const routeOpts = { ...opts };
+    if (opts?.avoidStationPairs?.length && uGraph) {
+      routeOpts.avoidEdges = this._avoidEdgesForPairs(uGraph, opts.avoidStationPairs);
+    }
     if (uGraph && uGraph.nodes.size > 0) {
       const s = this.findNearestNode(uGraph, fromLat, fromLon, 5);
       const e = this.findNearestNode(uGraph, toLat, toLon, 5);
       if (s && e) {
-        const path = this.dijkstra(uGraph, s.node.key, e.node.key, opts);
+        const path = this.dijkstra(uGraph, s.node.key, e.node.key, routeOpts);
         if (path && path.length >= 2) {
           this.routeCache.set(cacheKey, path);
           return path;
@@ -834,6 +859,9 @@ export class ORMClient {
 
     // Use the unified graph (now includes new area)
     const graph = this._ensureGraph();
+    if (opts?.avoidStationPairs?.length && graph) {
+      routeOpts.avoidEdges = this._avoidEdgesForPairs(graph, opts.avoidStationPairs);
+    }
     const snapRadius = distKm < 0.5 ? 0.3 : 5;
     const startResult = this.findNearestNode(graph, fromLat, fromLon, snapRadius);
     const endResult = this.findNearestNode(graph, toLat, toLon, snapRadius);
@@ -854,10 +882,13 @@ export class ORMClient {
         Math.max(fromLon, toLon) + extraPadding
       );
       const graph2 = this._ensureGraph();
+      if (opts?.avoidStationPairs?.length && graph2) {
+        routeOpts.avoidEdges = this._avoidEdgesForPairs(graph2, opts.avoidStationPairs);
+      }
       const s2 = this.findNearestNode(graph2, fromLat, fromLon, 10);
       const e2 = this.findNearestNode(graph2, toLat, toLon, 10);
       if (s2 && e2) {
-        const retryPath = this.dijkstra(graph2, s2.node.key, e2.node.key, opts);
+        const retryPath = this.dijkstra(graph2, s2.node.key, e2.node.key, routeOpts);
         if (retryPath && retryPath.length > 0) {
           this.routeCache.set(cacheKey, retryPath);
           return retryPath;
@@ -868,7 +899,7 @@ export class ORMClient {
       return fallback;
     }
 
-    const path = this.dijkstra(graph, startResult.node.key, endResult.node.key, opts);
+    const path = this.dijkstra(graph, startResult.node.key, endResult.node.key, routeOpts);
     if (!path || path.length === 0) {
       const fallback = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
       this.routeCache.set(cacheKey, fallback);
