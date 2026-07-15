@@ -174,6 +174,7 @@ export class ActiveService {
       breakdown: null,
       blockedBy: false,
       signalAlert: null, // 'caution' | 'closed' | null
+      delayReason: '',   // OCC-04 : motif du retard (régulation, signal, incident...)
       accel,
       decel,
       seriesName,
