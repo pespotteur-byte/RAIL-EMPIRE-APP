@@ -209,7 +209,7 @@
 | RH-02 | Chaque poste/fonction précis et réaliste | P1 | A9 | [ ] |
 | RH-03 | 3×8 : repos 24h/semaine + 8h entre services | P1 | A9 | [x] PR? (StaffManager.tickConductors, repos quotidien/hebdo) |
 | RH-04 | Non-respect → risque de mouvement social accru | P1 | A9 | [x] PR? (socialRisk accumulé si repos hebdo dépassé) |
-| RH-05 | Grèves/syndicats réalistes (page Personnel, ex-Syndicats fusionnée) | P1 | A9 | [ ] |
+| RH-05 | Grèves/syndicats réalistes (page Personnel, ex-Syndicats fusionnée) | P1 | A9 | [x] PR? (Unions.isServiceBlocked, blocage départs et en mouvement) |
 | RH-06 | ⚠️ Congés TOTALEMENT écartés | — | A9, réponse #7 | [x] décidé |
 
 ## INC — INCIDENTS  (P1)
