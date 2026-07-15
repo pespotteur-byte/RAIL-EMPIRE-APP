@@ -1,6 +1,7 @@
 import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779724771';
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
 import { getGlobalRng } from './rng.js?v=1779724771';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1779724771';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
@@ -299,6 +300,42 @@ export class ActiveService {
       if (pt) { lat = pt.lat; lon = pt.lon; }
     }
     return this.weather.getSpeedEffectsAt(lat, lon, this.rame ? this.rame.maxSpeed : (this.train?.maxSpeed || 0));
+  }
+
+  // PH-01/PH-03/PH-04 — accelération / freinage réalistes (masse, puissance, météo)
+  // La pente n'est pas disponible dans les données ORM ; on passe un grade nul.
+  _computePhysicsAccel(weather) {
+    const baseAccel = this.train.accel || 3.0; // km/h/s
+    const baseDecel = this.train.decel || 4.0; // km/h/s
+    if (!this.rame) return { accel: baseAccel, decel: baseDecel };
+
+    const massKg = (this.rame.getTotalMassWithPayload
+      ? this.rame.getTotalMassWithPayload(0.7)
+      : (this.rame.totalMass || this.rame.totalTonnage || 400)) * 1000;
+    const powerW = (this.rame.totalPower || 0) * 1000;
+    const lengthM = this.rame.totalLength || 200;
+    const weatherType = weather?.type || 'clear';
+
+    const vMs = this.speed * _units.KMH_TO_MS;
+    const grade = 0;
+    const params = { massKg, powerW, lengthM, weather: weatherType, adhesionMassKg: massKg, brakeServiceMs2: 0.9 };
+
+    let aMs2 = 0;
+    if (powerW > 0) {
+      aMs2 = accelerationMs2(params, vMs, grade);
+    }
+    const aKmhS = aMs2 * _units.MS_TO_KMH;
+    const effectiveAccel = powerW > 0 && Number.isFinite(aKmhS) && aKmhS > 0
+      ? Math.min(baseAccel, aKmhS)
+      : baseAccel;
+
+    const bMs2 = brakingDecelMs2(params, weatherType);
+    const bKmhS = bMs2 * _units.MS_TO_KMH;
+    const effectiveDecel = Number.isFinite(bKmhS) && bKmhS > 0
+      ? Math.min(baseDecel, bKmhS)
+      : baseDecel;
+
+    return { accel: effectiveAccel, decel: effectiveDecel };
   }
 
   // REG-01/02/04 : calcule l'écart canton selon la couverture régulateur/AC
@@ -1142,10 +1179,11 @@ export class ActiveService {
       }
     }
 
-    // --- ACCELERATION / DECELERATION PHYSICS ---
+    // --- ACCELERATION / DECELERATION PHYSICS (PH-01/PH-03/PH-04) ---
     // MET-03/04/05/06 — météo locale : freinage plus tôt sous pluie/orage/neige
-    const decel = this.train.decel * weather.brakeFactor;
-    const accelDelta = this.train.accel * dt;
+    const physics = this._computePhysicsAccel(weather);
+    const decel = physics.decel * weather.brakeFactor;
+    const accelDelta = physics.accel * dt;
     const decelDelta = decel * dt;
 
     // Check if next stop is a waypoint or passage (no braking needed)
