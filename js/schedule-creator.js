@@ -762,6 +762,15 @@ export class ActiveService {
       }
     }
 
+    // BUG-09 : avancement du contrat assigné mis à jour en temps réel
+    if (this.assignedContractId && window.game?.freightManager) {
+      const contract = window.game.freightManager.contracts.find(c => c.id === this.assignedContractId);
+      if (contract && contract.active) {
+        const total = Math.max(1, this.plannedDistance || this._state?.cumDist?.[0] || 1);
+        contract.progress = Math.min(0.99, Math.max(0, (this.totalDistance || 0) / total));
+      }
+    }
+
     if (!this.train.breakdown) {
       const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
       const breakdownMult = (typeof window !== 'undefined' && window.game?.realismSettings?.breakdown) ?? 1;
