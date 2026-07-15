@@ -178,7 +178,7 @@
 | ITE-04 | Alternative : garer sur grand faisceau puis tranches (600=2×300/3×200) | P1 | A6.4 | [x] PR? (trancheCount + trancheManeuver dwell) |
 | ITE-05 | Types d'ITE selon cargaison (ex. intermodal) | P1 | A6.4 | [x] PR1 (type ITE + cargoType par voie) |
 | ITE-06 | Temps en ITE : arrivée/coupe/déchargement/rechargement selon type+longueur | P1 | A6.4 | [x] PR? (dwell selon cargo/longueur/tranches) |
-| ITE-07 | Intermodal : simuler grues/portiques | P1 | A6.4 | [ ] |
+| ITE-07 | Intermodal : simuler grues/portiques | P1 | A6.4 | [x] PR? (modules ITE réduisent les temps de chargement/manœuvre) |
 | ITE-08 | ⚠️ Synchronisation bateaux ANNULÉE ; fret peut partir vide | — | A6.4, réponse #6 | [x] décidé |
 
 ## FRT — FRET, CLIENTS & CONTRATS  (P1)
