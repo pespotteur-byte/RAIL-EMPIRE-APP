@@ -295,10 +295,10 @@
 ## GM — GRAPHIQUE DE MARCHE  (P1)  [schéma jTrainGraph]
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| GM-01 | Graphique A↔B reproduisant le modèle jTrainGraph | P1 | A11.3, annexe finale | [ ] |
-| GM-02 | Une ligne par gare RÉELLE (alimenté par SC-02) | P1 | A11.3 | [ ] |
+| GM-01 | Graphique A↔B reproduisant le modèle jTrainGraph | P1 | A11.3, annexe finale | [x] PR? (graphique temps-distance axe 24h, théorique/live) |
+| GM-02 | Une ligne par gare RÉELLE (alimenté par SC-02) | P1 | A11.3 | [x] PR? (gares du service en axe Y, distances ORM) |
 | GM-03 | Axe 24h, bandes horaires, diagonales, labels train/heure | P1 | annexe finale | [x] PR? (GraphMarche.draw 24h + labels) |
-| GM-04 | Distance réelle (pas vol d'oiseau), styles trait par type, multi-voies, croisements | P1 | A11.3 note | [ ] |
+| GM-04 | Distance réelle (pas vol d'oiseau), styles trait par type, multi-voies, croisements | P1 | A11.3 note | [x] PR? (distance ORM, styles passager/fret/manoeuvre, épaisseur selon tracks) |
 
 ## IND — INDUSTRIELS  (P1)
 | ID | Exigence | Prio | Source | Statut |
