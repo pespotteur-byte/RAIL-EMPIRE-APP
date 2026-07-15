@@ -582,8 +582,12 @@ export class ActiveService {
       const depTime = stop.departureTime;
       const iteExtra = this._iteDwellExtra || 0;
       const effectiveDep = depTime != null ? depTime + iteExtra : null;
+      // OCC-06 : plafond d'attente max 2h en gare (sauf terminus) → départ forcé
+      const stopDuration = this.train._stoppedSinceGameTime ? timeDiff(timeOfDay, this.train._stoppedSinceGameTime) : 0;
+      const isLastStop = this.currentStopIndex >= stops.length;
+      const forceDepart = !isLastStop && stopDuration >= 120;
       // Guard against undefined/NaN departureTime — depart immediately
-      if (stop.type === 'passage' || stop.type === 'waypoint' || effectiveDep == null || isNaN(effectiveDep) || timeGte(timeOfDay, effectiveDep)) {
+      if (stop.type === 'passage' || stop.type === 'waypoint' || effectiveDep == null || isNaN(effectiveDep) || forceDepart || timeGte(timeOfDay, effectiveDep)) {
         // Release platform on departure
         if (this._platformAssignment && window.game?.platformManager) {
           window.game.platformManager.releasePlatform(
