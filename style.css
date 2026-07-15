@@ -603,7 +603,7 @@ header {
 .ig-ratp-destinations { color:#fff; font-size:14px; line-height:1.3; flex:1; margin-left:6px; }
 .ig-ratp-clock { color:#fbbf24; font-size:22px; font-weight:700; font-family:'Courier New',monospace; margin-left:auto; background:#1a1a2e; }
 .ig-ratp-separator { height:3px; width:100%; }
-.ig-ratp-rows { background:#c8c8d0; }
+.ig-ratp-rows { background:#c8c8d0; max-height:65vh; overflow-y:auto; }
 .ig-ratp-row { display:flex; align-items:center; padding:6px 10px; border-bottom:1px solid #b0b0b8; background:#c8c8d0; }
 .ig-ratp-row:nth-child(odd) { background:#d8d8e0; }
 .ig-ratp-row:hover { filter:brightness(0.95); }
@@ -622,7 +622,7 @@ header {
 
 /* === RER SNCF === dark navy with colored line circles */
 .ig-rsncf-board { background:#1c2240; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:3px solid #333; }
-.ig-rsncf-rows { }
+.ig-rsncf-rows { max-height:65vh; overflow-y:auto; }
 .ig-rsncf-row { display:flex; align-items:center; padding:10px 14px; border-bottom:2px solid #fff; gap:10px; }
 .ig-rsncf-row:hover { filter:brightness(1.1); }
 .ig-rsncf-line { color:#fff; font-weight:900; font-size:18px; min-width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -648,7 +648,7 @@ header {
 .ig-sncf-colheader span { min-width:55px; }
 .ig-sncf-colheader span:nth-child(3) { flex:1; }
 .ig-sncf-colheader span:last-child { min-width:35px; text-align:right; }
-.ig-sncf-rows { }
+.ig-sncf-rows { max-height:65vh; overflow-y:auto; }
 .ig-sncf-row { padding:4px 14px; border-bottom:1px solid rgba(255,255,255,.06); }
 .ig-sncf-row:hover { background:rgba(255,255,255,.04); }
 .ig-sncf-main { display:flex; align-items:center; gap:6px; }
@@ -681,7 +681,7 @@ header {
 .ig-solari-colheader span:nth-child(3) { min-width:80px; text-align:center; }
 .ig-solari-colheader span:nth-child(4) { min-width:70px; text-align:right; }
 .ig-solari-colheader span:nth-child(5) { min-width:40px; text-align:right; }
-.ig-solari-rows { }
+.ig-solari-rows { max-height:65vh; overflow-y:auto; }
 .ig-solari-row { display:flex; align-items:center; padding:3px 16px; border-bottom:1px solid #1a1a1a; min-height:28px; }
 .ig-solari-row:hover { background:#151515; }
 .ig-solari-cell { perspective:100px; display:inline-block; }

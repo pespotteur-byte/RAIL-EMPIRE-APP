@@ -6226,17 +6226,19 @@ export class UI {
       }
     }
 
-    // Filter by mode
+    // IG-07 — scroll infini sur 24h : on garde les trains dans les prochaines 24h
+    const wrap = t => (t % 1440 + 1440) % 1440;
+
     if (mode === 'sncf-arr') {
-      return results.filter(r => r.isArrival).sort((a, b) => ((a.arrTime || 0) - (b.arrTime || 0) + 1440) % 1440 - ((b.arrTime || 0) - (b.arrTime || 0) + 1440) % 1440);
+      const arr = results.filter(r => r.isArrival && r.arrTime != null)
+        .map(r => ({ ...r, waitMin: wrap(r.arrTime - now) }))
+        .filter(r => r.waitMin <= 1440);
+      arr.sort((a, b) => a.waitMin - b.waitMin);
+      return arr;
     }
-    // Default: departures
-    const deps = results.filter(r => r.isDeparture);
-    deps.sort((a, b) => {
-      const wa = a.waitMin != null ? a.waitMin : 9999;
-      const wb = b.waitMin != null ? b.waitMin : 9999;
-      return wa - wb;
-    });
+
+    const deps = results.filter(r => r.isDeparture && r.waitMin != null && r.waitMin <= 1440);
+    deps.sort((a, b) => a.waitMin - b.waitMin);
     return deps;
   }
 
