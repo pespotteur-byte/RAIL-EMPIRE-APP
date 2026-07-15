@@ -2,7 +2,7 @@ import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
-  interpolatePassageTimes,
+  interpolatePassageTimes, shouldSkipStop,
 } from './schedule-logic.js';
 
 let nextServiceId = 1;
@@ -42,9 +42,10 @@ const cantonManager = new CantonManager();
 export { cantonManager };
 
 export class ServiceStop {
-  constructor(stationId, type, depTime, arrTime, voiePointId, platform) {
+  constructor(stationId, type, depTime, arrTime, voiePointId, platform, stopCode = '') {
     this.stationId = stationId;
     this.type = type;
+    this.stopCode = stopCode || '';
     this.departureTime = depTime;
     this.arrivalTime = arrTime || depTime;
     this.voiePointId = voiePointId || null;
@@ -59,7 +60,7 @@ export class ActiveService {
     this.rameId = data.rameId;
     this.rame = rame;
     this.stops = (data.stops || []).map(s =>
-      new ServiceStop(s.stationId, s.type, s.departureTime ?? s.time, s.arrivalTime ?? s.time, s.voiePointId, s.platform)
+      new ServiceStop(s.stationId, s.type, s.departureTime ?? s.time, s.arrivalTime ?? s.time, s.voiePointId, s.platform, s.stopCode)
     );
     this.routes = data.routes || [];
     this.world = world;
@@ -263,7 +264,12 @@ export class ActiveService {
   }
 
   getCurrentStops() {
-    if (this.isReturnLeg) return this.returnStops;
+    if (this.isReturnLeg) {
+      if (!this._adjustedReturnStops && this.returnStops) {
+        this._adjustedReturnStops = this._buildAdjustedStops(this.returnStops);
+      }
+      return this._adjustedReturnStops || this.returnStops;
+    }
     return this._adjustedStops || this.stops;
   }
 
@@ -411,6 +417,8 @@ export class ActiveService {
               economy.processStopRevenue(this, firstStation.name, 0, true, false);
             }
           }
+          this._adjustedStops = this._buildAdjustedStops();
+          this._adjustedReturnStops = null;
           this.state = 'moving';
           this.currentStopIndex = 1;
           this.speed = 0;
@@ -453,6 +461,8 @@ export class ActiveService {
             const depSt = this.world?.getStationById(curStops2[0]?.stationId);
             if (depSt) this.position = { lat: depSt.lat, lon: depSt.lon };
           }
+          if (this.isReturnLeg) this._adjustedReturnStops = this._buildAdjustedStops(this.returnStops);
+          else this._adjustedStops = this._buildAdjustedStops();
           this.state = 'moving';
           this.currentStopIndex = 1;
           this.speed = 0;
@@ -1660,13 +1670,34 @@ export class ActiveService {
         s.stationId, s.type,
         dep < 0 ? dep + 1440 : dep,
         arr < 0 ? arr + 1440 : arr,
-        s.voiePointId, s.platform
+        s.voiePointId, s.platform, s.stopCode
+      );
+    });
+  }
+
+  // ARR-04/05 — for each circulation, randomly skip bracketed [C]/[S] stops.
+  // Skipped arrets are treated as waypoints (no braking / no dwell / no revenue).
+  _buildAdjustedStops(sourceStops = this.stops, rng = Math.random) {
+    return sourceStops.map(s => {
+      if (s.type === 'arret' && s.stopCode && shouldSkipStop(s.stopCode, rng)) {
+        const adjusted = new ServiceStop(
+          s.stationId, 'waypoint', s.departureTime, s.arrivalTime,
+          s.voiePointId, s.platform, s.stopCode
+        );
+        adjusted._skipped = true;
+        return adjusted;
+      }
+      return new ServiceStop(
+        s.stationId, s.type, s.departureTime, s.arrivalTime,
+        s.voiePointId, s.platform, s.stopCode
       );
     });
   }
 
   buildReturnStops() {
-    const fwdStops = this._adjustedStops || this.stops;
+    // Build the return from the original (non-adjusted) forward stops so
+    // skippable [C]/[S] draws are independent on the return leg.
+    const fwdStops = this.stops;
     if (!fwdStops || fwdStops.length === 0) return [];
 
     // SC-04 — independent return timetable when the player defined one:
@@ -1716,7 +1747,7 @@ export class ActiveService {
         const n = parseInt(returnPlat, 10);
         returnPlat = String(n % 2 === 0 ? n - 1 : n + 1);
       }
-      const rs = new ServiceStop(stop.stationId, stop.type, depTime, arrTime, stop.voiePointId, returnPlat);
+      const rs = new ServiceStop(stop.stationId, stop.type, depTime, arrTime, stop.voiePointId, returnPlat, stop.stopCode);
       return rs;
     });
   }
@@ -1735,7 +1766,7 @@ export class ActiveService {
       const dep = anchor + ((s.departureTime ?? s.arrivalTime ?? 0) - base);
       const arr = anchor + ((s.arrivalTime ?? s.departureTime ?? 0) - base);
       return new ServiceStop(
-        s.stationId, s.type, wrap(dep), wrap(arr), s.voiePointId, s.platform
+        s.stationId, s.type, wrap(dep), wrap(arr), s.voiePointId, s.platform, s.stopCode
       );
     });
   }

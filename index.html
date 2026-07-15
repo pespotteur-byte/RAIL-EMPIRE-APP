@@ -684,15 +684,19 @@
         <div class="modal-body">
           <div class="sched-layout">
             <div class="sched-map-col">
-              <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
-                <button type="button" id="btn-sched-manual" class="btn-sm" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Tracer manuellement</button>
-                <button type="button" id="btn-sched-clear-manual" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Effacer tracé manuel</button>
-                <span id="sched-manual-hint" style="font-size:10px;color:var(--text3)">Mode manuel désactivé — cliquez sur une gare ou un point de voie.</span>
+              <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px">
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  <button type="button" id="btn-sched-manual" class="btn-sm" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Tracer manuellement</button>
+                  <button type="button" id="btn-sched-edit-trace" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Éditer le tracé</button>
+                  <button type="button" id="btn-sched-delete-point" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Supprimer point</button>
+                  <button type="button" id="btn-sched-clear-manual" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Effacer tracé</button>
+                </div>
+                <span id="sched-manual-hint" style="font-size:10px;color:var(--text3)">Cliquez sur une gare ou un point de voie pour construire le trajet.</span>
               </div>
               <div class="sched-map-container">
                 <canvas id="sched-map-canvas"></canvas>
               </div>
-              <p class="sched-hint">Cliquer sur les gares / points de voie pour definir le trajet. Shift + clic pour ajouter un point manuel. Les horaires sont calcules automatiquement depuis les donnees ORM et la rame.<br><span style="color:#fbbf24;font-size:10px">Astuce : activez "Tracer manuellement" si ORM ne trouve pas le bon itineraire.</span></p>
+              <p class="sched-hint">Gares et points de voie uniquement sur la carte. Le tracé magenta suit l'itinéraire ferroviaire ORM. Mode manuel si ORM ne trouve pas le bon chemin. Shift + clic sur le tracé pour ajouter un point, glisser pour déplacer, Ctrl + clic pour supprimer.</p>
             </div>
             <div class="sched-form-col">
               <div class="form-row">

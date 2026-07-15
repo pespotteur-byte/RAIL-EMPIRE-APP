@@ -28,6 +28,35 @@ describe('SC-02 — passage times for intermediate stations', () => {
   });
 });
 
+describe('ARR-04/05 — skippable [C]/[S] stops applied per circulation', () => {
+  it('skips a bracketed stop 25% of the time and keeps bare C/S stops', () => {
+    const world = { stations: [
+      { id: 'A', name: 'A', lat: 0, lon: 0 },
+      { id: 'B', name: 'B', lat: 0.1, lon: 0 },
+      { id: 'C', name: 'C', lat: 0.2, lon: 0 },
+    ] };
+    const svc = new ActiveService({
+      name: 'Test', rameId: 'r1',
+      stops: [
+        { stationId: 'A', type: 'arret', stopCode: '', departureTime: 0, arrivalTime: 0 },
+        { stationId: 'B', type: 'arret', stopCode: '[C]', departureTime: 10, arrivalTime: 10 },
+        { stationId: 'C', type: 'arret', stopCode: 'C', departureTime: 20, arrivalTime: 20 },
+      ],
+      routes: [[{ lat: 0, lon: 0 }, { lat: 0.1, lon: 0 }, { lat: 0.2, lon: 0 }]],
+    }, null, world);
+    const adjusted = svc._buildAdjustedStops();
+    assert.equal(adjusted.length, 3);
+    assert.equal(adjusted[0].type, 'arret');
+    assert.equal(adjusted[2].type, 'arret'); // bare C is never skipped
+    // With a fixed RNG we can force the bracketed stop to be skipped.
+    const skipped = svc._buildAdjustedStops(svc.stops, () => 0.1);
+    assert.equal(skipped[1].type, 'waypoint');
+    assert.equal(skipped[1]._skipped, true);
+    const kept = svc._buildAdjustedStops(svc.stops, () => 0.9);
+    assert.equal(kept[1].type, 'arret');
+  });
+});
+
 describe('SC-05 — Auto 24h creates real round-trip duplicates', () => {
   it('creates separate services with independent aller/retour numbers', () => {
     const sc = new ScheduleCreator();

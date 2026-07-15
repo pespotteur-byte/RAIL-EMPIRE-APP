@@ -1670,6 +1670,8 @@ export class UI {
     document.getElementById('sched-sort')?.addEventListener('change', () => this.renderSchedulesList());
     document.getElementById('btn-sched-manual')?.addEventListener('click', () => this._toggleManualMode());
     document.getElementById('btn-sched-clear-manual')?.addEventListener('click', () => this._clearManualTrace());
+    document.getElementById('btn-sched-edit-trace')?.addEventListener('click', () => this._toggleTraceEdit());
+    document.getElementById('btn-sched-delete-point')?.addEventListener('click', () => this._deleteSelectedTracePoint());
   }
 
   openScheduleModal(editService) {
@@ -1687,6 +1689,7 @@ export class UI {
           voiePointId: s.voiePointId || null,
           stationName,
           type: s.type,
+          stopCode: s.stopCode || '',
           arrTimeMin: s.arrivalTime,
           depTimeMin: s.departureTime,
           arrTimeStr: this.minToTimeStr(s.arrivalTime),
@@ -1714,6 +1717,7 @@ export class UI {
       document.getElementById('sched-name').value = '';
       document.getElementById('sched-return-name').value = '';
       this._schedReturnPlatforms = {};
+      this._manualRoutes = []; // start empty, will be filled as stops are added
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = false;
       document.getElementById('sched-multi-departures').value = '1';
@@ -1727,7 +1731,9 @@ export class UI {
     this._manualMode = false;
     this._manualControlPoints = [];
     this._manualStartCoords = null;
-    this._manualRoutes = []; // per-leg manual route override (null = use ORM)
+    this._traceEditMode = false;
+    this._traceSelectedPoint = null;
+    this._traceDragging = null;
     this._updateManualUI();
 
     document.getElementById('modal-schedule')?.classList.remove('hidden');
@@ -1908,7 +1914,29 @@ export class UI {
         }
       }
 
-      // Draw manual trace control points (SC-04 / remaster IV)
+      // Draw editable trace points (SC-04 / remaster IV — points every 50 m).
+      // All route vertices are shown as small dots; selected/drag point is larger.
+      if (this._manualRoutes) {
+        for (let leg = 0; leg < this._manualRoutes.length; leg++) {
+          const route = this._manualRoutes[leg];
+          if (!route || route.length < 2) continue;
+          for (let i = 0; i < route.length; i++) {
+            const pt = route[i];
+            const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+            const isEnd = (i === 0 || i === route.length - 1);
+            const isSelected = this._traceSelectedPoint && this._traceSelectedPoint.leg === leg && this._traceSelectedPoint.index === i;
+            ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : 'rgba(255,255,255,0.7)');
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, isSelected ? 6 : (isEnd ? 4 : 2.5), 0, Math.PI * 2);
+            ctx.fill();
+            if (isSelected) {
+              ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            }
+          }
+        }
+      }
+
+      // Draw manual-trace in-progress control points and temporary line.
       if (this._manualMode && this._manualStartCoords) {
         ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
         ctx.beginPath();
@@ -1964,20 +1992,17 @@ export class UI {
 
     canvas.onmousedown = (e) => {
       const x = e.offsetX, y = e.offsetY;
-      // Grab an existing waypoint marker to drag it (reshape the route)
-      let hit = null, hitD = Infinity;
-      for (let i = 0; i < this.schedStops.length; i++) {
-        const s = this.schedStops[i];
-        if (s.type !== 'waypoint' || !s.voiePointId) continue;
-        const c = this._getStopCoords(s);
-        if (!c) continue;
-        const p = tileMap.worldToScreen(c.lat, c.lon, canvas.width, canvas.height);
-        const d = Math.hypot(p.x - x, p.y - y);
-        if (d < hitD && d < 10) { hitD = d; hit = { index: i, vpId: s.voiePointId }; }
-      }
-      if (hit) {
-        this._draggingWp = hit;
-        this._wpMoved = false;
+      // 1) Trace point drag: grab a 50 m vertex to reshape the route.
+      const traceHit = this._findNearestTracePoint(x, y, tileMap, canvas);
+      if (traceHit) {
+        if (e.ctrlKey || e.button === 2) {
+          this._removeTracePoint(traceHit.leg, traceHit.index);
+          this._traceSelectedPoint = null;
+          this._recalcAfterTraceEdit(traceHit.leg);
+        } else {
+          this._traceSelectedPoint = traceHit;
+          this._traceDragging = { ...traceHit, startX: x, startY: y };
+        }
         schedDrag = false; schedDragStart = null; totalDragDist = 0;
         return;
       }
@@ -1987,10 +2012,10 @@ export class UI {
     };
 
     canvas.onmousemove = (e) => {
-      if (this._draggingWp) {
+      if (this._traceDragging) {
         const w = tileMap.screenToWorld(e.offsetX, e.offsetY, canvas.width, canvas.height);
-        const vp = this.game.voiePointManager?.getVoiePointById(this._draggingWp.vpId);
-        if (vp) { vp.lat = w.lat; vp.lon = w.lon; this._wpMoved = true; requestDraw(); }
+        this._moveTracePoint(this._traceDragging.leg, this._traceDragging.index, w.lat, w.lon);
+        requestDraw();
         return;
       }
       if (schedDrag && schedDragStart) {
@@ -2002,43 +2027,41 @@ export class UI {
         requestDraw();
         return;
       }
-      // Hover feedback: grab cursor when over a draggable waypoint
-      let overWp = false;
-      for (const s of this.schedStops) {
-        if (s.type !== 'waypoint' || !s.voiePointId) continue;
-        const c = this._getStopCoords(s);
-        if (!c) continue;
-        const p = tileMap.worldToScreen(c.lat, c.lon, canvas.width, canvas.height);
-        if (Math.hypot(p.x - e.offsetX, p.y - e.offsetY) < 10) { overWp = true; break; }
+      // Hover feedback
+      const x = e.offsetX, y = e.offsetY;
+      let cursor = 'default';
+      const traceHit = this._findNearestTracePoint(x, y, tileMap, canvas);
+      if (traceHit) cursor = 'grab';
+      else {
+        if (this.game.voiePointManager) {
+          for (const vp of this.game.voiePointManager.getAll()) {
+            const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+            if (Math.hypot(p.x - x, p.y - y) < 12) { cursor = 'pointer'; break; }
+          }
+        }
+        if (cursor === 'default') {
+          for (const st of world.stations) {
+            const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+            if (Math.hypot(p.x - x, p.y - y) < 16) { cursor = 'pointer'; break; }
+          }
+        }
       }
-      canvas.style.cursor = overWp ? 'grab' : 'default';
+      canvas.style.cursor = cursor;
     };
 
-    canvas.onmouseup = (e) => {
-      if (this._draggingWp) {
-        const dw = this._draggingWp; this._draggingWp = null;
-        const vp = this.game.voiePointManager?.getVoiePointById(dw.vpId);
-        if (vp && this._wpMoved) {
-          const snapped = this._snapToTrack(vp.lat, vp.lon);
-          if (snapped) { vp.lat = snapped.lat; vp.lon = snapped.lon; }
-          const stop = this.schedStops[dw.index];
-          if (stop) stop.stationName = `Waypoint (${vp.lat.toFixed(4)}, ${vp.lon.toFixed(4)})`;
-          this.recalcStopsFrom(dw.index).then(() => {
-            this.renderSchedStops();
-            this._recalcPreviewRoutes();
-          });
-          this.game.saveState();
-        }
-        this._wpMoved = false;
-        this._recalcPreviewRoutes();
-        schedDrag = false; schedDragStart = null;
+    canvas.onmouseup = async (e) => {
+      if (this._traceDragging) {
+        const dw = this._traceDragging; this._traceDragging = null;
+        // End of a trace-point drag: recompute travel times from this leg onward.
+        await this._recalcAfterTraceEdit(dw.leg);
+        this.game.saveState();
+        schedDrag = false; schedDragStart = null; totalDragDist = 0;
         return;
       }
       if (totalDragDist < 5) {
         const x = e.offsetX, y = e.offsetY;
 
-        // Manual trace mode (SC-04 / remaster IV): clicks add control points,
-        // a station/voie-point click finishes the current manual leg.
+        // Manual trace mode (SC-04): clicks add control points, station/voie-point click finishes.
         if (this._manualMode) {
           const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
           let closestVP = null, minVPDist = Infinity;
@@ -2056,18 +2079,27 @@ export class UI {
             if (d < minDist && d < 20) { minDist = d; closest = st; }
           }
           if (closestVP && minVPDist < minDist) {
-            this.addSchedVoiePointStop(closestVP);
+            await this.addSchedVoiePointStop(closestVP);
           } else if (closest) {
-            this.addSchedStop(closest);
+            await this.addSchedStop(closest);
           } else {
             this._addManualPoint(worldPos.lat, worldPos.lon);
           }
-          schedDrag = false;
-          schedDragStart = null;
+          schedDrag = false; schedDragStart = null;
           return;
         }
 
-        // Check voie points first (smaller targets, higher priority for waypoint)
+        // Shift + click on a segment: insert a new 50 m trace point.
+        if (e.shiftKey) {
+          const seg = this._findNearestSegmentPoint(x, y, tileMap, canvas);
+          if (seg) {
+            this._insertTracePoint(seg.leg, seg.index, seg.lat, seg.lon);
+            await this._recalcAfterTraceEdit(seg.leg);
+            return;
+          }
+        }
+
+        // Check voie points first
         let closestVP = null, minVPDist = Infinity;
         if (this.game.voiePointManager) {
           for (const vp of this.game.voiePointManager.getAll()) {
@@ -2085,15 +2117,14 @@ export class UI {
           if (d < minDist && d < 20) { minDist = d; closest = st; }
         }
 
-        // If voie point is closer, add as invisible waypoint
         if (closestVP && minVPDist < minDist) {
-          this.addSchedVoiePointStop(closestVP);
+          await this.addSchedVoiePointStop(closestVP);
         } else if (closest) {
-          this.addSchedStop(closest);
-        } else {
-          // Click on empty space: snap to nearest tronçon or ORM rail as waypoint
+          await this.addSchedStop(closest);
+        } else if (e.shiftKey) {
+          // Shift + click on empty space: add a map waypoint snapped to track.
           const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
-          this._addMapWaypoint(worldPos.lat, worldPos.lon);
+          await this._addMapWaypoint(worldPos.lat, worldPos.lon);
         }
       }
       schedDrag = false;
@@ -2105,6 +2136,7 @@ export class UI {
       tileMap.applyZoom(e.deltaY < 0 ? 1 : -1, e.offsetX, e.offsetY);
       requestDraw();
     };
+    canvas.oncontextmenu = (e) => { e.preventDefault(); };
 
     this._drawSchedMap = drawMap;
     this._recalcPreviewRoutes();
@@ -2143,8 +2175,13 @@ export class UI {
   _updateManualUI() {
     const btn = document.getElementById('btn-sched-manual');
     const clear = document.getElementById('btn-sched-clear-manual');
+    const edit = document.getElementById('btn-sched-edit-trace');
+    const del = document.getElementById('btn-sched-delete-point');
     const hint = document.getElementById('sched-manual-hint');
     if (!btn || !clear || !hint) return;
+    const hasTrace = this._manualRoutes && this._manualRoutes.some(r => r && r.length >= 2);
+    if (edit) edit.classList.toggle('hidden', !hasTrace);
+    if (del) del.classList.toggle('hidden', !this._traceSelectedPoint);
     if (this._manualMode) {
       btn.textContent = 'Terminer le tracé manuel';
       btn.style.background = '#3b82f6';
@@ -2156,8 +2193,24 @@ export class UI {
       btn.style.background = '';
       btn.style.color = '';
       clear.classList.add('hidden');
-      hint.textContent = 'Mode manuel désactivé — cliquez sur une gare ou un point de voie.';
+      const base = 'Cliquez sur une gare ou un point de voie pour construire le trajet.';
+      const editHint = hasTrace ? ' Attrapez un point blanc pour déplacer le tracé, Shift+clic sur un segment pour ajouter un point, Ctrl+clic pour supprimer.' : '';
+      hint.textContent = base + editHint;
     }
+  }
+
+  _toggleTraceEdit() {
+    this._traceEditMode = !this._traceEditMode;
+    if (!this._traceEditMode) this._traceSelectedPoint = null;
+    this._updateManualUI();
+    if (this._drawSchedMap) this._drawSchedMap();
+  }
+
+  _deleteSelectedTracePoint() {
+    if (!this._traceSelectedPoint) return;
+    this._removeTracePoint(this._traceSelectedPoint.leg, this._traceSelectedPoint.index);
+    this._traceSelectedPoint = null;
+    this._updateManualUI();
   }
 
   _addManualPoint(lat, lon) {
@@ -2165,11 +2218,11 @@ export class UI {
     if (this._drawSchedMap) this._drawSchedMap();
   }
 
-  _finishManualLeg(endStop) {
+  _finishManualLeg(endStop, maxSpeed = 30) {
     if (!this._manualMode || !this._manualStartCoords) return;
     const endCoords = this._getStopCoords(endStop);
     if (!endCoords) return;
-    const route = this._buildManualRoute(this._manualStartCoords, this._manualControlPoints, endCoords);
+    const route = this._buildManualRoute(this._manualStartCoords, this._manualControlPoints, endCoords, maxSpeed);
     const legIdx = Math.max(0, this.schedStops.length - 1); // leg between last existing stop and endStop
     this._manualRoutes[legIdx] = route;
     this._manualMode = false;
@@ -2178,23 +2231,9 @@ export class UI {
     this._updateManualUI();
   }
 
-  _buildManualRoute(start, controls, end) {
+  _buildManualRoute(start, controls, end, maxSpeed = 30) {
     const points = [start, ...controls, end];
-    const route = [];
-    for (let i = 0; i < points.length - 1; i++) {
-      const a = points[i], b = points[i + 1];
-      const d = haversineDistance(a.lat, a.lon, b.lat, b.lon);
-      const steps = Math.max(1, Math.round(d / 0.05)); // one point every 50m
-      for (let s = 0; s <= steps; s++) {
-        const t = s / steps;
-        const lat = a.lat + (b.lat - a.lat) * t;
-        const lon = a.lon + (b.lon - a.lon) * t;
-        route.push({ lat, lon, maxSpeed: 30 }); // manual traces default 30 km/h unless overridden
-      }
-      // avoid duplicate last point except final
-      if (i < points.length - 2) route.pop();
-    }
-    return route;
+    return this._densifyRoute(points.map(p => ({ ...p, maxSpeed })), 0.05);
   }
 
   async addSchedStop(station) {
@@ -2211,6 +2250,7 @@ export class UI {
       stationId: station.id,
       stationName: station.name,
       type: 'arret',
+      stopCode: '',
       arrTimeMin: 0,
       depTimeMin: 0,
       arrTimeStr: '00:00',
@@ -2225,31 +2265,11 @@ export class UI {
       depTimeMin = arrTimeMin;
     } else {
       const prevStop = this.schedStops[this.schedStops.length - 1];
-      let travelTime = 15;
-
       if (this._manualMode) {
-        this._finishManualLeg(newStop);
-        const manualRoute = this._manualRoutes[this.schedStops.length - 1];
-        if (manualRoute && manualRoute.length >= 2) {
-          travelTime = this.game.orm.calculateTravelTime(manualRoute, rame || rameSpeed);
-        }
-      } else if (prevStop.stationId) {
-        const prevStation = this.game.world.getStationById(prevStop.stationId);
-        if (prevStation) {
-          const existingTrack = this.game.world.getTrackBetween(prevStation.id, station.id);
-          if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-            travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
-          } else {
-            try {
-              const route = await this.game.orm.findRoute(prevStation.lat, prevStation.lon, station.lat, station.lon);
-              travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
-            } catch (e) {
-              const dist = this._approxRailDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
-              travelTime = Math.round((dist / rameSpeed) * 60) || 1;
-            }
-          }
-        }
+        this._finishManualLeg(newStop, rameSpeed);
       }
+      const legIdx = this.schedStops.length - 1;
+      const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, legIdx);
       arrTimeMin = prevStop.depTimeMin + travelTime;
       depTimeMin = arrTimeMin + 2;
     }
@@ -2283,6 +2303,7 @@ export class UI {
       voiePointId: voiePoint.id,
       stationName: vpName,
       type: voiePoint.stationId ? 'arret' : 'waypoint',
+      stopCode: '',
       arrTimeMin: 0,
       depTimeMin: 0,
       arrTimeStr: '00:00',
@@ -2298,25 +2319,11 @@ export class UI {
       depTimeMin = arrTimeMin;
     } else {
       const prevStop = this.schedStops[this.schedStops.length - 1];
-      let travelTime = 5;
       if (this._manualMode) {
-        this._finishManualLeg(newStop);
-        const manualRoute = this._manualRoutes[this.schedStops.length - 1];
-        if (manualRoute && manualRoute.length >= 2) {
-          travelTime = this.game.orm.calculateTravelTime(manualRoute, rame || rameSpeed);
-        }
-      } else {
-        const prevCoords = this._getStopCoords(prevStop);
-        if (prevCoords) {
-          try {
-            const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
-            travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
-          } catch (e) {
-            const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
-            travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
-          }
-        }
+        this._finishManualLeg(newStop, rameSpeed);
       }
+      const legIdx = this.schedStops.length - 1;
+      const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, legIdx);
       arrTimeMin = prevStop.depTimeMin + travelTime;
       depTimeMin = arrTimeMin; // no stop time for waypoint
     }
@@ -2381,30 +2388,27 @@ export class UI {
     }
 
     const prevStop = this.schedStops[insertIndex - 1];
-    const prevCoords = this._getStopCoords(prevStop);
-    let travelTime = 5;
-    if (prevCoords) {
-      try {
-        const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
-        travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
-      } catch (e) {
-        const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, snappedLat, snappedLon);
-        travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
-      }
-    }
-    const arrTimeMin = (prevStop.depTimeMin || 0) + travelTime;
-
-    this.schedStops.splice(insertIndex, 0, {
+    const newStop = {
       stationId: null,
       voiePointId: vpId,
       stationName: `Waypoint (${snappedLat.toFixed(4)}, ${snappedLon.toFixed(4)})`,
       type: 'waypoint',
-      arrTimeMin,
-      depTimeMin: arrTimeMin,
-      arrTimeStr: this.minToTimeStr(arrTimeMin),
-      depTimeStr: this.minToTimeStr(arrTimeMin),
+      stopCode: '',
+      arrTimeMin: 0,
+      depTimeMin: 0,
+      arrTimeStr: '00:00',
+      depTimeStr: '00:00',
       platform: '',
-    });
+    };
+    const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, insertIndex - 1);
+    const arrTimeMin = (prevStop.depTimeMin || 0) + travelTime;
+
+    newStop.arrTimeMin = arrTimeMin;
+    newStop.depTimeMin = arrTimeMin;
+    newStop.arrTimeStr = this.minToTimeStr(arrTimeMin);
+    newStop.depTimeStr = this.minToTimeStr(arrTimeMin);
+    this.schedStops.splice(insertIndex, 0, newStop);
+    this._adjustManualRoutesForInsert(insertIndex);
 
     // Recompute the stops that follow the inserted waypoint (none are removed).
     if (insertIndex < this.schedStops.length - 1) {
@@ -2502,6 +2506,13 @@ export class UI {
             <option value="arret" ${stop.type === 'arret' ? 'selected' : ''}>Arret</option>
             <option value="passage" ${stop.type === 'passage' ? 'selected' : ''}>Passage</option>
             <option value="waypoint" ${stop.type === 'waypoint' ? 'selected' : ''}>Waypoint</option>
+          </select>
+          <select style="width:52px" onchange="game.ui.updateSchedStop(${i}, 'stopCode', this.value)" title="C=Commercial, S=Service, []=sautable (25%)">
+            <option value="" ${!stop.stopCode ? 'selected' : ''}>-</option>
+            <option value="C" ${stop.stopCode === 'C' ? 'selected' : ''}>C</option>
+            <option value="S" ${stop.stopCode === 'S' ? 'selected' : ''}>S</option>
+            <option value="[C]" ${stop.stopCode === '[C]' ? 'selected' : ''}>[C]</option>
+            <option value="[S]" ${stop.stopCode === '[S]' ? 'selected' : ''}>[S]</option>
           </select>
           ${stop.type === 'waypoint' ? `
             <span style="font-size:9px;color:var(--text3);font-style:italic">via</span>
@@ -2632,6 +2643,9 @@ export class UI {
     if (field === 'platform') {
       stop.platform = value || '';
     }
+    if (field === 'stopCode') {
+      stop.stopCode = value || '';
+    }
     // Auto-recalculate all subsequent stops (await async routing)
     await this.recalcStopsFrom(index + 1);
     this.renderSchedStops();
@@ -2707,6 +2721,143 @@ export class UI {
     return (best && bestDist <= 5) ? best : null;
   }
 
+  // --- Trace editing helpers (remaster IV — points auto every 50 m) ---
+
+  // Densify a polyline so consecutive vertices are at most `spacingKm` apart.
+  // Preserves the original shape by interpolating along cumulative distance.
+  _densifyRoute(route, spacingKm = 0.05) {
+    if (!route || route.length < 2) return route;
+    const cum = [0];
+    for (let i = 1; i < route.length; i++) {
+      cum[i] = cum[i - 1] + haversineDistance(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
+    }
+    const total = cum[cum.length - 1];
+    if (total <= 0) return [...route];
+    const out = [];
+    const steps = Math.max(1, Math.round(total / spacingKm));
+    for (let s = 0; s <= steps; s++) {
+      const target = Math.min(total, s * spacingKm);
+      let idx = 1;
+      while (idx < cum.length && cum[idx] < target) idx++;
+      const a = route[idx - 1], b = route[idx] || route[route.length - 1];
+      const segLen = (cum[idx] ?? total) - cum[idx - 1];
+      const t = segLen > 0 ? (target - cum[idx - 1]) / segLen : 0;
+      const maxSpeed = b?.maxSpeed ?? a?.maxSpeed ?? 30;
+      out.push({
+        lat: a.lat + (b.lat - a.lat) * t,
+        lon: a.lon + (b.lon - a.lon) * t,
+        maxSpeed,
+      });
+    }
+    return out;
+  }
+
+  // Recompute a route so that it keeps roughly 50 m spacing after a manual edit.
+  _resampleRoute(route, spacingKm = 0.05) {
+    return this._densifyRoute(route, spacingKm);
+  }
+
+  _findNearestTracePoint(x, y, tileMap, canvas) {
+    if (!this._manualRoutes || this._manualRoutes.length === 0) return null;
+    let best = null, bestDist = Infinity;
+    for (let leg = 0; leg < this._manualRoutes.length; leg++) {
+      const route = this._manualRoutes[leg];
+      if (!route) continue;
+      for (let i = 0; i < route.length; i++) {
+        const p = tileMap.worldToScreen(route[i].lat, route[i].lon, canvas.width, canvas.height);
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestDist) { bestDist = d; best = { leg, index: i }; }
+      }
+    }
+    return bestDist <= 10 ? best : null;
+  }
+
+  _findNearestSegmentPoint(x, y, tileMap, canvas) {
+    if (!this._manualRoutes || this._manualRoutes.length === 0) return null;
+    let best = null, bestDist = Infinity;
+    for (let leg = 0; leg < this._manualRoutes.length; leg++) {
+      const route = this._manualRoutes[leg];
+      if (!route || route.length < 2) continue;
+      for (let i = 0; i < route.length - 1; i++) {
+        const a = tileMap.worldToScreen(route[i].lat, route[i].lon, canvas.width, canvas.height);
+        const b = tileMap.worldToScreen(route[i + 1].lat, route[i + 1].lon, canvas.width, canvas.height);
+        const abx = b.x - a.x, aby = b.y - a.y;
+        const len2 = abx * abx + aby * aby;
+        let t = len2 > 0 ? ((x - a.x) * abx + (y - a.y) * aby) / len2 : 0;
+        t = Math.max(0, Math.min(1, t));
+        const px = a.x + abx * t, py = a.y + aby * t;
+        const d = Math.hypot(px - x, py - y);
+        if (d < bestDist) {
+          bestDist = d;
+          const worldPos = tileMap.screenToWorld(px, py, canvas.width, canvas.height);
+          best = { leg, index: i + 1, ...worldPos };
+        }
+      }
+    }
+    return bestDist <= 8 ? best : null;
+  }
+
+  // Insert a point into the trace route at a specific index and resample.
+  _insertTracePoint(leg, index, lat, lon) {
+    const route = this._manualRoutes[leg];
+    if (!route) return;
+    const maxSpeed = route[Math.max(0, index - 1)].maxSpeed || 30;
+    route.splice(index, 0, { lat, lon, maxSpeed });
+    this._manualRoutes[leg] = this._resampleRoute(route);
+    this._recalcAfterTraceEdit(leg);
+  }
+
+  // Remove a trace point (start/end are protected).
+  _removeTracePoint(leg, index) {
+    const route = this._manualRoutes[leg];
+    if (!route || route.length <= 2 || index <= 0 || index >= route.length - 1) return;
+    route.splice(index, 1);
+    this._manualRoutes[leg] = this._resampleRoute(route);
+    this._recalcAfterTraceEdit(leg);
+  }
+
+  // Move a trace point and resample the affected leg.
+  _moveTracePoint(leg, index, lat, lon) {
+    const route = this._manualRoutes[leg];
+    if (!route || index <= 0 || index >= route.length - 1) return;
+    const snapped = this._snapToTrack(lat, lon);
+    route[index].lat = snapped ? snapped.lat : lat;
+    route[index].lon = snapped ? snapped.lon : lon;
+    this._manualRoutes[leg] = this._resampleRoute(route);
+  }
+
+  async _recalcAfterTraceEdit(leg) {
+    // Recompute travel time for the affected leg and all subsequent stops.
+    await this.recalcStopsFrom(leg + 1);
+    this.renderSchedStops();
+    if (this._drawSchedMap) this._drawSchedMap();
+  }
+
+  // Keep the parallel manual-routes array aligned with schedStops legs.
+  _adjustManualRoutesForInsert(stopIndex) {
+    if (!this._manualRoutes) this._manualRoutes = [];
+    if (stopIndex <= 0 || stopIndex > this.schedStops.length) return;
+    if (stopIndex === this.schedStops.length) {
+      this._manualRoutes.push(null);
+      return;
+    }
+    const legIdx = stopIndex - 1;
+    // One old leg is replaced by two new legs; old downstream routes shift by one.
+    this._manualRoutes.splice(legIdx, 1, null, null);
+  }
+
+  _adjustManualRoutesForRemove(stopIndex) {
+    if (!this._manualRoutes) return;
+    if (stopIndex <= 0 || stopIndex >= this.schedStops.length) return;
+    if (stopIndex === this.schedStops.length - 1) {
+      this._manualRoutes.pop();
+      return;
+    }
+    const legIdx = stopIndex - 1;
+    this._manualRoutes.splice(legIdx, 1); // remove leg prev->removed
+    this._manualRoutes[legIdx] = null; // invalidate leg prev->next, will be recomputed
+  }
+
   async _resolveRouteForLeg(stopA, stopB) {
     const ca = this._getStopCoords(stopA), cb = this._getStopCoords(stopB);
     if (!ca || !cb) return null;
@@ -2738,14 +2889,23 @@ export class UI {
       this._schedPreviewRoutes = [];
       return;
     }
+    if (!this._manualRoutes) this._manualRoutes = [];
     const routes = [];
     for (let i = 0; i < this.schedStops.length - 1; i++) {
-      if (this._manualRoutes && this._manualRoutes[i]) {
+      if (this._manualRoutes[i]) {
         routes.push(this._manualRoutes[i]);
       } else {
-        routes.push(await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
+        const route = await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]);
+        if (route && route.length >= 2) {
+          this._manualRoutes[i] = this._densifyRoute(route);
+          routes.push(this._manualRoutes[i]);
+        } else {
+          routes.push(null);
+        }
       }
     }
+    // Trim if stops shrank
+    this._manualRoutes.length = this.schedStops.length - 1;
     this._schedPreviewRoutes = routes;
     if (this._drawSchedMap) this._drawSchedMap();
   }
@@ -2756,6 +2916,11 @@ export class UI {
       route = this._manualRoutes[legIndex];
     } else {
       route = await this._resolveRouteForLeg(prevStop, curStop);
+      if (route && route.length >= 2 && legIndex != null) {
+        if (!this._manualRoutes) this._manualRoutes = [];
+        this._manualRoutes[legIndex] = this._densifyRoute(route);
+        route = this._manualRoutes[legIndex];
+      }
     }
     if (route && route.length >= 2) {
       return this.game.orm.calculateTravelTime(route, rame || rameSpeed);
@@ -2803,6 +2968,7 @@ export class UI {
 
   removeSchedStop(index) {
     this.schedStops.splice(index, 1);
+    this._adjustManualRoutesForRemove(index);
     this.recalcStopsFrom(index);
     this.renderSchedStops();
     this._recalcPreviewRoutes();
@@ -2829,7 +2995,13 @@ export class UI {
         routePromises.push(this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
       }
     }
-    const routes = await Promise.all(routePromises);
+    let routes = await Promise.all(routePromises);
+    // Ensure every saved route is densified to ~50 m spacing.
+    routes = routes.map((r, i) => {
+      if (this._manualRoutes && this._manualRoutes[i] && this._manualRoutes[i].length >= 2) return this._manualRoutes[i];
+      if (r && r.length >= 2) return this._densifyRoute(r);
+      return r;
+    });
 
     const invalidLeg = routes.findIndex(r => !r || r.length < 2);
     if (invalidLeg >= 0) {
@@ -2840,6 +3012,7 @@ export class UI {
       stationId: s.stationId,
       voiePointId: s.voiePointId || null,
       type: s.type,
+      stopCode: s.stopCode || '',
       departureTime: s.depTimeMin,
       arrivalTime: s.arrTimeMin,
       platform: s.platform || '',

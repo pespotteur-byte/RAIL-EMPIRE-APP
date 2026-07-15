@@ -29,7 +29,7 @@
 | R-06 | Index spatial (grille/quadtree/R-tree) pour requêtes "edges proches" | P0 | A13 | [x] PR1 |
 | R-07 | Plafonnement vitesse routage à V160 (matériel joueur) | P1 | A13 | [ ] |
 | R-08 | Aiguillages branchés au routage (fin des aiguillages décoratifs) | P0 | A14#13, annexe 10d | [ ] |
-| R-09 | Points auto tous les 50 m maîtrisés (pas de points parasites) | P0 | A4.2 (d), A14#5 | [ ] |
+| R-09 | Points auto tous les 50 m maîtrisés (pas de points parasites) | P0 | A4.2 (d), A14#5 | [x] PR? (densification 50m, points editables/supprimables) |
 
 ## PH — PHYSIQUE DE TRACTION  (P0)
 | ID | Exigence | Prio | Source | Statut |
@@ -87,8 +87,8 @@
 | ARR-01 | C = Circulation, S = Service | P1 | A3.8, réponse #1 | [x] PR4 (parseStopType) |
 | ARR-02 | Sautable uniquement entre crochets [C] / [S] | P1 | A3.8, réponse #1 | [x] PR4 (parseStopType.skippable) |
 | ARR-03 | Arrêt non crocheté = incompressible (toujours marqué) | P1 | A3.8 | [x] PR4 (bare C/S = non skippable) |
-| ARR-04 | Probabilité de saut 25 % | P2 | A3.8 | [~] PR4 (rollSkip/shouldSkipStop 25% ; intégration circulation à faire) |
-| ARR-05 | Tirage rejoué **à chaque circulation** (indépendant du seed) | P2 | A3.8, A17, réponse #2 | [~] PR4 (RNG injectable rejoué ; intégration circulation à faire) |
+| ARR-04 | Probabilité de saut 25 % | P2 | A3.8 | [x] PR? (rollSkip 25% + _buildAdjustedStops) |
+| ARR-05 | Tirage rejoué **à chaque circulation** (indépendant du seed) | P2 | A3.8, A17, réponse #2 | [x] PR? (shouldSkipStop avec Math.random, recalculé par _buildAdjustedStops à chaque départ) |
 
 ## OCC — OCCUPATION VOIES & PRIORITÉS  (P1)
 | ID | Exigence | Prio | Source | Statut |
@@ -352,7 +352,7 @@
 | BUG-02 | Routage étrange A→B (cf. R-03/R-04) | P0 | A14#2 | [ ] |
 | BUG-03 | Aller-retour aléatoire (cf. SC-04) | P0 | A14#3 | [ ] |
 | BUG-04 | Auto 24h sans effet (cf. SC-05) | P0 | A14#4 | [x] PR? (createAutoRoundTripDuplicates + duplicateService) |
-| BUG-05 | Points random ajoutés (cf. R-09) | P0 | A14#5 | [ ] |
+| BUG-05 | Points random ajoutés (cf. R-09) | P0 | A14#5 | [x] PR? (points 50m provenant de _densifyRoute, pas de points parasites) |
 | BUG-06 | Bug de minuit → horloge en minutes absolues | P0 | A14#6 | [x] comparaisons midnight-safe (timeDiff/timeGte/isInServiceWindow) + horloge Paris |
 | BUG-07 | Bug 1440 min → modulo 24h propre | P0 | A14#7 | [x] normalisation ((m%1440)+1440)%1440 partout (affichage + fenêtres service) |
 | BUG-08 | Horaires non MAJ → recalcul auto à l'édition | P0 | A14#8 | [ ] |
