@@ -155,7 +155,7 @@ export class ActiveService {
     // LVM-01 — livemap category (annexe 2a) : Voyageur / Fret / Travaux / Machines.
     this.category = this.isWorkTrain
       ? 'travaux'
-      : (['hlp','tm'].includes(this.serviceType)
+      : (['hlp','tm','m-'].includes(this.serviceType)
         ? 'machine'
         : (rame && rame.totalFreightCapacity > rame.totalCapacity ? 'fret' : 'voyageur'));
 

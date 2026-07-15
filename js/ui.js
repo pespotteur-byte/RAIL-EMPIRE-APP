@@ -3456,6 +3456,16 @@ export class UI {
         return alert('Un TM (Train de machines) compte 3 à 12 locomotives, rien d’autre.');
       }
     }
+    if (serviceType === 'm-') {
+      // CVO-05 : machine de manœuvre = une seule locomotive rattachée à un dépôt
+      const locoCount = rame.elementDetails.filter(e => e.category === 'locomotive' || e.category === 'automotrice').length;
+      if (locoCount !== 1 || rame.elementDetails.length !== 1) {
+        return alert('Une machine de manœuvre (M-) est constituée d\'une seule locomotive.');
+      }
+      if (!rame.depotId) {
+        return alert('Une machine de manœuvre (M-) doit être rattachée à un dépôt.');
+      }
+    }
 
     const returnName = document.getElementById('sched-return-name')?.value.trim() || '';
     const assignedContractId = document.getElementById('sched-contract')?.value || '';
