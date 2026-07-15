@@ -301,7 +301,8 @@ export class ActiveService {
     return this.weather.getSpeedEffectsAt(lat, lon, this.rame ? this.rame.maxSpeed : (this.train?.maxSpeed || 0));
   }
 
-  // REG-01/02 : calcule l'écart canton selon la couverture régulateur/AC
+  // REG-01/02/04 : calcule l'écart canton selon la couverture régulateur/AC
+  // REG-04 : utilisation du découpage par axe (station/lineIds) plutôt que du seul cercle
   _updateRegulationFactor() {
     const lat = this.position?.lat;
     const lon = this.position?.lon;
@@ -309,7 +310,18 @@ export class ActiveService {
       cantonManager.setTrainSeparation(this.id, 2);
       return;
     }
-    const effects = window.game.staffManager.getRegulationEffects(lat, lon);
+    const currentStops = this.getCurrentStops();
+    const curStop = currentStops?.[this.currentStopIndex];
+    const prevStop = currentStops?.[this.currentStopIndex - 1];
+    const stationIds = [curStop?.stationId, prevStop?.stationId].filter(Boolean);
+    const lineManager = window.game.lineManager;
+    const lineIds = new Set();
+    for (const stId of stationIds) {
+      if (stId && lineManager?.getLinesForStation) {
+        for (const l of lineManager.getLinesForStation(stId)) lineIds.add(l.id);
+      }
+    }
+    const effects = window.game.staffManager.getRegulationEffects(lat, lon, stationIds, [...lineIds]);
     let minutes = 2;
     if (effects.regulator) minutes = 1; // 1 min d'écart si zone régulateur couverte
     if (effects.signalBox) minutes = 0.5; // 30 s d'écart si AC (signal box) couverte en plus
@@ -577,6 +589,13 @@ export class ActiveService {
           // Section VI — une rame ne peut pas effectuer 2 trajets en même temps
           if (this.rameId && window.game?.scheduleCreator?.isRameInUse(this.rameId, this.id, timeOfDay)) {
             // Rame already used by another active service; stay waiting and retry next tick
+            return;
+          }
+
+          // REG-03 : décision régulation — train en garage temporaire
+          if (this._garageUntil != null && timeOfDay < this._garageUntil) {
+            this.train.state = 'garage';
+            this.train.delayReason = 'regulation : garage temporaire';
             return;
           }
 
@@ -865,6 +884,8 @@ export class ActiveService {
    */
   moveUpdate(dt, timeOfDay, allServices) {
     if (!this.active || this.state !== 'moving') return;
+    // REG-03 : un train en route n'est plus sous garage régulation
+    this._garageUntil = null;
 
     // RH-05 : grève — les services affectés s'arrêtent sur place
     if (window.game?.unions?.isServiceBlocked(this.id)) {

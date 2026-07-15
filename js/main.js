@@ -754,6 +754,8 @@ class RailEmpire {
     try { this.staffManager.tickConductors(activeSchedules, timeOfDay, dateStr); } catch(e) { /* graceful */ }
     // Contrôleurs: random ticket inspections on passenger trains
     try { this.staffManager.tickControleurs(this.economy, activeSchedules, timeOfDay); } catch(e) { /* graceful */ }
+    // REG-03 : régulation (ordre de passage / garage) prise par le jeu
+    try { this.staffManager.tickRegulateurs(this.scheduleCreator.getActiveServices(), timeOfDay, dateStr, this.realismSettings); } catch(e) { /* graceful */ }
 
     // Revenue collected inside service.completeService -> economy.processServiceRevenue
 

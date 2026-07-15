@@ -277,6 +277,7 @@ export class StaffManager {
       lon: data.lon,
       radiusKm: data.radiusKm || 10,
       stationId: data.stationId || null,
+      lineId: data.lineId || null,
     };
     this.signalBoxes.push(sb);
     return sb;
@@ -293,13 +294,14 @@ export class StaffManager {
   getSignalBoxById(id) { return this.signalBoxes.find(sb => sb.id === id); }
 
   // ── Zones ──
-  addZone(name, lat, lon, radiusKm) {
+  addZone(name, lat, lon, radiusKm, lineId) {
     const z = {
       id: `zone-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
       name: name || `Zone ${this.zones.length + 1}`,
       lat: lat || null,
       lon: lon || null,
       radiusKm: radiusKm || 30,
+      lineId: lineId || null,
     };
     this.zones.push(z);
     return z;
@@ -347,33 +349,83 @@ export class StaffManager {
     return { count: regs.length, needed: 3, covered: regs.length >= 3 };
   }
 
-  // REG-01/02 : détermine si un point est couvert par une zone régulateur + AC
-  getRegulationEffects(lat, lon) {
+  // REG-01/02/04 : détermine si un point est couvert par une zone régulateur + AC
+  // stationIds/lineIds permettent le découpage par axe (REG-04) sans dépendre du rayon
+  getRegulationEffects(lat, lon, stationIds = [], lineIds = []) {
     if (lat == null || lon == null) return { regulator: null, signalBox: null };
+    const stationSet = new Set(stationIds);
+    const lineSet = new Set(lineIds);
     const effects = { regulator: null, signalBox: null };
     for (const z of this.zones) {
-      if (z.lat == null || z.lon == null) continue;
-      const d = haversineDistance(lat, lon, z.lat, z.lon);
-      if (d <= (z.radiusKm || 150)) {
-        const cov = this.getZoneRegulatorCoverage(z.id);
-        if (cov.covered) {
-          effects.regulator = { zoneId: z.id, name: z.name, distanceKm: d };
-          break;
-        }
+      const cov = this.getZoneRegulatorCoverage(z.id);
+      if (!cov.covered) continue;
+      let covered = false;
+      if (z.lineId && lineSet.has(z.lineId)) covered = true;
+      if (!covered && z.stationId && stationSet.has(z.stationId)) covered = true;
+      if (!covered && z.lat != null && z.lon != null) {
+        const d = haversineDistance(lat, lon, z.lat, z.lon);
+        if (d <= (z.radiusKm || 150)) covered = true;
+      }
+      if (covered) {
+        effects.regulator = { zoneId: z.id, name: z.name };
+        break;
       }
     }
     for (const sb of this.signalBoxes) {
-      if (sb.lat == null || sb.lon == null) continue;
-      const d = haversineDistance(lat, lon, sb.lat, sb.lon);
-      if (d <= (sb.radiusKm || 10)) {
-        const agents = this.staff.filter(s => s.role === 'agent_circulation' && s.assignedTo === sb.id);
-        if (agents.length > 0) {
-          effects.signalBox = { boxId: sb.id, name: sb.name, distanceKm: d, agents: agents.length };
-          break;
-        }
+      const agents = this.staff.filter(s => s.role === 'agent_circulation' && s.assignedTo === sb.id);
+      if (agents.length === 0) continue;
+      let covered = false;
+      if (sb.lineId && lineSet.has(sb.lineId)) covered = true;
+      if (!covered && sb.stationId && stationSet.has(sb.stationId)) covered = true;
+      if (!covered && sb.lat != null && sb.lon != null) {
+        const d = haversineDistance(lat, lon, sb.lat, sb.lon);
+        if (d <= (sb.radiusKm || 10)) covered = true;
+      }
+      if (covered) {
+        effects.signalBox = { boxId: sb.id, name: sb.name, agents: agents.length };
+        break;
       }
     }
     return effects;
+  }
+
+  // REG-03 — le jeu décide de l'ordre de passage / garage en gare
+  tickRegulateurs(activeServices, timeOfDay, dateStr, realismSettings) {
+    const tolerance = realismSettings?.delayTolerance || 30;
+    const stationQueues = new Map();
+    for (const svc of activeServices) {
+      if (!svc.active || svc.state !== 'waiting' && svc.state !== 'stopped_at_station') continue;
+      const stops = svc.getCurrentStops ? svc.getCurrentStops() : svc.stops;
+      const next = stops?.[svc.currentStopIndex];
+      if (!next) continue;
+      const dep = next.departureTime ?? next.arrivalTime ?? 0;
+      const delay = svc.delay || 0;
+      if (!stationQueues.has(next.stationId)) stationQueues.set(next.stationId, []);
+      stationQueues.get(next.stationId).push({ svc, dep, delay, type: svc.serviceType || 'passager' });
+    }
+    for (const [stationId, queue] of stationQueues) {
+      queue.sort((a, b) => {
+        if (a.type !== b.type) {
+          // priorité voyageur > fret > travaux
+          const order = { passager: 0, fret: 1, w: 1, work: 2, hlp: 3, tm: 3, evo: 4, m: 4 };
+          return (order[a.type] ?? 5) - (order[b.type] ?? 5);
+        }
+        return a.dep - b.dep;
+      });
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        item.svc._regulationPriority = i;
+        const maxWait = (item.type === 'passager') ? 60 : 120;
+        if (item.delay > tolerance && i > 0) {
+          // train en retard et non prioritaire -> garage temporaire
+          item.svc._garageUntil = timeOfDay + Math.min(item.delay, maxWait);
+          item.svc.train.delayReason = 'regulation : garage temporaire';
+        } else {
+          item.svc._garageUntil = null;
+          if (item.svc.train.delayReason === 'regulation : garage temporaire') item.svc.train.delayReason = '';
+        }
+      }
+    }
   }
 
   // ── Daily salaries ──
