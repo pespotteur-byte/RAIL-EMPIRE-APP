@@ -186,20 +186,20 @@
 |----|----------|------|--------|--------|
 | FRT-01 | Train complet = 1 type de wagon ; MLMC = wagons variés (diffus) | P1 | A7 | [ ] |
 | FRT-02 | Clients = entreprises ; but = qualité de service / parts de marché | P1 | A7 | [ ] |
-| FRT-03 | Contrat = besoins matériels + lieu livraison (ITE) | P1 | A7 | [ ] |
-| FRT-04 | Retard → pénalité 25 % | P1 | A7, A18 | [ ] |
+| FRT-03 | Contrat = besoins matériels + lieu livraison (ITE), assignable à un service | P1 | A7 | [x] PR? (picker contrat dans Horaires + fulfillment) |
+| FRT-04 | Retard → pénalité 25 % | P1 | A7, A18 | [x] PR? (sur contrat et fret générique) |
 | FRT-05 | Avance/fiabilité → confiance accrue → plus d'offres | P1 | A7 | [ ] |
-| FRT-06 | La demande peut manquer : fret peut partir vide | P1 | A7 | [ ] |
+| FRT-06 | La demande peut manquer : fret peut partir vide | P1 | A7 | [x] PR? (chargement aléatoire 20-70%) |
 
 ## ECO — ÉCONOMIE  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| ECO-01 | Coût d'exploitation : péage circulation | P1 | A8.1 | [ ] |
-| ECO-02 | Coût d'exploitation : composante distance | P1 | A8.1 | [ ] |
-| ECO-03 | Coût d'exploitation : composante vitesse max | P1 | A8.1 | [ ] |
-| ECO-04 | Prix voyageur au km différencié par classification du train | P1 | A8.2 | [ ] |
+| ECO-01 | Coût d'exploitation : péage circulation | P1 | A8.1 | [x] PR? |
+| ECO-02 | Coût d'exploitation : composante distance | P1 | A8.1 | [x] PR? |
+| ECO-03 | Coût d'exploitation : composante vitesse max | P1 | A8.1 | [x] PR? |
+| ECO-04 | Prix voyageur au km différencié par classification du train | P1 | A8.2 | [x] PR? |
 | ECO-05 | Prix au km **persistants** à la sauvegarde | P1 | A8.2 | [ ] |
-| ECO-06 | Valeurs de prêt ×10 (50 000 → 500 000) | P1 | A8.3 | [ ] |
+| ECO-06 | Valeurs de prêt ×10 (50 000 → 500 000) | P1 | A8.3 | [x] PR? |
 | ECO-07 | Plafond crédit RÉEL, adapté à la trésorerie de départ | P1 | A8.3, réponse #4 | [ ] |
 
 ## RH — PERSONNEL & SOCIAL  (P1)
