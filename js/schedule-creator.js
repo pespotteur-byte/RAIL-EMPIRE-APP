@@ -1906,12 +1906,23 @@ export class ActiveService {
     const rng = getGlobalRng();
     if (this.roundTrip && !this.isReturnLeg) {
       // Section OCC — retard au terminus : 1/3 de supprimer le retour, 2/3 de le faire rouler en retard
+      // RET-03 : si supprimé, la rame reste à la gare et repart au prochain trajet prévu depuis cette gare
       if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
         this.state = 'waiting';
         this.speed = 0; this.train.speed = 0;
         this.delay = 0; this.train.delay = 0;
         this.completed = true; this.completedDate = this._currentDate || '';
-        this.position = null; this.train.stoppedAt = null;
+        this.train.stoppedAt = station || this.train.stoppedAt;
+        if (this.rame && station) {
+          this.rame.currentLocation = {
+            stationId: station.id,
+            depotId: this.rame.depotId || '',
+            serviceId: '',
+            lat: arrivalLat,
+            lon: arrivalLon,
+          };
+        }
+        this.position = null;
         return;
       }
       this.returnStops = this.buildReturnStops();
@@ -1940,12 +1951,23 @@ export class ActiveService {
     // Check for multi round-trip (additional departures)
     if (this.roundTrip && this.isReturnLeg && this.multiDepartures && this._tripCount < this.multiDepartures) {
       // Section OCC — retard au terminus : 1/3 de supprimer le trajet suivant, 2/3 de le faire rouler en retard
+      // RET-03 : si supprimé, la rame reste à la gare et repart au prochain trajet prévu depuis cette gare
       if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
         this.state = 'waiting';
         this.speed = 0; this.train.speed = 0;
         this.delay = 0; this.train.delay = 0;
         this.completed = true; this.completedDate = this._currentDate || '';
-        this.position = null; this.train.stoppedAt = null;
+        this.train.stoppedAt = station || this.train.stoppedAt;
+        if (this.rame && station) {
+          this.rame.currentLocation = {
+            stationId: station.id,
+            depotId: this.rame.depotId || '',
+            serviceId: '',
+            lat: arrivalLat,
+            lon: arrivalLon,
+          };
+        }
+        this.position = null;
         return;
       }
       this.isReturnLeg = false;
@@ -1992,8 +2014,18 @@ export class ActiveService {
     this.revenueCollected = false;
     this._tripCount = 0;
     this._adjustedStops = null;
+    this.train.stoppedAt = station || this.train.stoppedAt;
+    // RET-03 : à la fin du trajet, la rame reste à la dernière gare pour le prochain service
+    if (this.rame && station) {
+      this.rame.currentLocation = {
+        stationId: station.id,
+        depotId: this.rame.depotId || '',
+        serviceId: '',
+        lat: arrivalLat,
+        lon: arrivalLon,
+      };
+    }
     this.position = null;
-    this.train.stoppedAt = null;
   }
 
   _rebuildStopsFromTime(departureTime) {
