@@ -351,7 +351,7 @@
 | BUG-01 | Trains en avance (cf. PH-07) | P0 | A14#1 | [ ] |
 | BUG-02 | Routage étrange A→B (cf. R-03/R-04) | P0 | A14#2 | [ ] |
 | BUG-03 | Aller-retour aléatoire (cf. SC-04) | P0 | A14#3 | [ ] |
-| BUG-04 | Auto 24h sans effet (cf. SC-05) | P0 | A14#4 | [ ] |
+| BUG-04 | Auto 24h sans effet (cf. SC-05) | P0 | A14#4 | [x] PR? (createAutoRoundTripDuplicates + duplicateService) |
 | BUG-05 | Points random ajoutés (cf. R-09) | P0 | A14#5 | [ ] |
 | BUG-06 | Bug de minuit → horloge en minutes absolues | P0 | A14#6 | [x] comparaisons midnight-safe (timeDiff/timeGte/isInServiceWindow) + horloge Paris |
 | BUG-07 | Bug 1440 min → modulo 24h propre | P0 | A14#7 | [x] normalisation ((m%1440)+1440)%1440 partout (affichage + fenêtres service) |
