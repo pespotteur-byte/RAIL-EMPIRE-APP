@@ -474,6 +474,12 @@ export class ActiveService {
           return;
         }
         if (isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
+          // Section VI — une rame ne peut pas effectuer 2 trajets en même temps
+          if (this.rameId && window.game?.scheduleCreator?.isRameInUse(this.rameId, this.id, timeOfDay)) {
+            // Rame already used by another active service; stay waiting and retry next tick
+            return;
+          }
+
           // Ensure position is set (may not have been set by pre-departure positioning)
           if (!this.position) {
             const depStation = this.world?.getStationById(currentStops[0]?.stationId);
@@ -1973,6 +1979,25 @@ export class ScheduleCreator {
 
   _invalidateActiveCache() {
     this._serviceVer = (this._serviceVer || 0) + 1;
+  }
+
+  // Section VI — une rame ne peut pas effectuer 2 trajets en même temps
+  isRameInUse(rameId, excludeId, timeOfDay) {
+    if (!rameId) return false;
+    for (const svc of this.getActiveServices()) {
+      if (svc.id === excludeId) continue;
+      if (svc.rameId !== rameId) continue;
+      if (svc.completed) continue;
+      if (svc.state === 'moving' || svc.state === 'stopped_at_station' || svc.state === 'departing') return true;
+      if (svc.state === 'waiting' && svc.currentStopIndex === 0) {
+        const firstDep = svc.stops?.[0]?.departureTime ?? svc.stops?.[0]?.time;
+        if (firstDep != null) {
+          const diff = timeDiff(timeOfDay, firstDep);
+          if (diff >= -2 && diff <= 5) return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
