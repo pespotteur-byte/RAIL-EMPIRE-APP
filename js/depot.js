@@ -117,6 +117,10 @@ export class DepotManager {
     return this.depots.filter(d => d.type === 'depot');
   }
 
+  getDepotById(id) {
+    return this.depots.find(d => d.id === id) || null;
+  }
+
   getITEs() {
     return this.depots.filter(d => d.type.startsWith('ite'));
   }

@@ -4411,6 +4411,14 @@ export class UI {
                 </div>
               ` : ''}
             </div>
+            <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+              <div style="font-size:11px;font-weight:600;margin-bottom:4px">Pièces détachées</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:10px">
+                ${Object.entries(d.spareParts || {}).map(([type, qty]) => `
+                  <span style="white-space:nowrap">${type}: ${qty} <button class="btn-sm" style="font-size:9px;padding:1px 4px" onclick="game.ui.buySparePart('${d.id}','${type}',1)">+</button></span>
+                `).join('')}
+              </div>
+            </div>
             ${this._renderDepotQueueSection(d)}
             ${this._renderMaintenanceButton(d)}
           ` : ''}
@@ -4471,6 +4479,19 @@ export class UI {
     this.game.depotManager.removeRescueLoco(depotId, stockId);
     this.game.saveState();
     this.renderDepotsList();
+  }
+
+  buySparePart(depotId, type, qty) {
+    const depot = this.game.depotManager.getDepotById(depotId);
+    if (!depot) return;
+    const prices = { moteur: 5000, freins: 3000, climatisation: 2000, portes: 1500, fanaux: 1000 };
+    const cost = (prices[type] || 1000) * qty;
+    if (this.game.economy.balance < cost) return alert('Fonds insuffisants.');
+    if (depot.addSpareParts(type, qty)) {
+      this.game.economy.addExpense(cost, 'maintenance', `Achat pièce détachée : ${type} x${qty}`);
+      this.game.saveState();
+      this.renderDepotsList();
+    }
   }
 
   deleteDepot(id) {
