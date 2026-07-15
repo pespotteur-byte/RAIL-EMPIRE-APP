@@ -3277,8 +3277,12 @@ export class UI {
     }
 
     // Priority 3: ORM (never return a straight-line fallback — R-03)
+    // R-07 : plafond vitesse routage à V160 (matériel joueur)
     try {
-      return await this.game.orm.findRoute(ca.lat, ca.lon, cb.lat, cb.lon);
+      const rameId = document.getElementById('sched-rame')?.value;
+      const rame = rameId ? this.game.rameManager.getById(rameId) : null;
+      const routingSpeed = rame ? Math.min(rame.maxSpeed || 160, 160) : 160;
+      return await this.game.orm.findRoute(ca.lat, ca.lon, cb.lat, cb.lon, { maxSpeed: routingSpeed });
     } catch (e) {
       return null;
     }

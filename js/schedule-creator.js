@@ -2152,7 +2152,8 @@ export class ScheduleCreator {
     const orm = window.game?.orm;
     if (orm?.findRoute) {
       try {
-        const resolved = orm.findRoute(fromLat, fromLon, targetStation.lat, targetStation.lon);
+        const routingSpeed = Math.min(svc.rame?.maxSpeed || 160, 160);
+        const resolved = orm.findRoute(fromLat, fromLon, targetStation.lat, targetStation.lon, { maxSpeed: routingSpeed });
         if (Array.isArray(resolved) && resolved.length >= 2) route = resolved;
       } catch (e) { route = []; }
     }

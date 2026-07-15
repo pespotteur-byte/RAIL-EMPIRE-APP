@@ -89,6 +89,8 @@ export class ORMClient {
     this._turnPenaltyDeg = 100; // above this angle a movement counts as a reversal
     this._reversalPenaltyH = 6;  // ~6h penalty ≫ any real leg → forbids arbitrary back-up
     this._maxFallbackKm = 1.0;   // only fabricate straight connectors up to 1 km (R-03)
+    // R-07 : plafond V160 par défaut pour le calcul d'itinéraire (matériel joueur)
+    this._routingSpeedCapKmh = 160;
   }
 
   // ============================================================
@@ -367,7 +369,9 @@ export class ORMClient {
 
   // Effective running speed on an edge (km/h). Service tracks (yards,
   // sidings, spurs) are capped low so routing avoids them unless required.
-  _effectiveSpeed(edge) {
+  // R-07 : plafond à V160 par défaut pour le routage du matériel joueur ;
+  // le maxSpeed du matériel sélectionné peut être passé via opts.maxSpeed.
+  _effectiveSpeed(edge, routingMaxSpeed = null) {
     // Annexe 3A / §IV — défaut conditionnel : 160 pour voie principale/branch,
     // 30 si absence d’usage/service (on ne peut pas distinguer) ou service/triage.
     const isMainOrBranch = edge.usage === 'main' || edge.usage === 'branch';
@@ -375,12 +379,14 @@ export class ORMClient {
     const isService = (edge.service && edge.service !== '') ||
       (edge.usage && edge.usage !== 'main' && edge.usage !== 'branch');
     if (isService) v = Math.min(v, this._serviceSpeedKmh);
+    const cap = routingMaxSpeed ?? this._routingSpeedCapKmh ?? Infinity;
+    if (cap > 0) v = Math.min(v, cap);
     return Math.max(5, v);
   }
 
   // Travel time across an edge, in hours
-  _edgeCost(edge) {
-    return edge.dist / this._effectiveSpeed(edge);
+  _edgeCost(edge, routingMaxSpeed = null) {
+    return edge.dist / this._effectiveSpeed(edge, routingMaxSpeed);
   }
 
   _edgeBearing(graph, edge) {
@@ -407,12 +413,14 @@ export class ORMClient {
 
   // Public entry point kept for backward compatibility (callers pass keys).
   // `directed` defaults to true; pass { directed:false } for a raw shortest path.
+  // `opts.maxSpeed` plafonne la vitesse utilisée pour le calcul d'itinéraire (R-07).
   dijkstra(graph, startKey, endKey, opts = null) {
     const directed = !(opts && opts.directed === false);
-    return this._route(graph, startKey, endKey, directed);
+    const maxSpeed = opts?.maxSpeed ?? null;
+    return this._route(graph, startKey, endKey, directed, maxSpeed);
   }
 
-  _route(graph, startKey, endKey, directed = true) {
+  _route(graph, startKey, endKey, directed = true, routingMaxSpeed = null) {
     if (!startKey || !endKey) return null;
     if (!graph.nodes.has(startKey) || !graph.nodes.has(endKey)) return null;
     const endNode = graph.nodes.get(endKey);
@@ -435,7 +443,7 @@ export class ORMClient {
 
     const startNode = graph.nodes.get(startKey);
     for (const edge of startNode.edges) {
-      const g = this._edgeCost(edge);
+      const g = this._edgeCost(edge, routingMaxSpeed);
       const sk = edge.from + '>' + edge.to;
       if (g < (gScore.get(sk) ?? Infinity)) {
         gScore.set(sk, g);
@@ -463,7 +471,7 @@ export class ORMClient {
         if (!isFinite(pen)) continue; // forbidden reversal
         const sk = edge.from + '>' + edge.to;
         if (settled.has(sk)) continue;
-        const g = gCur + this._edgeCost(edge) + pen;
+        const g = gCur + this._edgeCost(edge, routingMaxSpeed) + pen;
         if (g < (gScore.get(sk) ?? Infinity)) {
           gScore.set(sk, g);
           cameFrom.set(sk, { prev: cur.key, edge });
@@ -485,16 +493,19 @@ export class ORMClient {
     }
     if (edges.length === 0) return null;
 
+    const cap = routingMaxSpeed ?? this._routingSpeedCapKmh ?? Infinity;
+    const capSpeed = (v) => (cap > 0 && Number.isFinite(cap) ? Math.min(v, cap) : v);
+
     const path = [{
       lat: startNode.lat, lon: startNode.lon,
-      maxSpeed: edges[0].maxSpeed, electrified: edges[0].electrified !== false,
+      maxSpeed: capSpeed(edges[0].maxSpeed), electrified: edges[0].electrified !== false,
       tracks: edges[0].tracks || 1, wayId: edges[0].wayId,
     }];
     for (const e of edges) {
       const n = graph.nodes.get(e.to);
       path.push({
         lat: n.lat, lon: n.lon,
-        maxSpeed: e.maxSpeed, electrified: e.electrified !== false,
+        maxSpeed: capSpeed(e.maxSpeed), electrified: e.electrified !== false,
         tracks: e.tracks || 1, wayId: e.wayId, usage: e.usage, service: e.service,
       });
     }
@@ -502,14 +513,14 @@ export class ORMClient {
   }
 
   // Dijkstra with intermediate waypoints (forced routing through specific nodes)
-  dijkstraConstrained(graph, startKey, endKey, waypointKeys) {
+  dijkstraConstrained(graph, startKey, endKey, waypointKeys, opts = null) {
     if (!waypointKeys || waypointKeys.length === 0) {
-      return this.dijkstra(graph, startKey, endKey);
+      return this.dijkstra(graph, startKey, endKey, opts);
     }
     const allKeys = [startKey, ...waypointKeys, endKey];
     let fullPath = null;
     for (let i = 0; i < allKeys.length - 1; i++) {
-      const segment = this.dijkstra(graph, allKeys[i], allKeys[i + 1]);
+      const segment = this.dijkstra(graph, allKeys[i], allKeys[i + 1], opts);
       if (!segment || segment.length < 2) return null;
       if (!fullPath) {
         fullPath = segment;
@@ -787,8 +798,9 @@ export class ORMClient {
   // ROUTE FINDING — uses unified graph or area-specific graph
   // ============================================================
 
-  async findRoute(fromLat, fromLon, toLat, toLon) {
-    const cacheKey = `${fromLat.toFixed(4)},${fromLon.toFixed(4)}-${toLat.toFixed(4)},${toLon.toFixed(4)}`;
+  async findRoute(fromLat, fromLon, toLat, toLon, opts = null) {
+    const speedSuffix = opts?.maxSpeed ? `v${Math.round(opts.maxSpeed)}` : 'v160';
+    const cacheKey = `${fromLat.toFixed(4)},${fromLon.toFixed(4)}-${toLat.toFixed(4)},${toLon.toFixed(4)}-${speedSuffix}`;
     if (this.routeCache.has(cacheKey)) return this.routeCache.get(cacheKey);
 
     // First try the unified graph (pre-loaded areas)
@@ -797,7 +809,7 @@ export class ORMClient {
       const s = this.findNearestNode(uGraph, fromLat, fromLon, 5);
       const e = this.findNearestNode(uGraph, toLat, toLon, 5);
       if (s && e) {
-        const path = this.dijkstra(uGraph, s.node.key, e.node.key);
+        const path = this.dijkstra(uGraph, s.node.key, e.node.key, opts);
         if (path && path.length >= 2) {
           this.routeCache.set(cacheKey, path);
           return path;
@@ -845,7 +857,7 @@ export class ORMClient {
       const s2 = this.findNearestNode(graph2, fromLat, fromLon, 10);
       const e2 = this.findNearestNode(graph2, toLat, toLon, 10);
       if (s2 && e2) {
-        const retryPath = this.dijkstra(graph2, s2.node.key, e2.node.key);
+        const retryPath = this.dijkstra(graph2, s2.node.key, e2.node.key, opts);
         if (retryPath && retryPath.length > 0) {
           this.routeCache.set(cacheKey, retryPath);
           return retryPath;
@@ -856,7 +868,7 @@ export class ORMClient {
       return fallback;
     }
 
-    const path = this.dijkstra(graph, startResult.node.key, endResult.node.key);
+    const path = this.dijkstra(graph, startResult.node.key, endResult.node.key, opts);
     if (!path || path.length === 0) {
       const fallback = this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
       this.routeCache.set(cacheKey, fallback);
@@ -873,7 +885,7 @@ export class ORMClient {
   }
 
   // Route with waypoint constraints (player forced routing)
-  async findConstrainedRoute(fromLat, fromLon, toLat, toLon, waypointLatLons) {
+  async findConstrainedRoute(fromLat, fromLon, toLat, toLon, waypointLatLons, opts = null) {
     // Load area covering all points
     let minLat = Math.min(fromLat, toLat), maxLat = Math.max(fromLat, toLat);
     let minLon = Math.min(fromLon, toLon), maxLon = Math.max(fromLon, toLon);
@@ -902,7 +914,7 @@ export class ORMClient {
       return snap ? snap.node.key : null;
     }).filter(k => k !== null);
 
-    const path = this.dijkstraConstrained(graph, startSnap.node.key, endSnap.node.key, waypointKeys);
+    const path = this.dijkstraConstrained(graph, startSnap.node.key, endSnap.node.key, waypointKeys, opts);
     return path || this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
   }
 
