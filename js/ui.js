@@ -1,3 +1,5 @@
+import { haversineDistance } from './simulation.js';
+
 // LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
 const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b' };
 const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux' };
@@ -1666,6 +1668,8 @@ export class UI {
     document.getElementById('btn-new-schedule')?.addEventListener('click', () => this.openScheduleModal());
     document.getElementById('btn-save-schedule')?.addEventListener('click', () => this.saveSchedule());
     document.getElementById('sched-sort')?.addEventListener('change', () => this.renderSchedulesList());
+    document.getElementById('btn-sched-manual')?.addEventListener('click', () => this._toggleManualMode());
+    document.getElementById('btn-sched-clear-manual')?.addEventListener('click', () => this._clearManualTrace());
   }
 
   openScheduleModal(editService) {
@@ -1693,6 +1697,8 @@ export class UI {
       document.getElementById('sched-name').value = editService.name;
       document.getElementById('sched-return-name').value = editService.returnName || '';
       this._schedReturnPlatforms = editService.returnPlatforms ? { ...editService.returnPlatforms } : {};
+      // Preserve loaded routes as manual overrides so they survive the next save.
+      this._manualRoutes = (editService.routes || []).map(r => (r && r.length >= 2 ? [...r] : null));
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = editService.roundTrip;
       document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
@@ -1716,6 +1722,14 @@ export class UI {
       document.querySelectorAll('.sched-run-day').forEach(cb => { cb.checked = true; });
       document.getElementById('sched-run-dates').value = '';
     }
+
+    // Manual-trace state for SC-04 / remaster §IV
+    this._manualMode = false;
+    this._manualControlPoints = [];
+    this._manualStartCoords = null;
+    this._manualRoutes = []; // per-leg manual route override (null = use ORM)
+    this._updateManualUI();
+
     document.getElementById('modal-schedule')?.classList.remove('hidden');
 
     const rameSelect = document.getElementById('sched-rame');
@@ -1803,35 +1817,8 @@ export class UI {
       const vMinLon = Math.min(vpTL.lon, vpBR.lon) - 0.02;
       const vMaxLon = Math.max(vpTL.lon, vpBR.lon) + 0.02;
 
-      // Draw user's tracks (simplified, viewport-culled, single batch)
-      ctx.strokeStyle = 'rgba(100, 160, 255, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (const track of world.tracks) {
-        if (track.route && track.route.length > 2) {
-          const rF = track.route[0], rL = track.route[track.route.length - 1];
-          const tMinLat = Math.min(rF.lat, rL.lat), tMaxLat = Math.max(rF.lat, rL.lat);
-          const tMinLon = Math.min(rF.lon, rL.lon), tMaxLon = Math.max(rF.lon, rL.lon);
-          if (tMaxLat < vMinLat || tMinLat > vMaxLat || tMaxLon < vMinLon || tMinLon > vMaxLon) continue;
-          const step = Math.max(1, Math.floor(track.route.length / 60));
-          const p0 = tileMap.worldToScreen(rF.lat, rF.lon, canvas.width, canvas.height);
-          ctx.moveTo(p0.x, p0.y);
-          for (let r = step; r < track.route.length; r += step) {
-            const pr = tileMap.worldToScreen(track.route[r].lat, track.route[r].lon, canvas.width, canvas.height);
-            ctx.lineTo(pr.x, pr.y);
-          }
-        } else {
-          const a = world.getStationById(track.stationA);
-          const b = world.getStationById(track.stationB);
-          if (!a || !b) continue;
-          if (Math.max(a.lat, b.lat) < vMinLat || Math.min(a.lat, b.lat) > vMaxLat) continue;
-          if (Math.max(a.lon, b.lon) < vMinLon || Math.min(a.lon, b.lon) > vMaxLon) continue;
-          const pa = tileMap.worldToScreen(a.lat, a.lon, canvas.width, canvas.height);
-          const pb = tileMap.worldToScreen(b.lat, b.lon, canvas.width, canvas.height);
-          ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
-        }
-      }
-      ctx.stroke();
+      // Only stations and voie points are drawn in the schedule creator map.
+      // Track/troncon grey lines are hidden for readability and performance.
 
       // Draw stations (viewport-culled)
       const selectedIds = new Set(this.schedStops.map(s => s.stationId));
@@ -1853,10 +1840,11 @@ export class UI {
         ctx.fillText(st.name, p.x + 10, p.y + 4);
       }
 
-      // Draw the REAL route between consecutive stops (yellow) using the same
-      // routes that will be saved. Preview routes are recomputed on every change.
+      // Draw the planned route between consecutive stops (magenta = 'bon trajet'
+      // from the remaster schematic) using the same routes that will be saved.
+      // Preview routes are recomputed on every change.
       if (this.schedStops.length > 1) {
-        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 3;
         const drawGeom = (geom) => {
           if (!geom || geom.length < 2) return false;
           const step = Math.max(1, Math.floor(geom.length / 80));
@@ -1894,36 +1882,8 @@ export class UI {
         const vpMinLon = Math.min(topLeft.lon, botRight.lon) - 0.01;
         const vpMaxLon = Math.max(topLeft.lon, botRight.lon) + 0.01;
 
-        // Draw troncons — batch into single path, skip off-screen, simplify at low zoom
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        const simplifyStep = tileMap.zoomLevel >= 13 ? 1 : tileMap.zoomLevel >= 10 ? 3 : 6;
-        for (const trc of vpm.getAllTroncons()) {
-          if (!trc.route || trc.route.length < 2) continue;
-          // Quick bounds check using first and last route points
-          const rFirst = trc.route[0];
-          const rLast = trc.route[trc.route.length - 1];
-          const trcMinLat = Math.min(rFirst.lat, rLast.lat);
-          const trcMaxLat = Math.max(rFirst.lat, rLast.lat);
-          const trcMinLon = Math.min(rFirst.lon, rLast.lon);
-          const trcMaxLon = Math.max(rFirst.lon, rLast.lon);
-          if (trcMaxLat < vpMinLat || trcMinLat > vpMaxLat || trcMaxLon < vpMinLon || trcMinLon > vpMaxLon) continue;
-
-          const p0 = tileMap.worldToScreen(rFirst.lat, rFirst.lon, canvas.width, canvas.height);
-          ctx.moveTo(p0.x, p0.y);
-          for (let r = simplifyStep; r < trc.route.length; r += simplifyStep) {
-            const pr = tileMap.worldToScreen(trc.route[r].lat, trc.route[r].lon, canvas.width, canvas.height);
-            ctx.lineTo(pr.x, pr.y);
-          }
-          // Always include last point
-          const pL = tileMap.worldToScreen(rLast.lat, rLast.lon, canvas.width, canvas.height);
-          ctx.lineTo(pL.x, pL.y);
-        }
-        ctx.stroke();
-
-        // Draw voie point markers — only at zoom >= 11, viewport-culled
-        if (tileMap.zoomLevel >= 11) {
+        // Draw voie point markers — always visible, viewport-culled
+        if (tileMap.zoomLevel >= 6) {
           const usedVPIds = new Set(this.schedStops.filter(s => s.voiePointId).map(s => s.voiePointId));
           for (const vp of vpm.getAll()) {
             if (vp.lat < vpMinLat || vp.lat > vpMaxLat || vp.lon < vpMinLon || vp.lon > vpMaxLon) continue;
@@ -1945,6 +1905,25 @@ export class UI {
               ctx.fillText(`Voie ${vp.voie}`, p.x + 6, p.y + 3);
             }
           }
+        }
+      }
+
+      // Draw manual trace control points (SC-04 / remaster IV)
+      if (this._manualMode && this._manualStartCoords) {
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        const pStart = tileMap.worldToScreen(this._manualStartCoords.lat, this._manualStartCoords.lon, canvas.width, canvas.height);
+        ctx.moveTo(pStart.x, pStart.y);
+        for (const pt of this._manualControlPoints) {
+          const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        for (const pt of [this._manualStartCoords, ...this._manualControlPoints]) {
+          const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+          ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
         }
       }
 
@@ -2058,6 +2037,36 @@ export class UI {
       if (totalDragDist < 5) {
         const x = e.offsetX, y = e.offsetY;
 
+        // Manual trace mode (SC-04 / remaster IV): clicks add control points,
+        // a station/voie-point click finishes the current manual leg.
+        if (this._manualMode) {
+          const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
+          let closestVP = null, minVPDist = Infinity;
+          if (this.game.voiePointManager) {
+            for (const vp of this.game.voiePointManager.getAll()) {
+              const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+              const d = Math.hypot(p.x - x, p.y - y);
+              if (d < minVPDist && d < 15) { minVPDist = d; closestVP = vp; }
+            }
+          }
+          let closest = null, minDist = Infinity;
+          for (const st of world.stations) {
+            const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < minDist && d < 20) { minDist = d; closest = st; }
+          }
+          if (closestVP && minVPDist < minDist) {
+            this.addSchedVoiePointStop(closestVP);
+          } else if (closest) {
+            this.addSchedStop(closest);
+          } else {
+            this._addManualPoint(worldPos.lat, worldPos.lon);
+          }
+          schedDrag = false;
+          schedDragStart = null;
+          return;
+        }
+
         // Check voie points first (smaller targets, higher priority for waypoint)
         let closestVP = null, minVPDist = Infinity;
         if (this.game.voiePointManager) {
@@ -2101,6 +2110,93 @@ export class UI {
     this._recalcPreviewRoutes();
   }
 
+  // --- Manual trace helpers (remaster IV) ---
+
+  _toggleManualMode() {
+    if (this._manualMode) {
+      // cancel manual mode, keep control points? If no next stop yet, just exit
+      this._manualMode = false;
+      this._manualStartCoords = null;
+      this._manualControlPoints = [];
+    } else {
+      if (this.schedStops.length === 0) {
+        alert('Choisissez d\'abord la gare de depart.');
+        return;
+      }
+      this._manualMode = true;
+      this._manualStartCoords = this._getStopCoords(this.schedStops[this.schedStops.length - 1]);
+      this._manualControlPoints = [];
+    }
+    this._updateManualUI();
+    if (this._drawSchedMap) this._drawSchedMap();
+  }
+
+  _clearManualTrace() {
+    this._manualRoutes[this._manualRoutes.length - 1] = null;
+    this._manualControlPoints = [];
+    this._manualMode = false;
+    this._manualStartCoords = null;
+    this._updateManualUI();
+    this._recalcPreviewRoutes();
+  }
+
+  _updateManualUI() {
+    const btn = document.getElementById('btn-sched-manual');
+    const clear = document.getElementById('btn-sched-clear-manual');
+    const hint = document.getElementById('sched-manual-hint');
+    if (!btn || !clear || !hint) return;
+    if (this._manualMode) {
+      btn.textContent = 'Terminer le tracé manuel';
+      btn.style.background = '#3b82f6';
+      btn.style.color = '#fff';
+      clear.classList.remove('hidden');
+      hint.textContent = 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.';
+    } else {
+      btn.textContent = 'Tracer manuellement';
+      btn.style.background = '';
+      btn.style.color = '';
+      clear.classList.add('hidden');
+      hint.textContent = 'Mode manuel désactivé — cliquez sur une gare ou un point de voie.';
+    }
+  }
+
+  _addManualPoint(lat, lon) {
+    this._manualControlPoints.push({ lat, lon });
+    if (this._drawSchedMap) this._drawSchedMap();
+  }
+
+  _finishManualLeg(endStop) {
+    if (!this._manualMode || !this._manualStartCoords) return;
+    const endCoords = this._getStopCoords(endStop);
+    if (!endCoords) return;
+    const route = this._buildManualRoute(this._manualStartCoords, this._manualControlPoints, endCoords);
+    const legIdx = Math.max(0, this.schedStops.length - 1); // leg between last existing stop and endStop
+    this._manualRoutes[legIdx] = route;
+    this._manualMode = false;
+    this._manualControlPoints = [];
+    this._manualStartCoords = null;
+    this._updateManualUI();
+  }
+
+  _buildManualRoute(start, controls, end) {
+    const points = [start, ...controls, end];
+    const route = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i], b = points[i + 1];
+      const d = haversineDistance(a.lat, a.lon, b.lat, b.lon);
+      const steps = Math.max(1, Math.round(d / 0.05)); // one point every 50m
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps;
+        const lat = a.lat + (b.lat - a.lat) * t;
+        const lon = a.lon + (b.lon - a.lon) * t;
+        route.push({ lat, lon, maxSpeed: 30 }); // manual traces default 30 km/h unless overridden
+      }
+      // avoid duplicate last point except final
+      if (i < points.length - 2) route.pop();
+    }
+    return route;
+  }
+
   async addSchedStop(station) {
     if (station.closed) {
       alert('Cette gare est fermee — aucun train ne peut la desservir.');
@@ -2111,29 +2207,46 @@ export class UI {
     const rameSpeed = rame ? rame.maxSpeed : 160;
 
     let arrTimeMin, depTimeMin;
+    const newStop = {
+      stationId: station.id,
+      stationName: station.name,
+      type: 'arret',
+      arrTimeMin: 0,
+      depTimeMin: 0,
+      arrTimeStr: '00:00',
+      depTimeStr: '00:00',
+      platform: '',
+    };
+
     if (this.schedStops.length === 0) {
-      // Use current Paris time as default departure, user can change it
       const pt = this.game.engine.getParisTime();
       const currentMin = pt.hours * 60 + pt.minutes;
-      // Round up to next 5 minutes
       arrTimeMin = Math.ceil(currentMin / 5) * 5;
       depTimeMin = arrTimeMin;
     } else {
       const prevStop = this.schedStops[this.schedStops.length - 1];
-      const prevStation = this.game.world.getStationById(prevStop.stationId);
-
       let travelTime = 15;
-      if (prevStation) {
-        const existingTrack = this.game.world.getTrackBetween(prevStation.id, station.id);
-        if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-          travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
-        } else {
-          try {
-            const route = await this.game.orm.findRoute(prevStation.lat, prevStation.lon, station.lat, station.lon);
-            travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
-          } catch (e) {
-            const dist = this._approxRailDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
-            travelTime = Math.round((dist / rameSpeed) * 60) || 1;
+
+      if (this._manualMode) {
+        this._finishManualLeg(newStop);
+        const manualRoute = this._manualRoutes[this.schedStops.length - 1];
+        if (manualRoute && manualRoute.length >= 2) {
+          travelTime = this.game.orm.calculateTravelTime(manualRoute, rame || rameSpeed);
+        }
+      } else if (prevStop.stationId) {
+        const prevStation = this.game.world.getStationById(prevStop.stationId);
+        if (prevStation) {
+          const existingTrack = this.game.world.getTrackBetween(prevStation.id, station.id);
+          if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
+            travelTime = this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
+          } else {
+            try {
+              const route = await this.game.orm.findRoute(prevStation.lat, prevStation.lon, station.lat, station.lon);
+              travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
+            } catch (e) {
+              const dist = this._approxRailDistance(prevStation.lat, prevStation.lon, station.lat, station.lon);
+              travelTime = Math.round((dist / rameSpeed) * 60) || 1;
+            }
           }
         }
       }
@@ -2141,16 +2254,11 @@ export class UI {
       depTimeMin = arrTimeMin + 2;
     }
 
-    this.schedStops.push({
-      stationId: station.id,
-      stationName: station.name,
-      type: 'arret',
-      arrTimeMin,
-      depTimeMin,
-      arrTimeStr: this.minToTimeStr(arrTimeMin),
-      depTimeStr: this.minToTimeStr(depTimeMin),
-      platform: '',
-    });
+    newStop.arrTimeMin = arrTimeMin;
+    newStop.depTimeMin = depTimeMin;
+    newStop.arrTimeStr = this.minToTimeStr(arrTimeMin);
+    newStop.depTimeStr = this.minToTimeStr(depTimeMin);
+    this.schedStops.push(newStop);
 
     this.renderSchedStops();
     this._recalcPreviewRoutes();
@@ -2162,29 +2270,6 @@ export class UI {
     const rame = this.game.rameManager.getById(rameId);
     const rameSpeed = rame ? rame.maxSpeed : 160;
 
-    let arrTimeMin, depTimeMin;
-    if (this.schedStops.length === 0) {
-      const pt = this.game.engine.getParisTime();
-      const currentMin = pt.hours * 60 + pt.minutes;
-      arrTimeMin = Math.ceil(currentMin / 5) * 5;
-      depTimeMin = arrTimeMin;
-    } else {
-      const prevStop = this.schedStops[this.schedStops.length - 1];
-      const prevCoords = this._getStopCoords(prevStop);
-      let travelTime = 5;
-      if (prevCoords) {
-        try {
-          const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
-          travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
-        } catch (e) {
-          const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
-          travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
-        }
-      }
-      arrTimeMin = prevStop.depTimeMin + travelTime;
-      depTimeMin = arrTimeMin; // no stop time for waypoint
-    }
-
     // If voie point is linked to a station, show "GareName — Voie X"
     let vpName = `Voie ${voiePoint.voie}`;
     let vpStationId = null;
@@ -2193,17 +2278,54 @@ export class UI {
       if (st) { vpName = `${st.name} — Voie ${voiePoint.voie}`; vpStationId = st.id; }
     }
 
-    this.schedStops.push({
+    const newStop = {
       stationId: vpStationId,
       voiePointId: voiePoint.id,
       stationName: vpName,
       type: voiePoint.stationId ? 'arret' : 'waypoint',
-      arrTimeMin,
-      depTimeMin,
-      arrTimeStr: this.minToTimeStr(arrTimeMin),
-      depTimeStr: this.minToTimeStr(depTimeMin),
+      arrTimeMin: 0,
+      depTimeMin: 0,
+      arrTimeStr: '00:00',
+      depTimeStr: '00:00',
       platform: voiePoint.voie,
-    });
+    };
+
+    let arrTimeMin, depTimeMin;
+    if (this.schedStops.length === 0) {
+      const pt = this.game.engine.getParisTime();
+      const currentMin = pt.hours * 60 + pt.minutes;
+      arrTimeMin = Math.ceil(currentMin / 5) * 5;
+      depTimeMin = arrTimeMin;
+    } else {
+      const prevStop = this.schedStops[this.schedStops.length - 1];
+      let travelTime = 5;
+      if (this._manualMode) {
+        this._finishManualLeg(newStop);
+        const manualRoute = this._manualRoutes[this.schedStops.length - 1];
+        if (manualRoute && manualRoute.length >= 2) {
+          travelTime = this.game.orm.calculateTravelTime(manualRoute, rame || rameSpeed);
+        }
+      } else {
+        const prevCoords = this._getStopCoords(prevStop);
+        if (prevCoords) {
+          try {
+            const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
+            travelTime = this.game.orm.calculateTravelTime(route, rame || rameSpeed);
+          } catch (e) {
+            const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, voiePoint.lat, voiePoint.lon);
+            travelTime = Math.ceil((dist / rameSpeed) * 60) || 1;
+          }
+        }
+      }
+      arrTimeMin = prevStop.depTimeMin + travelTime;
+      depTimeMin = arrTimeMin; // no stop time for waypoint
+    }
+
+    newStop.arrTimeMin = arrTimeMin;
+    newStop.depTimeMin = depTimeMin;
+    newStop.arrTimeStr = this.minToTimeStr(arrTimeMin);
+    newStop.depTimeStr = this.minToTimeStr(depTimeMin);
+    this.schedStops.push(newStop);
 
     this.renderSchedStops();
     this._recalcPreviewRoutes();
@@ -2618,14 +2740,23 @@ export class UI {
     }
     const routes = [];
     for (let i = 0; i < this.schedStops.length - 1; i++) {
-      routes.push(await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
+      if (this._manualRoutes && this._manualRoutes[i]) {
+        routes.push(this._manualRoutes[i]);
+      } else {
+        routes.push(await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
+      }
     }
     this._schedPreviewRoutes = routes;
     if (this._drawSchedMap) this._drawSchedMap();
   }
 
-  async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null) {
-    const route = await this._resolveRouteForLeg(prevStop, curStop);
+  async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null, legIndex = null) {
+    let route = null;
+    if (legIndex != null && this._manualRoutes && this._manualRoutes[legIndex]) {
+      route = this._manualRoutes[legIndex];
+    } else {
+      route = await this._resolveRouteForLeg(prevStop, curStop);
+    }
     if (route && route.length >= 2) {
       return this.game.orm.calculateTravelTime(route, rame || rameSpeed);
     }
@@ -2652,7 +2783,7 @@ export class UI {
       const prevStop = this.schedStops[i - 1];
       const curStop = this.schedStops[i];
 
-      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame);
+      const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame, i - 1);
 
       curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
       curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
@@ -2688,11 +2819,15 @@ export class UI {
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
     const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
 
-    // Build routes for each leg using the same resolver as the preview.
+    // Build routes for each leg. Manual routes take precedence, then ORM.
     // No straight-line fallback is accepted (R-03).
     const routePromises = [];
     for (let i = 0; i < this.schedStops.length - 1; i++) {
-      routePromises.push(this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
+      if (this._manualRoutes && this._manualRoutes[i] && this._manualRoutes[i].length >= 2) {
+        routePromises.push(Promise.resolve(this._manualRoutes[i]));
+      } else {
+        routePromises.push(this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
+      }
     }
     const routes = await Promise.all(routePromises);
 
