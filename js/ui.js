@@ -1796,6 +1796,15 @@ export class UI {
     document.getElementById('btn-sched-delete-point')?.addEventListener('click', () => this._deleteSelectedTracePoint());
     document.getElementById('btn-sched-return-mode')?.addEventListener('click', () => this._toggleReturnEditMode());
     document.getElementById('sched-service-type')?.addEventListener('change', () => this._renderContractPicker());
+    document.getElementById('sched-terminus-wait')?.addEventListener('input', () => {
+      // BUG-08 : recalcul auto des horaires de retour quand l'attente terminus change
+      if (this._forwardStops?.length > 1 && document.getElementById('sched-round-trip')?.checked) {
+        this._returnStops = this._generateDefaultReturnStops();
+        if (this._isReturnEditMode) this.schedStops = this._returnStops;
+        this.renderSchedStops();
+        this._recalcPreviewRoutes();
+      }
+    });
     document.getElementById('sched-round-trip')?.addEventListener('change', () => {
       if (!document.getElementById('sched-round-trip').checked && this._isReturnEditMode) {
         // Exit return mode if round-trip is disabled.
