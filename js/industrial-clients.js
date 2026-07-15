@@ -4469,6 +4469,7 @@ export class IndustrialClients {
       dailyTonnage,
       active: true,
       satisfaction: 80,
+      marketShare: 5,
       contractsGenerated: 0,
       totalTonnage: 0,
       totalRevenue: 0,
@@ -4508,9 +4509,10 @@ export class IndustrialClients {
       const fromStation = stations.find(s => s.id === client.stationId);
       if (!fromStation) continue;
 
-      // FRT-05 : satisfaction élevée = plus d'offres (tonnage journalier majoré jusqu'à +30%)
+      // FRT-02/05 : satisfaction + part de marché = plus d'offres
       const satBoost = 1 + Math.max(0, (client.satisfaction - 70)) / 100;
-      let remainingTonnage = Math.round(client.dailyTonnage * satBoost);
+      const shareBoost = 0.5 + (client.marketShare || 5) / 10;
+      let remainingTonnage = Math.round(client.dailyTonnage * satBoost * shareBoost);
       let contractsToday = 0;
 
       while (remainingTonnage > 0 && contractsToday < 10) {
@@ -4614,19 +4616,20 @@ export class IndustrialClients {
       <div class="dash-section">
         <h3>Clients installés</h3>
         <div class="dash-train-table">
-          <div class="dash-train-header" style="grid-template-columns:0.3fr 1fr 0.8fr 0.6fr 0.6fr 0.5fr">
-            <span></span><span>Client</span><span>Gare</span><span>Trafic/j</span><span>Satisfaction</span><span>Actions</span>
+          <div class="dash-train-header" style="grid-template-columns:0.3fr 1fr 0.8fr 0.6fr 0.6fr 0.6fr 0.5fr">
+            <span></span><span>Client</span><span>Gare</span><span>Trafic/j</span><span>Satisfaction</span><span>Part marché</span><span>Actions</span>
           </div>
           ${activeClients.map(c => {
             const station = game.world?.stations.find(s => s.id === c.stationId);
             const satColor = c.satisfaction > 70 ? 'var(--green)' : c.satisfaction > 40 ? '#f97316' : '#ef4444';
             return `
-              <div class="dash-train-row" style="grid-template-columns:0.3fr 1fr 0.8fr 0.6fr 0.6fr 0.5fr">
+              <div class="dash-train-row" style="grid-template-columns:0.3fr 1fr 0.8fr 0.6fr 0.6fr 0.6fr 0.5fr">
                 <span>${icon(c.icon, 16)}</span>
                 <span>${c.name}<br><span style="font-size:9px;color:var(--text3)">${c.totalTonnage.toLocaleString('fr-FR')} t traités</span></span>
                 <span>${station?.name || '?'}</span>
                 <span style="color:#38bdf8">${c.dailyTonnage.toLocaleString('fr-FR')} t</span>
                 <span style="color:${satColor}">${Math.floor(c.satisfaction)}%</span>
+                <span style="color:#a78bfa">${Math.floor(c.marketShare || 5)}%</span>
                 <span><button class="btn-primary industrial-remove" data-id="${c.id}" style="font-size:9px;padding:3px 6px;background:#991b1b">Résilier</button></span>
               </div>
             `;

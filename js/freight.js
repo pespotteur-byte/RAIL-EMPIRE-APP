@@ -125,6 +125,9 @@ export class FreightManager {
         if (client) {
           const delta = isDelayed ? -5 : (isEarly ? +8 : +5);
           client.satisfaction = Math.min(100, Math.max(0, (client.satisfaction || 80) + delta));
+          // FRT-02 : qualité de service influe sur la part de marché
+          const shareDelta = isDelayed ? -1 : (isEarly ? +1.5 : +0.5);
+          client.marketShare = Math.min(100, Math.max(0, (client.marketShare || 5) + shareDelta));
         }
       }
       return true;
