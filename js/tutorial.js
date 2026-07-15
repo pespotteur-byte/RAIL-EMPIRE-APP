@@ -416,10 +416,10 @@ export class Tutorial {
         title: icon('bank',14) + ' Banque — Emprunts et investissement',
         text: `La <b>Banque</b> vous permet d'emprunter pour investir dans votre réseau.<br><br>
         <b>4 niveaux d'emprunt :</b><br>
-        • <b>Petit prêt</b> : 50 000 € à 3% sur 30 jours (remboursement ~1 717€/j)<br>
-        • <b>Prêt moyen</b> : 200 000 € à 5% sur 60 jours (~3 500€/j)<br>
-        • <b>Gros prêt</b> : 500 000 € à 7% sur 90 jours (~5 944€/j)<br>
-        • <b>Méga prêt</b> : 1 000 000 € à 10% sur 120 jours (~9 167€/j)<br><br>
+        • <b>Petit prêt</b> : 500 000 € à 3% sur 30 jours (remboursement ~17 167€/j)<br>
+        • <b>Prêt moyen</b> : 2 000 000 € à 5% sur 60 jours (~35 000€/j)<br>
+        • <b>Gros prêt</b> : 5 000 000 € à 7% sur 90 jours (~59 444€/j)<br>
+        • <b>Méga prêt</b> : 10 000 000 € à 10% sur 120 jours (~91 667€/j)<br><br>
         <b>Comment ça marche :</b><br>
         1. Cliquez sur le type de prêt souhaité<br>
         2. L'argent est <b>crédité immédiatement</b> sur votre solde<br>
