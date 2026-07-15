@@ -93,7 +93,10 @@ export class Economy {
     }
 
     const maxPax = service.rame.totalCapacity || 0;
-    const maxFreight = service.rame.totalFreightCapacity || 0;
+    let maxFreight = service.rame.totalFreightCapacity || 0;
+
+    // Section VI — ITE non compatible avec le fret du train : pas de chargement/déchargement
+    if (service._iteCargoMismatch) maxFreight = 0;
 
     // Section VI — W, HLP, TM, EVO, trains de travaux : pas de revenus voyageur/fret
     const isNonRevenue = ['w','hlp','tm','evo','work'].includes(service.serviceType) || service.isWorkTrain;
@@ -115,7 +118,7 @@ export class Economy {
       const freightUnloadRate = isTerminus ? 1.0 : Math.min(0.65, (0.10 + stopRatio * 0.35) * rndFrt);
 
       const paxDescend = Math.round(service._onboardPax * paxDescendRate);
-      const freightUnload = Math.round(service._onboardFreight * freightUnloadRate);
+      const freightUnload = service._iteCargoMismatch ? 0 : Math.round(service._onboardFreight * freightUnloadRate);
 
       // Revenue = descended passengers * distance they traveled * ticket price
       // Section X — prix au km différencié selon la classification (vitesse max)

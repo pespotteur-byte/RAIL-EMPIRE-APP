@@ -156,13 +156,18 @@ export class DepotManager {
   }
 
   // Section VI — longueur utile totale d'un ITE, et nombre de tranches nécessaires
-  getITEInfo(stationId, trainLengthM) {
+  getITEInfo(stationId, trainLengthM, cargoType) {
     const ite = this.getITEByStation(stationId);
     if (!ite) return { isITE: false, totalLength: Infinity, trancheCount: 1 };
     const totalLength = ite.iteTracks.reduce((s, t) => s + (Number(t.length) || 0), 0);
-    if (totalLength <= 0) return { isITE: true, totalLength: 0, trancheCount: 1 };
+    // Vérification du type de fret accepté par l'ITE
+    let cargoMatch = true;
+    if (cargoType && ite.iteCargoTypes && ite.iteCargoTypes.length > 0) {
+      cargoMatch = ite.iteCargoTypes.some(ct => ct && (ct === cargoType || cargoType.startsWith(ct) || ct.startsWith(cargoType)));
+    }
+    if (totalLength <= 0) return { isITE: true, totalLength: 0, trancheCount: 1, cargoMatch };
     const trancheCount = Math.ceil((trainLengthM || 0) / totalLength);
-    return { isITE: true, totalLength, canFit: (trainLengthM || 0) <= totalLength, trancheCount };
+    return { isITE: true, totalLength, canFit: (trainLengthM || 0) <= totalLength, trancheCount, cargoMatch };
   }
 
   // Add a rescue loco to a depot — max 2 per depot (Annexe 9)
