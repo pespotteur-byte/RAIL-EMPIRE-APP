@@ -126,8 +126,8 @@ export class Dashboard {
       return { name: l.name, code: l.code, ...p };
     }).filter(l => l.revenue > 0 || l.expense > 0).sort((a, b) => b.profit - a.profit);
 
-    // Format helpers
-    const fmt = n => Math.round(n).toLocaleString('fr-FR');
+    // Format helpers — X : arrondi au 0,1 près, gros chiffres visibles
+    const fmt = n => (Math.round(n * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
     const fmtE = n => fmt(n) + ' \u20ac';
 
     container.innerHTML = `
