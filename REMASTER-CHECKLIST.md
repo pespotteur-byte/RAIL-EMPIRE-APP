@@ -93,7 +93,7 @@
 ## OCC — OCCUPATION VOIES & PRIORITÉS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [~] PR6 (voie point occupé + probe voies libres à l'arrivée) |
+| OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [x] PR? (arriveAtStation occupe un VP libre, bloque si aucun) |
 | OCC-02 | 2 trains même voie n'entrent pas ensemble en gare (sauf points ≠) | P0 | A3.5 | [x] PR6 (arrivée bloquée si aucune voie libre → attente en approche) |
 | OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [x] PR? (voyageur avec départ le plus tôt en priorité) |
 | OCC-04 | Priorité en ligne : plus rapide = prioritaire | P1 | A3.5, réponse #3 | [x] PR? (espacement sécurité fonction vitesse/freinage) |
