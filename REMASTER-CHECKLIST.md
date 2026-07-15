@@ -96,7 +96,7 @@
 | OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [~] PR6 (voie point occupé + probe voies libres à l'arrivée) |
 | OCC-02 | 2 trains même voie n'entrent pas ensemble en gare (sauf points ≠) | P0 | A3.5 | [x] PR6 (arrivée bloquée si aucune voie libre → attente en approche) |
 | OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [x] PR? (voyageur avec départ le plus tôt en priorité) |
-| OCC-04 | Priorité en ligne : plus rapide = prioritaire | P1 | A3.5, réponse #3 | [ ] |
+| OCC-04 | Priorité en ligne : plus rapide = prioritaire | P1 | A3.5, réponse #3 | [x] PR? (espacement sécurité fonction vitesse/freinage) |
 | OCC-05 | Écart recommandé ≥ 2 min entre 2 trains (peut descendre au bloc) | P1 | A3.5 | [x] PR? (2 min après libération du canton) |
 | OCC-06 | Plafond d'attente : max 2 h sur voie de garage → reprise forcée au-delà | P1 | A3.5, réponse #3 | [x] PR? (départ forcé après 120 min) |
 
