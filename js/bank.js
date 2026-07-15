@@ -5,12 +5,12 @@
 export class Bank {
   constructor() {
     this.loans = [];
-    this.maxLoans = 5;
+    this.maxLoans = Infinity; // XII — emprunts max illimités
     this.interestRates = {
-      small:  { amount: 50000,  rate: 0.03, duration: 30, label: '50 000 €' },
-      medium: { amount: 200000, rate: 0.05, duration: 60, label: '200 000 €' },
-      large:  { amount: 500000, rate: 0.07, duration: 90, label: '500 000 €' },
-      mega:   { amount: 1000000, rate: 0.10, duration: 120, label: '1 000 000 €' },
+      small:  { amount: 500000,  rate: 0.03, duration: 30, label: '500 000 €' },
+      medium: { amount: 2000000, rate: 0.05, duration: 60, label: '2 000 000 €' },
+      large:  { amount: 5000000, rate: 0.07, duration: 90, label: '5 000 000 €' },
+      mega:   { amount: 10000000, rate: 0.10, duration: 120, label: '10 000 000 €' },
     };
   }
 
@@ -96,7 +96,7 @@ export class Bank {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Emprunts actifs</div>
-            <div class="dash-kpi-value" style="color:#38bdf8">${this.loans.length} / ${this.maxLoans}</div>
+            <div class="dash-kpi-value" style="color:#38bdf8">${this.loans.length}</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Solde actuel</div>
@@ -109,12 +109,11 @@ export class Bank {
         <h3>Emprunter</h3>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           ${Object.entries(this.interestRates).map(([key, cfg]) => `
-            <button class="bank-borrow-btn btn-primary" data-type="${key}" style="font-size:11px;padding:8px 14px" ${this.loans.length >= this.maxLoans ? 'disabled' : ''}>
+            <button class="bank-borrow-btn btn-primary" data-type="${key}" style="font-size:11px;padding:8px 14px">
               ${cfg.label}<br><span style="font-size:9px;opacity:0.7">${(cfg.rate * 100).toFixed(0)}% sur ${cfg.duration}j</span>
             </button>
           `).join('')}
         </div>
-        ${this.loans.length >= this.maxLoans ? '<p style="color:#ef4444;font-size:11px;margin-top:6px">Maximum d\'emprunts atteint (5/5)</p>' : ''}
       </div>
 
       <div class="dash-section">
