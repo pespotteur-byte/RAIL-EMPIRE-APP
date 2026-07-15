@@ -198,9 +198,9 @@
 | ECO-02 | Coût d'exploitation : composante distance | P1 | A8.1 | [x] PR? |
 | ECO-03 | Coût d'exploitation : composante vitesse max | P1 | A8.1 | [x] PR? |
 | ECO-04 | Prix voyageur au km différencié par classification du train | P1 | A8.2 | [x] PR? |
-| ECO-05 | Prix au km **persistants** à la sauvegarde | P1 | A8.2 | [ ] |
+| ECO-05 | Prix au km **persistants** à la sauvegarde | P1 | A8.2 | [x] PR? (Economy.toSave/ loadFromSave) |
 | ECO-06 | Valeurs de prêt ×10 (50 000 → 500 000) | P1 | A8.3 | [x] PR? |
-| ECO-07 | Plafond crédit RÉEL, adapté à la trésorerie de départ | P1 | A8.3, réponse #4 | [ ] |
+| ECO-07 | Plafond crédit RÉEL, adapté à la trésorerie de départ | P1 | A8.3, réponse #4 | [x] PR? (Bank.startingBalance + getCreditLimit) |
 
 ## RH — PERSONNEL & SOCIAL  (P1)
 | ID | Exigence | Prio | Source | Statut |
