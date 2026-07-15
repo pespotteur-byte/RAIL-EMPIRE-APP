@@ -27,7 +27,7 @@
 | R-04 | Aucun retour arrière / contre-sens non prévu (hors tête-à-queue planifié) | P0 | A4.3, annexe 10c | [x] PR1 |
 | R-05 | Routage fonctionne sur longue distance (**≥1200 km** vérifié) | P0 | annexe 10b | [x] PR1 |
 | R-06 | Index spatial (grille/quadtree/R-tree) pour requêtes "edges proches" | P0 | A13 | [x] PR1 |
-| R-07 | Plafonnement vitesse routage à V160 (matériel joueur) | P1 | A13 | [ ] |
+| R-07 | Plafonnement vitesse routage à V160 (matériel joueur) | P1 | A13 | [x] PR? (cap ORM 160 par défaut + opts.maxSpeed) |
 | R-08 | Aiguillages branchés au routage (fin des aiguillages décoratifs) | P0 | A14#13, annexe 10d | [x] PR? (tronçons utilisateur injectés dans le graphe ORM) |
 | R-09 | Points auto tous les 50 m maîtrisés (pas de points parasites) | P0 | A4.2 (d), A14#5 | [x] PR? (densification 50m, points editables/supprimables) |
 
