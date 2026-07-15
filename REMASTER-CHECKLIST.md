@@ -147,14 +147,14 @@
 | DEP-02 | Affectation engin à un dépôt à l'achat | P1 | A6.1 | [x] PR1 (depotId dans Rame, dropdown achat, liste dépôt) |
 | DEP-03 | ID interne jeu EN PLUS du n° série (n° série non obligatoire) | P1 | A6.1 | [ ] |
 | DEP-04 | Localisation permanente de chaque engin + rame d'affectation | P0 | A6.1 | [x] PR1 (depotId persistant, rames listées sur fiche dépôt) |
-| DEP-05 | "1 rame = 1 trajet" via position/états horodatés | P0 | A6.1, A12 | [ ] |
+| DEP-05 | "1 rame = 1 trajet" via position/états horodatés | P0 | A6.1, A12 | [x] PR? (currentLocation mise à jour au départ/arrivée/mouvement + affichage) |
 | DEP-06 | Trains en maintenance : absents livemap ET bandeau train | P1 | A6.1 | [ ] |
 
 ## MNT — MAINTENANCE & PIÈCES  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| MNT-01 | Stock pièces : moteur / clim / fanaux / freins / portes | P1 | A6.2 | [ ] |
-| MNT-02 | Risque de panne par pièce + alerte bandeau train | P1 | A6.2 | [ ] |
+| MNT-01 | Stock pièces : moteur / clim / fanaux / freins / portes | P1 | A6.2 | [x] PR? (Depot.spareParts + consume/add + UI) |
+| MNT-02 | Risque de panne par pièce + alerte bandeau train | P1 | A6.2 | [x] PR? (breakdown aléatoire par type + delayReason panne) |
 | MNT-03 | Pannes bénignes (clim, portes) : pas de technicentre obligatoire | P1 | A6.2 | [ ] |
 | MNT-04 | Pannes moteur/freins : arrêt urgence (plus long si freins) → DDS | P1 | A6.2 | [x] PR? (panne → arrêt → secours) |
 | MNT-05 | Notification d'achat pièces à valider + livraisons groupées multi-dépôts | P1 | A6.2 | [ ] |
