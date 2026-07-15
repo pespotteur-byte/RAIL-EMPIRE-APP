@@ -206,7 +206,7 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | RH-01 | Embauche multiple + noms auto (FR/DE/CH/ES/BE/NL/IT/CZ) | P1 | A9 | [x] PR1 |
-| RH-02 | Chaque poste/fonction précis et réaliste | P1 | A9 | [ ] |
+| RH-02 | Chaque poste/fonction précis et réaliste | P1 | A9 | [x] PR? (7 rôles avec affectation cible, page Personnel descriptive) |
 | RH-03 | 3×8 : repos 24h/semaine + 8h entre services | P1 | A9 | [x] PR? (StaffManager.tickConductors, repos quotidien/hebdo) |
 | RH-04 | Non-respect → risque de mouvement social accru | P1 | A9 | [x] PR? (socialRisk accumulé si repos hebdo dépassé) |
 | RH-05 | Grèves/syndicats réalistes (page Personnel, ex-Syndicats fusionnée) | P1 | A9 | [x] PR? (Unions.isServiceBlocked, blocage départs et en mouvement) |
@@ -358,7 +358,7 @@
 | BUG-08 | Horaires non MAJ → recalcul auto à l'édition | P0 | A14#8 | [x] PR? (recalcStopsFrom + recalcul terminus wait) |
 | BUG-09 | "objectif avance 0%" → corriger calcul d'avancement | P1 | A14#9 | [ ] |
 | BUG-10 | Gares créées invisibles (cf. LVM-05) | P0 | A14#10 | [x] PR? (world.addStation + renderer.drawStations) |
-| BUG-11 | Images Dashboard/Graphique zoomées → recadrage/responsive | P1 | A14#11 | [ ] |
+| BUG-11 | Images Dashboard/Graphique zoomées → recadrage/responsive | P1 | A14#11 | [x] PR? (Dashboard/GraphMarche canvas adaptés au DPR et à la taille CSS) |
 | BUG-12 | Point de voie qui s'efface (souris hors cadre) → découpler validation du focus + Échap/Entrée | P1 | A14#12 | [x] PR? (validation Entrée dans le modal) |
 | BUG-13 | Aiguillages décoratifs (cf. R-08) | P0 | A14#13 | [x] PR? (R-08 intégration graphe) |
 
