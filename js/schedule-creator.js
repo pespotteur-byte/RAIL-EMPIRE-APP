@@ -296,6 +296,21 @@ export class ActiveService {
     return this.weather.getSpeedEffectsAt(lat, lon, this.rame ? this.rame.maxSpeed : (this.train?.maxSpeed || 0));
   }
 
+  // REG-01/02 : calcule l'écart canton selon la couverture régulateur/AC
+  _updateRegulationFactor() {
+    const lat = this.position?.lat;
+    const lon = this.position?.lon;
+    if (lat == null || lon == null || !window.game?.staffManager) {
+      cantonManager.setTrainSeparation(this.id, 2);
+      return;
+    }
+    const effects = window.game.staffManager.getRegulationEffects(lat, lon);
+    let minutes = 2;
+    if (effects.regulator) minutes = 1; // 1 min d'écart si zone régulateur couverte
+    if (effects.signalBox) minutes = 0.5; // 30 s d'écart si AC (signal box) couverte en plus
+    cantonManager.setTrainSeparation(this.id, minutes);
+  }
+
   // Annexe 3A — A. changements de vitesse : vitesse minimale sur la portion de
   // voie occupée par le train (de l’avant jusqu’à la queue, trainLength en m).
   _getInfraSpeedLimit(route, segIdx, progress, trainLengthM) {
@@ -748,6 +763,7 @@ export class ActiveService {
   moveUpdate(dt, timeOfDay, allServices) {
     if (!this.active || this.state !== 'moving') return;
     cantonManager.setTime(timeOfDay);
+    this._updateRegulationFactor();
 
     // Clear any stale garage state from old saves
     if (this._garage) this._garage = null;

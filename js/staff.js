@@ -2,6 +2,7 @@
  * Staff Management — Multi-role personnel for Rail Empire.
  */
 import { icon } from './icons.js';
+import { haversineDistance } from './simulation.js';
 
 let nextStaffId = 1;
 
@@ -344,6 +345,35 @@ export class StaffManager {
     const regs = this.staff.filter(s => s.role === 'regulateur' && s.assignedTo === zoneId);
     // Need 3 regulators for 24/7 coverage (3 × 8h shifts)
     return { count: regs.length, needed: 3, covered: regs.length >= 3 };
+  }
+
+  // REG-01/02 : détermine si un point est couvert par une zone régulateur + AC
+  getRegulationEffects(lat, lon) {
+    if (lat == null || lon == null) return { regulator: null, signalBox: null };
+    const effects = { regulator: null, signalBox: null };
+    for (const z of this.zones) {
+      if (z.lat == null || z.lon == null) continue;
+      const d = haversineDistance(lat, lon, z.lat, z.lon);
+      if (d <= (z.radiusKm || 150)) {
+        const cov = this.getZoneRegulatorCoverage(z.id);
+        if (cov.covered) {
+          effects.regulator = { zoneId: z.id, name: z.name, distanceKm: d };
+          break;
+        }
+      }
+    }
+    for (const sb of this.signalBoxes) {
+      if (sb.lat == null || sb.lon == null) continue;
+      const d = haversineDistance(lat, lon, sb.lat, sb.lon);
+      if (d <= (sb.radiusKm || 10)) {
+        const agents = this.staff.filter(s => s.role === 'agent_circulation' && s.assignedTo === sb.id);
+        if (agents.length > 0) {
+          effects.signalBox = { boxId: sb.id, name: sb.name, distanceKm: d, agents: agents.length };
+          break;
+        }
+      }
+    }
+    return effects;
   }
 
   // ── Daily salaries ──
