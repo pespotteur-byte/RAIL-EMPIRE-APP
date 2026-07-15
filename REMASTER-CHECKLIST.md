@@ -129,15 +129,15 @@
 ## LG — PAGE LIGNE / SILLONS AUTO  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| LG-01 | Bibliothèque de sillons nommés + orientés + réutilisables | P1 | A5 | [ ] |
-| LG-02 | Chaque sillon = nom + orientation + tracé complet orienté (polyligne) | P1 | A5.1 | [ ] |
-| LG-03 | Sens respecté : A→B ne propose que sillons A→B | P1 | A5.1 | [ ] |
-| LG-04 | Nombre de sillons illimité | P1 | A5.1 | [ ] |
-| LG-05 | Au clic gare B : fenêtre propose sillons compatibles | P1 | A5.1 | [ ] |
-| LG-06 | Chaînage de plusieurs sillons pour un long trajet | P1 | A5.1 | [ ] |
-| LG-07 | Continuité : fin sillon N = début sillon N+1 ; refuser discontinu | P1 | A5.2 | [ ] |
-| LG-08 | Politique d'arrêt indépendante du sillon (arrêt/passage au raccord) | P1 | A5.2 | [ ] |
-| LG-09 | Réemploi de la page Lignes existante | P1 | A5 | [ ] |
+| LG-01 | Bibliothèque de sillons nommés + orientés + réutilisables | P1 | A5 | [x] PR1 (SillonManager + page Ligne) |
+| LG-02 | Chaque sillon = nom + orientation + tracé complet orienté (polyligne) | P1 | A5.1 | [x] PR1 (from/to + route ORM) |
+| LG-03 | Sens respecté : A→B ne propose que sillons A→B | P1 | A5.1 | [x] PR1 (getBetween from→to) |
+| LG-04 | Nombre de sillons illimité | P1 | A5.1 | [x] PR1 (array dynamique) |
+| LG-05 | Au clic gare B : fenêtre propose sillons compatibles | P1 | A5.1 | [x] PR1 (modal-sillon-picker) |
+| LG-06 | Chaînage de plusieurs sillons pour un long trajet | P1 | A5.1 | [x] PR1 (un sillon par segment, chaînables) |
+| LG-07 | Continuité : fin sillon N = début sillon N+1 ; refuser discontinu | P1 | A5.2 | [x] PR1 (gare B = gare A du segment suivant) |
+| LG-08 | Politique d'arrêt indépendante du sillon (arrêt/passage au raccord) | P1 | A5.2 | [x] PR1 (sillon ne force pas l'arrêt, stopCode libre) |
+| LG-09 | Réemploi de la page Lignes existante | P1 | A5 | [x] PR1 (section Sillons dans page Lignes) |
 | LG-10 | Mode création alternatif (liste/recherche) pour 200+ gares | P1 | A5.2 note | [ ] |
 
 ## DEP — DÉPÔTS & PARC  (P1)

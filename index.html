@@ -266,6 +266,36 @@
           <!-- Stations list -->
           <div id="lines-stations-list" style="margin-bottom:16px"></div>
           <div id="lines-list" class="lines-list"></div>
+
+          <!-- Sillons automatiques (Section V) -->
+          <div class="sillon-section" style="margin-top:16px">
+            <div class="page-header" style="margin:0 0 8px">
+              <h3>Sillons automatiques</h3>
+              <button id="btn-new-sillon" class="btn-primary">+ Creer un sillon</button>
+            </div>
+            <div id="sillon-creator" class="hidden" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">
+              <div class="form-row">
+                <div class="form-group" style="flex:1">
+                  <label>Nom</label>
+                  <input type="text" id="sillon-name" placeholder="ex: V1, V1BIS, V1TER..." value="V1">
+                </div>
+                <div class="form-group" style="flex:1">
+                  <label>Gare A</label>
+                  <select id="sillon-from"><option value="">—</option></select>
+                </div>
+                <div class="form-group" style="flex:1">
+                  <label>Gare B</label>
+                  <select id="sillon-to"><option value="">—</option></select>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:6px">
+                <button id="btn-save-sillon" class="btn-primary" style="flex:1">Creer</button>
+                <button id="btn-cancel-sillon" class="btn-sm" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 12px;cursor:pointer;color:var(--text)">Annuler</button>
+              </div>
+              <div id="sillon-creator-loading" class="hidden" style="color:var(--blue);font-size:11px;padding:4px">Calcul du tracé ferroviaire...</div>
+            </div>
+            <div id="sillons-list" class="sillons-list"></div>
+          </div>
         </div>
       </div>
 
@@ -1164,6 +1194,17 @@
           <hr style="border-color:#334155;margin:16px 0">
           <button id="settings-save" class="btn-primary btn-full" style="padding:10px;font-size:.9em;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;width:100%">Sauvegarder</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Sillon Picker Modal (Schedule Creator) -->
+    <div id="modal-sillon-picker" class="modal hidden">
+      <div class="modal-content">
+        <button class="modal-close" onclick="game.ui._resolveSillonPicker(null)">&times;</button>
+        <h3>Sillons automatiques disponibles</h3>
+        <p style="font-size:11px;color:var(--text3);margin:0 0 10px">Choisissez un sillon predefini pour ce segment ou laissez l'ORM calculer.</p>
+        <div id="sillon-picker-list" class="sillons-list" style="margin-bottom:10px"></div>
+        <button id="btn-sillon-picker-orm" class="btn-secondary" style="width:100%" onclick="game.ui._resolveSillonPicker(null)">Utiliser l'itineraire ORM</button>
       </div>
     </div>
 

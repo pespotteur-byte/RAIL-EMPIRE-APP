@@ -15,6 +15,7 @@ import { DepotManager } from './depot.js?v=1779724771';
 import { WorksManager } from './works.js?v=1779724771';
 import { ORMClient } from './orm.js?v=1779724771';
 import { LineManager, PlatformManager } from './line.js?v=1779724771';
+import { SillonManager } from './sillon.js?v=1780900000';
 import { VoiePointManager } from './voie-points.js?v=1779724771';
 import { Dashboard } from './dashboard.js?v=1779724771';
 import { GraphMarche } from './graph-marche.js?v=1779724771';
@@ -53,6 +54,7 @@ class RailEmpire {
     this.worksManager = new WorksManager();
     this.orm = new ORMClient();
     this.lineManager = new LineManager();
+    this.sillonManager = new SillonManager();
     this.platformManager = new PlatformManager();
     this.voiePointManager = new VoiePointManager();
     this.dashboard = new Dashboard();
@@ -336,6 +338,7 @@ class RailEmpire {
         depots: this.depotManager.toSave(),
         activeIncidents: this.incidentManager.getActiveIncidentsSave(),
         incidentEnabledTypes: this.incidentManager.getEnabledTypes(),
+        sillons: this.sillonManager.toSave(),
         works: this.worksManager.toSave(),
         freightContracts: this.freightManager.toSave(),
         ormRoutes: this.orm.toSave(),
@@ -400,6 +403,7 @@ class RailEmpire {
     if (s.freightContracts) this.freightManager.loadFromSave(s.freightContracts);
     if (s.ormRoutes) this.orm.loadFromSave(s.ormRoutes);
     if (s.lines) this.lineManager.loadFromSave(s.lines);
+    if (s.sillons) this.sillonManager.loadFromSave(s.sillons);
     if (s.voiePoints) this.voiePointManager.loadFromSave(s.voiePoints);
     if (s.dashboard) this.dashboard.loadFromSave(s.dashboard);
     if (s.graphMarche) this.graphMarche.loadFromSave(s.graphMarche);
@@ -456,6 +460,7 @@ class RailEmpire {
       depots: this.depotManager.toSave(),
       activeIncidents: this.incidentManager.getActiveIncidentsSave(),
       incidentEnabledTypes: this.incidentManager.getEnabledTypes(),
+      sillons: this.sillonManager.toSave(),
       works: this.worksManager.toSave(),
       freightContracts: this.freightManager.toSave(),
       ormRoutes: this.orm.toSave(),

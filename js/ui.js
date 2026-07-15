@@ -2489,6 +2489,59 @@ export class UI {
     return this._densifyRoute(points.map(p => ({ ...p, maxSpeed })), 0.05);
   }
 
+  // --- Sillon picker (Section V integration) ---
+  openSillonPicker(sillons, fromName, toName) {
+    return new Promise((resolve) => {
+      this._pendingSillonResolve = resolve;
+      const modal = document.getElementById('modal-sillon-picker');
+      const list = document.getElementById('sillon-picker-list');
+      if (!modal || !list) return resolve(null);
+      list.innerHTML = `
+        <div class="sillon-item" style="margin-bottom:6px;cursor:pointer" onclick="game.ui._resolveSillonPicker('orm')">
+          <div><b>Itinéraire ORM automatique</b><br><span>Calcul normal entre ${fromName} et ${toName}</span></div>
+        </div>
+        ${sillons.map((s, i) => `
+          <div class="sillon-item" style="cursor:pointer" onclick="game.ui._resolveSillonPicker(${i})">
+            <div><b>${s.name}</b> — ${s.fromStationName} → ${s.toStationName}<br><span>${Math.round(s.distance)} km · Vmax ${s.maxSpeed} km/h · ${s.electrified !== false ? 'électrifié' : 'non électrifié'}</span></div>
+          </div>
+        `).join('')}
+      `;
+      modal.classList.remove('hidden');
+    });
+  }
+
+  _resolveSillonPicker(index) {
+    const modal = document.getElementById('modal-sillon-picker');
+    if (modal) modal.classList.add('hidden');
+    if (this._pendingSillonResolve) {
+      const resolve = this._pendingSillonResolve;
+      this._pendingSillonResolve = null;
+      resolve(index);
+    }
+  }
+
+  async _pickSillonForLeg(prevStop, newStop, legIdx) {
+    if (!this.game.sillonManager || !prevStop?.stationId || !newStop?.stationId) return null;
+    const sillons = this.game.sillonManager.getBetween(prevStop.stationId, newStop.stationId);
+    if (!sillons.length) return null;
+
+    const prevName = prevStop.stationName;
+    const newName = newStop.stationName;
+    const choice = await this.openSillonPicker(sillons, prevName, newName);
+    if (choice === null || choice === 'orm') return null;
+
+    const sillon = sillons[choice];
+    if (!sillon || !sillon.route?.length) return null;
+
+    // Densify to 50 m points like manual trace.
+    const route = this._densifyRoute(sillon.route.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: p.maxSpeed || sillon.maxSpeed })));
+    if (!this._manualRoutes) this._manualRoutes = [];
+    this._manualRoutes[legIdx] = route;
+    this._sillonLegSelection = this._sillonLegSelection || {};
+    this._sillonLegSelection[legIdx] = sillon.name;
+    return route;
+  }
+
   async addSchedStop(station) {
     if (station.closed) {
       alert('Cette gare est fermee — aucun train ne peut la desservir.');
@@ -2518,10 +2571,13 @@ export class UI {
       depTimeMin = arrTimeMin;
     } else {
       const prevStop = this.schedStops[this.schedStops.length - 1];
+      const legIdx = this.schedStops.length - 1;
       if (this._manualMode) {
         this._finishManualLeg(newStop, rameSpeed);
+      } else if (this.game.sillonManager) {
+        // Section V : propose pre-defined sillons for this segment.
+        await this._pickSillonForLeg(prevStop, newStop, legIdx);
       }
-      const legIdx = this.schedStops.length - 1;
       const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, legIdx);
       arrTimeMin = prevStop.depTimeMin + travelTime;
       depTimeMin = arrTimeMin + 2;
@@ -3555,6 +3611,26 @@ export class UI {
       document.getElementById('lines-station-creator')?.classList.add('hidden');
     });
     document.getElementById('btn-lsc-save')?.addEventListener('click', () => this.saveStationFromLines());
+
+    // Section V — Sillons automatiques
+    document.getElementById('btn-new-sillon')?.addEventListener('click', () => this.openSillonCreator());
+    document.getElementById('btn-save-sillon')?.addEventListener('click', () => this.saveSillon());
+    document.getElementById('btn-cancel-sillon')?.addEventListener('click', () => {
+      document.getElementById('sillon-creator')?.classList.add('hidden');
+    });
+
+    const sillonsList = document.getElementById('sillons-list');
+    if (sillonsList && !sillonsList._delegated) {
+      sillonsList._delegated = true;
+      sillonsList.addEventListener('mousedown', (e) => {
+        const btn = e.target.closest ? e.target.closest('[data-delete-sillon]') : null;
+        if (btn && btn.dataset.deleteSillon) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.deleteSillon(btn.dataset.deleteSillon);
+        }
+      });
+    }
   }
 
   async saveStationFromLines() {
@@ -4029,6 +4105,8 @@ export class UI {
         </div>
       `;
     }).join('');
+
+    this.renderSillonsList();
   }
 
   editStationFromLines(stationId) {
@@ -4052,6 +4130,94 @@ export class UI {
       }
     }
     this.game.lineManager.removeLine(id);
+    this.renderLinesList();
+    this.game.saveState();
+  }
+
+  // --- SILLONS (Section V) ---
+  openSillonCreator() {
+    const creator = document.getElementById('sillon-creator');
+    if (!creator) return;
+    const fromSel = document.getElementById('sillon-from');
+    const toSel = document.getElementById('sillon-to');
+    const opts = this.game.world.stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+    if (fromSel) fromSel.innerHTML = '<option value="">—</option>' + opts;
+    if (toSel) toSel.innerHTML = '<option value="">—</option>' + opts;
+    document.getElementById('sillon-name').value = 'V1';
+    creator.classList.remove('hidden');
+  }
+
+  async saveSillon() {
+    const name = document.getElementById('sillon-name')?.value.trim();
+    const fromId = document.getElementById('sillon-from')?.value;
+    const toId = document.getElementById('sillon-to')?.value;
+    if (!name) return alert('Nom requis');
+    if (!fromId || !toId) return alert('Sélectionnez les gares A et B');
+    if (fromId === toId) return alert('Les gares doivent être différentes');
+
+    const stA = this.game.world.getStationById(fromId);
+    const stB = this.game.world.getStationById(toId);
+    if (!stA || !stB) return alert('Gares invalides');
+
+    const loadingEl = document.getElementById('sillon-creator-loading');
+    if (loadingEl) loadingEl.classList.remove('hidden');
+
+    let route = null;
+    try {
+      route = await this.game.orm.findRoute(stA.lat, stA.lon, stB.lat, stB.lon);
+    } catch (e) {
+      console.warn('ORM route failed for sillon', e);
+    }
+
+    if (loadingEl) loadingEl.classList.add('hidden');
+
+    if (!route || route.length < 2) {
+      return alert('Impossible de calculer un itineraire ferroviaire entre ces gares. Verifiez le reseau ORM ou utilisez des gares proches.');
+    }
+
+    const distance = this.game.orm.getRouteDistance(route);
+    const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+    const maxSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 160;
+
+    this.game.sillonManager.add({
+      name,
+      fromStationId: fromId,
+      toStationId: toId,
+      fromStationName: stA.name,
+      toStationName: stB.name,
+      route: this.game.orm.getRouteSegments(route).map(s => ({ lat: s.from.lat, lon: s.from.lon, maxSpeed: s.maxSpeed })).concat([{ lat: route[route.length - 1].lat, lon: route[route.length - 1].lon, maxSpeed: route[route.length - 1].maxSpeed || 160 }]),
+      distance,
+      maxSpeed,
+      electrified: route.some(r => r.electrified === false) ? false : true,
+    });
+
+    document.getElementById('sillon-creator')?.classList.add('hidden');
+    this.renderLinesList();
+    this.game.saveState();
+  }
+
+  renderSillonsList() {
+    const container = document.getElementById('sillons-list');
+    if (!container) return;
+    const sillons = this.game.sillonManager.getAll();
+    if (sillons.length === 0) {
+      container.innerHTML = '<p style="color:var(--text3);font-size:11px;text-align:center;padding:20px">Aucun sillon automatique. Créez-en un pour accélérer les horaires.</p>';
+      return;
+    }
+    container.innerHTML = sillons.map(s => `
+      <div class="sillon-item">
+        <div>
+          <b>${s.name}</b> — ${s.fromStationName} → ${s.toStationName}<br>
+          <span>${Math.round(s.distance)} km · Vmax ${s.maxSpeed} km/h · ${s.electrified !== false ? 'électrifié' : 'non électrifié'}</span>
+        </div>
+        <button class="btn-sm danger" data-delete-sillon="${s.id}" title="Supprimer le sillon">✕</button>
+      </div>
+    `).join('');
+  }
+
+  deleteSillon(id) {
+    if (!confirm('Supprimer ce sillon ?')) return;
+    this.game.sillonManager.remove(id);
     this.renderLinesList();
     this.game.saveState();
   }
