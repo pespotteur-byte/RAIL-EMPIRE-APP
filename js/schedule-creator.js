@@ -1107,7 +1107,11 @@ export class ActiveService {
     // --- ANTI-OVERTAKE: clamp position behind nearest train ahead on same route ---
     if (allServices && allServices.length > 1) {
       const myProgressKm = this._getRouteProgressKm(this.position, route, this._state.index);
-      const MIN_SPACING = 0.15; // 150m minimum spacing
+      // OCC-04 : espacement de sécurité fonction de la vitesse (freinage + marge)
+      const mySpeed = this.speed || 0;
+      const decel = this.train.decel || 2;
+      const brakeDistKm = mySpeed > 0 ? (mySpeed * mySpeed) / (2 * decel * 3600) : 0;
+      const MIN_SPACING = Math.max(0.15, brakeDistKm + 0.05); // min 150 m, + marge
       const candidates = this._nearbyServices || allServices;
       const vpmAO = window.game?.voiePointManager;
       const myVoieAO = this.train.platform || (vpmAO ? vpmAO.getVoieAtPosition(this.position) : null);
