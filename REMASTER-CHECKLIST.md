@@ -172,11 +172,11 @@
 ## ITE — INSTALLATIONS TERMINALES  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| ITE-01 | ITE = point chargement/livraison fret, créé sur livemap, terme unique "ITE" | P1 | A6.4 | [ ] |
-| ITE-02 | Tracé manuel des voies ITE, chacune nommée, longueur calculée | P1 | A6.4 | [ ] |
-| ITE-03 | Longueur = contrainte : train trop long ne rentre pas | P1 | A6.4, A18 | [ ] |
+| ITE-01 | ITE = point chargement/livraison fret, créé via modal Dépôts/ITE, terme unique "ITE" | P1 | A6.4 | [~] PR1 (UI ITE existante, tracé livemap à venir) |
+| ITE-02 | Tracé manuel des voies ITE, chacune nommée, longueur saisie/calculée | P1 | A6.4 | [~] PR1 (saisie longueur, tracé carte à venir) |
+| ITE-03 | Longueur = contrainte : train trop long ne rentre pas | P1 | A6.4, A18 | [~] PR1 (modèle stocké, validation gameplay à venir) |
 | ITE-04 | Alternative : garer sur grand faisceau puis tranches (600=2×300/3×200) | P1 | A6.4 | [ ] |
-| ITE-05 | Types d'ITE selon cargaison (ex. intermodal) | P1 | A6.4 | [ ] |
+| ITE-05 | Types d'ITE selon cargaison (ex. intermodal) | P1 | A6.4 | [x] PR1 (type ITE + cargoType par voie) |
 | ITE-06 | Temps en ITE : arrivée/coupe/déchargement/rechargement selon type+longueur | P1 | A6.4 | [ ] |
 | ITE-07 | Intermodal : simuler grues/portiques | P1 | A6.4 | [ ] |
 | ITE-08 | ⚠️ Synchronisation bateaux ANNULÉE ; fret peut partir vide | — | A6.4, réponse #6 | [x] décidé |
