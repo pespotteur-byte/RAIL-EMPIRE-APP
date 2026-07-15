@@ -32,6 +32,7 @@ export class UI {
     this._hoveredVoiePoint = null;
     this._draggingVoiePoint = null;
     this._schedTileMap = null;
+    this._schedPage = 0;
     // Global blink timer for "À l'approche" (survives DOM re-renders)
     this._approachVisible = true;
     this._approachInterval = setInterval(() => {
@@ -3573,7 +3574,13 @@ export class UI {
       return null;
     };
 
-    container.innerHTML = sorted.map(svc => {
+    const perPage = 50;
+    const total = sorted.length;
+    const pageCount = Math.ceil(total / perPage) || 1;
+    this._schedPage = Math.max(0, Math.min(this._schedPage, pageCount - 1));
+    const start = this._schedPage * perPage;
+    const pageItems = sorted.slice(start, start + perPage);
+    const itemsHtml = pageItems.map(svc => {
       const stopsPreview = svc.stops.map(s => {
         const st = this.game.world.getStationById(s.stationId);
         const name = st ? st.name : s.stationId;
@@ -3673,6 +3680,21 @@ export class UI {
         </div>
       `;
     }).join('');
+
+    const controls = pageCount > 1 ? `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:8px;background:var(--bg3);border-radius:4px;font-size:11px">
+        <span>Page ${this._schedPage + 1} / ${pageCount} — ${total} trajets</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm" ${this._schedPage === 0 ? 'disabled' : ''} onclick="game.ui.changeSchedPage(-1)">Précédent</button>
+          <button class="btn-sm" ${this._schedPage >= pageCount - 1 ? 'disabled' : ''} onclick="game.ui.changeSchedPage(1)">Suivant</button>
+        </div>
+      </div>` : '';
+    container.innerHTML = itemsHtml + controls;
+  }
+
+  changeSchedPage(delta) {
+    this._schedPage += delta;
+    this.renderSchedulesList();
   }
 
   // SC-08 — clic sur une ligne = menu déroulant détaillé du trajet.
