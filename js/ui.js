@@ -4230,30 +4230,79 @@ export class UI {
     this.game.saveState();
   }
 
-  // --- DEPOTS ---
+  // --- DEPOTS / ITE ---
   setupDepotPage() {
     document.getElementById('btn-add-depot')?.addEventListener('click', () => this.openDepotModal());
     document.getElementById('btn-save-depot')?.addEventListener('click', () => this.saveDepot());
+    document.getElementById('btn-add-ite-track')?.addEventListener('click', () => this.addITETrack());
+    document.getElementById('depot-type')?.addEventListener('change', () => this._toggleITEEditor());
   }
 
   openDepotModal() {
+    this._pendingDepotITETarget = null; // stored ITE target if created from map
+    this._pendingITETracks = [];
     document.getElementById('modal-depot')?.classList.remove('hidden');
     document.getElementById('depot-name').value = '';
+    const typeSel = document.getElementById('depot-type');
+    if (typeSel) typeSel.value = 'depot';
     const select = document.getElementById('depot-station');
-    select.innerHTML = this.game.world.stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    if (select) select.innerHTML = '<option value="">—</option>' + this.game.world.stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    this._toggleITEEditor();
+    this._renderITETrackList();
+  }
+
+  _toggleITEEditor() {
+    const type = document.getElementById('depot-type')?.value || 'depot';
+    const editor = document.getElementById('depot-ite-editor');
+    if (editor) editor.classList.toggle('hidden', !type.startsWith('ite'));
+  }
+
+  _renderITETrackList() {
+    const list = document.getElementById('depot-ite-tracks-list');
+    if (!list) return;
+    list.innerHTML = (this._pendingITETracks || []).map((t, i) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:10px">
+        <span><b>${t.name}</b> — ${t.length} m${t.cargoType ? ' (' + t.cargoType + ')' : ''}</span>
+        <button class="btn-sm danger" style="font-size:9px;padding:1px 4px" onclick="game.ui.removeITETrack(${i})">x</button>
+      </div>
+    `).join('') || '<span style="color:var(--text3);font-size:10px">Aucune voie saisie</span>';
+  }
+
+  removeITETrack(index) {
+    if (!this._pendingITETracks) return;
+    this._pendingITETracks.splice(index, 1);
+    this._renderITETrackList();
+  }
+
+  addITETrack() {
+    const name = document.getElementById('depot-ite-track-name')?.value.trim();
+    const length = parseInt(document.getElementById('depot-ite-track-length')?.value) || 0;
+    const cargoType = document.getElementById('depot-ite-track-cargo')?.value || '';
+    if (!name || length <= 0) return alert('Nom et longueur requis');
+    if (!this._pendingITETracks) this._pendingITETracks = [];
+    this._pendingITETracks.push({ name, length, cargoType });
+    this._renderITETrackList();
+    document.getElementById('depot-ite-track-name').value = '';
+    document.getElementById('depot-ite-track-length').value = '300';
   }
 
   saveDepot() {
+    const type = document.getElementById('depot-type')?.value || 'depot';
+    const stationId = document.getElementById('depot-station')?.value;
+    if (!stationId) return alert('Sélectionnez une gare');
     const data = {
-      type: document.getElementById('depot-type').value,
-      name: document.getElementById('depot-name').value.trim() || 'Depot',
-      stationId: document.getElementById('depot-station').value,
-      tracks: parseInt(document.getElementById('depot-tracks').value) || 4,
-      cost: parseInt(document.getElementById('depot-cost').value) || 50000,
+      type,
+      name: document.getElementById('depot-name')?.value.trim() || 'Depot',
+      stationId,
+      tracks: parseInt(document.getElementById('depot-tracks')?.value) || 4,
+      cost: parseInt(document.getElementById('depot-cost')?.value) || 50000,
+      iteTracks: type.startsWith('ite') ? (this._pendingITETracks || []) : [],
+      iteCargoTypes: type.startsWith('ite') ? [...new Set((this._pendingITETracks || []).map(t => t.cargoType).filter(Boolean))] : [],
     };
     this.game.depotManager.add(data, this.game.economy);
     document.getElementById('modal-depot')?.classList.add('hidden');
     this.renderDepotsList();
+    this.game.saveState();
   }
 
   renderDepotsList() {
@@ -4319,6 +4368,10 @@ export class UI {
 
     const renderIteCard = (d) => {
       const station = this.game.world.getStationById(d.stationId);
+      const totalLen = d.iteTracks.reduce((s, t) => s + (Number(t.length) || 0), 0);
+      const tracksHtml = d.iteTracks.length > 0
+        ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:10px">${d.iteTracks.map(t => `<div>${t.name}: ${t.length} m${t.cargoType ? ' · ' + t.cargoType : ''}</div>`).join('')}<div style="font-weight:600;margin-top:4px">Total longueur utile: ${totalLen} m</div></div>`
+        : '';
       return `
         <div class="card">
           <div class="card-title">${d.name}</div>
@@ -4327,6 +4380,7 @@ export class UI {
             <b>Gare:</b> ${station ? station.name : d.stationId}<br>
             <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR
           </div>
+          ${tracksHtml}
           <div class="card-actions">
             <button class="btn-sm danger" onclick="game.ui.deleteDepot('${d.id}')">Supprimer</button>
           </div>

@@ -11,6 +11,9 @@ export class Depot {
     this.cost = data.cost || 50000;
     this.built = data.built || false;
     this.ramesStored = data.ramesStored || [];
+    // ITE track footprints: array of { name, length, cargoType }
+    this.iteTracks = Array.isArray(data.iteTracks) ? data.iteTracks : [];
+    this.iteCargoTypes = data.iteCargoTypes || [];
     // Rescue locomotives: array of { stockId, stockName, deployed }
     this.rescueLocos = (data.rescueLocos || []).map(r => ({
       stockId: r.stockId,
@@ -98,6 +101,27 @@ export class DepotManager {
 
   getByStation(stationId) {
     return this.depots.filter(d => d.stationId === stationId);
+  }
+
+  addITETrack(depotId, track) {
+    const depot = this.depots.find(d => d.id === depotId);
+    if (depot && depot.type.startsWith('ite')) {
+      depot.iteTracks.push({ name: track.name, length: track.length, cargoType: track.cargoType });
+      return true;
+    }
+    return false;
+  }
+
+  removeITETrack(depotId, index) {
+    const depot = this.depots.find(d => d.id === depotId);
+    if (depot && depot.type.startsWith('ite')) {
+      depot.iteTracks.splice(index, 1);
+    }
+  }
+
+  getTotalITELength(depotId) {
+    const depot = this.depots.find(d => d.id === depotId);
+    return depot ? depot.iteTracks.reduce((s, t) => s + (Number(t.length) || 0), 0) : 0;
   }
 
   // Add a rescue loco to a depot — max 2 per depot (Annexe 9)
@@ -394,6 +418,8 @@ export class DepotManager {
         cost: d.cost,
         built: d.built,
         ramesStored: d.ramesStored,
+        iteTracks: d.iteTracks,
+        iteCargoTypes: d.iteCargoTypes,
         rescueLocos: d.rescueLocos,
       })),
       activeRescues: this.activeRescues,

@@ -858,6 +858,25 @@
               <input type="number" id="depot-cost" value="50000" min="0" step="5000">
             </div>
           </div>
+          <div id="depot-ite-editor" class="hidden" style="border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:6px">Voies ITE (longueur utile m)</div>
+            <div id="depot-ite-tracks-list" style="margin-bottom:6px"></div>
+            <div class="form-row">
+              <input type="text" id="depot-ite-track-name" placeholder="Nom voie" style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit">
+              <input type="number" id="depot-ite-track-length" placeholder="Longueur m" value="300" min="10" step="10" style="width:110px;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit">
+              <select id="depot-ite-track-cargo" style="width:120px;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit">
+                <option value="">Tout fret</option>
+                <option value="vrac_solide">Vrac solide</option>
+                <option value="cereales_agri">Céréales</option>
+                <option value="conteneurs">Conteneurs</option>
+                <option value="liquides">Liquides</option>
+                <option value="gaz">Gaz</option>
+                <option value="produits_chimiques">Chimique</option>
+                <option value="automobiles">Automobiles</option>
+              </select>
+              <button type="button" id="btn-add-ite-track" class="btn-sm">+</button>
+            </div>
+          </div>
           <button id="btn-save-depot" class="btn-primary btn-full">Construire</button>
         </div>
       </div>
