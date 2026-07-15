@@ -1464,11 +1464,15 @@ export class ActiveService {
 
     if (nearestAheadDist === Infinity) return null;
 
-    const blockLength = 0.8;
+    // OCC-04 : sillage dynamique basé sur la distance de freinage par rapport au train de tête
+    const mySpeed = this.speed || 0;
+    const decel = this.train.decel || 2;
+    const leaderSpeed = Math.max(0, nearestAheadSpeed);
+    const dSafe = Math.max(0.15, (mySpeed * mySpeed - leaderSpeed * leaderSpeed) / (2 * decel * 3600) + 0.15);
 
-    if (nearestAheadDist < blockLength) return 0;
-    if (nearestAheadDist < blockLength * 2) return Math.min(nearestAheadSpeed, 30);
-    if (nearestAheadDist < blockLength * 3) return nearestAheadSpeed;
+    if (nearestAheadDist < dSafe) return 0;
+    if (nearestAheadDist < dSafe + 0.3) return leaderSpeed;
+    if (nearestAheadDist < dSafe + 0.8 && mySpeed > leaderSpeed + 20) return leaderSpeed + 20;
 
     return null;
   }
