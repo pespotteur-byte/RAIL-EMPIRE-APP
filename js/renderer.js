@@ -5,6 +5,7 @@ export const LIVEMAP_CATEGORY_COLORS = {
   voyageur: '#3b82f6', // bleu
   fret: '#22c55e',     // vert
   travaux: '#f59e0b',  // orange
+  machine: '#a855f7',  // violet — HLP / TM (Section VI)
 };
 
 // LVM-01 — icônes de train reproduites à l'identique des annexes 2a (image2-5).
@@ -13,6 +14,7 @@ const TRAIN_ICON_SRC = {
   voyageur: 'img/livemap/train_voyageur.png',
   fret: 'img/livemap/train_fret.png',
   travaux: 'img/livemap/train_travaux.png',
+  machine: 'img/livemap/train_generic.png',
 };
 const TRAIN_ICON_IMAGES = {};
 if (typeof Image !== 'undefined') {
@@ -651,7 +653,7 @@ export class Renderer {
   // L'ancre est la pointe de la flèche, donc l'icône est centrée horizontalement
   // et positionnée au-dessus du point (x,y).
   _drawTrainIcon(ctx, p, cat, color, bs, state) {
-    const iconKey = (cat === 'voyageur' || cat === 'fret' || cat === 'travaux') ? cat : 'generic';
+    const iconKey = (cat === 'voyageur' || cat === 'fret' || cat === 'travaux' || cat === 'machine') ? cat : 'generic';
     const img = TRAIN_ICON_IMAGES[iconKey];
     const iconH = bs * 5.5;
     const iconW = iconH * (149 / 225);
