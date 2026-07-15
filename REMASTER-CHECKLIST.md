@@ -290,7 +290,7 @@
 | DSH-01 | Dashboard reçoit Finances + Banque (fusion) | P1 | A1.1, A11.2 | [x] PR1 |
 | DSH-02 | Schémas nets (fin du flou/pixélisé), MAJ temps réel, arrondi 0,1 | P1 | A11.2 | [x] PR? (graphiques DPR, arrondi 0,1 + MAJ live) |
 | DSH-03 | Grandes valeurs : case s'agrandit pour ne pas disparaître | P1 | A11.2 | [x] PR1 (word-break, overflow visible) |
-| DSH-04 | Vue synthèse + drill-down (rester lisible) | P1 | review | [ ] |
+| DSH-04 | Vue synthèse + drill-down (rester lisible) | P1 | review | [x] PR? (section Vue synthèse + details repliables) |
 
 ## GM — GRAPHIQUE DE MARCHE  (P1)  [schéma jTrainGraph]
 | ID | Exigence | Prio | Source | Statut |

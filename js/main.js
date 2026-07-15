@@ -28,6 +28,7 @@ import { Unions } from './unions.js?v=1779724771';
 import { SeasonalSchedule } from './seasonal.js?v=1779724771';
 import { Connections } from './connections.js?v=1779724771';
 import { StationUpgrades } from './station-upgrades.js?v=1779724771';
+import { A12Model } from './a12-model.js?v=1780824000';
 import { JunctionManager } from './junctions.js?v=1779724771';
 import { CargoTypeManager } from './cargo-types.js?v=1780824000';
 import { ITEModules } from './ite-modules.js?v=1779724771';
@@ -77,6 +78,7 @@ class RailEmpire {
     this.tutorial = new Tutorial();
     this.bank = new Bank();
     this.weather = new Weather();
+    this.a12Model = new A12Model(this);
     this.scheduleCreator.weather = this.weather;
     this.unions = new Unions();
     this.seasonal = new SeasonalSchedule();
