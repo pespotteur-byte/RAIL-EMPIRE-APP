@@ -227,8 +227,8 @@
 | TRV-01 | Chaque section s'use ; axes fréquentés = + d'entretien ; suivi page Réseau | P1 | A10.2 | [x] PR? (Troncon.wear incrémentée par distance/tonnage) |
 | TRV-02 | ITE et dépôts non soumis aux travaux | P1 | A10.2 | [x] PR? (WorksManager n'affecte que world.tracks) |
 | TRV-03 | Fermeture de voie : cocher case + tracer portion ; trains reroutés en sécurité | P1 | A10.2 | [ ] |
-| TRV-04 | Trains de travaux (TTX) fournis ; caténaire = lignes électrifiées only | P1 | A10.2 | [ ] |
-| TRV-05 | Portée : journée/tranche, entre 2 gares, ou récurrente | P1 | A10.2 | [ ] |
+| TRV-04 | Trains de travaux (TTX) fournis ; caténaire = lignes électrifiées only | P1 | A10.2 | [x] PR? (TTX bloqué si segment non électrifié) |
+| TRV-05 | Portée : journée/tranche, entre 2 gares, ou récurrente | P1 | A10.2 | [x] PR? (journée unique / quotidien / hebdomadaire + jours) |
 | TRV-06 | Toutes voies fermées : aucun train ; itinéraires déroutement A/B/C/D ou renoncer (alerte) | P1 | A10.2 | [ ] |
 | TRV-07 | Page Réseau : état lignes A↔B, usure, plages travaux | P1 | A2.3, A1.1 | [x] PR? (page Lignes/Réseau avec usure moyenne/max et état par ligne) |
 
