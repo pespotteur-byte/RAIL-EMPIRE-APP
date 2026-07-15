@@ -144,9 +144,9 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | DEP-01 | Infrastructure dépôt : remisage / rotondes / technicentres | P1 | A6.1 | [ ] |
-| DEP-02 | Affectation engin à un dépôt à l'achat | P1 | A6.1 | [ ] |
+| DEP-02 | Affectation engin à un dépôt à l'achat | P1 | A6.1 | [x] PR1 (depotId dans Rame, dropdown achat, liste dépôt) |
 | DEP-03 | ID interne jeu EN PLUS du n° série (n° série non obligatoire) | P1 | A6.1 | [ ] |
-| DEP-04 | Localisation permanente de chaque engin + rame d'affectation | P0 | A6.1 | [ ] |
+| DEP-04 | Localisation permanente de chaque engin + rame d'affectation | P0 | A6.1 | [x] PR1 (depotId persistant, rames listées sur fiche dépôt) |
 | DEP-05 | "1 rame = 1 trajet" via position/états horodatés | P0 | A6.1, A12 | [ ] |
 | DEP-06 | Trains en maintenance : absents livemap ET bandeau train | P1 | A6.1 | [ ] |
 
