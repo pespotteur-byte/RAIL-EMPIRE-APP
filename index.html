@@ -1024,6 +1024,28 @@
               <input type="text" id="works-end-time" value="05:00" placeholder="HH:MM">
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>Recurrence</label>
+              <select id="works-recurrence">
+                <option value="once">Journée unique</option>
+                <option value="daily" selected>Chaque jour (tranche)</option>
+                <option value="weekly">Hebdomadaire</option>
+              </select>
+            </div>
+            <div class="form-group" id="works-days-group" style="flex:2;display:none">
+              <label>Jours de la semaine</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px">
+                <label><input type="checkbox" class="works-day" value="0" checked> Di</label>
+                <label><input type="checkbox" class="works-day" value="1" checked> Lu</label>
+                <label><input type="checkbox" class="works-day" value="2" checked> Ma</label>
+                <label><input type="checkbox" class="works-day" value="3" checked> Me</label>
+                <label><input type="checkbox" class="works-day" value="4" checked> Je</label>
+                <label><input type="checkbox" class="works-day" value="5" checked> Ve</label>
+                <label><input type="checkbox" class="works-day" value="6" checked> Sa</label>
+              </div>
+            </div>
+          </div>
           <div class="form-group">
             <label>Impact</label>
             <select id="works-impact">

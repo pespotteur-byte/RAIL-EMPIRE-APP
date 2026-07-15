@@ -4814,6 +4814,9 @@ export class UI {
     document.getElementById('works-impact')?.addEventListener('change', (e) => {
       document.getElementById('works-speed-group').style.display = e.target.value === 'slow' ? 'block' : 'none';
     });
+    document.getElementById('works-recurrence')?.addEventListener('change', (e) => {
+      document.getElementById('works-days-group').style.display = e.target.value === 'weekly' ? 'block' : 'none';
+    });
     document.getElementById('btn-save-works')?.addEventListener('click', () => this.saveWorks());
 
     // Predefined incident type toggles (Annexe 11)
@@ -4841,12 +4844,20 @@ export class UI {
     document.getElementById('works-end-date').value = tomorrow;
     document.getElementById('works-start-time').value = '22:00';
     document.getElementById('works-end-time').value = '05:00';
+    const recSel = document.getElementById('works-recurrence');
+    if (recSel) recSel.value = 'daily';
+    document.getElementById('works-days-group')?.style.setProperty('display', 'none');
+    document.querySelectorAll('.works-day').forEach(cb => cb.checked = true);
 
     const select = document.getElementById('works-track');
     select.innerHTML = this.game.world.tracks.map(t => `<option value="${t.id}">${t.name || t.id}</option>`).join('');
   }
 
   saveWorks() {
+    const recurrence = document.getElementById('works-recurrence')?.value || 'daily';
+    const daysOfWeek = recurrence === 'weekly'
+      ? [...document.querySelectorAll('.works-day:checked')].map(cb => parseInt(cb.value))
+      : [0,1,2,3,4,5,6];
     this.game.worksManager.add({
       name: document.getElementById('works-name').value.trim() || 'Travaux',
       trackId: document.getElementById('works-track').value,
@@ -4856,6 +4867,8 @@ export class UI {
       endTime: document.getElementById('works-end-time').value || '05:00',
       impact: document.getElementById('works-impact').value,
       speedLimit: parseInt(document.getElementById('works-speed-limit').value) || 40,
+      recurrence,
+      daysOfWeek,
     });
     document.getElementById('modal-works')?.classList.add('hidden');
     this.renderIncidentsPage();
@@ -4950,7 +4963,7 @@ export class UI {
               <div class="works-item">
                 <span class="works-name">${w.name}</span> - ${track ? track.name : w.trackId}<br>
                 ${w.getDateRange()}<br>
-                <span style="font-size:10px;color:var(--text3)">Actif chaque jour de ${w.startTime} a ${w.endTime}</span><br>
+                <span style="font-size:10px;color:var(--text3)">${w.recurrence === 'once' ? 'Le ' + w.startDate : w.recurrence === 'weekly' ? 'Hebdo : ' + w.daysOfWeek.join(',') : 'Chaque jour'} de ${w.startTime} a ${w.endTime}</span><br>
                 Impact: ${w.impact === 'stop' ? 'Interruption' : 'Ralenti ' + w.speedLimit + ' km/h'}
                 ${w.active ? ' <b style="color:var(--red)">EN COURS</b>' : ''}
                 <button class="btn-sm danger incident-delete-btn" style="float:right" data-delete-works="${w.id}" title="Supprimer les travaux">✕</button>

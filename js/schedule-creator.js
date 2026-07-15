@@ -999,6 +999,16 @@ export class ActiveService {
     }
     if (worksLimit !== null) segMaxSpeed = Math.min(segMaxSpeed, worksLimit);
 
+    // TRV-04 : TTX (trains de travaux caténaire) uniquement sur lignes électrifiées
+    if (this.isWorkTrain && this._electrificationMismatch(route, segIdx)) {
+      this.speed = 0;
+      this.train.speed = 0;
+      this.train.blockedBy = true;
+      this.train.delayReason = 'TTX : ligne non électrifiée';
+      this._updateContinuousDelay(timeOfDay);
+      return;
+    }
+
     // CRITICAL: effectiveSpeed = min(train speed, infrastructure speed)
     let effectiveMaxSpeed = Math.min(rameMaxSpeed, segMaxSpeed);
 

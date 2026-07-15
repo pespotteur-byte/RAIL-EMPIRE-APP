@@ -11,7 +11,14 @@ export class PlannedWorks {
     this.endTime = data.endTime || '05:00';
     this.impact = data.impact || 'stop';
     this.speedLimit = data.speedLimit || 40;
+    // TRV-05 : portée — journée, tranche horaire, entre 2 gares, récurrente
+    this.recurrence = data.recurrence || 'daily'; // 'once' | 'daily' | 'weekly'
+    this.daysOfWeek = data.daysOfWeek || [0,1,2,3,4,5,6]; // for weekly
     this.active = false;
+  }
+
+  _dayOfWeek(dateStr) {
+    try { return new Date(dateStr + 'T12:00:00').getDay(); } catch { return -1; }
   }
 
   isActiveAt(dateStr, timeOfDay) {
@@ -19,6 +26,10 @@ export class PlannedWorks {
 
     // Check if current date is within the overall works period
     if (dateStr < this.startDate || dateStr > this.endDate) return false;
+
+    // TRV-05 : récurrence
+    if (this.recurrence === 'once' && dateStr !== this.startDate) return false;
+    if (this.recurrence === 'weekly' && !this.daysOfWeek.includes(this._dayOfWeek(dateStr))) return false;
 
     // Check daily active hours
     const [sh, sm] = this.startTime.split(':').map(Number);
@@ -108,6 +119,7 @@ export class WorksManager {
       startDate: w.startDate, startTime: w.startTime,
       endDate: w.endDate, endTime: w.endTime,
       impact: w.impact, speedLimit: w.speedLimit,
+      recurrence: w.recurrence, daysOfWeek: w.daysOfWeek,
     }));
   }
 
