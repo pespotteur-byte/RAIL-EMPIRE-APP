@@ -90,7 +90,7 @@ export class FreightManager {
 
   // Section X — résolution des contrats fret lors d'un arrêt en gare ITE/destination
   // Renvoie { fulfilled: [...], remainingTonnes }
-  fulfillAtStation(service, stationId, freightUnload, isDelayed = false) {
+  fulfillAtStation(service, stationId, freightUnload, isDelayed = false, isEarly = false) {
     const g = typeof window !== 'undefined' ? window.game : null;
     if (!g || !service?.rame || !stationId || freightUnload <= 0) return { fulfilled: [], remainingTonnes: freightUnload };
 
@@ -123,7 +123,8 @@ export class FreightManager {
       if (c.quantity <= 0 && c.industrialClientId) {
         const client = g.industrialClients?.clients?.find(cl => cl.id === c.industrialClientId);
         if (client) {
-          client.satisfaction = Math.min(100, (client.satisfaction || 80) + (isDelayed ? 0 : 5));
+          const delta = isDelayed ? -5 : (isEarly ? +8 : +5);
+          client.satisfaction = Math.min(100, Math.max(0, (client.satisfaction || 80) + delta));
         }
       }
       return true;

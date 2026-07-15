@@ -4508,7 +4508,9 @@ export class IndustrialClients {
       const fromStation = stations.find(s => s.id === client.stationId);
       if (!fromStation) continue;
 
-      let remainingTonnage = client.dailyTonnage;
+      // FRT-05 : satisfaction élevée = plus d'offres (tonnage journalier majoré jusqu'à +30%)
+      const satBoost = 1 + Math.max(0, (client.satisfaction - 70)) / 100;
+      let remainingTonnage = Math.round(client.dailyTonnage * satBoost);
       let contractsToday = 0;
 
       while (remainingTonnage > 0 && contractsToday < 10) {

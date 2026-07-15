@@ -160,8 +160,10 @@ export class Economy {
         // Section X — écoulement des contrats fret en gare destination
         let fulfilledQty = 0, contractRevenue = 0;
         if (isTerminus && stationId && typeof window !== 'undefined' && window.game?.freightManager?.fulfillAtStation) {
-          const isDelayed = (service.train?.delay || 0) >= 30;
-          const res = window.game.freightManager.fulfillAtStation(service, stationId, freightUnload, isDelayed);
+          const delay = service.train?.delay || 0;
+          const isDelayed = delay >= 30;
+          const isEarly = delay <= -10;
+          const res = window.game.freightManager.fulfillAtStation(service, stationId, freightUnload, isDelayed, isEarly);
           fulfilledQty = Math.max(0, freightUnload - (res.remainingTonnes || 0));
           contractRevenue = (res.fulfilled || []).reduce((s, f) => s + (f.payment || 0), 0);
         }
