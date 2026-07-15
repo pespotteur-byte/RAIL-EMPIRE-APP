@@ -356,7 +356,7 @@
 | BUG-06 | Bug de minuit → horloge en minutes absolues | P0 | A14#6 | [x] comparaisons midnight-safe (timeDiff/timeGte/isInServiceWindow) + horloge Paris |
 | BUG-07 | Bug 1440 min → modulo 24h propre | P0 | A14#7 | [x] normalisation ((m%1440)+1440)%1440 partout (affichage + fenêtres service) |
 | BUG-08 | Horaires non MAJ → recalcul auto à l'édition | P0 | A14#8 | [x] PR? (recalcStopsFrom + recalcul terminus wait) |
-| BUG-09 | "objectif avance 0%" → corriger calcul d'avancement | P1 | A14#9 | [ ] |
+| BUG-09 | "objectif avance 0%" → corriger calcul d'avancement | P1 | A14#9 | [x] PR? (progress contrat assigné mis à jour par distance parcourue / distance planifiée) |
 | BUG-10 | Gares créées invisibles (cf. LVM-05) | P0 | A14#10 | [x] PR? (world.addStation + renderer.drawStations) |
 | BUG-11 | Images Dashboard/Graphique zoomées → recadrage/responsive | P1 | A14#11 | [x] PR? (Dashboard/GraphMarche canvas adaptés au DPR et à la taille CSS) |
 | BUG-12 | Point de voie qui s'efface (souris hors cadre) → découpler validation du focus + Échap/Entrée | P1 | A14#12 | [x] PR? (validation Entrée dans le modal) |
