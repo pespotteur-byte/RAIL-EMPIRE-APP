@@ -364,6 +364,7 @@ export class ActiveService {
   // Called every minute - handles schedule logic (departures, arrivals, state transitions)
   scheduleTick(timeOfDay, dateStr, economy) {
     if (!this.active || this.stops.length < 2) return;
+    cantonManager.setTime(timeOfDay);
     this._currentDate = dateStr;
     this._economy = economy;
 
@@ -745,6 +746,7 @@ export class ActiveService {
    */
   moveUpdate(dt, timeOfDay, allServices) {
     if (!this.active || this.state !== 'moving') return;
+    cantonManager.setTime(timeOfDay);
 
     // Clear any stale garage state from old saves
     if (this._garage) this._garage = null;

@@ -72,6 +72,7 @@ class Canton {
     this.endIndex = endIndex;
     this.occupiedBy = null;
     this.reservedBy = null;
+    this.lastReleasedAt = -9999; // OCC-05: time in minutes when last train left
   }
 }
 
@@ -92,6 +93,11 @@ export class CantonManager {
     this.cantons = new Map();
     this.routeCantons = new Map();
     this.trainCantons = new Map();
+    this.currentTime = 0; // OCC-05: timeOfDay in minutes for separation checks
+  }
+
+  setTime(timeOfDay) {
+    this.currentTime = timeOfDay;
   }
 
   /**
@@ -191,6 +197,8 @@ export class CantonManager {
     if (!c) return true;
     if (c.occupiedBy && c.occupiedBy !== trainId) return false;
     if (c.reservedBy && c.reservedBy !== trainId) return false;
+    // OCC-05 : écart de 2 min après libération du canton
+    if (this.currentTime - (c.lastReleasedAt || -9999) < 2 && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
     c.reservedBy = trainId;
     this._trackCanton(trainId, cantonId);
     return true;
@@ -203,6 +211,8 @@ export class CantonManager {
     if (c.occupiedBy && c.occupiedBy !== trainId) {
       if (!this._isTrainGone(c.occupiedBy)) return false;
     }
+    // OCC-05 : écart de 2 min après libération du canton
+    if (this.currentTime - (c.lastReleasedAt || -9999) < 2 && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
     c.occupiedBy = trainId;
     c.reservedBy = null;
     this._trackCanton(trainId, cantonId);
@@ -212,8 +222,8 @@ export class CantonManager {
   release(cantonId, trainId) {
     const c = this.cantons.get(cantonId);
     if (!c) return;
-    if (c.occupiedBy === trainId) c.occupiedBy = null;
-    if (c.reservedBy === trainId) c.reservedBy = null;
+    if (c.occupiedBy === trainId) { c.occupiedBy = null; c.lastReleasedAt = this.currentTime || -9999; }
+    if (c.reservedBy === trainId) { c.reservedBy = null; c.lastReleasedAt = this.currentTime || -9999; }
     const tc = this.trainCantons.get(trainId);
     if (tc) tc.delete(cantonId);
   }
@@ -230,6 +240,8 @@ export class CantonManager {
       if (this._isTrainGone(c.reservedBy)) { c.reservedBy = null; }
       else return false;
     }
+    // OCC-05 : écart de 2 min après libération du canton
+    if (this.currentTime - (c.lastReleasedAt || -9999) < 2 && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
     return true;
   }
 
@@ -251,8 +263,8 @@ export class CantonManager {
     for (const cid of ids) {
       const c = this.cantons.get(cid);
       if (c) {
-        if (c.occupiedBy === trainId) c.occupiedBy = null;
-        if (c.reservedBy === trainId) c.reservedBy = null;
+        if (c.occupiedBy === trainId) { c.occupiedBy = null; c.lastReleasedAt = this.currentTime || -9999; }
+        if (c.reservedBy === trainId) { c.reservedBy = null; c.lastReleasedAt = this.currentTime || -9999; }
       }
     }
     ids.clear();
