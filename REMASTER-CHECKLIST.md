@@ -114,8 +114,8 @@
 | CVO-01 | W = vide voyageur (repositionnement, voyageurs only, créé par joueur) | P1 | A3.7 | [x] PR? (serviceType='w', non-revenus) |
 | CVO-02 | HLP = loco(s) seule(s), max 2, auto | P1 | A3.7 | [x] PR? (validation max 2 locos) |
 | CVO-03 | TM = train de machines, 3 à 12 locos (jamais >12) | P1 | A3.7 | [x] PR? (validation 3-12 locos) |
-| CVO-04 | EVO = mouvement rame garage→gare, auto | P1 | A3.7 | [~] (type défini, auto à venir) |
-| CVO-05 | M- = machine de manœuvre, rattachée dépôt, usure identique | P1 | A3.7 | [~] (type disponible, manœuvre à venir) |
+| CVO-04 | EVO = mouvement rame garage→gare, auto | P1 | A3.7 | [x] PR? (ensureEVOForService + attente service principal) |
+| CVO-05 | M- = machine de manœuvre, rattachée dépôt, usure identique | P1 | A3.7 | [x] PR? (option serviceType 'm-' + validation 1 loco + dépôt) |
 | CVO-06 | S- = machine de secours, max 2/dépôt, payante, usure identique | P1 | A3.7, A6.3 | [x] PR? (max 2 secours + vitesse DDS 10/30 km/h) |
 
 ## RET — RETARDS, SUPPRESSION & REPRISE  (P1)
@@ -235,14 +235,14 @@
 ## MET — MÉTÉO & SAISONS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| MET-01 | Météo précise par lat/long (une même ligne peut varier) | P1 | A3.4, A11.4 | [ ] |
-| MET-02 | Dégagé/nuageux/vent : aucun impact | P1 | A3.4 | [ ] |
-| MET-03 | Pluie faible : freiner un peu plus tôt | P1 | A3.4 | [ ] |
-| MET-04 | Pluie forte : freiner bien plus tôt | P1 | A3.4 | [ ] |
-| MET-05 | Orage/tempête : freiner encore plus tôt | P1 | A3.4 | [ ] |
-| MET-06 | Neige : −20 km/h si V ≥ 140 + freinage dégradé | P1 | A3.4 | [ ] |
-| MET-07 | Nuages via satellite, radar pluie amélioré | P2 | A11.4 | [ ] |
-| MET-08 | Saisons fusionnées dans page Météo | P1 | A11.4 | [ ] |
+| MET-01 | Météo précise par lat/long (une même ligne peut varier) | P1 | A3.4, A11.4 | [x] PR? (cache par point lat/lon) |
+| MET-02 | Dégagé/nuageux/vent : aucun impact | P1 | A3.4 | [x] PR? (pas de speedCap/brakeFactor pour ces cas) |
+| MET-03 | Pluie faible : freiner un peu plus tôt | P1 | A3.4 | [x] PR? (brakeFactor > 1) |
+| MET-04 | Pluie forte : freiner bien plus tôt | P1 | A3.4 | [x] PR? (brakeFactor plus élevé) |
+| MET-05 | Orage/tempête : freiner encore plus tôt | P1 | A3.4 | [x] PR? (brakeFactor max) |
+| MET-06 | Neige : −20 km/h si V ≥ 140 + freinage dégradé | P1 | A3.4 | [x] PR? (speedCap, brakeFactor) |
+| MET-07 | Nuages via satellite, radar pluie amélioré | P2 | A11.4 | [x] PR? (RainViewer radar + cloud tiles) |
+| MET-08 | Saisons fusionnées dans page Météo | P1 | A11.4 | [x] PR? (page Météo unique) |
 
 ## MAT — PAGE MATÉRIEL  (P1)  [schémas annexes 6-7]
 | ID | Exigence | Prio | Source | Statut |
@@ -359,7 +359,7 @@
 | BUG-09 | "objectif avance 0%" → corriger calcul d'avancement | P1 | A14#9 | [ ] |
 | BUG-10 | Gares créées invisibles (cf. LVM-05) | P0 | A14#10 | [x] PR? (world.addStation + renderer.drawStations) |
 | BUG-11 | Images Dashboard/Graphique zoomées → recadrage/responsive | P1 | A14#11 | [ ] |
-| BUG-12 | Point de voie qui s'efface (souris hors cadre) → découpler validation du focus + Échap/Entrée | P1 | A14#12 | [ ] |
+| BUG-12 | Point de voie qui s'efface (souris hors cadre) → découpler validation du focus + Échap/Entrée | P1 | A14#12 | [x] PR? (validation Entrée dans le modal) |
 | BUG-13 | Aiguillages décoratifs (cf. R-08) | P0 | A14#13 | [ ] |
 
 ---
