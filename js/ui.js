@@ -951,6 +951,8 @@ export class UI {
       const station = this.game.world.getStationById(this._editingStationId);
       if (station) {
         station.name = name;
+        station.lat = lat;
+        station.lon = lon;
         station.type = type;
         station.platforms = platforms;
         station.platformNames = platformNames;
