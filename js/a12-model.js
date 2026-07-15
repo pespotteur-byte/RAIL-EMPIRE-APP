@@ -8,14 +8,14 @@ import { World } from './world.js';
 import { VoiePointManager } from './voie-points.js';
 import { LineManager, PlatformManager } from './line.js';
 import { RameManager } from './rame.js';
-import { StockManager } from './rolling-stock.js';
+import { RollingStockManager } from './rolling-stock.js';
 import { ScheduleCreator } from './schedule-creator.js';
 import { FreightManager } from './freight.js';
 import { DepotManager } from './depot.js';
 import { StaffManager } from './staff.js';
 import { IncidentManager } from './incidents.js';
 import { Economy } from './economy.js';
-import { WeatherManager } from './weather.js';
+import { Weather } from './weather.js';
 import { SillonManager } from './sillon.js';
 
 // Entités fondamentales du modèle A12 (Annexe 12)
@@ -52,7 +52,7 @@ export class A12Model {
       lignes: g.lineManager?.getAll().length || 0,
       ites: g.voiePointManager?.getAll().length || 0,
       depots: g.depotManager?.depots?.length || 0,
-      engins: g.stockManager?.stock?.length || 0,
+      engins: g.rollingStock?.items?.length || 0,
       rames: g.rameManager?.getAll().length || 0,
       services: g.scheduleCreator?.services?.length || 0,
       contrats: g.freightManager?.contracts?.length || 0,
@@ -69,14 +69,14 @@ export class A12Model {
     if (!g.voiePointManager) errors.push('VoiePointManager manquant');
     if (!g.lineManager) errors.push('LineManager manquant');
     if (!g.rameManager) errors.push('RameManager manquant');
-    if (!g.stockManager) errors.push('StockManager manquant');
+    if (!g.rollingStock) errors.push('StockManager manquant');
     if (!g.scheduleCreator) errors.push('ScheduleCreator manquant');
     if (!g.freightManager) errors.push('FreightManager manquant');
     if (!g.depotManager) errors.push('DepotManager manquant');
     if (!g.staffManager) errors.push('StaffManager manquant');
     if (!g.incidentManager) errors.push('IncidentManager manquant');
     if (!g.economy) errors.push('Economy manquant');
-    if (!g.weatherManager) errors.push('WeatherManager manquant');
+    if (!g.weather) errors.push('WeatherManager manquant');
     return { ok: errors.length === 0, errors };
   }
 
