@@ -5,6 +5,42 @@ import { icon } from './icons.js';
 
 let nextStaffId = 1;
 
+// RH-01 — noms aléatoires par nationalité
+const NATIONALITY_NAMES = {
+  fr: {
+    first: ['Jean','Pierre','Michel','André','Philippe','Alain','Nicolas','Christophe','Laurent','Patrick','Marie','Sophie','Isabelle','Nathalie','Céline','Virginie','Sandrine','Stéphanie','Camille','Emma'],
+    last: ['Martin','Bernard','Thomas','Petit','Robert','Richard','Durand','Dubois','Moreau','Laurent','Simon','Michel','Lefèvre','Mercier','Dupont','Fournier','Girard','Bonnet','André','François']
+  },
+  de: {
+    first: ['Hans','Peter','Klaus','Wolfgang','Thomas','Michael','Andreas','Stefan','Markus','Jürgen','Anna','Maria','Ursula','Monika','Petra','Sabine','Karin','Christine','Ingrid','Birgit'],
+    last: ['Müller','Schmidt','Schneider','Fischer','Weber','Meyer','Wagner','Becker','Schulz','Hoffmann','Koch','Bauer','Richter','Klein','Wolf','Schröder','Neumann','Schwarz','Zimmermann','Braun']
+  },
+  ch: {
+    first: ['Andreas','Daniel','Markus','Thomas','Stefan','Michael','Peter','Christian','Simon','Rett','Anna','Laura','Sarah','Mia','Sophie','Lena','Nina','Julia','Elena','Vanessa'],
+    last: ['Meier','Müller','Schmid','Keller','Weber','Fischer','Frei','Moser','Baumann','Gerber','Bachmann','Widmer','Zimmermann','Brunner','Huber','Schneider','Schärer','Graf','Wyss','Frei']
+  },
+  es: {
+    first: ['Antonio','José','Manuel','Francisco','Juan','Carlos','Luis','Miguel','Pedro','Rafael','María','Carmen','Ana','Laura','Isabel','Marta','Sara','Paula','Lucía','Sofía'],
+    last: ['García','Rodríguez','González','Fernández','López','Martínez','Sánchez','Pérez','Gómez','Martín','Jiménez','Ruiz','Hernández','Díaz','Moreno','Álvarez','Muñoz','Romero','Alonso','Gutiérrez']
+  },
+  be: {
+    first: ['Jean','Pierre','Michel','Philippe','André','Luc','Thierry','Marc','Benoît','Laurent','Marie','Anne','Sophie','Isabelle','Véronique','Nathalie','Christine','Caroline','Sandrine','Aurélie'],
+    last: ['Peeters','Janssens','Maes','Jacobs','Mertens','Willems','Claes','Goossens','Wouters','De Smet','Van den Berg','Pieters','Cools','Martens','Desmet','Vermeulen','Aerts','Smets','Depoorter','De Backer']
+  },
+  nl: {
+    first: ['Jan','Peter','Hans','Willem','Klaas','Henk','Bert','Erik','Mark','Ruben','Maria','Anna','Laura','Sanne','Emma','Lieke','Noortje','Eva','Fleur','Sophie'],
+    last: ['De Jong','Jansen','Van den Berg','Bakker','Van Dijk','Visser','Smit','Meijer','Mulder','De Vries','Van der Linden','Bos','Peters','Hendriks','Van Leeuwen','Dekker','Van der Meer','Brouwer','Verhoeven','Koster']
+  },
+  it: {
+    first: ['Marco','Giuseppe','Antonio','Luigi','Giovanni','Francesco','Paolo','Mario','Roberto','Stefano','Maria','Anna','Giulia','Laura','Sara','Francesca','Chiara','Valentina','Elena','Alice'],
+    last: ['Rossi','Russo','Ferrari','Esposito','Bianchi','Romano','Gallo','Costa','Fontana','Conti','Ricci','Bruno','De Luca','Moretti','Marino','Greco','Barbieri','Lombardi','Giordano','Cassano']
+  },
+  cz: {
+    first: ['Jan','Petr','Tomáš','Jiří','Martin','Pavel','Jaroslav','Miroslav','Zdeněk','Václav','Eva','Anna','Hana','Lenka','Kateřina','Jana','Petra','Lucie','Veronika','Tereza'],
+    last: ['Novák','Svoboda','Novotný','Dvořák','Černý','Procházka','Kučera','Veselý','Horák','Němec','Marek','Pokorný','Pánek','Král','Růžička','Beneš','Fiala','Sedláček','Kolář','Macháček']
+  },
+};
+
 const ROLES = {
   conducteur:           { label: 'Conducteur',              salary: 120, hiringCost: 2000, assignTo: 'service' },
   conducteur_manoeuvre:  { label: 'Conducteur de manœuvre',  salary: 100, hiringCost: 1500, assignTo: 'depot' },
@@ -29,31 +65,51 @@ export class StaffManager {
   }
 
   // ── Hire ──
-  hire(economy, name, role) {
+  // RH-01 : embauche multiple + noms aléatoires par nationalité quand non fourni.
+  hire(economy, name, role, opts = {}) {
     role = role || 'conducteur';
     const def = ROLES[role];
     if (!def) return null;
-    if (!economy || economy.balance < def.hiringCost) return null;
+    const count = Math.max(1, Math.min(100, parseInt(opts.count) || 1));
+    const totalCost = def.hiringCost * count;
+    if (!economy || economy.balance < totalCost) return null;
 
-    const member = {
-      id: `staff-${nextStaffId++}`,
-      name: name || `${def.label} ${this.getByRole(role).length + 1}`,
-      role,
-      assignedTo: null,
-      available: true,
-      hireDate: Date.now(),
-      totalTrips: 0,
-      totalFines: 0,
-      totalFineRevenue: 0,
-      shiftStartMin: -1,
-      shiftWorkedMin: 0,
-      resting: false,
-    };
+    const hired = [];
+    for (let i = 0; i < count; i++) {
+      const generatedName = !name || opts.generateEach ? this.generateRandomName(opts.nationality) : null;
+      const memberName = name && !opts.generateEach ? name : (generatedName || `${def.label} ${this.getByRole(role).length + 1}`);
+      const member = {
+        id: `staff-${nextStaffId++}`,
+        name: memberName,
+        role,
+        nationality: generatedName ? (opts.nationality || this._lastGeneratedNationality) : '',
+        assignedTo: null,
+        available: true,
+        hireDate: Date.now(),
+        totalTrips: 0,
+        totalFines: 0,
+        totalFineRevenue: 0,
+        shiftStartMin: -1,
+        shiftWorkedMin: 0,
+        resting: false,
+      };
 
-    economy.addExpense(def.hiringCost, 'personnel', `Embauche: ${member.name} (${def.label})`);
-    this.staff.push(member);
+      economy.addExpense(def.hiringCost, 'personnel', `Embauche: ${member.name} (${def.label})`);
+      this.staff.push(member);
+      hired.push(member);
+    }
     this._syncLegacy();
-    return member;
+    return hired;
+  }
+
+  generateRandomName(preferredNationality) {
+    const nats = preferredNationality ? [preferredNationality] : Object.keys(NATIONALITY_NAMES);
+    const nat = nats[Math.floor(Math.random() * nats.length)];
+    this._lastGeneratedNationality = nat;
+    const pool = NATIONALITY_NAMES[nat];
+    const first = pool.first[Math.floor(Math.random() * pool.first.length)];
+    const last = pool.last[Math.floor(Math.random() * pool.last.length)];
+    return `${first} ${last}`;
   }
 
   // ── Fire ──
@@ -327,6 +383,18 @@ export class StaffManager {
             ${roleKeys.map(k => `<option value="${k}">${ROLES[k].label} (${ROLES[k].hiringCost.toLocaleString('fr-FR')}€)</option>`).join('')}
           </select>
           <input type="text" id="staff-hire-name" placeholder="Nom (optionnel)" style="font-size:11px;padding:6px 10px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:160px">
+          <select id="staff-hire-nat" title="Nationalité" style="font-size:11px;padding:6px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="">Nationalité aléatoire</option>
+            <option value="fr">FR</option>
+            <option value="de">DE</option>
+            <option value="ch">CH</option>
+            <option value="es">ES</option>
+            <option value="be">BE</option>
+            <option value="nl">NL</option>
+            <option value="it">IT</option>
+            <option value="cz">CZ</option>
+          </select>
+          <input type="number" id="staff-hire-qty" value="1" min="1" max="50" style="font-size:11px;padding:6px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:60px" title="Quantité">
           <button id="staff-hire-btn" class="btn-primary" style="font-size:11px;padding:6px 12px">Embaucher</button>
           <span style="font-size:10px;color:var(--text3)">Solde: ${eco.formatAmount(eco.balance)}</span>
         </div>
@@ -492,8 +560,10 @@ export class StaffManager {
     document.getElementById('staff-hire-btn')?.addEventListener('click', () => {
       const role = document.getElementById('staff-hire-role')?.value || 'conducteur';
       const name = document.getElementById('staff-hire-name')?.value?.trim() || '';
-      const result = this.hire(eco, name, role);
-      if (result) {
+      const nationality = document.getElementById('staff-hire-nat')?.value || '';
+      const qty = parseInt(document.getElementById('staff-hire-qty')?.value) || 1;
+      const result = this.hire(eco, name, role, { count: qty, nationality, generateEach: !name });
+      if (result && result.length > 0) {
         this.render(container, game);
         game.saveState();
       } else {
