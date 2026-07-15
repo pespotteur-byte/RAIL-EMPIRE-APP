@@ -265,7 +265,10 @@ export class ActiveService {
 
   getCurrentStops() {
     if (this.isReturnLeg) {
-      if (!this._adjustedReturnStops && this.returnStops) {
+      if (this.returnStops.length === 0 && this._returnStopsData?.length) {
+        this.returnStops = this.buildReturnStops();
+      }
+      if (!this._adjustedReturnStops && this.returnStops.length) {
         this._adjustedReturnStops = this._buildAdjustedStops(this.returnStops);
       }
       return this._adjustedReturnStops || this.returnStops;
@@ -1795,7 +1798,7 @@ export class ScheduleCreator {
         stationId: st.stationId, type: st.type,
         departureTime: (st.departureTime ?? st.time) + offset,
         arrivalTime: (st.arrivalTime ?? st.time) + offset,
-        voiePointId: st.voiePointId || null, platform: st.platform || '',
+        voiePointId: st.voiePointId || null, platform: st.platform || '', stopCode: st.stopCode || '',
       }));
       const newStops = shiftStops(src.stops);
       const newReturnStops = src._returnStopsData
@@ -1829,7 +1832,7 @@ export class ScheduleCreator {
       stationId: st.stationId, type: st.type,
       departureTime: (st.departureTime ?? st.time) + offset,
       arrivalTime: (st.arrivalTime ?? st.time) + offset,
-      voiePointId: st.voiePointId || null, platform: st.platform || '',
+      voiePointId: st.voiePointId || null, platform: st.platform || '', stopCode: st.stopCode || '',
     }));
     for (let i = 1; i < requestedCount; i++) {
       const offset = oneRoundTripMin * i;
@@ -1932,11 +1935,49 @@ export class ScheduleCreator {
           if (hasCustomSpeed) o.s = speeds;
           return o;
         }).filter(r => r !== null);
+        const safeReturnRoutes = (s._returnRoutes || []).map(route => {
+          if (!Array.isArray(route) || route.length === 0) return null;
+          let pts = route;
+          if (pts.length > 100) {
+            const step = Math.ceil(pts.length / 80);
+            const sampled = [pts[0]];
+            for (let i = step; i < pts.length - 1; i += step) sampled.push(pts[i]);
+            sampled.push(pts[pts.length - 1]);
+            pts = sampled;
+          }
+          const coords = [];
+          let prevLat = 0, prevLon = 0;
+          for (let i = 0; i < pts.length; i++) {
+            const lat5 = Math.round(pts[i].lat * 1e5);
+            const lon5 = Math.round(pts[i].lon * 1e5);
+            if (i === 0) { coords.push(lat5, lon5); }
+            else { coords.push(lat5 - prevLat, lon5 - prevLon); }
+            prevLat = lat5; prevLon = lon5;
+          }
+          const speeds = [];
+          let hasCustomSpeed = false;
+          for (const pt of pts) {
+            const sp = pt.maxSpeed || 160;
+            if (sp !== 160) hasCustomSpeed = true;
+            speeds.push(sp);
+          }
+          const o = { c: coords };
+          if (hasCustomSpeed) o.s = speeds;
+          return o;
+        }).filter(r => r !== null);
         // Compact stops: short keys
         const compactStops = (s.stops || []).map(st => {
           const o = { si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime };
           if (st.voiePointId) o.vp = st.voiePointId;
           if (st.platform) o.p = st.platform;
+          if (st.stopCode) o.sc = st.stopCode;
+          return o;
+        });
+        const compactReturnStops = (s._returnStopsData || []).map(st => {
+          const o = { si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime };
+          if (st.voiePointId) o.vp = st.voiePointId;
+          if (st.platform) o.p = st.platform;
+          if (st.stopCode) o.sc = st.stopCode;
           return o;
         });
         const o = { id: s.id, n: s.name, ri: s.rameId, st: compactStops, rt: safeRoutes };
@@ -1955,6 +1996,8 @@ export class ScheduleCreator {
         if (s.runDates?.length) o.rdt = s.runDates;
         if (s.returnName) o.rn = s.returnName;
         if (s.returnPlatforms && Object.keys(s.returnPlatforms).length) o.rp = s.returnPlatforms;
+        if (safeReturnRoutes.length) o.rtrt = safeReturnRoutes;
+        if (compactReturnStops.length) o.rst = compactReturnStops;
         // Runtime state (compact)
         o._r = {
           ci: s.currentStopIndex || 0,
@@ -2012,9 +2055,14 @@ export class ScheduleCreator {
         rameId: d.ri,
         stops: (d.st || []).map(s => ({
           stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
-          voiePointId: s.vp || null, platform: s.p || '',
+          voiePointId: s.vp || null, platform: s.p || '', stopCode: s.sc || '',
         })),
         routes: this._decodeRoutes(d.rt || []),
+        returnStops: (d.rst || []).map(s => ({
+          stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
+          voiePointId: s.vp || null, platform: s.p || '', stopCode: s.sc || '',
+        })),
+        returnRoutes: this._decodeRoutes(d.rtrt || []),
         roundTrip: d.rnd || false,
         multiDepartures: d.md || 1,
         terminusWait: d.tw ?? DEFAULT_TERMINUS_WAIT_MIN,

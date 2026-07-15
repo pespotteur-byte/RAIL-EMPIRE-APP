@@ -1672,36 +1672,66 @@ export class UI {
     document.getElementById('btn-sched-clear-manual')?.addEventListener('click', () => this._clearManualTrace());
     document.getElementById('btn-sched-edit-trace')?.addEventListener('click', () => this._toggleTraceEdit());
     document.getElementById('btn-sched-delete-point')?.addEventListener('click', () => this._deleteSelectedTracePoint());
+    document.getElementById('btn-sched-return-mode')?.addEventListener('click', () => this._toggleReturnEditMode());
+    document.getElementById('sched-round-trip')?.addEventListener('change', () => {
+      if (!document.getElementById('sched-round-trip').checked && this._isReturnEditMode) {
+        // Exit return mode if round-trip is disabled.
+        this._returnStops = this.schedStops;
+        this._returnManualRoutes = this._manualRoutes;
+        this.schedStops = this._forwardStops;
+        this._manualRoutes = this._forwardManualRoutes;
+        this._isReturnEditMode = false;
+        this.renderSchedStops();
+        this._recalcPreviewRoutes();
+      }
+      this._updateManualUI();
+    });
+  }
+
+  _stopDataToEditObj(s) {
+    const st = s.stationId ? this.game.world.getStationById(s.stationId) : null;
+    let stationName = st?.name || s.stationId || '';
+    if (s.voiePointId) {
+      const vp = this.game.voiePointManager?.getVoiePointById(s.voiePointId);
+      stationName = vp ? `Voie ${vp.voie}` : s.voiePointId;
+    }
+    return {
+      stationId: s.stationId,
+      voiePointId: s.voiePointId || null,
+      stationName,
+      type: s.type,
+      stopCode: s.stopCode || '',
+      arrTimeMin: s.arrivalTime,
+      depTimeMin: s.departureTime,
+      arrTimeStr: this.minToTimeStr(s.arrivalTime),
+      depTimeStr: this.minToTimeStr(s.departureTime),
+      platform: s.platform || '',
+    };
+  }
+
+  _stopEditToData(s) {
+    return {
+      stationId: s.stationId,
+      voiePointId: s.voiePointId || null,
+      type: s.type,
+      stopCode: s.stopCode || '',
+      departureTime: s.depTimeMin,
+      arrivalTime: s.arrTimeMin,
+      platform: s.platform || '',
+    };
   }
 
   openScheduleModal(editService) {
     this._editingScheduleId = editService?.id || null;
     if (editService) {
-      this.schedStops = editService.stops.map(s => {
-        const st = s.stationId ? this.game.world.getStationById(s.stationId) : null;
-        let stationName = st?.name || s.stationId || '';
-        if (s.voiePointId) {
-          const vp = this.game.voiePointManager?.getVoiePointById(s.voiePointId);
-          stationName = vp ? `Voie ${vp.voie}` : s.voiePointId;
-        }
-        return {
-          stationId: s.stationId,
-          voiePointId: s.voiePointId || null,
-          stationName,
-          type: s.type,
-          stopCode: s.stopCode || '',
-          arrTimeMin: s.arrivalTime,
-          depTimeMin: s.departureTime,
-          arrTimeStr: this.minToTimeStr(s.arrivalTime),
-          depTimeStr: this.minToTimeStr(s.departureTime),
-          platform: s.platform || '',
-        };
-      });
+      this._forwardStops = editService.stops.map(s => this._stopDataToEditObj(s));
+      this._forwardManualRoutes = (editService.routes || []).map(r => (r && r.length >= 2 ? [...r] : null));
+      this._returnStops = (editService._returnStopsData || []).map(s => this._stopDataToEditObj(s));
+      this._returnManualRoutes = (editService._returnRoutes || []).map(r => (r && r.length >= 2 ? [...r] : null));
+
       document.getElementById('sched-name').value = editService.name;
       document.getElementById('sched-return-name').value = editService.returnName || '';
       this._schedReturnPlatforms = editService.returnPlatforms ? { ...editService.returnPlatforms } : {};
-      // Preserve loaded routes as manual overrides so they survive the next save.
-      this._manualRoutes = (editService.routes || []).map(r => (r && r.length >= 2 ? [...r] : null));
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = editService.roundTrip;
       document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
@@ -1713,11 +1743,13 @@ export class UI {
       });
       document.getElementById('sched-run-dates').value = (editService.runDates || []).join(', ');
     } else {
-      this.schedStops = [];
+      this._forwardStops = [];
+      this._forwardManualRoutes = [];
+      this._returnStops = [];
+      this._returnManualRoutes = [];
       document.getElementById('sched-name').value = '';
       document.getElementById('sched-return-name').value = '';
       this._schedReturnPlatforms = {};
-      this._manualRoutes = []; // start empty, will be filled as stops are added
       const rtCheck = document.getElementById('sched-round-trip');
       if (rtCheck) rtCheck.checked = false;
       document.getElementById('sched-multi-departures').value = '1';
@@ -1726,6 +1758,9 @@ export class UI {
       document.querySelectorAll('.sched-run-day').forEach(cb => { cb.checked = true; });
       document.getElementById('sched-run-dates').value = '';
     }
+    this._isReturnEditMode = false;
+    this.schedStops = this._forwardStops;
+    this._manualRoutes = this._forwardManualRoutes;
 
     // Manual-trace state for SC-04 / remaster §IV
     this._manualMode = false;
@@ -2178,6 +2213,18 @@ export class UI {
     const edit = document.getElementById('btn-sched-edit-trace');
     const del = document.getElementById('btn-sched-delete-point');
     const hint = document.getElementById('sched-manual-hint');
+    const returnBtn = document.getElementById('btn-sched-return-mode');
+    const modeLabel = document.getElementById('sched-mode-label');
+    const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
+    if (returnBtn) {
+      returnBtn.classList.toggle('hidden', !roundTrip || this._forwardStops.length < 2);
+      returnBtn.textContent = this._isReturnEditMode ? 'Retour aller' : 'Tracer le retour';
+    }
+    if (modeLabel) {
+      modeLabel.textContent = this._isReturnEditMode ? 'Retour' : 'Aller';
+      modeLabel.style.background = this._isReturnEditMode ? '#7c3aed' : 'var(--bg2)';
+      modeLabel.style.color = this._isReturnEditMode ? '#fff' : 'var(--text2)';
+    }
     if (!btn || !clear || !hint) return;
     const hasTrace = this._manualRoutes && this._manualRoutes.some(r => r && r.length >= 2);
     if (edit) edit.classList.toggle('hidden', !hasTrace);
@@ -2197,6 +2244,127 @@ export class UI {
       const editHint = hasTrace ? ' Attrapez un point blanc pour déplacer le tracé, Shift+clic sur un segment pour ajouter un point, Ctrl+clic pour supprimer.' : '';
       hint.textContent = base + editHint;
     }
+  }
+
+  // SC-04 — switch between forward and independent return editing.
+  async _toggleReturnEditMode() {
+    const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
+    if (!roundTrip) return;
+    if (this._forwardStops.length < 2) return alert('Definissez d\'abord un aller avec au moins 2 arrets.');
+
+    if (this._isReturnEditMode) {
+      // Switch back to forward mode: capture return edits first.
+      this._returnStops = this.schedStops;
+      this._returnManualRoutes = this._manualRoutes;
+      this.schedStops = this._forwardStops;
+      this._manualRoutes = this._forwardManualRoutes;
+      this._isReturnEditMode = false;
+    } else {
+      // Switch to return mode: capture forward edits and seed a default return if empty.
+      this._forwardStops = this.schedStops;
+      this._forwardManualRoutes = this._manualRoutes;
+      if (!this._returnStops || this._returnStops.length < 2) {
+        this._returnStops = this._generateDefaultReturnStops();
+        this._returnManualRoutes = this._generateDefaultReturnRoutes();
+        await this._recalcReturnTimes();
+      }
+      this.schedStops = this._returnStops;
+      this._manualRoutes = this._returnManualRoutes;
+      this._isReturnEditMode = true;
+    }
+    this._traceSelectedPoint = null;
+    this._traceDragging = null;
+    this._manualMode = false;
+    this._manualControlPoints = [];
+    this._manualStartCoords = null;
+    this._updateManualUI();
+    this.renderSchedStops();
+    this._recalcPreviewRoutes();
+  }
+
+  _generateDefaultReturnStops() {
+    const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+    const fwd = this._forwardStops;
+    if (fwd.length < 2) return [];
+    const rev = [...fwd].reverse();
+    const lastArr = rev[0].arrTimeMin ?? rev[0].depTimeMin ?? 0;
+    let currentTime = lastArr + terminusWait;
+    const out = [];
+    for (let i = 0; i < rev.length; i++) {
+      const s = rev[i];
+      let travelTime = 0;
+      if (i > 0) {
+        // Reuse the forward segment durations in reverse order.
+        const earlierIdx = fwd.length - 1 - i;
+        const laterIdx = fwd.length - i;
+        travelTime = Math.max(0, (fwd[laterIdx]?.arrTimeMin ?? 0) - (fwd[earlierIdx]?.depTimeMin ?? 0));
+        if (travelTime <= 0) travelTime = 15;
+      }
+      const arrTime = currentTime + travelTime;
+      const dwell = (s.type === 'arret' && i > 0 && i < rev.length - 1)
+        ? Math.max(2, (s.depTimeMin ?? 0) - (s.arrTimeMin ?? 0))
+        : 0;
+      const depTime = arrTime + dwell;
+      currentTime = depTime;
+      // Mirror platform swap from ActiveService.buildReturnStops.
+      let returnPlat = s.platform || '';
+      if (returnPlat === '1' || returnPlat === 'Voie 1') returnPlat = '2';
+      else if (returnPlat === '2' || returnPlat === 'Voie 2') returnPlat = '1';
+      else if (/^\d+$/.test(returnPlat)) {
+        const n = parseInt(returnPlat, 10);
+        returnPlat = String(n % 2 === 0 ? n - 1 : n + 1);
+      }
+      out.push({
+        stationId: s.stationId,
+        voiePointId: s.voiePointId || null,
+        stationName: this._stopNameFor(s.stationId, s.voiePointId),
+        type: s.type,
+        stopCode: s.stopCode || '',
+        arrTimeMin: arrTime,
+        depTimeMin: depTime,
+        arrTimeStr: this.minToTimeStr(arrTime),
+        depTimeStr: this.minToTimeStr(depTime),
+        platform: returnPlat,
+      });
+    }
+    return out;
+  }
+
+  _generateDefaultReturnRoutes() {
+    const rev = (this._forwardManualRoutes || []).slice().reverse();
+    return rev.map(r => {
+      if (!r || r.length < 2) return null;
+      // Reverse the ordered lat/lon list for the return direction.
+      const reversed = [...r].reverse().map(p => ({ ...p }));
+      return this._densifyRoute(reversed);
+    });
+  }
+
+  async _recalcReturnTimes() {
+    if (!this._returnStops || this._returnStops.length < 2) return;
+    const rameId = document.getElementById('sched-rame').value;
+    const rame = this.game.rameManager.getById(rameId);
+    const rameSpeed = rame ? rame.maxSpeed : 120;
+    for (let i = 1; i < this._returnStops.length; i++) {
+      const prev = this._returnStops[i - 1], cur = this._returnStops[i];
+      const travelTime = await this._getSegmentTravelTime(prev, cur, rameSpeed, rame, i - 1);
+      cur.arrTimeMin = prev.depTimeMin + travelTime;
+      cur.depTimeMin = cur.arrTimeMin + (cur.type === 'arret' ? 2 : 0);
+      cur.arrTimeStr = this.minToTimeStr(cur.arrTimeMin);
+      cur.depTimeStr = this.minToTimeStr(cur.depTimeMin);
+    }
+  }
+
+  _stopNameFor(stationId, voiePointId) {
+    if (stationId) {
+      const st = this.game.world.getStationById(stationId);
+      if (st) return st.name;
+    }
+    if (voiePointId) {
+      const vp = this.game.voiePointManager?.getVoiePointById(voiePointId);
+      if (vp) return `Voie ${vp.voie}`;
+    }
+    return stationId || voiePointId || '';
   }
 
   _toggleTraceEdit() {
@@ -2536,9 +2704,9 @@ export class UI {
       `;
     }).join('');
 
-    // Add return leg stops if round-trip is checked
+    // Add return leg stops if round-trip is checked and we are not already editing the return.
     const rtChecked = document.getElementById('sched-round-trip')?.checked;
-    if (rtChecked && this.schedStops.length >= 2) {
+    if (rtChecked && this.schedStops.length >= 2 && !this._isReturnEditMode) {
       const reversed = [...this.schedStops].reverse();
       const n = this.schedStops.length;
       // SC-14 — mirror the forward segment/dwell durations onto the return leg,
@@ -2974,54 +3142,70 @@ export class UI {
     this._recalcPreviewRoutes();
   }
 
+  async _buildSaveRoutes(stops, manualRoutes) {
+    const routePromises = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (manualRoutes && manualRoutes[i] && manualRoutes[i].length >= 2) {
+        routePromises.push(Promise.resolve(manualRoutes[i]));
+      } else {
+        routePromises.push(this._resolveRouteForLeg(stops[i], stops[i + 1]));
+      }
+    }
+    const routes = await Promise.all(routePromises);
+    return routes.map((r, i) => {
+      if (manualRoutes && manualRoutes[i] && manualRoutes[i].length >= 2) return manualRoutes[i];
+      if (r && r.length >= 2) return this._densifyRoute(r);
+      return r;
+    });
+  }
+
   async saveSchedule() {
     const name = document.getElementById('sched-name').value.trim();
     const rameId = document.getElementById('sched-rame').value;
     if (!name) return alert('Nom requis');
-    if (this.schedStops.length < 2) return alert('Il faut au moins 2 arrets');
 
     const rame = this.game.rameManager.getById(rameId);
     const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
     const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
 
-    // Build routes for each leg. Manual routes take precedence, then ORM.
-    // No straight-line fallback is accepted (R-03).
-    const routePromises = [];
-    for (let i = 0; i < this.schedStops.length - 1; i++) {
-      if (this._manualRoutes && this._manualRoutes[i] && this._manualRoutes[i].length >= 2) {
-        routePromises.push(Promise.resolve(this._manualRoutes[i]));
-      } else {
-        routePromises.push(this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
+    // Flush any in-progress return-mode edits into their dedicated buffers.
+    if (this._isReturnEditMode) {
+      this._returnStops = this.schedStops;
+      this._returnManualRoutes = this._manualRoutes;
+    } else {
+      this._forwardStops = this.schedStops;
+      this._forwardManualRoutes = this._manualRoutes;
+    }
+
+    if (this._forwardStops.length < 2) return alert('Il faut au moins 2 arrets');
+
+    // Build forward routes.
+    const forwardStops = this._forwardStops;
+    const forwardRoutes = await this._buildSaveRoutes(forwardStops, this._forwardManualRoutes);
+    const invalidForward = forwardRoutes.findIndex(r => !r || r.length < 2);
+    if (invalidForward >= 0) {
+      return alert(`Impossible de calculer un itineraire ferroviaire entre les arrets aller #${invalidForward + 1} et #${invalidForward + 2}. Verifiez les points de voie / le reseau ORM.`);
+    }
+
+    // Build return routes/stops if a return leg has been defined; otherwise fall back to the reversed forward leg.
+    let returnStops = [];
+    let returnRoutes = [];
+    if (roundTrip && this._returnStops && this._returnStops.length >= 2) {
+      returnStops = this._returnStops;
+      returnRoutes = await this._buildSaveRoutes(returnStops, this._returnManualRoutes);
+      const invalidReturn = returnRoutes.findIndex(r => !r || r.length < 2);
+      if (invalidReturn >= 0) {
+        return alert(`Impossible de calculer un itineraire ferroviaire entre les arrets retour #${invalidReturn + 1} et #${invalidReturn + 2}. Verifiez les points de voie / le reseau ORM.`);
       }
     }
-    let routes = await Promise.all(routePromises);
-    // Ensure every saved route is densified to ~50 m spacing.
-    routes = routes.map((r, i) => {
-      if (this._manualRoutes && this._manualRoutes[i] && this._manualRoutes[i].length >= 2) return this._manualRoutes[i];
-      if (r && r.length >= 2) return this._densifyRoute(r);
-      return r;
-    });
 
-    const invalidLeg = routes.findIndex(r => !r || r.length < 2);
-    if (invalidLeg >= 0) {
-      return alert(`Impossible de calculer un itineraire ferroviaire entre les arrets #${invalidLeg + 1} et #${invalidLeg + 2}. Verifiez les points de voie / le reseau ORM.`);
-    }
-
-    const stops = this.schedStops.map(s => ({
-      stationId: s.stationId,
-      voiePointId: s.voiePointId || null,
-      type: s.type,
-      stopCode: s.stopCode || '',
-      departureTime: s.depTimeMin,
-      arrivalTime: s.arrTimeMin,
-      platform: s.platform || '',
-    }));
+    const stops = forwardStops.map(s => this._stopEditToData(s));
+    const returnStopsData = returnStops.length >= 2 ? returnStops.map(s => this._stopEditToData(s)) : [];
 
     let totalDist = 0;
-    for (const route of routes) {
-      totalDist += this.game.orm.getRouteDistance(route);
-    }
+    for (const route of forwardRoutes) totalDist += this.game.orm.getRouteDistance(route);
+    for (const route of returnRoutes) totalDist += this.game.orm.getRouteDistance(route);
 
     // If editing, remove old service first
     if (this._editingScheduleId) {
@@ -3044,11 +3228,18 @@ export class UI {
     const firstDep = stops[0]?.departureTime || 0;
     const lastArr = stops[stops.length - 1]?.arrivalTime || firstDep;
     const oneWayMin = lastArr - firstDep;
-    const oneRoundTrip = roundTrip ? (oneWayMin * 2 + terminusWait * 2) : 0;
+    let returnMin = oneWayMin;
+    if (returnStopsData.length >= 2) {
+      const retFirstDep = returnStopsData[0].departureTime;
+      const retLastArr = returnStopsData[returnStopsData.length - 1].arrivalTime;
+      returnMin = retLastArr - retFirstDep;
+    }
+    const oneRoundTrip = roundTrip ? (oneWayMin + returnMin + terminusWait * 2) : 0;
 
     // SC-05 — create a single base service, then generate real duplicates for Auto 24h.
     const baseService = this.game.scheduleCreator.addService({
-      name, rameId, stops, routes, roundTrip, multiDepartures: 1, terminusWait,
+      name, rameId, stops, routes, returnStops: returnStopsData, returnRoutes,
+      roundTrip, multiDepartures: 1, terminusWait,
       totalDistance: 0, plannedDistance: Math.round(totalDist),
       isWorkTrain, returnName, returnPlatforms,
       runDays, runDates,

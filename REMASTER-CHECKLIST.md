@@ -69,7 +69,7 @@
 | SC-01 | Définitions Gare / Waypoint / Aller-retour respectées | P0 | A4.1 | [x] PR5 (types arret/passage/waypoint + A/R) |
 | SC-02 | Heure de passage calculée à **CHAQUE gare réelle** rencontrée (point g) | P0 | A4.3, annexe 5 | [x] PR? (ActiveService._computePassageStops + affichage dans la liste) |
 | SC-03 | Numérotation auto impair (aller) / pair (retour) | P0 | A4.3 | [x] PR4 (schedule-logic + ActiveService) |
-| SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [~] PR4/PR5 (modèle + propagation duplicata ; UI de tracé retour distinct à faire) |
+| SC-04 | Aller-retour : tracé retour **indépendant** de l'aller | P0 | A4.1, A14#3 | [x] PR4/PR5 (UI "Tracer le retour", stop/route buffers distincts, save/load, simulation via _returnRoutes/_returnStopsData) |
 | SC-05 | Auto 24h génère les **duplicata réels** (pas juste un décompte) | P0 | A4.3, A14#4 | [x] PR? (createAutoRoundTripDuplicates + duplicateService shift return stops + numéros) |
 | SC-06 | Attente terminus minimum 5 min, modifiable par le joueur | P0 | A4.3, réponse #5 doc | [x] PR4 (défaut 5 min, modifiable) |
 | SC-07 | Tableau horaires : 50 trajets par défaut, tri chronologique (départ A) | P1 | A4.3 | [~] tri chrono ajouté, pagination 50 à faire |
@@ -350,7 +350,7 @@
 |----|----------|------|--------|--------|
 | BUG-01 | Trains en avance (cf. PH-07) | P0 | A14#1 | [ ] |
 | BUG-02 | Routage étrange A→B (cf. R-03/R-04) | P0 | A14#2 | [ ] |
-| BUG-03 | Aller-retour aléatoire (cf. SC-04) | P0 | A14#3 | [ ] |
+| BUG-03 | Aller-retour aléatoire (cf. SC-04) | P0 | A14#3 | [x] PR4/PR5 (returnRoutes/returnStopsData fixes the independent return path) |
 | BUG-04 | Auto 24h sans effet (cf. SC-05) | P0 | A14#4 | [x] PR? (createAutoRoundTripDuplicates + duplicateService) |
 | BUG-05 | Points random ajoutés (cf. R-09) | P0 | A14#5 | [x] PR? (points 50m provenant de _densifyRoute, pas de points parasites) |
 | BUG-06 | Bug de minuit → horloge en minutes absolues | P0 | A14#6 | [x] comparaisons midnight-safe (timeDiff/timeGte/isInServiceWindow) + horloge Paris |
