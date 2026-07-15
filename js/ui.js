@@ -1794,6 +1794,7 @@ export class UI {
     document.getElementById('btn-sched-edit-trace')?.addEventListener('click', () => this._toggleTraceEdit());
     document.getElementById('btn-sched-delete-point')?.addEventListener('click', () => this._deleteSelectedTracePoint());
     document.getElementById('btn-sched-return-mode')?.addEventListener('click', () => this._toggleReturnEditMode());
+    document.getElementById('sched-service-type')?.addEventListener('change', () => this._renderContractPicker());
     document.getElementById('sched-round-trip')?.addEventListener('change', () => {
       if (!document.getElementById('sched-round-trip').checked && this._isReturnEditMode) {
         // Exit return mode if round-trip is disabled.
@@ -1902,13 +1903,30 @@ export class UI {
     const rames = this.game.rameManager.getAll();
     rameSelect.innerHTML = rames.map(r => `<option value="${r.id}">${r.name} (${r.maxSpeed} km/h)</option>`).join('');
     if (editService) rameSelect.value = editService.rameId;
-    rameSelect.onchange = () => this.recalcStopsFrom(1);
+    rameSelect.onchange = () => { this.recalcStopsFrom(1); this._renderContractPicker(); };
 
     // Auto 24h button
     document.getElementById('btn-auto-ar')?.addEventListener('click', () => this._calcAutoAR());
 
+    this._renderContractPicker(editService?.assignedContractId || '');
     this.renderSchedStops();
     this.setupSchedMap();
+  }
+
+  // Section X — affiche le sélecteur de contrat fret pour un service marchandise
+  _renderContractPicker(selectedId = '') {
+    const row = document.getElementById('sched-contract-row');
+    const select = document.getElementById('sched-contract');
+    const type = document.getElementById('sched-service-type')?.value || 'passager';
+    if (!row || !select) return;
+    const rameId = document.getElementById('sched-rame')?.value;
+    const rame = rameId ? this.game.rameManager.getById(rameId) : null;
+    const hasFreight = rame && (rame.totalFreightCapacity > 0 || rame.elementDetails?.some(e => Array.isArray(e.cargoTypes) && e.cargoTypes.length > 0));
+    row.style.display = (type === 'passager' && hasFreight) ? 'flex' : 'none';
+
+    const contracts = this.game.freightManager?.getAllActive() || [];
+    const opts = contracts.map(c => `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.from} → ${c.to} : ${c.cargoName} (${c.quantity}${c.unit}) — ${c.payment.toLocaleString()} €</option>`).join('');
+    select.innerHTML = '<option value="">— Aucun contrat assigné —</option>' + opts;
   }
 
   _calcAutoAR() {
@@ -3411,6 +3429,7 @@ export class UI {
     }
 
     const returnName = document.getElementById('sched-return-name')?.value.trim() || '';
+    const assignedContractId = document.getElementById('sched-contract')?.value || '';
     const returnPlatforms = this._schedReturnPlatforms || {};
 
     // Read run days from checkboxes
@@ -3438,7 +3457,7 @@ export class UI {
       name, rameId, stops, routes, returnStops: returnStopsData, returnRoutes,
       roundTrip, multiDepartures: 1, terminusWait,
       totalDistance: 0, plannedDistance: Math.round(totalDist),
-      serviceType, isWorkTrain, returnName, returnPlatforms,
+      serviceType, isWorkTrain, assignedContractId, returnName, returnPlatforms,
       runDays, runDates,
     }, rame, this.game.world);
     if (roundTrip && multiDepartures > 1) {

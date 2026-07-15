@@ -89,6 +89,8 @@ export class ActiveService {
     // Section VI — types de convois : passager (par defaut), W, HLP, TM, EVO, work
     this.serviceType = data.serviceType || (data.isWorkTrain ? 'work' : 'passager');
     this.isWorkTrain = this.serviceType === 'work'; // S15: Work trains unaffected by works
+    // Section X — contrat fret éventuellement assigné à ce service
+    this.assignedContractId = data.assignedContractId || '';
     this.returnName = data.returnName || '';
     this.returnPlatforms = data.returnPlatforms || {}; // { stationId: platformName }
     this.runDays = data.runDays || [0,1,2,3,4,5,6]; // days of week (0=Sun..6=Sat), default all
@@ -1943,6 +1945,7 @@ export class ScheduleCreator {
         plannedDistance: src.plannedDistance,
         serviceType: src.serviceType,
         isWorkTrain: src.isWorkTrain,
+        assignedContractId: src.assignedContractId || '',
         returnName: src.returnName ? incrementTrailingNumber(src.returnName, 2 * i) : '',
         returnPlatforms: src.returnPlatforms,
         // SC-04 — propagate the independent return geometry/timetable so each
@@ -1983,6 +1986,7 @@ export class ScheduleCreator {
         plannedDistance: baseService.plannedDistance,
         serviceType: baseService.serviceType,
         isWorkTrain: baseService.isWorkTrain,
+        assignedContractId: baseService.assignedContractId || '',
         returnName: newReturnName,
         returnPlatforms: baseService.returnPlatforms,
         returnRoutes: baseService._returnRoutes, returnStops: newReturnStops,
@@ -2144,6 +2148,7 @@ export class ScheduleCreator {
         if (!s.active) o.act = false;
         if (s.serviceType && s.serviceType !== 'passager') o.st = s.serviceType;
         if (s.isWorkTrain) o.wt = true;
+        if (s.assignedContractId) o.ac = s.assignedContractId;
         const allDays = [0,1,2,3,4,5,6];
         if (JSON.stringify(s.runDays) !== JSON.stringify(allDays)) o.rd = s.runDays;
         if (s.runDates?.length) o.rdt = s.runDates;
@@ -2227,6 +2232,7 @@ export class ScheduleCreator {
         active: d.act !== false,
         serviceType: d.st || (d.wt ? 'work' : 'passager'),
         isWorkTrain: (d.st ? d.st === 'work' : d.wt) || false,
+        assignedContractId: d.ac || '',
         runDays: d.rd || [0,1,2,3,4,5,6],
         runDates: d.rdt || [],
         returnName: d.rn || '',

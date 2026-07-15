@@ -102,12 +102,11 @@ export class FreightManager {
 
     let remaining = freightUnload;
     const fulfilled = [];
-    for (const c of this.contracts) {
-      if (!c.active) continue;
-      if (c.toId !== stationId) continue;
-      if (c.cargoType !== rameCargoType && !c.cargoType?.startsWith(rameCargoType?.split('-')[0])) continue;
-      if (remaining <= 0) break;
 
+    const tryFulfill = (c) => {
+      if (!c || !c.active || c.toId !== stationId) return false;
+      if (c.cargoType !== rameCargoType && !c.cargoType?.startsWith(rameCargoType?.split('-')[0])) return false;
+      if (remaining <= 0) return false;
       const qty = Math.min(remaining, c.quantity);
       c.quantity -= qty;
       remaining -= qty;
@@ -115,7 +114,7 @@ export class FreightManager {
         c.active = false;
         c.progress = 1;
       } else {
-        c.progress = (c.payment - (c.quantity * c.unitPrice || 0)) / c.payment;
+        c.progress = (c.payment - (c.quantity * (c.unitPrice || (c.payment / (c.quantity + qty || 1))))) / c.payment;
       }
       let payment = Math.round(qty * (c.payment / (c.quantity + qty || 1)));
       if (isDelayed && payment > 0) payment = Math.round(payment * 0.75); // pénalité retard 25%
@@ -127,8 +126,26 @@ export class FreightManager {
           client.satisfaction = Math.min(100, (client.satisfaction || 80) + (isDelayed ? 0 : 5));
         }
       }
+      return true;
+    };
+
+    // Priorité au contrat explicitement assigné à ce service
+    if (service.assignedContractId) {
+      const assigned = this.contracts.find(c => c.id === service.assignedContractId);
+      if (assigned) tryFulfill(assigned);
+    }
+
+    // Puis écoulement automatique sur les autres contrats compatibles
+    for (const c of this.contracts) {
+      if (remaining <= 0) break;
+      if (service.assignedContractId && c.id === service.assignedContractId) continue;
+      tryFulfill(c);
     }
     return { fulfilled, remainingTonnes: remaining };
+  }
+
+  getAllActive() {
+    return this.contracts.filter(c => c.active);
   }
 
   loadFromSave(arr) {
