@@ -1968,10 +1968,10 @@ export class ActiveService {
 
   // ARR-04/05 — for each circulation, randomly skip bracketed [C]/[S] stops.
   // Skipped arrets are treated as waypoints (no braking / no dwell / no revenue).
-  _buildAdjustedStops(sourceStops = this.stops, rng = null) {
-    const randomFn = rng || getGlobalRng().random;
+  _buildAdjustedStops(sourceStops = this.stops, rng = Math.random) {
+    // DET-03 : saut d'arrêt [C]/[S] reste hors seed (aléatoire par circulation)
     return sourceStops.map(s => {
-      if (s.type === 'arret' && s.stopCode && shouldSkipStop(s.stopCode, randomFn)) {
+      if (s.type === 'arret' && s.stopCode && shouldSkipStop(s.stopCode, rng)) {
         const adjusted = new ServiceStop(
           s.stationId, 'waypoint', s.departureTime, s.arrivalTime,
           s.voiePointId, s.platform, s.stopCode

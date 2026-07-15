@@ -330,9 +330,9 @@
 ## DET — DÉTERMINISME  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| DET-01 | PRNG à seed unique de partie (suppression/pannes/incidents) | P0 | A17 | [ ] |
-| DET-02 | Même seed + mêmes actions ⇒ même déroulé | P0 | A17 | [ ] |
-| DET-03 | Exception : saut d'arrêt [C]/[S] hors seed (cf. ARR-05) | P2 | A17 | [ ] |
+| DET-01 | PRNG à seed unique de partie (suppression/pannes/incidents) | P0 | A17 | [x] PR? (SeededRng global + save/load state) |
+| DET-02 | Même seed + mêmes actions ⇒ même déroulé | P0 | A17 | [x] PR? (pannes, annulations, économie, contrats via rng) |
+| DET-03 | Exception : saut d'arrêt [C]/[S] hors seed (cf. ARR-05) | P2 | A17 | [x] PR? (_buildAdjustedStops conserve Math.random) |
 | DET-04 | Boucle simulation à pas fixe déterministe découplée du rendu | P0 | A13 | [x] PR? (accumulateur 100ms dans engine.js) |
 | DET-05 | Curseurs de réalisme (physique/météo/pannes/tolérance retard) | P2 | A17 | [ ] |
 
