@@ -1853,9 +1853,8 @@ export class UI {
         ctx.fillText(st.name, p.x + 10, p.y + 4);
       }
 
-      // Draw the REAL route between consecutive stops (yellow), passing through
-      // waypoints. Mirrors the save-time routing priority so the preview equals
-      // the path the train will actually run.
+      // Draw the REAL route between consecutive stops (yellow) using the same
+      // routes that will be saved. Preview routes are recomputed on every change.
       if (this.schedStops.length > 1) {
         ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3;
         const drawGeom = (geom) => {
@@ -1877,26 +1876,10 @@ export class UI {
           const stopA = this.schedStops[i], stopB = this.schedStops[i + 1];
           const ca = this._getStopCoords(stopA), cb = this._getStopCoords(stopB);
           if (!ca || !cb) continue;
-          // Priority 1: tronçon graph (exact player infrastructure, via waypoints)
-          let geom = null;
-          const trc = this.game.voiePointManager?.findTronconRoute(ca.lat, ca.lon, cb.lat, cb.lon);
-          if (trc && trc.route && trc.route.length >= 2) geom = trc.route;
-          // Priority 2: existing world track between two stations
-          if (!geom && stopA.stationId && stopB.stationId) {
-            const sa = world.getStationById(stopA.stationId), sb = world.getStationById(stopB.stationId);
-            if (sa && sb) {
-              const track = world.getTrackBetween(sa.id, sb.id);
-              if (track && track.route && track.route.length > 1) {
-                geom = (track.stationA !== sa.id) ? [...track.route].reverse() : track.route;
-              }
-            }
-          }
-          // Priority 3: straight fallback
-          if (!drawGeom(geom)) {
-            const pa = tileMap.worldToScreen(ca.lat, ca.lon, canvas.width, canvas.height);
-            const pb = tileMap.worldToScreen(cb.lat, cb.lon, canvas.width, canvas.height);
-            ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
-          }
+          // No straight-line fallback: if the preview route is not computed yet,
+          // draw nothing for this leg.
+          const geom = this._schedPreviewRoutes?.[i];
+          if (geom && geom.length >= 2) drawGeom(geom);
         }
       }
 
@@ -1992,6 +1975,7 @@ export class UI {
       }
     };
 
+    this._schedPreviewRoutes = [];
     drawMap();
 
     // Tile loading: periodically redraw to show loaded tiles
@@ -2062,12 +2046,12 @@ export class UI {
           if (stop) stop.stationName = `Waypoint (${vp.lat.toFixed(4)}, ${vp.lon.toFixed(4)})`;
           this.recalcStopsFrom(dw.index).then(() => {
             this.renderSchedStops();
-            if (this._drawSchedMap) this._drawSchedMap();
+            this._recalcPreviewRoutes();
           });
           this.game.saveState();
         }
         this._wpMoved = false;
-        if (this._drawSchedMap) this._drawSchedMap();
+        this._recalcPreviewRoutes();
         schedDrag = false; schedDragStart = null;
         return;
       }
@@ -2114,6 +2098,7 @@ export class UI {
     };
 
     this._drawSchedMap = drawMap;
+    this._recalcPreviewRoutes();
   }
 
   async addSchedStop(station) {
@@ -2168,7 +2153,7 @@ export class UI {
     });
 
     this.renderSchedStops();
-    if (this._drawSchedMap) this._drawSchedMap();
+    this._recalcPreviewRoutes();
   }
 
   async addSchedVoiePointStop(voiePoint) {
@@ -2221,7 +2206,7 @@ export class UI {
     });
 
     this.renderSchedStops();
-    if (this._drawSchedMap) this._drawSchedMap();
+    this._recalcPreviewRoutes();
   }
 
   async _addMapWaypoint(lat, lon) {
@@ -2305,7 +2290,7 @@ export class UI {
     }
 
     this.renderSchedStops();
-    if (this._drawSchedMap) this._drawSchedMap();
+    this._recalcPreviewRoutes();
     this.game.saveState();
   }
 
@@ -2564,14 +2549,20 @@ export class UI {
   }
 
   _getStopCoords(stop) {
-    // Resolve lat/lon for any stop type (station, voie point, waypoint)
+    // Resolve lat/lon for any stop type (station, voie point, waypoint).
+    // Prefer the exact platform voie point when a platform is selected.
     if (stop.voiePointId && this.game.voiePointManager) {
       const vp = this.game.voiePointManager.getVoiePointById(stop.voiePointId);
       if (vp) return { lat: vp.lat, lon: vp.lon };
     }
     if (stop.stationId) {
       const st = this.game.world.getStationById(stop.stationId);
-      if (st) return { lat: st.lat, lon: st.lon };
+      if (!st) return null;
+      if (stop.platform && this.game.voiePointManager) {
+        const svp = this.game.voiePointManager.getStationVoiePoint(st.id, stop.platform);
+        if (svp) return { lat: svp.lat, lon: svp.lon };
+      }
+      return { lat: st.lat, lon: st.lon };
     }
     return null;
   }
@@ -2594,27 +2585,55 @@ export class UI {
     return (best && bestDist <= 5) ? best : null;
   }
 
+  async _resolveRouteForLeg(stopA, stopB) {
+    const ca = this._getStopCoords(stopA), cb = this._getStopCoords(stopB);
+    if (!ca || !cb) return null;
+
+    // Priority 1: player tronçon graph
+    const trc = this.game.voiePointManager?.findTronconRoute(ca.lat, ca.lon, cb.lat, cb.lon);
+    if (trc && trc.route && trc.route.length >= 2) return trc.route;
+
+    // Priority 2: existing world track between two stations
+    const sa = stopA.stationId ? this.game.world.getStationById(stopA.stationId) : null;
+    const sb = stopB.stationId ? this.game.world.getStationById(stopB.stationId) : null;
+    if (sa && sb) {
+      const track = this.game.world.getTrackBetween(sa.id, sb.id);
+      if (track && track.route && track.route.length > 1) {
+        return (track.stationA !== sa.id) ? [...track.route].reverse() : track.route;
+      }
+    }
+
+    // Priority 3: ORM (never return a straight-line fallback — R-03)
+    try {
+      return await this.game.orm.findRoute(ca.lat, ca.lon, cb.lat, cb.lon);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async _recalcPreviewRoutes() {
+    if (!this.schedStops || this.schedStops.length < 2) {
+      this._schedPreviewRoutes = [];
+      return;
+    }
+    const routes = [];
+    for (let i = 0; i < this.schedStops.length - 1; i++) {
+      routes.push(await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
+    }
+    this._schedPreviewRoutes = routes;
+    if (this._drawSchedMap) this._drawSchedMap();
+  }
+
   async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null) {
+    const route = await this._resolveRouteForLeg(prevStop, curStop);
+    if (route && route.length >= 2) {
+      return this.game.orm.calculateTravelTime(route, rame || rameSpeed);
+    }
     const prevCoords = this._getStopCoords(prevStop);
     const curCoords = this._getStopCoords(curStop);
     if (!prevCoords || !curCoords) return 15;
-
-    const prevStation = prevStop.stationId ? this.game.world.getStationById(prevStop.stationId) : null;
-    const curStation = curStop.stationId ? this.game.world.getStationById(curStop.stationId) : null;
-
-    if (prevStation && curStation) {
-      const existingTrack = this.game.world.getTrackBetween(prevStation.id, curStation.id);
-      if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-        return this.game.orm.calculateTravelTime(existingTrack.route, rame || rameSpeed);
-      }
-    }
-    try {
-      const route = await this.game.orm.findRoute(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
-      return this.game.orm.calculateTravelTime(route, rame || rameSpeed);
-    } catch (e) {
-      const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
-      return Math.round((dist / rameSpeed) * 60) || 1;
-    }
+    const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
+    return Math.round((dist / rameSpeed) * 60) || 1;
   }
 
   async recalcStopsFrom(fromIndex) {
@@ -2648,13 +2667,14 @@ export class UI {
       }
     }
     this.renderSchedStops();
+    this._recalcPreviewRoutes();
   }
 
   removeSchedStop(index) {
     this.schedStops.splice(index, 1);
     this.recalcStopsFrom(index);
     this.renderSchedStops();
-    if (this._drawSchedMap) this._drawSchedMap();
+    this._recalcPreviewRoutes();
   }
 
   async saveSchedule() {
@@ -2668,66 +2688,18 @@ export class UI {
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
     const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
 
-    // Build route requests in parallel for speed
+    // Build routes for each leg using the same resolver as the preview.
+    // No straight-line fallback is accepted (R-03).
     const routePromises = [];
     for (let i = 0; i < this.schedStops.length - 1; i++) {
-      const stopA = this.schedStops[i];
-      const stopB = this.schedStops[i + 1];
-      let fromLat, fromLon, toLat, toLon;
-      if (stopA.voiePointId) {
-        const vp = this.game.voiePointManager.getVoiePointById(stopA.voiePointId);
-        fromLat = vp?.lat; fromLon = vp?.lon;
-      } else {
-        const st = this.game.world.getStationById(stopA.stationId);
-        if (st && stopA.platform && this.game.voiePointManager) {
-          const svp = this.game.voiePointManager.getStationVoiePoint(st.id, stopA.platform);
-          if (svp) { fromLat = svp.lat; fromLon = svp.lon; }
-          else { fromLat = st.lat; fromLon = st.lon; }
-        } else {
-          fromLat = st?.lat; fromLon = st?.lon;
-        }
-      }
-      if (stopB.voiePointId) {
-        const vp = this.game.voiePointManager.getVoiePointById(stopB.voiePointId);
-        toLat = vp?.lat; toLon = vp?.lon;
-      } else {
-        const st = this.game.world.getStationById(stopB.stationId);
-        if (st && stopB.platform && this.game.voiePointManager) {
-          const svp = this.game.voiePointManager.getStationVoiePoint(st.id, stopB.platform);
-          if (svp) { toLat = svp.lat; toLon = svp.lon; }
-          else { toLat = st.lat; toLon = st.lon; }
-        } else {
-          toLat = st?.lat; toLon = st?.lon;
-        }
-      }
-      if (fromLat != null && toLat != null) {
-        // Priority 1: Try tronçon graph routing (exact player infrastructure)
-        const trcResult = this.game.voiePointManager?.findTronconRoute(fromLat, fromLon, toLat, toLon);
-        if (trcResult && trcResult.route && trcResult.route.length >= 2) {
-          routePromises.push(Promise.resolve(trcResult.route));
-          continue;
-        }
-        // Priority 2: Existing world track
-        const fromSt = stopA.stationId ? this.game.world.getStationById(stopA.stationId) : null;
-        const toSt = stopB.stationId ? this.game.world.getStationById(stopB.stationId) : null;
-        if (fromSt && toSt) {
-          const existingTrack = this.game.world.getTrackBetween(fromSt.id, toSt.id);
-          if (existingTrack && existingTrack.route && existingTrack.route.length > 1) {
-            const needReverse = existingTrack.stationA !== fromSt.id;
-            routePromises.push(Promise.resolve(needReverse ? [...existingTrack.route].reverse() : existingTrack.route));
-            continue;
-          }
-        }
-        // Priority 3: ORM fallback
-        routePromises.push(
-          this.game.orm.findRoute(fromLat, fromLon, toLat, toLon)
-            .catch(() => [{ lat: fromLat, lon: fromLon, maxSpeed: 160 }, { lat: toLat, lon: toLon, maxSpeed: 160 }])
-        );
-      } else {
-        routePromises.push(Promise.resolve([]));
-      }
+      routePromises.push(this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]));
     }
     const routes = await Promise.all(routePromises);
+
+    const invalidLeg = routes.findIndex(r => !r || r.length < 2);
+    if (invalidLeg >= 0) {
+      return alert(`Impossible de calculer un itineraire ferroviaire entre les arrets #${invalidLeg + 1} et #${invalidLeg + 2}. Verifiez les points de voie / le reseau ORM.`);
+    }
 
     const stops = this.schedStops.map(s => ({
       stationId: s.stationId,
