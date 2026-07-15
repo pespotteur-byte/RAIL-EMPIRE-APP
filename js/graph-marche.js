@@ -80,14 +80,23 @@ export class GraphMarche {
     return svc.stops.slice(start, end + 1);
   }
 
-  /** Calculate cumulative distances between stations (using lat/lon) */
-  _calcDistances(stationStops, game) {
+  /** Calculate cumulative distances between stations using the real ORM route.
+   * Falls back to straight-line haversine only if no route is available. */
+  _calcDistances(stationStops, game, refSvc) {
     const dists = [0];
     for (let i = 1; i < stationStops.length; i++) {
-      const prev = game.world.getStationById(stationStops[i - 1].stationId);
-      const curr = game.world.getStationById(stationStops[i].stationId);
-      if (!prev || !curr) { dists.push(dists[i - 1]); continue; }
-      const d = this._haversine(prev.lat, prev.lon, curr.lat, curr.lon);
+      const route = refSvc && refSvc.routes ? refSvc.routes[i - 1] : null;
+      let d = 0;
+      if (route && route.length >= 2) {
+        for (let k = 0; k < route.length - 1; k++) {
+          d += this._haversine(route[k].lat, route[k].lon, route[k + 1].lat, route[k + 1].lon);
+        }
+      } else {
+        const prev = game.world.getStationById(stationStops[i - 1].stationId);
+        const curr = game.world.getStationById(stationStops[i].stationId);
+        if (!prev || !curr) { dists.push(dists[i - 1]); continue; }
+        d = this._haversine(prev.lat, prev.lon, curr.lat, curr.lon);
+      }
       dists.push(dists[i - 1] + d);
     }
     return dists;
@@ -221,7 +230,7 @@ export class GraphMarche {
     // Build station list from first match (longest path)
     const ref = matches.reduce((best, m) => Math.abs(m.idxB - m.idxA) > Math.abs(best.idxB - best.idxA) ? m : best, matches[0]);
     const refStops = this._getStationsBetween(ref.svc, ref.idxA, ref.idxB);
-    const refDists = this._calcDistances(refStops, game);
+    const refDists = this._calcDistances(refStops, game, ref.svc);
     const totalDist = refDists[refDists.length - 1] || 1;
 
     // Station labels on Y axis
@@ -230,24 +239,8 @@ export class GraphMarche {
       return st ? st.name : '?';
     });
 
-    // Time range: 0-1440 (full day) or adapt to services
-    let minTime = 1440, maxTime = 0;
-    for (const m of matches) {
-      const start = Math.min(m.idxA, m.idxB);
-      const end = Math.max(m.idxA, m.idxB);
-      for (let i = start; i <= end; i++) {
-        const dep = m.svc.stops[i].departureTime ?? 0;
-        const arr = m.svc.stops[i].arrivalTime ?? dep;
-        if (dep < minTime) minTime = dep;
-        if (arr < minTime) minTime = arr;
-        if (dep > maxTime) maxTime = dep;
-        if (arr > maxTime) maxTime = arr;
-      }
-    }
-    // Add padding
-    minTime = Math.max(0, minTime - 30);
-    maxTime = Math.min(1440, maxTime + 30);
-    const timeRange = maxTime - minTime || 1;
+    // GM-03 — Axe 24h fixe (jTrainGraph)
+    const minTime = 0, maxTime = 1440, timeRange = 1440;
 
     // Draw grid — Y axis (stations)
     ctx.strokeStyle = '#1e293b';
@@ -266,14 +259,12 @@ export class GraphMarche {
       ctx.fillText(name, pad.left - 4, y + 3);
     }
 
-    // Draw grid — X axis (time, every 30 min)
-    const startHour = Math.floor(minTime / 60);
-    const endHour = Math.ceil(maxTime / 60);
-    for (let h = startHour; h <= endHour; h++) {
+    // Draw grid — X axis (time, every 30 min) over 24h
+    for (let h = 0; h <= 24; h++) {
       for (let m = 0; m < 60; m += 30) {
         const t = h * 60 + m;
-        if (t < minTime || t > maxTime) continue;
-        const x = pad.left + ((t - minTime) / timeRange) * chartW;
+        if (t > 1440) continue;
+        const x = pad.left + (t / 1440) * chartW;
         ctx.strokeStyle = m === 0 ? '#1e293b' : 'rgba(30,41,59,0.5)';
         ctx.lineWidth = m === 0 ? 0.8 : 0.3;
         ctx.beginPath();
@@ -284,7 +275,7 @@ export class GraphMarche {
           ctx.fillStyle = '#94a3b8';
           ctx.font = '10px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(`${String(h % 24).padStart(2, '0')}:00`, x, H - 8);
+          ctx.fillText(`${String(h).padStart(2, '0')}:00`, x, H - 8);
         }
       }
     }
@@ -318,13 +309,13 @@ export class GraphMarche {
           const dep = stop.departureTime ?? arr;
 
           // Arrival point
-          const xArr = pad.left + ((arr - minTime) / timeRange) * chartW;
+          const xArr = pad.left + (arr / 1440) * chartW;
           if (!started) { ctx.moveTo(xArr, y); started = true; }
           else ctx.lineTo(xArr, y);
 
           // If dwell time (arr != dep), draw horizontal line
           if (dep !== arr) {
-            const xDep = pad.left + ((dep - minTime) / timeRange) * chartW;
+            const xDep = pad.left + (dep / 1440) * chartW;
             ctx.lineTo(xDep, y);
           }
         }
@@ -338,11 +329,31 @@ export class GraphMarche {
           const dist = refDists[refIdx];
           const y = pad.top + (dist / totalDist) * chartH;
           const dep = stop.departureTime ?? stop.arrivalTime ?? 0;
-          const x = pad.left + ((dep - minTime) / timeRange) * chartW;
+          const x = pad.left + (dep / 1440) * chartW;
           ctx.fillStyle = color;
           ctx.beginPath();
           ctx.arc(x, y, 2.5, 0, Math.PI * 2);
           ctx.fill();
+        }
+
+        // GM-03 — labels train/heure aux extrémités
+        const firstStop = m.svc.stops[start];
+        const lastStop = m.svc.stops[end];
+        const firstRef = refStops.findIndex(rs => rs.stationId === firstStop.stationId);
+        const lastRef = refStops.findIndex(rs => rs.stationId === lastStop.stationId);
+        if (firstRef >= 0 && lastRef >= 0) {
+          const y0 = pad.top + (refDists[firstRef] / totalDist) * chartH;
+          const y1 = pad.top + (refDists[lastRef] / totalDist) * chartH;
+          const t0 = firstStop.departureTime ?? firstStop.arrivalTime ?? 0;
+          const t1 = lastStop.arrivalTime ?? lastStop.departureTime ?? 0;
+          const x0 = pad.left + (t0 / 1440) * chartW;
+          const x1 = pad.left + (t1 / 1440) * chartW;
+          ctx.fillStyle = color;
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(`${m.svc.name}`, x0 + 4, y0 - 4);
+          ctx.textAlign = 'right';
+          ctx.fillText(`${m.svc.name}`, x1 - 4, y1 - 4);
         }
 
         legendItems.push({ name: m.svc.name, color });
