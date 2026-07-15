@@ -109,6 +109,8 @@ export class Economy {
 
     if (isNonRevenue) return;
 
+    const delayTolerance = (typeof window !== 'undefined' && window.game?.realismSettings?.delayTolerance) ?? 30;
+
     // --- DESCENTE / DÉCHARGEMENT (revenue from those who rode this segment) ---
     const rng = getGlobalRng();
     if (!isFirst && distFromPrev > 0) {
@@ -137,11 +139,11 @@ export class Economy {
       let frtRevenue = 0; // calcul fret (contrat + générique) plus bas
 
       // Delay penalty: reduce passenger revenue by 25% (freight handled below)
-      if (service.train && service.train.delay >= 30) {
+      if (service.train && service.train.delay >= delayTolerance) {
         const totalRev = paxRevenue + frtRevenue;
         const reducedTotal = Math.round(totalRev * 0.75);
         const penalty = totalRev - reducedTotal;
-        if (penalty > 0) this.addPenalty(penalty, `Retard >30min ${service.name} @ ${stationName}`);
+        if (penalty > 0) this.addPenalty(penalty, `Retard >${delayTolerance}min ${service.name} @ ${stationName}`);
         // Distribute reduced revenue proportionally
         if (totalRev > 0) {
           paxRevenue = Math.round(reducedTotal * (paxRevenue / totalRev));
@@ -164,7 +166,7 @@ export class Economy {
         let fulfilledQty = 0, contractRevenue = 0;
         if (isTerminus && stationId && typeof window !== 'undefined' && window.game?.freightManager?.fulfillAtStation) {
           const delay = service.train?.delay || 0;
-          const isDelayed = delay >= 30;
+          const isDelayed = delay >= delayTolerance;
           const isEarly = delay <= -10;
           const res = window.game.freightManager.fulfillAtStation(service, stationId, freightUnload, isDelayed, isEarly);
           fulfilledQty = Math.max(0, freightUnload - (res.remainingTonnes || 0));
@@ -172,7 +174,7 @@ export class Economy {
         }
         const genericUnload = freightUnload - fulfilledQty;
         let genericRevenue = genericUnload > 0 ? Math.round(genericUnload * distFromPrev * this.freightPricePerTKm) : 0;
-        const isDelayed = (service.train?.delay || 0) >= 30;
+        const isDelayed = (service.train?.delay || 0) >= delayTolerance;
         if (isDelayed && genericRevenue > 0) genericRevenue = Math.round(genericRevenue * 0.75); // pénalité retard 25%
         const totalFrtRevenue = contractRevenue + genericRevenue;
         if (totalFrtRevenue > 0) {

@@ -310,23 +310,29 @@ export class Weather {
     const type = state.type;
     let speedCap = Infinity;
     let brakeFactor = 1.0;
+    // DET-05 : curseur de réalisme météo (0 = sans impact, 1 = normal, 2 = extrême)
+    const weatherMult = (typeof window !== 'undefined' && window.game?.realismSettings?.weather) ?? 1;
     // MET-06 — neige : −20 km/h si V ≥ 140 + freinage dégradé
     if (type === 'snow') {
-      if (trainSpeedKmh >= 140) speedCap = trainSpeedKmh - 20;
-      brakeFactor = 0.55;
+      if (trainSpeedKmh >= 140) speedCap = trainSpeedKmh - 20 * weatherMult;
+      const base = 0.55;
+      brakeFactor = 1 - (1 - base) * weatherMult;
     } else if (type === 'rain') {
       // MET-03/04 : pluie = freiner plus tôt (pas de baisse de vitesse)
-      brakeFactor = state.precipitation > 2.5 ? 0.80 : 0.92;
+      const base = state.precipitation > 2.5 ? 0.80 : 0.92;
+      brakeFactor = 1 - (1 - base) * weatherMult;
     } else if (type === 'storm') {
       // MET-05 : orage/tempête = freiner encore plus tôt
-      brakeFactor = 0.60;
+      const base = 0.60;
+      brakeFactor = 1 - (1 - base) * weatherMult;
     } else if (type === 'fog') {
-      brakeFactor = 0.85;
+      const base = 0.85;
+      brakeFactor = 1 - (1 - base) * weatherMult;
     } else if (type === 'heat') {
       brakeFactor = 1.0;
     }
     const speedMult = this._effects[type]?.speedMult ?? 1.0;
-    return { type, speedCap, brakeFactor, speedMult, label: state.label };
+    return { type, speedCap, brakeFactor: Math.max(0.1, brakeFactor), speedMult, label: state.label };
   }
 
   getDisplay() {

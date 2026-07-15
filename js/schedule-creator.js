@@ -142,6 +142,10 @@ export class ActiveService {
         decel = Math.min(5.0, Math.max(2.0, 1600 / totalMass));
       }
     }
+    // DET-05 : curseur de réalisme physique
+    const physicsMult = (typeof window !== 'undefined' && window.game?.realismSettings?.physics) ?? 1;
+    accel = Math.max(0.1, accel * physicsMult);
+    decel = Math.max(0.1, decel * physicsMult);
 
     // S12: Get locomotive series name/number from rame
     let seriesName = '', trainNumber = '';
@@ -702,7 +706,8 @@ export class ActiveService {
     }
     if (!this.train.breakdown) {
       const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
-      const failureProb = (distKm / 25000) * wearMultiplier;
+      const breakdownMult = (typeof window !== 'undefined' && window.game?.realismSettings?.breakdown) ?? 1;
+      const failureProb = (distKm / 25000) * wearMultiplier * breakdownMult;
       const rng = getGlobalRng();
       if (rng.random() < failureProb) {
         const types = ['moteur', 'freins', 'climatisation', 'portes', 'fanaux'];

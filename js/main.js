@@ -43,6 +43,13 @@ class RailEmpire {
     // DET-01 : PRNG déterministe de partie
     this.rng = new SeededRng(Date.now());
     setGlobalRng(this.rng);
+    // DET-05 : curseurs de réalisme (1.0 = normal)
+    this.realismSettings = {
+      physics: 1.0,
+      weather: 1.0,
+      breakdown: 1.0,
+      delayTolerance: 30,
+    };
     this.engine = new SimulationEngine();
     this.world = createDefaultWorld();
     this.economy = new Economy();
@@ -283,16 +290,43 @@ class RailEmpire {
     const logoInput = document.getElementById('settings-logo-url');
     const colorInput = document.getElementById('settings-company-color');
     const incidentsToggle = document.getElementById('settings-incidents-enabled');
+    const physicsInput = document.getElementById('settings-physics');
+    const weatherInput = document.getElementById('settings-weather');
+    const breakdownInput = document.getElementById('settings-breakdown');
+    const delayToleranceInput = document.getElementById('settings-delay-tolerance');
+    const physicsVal = document.getElementById('settings-physics-val');
+    const weatherVal = document.getElementById('settings-weather-val');
+    const breakdownVal = document.getElementById('settings-breakdown-val');
+    const delayToleranceVal = document.getElementById('settings-delay-tolerance-val');
     const saveBtn = document.getElementById('settings-save');
 
     // Load saved settings
     const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
+    if (settings.realism) {
+      this.realismSettings = { ...this.realismSettings, ...settings.realism };
+    }
+
+    const updateRealismLabels = () => {
+      if (physicsVal) physicsVal.textContent = Number(physicsInput.value).toFixed(2);
+      if (weatherVal) weatherVal.textContent = Number(weatherInput.value).toFixed(2);
+      if (breakdownVal) breakdownVal.textContent = Number(breakdownInput.value).toFixed(2);
+      if (delayToleranceVal) delayToleranceVal.textContent = delayToleranceInput.value;
+    };
+
+    [physicsInput, weatherInput, breakdownInput, delayToleranceInput].forEach(el => {
+      el?.addEventListener('input', updateRealismLabels);
+    });
 
     btnSettings.addEventListener('click', () => {
       nameInput.value = this.account.companyName || '';
       logoInput.value = settings.logoUrl || '';
       colorInput.value = settings.companyColor || '#3b82f6';
       incidentsToggle.checked = settings.incidentsEnabled !== false;
+      physicsInput.value = this.realismSettings.physics ?? 1;
+      weatherInput.value = this.realismSettings.weather ?? 1;
+      breakdownInput.value = this.realismSettings.breakdown ?? 1;
+      delayToleranceInput.value = this.realismSettings.delayTolerance ?? 30;
+      updateRealismLabels();
       modal.classList.remove('hidden');
     });
 
@@ -307,9 +341,13 @@ class RailEmpire {
       const logoUrl = logoInput.value.trim();
       const color = colorInput.value;
       const incEnabled = incidentsToggle.checked;
+      this.realismSettings.physics = parseFloat(physicsInput.value) || 1;
+      this.realismSettings.weather = parseFloat(weatherInput.value) || 1;
+      this.realismSettings.breakdown = parseFloat(breakdownInput.value) || 1;
+      this.realismSettings.delayTolerance = parseInt(delayToleranceInput.value) || 30;
 
       // Save settings
-      const s = { logoUrl, companyColor: color, incidentsEnabled: incEnabled };
+      const s = { logoUrl, companyColor: color, incidentsEnabled: incEnabled, realism: { ...this.realismSettings } };
       localStorage.setItem('re_player_settings', JSON.stringify(s));
 
       // Apply logo
