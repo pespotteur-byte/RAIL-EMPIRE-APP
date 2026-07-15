@@ -324,7 +324,7 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | SAV-01 | Persister l'état complet (rien à ressaisir à la réouverture) | P0 | A8.4, A18 | [x] PR? (saveState/loadState complets + rechargement ORM) |
-| SAV-02 | Delta-encoding des coordonnées conservé | P1 | A13 | [ ] |
+| SAV-02 | Delta-encoding des coordonnées conservé | P1 | A13 | [x] PR? (voiePoints/troncons delta encodés) |
 | SAV-03 | Prix au km / réglages / positions / états persistés | P1 | A8.2, A8.4 | [x] PR? (state object complet + restore) |
 
 ## DET — DÉTERMINISME  (P0)
