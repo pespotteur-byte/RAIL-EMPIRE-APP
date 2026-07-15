@@ -560,6 +560,16 @@ export class ActiveService {
           this.train.blockedBy = false;
           this.train.stoppedAt = null;
           this._lastTronconId = null;
+          // DEP-05 : mise à jour de la localisation permanente de la rame
+          if (this.rame) {
+            this.rame.currentLocation = {
+              stationId: currentStops[0]?.stationId || '',
+              depotId: this.rame.depotId || '',
+              serviceId: this.id,
+              lat: this.position?.lat ?? null,
+              lon: this.position?.lon ?? null,
+            };
+          }
           // Release all occupations on departure
           if (window.game?.voiePointManager) window.game.voiePointManager.releaseAllVoiePointsForTrain(this.id);
           if (window.game?.platformManager) window.game.platformManager.releasePlatform(currentStops[0]?.stationId, this.id);
@@ -1277,6 +1287,17 @@ export class ActiveService {
     // Clamp to 0 minimum: trains cannot be "en avance"
     this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
     this.train.delay = this.delay;
+
+    // DEP-05 : mise à jour continue de la localisation permanente de la rame
+    if (this.rame && this.position) {
+      this.rame.currentLocation = {
+        stationId: this.rame.currentLocation?.stationId || '',
+        depotId: this.rame.depotId || '',
+        serviceId: this.id,
+        lat: this.position.lat,
+        lon: this.position.lon,
+      };
+    }
   }
 
   /**
@@ -1598,6 +1619,17 @@ export class ActiveService {
     this.position = { lat: arrivalLat, lon: arrivalLon };
     this.train.blockedBy = false;
     this._lastArrivalTime = timeOfDay;
+
+    // DEP-05 : mise à jour de la localisation permanente de la rame
+    if (this.rame) {
+      this.rame.currentLocation = {
+        stationId: station?.id || '',
+        depotId: this.rame.depotId || '',
+        serviceId: this.id,
+        lat: arrivalLat,
+        lon: arrivalLon,
+      };
+    }
 
     // Section VI — ITE : longueur utile, tranches et compatibilité fret
     if (stop?.type === 'arret' && station) {

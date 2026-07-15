@@ -1773,9 +1773,28 @@ export class UI {
         <div class="card-info" style="font-size:10px;color:var(--text3)">
           <b>Mise en service:</b> ${r.createdDate} | <b>Km parcourus:</b> ${Math.round(r.totalKmRun || 0).toLocaleString('fr-FR')} km${r.elementDetails.some(e => e.purchasePrice) ? ` | <b>Valeur:</b> ${r.elementDetails.reduce((s,e) => s + (e.purchasePrice || 0), 0).toLocaleString('fr-FR')} €` : ''}
           ${r.depotId ? `| <b>Dépôt:</b> ${(this.game.depotManager.getAll().find(d => d.id === r.depotId)?.name || r.depotId)}` : ''}
+          ${r.currentLocation ? `| <b>Position:</b> ${this._rameLocationLabel(r)}` : ''}
         </div>
       </div>
     `).join('');
+  }
+
+  _rameLocationLabel(r) {
+    const loc = r.currentLocation || {};
+    if (loc.serviceId) {
+      const svc = this.game.scheduleCreator.services.find(s => s.id === loc.serviceId);
+      if (svc) return `En service ${svc.name} (${svc.state || ''})`;
+    }
+    if (loc.stationId) {
+      const st = this.game.world.getStationById(loc.stationId);
+      if (st) return `Gare ${st.name}`;
+    }
+    if (loc.depotId) {
+      const d = this.game.depotManager.getDepotById?.(loc.depotId);
+      if (d) return `Dépôt ${d.name}`;
+    }
+    if (loc.lat != null && loc.lon != null) return `Route (${loc.lat.toFixed(3)}, ${loc.lon.toFixed(3)})`;
+    return 'Inconnue';
   }
 
   deleteRame(id) {

@@ -12,6 +12,14 @@ export class Rame {
     this.wearLevel = isFinite(data.wearLevel) ? data.wearLevel : 0;
     this.inMaintenance = data.inMaintenance ?? false;
     this.depotId = data.depotId || '';
+    // DEP-05 : localisation permanente de chaque engin
+    this.currentLocation = data.currentLocation || {
+      depotId: data.depotId || '',
+      stationId: '',
+      serviceId: '',
+      lat: null,
+      lon: null,
+    };
   }
 
   get totalLength() {
@@ -108,6 +116,7 @@ export class RameManager {
       wearLevel: r.wearLevel,
       inMaintenance: r.inMaintenance,
       depotId: r.depotId,
+      currentLocation: r.currentLocation,
     }));
   }
 
