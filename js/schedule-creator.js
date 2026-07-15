@@ -1026,7 +1026,7 @@ export class ActiveService {
     }
 
     // Works speed limit (S15: work trains are unaffected)
-    const worksLimit = this.isWorkTrain ? null : this.getWorksSpeedLimit();
+    const worksLimit = this.isWorkTrain ? null : this.getWorksSpeedLimit(timeOfDay);
     if (worksLimit === 0) {
       this.speed = 0;
       this.train.speed = 0;
@@ -1744,7 +1744,7 @@ export class ActiveService {
     return bestSpeed;
   }
 
-  getWorksSpeedLimit() {
+  getWorksSpeedLimit(timeOfDay) {
     if (!this.world) return null;
     const currentStops = this.getCurrentStops();
     if (this.currentStopIndex <= 0 || this.currentStopIndex >= currentStops.length) return null;
