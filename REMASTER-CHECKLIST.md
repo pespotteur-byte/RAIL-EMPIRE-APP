@@ -225,7 +225,7 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | TRV-01 | Chaque section s'use ; axes fréquentés = + d'entretien ; suivi page Réseau | P1 | A10.2 | [ ] |
-| TRV-02 | ITE et dépôts non soumis aux travaux | P1 | A10.2 | [ ] |
+| TRV-02 | ITE et dépôts non soumis aux travaux | P1 | A10.2 | [x] PR? (WorksManager n'affecte que world.tracks) |
 | TRV-03 | Fermeture de voie : cocher case + tracer portion ; trains reroutés en sécurité | P1 | A10.2 | [ ] |
 | TRV-04 | Trains de travaux (TTX) fournis ; caténaire = lignes électrifiées only | P1 | A10.2 | [ ] |
 | TRV-05 | Portée : journée/tranche, entre 2 gares, ou récurrente | P1 | A10.2 | [ ] |
@@ -340,7 +340,7 @@
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
 | ARC-01 | Modèle de données A12 implémenté (Node/Edge/Canton/Signal/Gare/Ligne/ITE/Dépôt/Engin/Rame/Trajet/Service/Contrat/Agent) | P0 | A12 | [ ] |
-| ARC-02 | Rendu : n'afficher que les points de voie (FPS) | P1 | A13 | [ ] |
+| ARC-02 | Rendu : n'afficher que les points de voie (FPS) | P1 | A13 | [x] PR? (livemap sans tracés gris, gares+voies) |
 | ARC-03 | LOD selon zoom + culling hors écran | P1 | A13 | [ ] |
 | ARC-04 | Option carte basique (sans tracés ORM) + satellite + .org/.app | P2 | A13 | [ ] |
 | ARC-05 | Streaming/chargement progressif ORM par zone | P1 | A13 | [ ] |
