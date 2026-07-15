@@ -190,8 +190,22 @@ export class GraphMarche {
   _draw(game) {
     const canvas = document.getElementById('gm-canvas');
     if (!canvas) return;
+
+    // BUG-11 / responsive : adapter le canevas au DPR et à la taille CSS
+    const dpr = window.devicePixelRatio || 1;
+    const styleW = canvas.clientWidth || canvas.width;
+    const styleH = canvas.clientHeight || Math.round(styleW * (canvas.height / canvas.width)) || canvas.height;
+    const needW = Math.max(1, Math.floor(styleW * dpr));
+    const needH = Math.max(1, Math.floor(styleH * dpr));
+    if (canvas.width !== needW || canvas.height !== needH) {
+      canvas.width = needW;
+      canvas.height = needH;
+      canvas.style.width = styleW + 'px';
+      canvas.style.height = styleH + 'px';
+    }
     const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = styleW, H = styleH;
     const pad = { top: 20, right: 30, bottom: 35, left: 80 };
     const chartW = W - pad.left - pad.right;
     const chartH = H - pad.top - pad.bottom;

@@ -402,26 +402,41 @@ export class Dashboard {
   }
 
   /**
+   * BUG-11 / responsive : ajuste le canevas à la taille CSS réelle (DPR).
+   */
+  _fitCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const styleW = canvas.clientWidth || canvas.width;
+    const styleH = canvas.clientHeight || Math.round(styleW * (canvas.height / canvas.width)) || canvas.height;
+    const needW = Math.max(1, Math.floor(styleW * dpr));
+    const needH = Math.max(1, Math.floor(styleH * dpr));
+    if (canvas.width !== needW || canvas.height !== needH) {
+      canvas.width = needW;
+      canvas.height = needH;
+      canvas.style.width = styleW + 'px';
+      canvas.style.height = styleH + 'px';
+    }
+    return { ctx: canvas.getContext('2d'), W: styleW, H: styleH, dpr };
+  }
+
+  /**
    * Draw a simple line chart on a canvas element.
    */
   _drawLineChart(canvasId, data, unit, color, fixedMin, fixedMax) {
     const canvas = document.getElementById(canvasId);
-    if (!canvas || data.length < 2) {
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#64748b';
-        ctx.font = '12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Pas assez de données (attendez quelques minutes de jeu)', canvas.width / 2, canvas.height / 2);
-      }
+    if (!canvas) return;
+    const { ctx, W, H, dpr } = this._fitCanvas(canvas);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (data.length < 2) {
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#64748b';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Pas assez de données (attendez quelques minutes de jeu)', W / 2, H / 2);
       return;
     }
-
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
     const pad = { top: 20, right: 15, bottom: 30, left: 55 };
     const chartW = W - pad.left - pad.right;
     const chartH = H - pad.top - pad.bottom;
@@ -492,8 +507,8 @@ export class Dashboard {
   _drawHorizontalBar(canvasId, data) {
     const canvas = document.getElementById(canvasId);
     if (!canvas || data.length === 0) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
+    const { ctx, W, H, dpr } = this._fitCanvas(canvas);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, 0, W, H);
@@ -539,8 +554,8 @@ export class Dashboard {
   _drawBarChart(canvasId, data, unit) {
     const canvas = document.getElementById(canvasId);
     if (!canvas || data.length < 1) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
+    const { ctx, W, H, dpr } = this._fitCanvas(canvas);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const pad = { top: 20, right: 15, bottom: 30, left: 65 };
     const chartW = W - pad.left - pad.right;
     const chartH = H - pad.top - pad.bottom;
