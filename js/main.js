@@ -232,6 +232,8 @@ class RailEmpire {
     this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
     this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
     this.gameLoop();
+    // Reload previously loaded OSM areas after save restore (async, non-blocking)
+    this.orm.reloadAreas().catch(() => {});
     // Clear previous autoSave interval to prevent double-save on re-login
     if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
     this.autoSaveInterval = setInterval(() => this.saveState(), 10000);
@@ -409,6 +411,8 @@ class RailEmpire {
     if (s.lines) this.lineManager.loadFromSave(s.lines);
     if (s.sillons) this.sillonManager.loadFromSave(s.sillons);
     if (s.voiePoints) this.voiePointManager.loadFromSave(s.voiePoints);
+    // R-08 : les tronçons utilisateur doivent être rebranchés au graphe après chargement
+    if (s.voiePoints || s.ormRoutes) this.orm.markGraphDirty();
     if (s.dashboard) this.dashboard.loadFromSave(s.dashboard);
     if (s.graphMarche) this.graphMarche.loadFromSave(s.graphMarche);
     if (s.staff) this.staffManager.loadFromSave(s.staff);
