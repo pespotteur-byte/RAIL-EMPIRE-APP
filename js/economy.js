@@ -95,9 +95,14 @@ export class Economy {
     const maxPax = service.rame.totalCapacity || 0;
     const maxFreight = service.rame.totalFreightCapacity || 0;
 
+    // Section VI — W, HLP, TM, EVO, trains de travaux : pas de revenus voyageur/fret
+    const isNonRevenue = ['w','hlp','tm','evo','work'].includes(service.serviceType) || service.isWorkTrain;
+
     // Initialize onboard counts on first stop
     if (service._onboardPax == null) service._onboardPax = 0;
     if (service._onboardFreight == null) service._onboardFreight = 0;
+
+    if (isNonRevenue) return;
 
     // --- DESCENTE / DÉCHARGEMENT (revenue from those who rode this segment) ---
     if (!isFirst && distFromPrev > 0) {

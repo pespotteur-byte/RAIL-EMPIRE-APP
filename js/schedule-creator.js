@@ -86,7 +86,9 @@ export class ActiveService {
     this.totalDistance = data.totalDistance || 0;
     this.plannedDistance = data.plannedDistance || 0;
     this.active = data.active !== false;
-    this.isWorkTrain = data.isWorkTrain || false; // S15: Work trains unaffected by works
+    // Section VI — types de convois : passager (par defaut), W, HLP, TM, EVO, work
+    this.serviceType = data.serviceType || (data.isWorkTrain ? 'work' : 'passager');
+    this.isWorkTrain = this.serviceType === 'work'; // S15: Work trains unaffected by works
     this.returnName = data.returnName || '';
     this.returnPlatforms = data.returnPlatforms || {}; // { stationId: platformName }
     this.runDays = data.runDays || [0,1,2,3,4,5,6]; // days of week (0=Sun..6=Sat), default all
@@ -148,10 +150,12 @@ export class ActiveService {
       }
     }
 
-    // LVM-01 — livemap category (annexe 2a) : Voyageur / Fret / Travaux.
+    // LVM-01 — livemap category (annexe 2a) : Voyageur / Fret / Travaux / Machines.
     this.category = this.isWorkTrain
       ? 'travaux'
-      : (rame && rame.totalFreightCapacity > rame.totalCapacity ? 'fret' : 'voyageur');
+      : (['hlp','tm'].includes(this.serviceType)
+        ? 'machine'
+        : (rame && rame.totalFreightCapacity > rame.totalCapacity ? 'fret' : 'voyageur'));
 
     this.train = {
       id: this.id,
@@ -1913,6 +1917,7 @@ export class ScheduleCreator {
         roundTrip: src.roundTrip, multiDepartures: src.multiDepartures,
         terminusWait: src.terminusWait, totalDistance: 0,
         plannedDistance: src.plannedDistance,
+        serviceType: src.serviceType,
         isWorkTrain: src.isWorkTrain,
         returnName: src.returnName ? incrementTrailingNumber(src.returnName, 2 * i) : '',
         returnPlatforms: src.returnPlatforms,
@@ -1952,6 +1957,7 @@ export class ScheduleCreator {
         roundTrip: baseService.roundTrip, multiDepartures: 1,
         terminusWait: baseService.terminusWait, totalDistance: 0,
         plannedDistance: baseService.plannedDistance,
+        serviceType: baseService.serviceType,
         isWorkTrain: baseService.isWorkTrain,
         returnName: newReturnName,
         returnPlatforms: baseService.returnPlatforms,
@@ -2112,6 +2118,7 @@ export class ScheduleCreator {
         o.td = Math.round((s.totalDistance || 0) * 100) / 100;
         if (s.plannedDistance) o.pd = s.plannedDistance;
         if (!s.active) o.act = false;
+        if (s.serviceType && s.serviceType !== 'passager') o.st = s.serviceType;
         if (s.isWorkTrain) o.wt = true;
         const allDays = [0,1,2,3,4,5,6];
         if (JSON.stringify(s.runDays) !== JSON.stringify(allDays)) o.rd = s.runDays;
@@ -2194,7 +2201,8 @@ export class ScheduleCreator {
         totalDistance: d.td || 0,
         plannedDistance: d.pd || 0,
         active: d.act !== false,
-        isWorkTrain: d.wt || false,
+        serviceType: d.st || (d.wt ? 'work' : 'passager'),
+        isWorkTrain: (d.st ? d.st === 'work' : d.wt) || false,
         runDays: d.rd || [0,1,2,3,4,5,6],
         runDates: d.rdt || [],
         returnName: d.rn || '',
