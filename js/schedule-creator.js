@@ -1767,8 +1767,8 @@ export class ActiveService {
       const matches = (track.stationA === prevId && track.stationB === nextId) ||
                       (track.stationA === nextId && track.stationB === prevId);
       if (matches) {
-        if (track.worksImpact === 'stop') return 0;
-        return track.worksSpeedLimit || 40;
+        if (track.worksImpact === 'stop' || track.worksSpeedLimit === 0) return 0;
+        return Number.isFinite(track.worksSpeedLimit) ? track.worksSpeedLimit : 40;
       }
     }
 
@@ -1777,9 +1777,11 @@ export class ActiveService {
     if (worksMgr) {
       const closures = worksMgr.getActiveClosuresBetween(prevId, nextId, this._currentDate, timeOfDay);
       if (closures.length > 0) {
-        // Pire impact
-        if (closures.some(w => w.impact === 'stop')) return 0;
-        return Math.min(...closures.map(w => w.speedLimit || 40));
+        const limits = closures.map(w => {
+          if (w.impact === 'stop' || w.speedLimit === 0) return 0;
+          return Number.isFinite(w.speedLimit) ? w.speedLimit : 40;
+        });
+        return Math.min(...limits);
       }
     }
 

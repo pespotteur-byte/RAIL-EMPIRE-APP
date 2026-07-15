@@ -13,7 +13,7 @@ export class PlannedWorks {
     this.endDate = data.endDate || '';
     this.endTime = data.endTime || '05:00';
     this.impact = data.impact || 'stop';
-    this.speedLimit = data.speedLimit || 40;
+    this.speedLimit = Number.isFinite(data.speedLimit) ? data.speedLimit : 40;
     // TRV-05 : portée — journée, tranche horaire, entre 2 gares, récurrente
     this.recurrence = data.recurrence || 'daily'; // 'once' | 'daily' | 'weekly'
     this.daysOfWeek = data.daysOfWeek || [0,1,2,3,4,5,6]; // for weekly
