@@ -1,5 +1,6 @@
 import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1779724771';
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
+import { getGlobalRng } from './rng.js?v=1779724771';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
@@ -702,9 +703,10 @@ export class ActiveService {
     if (!this.train.breakdown) {
       const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
       const failureProb = (distKm / 25000) * wearMultiplier;
-      if (Math.random() < failureProb) {
+      const rng = getGlobalRng();
+      if (rng.random() < failureProb) {
         const types = ['moteur', 'freins', 'climatisation', 'portes', 'fanaux'];
-        const type = types[Math.floor(Math.random() * types.length)];
+        const type = types[Math.floor(rng.random() * types.length)];
         this.train.breakdown = { type, time: timeOfDay };
         this._rescueDispatched = false;
       }
@@ -1857,9 +1859,10 @@ export class ActiveService {
       this.train.platform = null;
     }
 
+    const rng = getGlobalRng();
     if (this.roundTrip && !this.isReturnLeg) {
       // Section OCC — retard au terminus : 1/3 de supprimer le retour, 2/3 de le faire rouler en retard
-      if ((this.delay || 0) > 0 && Math.random() < 1 / 3) {
+      if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
         this.state = 'waiting';
         this.speed = 0; this.train.speed = 0;
         this.delay = 0; this.train.delay = 0;
@@ -1893,7 +1896,7 @@ export class ActiveService {
     // Check for multi round-trip (additional departures)
     if (this.roundTrip && this.isReturnLeg && this.multiDepartures && this._tripCount < this.multiDepartures) {
       // Section OCC — retard au terminus : 1/3 de supprimer le trajet suivant, 2/3 de le faire rouler en retard
-      if ((this.delay || 0) > 0 && Math.random() < 1 / 3) {
+      if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
         this.state = 'waiting';
         this.speed = 0; this.train.speed = 0;
         this.delay = 0; this.train.delay = 0;
@@ -1965,9 +1968,10 @@ export class ActiveService {
 
   // ARR-04/05 — for each circulation, randomly skip bracketed [C]/[S] stops.
   // Skipped arrets are treated as waypoints (no braking / no dwell / no revenue).
-  _buildAdjustedStops(sourceStops = this.stops, rng = Math.random) {
+  _buildAdjustedStops(sourceStops = this.stops, rng = null) {
+    const randomFn = rng || getGlobalRng().random;
     return sourceStops.map(s => {
-      if (s.type === 'arret' && s.stopCode && shouldSkipStop(s.stopCode, rng)) {
+      if (s.type === 'arret' && s.stopCode && shouldSkipStop(s.stopCode, randomFn)) {
         const adjusted = new ServiceStop(
           s.stationId, 'waypoint', s.departureTime, s.arrivalTime,
           s.voiePointId, s.platform, s.stopCode

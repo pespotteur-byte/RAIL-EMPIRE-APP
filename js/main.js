@@ -1,4 +1,5 @@
 import { SimulationEngine } from './engine.js?v=1779724771';
+import { SeededRng, setGlobalRng } from './rng.js?v=1779724771';
 import { World, createDefaultWorld } from './world.js?v=1779724771';
 import { Renderer } from './renderer.js?v=1780824000';
 import { UI } from './ui.js?v=1780824000';
@@ -39,6 +40,9 @@ import { adminSync } from './admin-sync.js?v=1780900000';
 
 class RailEmpire {
   constructor() {
+    // DET-01 : PRNG déterministe de partie
+    this.rng = new SeededRng(Date.now());
+    setGlobalRng(this.rng);
     this.engine = new SimulationEngine();
     this.world = createDefaultWorld();
     this.economy = new Economy();
@@ -427,6 +431,7 @@ class RailEmpire {
     if (s.iteModules) this.iteModules.loadFromSave(s.iteModules);
     if (s.industrialClients) this.industrialClients.loadFromSave(s.industrialClients);
     if (s.shunting) this.shuntingManager.loadFromSave(s.shunting);
+    if (this.rng && typeof s.rngState === 'number') this.rng.setState(s.rngState);
     // Clear voie point occupations on reload (prevent ghost occupations after crash)
     for (const vp of this.voiePointManager.getAll()) { vp.occupiedBy = null; }
     for (const trc of this.voiePointManager.getAllTroncons()) { trc.occupiedBy = null; }
@@ -488,6 +493,7 @@ class RailEmpire {
       iteModules: this.iteModules.toSave(),
       industrialClients: this.industrialClients.toSave(),
       shunting: this.shuntingManager.toSave(),
+      rngState: this.rng ? this.rng.getState() : null,
     };
     try { this.storage.saveGame(state).catch(e => console.warn('Auto-save failed:', e)); } catch(e) { console.warn('Auto-save failed:', e); }
   }

@@ -5,6 +5,7 @@
  * Real GPS coordinates from industrial sites.
  */
 import { icon } from './icons.js';
+import { getGlobalRng } from './rng.js?v=1779724771';
 
 let nextClientId = 1;
 
@@ -4456,8 +4457,9 @@ export class IndustrialClients {
 
     economy.addExpense(industry.attractCost, 'infrastructure', `Attraction client: ${industry.name}`);
 
+    const rng = getGlobalRng();
     const dailyTonnage = industry.dailyTonnageMin +
-      Math.floor(Math.random() * (industry.dailyTonnageMax - industry.dailyTonnageMin));
+      Math.floor(rng.random() * (industry.dailyTonnageMax - industry.dailyTonnageMin));
 
     const client = {
       id: `client-${nextClientId++}`,
@@ -4515,15 +4517,16 @@ export class IndustrialClients {
       let remainingTonnage = Math.round(client.dailyTonnage * satBoost * shareBoost);
       let contractsToday = 0;
 
+      const rng = getGlobalRng();
       while (remainingTonnage > 0 && contractsToday < 10) {
         const contractTonnage = Math.min(
           remainingTonnage,
-          Math.max(50, Math.floor(remainingTonnage / (3 + Math.random() * 3)))
+          Math.max(50, Math.floor(remainingTonnage / (3 + rng.random() * 3)))
         );
 
-        const toStation = otherStations[Math.floor(Math.random() * otherStations.length)];
+        const toStation = otherStations[Math.floor(rng.random() * otherStations.length)];
         const revenue = Math.floor(contractTonnage * industry.pricePerTonne);
-        const cargoType = industry.cargoTypes[Math.floor(Math.random() * industry.cargoTypes.length)];
+        const cargoType = industry.cargoTypes[Math.floor(rng.random() * industry.cargoTypes.length)];
 
         if (freightManager.contracts.filter(c => c.active).length < 30) {
           freightManager.contracts.push({

@@ -1,3 +1,5 @@
+import { getGlobalRng } from './rng.js?v=1779724771';
+
 let nextContractId = 1;
 
 export class FreightContract {
@@ -35,22 +37,23 @@ export class FreightManager {
 
     if (!stations || stations.length < 2) return;
     if (this.contracts.filter(c => c.active && !c.industrialClientId).length >= 12) return;
-    if (Math.random() > 0.3) return;
+    const rng = getGlobalRng();
+    if (rng.random() > 0.3) return;
 
     // Use CargoTypeManager if available, otherwise fallback
     const allTypes = cargoTypes?.getAllTypes?.() || [];
     if (allTypes.length === 0) return;
 
-    const cargo = allTypes[Math.floor(Math.random() * allTypes.length)];
-    const quantity = 20 + Math.floor(Math.random() * 500);
-    const from = stations[Math.floor(Math.random() * stations.length)];
+    const cargo = allTypes[Math.floor(rng.random() * allTypes.length)];
+    const quantity = 20 + Math.floor(rng.random() * 500);
+    const from = stations[Math.floor(rng.random() * stations.length)];
     const others = stations.filter(s => s.id !== from.id);
     if (others.length === 0) return;
-    const to = others[Math.floor(Math.random() * others.length)];
+    const to = others[Math.floor(rng.random() * others.length)];
 
     const payment = quantity * cargo.pricePerUnit;
     // FRT-01 : 20 % des contrats générés sont diffus (MLMC) — plusieurs types de wagons
-    const isDiffuse = Math.random() < 0.2;
+    const isDiffuse = rng.random() < 0.2;
     this.contracts.push(new FreightContract({
       cargoType: cargo.type,
       cargoName: isDiffuse ? `${cargo.name} (MLMC)` : cargo.name,
