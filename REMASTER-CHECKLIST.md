@@ -105,8 +105,8 @@
 |----|----------|------|--------|--------|
 | REG-01 | Régulateur : zone d'axe ~150 km | P1 | A3.6 | [x] PR? (StaffManager.getRegulationEffects) |
 | REG-02 | Agent Circulation (AC) : zone 10-30 km sous supervision | P1 | A3.6 | [x] PR? (signal box + agents réduit écart canton) |
-| REG-03 | Décisions (garage, ordre passage) prises par le JEU ; joueur embauche seulement | P1 | A3.6 | [ ] |
-| REG-04 | Suppression des cercles d'influence des postes (découpage par axe) | P1 | A3.6 | [ ] |
+| REG-03 | Décisions (garage, ordre passage) prises par le JEU ; joueur embauche seulement | P1 | A3.6 | [x] PR? (tickRegulateurs : tri par type/horaire + garage temporaire) |
+| REG-04 | Suppression des cercles d'influence des postes (découpage par axe) | P1 | A3.6 | [x] PR? (zone/signalBox avec lineId + getRegulationEffects par station/axe) |
 
 ## CVO — TYPES DE CONVOIS  (P1)
 | ID | Exigence | Prio | Source | Statut |
