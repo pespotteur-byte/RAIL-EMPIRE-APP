@@ -323,9 +323,9 @@
 ## SAV — SAUVEGARDE  (P0)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| SAV-01 | Persister l'état complet (rien à ressaisir à la réouverture) | P0 | A8.4, A18 | [ ] |
+| SAV-01 | Persister l'état complet (rien à ressaisir à la réouverture) | P0 | A8.4, A18 | [x] PR? (saveState/loadState complets + rechargement ORM) |
 | SAV-02 | Delta-encoding des coordonnées conservé | P1 | A13 | [ ] |
-| SAV-03 | Prix au km / réglages / positions / états persistés | P1 | A8.2, A8.4 | [ ] |
+| SAV-03 | Prix au km / réglages / positions / états persistés | P1 | A8.2, A8.4 | [x] PR? (state object complet + restore) |
 
 ## DET — DÉTERMINISME  (P0)
 | ID | Exigence | Prio | Source | Statut |
@@ -333,7 +333,7 @@
 | DET-01 | PRNG à seed unique de partie (suppression/pannes/incidents) | P0 | A17 | [ ] |
 | DET-02 | Même seed + mêmes actions ⇒ même déroulé | P0 | A17 | [ ] |
 | DET-03 | Exception : saut d'arrêt [C]/[S] hors seed (cf. ARR-05) | P2 | A17 | [ ] |
-| DET-04 | Boucle simulation à pas fixe déterministe découplée du rendu | P0 | A13 | [ ] |
+| DET-04 | Boucle simulation à pas fixe déterministe découplée du rendu | P0 | A13 | [x] PR? (accumulateur 100ms dans engine.js) |
 | DET-05 | Curseurs de réalisme (physique/météo/pannes/tolérance retard) | P2 | A17 | [ ] |
 
 ## ARC — ARCHITECTURE & PERFORMANCE  (P0/P1)
