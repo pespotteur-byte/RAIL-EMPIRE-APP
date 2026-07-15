@@ -348,16 +348,16 @@
 ## BUG — BUGS CONSOLIDÉS  (P0 majoritaire)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| BUG-01 | Trains en avance (cf. PH-07) | P0 | A14#1 | [ ] |
-| BUG-02 | Routage étrange A→B (cf. R-03/R-04) | P0 | A14#2 | [ ] |
+| BUG-01 | Trains en avance (cf. PH-07) | P0 | A14#1 | [x] PR? (delay clamped ≥0 dans arriveAtStation et _updateContinuousDelay) |
+| BUG-02 | Routage étrange A→B (cf. R-03/R-04) | P0 | A14#2 | [x] PR? (manual trace 50m + ORM fallback droit supprimé) |
 | BUG-03 | Aller-retour aléatoire (cf. SC-04) | P0 | A14#3 | [x] PR4/PR5 (returnRoutes/returnStopsData fixes the independent return path) |
 | BUG-04 | Auto 24h sans effet (cf. SC-05) | P0 | A14#4 | [x] PR? (createAutoRoundTripDuplicates + duplicateService) |
 | BUG-05 | Points random ajoutés (cf. R-09) | P0 | A14#5 | [x] PR? (points 50m provenant de _densifyRoute, pas de points parasites) |
 | BUG-06 | Bug de minuit → horloge en minutes absolues | P0 | A14#6 | [x] comparaisons midnight-safe (timeDiff/timeGte/isInServiceWindow) + horloge Paris |
 | BUG-07 | Bug 1440 min → modulo 24h propre | P0 | A14#7 | [x] normalisation ((m%1440)+1440)%1440 partout (affichage + fenêtres service) |
-| BUG-08 | Horaires non MAJ → recalcul auto à l'édition | P0 | A14#8 | [ ] |
+| BUG-08 | Horaires non MAJ → recalcul auto à l'édition | P0 | A14#8 | [x] PR? (recalcStopsFrom + recalcul terminus wait) |
 | BUG-09 | "objectif avance 0%" → corriger calcul d'avancement | P1 | A14#9 | [ ] |
-| BUG-10 | Gares créées invisibles (cf. LVM-05) | P0 | A14#10 | [ ] |
+| BUG-10 | Gares créées invisibles (cf. LVM-05) | P0 | A14#10 | [x] PR? (world.addStation + renderer.drawStations) |
 | BUG-11 | Images Dashboard/Graphique zoomées → recadrage/responsive | P1 | A14#11 | [ ] |
 | BUG-12 | Point de voie qui s'efface (souris hors cadre) → découpler validation du focus + Échap/Entrée | P1 | A14#12 | [ ] |
 | BUG-13 | Aiguillages décoratifs (cf. R-08) | P0 | A14#13 | [ ] |
