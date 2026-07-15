@@ -1546,6 +1546,11 @@ export class UI {
     const s = document.getElementById('rame-search'); if (s) s.value = '';
     const c = document.getElementById('rame-cat-filter'); if (c) c.value = '';
     const q = document.getElementById('rame-qty'); if (q) q.value = '1';
+    const depotSel = document.getElementById('rame-depot');
+    if (depotSel) {
+      const depots = this.game.depotManager.getDepots();
+      depotSel.innerHTML = '<option value="">— Aucun —</option>' + depots.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+    }
     document.getElementById('modal-rame')?.classList.remove('hidden');
     this.renderRamePicker();
     this.renderRameAssembly();
@@ -1689,8 +1694,10 @@ export class UI {
       this.game.economy.addExpense(totalPrice, 'achat', `Achat rame ${name}`);
     }
 
+    const depotId = document.getElementById('rame-depot')?.value || '';
     this.game.rameManager.add({
       name,
+      depotId,
       elements: this.currentRameElements.map(e => e.stockId),
       elementDetails: this.currentRameElements.map(e => ({
         name: e.name, instanceName: e.instanceName, seriesName: e.seriesName,
@@ -1736,6 +1743,7 @@ export class UI {
         </div>
         <div class="card-info" style="font-size:10px;color:var(--text3)">
           <b>Mise en service:</b> ${r.createdDate} | <b>Km parcourus:</b> ${Math.round(r.totalKmRun || 0).toLocaleString('fr-FR')} km${r.elementDetails.some(e => e.purchasePrice) ? ` | <b>Valeur:</b> ${r.elementDetails.reduce((s,e) => s + (e.purchasePrice || 0), 0).toLocaleString('fr-FR')} €` : ''}
+          ${r.depotId ? `| <b>Dépôt:</b> ${(this.game.depotManager.getAll().find(d => d.id === r.depotId)?.name || r.depotId)}` : ''}
         </div>
       </div>
     `).join('');
@@ -4274,6 +4282,11 @@ export class UI {
         `<option value="${s.id}">${s.seriesName ? s.seriesName + ' ' + (s.numberStart || '') : s.name}</option>`
       ).join('');
 
+      const ramesHere = this.game.rameManager.getAll().filter(r => r.depotId === d.id);
+      const ramesList = ramesHere.length > 0
+        ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><div style="font-size:11px;font-weight:600;margin-bottom:4px">Rames affectées (${ramesHere.length})</div>${ramesHere.map(r => `<div style="font-size:10px;padding:2px 0">${r.name}</div>`).join('')}</div>`
+        : '';
+
       return `
         <div class="card">
           <div class="card-title">${d.name}</div>
@@ -4282,11 +4295,12 @@ export class UI {
             <b>Gare:</b> ${station ? station.name : d.stationId}<br>
             <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR
           </div>
+          ${ramesList}
           ${d.type === 'depot' ? `
             <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
-              <div style="font-size:11px;font-weight:600;margin-bottom:4px">Machines de secours</div>
+              <div style="font-size:11px;font-weight:600;margin-bottom:4px">Machines de secours (max 2)</div>
               ${rescueList}
-              ${availableStock.length > 0 ? `
+              ${availableStock.length > 0 && d.rescueLocos.length < 2 ? `
                 <div style="display:flex;gap:4px;margin-top:4px">
                   <select id="rescue-stock-${d.id}" style="flex:1;font-size:10px">${stockOptions}</select>
                   <button class="btn-sm" style="font-size:9px" onclick="game.ui.addRescueLoco('${d.id}')">+ Ajouter</button>
@@ -4338,7 +4352,8 @@ export class UI {
     const stock = this.game.rollingStock.getAll().find(s => s.id === select.value);
     if (!stock) return;
     const displayName = stock.seriesName ? `${stock.seriesName} ${stock.numberStart || ''}`.trim() : stock.name;
-    this.game.depotManager.addRescueLoco(depotId, stock.id, displayName);
+    const ok = this.game.depotManager.addRescueLoco(depotId, stock.id, displayName);
+    if (!ok) return alert('Maximum 2 machines de secours par dépôt.');
     this.game.saveState();
     this.renderDepotsList();
   }

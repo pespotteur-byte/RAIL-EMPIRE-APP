@@ -11,6 +11,7 @@ export class Rame {
     this.kmSinceLastMaint = isFinite(data.kmSinceLastMaint) ? data.kmSinceLastMaint : 0;
     this.wearLevel = isFinite(data.wearLevel) ? data.wearLevel : 0;
     this.inMaintenance = data.inMaintenance ?? false;
+    this.depotId = data.depotId || '';
   }
 
   get totalLength() {
@@ -106,6 +107,7 @@ export class RameManager {
       kmSinceLastMaint: r.kmSinceLastMaint,
       wearLevel: r.wearLevel,
       inMaintenance: r.inMaintenance,
+      depotId: r.depotId,
     }));
   }
 

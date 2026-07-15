@@ -100,12 +100,15 @@ export class DepotManager {
     return this.depots.filter(d => d.stationId === stationId);
   }
 
-  // Add a rescue loco to a depot
+  // Add a rescue loco to a depot — max 2 per depot (Annexe 9)
   addRescueLoco(depotId, stockId, stockName) {
     const depot = this.depots.find(d => d.id === depotId);
     if (depot) {
+      if (depot.rescueLocos.length >= 2) return false;
       depot.rescueLocos.push({ stockId, stockName, deployed: false });
+      return true;
     }
+    return false;
   }
 
   // Remove a rescue loco from a depot
