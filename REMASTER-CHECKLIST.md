@@ -98,7 +98,7 @@
 | OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [x] PR7 (testé : voyageur avec départ le plus tôt en priorité) |
 | OCC-04 | Priorité en ligne : plus rapide = prioritaire | P1 | A3.5, réponse #3 | [x] PR? (espacement sécurité fonction vitesse/freinage) |
 | OCC-05 | Écart recommandé ≥ 2 min entre 2 trains (peut descendre au bloc) | P1 | A3.5 | [x] PR7 (corrigé + testé : 2 min après libération du canton, lastReleasedAt minuit-safe) |
-| OCC-06 | Plafond d'attente : max 2 h sur voie de garage → reprise forcée au-delà | P1 | A3.5, réponse #3 | [x] PR? (départ forcé après 120 min) |
+| OCC-06 | Plafond d'attente : max 2 h sur voie de garage → reprise forcée au-delà | P1 | A3.5, réponse #3 | [x] PR7 (départ forcé après 120 min, testé : train bloqué en gare repart une fois l'incident levé) |
 
 ## REG — RÉGULATION  (P1)
 | ID | Exigence | Prio | Source | Statut |
@@ -114,7 +114,7 @@
 | CVO-01 | W = vide voyageur (repositionnement, voyageurs only, créé par joueur) | P1 | A3.7 | [x] PR? (serviceType='w', non-revenus) |
 | CVO-02 | HLP = loco(s) seule(s), max 2, auto | P1 | A3.7 | [x] PR? (validation max 2 locos) |
 | CVO-03 | TM = train de machines, 3 à 12 locos (jamais >12) | P1 | A3.7 | [x] PR? (validation 3-12 locos) |
-| CVO-04 | EVO = mouvement rame garage→gare, auto | P1 | A3.7 | [x] PR? (ensureEVOForService + attente service principal) |
+| CVO-04 | EVO = mouvement rame garage→gare, auto | P1 | A3.7 | [x] PR7 (testé : EVO généré, rame rejoint la gare de départ, service démarre) |
 | CVO-05 | M- = machine de manœuvre, rattachée dépôt, usure identique | P1 | A3.7 | [x] PR? (option serviceType 'm-' + validation 1 loco + dépôt) |
 | CVO-06 | S- = machine de secours, max 2/dépôt, payante, usure identique | P1 | A3.7, A6.3 | [x] PR? (max 2 secours + vitesse DDS 10/30 km/h) |
 
@@ -217,7 +217,7 @@
 |----|----------|------|--------|--------|
 | INC-01 | Plus de création manuelle : incidents pré-implémentés activables/désactivables | P1 | A10.1, annexe 11 | [x] PR1 (table PREDEFINED_INCIDENT_TYPES + UI toggle) |
 | INC-02 | Zone d'impact LINÉAIRE 5-10 km (pas un cercle) | P1 | A10.1 | [x] PR1 (track/station route-based bbox, pas cercle) |
-| INC-03 | Effets hors zone (bouchons en accordéon) | P1 | A10.1 | [x] PR7 (corrigé : incident stop en gare bloque le départ immédiat) |
+| INC-03 | Effets hors zone (bouchons en accordéon) | P1 | A10.1 | [x] PR7 (corrigé : incident stop en gare bloque le départ immédiat + filtrage par segment parcouru) |
 | INC-04 | Motifs affichés dans bilans de trajet | P1 | A10.1 | [x] PR? (bilan retard/panne/incident dans sched-detail) |
 | INC-05 | Bulletins spéciaux à côté du récap de compagnie | P1 | A10.1 | [x] PR? (Dashboard.getBulletins + incidents.getBulletins) |
 
