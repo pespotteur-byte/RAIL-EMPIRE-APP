@@ -764,7 +764,9 @@ export class Renderer {
     if (img && img.complete && img.naturalWidth) {
       ctx.save();
       ctx.translate(p.x, p.y);
-      ctx.rotate(heading);
+      // L'image a une flèche vers le bas (sens +y) ; on la tourne pour qu'elle
+      // pointe dans le sens du heading calculé par atan2(dy,dx) en canvas.
+      ctx.rotate(Math.PI / 2 - heading);
       if (state === 'waiting') {
         ctx.filter = 'grayscale(100%) brightness(0.55)';
       }

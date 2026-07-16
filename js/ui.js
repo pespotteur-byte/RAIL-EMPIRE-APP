@@ -4,6 +4,7 @@ import { incrementTrailingNumber } from './schedule-logic.js';
 // LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
 const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b', machine: '#a855f7' };
 const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux', machine: 'Machine' };
+const LVM_CAT_ICONS = { voyageur: 'img/livemap/train_voyageur.png', fret: 'img/livemap/train_fret.png', travaux: 'img/livemap/train_travaux.png', machine: 'img/livemap/train_generic.png' };
 
 // NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
 // contenu mais sont regroupées sous une page parente via des sous-onglets.
@@ -776,9 +777,10 @@ export class UI {
       }
     }
 
+    const panelIcon = LVM_CAT_ICONS[cat] || LVM_CAT_ICONS.generic;
     panel.innerHTML = `
       <div class="lvp-header" style="background:${catColor}">
-        <span class="lvp-cat"></span>
+        <img src="${panelIcon}" class="lvp-cat" alt="">
         <span class="lvp-title">${displayName}</span>
         ${numLabel}
         <button class="lvp-close" onclick="game.ui.deselectService()" title="Fermer">×</button>
@@ -6220,12 +6222,14 @@ export class UI {
       const rameKm = svc.rame ? (svc.rame.totalKmRun || 0) : (t.totalKmRun || 0);
       const wearHtml = rameKm > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(rameWear)}% · Total: ${Math.round(rameKm)} km</span></div>` : '';
 
-      const catColor = LVM_CAT_COLORS[svc.category || t.category] || t.color;
+      const cat = svc.category || t.category || 'voyageur';
+      const catColor = LVM_CAT_COLORS[cat] || t.color;
+      const iconSrc = LVM_CAT_ICONS[cat] || LVM_CAT_ICONS.generic;
       const selCls = this.selectedService?.id === svc.id ? ' tc-selected' : '';
       return `
         <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${svc.id}')">
           <div class="tc-line tc-header">
-            <span class="train-color" style="background:${catColor}"></span>
+            <img src="${iconSrc}" class="tc-icon" alt="" style="background:${catColor}">
             <div class="tc-scroll"><span class="tc-scroll-text tc-name">${displayName}</span></div>
           </div>
           ${imageHtml}
@@ -7089,11 +7093,13 @@ export class UI {
       case 'rer-sncf': board.innerHTML = this._renderRerSncf(station, trains, nowStr); break;
       case 'sncf-dep': board.innerHTML = this._renderSncfDep(station, trains, nowStr); break;
       case 'sncf-arr': board.innerHTML = this._renderSncfArr(station, trains, nowStr); break;
-      case 'old-sncf': board.innerHTML = this._renderOldSncf(station, trains, nowStr); break;
+      case 'old-sncf': board.innerHTML = this._renderPalette(station, trains, nowStr); break;
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
       case 'cati-3-3': board.innerHTML = this._renderCATI3_3(station, trains, nowStr); break;
+      case 'cati-complet': board.innerHTML = this._renderCATIComplet(station, trains, nowStr); break;
       case 'afl-depart': board.innerHTML = this._renderAFLDepart(station, trains, nowStr); break;
       case 'afl-arrivee': board.innerHTML = this._renderAFLArrivee(station, trains, nowStr); break;
+      case 'ecran-quai': board.innerHTML = this._renderEcranQuai(station, trains, nowStr); break;
     }
 
     // Setup train click handlers for platform display
@@ -7313,10 +7319,9 @@ export class UI {
     });
   }
 
-  // --- Flash Circulation : bandeau d'info trafic réseau ---
+  // --- Flash Circulation : panneau bleu/jaune d'info trafic réseau ---
   _renderFlashCirculation(station, nowStr) {
     const im = this.game.incidentManager;
-    const incidents = im?.getActiveIncidents?.() || [];
     const bulletins = im?.getBulletins?.() || [];
     const services = this.game.scheduleCreator?.services || [];
     const delayed = services.filter(s => s.active && s.delay >= 15).slice(0, 6);
@@ -7325,30 +7330,23 @@ export class UI {
     const dateStr = this.game.engine?.currentDate || this.game.engine?.getParisDate?.() || '';
     const works = this.game.worksManager?.getActive?.(dateStr, timeOfDay) || [];
 
-    let messages = [];
-    for (const b of bulletins) {
-      messages.push(`${b.name} — ${b.description || 'perturbation en cours'}`);
-    }
-    for (const d of delayed) {
-      messages.push(`Retard ${d.delay} min — ${d.name}`);
-    }
-    if (works.length > 0) messages.push(`Travaux en cours : ${works.length} intervention(s)`);
-    if (messages.length === 0) messages.push('Trafic fluide sur le réseau.');
+    const items = [];
+    for (const b of bulletins) items.push(`${b.name} : ${b.description || 'perturbation en cours'}`);
+    for (const d of delayed) items.push(`${d.name} — retard ${Math.round(d.delay)} min`);
+    for (const w of works) items.push(`Travaux en cours : ${w.name || w.type || 'chantier'}`);
+    const mainText = items.length ? items.join(' / ') : 'Trafic fluide sur le réseau.';
+    const ticker = items.length ? `${items.join('   +++   ')}   +++   ` : 'Circulation normale.';
 
-    const marqueeText = messages.join('  +++  ');
-    return `<div class="ig-flash-board">
-      <div class="ig-flash-header">
-        <span class="ig-flash-title">Flash Circulation</span>
-        <span class="ig-flash-station">${station?.name || ''}</span>
-        <span class="ig-flash-clock">${nowStr}</span>
+    return `<div class="ig-flash-sign">
+      <div class="ig-flash-sign-bar">
+        <span class="ig-flash-sign-title">flash circulation</span>
       </div>
-      <div class="ig-flash-marquee"><div class="ig-flash-track">${marqueeText}</div></div>
-      <div class="ig-flash-list">
-        ${bulletins.map(b => `<div class="ig-flash-item ig-flash-alert"><strong>${b.name}</strong> : ${b.description || ''} — ${b.severity || 'info'}</div>`).join('')}
-        ${delayed.map(d => `<div class="ig-flash-item ig-flash-delay">${d.name} — retard ${Math.round(d.delay)} min</div>`).join('')}
-        ${works.map(w => `<div class="ig-flash-item ig-flash-works">Travaux : ${w.name || w.type || 'chantier'}</div>`).join('')}
-        ${bulletins.length === 0 && delayed.length === 0 && works.length === 0 ? '<div class="ig-flash-item ig-flash-ok">Aucun incident signalé</div>' : ''}
+      <div class="ig-flash-sign-body">
+        <div class="ig-flash-sign-msg">${mainText}</div>
+        <div class="ig-flash-sign-info">INFORMATIONS A SUIVRE</div>
       </div>
+      <div class="ig-flash-sign-ticker"><span class="ig-flash-sign-track">${ticker}</span></div>
+      <div class="ig-flash-sign-clock">${nowStr.replace(':',' ')}</div>
     </div>`;
   }
 
@@ -7570,6 +7568,101 @@ export class UI {
         <div class="ig-pban-crowd-label">Affluence prevue</div>
         <div class="ig-pban-crowd-cars">${crowdHtml}</div>
         <div class="ig-pban-crowd-ends"><span>Queue</span><span>Tete</span></div>
+      </div>
+    </div>`;
+  }
+
+  // --- CATI Complet : liste unique pleine largeur ---
+  _renderCATIComplet(station, trains, nowStr) {
+    const dep = trains.filter(r => r.isDeparture).slice(0, 24);
+    const particulars = (t) => {
+      if (t.isCancelled) return '<span style="color:#f87171;font-weight:700">Supprimé</span>';
+      if (t.isFull || t.isFreightFull) return '<span style="color:#fbbf24;font-weight:700">TRAIN COMPLET</span>';
+      const d = this._fmtDelay(t.delay);
+      return d === "a l'heure" ? "<span style=\"color:#4ade80\">à l'heure</span>" : `<span style="color:#fbbf24">${d}</span>`;
+    };
+    const head = `<div class="ig-cati-row ig-cati-head">
+      <span>Train</span><span>N°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
+    </div>`;
+    const cell = t => `<div class="ig-cati-row" data-svc-id="${t.svcId}">
+      <span class="ig-cati-train">${t.name.split(' ')[0] || t.name}</span>
+      <span class="ig-cati-num">${t.trainNumber || ''}</span>
+      <span class="ig-cati-time">${this._fmtTime(t.depTime)}</span>
+      <span class="ig-cati-dest">${t.destination}</span>
+      <span class="ig-cati-part">${particulars(t)}</span>
+      <span class="ig-cati-voie">${t.voie || '—'}</span>
+    </div>`;
+    return `<div class="ig-cati-board ig-cati-complet">
+      <div class="ig-cati-header">
+        <span class="ig-cati-station">${station?.name || ''}</span>
+        <span class="ig-cati-title">Départs — Affichage complet</span>
+        <span class="ig-cati-clock">${nowStr}</span>
+      </div>
+      <div class="ig-cati-full">${head}${dep.length ? dep.map(cell).join('') : '<div class="ig-cati-empty">Aucun départ</div>'}</div>
+      <div class="ig-cati-footer">24h • Toutes destinations</div>
+    </div>`;
+  }
+
+  // --- Écran quai : prochain départ sur la voie (image annexe INFOGARE) ---
+  _renderEcranQuai(station, trains, nowStr) {
+    const t = trains.find(r => r.isDeparture);
+    if (!t) return `<div class="ig-quai-board"><div class="ig-quai-header">${station?.name || ''}</div><div class="ig-quai-msg">Aucun départ prévu</div></div>`;
+    const served = t.servedStations.slice(0, 12);
+    const stops = served.map(s => `<div class="ig-quai-stop"><span class="ig-quai-dot">•</span>${s}</div>`).join('');
+    const msg = t.isCancelled ? 'SUPPRIMÉ' : (t.delay > 0 ? `RETARD ${this._fmtDelay(t.delay)}` : "À L'HEURE");
+    const trainNum = t.trainNumber || t.name;
+    return `<div class="ig-quai-board">
+      <div class="ig-quai-left">
+        <div class="ig-quai-sncf">SNCF</div>
+        <div class="ig-quai-time">${this._fmtTime(t.depTime)}</div>
+        <div class="ig-quai-status">${msg}</div>
+        <div class="ig-quai-dest">${t.destination}</div>
+        <div class="ig-quai-num">${t.name.split(' ')[0] || t.name} ${trainNum}</div>
+      </div>
+      <div class="ig-quai-right">
+        <div class="ig-quai-stops-title">Gares desservies</div>
+        <div class="ig-quai-stops">${stops || '<div class="ig-quai-stop">Terminus</div>'}</div>
+      </div>
+      <div class="ig-quai-bottom">
+        <div class="ig-quai-ticker"><span>${station?.name || ''} — Prochain départ à ${this._fmtTime(t.depTime)} pour ${t.destination}</span></div>
+        <div class="ig-quai-clock">${nowStr}</div>
+      </div>
+    </div>`;
+  }
+
+  // --- Palette SNCF moderne (image annexe INFOGARE : 2 colonnes, horloge, défilant) ---
+  _renderPalette(station, trains, nowStr) {
+    const rows = trains.filter(r => r.isDeparture).slice(0, 12);
+    const buildRow = t => {
+      const dest = t.destination.toUpperCase();
+      const via = t.servedStations.slice(0, 3).join(' ').toUpperCase();
+      const full = via ? `${dest}  ${via}` : dest;
+      let part = (t.seriesName || '').toUpperCase();
+      if (t.isCancelled) part = 'SUPP';
+      else if (t.isFull || t.isFreightFull) part = 'PLEIN';
+      return `<div class="ig-palette-row" data-svc-id="${t.svcId}">
+        <span class="ig-palette-cell ig-palette-time">${this._fmtTime(t.depTime).replace('h','.')}</span>
+        <span class="ig-palette-cell ig-palette-dest">${full}</span>
+        <span class="ig-palette-cell ig-palette-part">${part}</span>
+        <span class="ig-palette-cell ig-palette-num">${t.trainNumber || t.name}</span>
+        <span class="ig-palette-cell ig-palette-voie">${t.voie || ''}</span>
+      </div>`;
+    };
+    const ticker = 'VÉRIFIEZ LES HORAIRES EN TEMPS RÉEL.  ' + (station?.name || '').toUpperCase();
+    return `<div class="ig-palette-board">
+      <div class="ig-palette-header">
+        <span>Trains au départ</span>
+        <span>Train departures</span>
+        <span>Abfahrende Züge</span>
+      </div>
+      <div class="ig-palette-subheader">
+        <span>Train</span><span>n°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
+      </div>
+      <div class="ig-palette-rows">${rows.length ? rows.map(buildRow).join('') : '<div class="ig-palette-empty">AUCUN TRAIN PRÉVU</div>'}</div>
+      <div class="ig-palette-footer">
+        <div class="ig-palette-clock-face"><div class="ig-palette-clock-hand" style="transform:rotate(${((new Date().getHours() % 12) * 30 + new Date().getMinutes() * 0.5)}deg)"></div><div class="ig-palette-clock-hand-min" style="transform:rotate(${new Date().getMinutes() * 6}deg)"></div></div>
+        <div class="ig-palette-marquee"><span>${ticker}</span></div>
+        <div class="ig-palette-time-digital">${nowStr.replace(':','.')}</div>
       </div>
     </div>`;
   }

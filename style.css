@@ -169,7 +169,7 @@ header {
 .train-card-fixed { background: var(--bg3); border: 1px solid #475569; border-radius: 4px; padding: 5px 7px; font-size: 11px; }
 .tc-line { margin-top: 2px; font-size: 10px; }
 .tc-header { display: flex; align-items: center; gap: 5px; margin-top: 0; }
-.train-color { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.tc-icon { width: 18px; height: 18px; border-radius: 3px; flex-shrink: 0; object-fit: contain; padding: 1px; }
 .tc-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; font-size: 11px; }
 .tc-scroll { overflow: hidden; white-space: nowrap; max-width: 100%; }
 .tc-scroll-text { display: inline-block; animation: tc-marquee 10s linear infinite; padding-left: 100%; }
@@ -802,7 +802,7 @@ header {
   padding:8px 10px; color:#fff;
   display:flex; align-items:center; gap:8px;
 }
-.lvp-cat { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.lvp-cat { width:22px; height:22px; border-radius:4px; flex-shrink:0; object-fit:contain; padding:2px; background:rgba(0,0,0,.25); }
 .lvp-title { font-weight:700; font-size:13px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lvp-num { font-size:11px; font-weight:700; opacity:.9; }
 .lvp-close { cursor:pointer; background:none; border:none; color:#fff; font-size:16px; line-height:1; padding:0 2px; opacity:.8; }
@@ -888,3 +888,61 @@ header {
 .ig-afl-ontime { color:#4ade80; margin-left:12px; }
 .ig-afl-details { font-size:12px; color:#aaa; margin-top:10px; }
 .ig-afl-msg { color:#fff; padding:20px; }
+
+/* === CATI Complet (liste pleine largeur) === */
+.ig-cati-complet .ig-cati-full { background:#0a1428; padding:6px; }
+.ig-cati-complet .ig-cati-row { grid-template-columns: 55px 60px 60px 1fr 120px 40px; }
+
+/* === Flash Circulation — panneau bleu/jaune === */
+.ig-flash-sign { display:flex; flex-wrap:wrap; background:#ffd600; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:4px solid #003366; min-height:160px; position:relative; }
+.ig-flash-sign-bar { background:#003366; color:#ffd600; writing-mode:vertical-rl; text-orientation:mixed; padding:12px 4px; display:flex; align-items:center; justify-content:center; min-width:34px; }
+.ig-flash-sign-title { text-transform:lowercase; font-weight:900; font-size:18px; letter-spacing:1px; transform:rotate(180deg); }
+.ig-flash-sign-body { flex:1; padding:14px 18px; display:flex; flex-direction:column; justify-content:center; color:#003366; }
+.ig-flash-sign-msg { font-size:18px; font-weight:700; line-height:1.3; margin-bottom:8px; }
+.ig-flash-sign-info { font-size:13px; font-weight:600; color:#003366; opacity:.85; }
+.ig-flash-sign-ticker { width:100%; background:#003366; color:#ffd600; overflow:hidden; white-space:nowrap; font-size:13px; font-weight:700; padding:6px 0; }
+.ig-flash-sign-track { display:inline-block; padding-left:100%; animation:igFlashSign 20s linear infinite; }
+@keyframes igFlashSign { from { transform:translateX(0); } to { transform:translateX(-100%); } }
+.ig-flash-sign-clock { position:absolute; top:8px; right:12px; background:#003366; color:#fff; font-family:'Courier New',monospace; font-size:13px; padding:3px 8px; border-radius:4px; }
+
+/* === Écran quai === */
+.ig-quai-board { display:grid; grid-template-columns: 340px 1fr; grid-template-rows: 1fr auto; background:#0f172a; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:3px solid #333; min-height:320px; }
+.ig-quai-left { background:#c7d2fe; color:#1e3a8a; padding:18px; display:flex; flex-direction:column; align-items:flex-start; grid-row:1/2; }
+.ig-quai-right { background:#0a1428; color:#fff; padding:18px; grid-row:1/2; }
+.ig-quai-bottom { grid-column:1/3; background:#0d3a8f; color:#fff; display:flex; align-items:center; padding:6px 14px; gap:12px; }
+.ig-quai-sncf { font-size:22px; font-weight:900; margin-bottom:8px; }
+.ig-quai-time { font-size:44px; font-weight:900; line-height:1; margin-bottom:4px; }
+.ig-quai-status { font-size:14px; font-weight:700; margin-bottom:10px; }
+.ig-quai-dest { font-size:26px; font-weight:900; line-height:1.2; margin-bottom:8px; }
+.ig-quai-num { font-size:13px; font-weight:700; }
+.ig-quai-stops-title { font-size:12px; font-weight:700; color:#94a3b8; margin-bottom:8px; text-transform:uppercase; }
+.ig-quai-stops { display:grid; grid-template-columns:1fr 1fr; gap:4px 24px; }
+.ig-quai-stop { display:flex; align-items:center; gap:6px; font-size:13px; color:#fff; }
+.ig-quai-dot { color:#fbbf24; }
+.ig-quai-ticker { flex:1; overflow:hidden; white-space:nowrap; font-size:12px; }
+.ig-quai-ticker span { display:inline-block; padding-left:100%; animation:igQuaiTicker 18s linear infinite; }
+@keyframes igQuaiTicker { from { transform:translateX(0); } to { transform:translateX(-100%); } }
+.ig-quai-clock { font-family:'Courier New',monospace; font-size:14px; font-weight:700; background:#0a1428; padding:3px 8px; border-radius:4px; }
+
+/* === Palette SNCF === */
+.ig-palette-board { background:#0a0a0a; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:6px solid #444; color:#fff; }
+.ig-palette-header { display:flex; justify-content:space-around; padding:12px 24px; background:#2a3d6d; color:#fff; font-size:20px; font-weight:900; letter-spacing:3px; text-transform:uppercase; border-bottom:2px solid #1a2a4a; }
+.ig-palette-subheader { display:grid; grid-template-columns:50px 50px 55px 1fr 90px 40px; gap:8px; padding:4px 16px; color:#8899bb; font-size:9px; text-transform:uppercase; border-bottom:2px solid #333; }
+.ig-palette-rows { max-height:60vh; overflow-y:auto; }
+.ig-palette-row { display:grid; grid-template-columns:50px 50px 55px 1fr 90px 40px; gap:8px; align-items:center; padding:4px 16px; border-bottom:1px solid #1a1a1a; min-height:28px; }
+.ig-palette-row:hover { background:#151515; }
+.ig-palette-cell { display:inline-block; }
+.ig-palette-time { color:#ccbb33; font-size:15px; font-weight:700; font-family:'Courier New',monospace; }
+.ig-palette-dest { color:#ccbb33; font-size:13px; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:uppercase; }
+.ig-palette-part { color:#aaa; font-size:9px; text-transform:uppercase; }
+.ig-palette-num { color:#ccbb33; font-size:11px; text-align:right; font-family:'Courier New',monospace; }
+.ig-palette-voie { color:#ccbb33; font-size:14px; font-weight:700; text-align:right; }
+.ig-palette-empty { color:#ccbb33; padding:16px; text-align:center; font-size:13px; letter-spacing:2px; }
+.ig-palette-footer { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; background:#0a0a0a; border-top:3px solid #333; gap:12px; }
+.ig-palette-marquee { flex:1; overflow:hidden; white-space:nowrap; color:#fbbf24; font-size:12px; font-weight:700; }
+.ig-palette-marquee span { display:inline-block; padding-left:100%; animation:igPaletteMarquee 22s linear infinite; }
+@keyframes igPaletteMarquee { from { transform:translateX(0); } to { transform:translateX(-100%); } }
+.ig-palette-time-digital { color:#e22; font-size:20px; font-weight:700; font-family:'Courier New',monospace; text-shadow:0 0 8px #e22; }
+.ig-palette-clock-face { width:42px; height:42px; border:2px solid #fff; border-radius:50%; background:#000; position:relative; flex-shrink:0; }
+.ig-palette-clock-hand { position:absolute; top:50%; left:50%; width:2px; height:14px; background:#fff; transform-origin:bottom center; margin-left:-1px; margin-top:-14px; }
+.ig-palette-clock-hand-min { position:absolute; top:50%; left:50%; width:1px; height:18px; background:#e22; transform-origin:bottom center; margin-left:-0.5px; margin-top:-18px; }
