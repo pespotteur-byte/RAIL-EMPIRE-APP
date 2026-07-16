@@ -1,4 +1,5 @@
 import { haversineDistance } from './simulation.js';
+import { incrementTrailingNumber } from './schedule-logic.js';
 
 // LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
 const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b' };
@@ -385,6 +386,10 @@ export class UI {
         if (this.tronconCreationMode) this.toggleTronconCreation();
         if (this.manualTronconMode) this.toggleManualTronconCreation();
         if (this.tracerLigneMode) this.toggleTracerLigne();
+        if (this._insertAfterIndex != null) {
+          this._insertAfterIndex = null;
+          this._updateManualUI();
+        }
         // Close any open modal
         const openModal = document.querySelector('.modal:not(.hidden)');
         if (openModal) openModal.classList.add('hidden');
@@ -1045,13 +1050,13 @@ export class UI {
       // User chose "Aucune connexion"
       connectTo = null;
     } else if (connectChoice === '_nearest') {
-      // Auto: find nearest
+      // Auto: find nearest station within 50 km (player feedback + remaster I).
       let nearestDist = Infinity;
       for (const s of existingStations) {
-        const d = Math.hypot(s.lat - lat, s.lon - lon);
+        const d = haversineDistance(s.lat, s.lon, lat, lon);
         if (d < nearestDist) { nearestDist = d; connectTo = s; }
       }
-      if (nearestDist >= 3) connectTo = null; // too far
+      if (nearestDist >= 50) connectTo = null; // too far
     } else if (connectChoice) {
       // User picked a specific station
       connectTo = this.game.world.getStationById(connectChoice);
@@ -1999,6 +2004,18 @@ export class UI {
     const oneRoundTrip = (oneWayMin * 2) + (terminusWait * 2);
     const maxAR = Math.max(1, Math.floor((24 * 60) / oneRoundTrip));
     document.getElementById('sched-multi-departures').value = maxAR;
+
+    // SC-05 — l'auto 24h nécessite un aller/retour pour générer les départs multiples.
+    const rtCheck = document.getElementById('sched-round-trip');
+    if (rtCheck && !rtCheck.checked) {
+      rtCheck.checked = true;
+      const name = document.getElementById('sched-name')?.value.trim() || 'Train';
+      const rn = document.getElementById('sched-return-name');
+      if (rn && !rn.value.trim()) rn.value = incrementTrailingNumber(name, 1);
+      if (!this._returnStops || this._returnStops.length < 2) {
+        this._returnStops = this._generateDefaultReturnStops();
+      }
+    }
   }
 
   setupSchedMap() {
@@ -2287,6 +2304,36 @@ export class UI {
     };
 
     canvas.onmouseup = async (e) => {
+      // SC-XX — insertion d'un arrêt entre deux arrêts existants (remarque joueur).
+      if (this._insertAfterIndex != null) {
+        if (totalDragDist < 5) {
+          const x = e.offsetX, y = e.offsetY;
+          let closestVP = null, minVPDist = Infinity;
+          if (this.game.voiePointManager) {
+            for (const vp of this.game.voiePointManager.getAll()) {
+              const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+              const d = Math.hypot(p.x - x, p.y - y);
+              if (d < minVPDist && d < 15) { minVPDist = d; closestVP = vp; }
+            }
+          }
+          let closest = null, minDist = Infinity;
+          for (const st of world.stations) {
+            const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < minDist && d < 20) { minDist = d; closest = st; }
+          }
+          if (closestVP && minVPDist < minDist) {
+            await this._insertStopFromMap(this._insertAfterIndex, closestVP);
+          } else if (closest) {
+            await this._insertStopFromMap(this._insertAfterIndex, closest);
+          }
+        }
+        this._insertAfterIndex = null;
+        this._updateManualUI();
+        schedDrag = false; schedDragStart = null; totalDragDist = 0;
+        return;
+      }
+
       if (this._traceDragging) {
         const dw = this._traceDragging; this._traceDragging = null;
         // End of a trace-point drag: recompute travel times from this leg onward.
@@ -2431,6 +2478,10 @@ export class UI {
     const hasTrace = this._manualRoutes && this._manualRoutes.some(r => r && r.length >= 2);
     if (edit) edit.classList.toggle('hidden', !hasTrace);
     if (del) del.classList.toggle('hidden', !this._traceSelectedPoint);
+    if (this._insertAfterIndex != null) {
+      hint.textContent = `Insertion après l'arrêt ${this._insertAfterIndex + 1} — cliquez sur une gare ou un point de voie sur la carte. Échap pour annuler.`;
+      return;
+    }
     if (this._manualMode) {
       btn.textContent = 'Terminer (cliquer gare/point)';
       btn.style.background = '#3b82f6';
@@ -2954,7 +3005,10 @@ export class UI {
           ${depCell ? `<div>${depCell}</div>` : '<div></div>'}
           ${dwellCell ? `<div>${dwellCell}</div>` : '<div></div>'}
           <div>${platformSelect}</div>
-          <button class="btn-remove-stop" onclick="game.ui.removeSchedStop(${i})" title="Supprimer cet arrêt">x</button>
+          <div class="stop-actions">
+            <button class="btn-add-stop" onclick="game.ui.startInsertStop(${i})" title="Insérer un arrêt après">+</button>
+            <button class="btn-remove-stop" onclick="game.ui.removeSchedStop(${i})" title="Supprimer cet arrêt">x</button>
+          </div>
         </div>
       `;
     }).join('');
@@ -3415,6 +3469,71 @@ export class UI {
     this.recalcStopsFrom(index);
     this.renderSchedStops();
     this._recalcPreviewRoutes();
+  }
+
+  startInsertStop(index) {
+    if (this._manualMode) this._toggleManualMode();
+    this._insertAfterIndex = index;
+    this._traceSelectedPoint = null;
+    this._traceDragging = null;
+    this._updateManualUI();
+  }
+
+  async _insertStopFromMap(afterIndex, item) {
+    if (!item || afterIndex < 0 || afterIndex >= this.schedStops.length) return;
+    const rameId = document.getElementById('sched-rame')?.value;
+    const rame = this.game.rameManager.getById(rameId);
+    const rameSpeed = rame ? rame.maxSpeed : 160;
+    const insertIndex = afterIndex + 1;
+    const prevStop = this.schedStops[afterIndex];
+
+    let newStop;
+    if (item.voie != null) {
+      // voie point
+      let vpName = `Voie ${item.voie}`;
+      let vpStationId = null;
+      if (item.stationId) {
+        const st = this.game.world.getStationById(item.stationId);
+        if (st) { vpName = `${st.name} — Voie ${item.voie}`; vpStationId = st.id; }
+      }
+      newStop = {
+        stationId: vpStationId, voiePointId: item.id, stationName: vpName,
+        type: item.stationId ? 'arret' : 'waypoint', stopCode: '', arrTimeMin: 0, depTimeMin: 0,
+        arrTimeStr: '00:00', depTimeStr: '00:00', platform: item.voie,
+      };
+    } else if (item.lat != null && item.lon != null && !item.id) {
+      // map waypoint
+      newStop = {
+        stationId: null, voiePointId: item.vpId || null, stationName: item.name || `Waypoint (${item.lat.toFixed(4)}, ${item.lon.toFixed(4)})`,
+        type: 'waypoint', stopCode: '', arrTimeMin: 0, depTimeMin: 0,
+        arrTimeStr: '00:00', depTimeStr: '00:00', platform: '',
+      };
+    } else {
+      // station
+      if (item.closed) { alert('Cette gare est fermée — aucun train ne peut la desservir.'); return; }
+      newStop = {
+        stationId: item.id, stationName: item.name, type: 'arret', stopCode: '',
+        arrTimeMin: 0, depTimeMin: 0, arrTimeStr: '00:00', depTimeStr: '00:00', platform: '',
+      };
+    }
+
+    this.schedStops.splice(insertIndex, 0, newStop);
+    this._adjustManualRoutesForInsert(insertIndex);
+
+    const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, afterIndex);
+    const arrTimeMin = (prevStop.depTimeMin || 0) + travelTime;
+    newStop.arrTimeMin = arrTimeMin;
+    newStop.depTimeMin = newStop.type === 'arret' ? arrTimeMin + 2 : arrTimeMin;
+    newStop.arrTimeStr = this.minToTimeStr(newStop.arrTimeMin);
+    newStop.depTimeStr = this.minToTimeStr(newStop.depTimeMin);
+
+    if (insertIndex < this.schedStops.length - 1) {
+      await this.recalcStopsFrom(insertIndex + 1);
+    }
+
+    this.renderSchedStops();
+    this._recalcPreviewRoutes();
+    this.game.saveState();
   }
 
   async _buildSaveRoutes(stops, manualRoutes) {
@@ -5676,6 +5795,18 @@ export class UI {
           if (distKm < 0.3 && !_isWaypoint) {
             contextLabel = 'À l\'approche';
             contextClass = 'ctx-approach';
+          } else {
+            // Annex 5 / phone note : contexte "se situe entre A et B".
+            const currentStops = typeof svc.getCurrentStops === 'function' ? svc.getCurrentStops() : [];
+            const prevIdx = Math.max(0, (svc.currentStopIndex || 1) - 1);
+            const prevS = currentStops[prevIdx];
+            const nextS = currentStops[svc.currentStopIndex];
+            const prevName = prevS?.stationName || this.game.world?.getStationById(prevS?.stationId)?.name || '';
+            const nextName = nextS?.stationName || this.game.world?.getStationById(nextS?.stationId)?.name || '';
+            if (prevName && nextName) {
+              contextLabel = `Se situe entre ${prevName} et ${nextName}`;
+              contextClass = 'ctx-between';
+            }
           }
         }
       }
@@ -5734,9 +5865,9 @@ export class UI {
       // S12: Train identification (series + number)
       const displayName = t.seriesName ? `${t.seriesName} ${t.number || ''}`.trim() : svc.name;
 
-      // S2: Train images (scrollable zone)
+      // S2: Train images (scrollable zone) — absent pour les trains de travaux.
       let imageHtml = '';
-      if (svc.rame && svc.rame.elementDetails) {
+      if (!svc.isWorkTrain && svc.serviceType !== 'work' && svc.rame && svc.rame.elementDetails) {
         const imgs = svc.rame.elementDetails
           .filter(e => e.imageData)
           .map(e => `<img src="${e.imageData}" class="tc-train-img">`)

@@ -616,7 +616,18 @@ export class Renderer {
         ctx.globalAlpha = 1.0;
       }
 
-      this._drawTrainIcon(ctx, p, cat, color, bs, svc.state);
+      // LVM-01 — icône directionnelle : flèche orientée vers la cible du train.
+      let heading = svc.train?.heading;
+      if (heading == null && svc.position) {
+        const target = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
+        if (target) {
+          const pa = this.latLonToScreen(svc.position.lat, svc.position.lon);
+          const pb = this.latLonToScreen(target.lat, target.lon);
+          heading = Math.atan2(pb.y - pa.y, pb.x - pa.x);
+        }
+      }
+      if (heading == null) heading = 0;
+      this._drawTrainIcon(ctx, p, cat, color, bs, svc.state, heading);
 
       if (svc.train.breakdown) {
         ctx.fillStyle = '#ef4444';
@@ -651,41 +662,31 @@ export class Renderer {
     }
   }
 
-  // LVM-01 — dessine l'icône de train issue des assets (annexe 2a).
-  // L'ancre est la pointe de la flèche, donc l'icône est centrée horizontalement
-  // et positionnée au-dessus du point (x,y).
-  _drawTrainIcon(ctx, p, cat, color, bs, state) {
-    const iconKey = (cat === 'voyageur' || cat === 'fret' || cat === 'travaux' || cat === 'machine') ? cat : 'generic';
-    const img = TRAIN_ICON_IMAGES[iconKey];
-    const iconH = bs * 5.5;
-    const iconW = iconH * (149 / 225);
-    const x = p.x - iconW / 2;
-    const y = p.y - iconH;
-    if (img && img.complete && img.naturalWidth) {
-      ctx.save();
-      if (state === 'waiting') {
-        ctx.filter = 'grayscale(100%) brightness(0.55)';
-      }
-      ctx.drawImage(img, x, y, iconW, iconH);
-      ctx.restore();
-    } else {
-      ctx.save();
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y - iconH / 2, iconW / 2, iconH / 2.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      // flèche de rappel vers le point
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(p.x - iconW / 4, p.y - iconH / 4);
-      ctx.lineTo(p.x + iconW / 4, p.y - iconH / 4);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+  // LVM-01 — flèche directionnelle colorée selon la catégorie (annexe 2a).
+  // La pointe de la flèche est orientée dans le sens du mouvement (heading).
+  _drawTrainIcon(ctx, p, cat, color, bs, state, heading = 0) {
+    const len = bs * 5;
+    const wid = bs * 2;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(heading);
+    if (state === 'waiting') {
+      ctx.filter = 'grayscale(100%) brightness(0.55)';
     }
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(len, 0);
+    ctx.lineTo(-len * 0.35, -wid);
+    ctx.lineTo(-len * 0.2, -wid * 0.4);
+    ctx.lineTo(-len * 0.55, 0);
+    ctx.lineTo(-len * 0.2, wid * 0.4);
+    ctx.lineTo(-len * 0.35, wid);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = Math.max(1, bs * 0.25);
+    ctx.stroke();
+    ctx.restore();
   }
 
   drawMinimap(ctx, w, h, world, services) {

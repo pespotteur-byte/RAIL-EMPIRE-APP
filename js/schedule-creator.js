@@ -908,6 +908,17 @@ export class ActiveService {
     }
   }
 
+  _updateHeading(a, b) {
+    if (!a || !b || !this.train) return;
+    const renderer = window.game?.renderer;
+    if (!renderer?.latLonToScreen) { this.train.heading = 0; return; }
+    try {
+      const pa = renderer.latLonToScreen(a.lat, a.lon);
+      const pb = renderer.latLonToScreen(b.lat, b.lon);
+      this.train.heading = Math.atan2(pb.y - pa.y, pb.x - pa.x);
+    } catch (e) { this.train.heading = 0; }
+  }
+
   /**
    * Called every 0.5s - handles smooth train movement with strict route following.
    *
@@ -1295,11 +1306,14 @@ export class ActiveService {
       const p = this._state.progress;
       this.position.lat = segFrom.lat + (segTo.lat - segFrom.lat) * p;
       this.position.lon = segFrom.lon + (segTo.lon - segFrom.lon) * p;
+      this._updateHeading(segFrom, segTo);
     } else {
       // Reached end of route — track km before returning
       const lastPt = route[route.length - 1];
       this.position.lat = lastPt.lat;
       this.position.lon = lastPt.lon;
+      const prevIdx = Math.max(0, this._state.index - 1);
+      this._updateHeading(route[prevIdx], lastPt);
       const finalDist = stepKm - remaining;
       if (isFinite(finalDist) && finalDist > 0) {
         this.totalDistance += finalDist;
@@ -1557,6 +1571,7 @@ export class ActiveService {
       const fraction = Math.min(stepKm / dist, 1);
       this.position.lat += (tLat - this.position.lat) * fraction;
       this.position.lon += (tLon - this.position.lon) * fraction;
+      this._updateHeading(this.position, { lat: tLat, lon: tLon });
       this.totalDistance += actualMove;
       this._trackWear(actualMove, timeOfDay);
     }
