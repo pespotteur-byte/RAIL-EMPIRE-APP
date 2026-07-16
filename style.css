@@ -649,20 +649,20 @@ header {
 .ig-rsncf-clock { color:#fff; font-size:15px; font-weight:700; font-family:'Courier New',monospace; }
 
 /* === SNCF Dep/Arr === blue departures, green arrivals */
-.ig-sncf-board { overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:3px solid #222; }
+.ig-sncf-board { overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:3px solid #222; position:relative; }
 .ig-sncf-dep { background:#0a1428; }
 .ig-sncf-arr { background:#0a200a; }
-.ig-sncf-header { padding:8px 14px; color:#fff; display:flex; flex-direction:column; }
+.ig-sncf-header { padding:8px 14px; color:#fff; display:flex; flex-direction:column; padding-right:38px; }
 .ig-sncf-header-dep { background:#0d3a8f; }
 .ig-sncf-header-arr { background:#1a5e1a; }
 .ig-sncf-header-title { font-size:16px; font-weight:700; }
 .ig-sncf-header-sub { font-size:10px; font-style:italic; color:#aac; }
-.ig-sncf-colheader { display:flex; padding:3px 14px; color:#5577aa; font-size:9px; gap:6px; border-bottom:1px solid #222; }
+.ig-sncf-colheader { display:flex; padding:3px 14px; padding-right:42px; color:#5577aa; font-size:9px; gap:6px; border-bottom:1px solid #222; }
 .ig-sncf-colheader span { min-width:55px; }
 .ig-sncf-colheader span:nth-child(3) { flex:1; }
 .ig-sncf-colheader span:last-child { min-width:35px; text-align:right; }
-.ig-sncf-rows { max-height:65vh; overflow-y:auto; }
-.ig-sncf-row { padding:4px 14px; border-bottom:1px solid rgba(255,255,255,.06); }
+.ig-sncf-rows { max-height:65vh; overflow-y:auto; padding-right:30px; }
+.ig-sncf-row { padding:4px 14px; padding-right:34px; border-bottom:1px solid rgba(255,255,255,.06); }
 .ig-sncf-row:hover { background:rgba(255,255,255,.04); }
 .ig-sncf-main { display:flex; align-items:center; gap:6px; }
 .ig-sncf-logo-icon { font-size:9px; color:#aaa; background:#222; border-radius:3px; padding:1px 4px; min-width:30px; text-align:center; }
@@ -685,6 +685,8 @@ header {
 .ig-sncf-legend-sq { display:inline-block; width:10px; height:10px; border-radius:1px; }
 .ig-sncf-clock { color:#e74c3c; font-size:16px; font-weight:700; font-family:'Courier New',monospace; }
 .ig-sncf-logo { color:#fff; font-weight:900; font-size:14px; font-style:italic; }
+.ig-sncf-side { position:absolute; right:0; top:38px; bottom:38px; width:30px; background:#0d3a8f; color:#fff; writing-mode:vertical-rl; text-orientation:mixed; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; letter-spacing:2px; text-transform:uppercase; border-left:2px solid #1a2a4a; }
+.ig-sncf-arr .ig-sncf-side { background:#1a5e1a; }
 
 /* === OLD SNCF Solari split-flap === */
 .ig-solari-board { background:#0a0a0a; overflow:hidden; font-family:'Courier New','Lucida Console',monospace; border:6px solid #444; position:relative; }
@@ -929,24 +931,32 @@ header {
 .ig-quai-right { position:relative; }
 
 /* === Palette SNCF === */
-.ig-palette-board { background:#0a0a0a; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:6px solid #444; color:#fff; }
-.ig-palette-header { display:flex; justify-content:space-around; padding:12px 24px; background:#2a3d6d; color:#fff; font-size:20px; font-weight:900; letter-spacing:3px; text-transform:uppercase; border-bottom:2px solid #1a2a4a; }
-.ig-palette-subheader { display:grid; grid-template-columns:65px 1fr 90px 70px 45px; gap:8px; padding:4px 16px; color:#8899bb; font-size:9px; text-transform:uppercase; border-bottom:2px solid #333; }
-.ig-palette-rows { max-height:60vh; overflow-y:auto; }
-.ig-palette-row { display:grid; grid-template-columns:65px 1fr 90px 70px 45px; gap:8px; align-items:center; padding:4px 16px; border-bottom:1px solid #1a1a1a; min-height:28px; }
-.ig-palette-row:hover { background:#151515; }
-.ig-palette-cell { display:inline-block; }
-.ig-palette-time { color:#ccbb33; font-size:15px; font-weight:700; font-family:'Courier New',monospace; }
-.ig-palette-dest { color:#ccbb33; font-size:13px; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-transform:uppercase; }
+.ig-palette-board { background:#0a0a0a; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:6px solid #444; color:#fff; position:relative; }
+.ig-palette-sncf-logo { position:absolute; top:12px; right:14px; background:#c00; color:#fff; font-style:italic; font-weight:900; font-size:14px; padding:3px 8px; border-radius:3px; letter-spacing:1px; z-index:2; }
+.ig-palette-header { display:flex; justify-content:flex-start; gap:24px; padding:12px 24px; background:#2a3d6d; color:#fff; font-size:20px; font-weight:900; letter-spacing:2px; text-transform:uppercase; border-bottom:2px solid #1a2a4a; }
+.ig-palette-body { display:flex; }
+.ig-palette-left { flex:1; min-width:0; }
+.ig-palette-right { width:180px; background:#111; border-left:2px solid #333; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px; gap:12px; }
+.ig-palette-subheader { display:grid; grid-template-columns:55px 45px 55px 1fr 90px 38px; gap:6px; padding:4px 12px; color:#8899bb; font-size:9px; text-transform:uppercase; border-bottom:2px solid #333; }
+.ig-palette-cols { display:flex; }
+.ig-palette-col { flex:1; min-width:0; }
+.ig-palette-col:first-child { border-right:1px solid #333; }
+.ig-palette-row { display:grid; grid-template-columns:55px 45px 55px 1fr 90px 38px; gap:6px; align-items:center; padding:3px 12px; border-bottom:1px solid #1a1a1a; min-height:26px; }
+.ig-palette-row:nth-child(odd) { background:#101010; }
+.ig-palette-row:hover { background:#1a1a1a; }
+.ig-palette-cell { display:inline-block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ig-palette-train { color:#fff; font-size:11px; font-weight:700; }
+.ig-palette-num { color:#ccbb33; font-size:12px; font-family:'Courier New',monospace; }
+.ig-palette-time { color:#ccbb33; font-size:14px; font-weight:700; font-family:'Courier New',monospace; }
+.ig-palette-dest { color:#ccbb33; font-size:12px; font-weight:700; text-transform:uppercase; }
 .ig-palette-part { color:#aaa; font-size:9px; text-transform:uppercase; }
-.ig-palette-num { color:#ccbb33; font-size:11px; text-align:right; font-family:'Courier New',monospace; }
 .ig-palette-voie { color:#ccbb33; font-size:14px; font-weight:700; text-align:right; }
 .ig-palette-empty { color:#ccbb33; padding:16px; text-align:center; font-size:13px; letter-spacing:2px; }
-.ig-palette-footer { display:flex; justify-content:space-between; align-items:center; padding:8px 16px; background:#0a0a0a; border-top:3px solid #333; gap:12px; }
-.ig-palette-marquee { flex:1; overflow:hidden; white-space:nowrap; color:#fbbf24; font-size:12px; font-weight:700; }
-.ig-palette-marquee span { display:inline-block; padding-left:100%; animation:igPaletteMarquee 22s linear infinite; }
+.ig-palette-footer { padding:8px 16px; background:#0a0a0a; border-top:3px solid #333; text-align:center; }
+.ig-palette-marquee { width:140px; overflow:hidden; white-space:nowrap; color:#fbbf24; font-size:12px; font-weight:700; }
+.ig-palette-marquee span { display:inline-block; padding-left:100%; animation:igPaletteMarquee 12s linear infinite; }
 @keyframes igPaletteMarquee { from { transform:translateX(0); } to { transform:translateX(-100%); } }
-.ig-palette-time-digital { color:#e22; font-size:20px; font-weight:700; font-family:'Courier New',monospace; text-shadow:0 0 8px #e22; }
-.ig-palette-clock-face { width:42px; height:42px; border:2px solid #fff; border-radius:50%; background:#000; position:relative; flex-shrink:0; }
-.ig-palette-clock-hand { position:absolute; top:50%; left:50%; width:2px; height:14px; background:#fff; transform-origin:bottom center; margin-left:-1px; margin-top:-14px; }
-.ig-palette-clock-hand-min { position:absolute; top:50%; left:50%; width:1px; height:18px; background:#e22; transform-origin:bottom center; margin-left:-0.5px; margin-top:-18px; }
+.ig-palette-time-digital { color:#e22; font-size:24px; font-weight:700; font-family:'Courier New',monospace; text-shadow:0 0 8px #e22; }
+.ig-palette-clock-face { width:90px; height:90px; border:3px solid #fff; border-radius:50%; background:#000; position:relative; flex-shrink:0; }
+.ig-palette-clock-hand { position:absolute; top:50%; left:50%; width:3px; height:26px; background:#fff; transform-origin:bottom center; margin-left:-1.5px; margin-top:-26px; }
+.ig-palette-clock-hand-min { position:absolute; top:50%; left:50%; width:2px; height:36px; background:#e22; transform-origin:bottom center; margin-left:-1px; margin-top:-36px; }

@@ -7257,13 +7257,14 @@ export class UI {
 
     return `<div class="ig-sncf-board ig-sncf-dep">
       <div class="ig-sncf-header ig-sncf-header-dep">
-        <div class="ig-sncf-header-title">Departs Grandes Lignes</div>
-        <div class="ig-sncf-header-sub">Mainline departures - Abfahrt Fernverkehr</div>
+        <div class="ig-sncf-header-title">Départs Grandes Lignes</div>
+        <div class="ig-sncf-header-sub">Mainline departures — Abfahrt Fernverkehr</div>
       </div>
-      <div class="ig-sncf-colheader"><span>train n\u00b0</span><span>heure</span><span>destination</span><span>voie</span></div>
+      <div class="ig-sncf-colheader"><span>train n°</span><span>heure</span><span>destination</span><span>voie</span></div>
       <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
+      <div class="ig-sncf-side">départs</div>
       <div class="ig-sncf-footer">
-        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 a 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 a 30</div>
+        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 à 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 à 30</div>
         <div class="ig-sncf-clock">${nowStr.replace(':','.')}</div>
         <div class="ig-sncf-logo">SNCF</div>
       </div>
@@ -7300,13 +7301,14 @@ export class UI {
 
     return `<div class="ig-sncf-board ig-sncf-arr">
       <div class="ig-sncf-header ig-sncf-header-arr">
-        <div class="ig-sncf-header-title">Arrivees Grandes Lignes</div>
-        <div class="ig-sncf-header-sub">Mainline arrivals - Ankunft Fernverkehr</div>
+        <div class="ig-sncf-header-title">Arrivées Grandes Lignes</div>
+        <div class="ig-sncf-header-sub">Mainline arrivals — Ankunft Fernverkehr</div>
       </div>
-      <div class="ig-sncf-colheader"><span>train n\u00b0</span><span>heure</span><span>provenance</span><span>voie</span></div>
+      <div class="ig-sncf-colheader"><span>train n°</span><span>heure</span><span>provenance</span><span>voie</span></div>
       <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
+      <div class="ig-sncf-side ig-sncf-side-arr">arrivées</div>
       <div class="ig-sncf-footer">
-        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 a 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 a 30</div>
+        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 à 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 à 30</div>
         <div class="ig-sncf-clock">${nowStr.replace(':','.')}</div>
         <div class="ig-sncf-logo">SNCF</div>
       </div>
@@ -7674,37 +7676,59 @@ export class UI {
 
   // --- Palette SNCF moderne (image annexe INFOGARE : 2 colonnes, horloge, défilant) ---
   _renderPalette(station, trains, nowStr) {
-    const rows = trains.filter(r => r.isDeparture).slice(0, 12);
+    const all = trains.filter(r => r.isDeparture).slice(0, 32);
+    const mid = Math.ceil(all.length / 2);
+    const left = all.slice(0, mid);
+    const right = all.slice(mid);
     const buildRow = t => {
+      const type = (t.name.split(' ')[0] || t.name).toUpperCase();
       const dest = t.destination.toUpperCase();
-      const via = t.servedStations.slice(0, 3).join(' ').toUpperCase();
+      const via = t.servedStations.slice(0, 2).join(' ').toUpperCase();
       const full = via ? `${dest}  ${via}` : dest;
+      const num = t.trainNumber || '';
       let part = (t.seriesName || '').toUpperCase();
       if (t.isCancelled) part = 'SUPP';
       else if (t.isFull || t.isFreightFull) part = 'PLEIN';
       return `<div class="ig-palette-row" data-svc-id="${t.svcId}">
+        <span class="ig-palette-cell ig-palette-train">${type}</span>
+        <span class="ig-palette-cell ig-palette-num">${num}</span>
         <span class="ig-palette-cell ig-palette-time">${this._fmtTime(t.depTime).replace('h','.')}</span>
         <span class="ig-palette-cell ig-palette-dest">${full}</span>
         <span class="ig-palette-cell ig-palette-part">${part}</span>
-        <span class="ig-palette-cell ig-palette-num">${t.trainNumber || t.name}</span>
         <span class="ig-palette-cell ig-palette-voie">${t.voie || ''}</span>
       </div>`;
     };
+    const colRows = arr => arr.length ? arr.map(buildRow).join('') : '<div class="ig-palette-empty">AUCUN TRAIN PRÉVU</div>';
     const ticker = 'VÉRIFIEZ LES HORAIRES EN TEMPS RÉEL.  ' + (station?.name || '').toUpperCase();
+    const pt = this.game.engine.getParisTime();
+    const hourDeg = (pt.hours % 12) * 30 + pt.minutes * 0.5;
+    const minDeg = pt.minutes * 6;
     return `<div class="ig-palette-board" style="position:relative">
-      <div style="position:absolute;top:10px;right:14px;font-style:italic;font-weight:900;font-size:18px;color:#fff;letter-spacing:1px;z-index:2">SNCF</div>
+      <div class="ig-palette-sncf-logo">SNCF</div>
       <div class="ig-palette-header">
         <span>Trains au départ</span>
         <span>Train departures</span>
         <span>Abfahrende Züge</span>
       </div>
-      <div class="ig-palette-subheader">
-        <span>Heure</span><span>Destination</span><span>Particularités</span><span>n°</span><span>Voie</span>
+      <div class="ig-palette-body">
+        <div class="ig-palette-left">
+          <div class="ig-palette-subheader">
+            <span>Train</span><span>n°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
+          </div>
+          <div class="ig-palette-cols">
+            <div class="ig-palette-col">${colRows(left)}</div>
+            <div class="ig-palette-col">${colRows(right)}</div>
+          </div>
+        </div>
+        <div class="ig-palette-right">
+          <div class="ig-palette-clock-face">
+            <div class="ig-palette-clock-hand" style="transform:rotate(${hourDeg}deg)"></div>
+            <div class="ig-palette-clock-hand-min" style="transform:rotate(${minDeg}deg)"></div>
+          </div>
+          <div class="ig-palette-marquee"><span>${ticker}</span></div>
+        </div>
       </div>
-      <div class="ig-palette-rows">${rows.length ? rows.map(buildRow).join('') : '<div class="ig-palette-empty">AUCUN TRAIN PRÉVU</div>'}</div>
       <div class="ig-palette-footer">
-        <div class="ig-palette-clock-face"><div class="ig-palette-clock-hand" style="transform:rotate(${((new Date().getHours() % 12) * 30 + new Date().getMinutes() * 0.5)}deg)"></div><div class="ig-palette-clock-hand-min" style="transform:rotate(${new Date().getMinutes() * 6}deg)"></div></div>
-        <div class="ig-palette-marquee"><span>${ticker}</span></div>
         <div class="ig-palette-time-digital">${nowStr.replace(':','.')}</div>
       </div>
     </div>`;
