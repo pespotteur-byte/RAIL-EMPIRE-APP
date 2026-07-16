@@ -2847,10 +2847,13 @@ export class UI {
       depTimeMin = arrTimeMin;
     } else {
       const prevStop = this.schedStops[this.schedStops.length - 1];
+      const legIdx = this.schedStops.length - 1;
       if (this._manualMode) {
         this._finishManualLeg(newStop, rameSpeed);
+      } else if (this.game.sillonManager) {
+        // Section V : propose pre-defined sillons between voie points / stations too.
+        await this._pickSillonForLeg(prevStop, newStop, legIdx);
       }
-      const legIdx = this.schedStops.length - 1;
       const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, legIdx);
       arrTimeMin = prevStop.depTimeMin + travelTime;
       depTimeMin = arrTimeMin; // no stop time for waypoint
