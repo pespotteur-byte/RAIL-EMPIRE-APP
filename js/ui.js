@@ -6045,6 +6045,7 @@ export class UI {
 
       // S3: Approach / platform / regulation status
       let contextLabel = '', contextClass = '';
+      let nextDistKm = null;
       const _nsCtx = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
       const _isWaypoint = _nsCtx?.type === 'waypoint';
       if ((svc.state === 'stopped_at_station' || (svc.state === 'waiting' && t.stoppedAt)) && !_isWaypoint) {
@@ -6101,9 +6102,11 @@ export class UI {
             if (prevName && nextName && prevName !== nextName) {
               contextLabel = `Se situe entre ${prevName} et ${nextName}`;
               contextClass = 'ctx-between';
+              nextDistKm = distKm;
             } else if (nextName) {
               contextLabel = `Au départ de ${nextName}`;
               contextClass = 'ctx-between';
+              nextDistKm = distKm;
             }
           }
         }
@@ -6142,7 +6145,8 @@ export class UI {
         const plannedArr = nextStop.arrivalTime ?? 0;
         const actualArr = plannedArr + delayVal;
         const arrStr = fmtTime(actualArr);
-        nextInfo = `Prochain arrêt : ${targetStation.name}${voie} — Arrivée prévue à ${arrStr}`;
+        const distStr = nextDistKm != null ? ` — ${Math.round(nextDistKm)} km` : '';
+        nextInfo = `Prochain arrêt : ${targetStation.name}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
       } else if (nextStop) {
         nextInfo = `→ ...`;
       } else {
