@@ -2710,7 +2710,7 @@ export class ScheduleCreator {
       if (!timeGte(timeOfDay, dep)) continue;
       const diff = timeDiff(timeOfDay, dep);
       if (diff > 120) continue;
-      if (minId === null || timeDiff(dep, minDep) > 0) {
+      if (minId === null || timeDiff(dep, minDep) < 0) {
         minId = id;
         minDep = dep;
       }
