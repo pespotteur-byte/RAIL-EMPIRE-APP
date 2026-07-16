@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { ScheduleCreator, ActiveService } from '../schedule-creator.js';
 import { StaffManager } from '../staff.js';
 import { CantonManager } from '../simulation.js';
+import { getGlobalRng, setGlobalRng, SeededRng } from '../rng.js?v=1779724771';
 
 const economy = {
   processStopRevenue() {},
@@ -211,5 +212,35 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     mgr.setTime(2);
     assert.equal(mgr.reserve(c0, 'B'), true, '2 min après libération, canton disponible');
     assert.equal(mgr.occupy(c0, 'B'), true);
+  });
+
+  it('RET-03 — retard au terminus : 1/3 chance d annuler le retour', () => {
+    const prev = getGlobalRng();
+    setGlobalRng(new SeededRng(0)); // random() == 0 => annulation
+    try {
+      const sc = new ScheduleCreator();
+      global.window.game.scheduleCreator = sc;
+      const world = makeWorld();
+      const svc = sc.addService({
+        name: 'T1',
+        serviceType: 'passager',
+        roundTrip: true,
+        isReturnLeg: false,
+        stops: [
+          { stationId: 'A', type: 'arret', departureTime: 600, arrivalTime: 600 },
+          { stationId: 'B', type: 'arret', departureTime: 700, arrivalTime: 700 },
+        ],
+        routes: [[{ lat: 0, lon: 0 }, { lat: 0.1, lon: 0 }]],
+      }, null, world);
+      svc.delay = 15;
+      svc.currentStopIndex = 2;
+      svc.state = 'moving';
+      svc.completeService({ processServiceRevenue() {} }, world.getStationById('B'), 0.1, 0);
+      assert.equal(svc.state, 'cancelled', 'le retour est annulé');
+      assert.equal(svc.cancelled, true);
+      assert.equal(svc.delay, 0, 'le retard est effacé si annulé');
+    } finally {
+      setGlobalRng(prev);
+    }
   });
 });
