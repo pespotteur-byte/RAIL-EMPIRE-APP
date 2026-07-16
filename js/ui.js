@@ -7148,12 +7148,96 @@ export class UI {
       el.addEventListener('click', () => this._showPlatformDisplay(el.dataset.svcId, stationId));
     });
 
-    // Auto-refresh every 10 seconds
+    this._animateInfogareBoard(board, displayType);
+
+    // Auto-refresh every 5 seconds (data), plus a 1s clock update
     if (this._infogareInterval) clearInterval(this._infogareInterval);
     this._infogareInterval = setInterval(() => {
-      if (this.activePage !== 'infogare') { clearInterval(this._infogareInterval); return; }
+      if (this.activePage !== 'infogare') { clearInterval(this._infogareInterval); this._stopInfogareClock(); return; }
       this._showInfogareBoard();
-    }, 10000);
+    }, 5000);
+  }
+
+  _stopInfogareClock() {
+    if (this._infogareClockInterval) { clearInterval(this._infogareClockInterval); this._infogareClockInterval = null; }
+  }
+
+  _animateInfogareBoard(board, displayType) {
+    const lower = displayType.toLowerCase();
+    board.classList.remove('ig-board-entrance','ig-anim-pulse','ig-anim-flash','ig-anim-shake');
+    void board.offsetWidth; // force reflow
+    board.classList.add('ig-board-entrance');
+
+    // staggered row entrance
+    const rows = board.querySelectorAll('[data-svc-id], .ig-sncf-row, .ig-cati-row, .ig-cati-33-row, .ig-rsncf-row, .ig-ratp-row, .ig-solari-row');
+    rows.forEach((el, i) => {
+      el.classList.add('ig-row-entrance');
+      el.style.animationDelay = `${i * 0.05}s`;
+    });
+
+    // blink / pulse statuses
+    const statusEls = board.querySelectorAll('.ig-sncf-status, .ig-cati-num, .ig-quai-status, .ig-afl-delay, .ig-ratp-wait-approche, .ig-pgl-delay, .ig-pban-delay, .ig-flash-sign-info');
+    statusEls.forEach(el => {
+      const txt = el.textContent.toLowerCase();
+      if (txt.includes('supprim') || txt.includes('annul') || txt.includes('cancel')) {
+        el.classList.add('ig-status-cancel');
+      } else if (txt.includes('retard') || txt.includes('retardé') || txt.includes('delayed')) {
+        el.classList.add('ig-status-delay');
+      } else if (txt.includes("approche") || txt.includes('approach')) {
+        el.classList.add('ig-status-approach');
+      }
+    });
+
+    // AFL / Flash / Quai pulse when disrupted
+    const isDisrupted = board.textContent.toLowerCase().includes('retard') || board.textContent.toLowerCase().includes('supprim') || board.textContent.toLowerCase().includes('travaux');
+    if (isDisrupted) {
+      if (lower.includes('afl')) board.classList.add('ig-anim-pulse');
+      if (lower.includes('flash')) board.querySelector('.ig-flash-sign-body')?.classList.add('ig-anim-pulse');
+      if (lower.includes('quai')) board.querySelector('.ig-quai-status')?.classList.add('ig-anim-pulse');
+    }
+
+    // start live clock
+    this._stopInfogareClock();
+    this._updateInfogareClocks(board);
+    this._infogareClockInterval = setInterval(() => {
+      if (this.activePage !== 'infogare') { this._stopInfogareClock(); return; }
+      const b = document.getElementById('infogare-board');
+      if (b) this._updateInfogareClocks(b);
+    }, 1000);
+  }
+
+  _updateInfogareClocks(board) {
+    const pt = this.game.engine.getParisTime();
+    const nowStr = `${pt.hours.toString().padStart(2,'0')}:${pt.minutes.toString().padStart(2,'0')}`;
+    const nowStrDot = nowStr.replace(':', '.');
+    const nowStrSpace = nowStr.replace(':', ' ');
+
+    // any element whose class contains "clock" inside the board, plus palette digital
+    board.querySelectorAll('[class*="clock"], .ig-palette-time-digital').forEach(el => {
+      const txt = el.textContent;
+      if (txt.includes(':')) el.textContent = nowStr;
+      else if (txt.includes('.')) el.textContent = nowStrDot;
+      else if (txt.includes('h')) { /* keep h format in palette? palette uses digital */ }
+      else el.textContent = nowStr;
+    });
+
+    // palette analog clock
+    const hourHand = board.querySelector('.ig-palette-clock-hand');
+    const minHand = board.querySelector('.ig-palette-clock-hand-min');
+    if (hourHand && minHand) {
+      const totalMin = pt.hours * 60 + pt.minutes + (pt.seconds || 0) / 60;
+      hourHand.style.transform = `rotate(${(totalMin / 2) % 360}deg)`;
+      minHand.style.transform = `rotate(${(totalMin * 6) % 360}deg)`;
+    }
+
+    // footer clocks (second span inside cati/afl/sncf footers)
+    board.querySelectorAll('.ig-cati-footer, .ig-afl-footer, .ig-sncf-footer').forEach(foot => {
+      const last = foot.lastElementChild;
+      if (last && last.textContent.match(/\d{1,2}[:.h ]\d{2}/)) {
+        if (last.textContent.includes('.')) last.textContent = nowStrDot;
+        else last.textContent = nowStr;
+      }
+    });
   }
 
   // --- RER RATP --- pixel-perfect dark screen
@@ -7503,6 +7587,7 @@ export class UI {
       board.innerHTML = this._renderPlatformBanlieue(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars);
     }
 
+    this._animateInfogareBoard(board, 'platform');
     board.querySelector('.ig-platform-back')?.addEventListener('click', () => this._showInfogareBoard());
   }
 

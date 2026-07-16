@@ -985,3 +985,34 @@ header {
 .ig-cati-ar .ig-cati-row { border-bottom-color:#1a4a2a; }
 .ig-cati-ar .ig-cati-row:hover { background:#123a1f; }
 .ig-cati-ar .ig-cati-destcol { display:flex; flex-direction:column; gap:2px; min-width:0; }
+
+/* === Infogare animations === */
+.ig-anim-fade-in { animation: igFadeIn 0.35s ease-out both; }
+.ig-anim-slide-in { animation: igSlideIn 0.28s ease-out both; }
+.ig-anim-pulse { animation: igPulse 1.2s ease-in-out infinite; }
+.ig-anim-blink { animation: igBlink 1s step-end infinite; }
+.ig-anim-blink-fast { animation: igBlink 0.55s step-end infinite; }
+.ig-anim-marquee { display:inline-block; white-space:nowrap; animation: igMarquee 10s linear infinite; }
+.ig-anim-marquee-fast { animation-duration:6s; }
+.ig-anim-marquee-slow { animation-duration:18s; }
+.ig-anim-flash { animation: igFlash 1.5s ease-in-out infinite; }
+.ig-anim-shake { animation: igShake 0.4s ease-in-out infinite; }
+
+@keyframes igFadeIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes igSlideIn { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes igPulse { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.015); opacity:0.85; } }
+@keyframes igMarquee { from { transform:translateX(0); } to { transform:translateX(-100%); } }
+@keyframes igFlash { 0%,100% { opacity:1; } 50% { opacity:0.55; } }
+@keyframes igShake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-3px); } 75% { transform:translateX(3px); } }
+
+/* Live status blinking for delays/cancellations/approach */
+.ig-status-delay, .ig-status-approach { color:#facc15; animation: igBlink 1.1s step-end infinite; }
+.ig-status-cancel { color:#fff; background:#dc2626; padding:2px 6px; border-radius:3px; animation: igBlink 0.6s step-end infinite; }
+
+/* Long text scroll inside a masked container */
+.ig-anim-scroll { display:inline-block; white-space:nowrap; animation: igScrollText 9s linear infinite; min-width:100%; }
+@keyframes igScrollText { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+
+/* Board / row entrance with stagger will be set by JS via style */
+.ig-board-entrance { animation: igFadeIn 0.35s ease-out both; }
+.ig-row-entrance { animation: igFadeIn 0.3s ease-out both; }
