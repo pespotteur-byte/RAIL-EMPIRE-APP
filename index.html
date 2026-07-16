@@ -811,15 +811,16 @@
                   <button type="button" id="btn-sched-return-mode" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Tracer le retour</button>
                   <span id="sched-mode-label" style="font-size:10px;color:var(--text2);margin-left:auto;padding:2px 6px;border-radius:4px;background:var(--bg2)">Aller</span>
                 </div>
-                <span id="sched-manual-hint" style="font-size:10px;color:var(--text3)">1. Choisissez une gare/point de voie de départ. 2. Appuyez sur « Tracer manuellement ». 3. Cliquez sur la carte pour ajouter des points tous les 50 m. Shift+clic pour déplacer un point, Ctrl+clic pour supprimer.</span>
+                <span id="sched-manual-hint" style="font-size:10px;color:var(--text3)">Cliquer sur les gares de la carte pour définir le trajet. Les horaires sont calculés automatiquement depuis les données ORM et la rame. Astuce : ajoutez des gares intermédiaires en "Waypoint" pour forcer le passage par un raccordement précis (ex: via Troyes au lieu de Nancy).</span>
               </div>
               <div class="sched-map-container">
                 <canvas id="sched-map-canvas"></canvas>
               </div>
               <p class="sched-hint">
-                <span style="display:inline-block;width:12px;height:4px;background:#facc15;vertical-align:middle;margin:0 4px 0 0"></span>Tracé manuel (actuel)
-                <span style="display:inline-block;width:12px;height:4px;background:#e879f9;vertical-align:middle;margin:0 4px 0 8px"></span>Itinéraire ORM (objectif)
+                <span style="display:inline-block;width:12px;height:4px;background:#ff00ff;vertical-align:middle;margin:0 4px 0 0"></span>Tracé objectif (bon trajet)
+                <span style="display:inline-block;width:12px;height:4px;background:#facc15;vertical-align:middle;margin:0 4px 0 8px"></span>Tracé actuel
                 <span style="display:inline-block;width:12px;height:4px;background:#38bdf8;vertical-align:middle;margin:0 4px 0 8px"></span>Tracé en cours
+                <span style="display:inline-block;width:0;height:0;border-left:6px solid #e2e8f0;border-top:4px solid transparent;border-bottom:4px solid transparent;vertical-align:middle;margin:0 4px 0 8px"></span>Sens de circulation
                 — Gares/points de voie sur la carte. Mode manuel si ORM ne trouve pas le bon chemin. Shift+clic sur un segment pour ajouter un point, glisser pour déplacer, Ctrl+clic pour supprimer.
               </p>
             </div>

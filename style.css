@@ -863,11 +863,15 @@ header {
 .ig-cati-clock { font-family:'Courier New',monospace; font-size:14px; color:#fbbf24; }
 .ig-cati-cols { display:flex; gap:2px; background:#0a1428; padding:6px; }
 .ig-cati-col { flex:1; background:#0a1428; }
-.ig-cati-row { display:flex; align-items:center; padding:8px 10px; border-bottom:1px solid #1a2a4a; font-size:14px; }
+.ig-cati-row { display:grid; grid-template-columns: 50px 55px 55px 1fr 110px 38px; gap:6px; align-items:center; padding:6px 8px; border-bottom:1px solid #1a2a4a; font-size:12px; }
 .ig-cati-row:hover { background:#132243; }
-.ig-cati-time { color:#fbbf24; font-weight:700; min-width:55px; font-family:'Courier New',monospace; }
-.ig-cati-dest { flex:1; padding-left:10px; font-weight:600; }
-.ig-cati-voie { background:#d4a017; color:#000; font-weight:900; min-width:30px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:3px; }
+.ig-cati-row.ig-cati-head { background:#0d3a8f; font-weight:700; font-size:10px; text-transform:uppercase; color:#aac; border-bottom:2px solid #1a2a4a; }
+.ig-cati-train { color:#fff; font-weight:700; }
+.ig-cati-num { color:#cbd5e1; font-family:'Courier New',monospace; }
+.ig-cati-time { color:#fbbf24; font-weight:700; font-family:'Courier New',monospace; }
+.ig-cati-dest { color:#fff; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ig-cati-part { color:#fbbf24; font-size:11px; }
+.ig-cati-voie { background:#d4a017; color:#000; font-weight:900; width:30px; height:22px; display:flex; align-items:center; justify-content:center; border-radius:3px; justify-self:end; }
 .ig-cati-empty { color:#5577aa; padding:12px; text-align:center; font-size:12px; }
 .ig-cati-footer { padding:6px 14px; background:#0d3a8f; font-size:10px; color:#aac; text-align:center; }
 

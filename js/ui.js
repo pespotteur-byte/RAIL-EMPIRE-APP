@@ -705,14 +705,16 @@ export class UI {
       const dep = s.departureTime ?? s.arrivalTime ?? 0;
       const actualArr = arr + d;
       const actualDep = dep + d;
+      const dwell = (!isFirst && !isLast && !isWp && dep > arr) ? Math.max(0, Math.round(dep - arr)) : 0;
+      const dwellTxt = dwell > 0 ? ` · ${dwell} min d'arrêt` : '';
       const baseLabel = isFirst ? `dép ${fmt(dep)}`
         : isLast ? `arr ${fmt(arr)}`
         : isWp ? `pass ${fmt(arr)}`
-        : `${fmt(arr)}–${fmt(dep)}`;
+        : `${fmt(arr)}–${fmt(dep)}${dwellTxt}`;
       const actLabel = isFirst ? `dép ${fmt(actualDep)}`
         : isLast ? `arr ${fmt(actualArr)}`
         : isWp ? `pass ${fmt(actualArr)}`
-        : `${fmt(actualArr)}–${fmt(actualDep)}`;
+        : `${fmt(actualArr)}–${fmt(actualDep)}${dwellTxt}`;
       const showRecalc = d !== 0 && i >= curIdx;
       if (!showRecalc) return `<span class="lvp-base-time">${baseLabel}</span>`;
       const cls = d > 0 ? 'lvp-recalc-late' : 'lvp-recalc-early';
@@ -853,6 +855,8 @@ export class UI {
     document.getElementById('station-platform-names').value = '';
     // Player note: creation mode hides platforms/connection, defaults are applied.
     document.getElementById('station-platforms-row').style.display = 'none';
+    const platformNamesGroup = document.getElementById('station-platform-names')?.closest('.form-group');
+    if (platformNamesGroup) { platformNamesGroup.style.display = 'none'; }
     const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
     if (connectGroup) { connectGroup.style.display = 'none'; }
     document.getElementById('station-connect').value = '_nearest';
@@ -1263,6 +1267,8 @@ export class UI {
     document.getElementById('station-lon').readOnly = false;
     // Show hidden fields from creation mode so they can be edited.
     document.getElementById('station-platforms-row').style.display = '';
+    const platformNamesGroup = document.getElementById('station-platform-names')?.closest('.form-group');
+    if (platformNamesGroup) { platformNamesGroup.style.display = ''; }
     document.getElementById('station-type').value = station.type;
     document.getElementById('station-platforms').value = station.platforms || 4;
     document.getElementById('station-platform-names').value = (station.platformNames || []).join(', ');
@@ -1306,6 +1312,8 @@ export class UI {
     this._editingStationId = null;
     // Restore modal state
     document.getElementById('station-platforms-row').style.display = 'none';
+    const platformNamesGroup = document.getElementById('station-platform-names')?.closest('.form-group');
+    if (platformNamesGroup) platformNamesGroup.style.display = 'none';
     const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
     if (connectGroup) connectGroup.style.display = 'none';
     const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
@@ -7196,15 +7204,28 @@ export class UI {
 
   // --- CATI 3-3 : tableau 3+3 départs à 24h ---
   _renderCATI3_3(station, trains, nowStr) {
-    const dep = trains.filter(r => r.isDeparture).slice(0, 6);
-    const left = dep.slice(0, 3);
-    const right = dep.slice(3, 6);
+    const dep = trains.filter(r => r.isDeparture).slice(0, 14);
+    const mid = Math.ceil(dep.length / 2);
+    const left = dep.slice(0, mid);
+    const right = dep.slice(mid);
+    const particulars = (t) => {
+      if (t.isCancelled) return '<span style="color:#f87171;font-weight:700">Supprimé</span>';
+      if (t.isFull || t.isFreightFull) return '<span style="color:#fbbf24;font-weight:700">TRAIN COMPLET</span>';
+      const d = this._fmtDelay(t.delay);
+      return d === "a l'heure" ? "<span style=\"color:#4ade80\">à l'heure</span>" : `<span style="color:#fbbf24">${d}</span>`;
+    };
+    const head = `<div class="ig-cati-row ig-cati-head">
+      <span>Train</span><span>N°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
+    </div>`;
     const cell = t => `<div class="ig-cati-row" data-svc-id="${t.svcId}">
+      <span class="ig-cati-train">${t.name.split(' ')[0] || t.name}</span>
+      <span class="ig-cati-num">${t.trainNumber || ''}</span>
       <span class="ig-cati-time">${this._fmtTime(t.depTime)}</span>
       <span class="ig-cati-dest">${t.destination}</span>
+      <span class="ig-cati-part">${particulars(t)}</span>
       <span class="ig-cati-voie">${t.voie || '—'}</span>
     </div>`;
-    const col = items => items.map(cell).join('') || '<div class="ig-cati-empty">Aucun départ</div>';
+    const col = items => items.length ? (head + items.map(cell).join('')) : '<div class="ig-cati-empty">Aucun départ</div>';
     return `<div class="ig-cati-board">
       <div class="ig-cati-header">
         <span class="ig-cati-station">${station?.name || ''}</span>
