@@ -972,6 +972,19 @@ export class ActiveService {
       return;
     }
 
+    // MNT-03 : panne non bénigne en cours de route -> arrêt + secours
+    if (this.train.breakdown && !['climatisation', 'portes'].includes(this.train.breakdown.type)) {
+      this.speed = 0;
+      this.train.speed = 0;
+      this.train.state = 'en panne';
+      this._updateContinuousDelay(timeOfDay);
+      if (!this._rescueDispatched && this.position && window.game?.depotManager) {
+        window.game.depotManager.dispatchRescue(this.world, this);
+        this._rescueDispatched = true;
+      }
+      return;
+    }
+
     cantonManager.setTime(timeOfDay);
     this._updateRegulationFactor();
 
