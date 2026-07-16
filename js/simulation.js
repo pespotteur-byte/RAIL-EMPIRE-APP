@@ -18,7 +18,7 @@ export function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 // Midnight-safe minute difference, clamped to [-720, 720]
-function timeDiff(a, b) {
+export function timeDiff(a, b) {
   let d = a - b;
   if (d > 720) d -= 1440;
   else if (d < -720) d += 1440;

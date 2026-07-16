@@ -2,7 +2,7 @@
  * Staff Management — Multi-role personnel for Rail Empire.
  */
 import { icon } from './icons.js';
-import { haversineDistance } from './simulation.js';
+import { haversineDistance, timeDiff } from './simulation.js?v=1784232201';
 import { getGlobalRng } from './rng.js?v=1784201500';
 
 let nextStaffId = 1;
@@ -410,7 +410,8 @@ export class StaffManager {
       const next = stops?.[stopIndex];
       if (!next) continue;
       const dep = next.departureTime ?? next.arrivalTime ?? 0;
-      const delay = svc.delay || 0;
+      // Retard calculé à la minute actuelle (pas le svc.delay du tick précédent)
+      const delay = Math.max(0, timeDiff(timeOfDay, dep));
       if (!stationQueues.has(next.stationId)) stationQueues.set(next.stationId, []);
       stationQueues.get(next.stationId).push({ svc, dep, delay, type: svc.serviceType || 'passager' });
     }
