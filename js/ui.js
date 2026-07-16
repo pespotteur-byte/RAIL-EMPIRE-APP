@@ -2,8 +2,8 @@ import { haversineDistance } from './simulation.js';
 import { incrementTrailingNumber } from './schedule-logic.js';
 
 // LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
-const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b' };
-const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux' };
+const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b', machine: '#a855f7' };
+const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux', machine: 'Machine' };
 
 // NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
 // contenu mais sont regroupées sous une page parente via des sous-onglets.
@@ -2231,6 +2231,12 @@ export class UI {
       // Preview routes are recomputed on every change.
       if (this.schedStops.length > 1) {
         ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 3;
+        const drawArrow = (x, y, angle, size = 5, color = '#ff00ff') => {
+          ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+          ctx.fillStyle = color;
+          ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(-size / 2, -size / 2); ctx.lineTo(-size / 2, size / 2); ctx.closePath(); ctx.fill();
+          ctx.restore();
+        };
         const drawGeom = (geom) => {
           if (!geom || geom.length < 2) return false;
           const step = Math.max(1, Math.floor(geom.length / 80));
@@ -2244,6 +2250,13 @@ export class UI {
           const pL = tileMap.worldToScreen(geom[geom.length - 1].lat, geom[geom.length - 1].lon, canvas.width, canvas.height);
           ctx.lineTo(pL.x, pL.y);
           ctx.stroke();
+          // Annex 18 — sens de circulation arrow along the preview route
+          if (geom.length >= 4) {
+            const mid = Math.floor(geom.length / 2);
+            const pMid = tileMap.worldToScreen(geom[mid].lat, geom[mid].lon, canvas.width, canvas.height);
+            const pPrev = tileMap.worldToScreen(geom[mid - 1].lat, geom[mid - 1].lon, canvas.width, canvas.height);
+            drawArrow(pMid.x, pMid.y, Math.atan2(pMid.y - pPrev.y, pMid.x - pPrev.x), 5, '#ff00ff');
+          }
           return true;
         };
         for (let i = 0; i < this.schedStops.length - 1; i++) {

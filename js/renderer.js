@@ -1167,6 +1167,16 @@ export class Renderer {
           ctx.fillStyle = color === '#ef4444' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)';
           ctx.fill();
         }
+
+        // Annex 7 — label signal aspect at very high zoom
+        if (zoom >= 15) {
+          const aspectLabel = color === '#22c55e' ? 'voie libre' : color === '#eab308' ? 'avertissement' : 'carré';
+          ctx.fillStyle = color;
+          ctx.font = 'bold 8px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(aspectLabel, screenPos.x, screenPos.y - signalRadius - 2);
+        }
       }
     }
   }
