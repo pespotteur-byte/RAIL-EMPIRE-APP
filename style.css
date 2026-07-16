@@ -873,7 +873,9 @@ header {
 .ig-cati-part { color:#fbbf24; font-size:11px; }
 .ig-cati-voie { background:#d4a017; color:#000; font-weight:900; width:30px; height:22px; display:flex; align-items:center; justify-content:center; border-radius:3px; justify-self:end; }
 .ig-cati-empty { color:#5577aa; padding:12px; text-align:center; font-size:12px; }
-.ig-cati-footer { padding:6px 14px; background:#0d3a8f; font-size:10px; color:#aac; text-align:center; }
+.ig-cati-footer { padding:6px 14px; background:#0d3a8f; font-size:10px; color:#aac; display:flex; justify-content:space-between; align-items:center; }
+.ig-cati-side { position:absolute; right:0; top:38px; bottom:34px; width:26px; background:#0a1428; color:#fff; writing-mode:vertical-rl; text-orientation:mixed; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; letter-spacing:2px; border-left:2px solid #1a2a4a; text-transform:uppercase; }
+.ig-cati-board { position:relative; }
 
 /* === AFL (Annonce Flash Lumineuse) === */
 .ig-afl-board { background:#1a1a2e; color:#fbbf24; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:4px solid #fbbf24; text-align:center; padding:20px; }
@@ -923,13 +925,15 @@ header {
 .ig-quai-ticker span { display:inline-block; padding-left:100%; animation:igQuaiTicker 18s linear infinite; }
 @keyframes igQuaiTicker { from { transform:translateX(0); } to { transform:translateX(-100%); } }
 .ig-quai-clock { font-family:'Courier New',monospace; font-size:14px; font-weight:700; background:#0a1428; padding:3px 8px; border-radius:4px; }
+.ig-quai-watermark { position:absolute; right:8px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,.06); font-size:72px; font-weight:900; writing-mode:vertical-rl; text-orientation:mixed; letter-spacing:8px; }
+.ig-quai-right { position:relative; }
 
 /* === Palette SNCF === */
 .ig-palette-board { background:#0a0a0a; overflow:hidden; font-family:Arial,Helvetica,sans-serif; border:6px solid #444; color:#fff; }
 .ig-palette-header { display:flex; justify-content:space-around; padding:12px 24px; background:#2a3d6d; color:#fff; font-size:20px; font-weight:900; letter-spacing:3px; text-transform:uppercase; border-bottom:2px solid #1a2a4a; }
-.ig-palette-subheader { display:grid; grid-template-columns:50px 50px 55px 1fr 90px 40px; gap:8px; padding:4px 16px; color:#8899bb; font-size:9px; text-transform:uppercase; border-bottom:2px solid #333; }
+.ig-palette-subheader { display:grid; grid-template-columns:65px 1fr 90px 70px 45px; gap:8px; padding:4px 16px; color:#8899bb; font-size:9px; text-transform:uppercase; border-bottom:2px solid #333; }
 .ig-palette-rows { max-height:60vh; overflow-y:auto; }
-.ig-palette-row { display:grid; grid-template-columns:50px 50px 55px 1fr 90px 40px; gap:8px; align-items:center; padding:4px 16px; border-bottom:1px solid #1a1a1a; min-height:28px; }
+.ig-palette-row { display:grid; grid-template-columns:65px 1fr 90px 70px 45px; gap:8px; align-items:center; padding:4px 16px; border-bottom:1px solid #1a1a1a; min-height:28px; }
 .ig-palette-row:hover { background:#151515; }
 .ig-palette-cell { display:inline-block; }
 .ig-palette-time { color:#ccbb33; font-size:15px; font-weight:700; font-family:'Courier New',monospace; }

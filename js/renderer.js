@@ -312,12 +312,13 @@ export class Renderer {
         ctx.stroke();
       }
 
-      // Annex 6 — direction arrows for main tracks at high zoom
-      if (zoom >= 14) {
-        const startLat = track.route?.[0]?.lat ?? stA.lat;
-        const startLon = track.route?.[0]?.lon ?? stA.lon;
-        const endLat = track.route?.[track.route.length - 1]?.lat ?? stB.lat;
-        const endLon = track.route?.[track.route.length - 1]?.lon ?? stB.lon;
+      // Annex 6 / LVM — direction arrows + track labels for main tracks at high zoom
+      if (zoom >= 13) {
+        const route = track.route || [];
+        const startLat = route[0]?.lat ?? stA.lat;
+        const startLon = route[0]?.lon ?? stA.lon;
+        const endLat = route[route.length - 1]?.lat ?? stB.lat;
+        const endLon = route[route.length - 1]?.lon ?? stB.lon;
         const start = this.latLonToScreen(startLat, startLon);
         const end = this.latLonToScreen(endLat, endLon);
         const dx = end.x - start.x;
@@ -325,13 +326,33 @@ export class Renderer {
         const len = Math.hypot(dx, dy);
         if (len > 20) {
           const angle = Math.atan2(dy, dx);
-          this._drawArrow(ctx, (start.x + end.x) / 2, (start.y + end.y) / 2, angle, 5, '#e2e8f0');
+          const mx = (start.x + end.x) / 2;
+          const my = (start.y + end.y) / 2;
+
+          // Track label (OSM ref/name/trackRef) at midpoint
+          const trkLabel = track.name || track.ref || '';
+          if (trkLabel) {
+            ctx.save();
+            ctx.font = 'bold 9px sans-serif';
+            const metrics = ctx.measureText(trkLabel);
+            const pad = 2;
+            ctx.fillStyle = 'rgba(30, 58, 138, 0.85)';
+            ctx.fillRect(mx - metrics.width / 2 - pad, my - 20, metrics.width + pad * 2, 14);
+            ctx.fillStyle = '#e0e7ff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(trkLabel, mx, my - 13);
+            ctx.restore();
+          }
+
+          // Direction arrow + label
+          this._drawArrow(ctx, mx, my, angle, 5, '#e2e8f0');
           ctx.save();
           ctx.fillStyle = '#e2e8f0';
           ctx.font = 'bold 9px sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(`→ ${stB.name}`, (start.x + end.x) / 2 + 8, (start.y + end.y) / 2);
+          ctx.fillText(`Direction ${stB.name}`, mx + 8, my + 10);
           ctx.restore();
         }
       }
@@ -1083,10 +1104,36 @@ export class Renderer {
         // PA / PB labels
         ctx.fillText('PA', start.x + ox, start.y + oy);
         ctx.fillText('PB', end.x + ox, end.y + oy);
-        // Direction arrow at midpoint
+        // Direction arrow + labels at midpoint
         const midX = (start.x + end.x) / 2;
         const midY = (start.y + end.y) / 2;
         this._drawArrow(ctx, midX, midY, angle, 5, '#e2e8f0');
+
+        // Track label (OSM ref/name/trackRef)
+        const trkLabel = trc.trackRef || trc.ref || trc.name || '';
+        if (trkLabel) {
+          ctx.save();
+          ctx.font = 'bold 8px sans-serif';
+          const metrics = ctx.measureText(trkLabel);
+          const pad = 2;
+          ctx.fillStyle = 'rgba(30, 58, 138, 0.85)';
+          ctx.fillRect(midX - metrics.width / 2 - pad, midY - 18, metrics.width + pad * 2, 12);
+          ctx.fillStyle = '#e0e7ff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(trkLabel, midX, midY - 12);
+          ctx.restore();
+        }
+
+        // Direction label
+        const destName = ptB.stationId ? (world.getStationById(ptB.stationId)?.name || 'PB') : 'PB';
+        ctx.save();
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = 'bold 8px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`Direction ${destName}`, midX + 6, midY + 8);
+        ctx.restore();
       }
       ctx.restore();
     }

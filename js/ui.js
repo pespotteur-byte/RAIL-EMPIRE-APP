@@ -2227,11 +2227,9 @@ export class UI {
         ctx.fillText(st.name, p.x + 10, p.y + 4);
       }
 
-      // Draw the planned route between consecutive stops (magenta = 'bon trajet'
-      // from the remaster schematic) using the same routes that will be saved.
-      // Preview routes are recomputed on every change.
+      // Draw the 'objectif' route (ORM / bon trajet) in magenta behind the actual trace.
       if (this.schedStops.length > 1) {
-        ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
         const drawArrow = (x, y, angle, size = 5, color = '#ff00ff') => {
           ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
           ctx.fillStyle = color;
@@ -2251,7 +2249,7 @@ export class UI {
           const pL = tileMap.worldToScreen(geom[geom.length - 1].lat, geom[geom.length - 1].lon, canvas.width, canvas.height);
           ctx.lineTo(pL.x, pL.y);
           ctx.stroke();
-          // Annex 18 — sens de circulation arrow along the preview route
+          // Annex 18 — sens de circulation arrow along the objectif route
           if (geom.length >= 4) {
             const mid = Math.floor(geom.length / 2);
             const pMid = tileMap.worldToScreen(geom[mid].lat, geom[mid].lon, canvas.width, canvas.height);
@@ -2264,11 +2262,12 @@ export class UI {
           const stopA = this.schedStops[i], stopB = this.schedStops[i + 1];
           const ca = this._getStopCoords(stopA), cb = this._getStopCoords(stopB);
           if (!ca || !cb) continue;
-          // No straight-line fallback: if the preview route is not computed yet,
+          // No straight-line fallback: if the objectif route is not computed yet,
           // draw nothing for this leg.
-          const geom = this._schedPreviewRoutes?.[i];
+          const geom = this._schedObjectifRoutes?.[i];
           if (geom && geom.length >= 2) drawGeom(geom);
         }
+        ctx.setLineDash([]);
       }
 
       // Draw voie points on schedule map (viewport-culled for performance)
@@ -3665,25 +3664,28 @@ export class UI {
   async _recalcPreviewRoutes() {
     if (!this.schedStops || this.schedStops.length < 2) {
       this._schedPreviewRoutes = [];
+      this._schedObjectifRoutes = [];
       return;
     }
     if (!this._manualRoutes) this._manualRoutes = [];
+    const objectifRoutes = [];
     const routes = [];
     for (let i = 0; i < this.schedStops.length - 1; i++) {
+      const objectif = await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]);
+      const densifiedObj = (objectif && objectif.length >= 2) ? this._densifyRoute([...objectif]) : null;
+      objectifRoutes.push(densifiedObj);
       if (this._manualRoutes[i]) {
         routes.push(this._manualRoutes[i]);
+      } else if (densifiedObj) {
+        this._manualRoutes[i] = densifiedObj;
+        routes.push(this._manualRoutes[i]);
       } else {
-        const route = await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]);
-        if (route && route.length >= 2) {
-          this._manualRoutes[i] = this._densifyRoute(route);
-          routes.push(this._manualRoutes[i]);
-        } else {
-          routes.push(null);
-        }
+        routes.push(null);
       }
     }
     // Trim if stops shrank
     this._manualRoutes.length = this.schedStops.length - 1;
+    this._schedObjectifRoutes = objectifRoutes;
     this._schedPreviewRoutes = routes;
     if (this._drawSchedMap) this._drawSchedMap();
   }
@@ -4341,7 +4343,40 @@ export class UI {
 
     document.getElementById('modal-line')?.classList.remove('hidden');
     this.renderLineStops();
+    this._populateLineStationSelect();
+    this._setupLineStationSearch();
     setTimeout(() => this.setupLineMap(), 50);
+  }
+
+  _populateLineStationSelect(filter = '') {
+    const select = document.getElementById('line-station-select');
+    if (!select) return;
+    const term = filter.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const stations = (this.game.world.stations || [])
+      .filter(st => {
+        const name = (st.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return name.includes(term);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    select.innerHTML = stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+    select.dataset.stations = JSON.stringify(stations.map(s => ({ id: s.id, name: s.name })));
+  }
+
+  _setupLineStationSearch() {
+    const search = document.getElementById('line-station-search');
+    const select = document.getElementById('line-station-select');
+    const btn = document.getElementById('btn-line-add-station');
+    if (search) {
+      search.oninput = () => this._populateLineStationSelect(search.value);
+    }
+    if (btn) {
+      btn.onclick = () => {
+        const stId = select?.value;
+        if (!stId) return;
+        const station = this.game.world.getStationById(stId);
+        if (station) this.addLineStop(station);
+      };
+    }
   }
 
   setupLineMap() {
@@ -7384,11 +7419,12 @@ export class UI {
         <span class="ig-cati-title">Départs</span>
         <span class="ig-cati-clock">${nowStr}</span>
       </div>
-      <div class="ig-cati-cols">
+      <div class="ig-cati-cols" style="padding-right:26px">
         <div class="ig-cati-col">${col(left)}</div>
         <div class="ig-cati-col">${col(right)}</div>
       </div>
-      <div class="ig-cati-footer">24h • Toutes destinations</div>
+      <div class="ig-cati-footer"><span>24h • Toutes destinations</span><span>${nowStr}</span></div>
+      <div class="ig-cati-side">départs</div>
     </div>`;
   }
 
@@ -7602,8 +7638,9 @@ export class UI {
         <span class="ig-cati-title">Départs — Affichage complet</span>
         <span class="ig-cati-clock">${nowStr}</span>
       </div>
-      <div class="ig-cati-full">${head}${dep.length ? dep.map(cell).join('') : '<div class="ig-cati-empty">Aucun départ</div>'}</div>
-      <div class="ig-cati-footer">24h • Toutes destinations</div>
+      <div class="ig-cati-full" style="padding-right:26px">${head}${dep.length ? dep.map(cell).join('') : '<div class="ig-cati-empty">Aucun départ</div>'}</div>
+      <div class="ig-cati-footer"><span>24h • Toutes destinations</span><span>${nowStr}</span></div>
+      <div class="ig-cati-side">départs</div>
     </div>`;
   }
 
@@ -7624,6 +7661,7 @@ export class UI {
         <div class="ig-quai-num">${t.name.split(' ')[0] || t.name} ${trainNum}</div>
       </div>
       <div class="ig-quai-right">
+        <div class="ig-quai-watermark">départ</div>
         <div class="ig-quai-stops-title">Gares desservies</div>
         <div class="ig-quai-stops">${stops || '<div class="ig-quai-stop">Terminus</div>'}</div>
       </div>
@@ -7653,14 +7691,15 @@ export class UI {
       </div>`;
     };
     const ticker = 'VÉRIFIEZ LES HORAIRES EN TEMPS RÉEL.  ' + (station?.name || '').toUpperCase();
-    return `<div class="ig-palette-board">
+    return `<div class="ig-palette-board" style="position:relative">
+      <div style="position:absolute;top:10px;right:14px;font-style:italic;font-weight:900;font-size:18px;color:#fff;letter-spacing:1px;z-index:2">SNCF</div>
       <div class="ig-palette-header">
         <span>Trains au départ</span>
         <span>Train departures</span>
         <span>Abfahrende Züge</span>
       </div>
       <div class="ig-palette-subheader">
-        <span>Train</span><span>n°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
+        <span>Heure</span><span>Destination</span><span>Particularités</span><span>n°</span><span>Voie</span>
       </div>
       <div class="ig-palette-rows">${rows.length ? rows.map(buildRow).join('') : '<div class="ig-palette-empty">AUCUN TRAIN PRÉVU</div>'}</div>
       <div class="ig-palette-footer">

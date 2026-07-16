@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784210000">
+  <link rel="stylesheet" href="style.css?v=1784213869">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -1105,7 +1105,20 @@
               <input type="color" id="line-color" value="#3b82f6">
             </div>
           </div>
-          <p class="sched-hint">Cliquer sur les gares de la carte pour definir le parcours de la ligne. Les troncons communs avec d'autres lignes sont automatiquement partages.</p>
+          <p class="sched-hint">Cliquer sur les gares de la carte pour definir le parcours de la ligne. Les troncons communs avec d'autres lignes sont automatiquement partages. Ou utilisez la recherche ci-dessous.</p>
+          <div class="form-row" style="margin-top:8px;margin-bottom:8px">
+            <div class="form-group" style="flex:1;min-width:120px">
+              <label>Rechercher une gare</label>
+              <input type="text" id="line-station-search" placeholder="Tapez le nom d'une gare..." autocomplete="off">
+            </div>
+            <div class="form-group" style="flex:1;min-width:160px">
+              <label>Gare</label>
+              <select id="line-station-select" style="width:100%;font-size:12px"></select>
+            </div>
+            <div class="form-group" style="align-self:flex-end">
+              <button type="button" id="btn-line-add-station" class="btn-sm" style="height:34px">Ajouter a la ligne</button>
+            </div>
+          </div>
           <div class="sched-map-container">
             <canvas id="line-map-canvas"></canvas>
           </div>
@@ -1374,6 +1387,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784210000"></script>
+  <script type="module" src="js/main.js?v=1784213869"></script>
 </body>
 </html>

@@ -276,9 +276,17 @@ export class GraphMarche {
     // GM-03 — Axe 24h fixe (jTrainGraph)
     const minTime = 0, maxTime = 1440, timeRange = 1440;
 
-    // Draw grid — Y axis (stations)
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 0.5;
+    // Draw station horizontal bands (jTrainGraph-style alternating rows)
+    for (let i = 0; i < refStops.length - 1; i++) {
+      const y0 = pad.top + (refDists[i] / totalDist) * chartH;
+      const y1 = pad.top + (refDists[i + 1] / totalDist) * chartH;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(30, 41, 59, 0.35)' : 'rgba(30, 41, 59, 0.15)';
+      ctx.fillRect(pad.left, y0, chartW, y1 - y0);
+    }
+
+    // Draw grid — Y axis (station lines + labels)
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 0.6;
     for (let i = 0; i < refStops.length; i++) {
       const y = pad.top + (refDists[i] / totalDist) * chartH;
       ctx.beginPath();
@@ -286,31 +294,32 @@ export class GraphMarche {
       ctx.lineTo(W - pad.right, y);
       ctx.stroke();
       // Station name
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '9px sans-serif';
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 9px sans-serif';
       ctx.textAlign = 'right';
-      const name = stationNames[i].length > 12 ? stationNames[i].substring(0, 11) + '…' : stationNames[i];
-      ctx.fillText(name, pad.left - 4, y + 3);
+      ctx.textBaseline = 'middle';
+      const name = stationNames[i].length > 14 ? stationNames[i].substring(0, 13) + '…' : stationNames[i];
+      ctx.fillText(name, pad.left - 6, y);
     }
 
-    // Draw grid — X axis (time, every 30 min) over 24h
-    for (let h = 0; h <= 24; h++) {
-      for (let m = 0; m < 60; m += 30) {
-        const t = h * 60 + m;
-        if (t > 1440) continue;
-        const x = pad.left + (t / 1440) * chartW;
-        ctx.strokeStyle = m === 0 ? '#1e293b' : 'rgba(30,41,59,0.5)';
-        ctx.lineWidth = m === 0 ? 0.8 : 0.3;
-        ctx.beginPath();
-        ctx.moveTo(x, pad.top);
-        ctx.lineTo(x, H - pad.bottom);
-        ctx.stroke();
-        if (m === 0) {
-          ctx.fillStyle = '#94a3b8';
-          ctx.font = '10px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(`${String(h).padStart(2, '0')}:00`, x, H - 8);
-        }
+    // Draw grid — X axis (hours, with lighter 15-min ticks)
+    for (let t = 0; t <= 1440; t += 15) {
+      const x = pad.left + (t / 1440) * chartW;
+      const isHour = t % 60 === 0;
+      ctx.strokeStyle = isHour ? '#334155' : 'rgba(51, 65, 85, 0.35)';
+      ctx.lineWidth = isHour ? 0.8 : 0.3;
+      ctx.beginPath();
+      ctx.moveTo(x, pad.top);
+      ctx.lineTo(x, H - pad.bottom);
+      ctx.stroke();
+      if (isHour) {
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`${String(Math.floor(t / 60)).padStart(2, '0')}:00`, x, H - pad.bottom + 4);
+        // Top label too
+        ctx.fillText(`${String(Math.floor(t / 60)).padStart(2, '0')}:00`, x, pad.top - 14);
       }
     }
 
@@ -370,24 +379,25 @@ export class GraphMarche {
           ctx.fill();
         }
 
-        // GM-03 — labels train/heure aux extrémités
-        const firstStop = m.svc.stops[start];
-        const lastStop = m.svc.stops[end];
-        const firstRef = refStops.findIndex(rs => rs.stationId === firstStop.stationId);
-        const lastRef = refStops.findIndex(rs => rs.stationId === lastStop.stationId);
-        if (firstRef >= 0 && lastRef >= 0) {
-          const y0 = pad.top + (refDists[firstRef] / totalDist) * chartH;
-          const y1 = pad.top + (refDists[lastRef] / totalDist) * chartH;
-          const t0 = firstStop.departureTime ?? firstStop.arrivalTime ?? 0;
-          const t1 = lastStop.arrivalTime ?? lastStop.departureTime ?? 0;
-          const x0 = pad.left + (t0 / 1440) * chartW;
-          const x1 = pad.left + (t1 / 1440) * chartW;
+        // GM-03 — label at the middle of the trace to avoid overlap
+        const midIdx = Math.floor((start + end) / 2);
+        const midStop = m.svc.stops[midIdx];
+        const midRef = refStops.findIndex(rs => rs.stationId === midStop.stationId);
+        const midTime = midStop.arrivalTime ?? midStop.departureTime ?? 0;
+        if (midRef >= 0) {
+          const mx = pad.left + (midTime / 1440) * chartW;
+          const my = pad.top + (refDists[midRef] / totalDist) * chartH;
+          const label = m.svc.name;
+          ctx.save();
+          ctx.font = 'bold 10px sans-serif';
+          const metrics = ctx.measureText(label);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.fillRect(mx + 4, my - 13, metrics.width + 8, 18);
           ctx.fillStyle = color;
-          ctx.font = '10px sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText(`${m.svc.name}`, x0 + 4, y0 - 4);
-          ctx.textAlign = 'right';
-          ctx.fillText(`${m.svc.name}`, x1 - 4, y1 - 4);
+          ctx.textBaseline = 'middle';
+          ctx.fillText(label, mx + 8, my - 4);
+          ctx.restore();
         }
 
         legendItems.push({ name: m.svc.name, color });

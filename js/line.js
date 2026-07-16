@@ -112,13 +112,16 @@ export class LineManager {
         const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
         const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
 
+        const routeLabel = route.find(p => p.trackRef || p.ref || p.name);
+        const trackName = routeLabel ? (routeLabel.trackRef || routeLabel.ref || routeLabel.name) : `${stA.name} - ${stB.name}`;
+
         const track = world.addTrack({
           stationA: stA.id,
           stationB: stB.id,
           distance: Math.round(distance),
           maxSpeed: avgSpeed,
           electrified: true,
-          name: `${stA.name} - ${stB.name}`,
+          name: trackName,
           route,
         });
         trackIds.push(track.id);

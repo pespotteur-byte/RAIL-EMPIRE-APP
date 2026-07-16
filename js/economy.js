@@ -71,25 +71,68 @@ export class Economy {
   processServiceRevenue(service) {}
 
   /**
+   * Péage infrastructure (redevance d'utilisation des voies).
+   * Dépend de la distance, du pays, de la vitesse max de la ligne, du nombre
+   * de voies, de l'électrification, et de la masse du convoi.
+   */
+  _calcInfrastructureToll(distanceKm, route, rame, country = 'FR') {
+    if (!route || route.length < 2) return Math.round(distanceKm * 2.0);
+    // Extract line metadata from the route
+    const speeds = route.filter(p => p && p.maxSpeed > 0).map(p => p.maxSpeed);
+    const maxLineSpeed = speeds.length ? Math.max(...speeds) : (rame.maxSpeed || 160);
+    const avgLineSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : maxLineSpeed;
+    const tracks = route.filter(p => p && p.tracks > 0).map(p => p.tracks);
+    const avgTracks = tracks.length ? (tracks.reduce((a, b) => a + b, 0) / tracks.length) : 1;
+    const electrified = route.filter(p => p && p.electrified).length / route.length;
+    const isHighSpeed = maxLineSpeed >= 250;
+    const isLgv = maxLineSpeed >= 200;
+
+    // Country base rate (EUR / train-km)
+    const countryRates = {
+      FR: 3.0, DE: 2.6, IT: 2.4, ES: 2.2, BE: 2.5, NL: 2.5, CH: 3.2, AT: 2.3,
+      GB: 2.8, PL: 1.6, CZ: 1.5, HU: 1.4, RO: 1.2, SE: 2.0, NO: 2.1, DK: 2.4,
+      PT: 1.9, FI: 1.8, IE: 2.0, LU: 2.3, SI: 1.7, SK: 1.5, HR: 1.6, GR: 1.4,
+      BG: 1.2, LT: 1.3, LV: 1.3, EE: 1.3, RS: 1.4, BA: 1.3, MK: 1.2, AL: 1.1,
+    };
+    const baseRate = countryRates[country] || 2.0;
+
+    // Multipliers
+    const speedMult = isHighSpeed ? 2.5 : (isLgv ? 1.8 : (avgLineSpeed >= 160 ? 1.3 : (avgLineSpeed >= 120 ? 1.0 : 0.8)));
+    const trackMult = avgTracks >= 3 ? 1.2 : (avgTracks >= 2 ? 1.0 : 0.85);
+    const electrifiedMult = electrified > 0.5 ? 1.15 : 1.0;
+    const usageMult = route.some(p => p && p.usage === 'main') ? 1.0 : 0.85;
+
+    // Weight factor (heavier trains cause more wear)
+    const tonnage = rame.totalTonnage || 100;
+    const weightFactor = 0.9 + tonnage / 2000;
+
+    const toll = distanceKm * baseRate * speedMult * trackMult * electrifiedMult * usageMult * weightFactor;
+    return Math.round(toll);
+  }
+
+  /**
    * Process revenue at each station stop.
    * - Passengers: some descend (revenue for their trip), new ones board
    * - Freight: some unloaded (revenue), new freight loaded
    */
-  processStopRevenue(service, stationName, distFromPrev, isFirst, isTerminus, stationId) {
+  processStopRevenue(service, stationName, distFromPrev, isFirst, isTerminus, stationId, legRoute) {
     if (!service || !service.rame) return;
     if (distFromPrev <= 0 && !isFirst) return;
 
-    // Per-segment operating cost: péage + distance + vitesse max + usure
+    // Per-segment operating cost: péage réaliste + distance + vitesse max + usure
     if (!isFirst && distFromPrev > 0) {
       const tonnage = service.rame.totalTonnage || 100;
       const maxSpeed = service.rame.maxSpeed || 100;
-      // base énergie/usure (€/t·km), péage (fixe €/km), surcoût vitesse (>100 km/h)
+      // base énergie/usure (€/t·km)
       const energyCost = Math.round(distFromPrev * tonnage * 0.5);
-      const tollCost = Math.round(distFromPrev * 2.0);
+      // péage infrastructure (track access charge)
+      const station = typeof window !== 'undefined' && window.game?.world?.getStationById ? window.game.world.getStationById(stationId) : null;
+      const country = station?.country || 'FR';
+      const tollCost = this._calcInfrastructureToll(distFromPrev, legRoute || [], service.rame, country);
       const speedCost = Math.round(distFromPrev * Math.max(0, maxSpeed - 100) / 50);
       const opCost = energyCost + tollCost + speedCost;
       if (opCost > 0) {
-        this.addExpense(opCost, 'exploitation', `Trajet ${Math.round(distFromPrev)} km — ${service.name} (${maxSpeed} km/h)`);
+        this.addExpense(opCost, 'exploitation', `Trajet ${Math.round(distFromPrev)} km — ${service.name} (${maxSpeed} km/h) — péage ${tollCost.toLocaleString()} EUR`);
         if (service.lineId) this.addLineExpense(service.lineId, opCost);
       }
     }
@@ -106,10 +149,16 @@ export class Economy {
     // Initialize onboard counts on first stop
     if (service._onboardPax == null) service._onboardPax = 0;
     if (service._onboardFreight == null) service._onboardFreight = 0;
+    if (service._contractFreight == null) service._contractFreight = 0;
 
     if (isNonRevenue) return;
 
     const delayTolerance = (typeof window !== 'undefined' && window.game?.realismSettings?.delayTolerance) ?? 30;
+
+    const g = typeof window !== 'undefined' ? window.game : null;
+    const assignedContract = service.assignedContractId && g?.freightManager?.contracts
+      ? g.freightManager.contracts.find(c => c.id === service.assignedContractId && c.active)
+      : null;
 
     // --- DESCENTE / DÉCHARGEMENT (revenue from those who rode this segment) ---
     const rng = getGlobalRng();
@@ -123,6 +172,27 @@ export class Economy {
       const freightUnloadRate = isTerminus ? 1.0 : Math.min(0.65, (0.10 + stopRatio * 0.35) * rndFrt);
 
       const paxDescend = Math.round(service._onboardPax * paxDescendRate);
+
+      // Contrat assigné : déchargement à la gare destination
+      let contractUnload = 0;
+      let contractRevenue = 0;
+      if (assignedContract && stationId === assignedContract.toId && service._contractFreight > 0 && !service._iteCargoMismatch) {
+        contractUnload = service._contractFreight;
+        service._contractFreight = 0;
+        service._contractDelivered = (service._contractDelivered || 0) + contractUnload;
+        if (g?.freightManager?.fulfillAtStation) {
+          const delay = service.train?.delay || 0;
+          const isDelayed = delay >= delayTolerance;
+          const isEarly = delay <= -10;
+          const res = g.freightManager.fulfillAtStation(service, stationId, contractUnload, isDelayed, isEarly);
+          contractRevenue = (res.fulfilled || []).reduce((s, f) => s + (f.payment || 0), 0);
+        }
+        if (contractRevenue > 0) {
+          this.addRevenue(contractRevenue, 'fret', `${stationName}: contrat ${assignedContract.cargoName} ${contractUnload}${assignedContract.unit} — ${service.name}`);
+          if (service.lineId) this.addLineRevenue(service.lineId, contractRevenue);
+        }
+      }
+
       const freightUnload = service._iteCargoMismatch ? 0 : Math.round(service._onboardFreight * freightUnloadRate);
 
       // Revenue = descended passengers * distance they traveled * ticket price
@@ -136,18 +206,13 @@ export class Economy {
       else priceMult = 2.5;
 
       let paxRevenue = Math.round(paxDescend * distFromPrev * this.ticketPricePerKm * priceMult);
-      let frtRevenue = 0; // calcul fret (contrat + générique) plus bas
 
-      // Delay penalty: reduce passenger revenue by 25% (freight handled below)
+      // Delay penalty: reduce passenger revenue by 25% (contract already penalized in fulfillAtStation)
       if (service.train && service.train.delay >= delayTolerance) {
-        const totalRev = paxRevenue + frtRevenue;
-        const reducedTotal = Math.round(totalRev * 0.75);
-        const penalty = totalRev - reducedTotal;
-        if (penalty > 0) this.addPenalty(penalty, `Retard >${delayTolerance}min ${service.name} @ ${stationName}`);
-        // Distribute reduced revenue proportionally
-        if (totalRev > 0) {
-          paxRevenue = Math.round(reducedTotal * (paxRevenue / totalRev));
-          frtRevenue = reducedTotal - paxRevenue;
+        const penalty = Math.round(paxRevenue * 0.25);
+        if (penalty > 0) {
+          this.addPenalty(penalty, `Retard >${delayTolerance}min ${service.name} @ ${stationName}`);
+          paxRevenue -= penalty;
         }
       }
 
@@ -162,38 +227,21 @@ export class Economy {
       }
       if (freightUnload > 0) {
         this.totalFreightTonnes += freightUnload;
-        // Section X — écoulement des contrats fret en gare destination
-        let fulfilledQty = 0, contractRevenue = 0;
-        if (isTerminus && stationId && typeof window !== 'undefined' && window.game?.freightManager?.fulfillAtStation) {
-          const delay = service.train?.delay || 0;
-          const isDelayed = delay >= delayTolerance;
-          const isEarly = delay <= -10;
-          const res = window.game.freightManager.fulfillAtStation(service, stationId, freightUnload, isDelayed, isEarly);
-          fulfilledQty = Math.max(0, freightUnload - (res.remainingTonnes || 0));
-          contractRevenue = (res.fulfilled || []).reduce((s, f) => s + (f.payment || 0), 0);
-        }
-        const genericUnload = freightUnload - fulfilledQty;
-        let genericRevenue = genericUnload > 0 ? Math.round(genericUnload * distFromPrev * this.freightPricePerTKm) : 0;
+        let genericRevenue = Math.round(freightUnload * distFromPrev * this.freightPricePerTKm);
         const isDelayed = (service.train?.delay || 0) >= delayTolerance;
         if (isDelayed && genericRevenue > 0) genericRevenue = Math.round(genericRevenue * 0.75); // pénalité retard 25%
-        const totalFrtRevenue = contractRevenue + genericRevenue;
-        if (totalFrtRevenue > 0) {
-          this.addRevenue(totalFrtRevenue, 'fret', `${stationName}: ${freightUnload}t déch. (${Math.round(distFromPrev)} km) — ${service.name}`);
-          if (service.lineId) this.addLineRevenue(service.lineId, totalFrtRevenue);
+        if (genericRevenue > 0) {
+          this.addRevenue(genericRevenue, 'fret', `${stationName}: fret générique ${freightUnload}t (${Math.round(distFromPrev)} km) — ${service.name}`);
+          if (service.lineId) this.addLineRevenue(service.lineId, genericRevenue);
         }
-        // Fret hors contrat : le tonnage réellement déchargé par un train du
-        // joueur alimente aussi les stats Marchandises + Industrie. Le type de
-        // chargement est déduit des wagons de la rame. Le "contrat" n'est
-        // compté qu'au terminus (1 acheminement = 1 contrat réalisé).
+        // Fret hors contrat : le tonnage générique déchargé alimente aussi les stats Marchandises + Industrie.
         try {
-          const g = window.game;
           if (g?.cargoTypes?.recordContract) {
             const cType = this._rameCargoType(service.rame);
-            g.cargoTypes.recordContract(cType, freightUnload, frtRevenue, isTerminus);
+            g.cargoTypes.recordContract(cType, freightUnload, genericRevenue, isTerminus);
             if (g.industrialClients?.stats) {
-              if (isTerminus) g.industrialClients.stats.contractsGenerated++;
               g.industrialClients.stats.totalTonnage += freightUnload;
-              g.industrialClients.stats.totalRevenue += frtRevenue;
+              g.industrialClients.stats.totalRevenue += genericRevenue;
             }
           }
         } catch (e) { /* graceful */ }
@@ -205,8 +253,17 @@ export class Economy {
 
     // --- MONTÉE / CHARGEMENT (new passengers/freight board) ---
     if (!isTerminus) {
+      // Contrat assigné : chargement au départ
+      if (isFirst && assignedContract && stationId === assignedContract.fromId && service._contractFreight === 0) {
+        const contractLoad = Math.min(assignedContract.quantity, maxFreight);
+        if (contractLoad > 0) {
+          service._contractFreight = contractLoad;
+          assignedContract.progress = 0.5;
+        }
+      }
+
       const availPaxSlots = maxPax - service._onboardPax;
-      const availFreightSlots = maxFreight - service._onboardFreight;
+      const availFreightSlots = Math.max(0, maxFreight - service._onboardFreight - service._contractFreight);
       // Randomized boarding: 30-80% of available slots
       const paxBoardRate = 0.30 + rng.random() * 0.50;
       const frtBoardRate = 0.20 + rng.random() * 0.50;

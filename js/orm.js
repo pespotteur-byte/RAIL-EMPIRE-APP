@@ -164,6 +164,7 @@ export class ORMClient {
           service,
           name: el.tags?.name || '',
           ref: el.tags?.ref || '',
+          trackRef: el.tags?.['railway:track_ref'] || el.tags?.track_ref || '',
           geometry: el.geometry.map(p => ({ lat: p.lat, lon: p.lon })),
           nodeIds: el.nodes || [],
         };
@@ -251,8 +252,8 @@ export class ORMClient {
 
         const dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
 
-        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
-        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
+        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
+        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
 
         nodes.get(aKey).edges.push(edge);
         nodes.get(bKey).edges.push(reverseEdge);
@@ -304,8 +305,8 @@ export class ORMClient {
         if (!nodes.has(aKey)) nodes.set(aKey, { key: aKey, lat: geom[i].lat, lon: geom[i].lon, edges: [] });
         if (!nodes.has(bKey)) nodes.set(bKey, { key: bKey, lat: geom[i + 1].lat, lon: geom[i + 1].lon, edges: [] });
         const dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
-        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
-        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id };
+        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
+        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
         nodes.get(aKey).edges.push(edge);
         nodes.get(bKey).edges.push(reverseEdge);
       }
@@ -503,6 +504,7 @@ export class ORMClient {
       lat: startNode.lat, lon: startNode.lon,
       maxSpeed: capSpeed(edges[0].maxSpeed), electrified: edges[0].electrified !== false,
       tracks: edges[0].tracks || 1, wayId: edges[0].wayId,
+      name: edges[0].name || '', ref: edges[0].ref || '', trackRef: edges[0].trackRef || '',
     }];
     for (const e of edges) {
       const n = graph.nodes.get(e.to);
@@ -510,6 +512,7 @@ export class ORMClient {
         lat: n.lat, lon: n.lon,
         maxSpeed: capSpeed(e.maxSpeed), electrified: e.electrified !== false,
         tracks: e.tracks || 1, wayId: e.wayId, usage: e.usage, service: e.service,
+        name: e.name || '', ref: e.ref || '', trackRef: e.trackRef || '',
       });
     }
     return path;
@@ -612,6 +615,7 @@ export class ORMClient {
     const east = Math.max(fromLon, toLon) + padding;
 
     const allWays = await this.fetchArea(south, west, north, east);
+    const wayById = new Map(allWays.map(w => [w.id, w]));
     if (allWays.length === 0) return { voiePoints: [], troncons: [] };
 
     // Build node-level adjacency graph from ALL ways (no filtering!)
@@ -734,9 +738,11 @@ export class ORMClient {
             return sum + haversine(trcRoute[idx - 1].lat, trcRoute[idx - 1].lon, p.lat, p.lon);
           }, 0);
           // Keep ALL tronçons — no dédoublonnage of parallel tracks!
+          const wayMeta = wayById.get(chainWayId) || {};
           resultTroncons.push({
             pointA: vpAId, pointB: vpBId,
-            route: trcRoute, distance: Math.round(dist * 10) / 10
+            route: trcRoute, distance: Math.round(dist * 10) / 10,
+            name: wayMeta.name || '', ref: wayMeta.ref || '', trackRef: wayMeta.trackRef || ''
           });
         }
       }

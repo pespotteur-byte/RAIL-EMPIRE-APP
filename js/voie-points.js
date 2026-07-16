@@ -31,6 +31,9 @@ export class Troncon {
     this.occupiedBy = null; // trainId currently occupying this troncon
     // TRV-01 : usure de la voie (0-100)
     this.wear = data.wear != null ? data.wear : 0;
+    this.name = data.name || '';
+    this.ref = data.ref || '';
+    this.trackRef = data.trackRef || '';
     this.lineGroupId = data.lineGroupId || null; // import group for bulk delete
   }
 }
@@ -548,6 +551,9 @@ export class VoiePointManager {
       }),
       troncons: this.troncons.map(t => {
         const o = { id: t.id, a: t.pointA, b: t.pointB, d: Math.round(t.distance * 100) / 100, w: Math.round((t.wear || 0) * 100) / 100 };
+        if (t.name) o.n = t.name;
+        if (t.ref) o.r = t.ref;
+        if (t.trackRef) o.tr = t.trackRef;
         if (t.lineGroupId) o.lg = t.lineGroupId;
         // Delta-encoded route
         if (Array.isArray(t.route) && t.route.length > 0) {
@@ -594,7 +600,7 @@ export class VoiePointManager {
             route.push({ lat: lat / 1e5, lon: lon / 1e5 });
           }
         }
-        return new Troncon({ id: d.id, pointA: d.a, pointB: d.b, route, distance: d.d, wear: d.w || 0, lineGroupId: d.lg || null });
+        return new Troncon({ id: d.id, pointA: d.a, pointB: d.b, route, distance: d.d, wear: d.w || 0, lineGroupId: d.lg || null, name: d.n || '', ref: d.r || '', trackRef: d.tr || '' });
       }
       return new Troncon(d);
     });

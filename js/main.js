@@ -1,45 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784210000';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784210000';
-import { World, createDefaultWorld } from './world.js?v=1784210000';
-import { Renderer } from './renderer.js?v=1784210000';
-import { UI } from './ui.js?v=1784210000';
-import { Economy } from './economy.js?v=1784210000';
-import { IncidentManager } from './incidents.js?v=1784210000';
-import { FreightManager } from './freight.js?v=1784210000';
-import { ScheduleManager } from './schedule.js?v=1784210000';
-import { GameStorage } from './storage.js?v=1784210000';
-import { AccountManager } from './account.js?v=1784210000';
-import { RollingStockManager } from './rolling-stock.js?v=1784210000';
-import { RameManager } from './rame.js?v=1784210000';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784210000';
-import { DepotManager } from './depot.js?v=1784210000';
-import { WorksManager } from './works.js?v=1784210000';
-import { ORMClient } from './orm.js?v=1784210000';
-import { LineManager, PlatformManager } from './line.js?v=1784210000';
-import { SillonManager } from './sillon.js?v=1784210000';
-import { VoiePointManager } from './voie-points.js?v=1784210000';
-import { Dashboard } from './dashboard.js?v=1784210000';
-import { GraphMarche } from './graph-marche.js?v=1784210000';
-import { StaffManager } from './staff.js?v=1784210000';
-import { Tutorial } from './tutorial.js?v=1784210000';
-import { Bank } from './bank.js?v=1784210000';
-import { Weather } from './weather.js?v=1784210000';
-import { Unions } from './unions.js?v=1784210000';
-import { SeasonalSchedule } from './seasonal.js?v=1784210000';
-import { Connections } from './connections.js?v=1784210000';
-import { StationUpgrades } from './station-upgrades.js?v=1784210000';
-import { A12Model } from './a12-model.js?v=1784210000';
-import { PlayerSignalManager } from './signaling.js?v=1784210000';
-import { JunctionManager } from './junctions.js?v=1784210000';
-import { CargoTypeManager } from './cargo-types.js?v=1784210000';
-import { ITEModules } from './ite-modules.js?v=1784210000';
-import { IndustrialClients } from './industrial-clients.js?v=1784210000';
-import { ShuntingManager } from './shunting.js?v=1784210000';
-import { haversineDistance } from './simulation.js?v=1784210000';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784210000';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784210000';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784210000';
-import { adminSync } from './admin-sync.js?v=1784210000';
+import { SimulationEngine } from './engine.js?v=1784213869';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784213869';
+import { World, createDefaultWorld } from './world.js?v=1784213869';
+import { Renderer } from './renderer.js?v=1784213869';
+import { UI } from './ui.js?v=1784213869';
+import { Economy } from './economy.js?v=1784213869';
+import { IncidentManager } from './incidents.js?v=1784213869';
+import { FreightManager } from './freight.js?v=1784213869';
+import { ScheduleManager } from './schedule.js?v=1784213869';
+import { GameStorage } from './storage.js?v=1784213869';
+import { AccountManager } from './account.js?v=1784213869';
+import { RollingStockManager } from './rolling-stock.js?v=1784213869';
+import { RameManager } from './rame.js?v=1784213869';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784213869';
+import { DepotManager } from './depot.js?v=1784213869';
+import { WorksManager } from './works.js?v=1784213869';
+import { ORMClient } from './orm.js?v=1784213869';
+import { LineManager, PlatformManager } from './line.js?v=1784213869';
+import { SillonManager } from './sillon.js?v=1784213869';
+import { VoiePointManager } from './voie-points.js?v=1784213869';
+import { Dashboard } from './dashboard.js?v=1784213869';
+import { GraphMarche } from './graph-marche.js?v=1784213869';
+import { StaffManager } from './staff.js?v=1784213869';
+import { Tutorial } from './tutorial.js?v=1784213869';
+import { Bank } from './bank.js?v=1784213869';
+import { Weather } from './weather.js?v=1784213869';
+import { Unions } from './unions.js?v=1784213869';
+import { SeasonalSchedule } from './seasonal.js?v=1784213869';
+import { Connections } from './connections.js?v=1784213869';
+import { StationUpgrades } from './station-upgrades.js?v=1784213869';
+import { A12Model } from './a12-model.js?v=1784213869';
+import { PlayerSignalManager } from './signaling.js?v=1784213869';
+import { JunctionManager } from './junctions.js?v=1784213869';
+import { CargoTypeManager } from './cargo-types.js?v=1784213869';
+import { ITEModules } from './ite-modules.js?v=1784213869';
+import { IndustrialClients } from './industrial-clients.js?v=1784213869';
+import { ShuntingManager } from './shunting.js?v=1784213869';
+import { haversineDistance } from './simulation.js?v=1784213869';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784213869';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784213869';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784213869';
+import { adminSync } from './admin-sync.js?v=1784213869';
 
 class RailEmpire {
   constructor() {
@@ -459,6 +459,7 @@ class RailEmpire {
     const savedDate = s.gameDate || null;
     if (savedTime != null && savedDate) this.engine.setGameTime(savedTime, savedDate);
     else this.engine.setGameTime(null, null); // anciennes sauvegardes : heure réelle
+    if (s.realism) this.realismSettings = { ...this.realismSettings, ...s.realism };
     const loadPt = this.engine.getParisTime();
     const loadTimeMin = loadPt.hours * 60 + loadPt.minutes;
     const loadDateStr = this.engine.getParisDate();
@@ -559,6 +560,7 @@ class RailEmpire {
       shunting: this.shuntingManager.toSave(),
       signals: this.signalManager.toSave(),
       rngState: this.rng ? this.rng.getState() : null,
+      realism: { ...this.realismSettings },
     };
     try { this.storage.saveGame(state).catch(e => console.warn('Auto-save failed:', e)); } catch(e) { console.warn('Auto-save failed:', e); }
   }

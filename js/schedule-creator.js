@@ -1986,6 +1986,7 @@ export class ActiveService {
       const isTerminus = this.currentStopIndex === lastArretIdx;
       // Compute distance from last 'arret' stop (sum all route segments since then)
       let distFromPrev = 0;
+      const legRoute = [];
       if (!isFirst) {
         if (this.routes && this.routes.length > 0) {
           // Find the previous 'arret' stop index
@@ -2000,6 +2001,7 @@ export class ActiveService {
               : seg;
             const route = this.routes[Math.max(0, Math.min(routeIdx, this.routes.length - 1))];
             if (route && route.length >= 2) {
+              for (const p of route) legRoute.push(p);
               for (let k = 1; k < route.length; k++) {
                 distFromPrev += haversineDistance(route[k - 1].lat, route[k - 1].lon, route[k].lat, route[k].lon);
               }
@@ -2016,7 +2018,7 @@ export class ActiveService {
           if (distFromPrev <= 0) distFromPrev = 20; // ultimate fallback
         }
       }
-      economy.processStopRevenue(this, station.name, distFromPrev, isFirst, isTerminus, station.id);
+      economy.processStopRevenue(this, station.name, distFromPrev, isFirst, isTerminus, station.id, legRoute);
     }
 
     // For passage and waypoint stops, maintain speed (no stop-and-go)
@@ -2802,6 +2804,8 @@ export class ScheduleCreator {
           st: s.state || 'waiting',
           sp: Math.round((s.speed || 0) * 10) / 10,
           dl: Math.round(s.delay || 0),
+          cf: s._contractFreight || 0,
+          cd: s._contractDelivered || 0,
         };
         // Save position for mid-journey restore
         if (s.position) {
@@ -2888,6 +2892,8 @@ export class ScheduleCreator {
           _adjustedStops: d._r.as ? d._r.as.map(s => ({
             stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
           })) : null,
+          _contractFreight: d._r.cf || 0,
+          _contractDelivered: d._r.cd || 0,
         };
       }
       return expanded;
@@ -3011,6 +3017,8 @@ export class ScheduleCreator {
       svc._nextDepartureTime = null;
       svc._onboardPax = 0;
       svc._onboardFreight = 0;
+      svc._contractFreight = d._runtime?._contractFreight || 0;
+      svc._contractDelivered = d._runtime?._contractDelivered || 0;
       svc.revenueCollected = false;
       // Clear multi-trip adjusted stops to use original schedule on reload
       svc._adjustedStops = null;
