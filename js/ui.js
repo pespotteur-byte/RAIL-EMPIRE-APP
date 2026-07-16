@@ -967,7 +967,6 @@ export class UI {
     const typeSelect = document.getElementById('station-type');
     const radiusGroup = document.getElementById('station-radius-group');
     const platformsRow = document.getElementById('station-platforms-row');
-    const platformNamesGroup = document.getElementById('station-platform-names')?.closest('.form-group');
     const closedGroup = document.getElementById('station-closed')?.closest('.form-group');
     const modalTitle = document.getElementById('modal-station-title');
     const nameInput = document.getElementById('station-name');
@@ -2646,8 +2645,8 @@ export class UI {
       btn.style.background = '';
       btn.style.color = '';
       clear.classList.add('hidden');
-      const base = 'Cliquez sur une gare ou un point de voie pour construire le trajet.';
-      const editHint = hasTrace ? ' Attrapez un point blanc pour déplacer le tracé, Shift+clic sur un segment pour ajouter un point, Ctrl+clic pour supprimer.' : '';
+      const base = "Cliquer sur les gares de la carte pour définir le trajet. Les horaires sont calculés automatiquement depuis les données ORM et la rame.";
+      const editHint = hasTrace ? " Attrapez un point blanc pour déplacer le tracé, Shift+clic sur un segment pour ajouter un point, Ctrl+clic pour supprimer." : '';
       hint.textContent = base + editHint;
     }
   }
@@ -6588,16 +6587,17 @@ export class UI {
   _finalizeManualTroncon(endPoint) {
     const vpm = this.game.voiePointManager;
     const ptA = this._manualTronconPointA;
-    const route = this._manualTronconWaypoints.map(wp => ({
+    const coarseRoute = this._manualTronconWaypoints.map(wp => ({
       lat: wp.lat, lon: wp.lon, maxSpeed: wp.maxSpeed || 30,
     }));
 
-    // Calculate distance from waypoints
+    // Player note / Annex 6 — livemap manual tronçon must keep one point every 50 m.
+    const route = this._densifyRoute(coarseRoute, 0.05);
+
+    // Recalculate distance from the densified route.
     let distance = 0;
     for (let i = 1; i < route.length; i++) {
-      const dLat = (route[i].lat - route[i-1].lat) * 111;
-      const dLon = (route[i].lon - route[i-1].lon) * 111 * Math.cos(route[i].lat * Math.PI / 180);
-      distance += Math.sqrt(dLat * dLat + dLon * dLon);
+      distance += haversineDistance(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
     }
 
     vpm.addTroncon({

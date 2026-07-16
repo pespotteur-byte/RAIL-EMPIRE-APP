@@ -1040,6 +1040,21 @@ export class Renderer {
       ctx.stroke();
     }
 
+    // Player note / Annex 6 — small circle on each traced point (50 m vertex) at high zoom.
+    if (zoom >= 12 && visibleTrcs.length > 0) {
+      ctx.fillStyle = zoom >= 14 ? '#cbd5e1' : '#64748b';
+      ctx.beginPath();
+      for (const trc of visibleTrcs) {
+        if (!trc.route || trc.route.length < 2) continue;
+        for (let i = step; i < trc.route.length - 1; i += step) {
+          const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
+          ctx.moveTo(p.x + 1.5, p.y);
+          ctx.arc(p.x, p.y, zoom >= 14 ? 1.5 : 1, 0, Math.PI * 2);
+        }
+      }
+      ctx.fill();
+    }
+
     // Annex 6 — direction arrows + PA/PB markers on user tronçons at high zoom
     if (zoom >= 14 && visibleTrcs.length > 0) {
       ctx.save();
