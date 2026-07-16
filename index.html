@@ -687,7 +687,7 @@
             <div class="form-group">
               <select id="stock-wagon-subcat">
                 <option value="">— Sélectionner —</option>
-                <option value="tomber">Tombeau</option>
+                <option value="tombereau">Tombereau</option>
                 <option value="citerne">Citerne</option>
                 <option value="gaz">Gaz</option>
                 <option value="porte-auto">Porte-Auto</option>
@@ -804,19 +804,24 @@
             <div class="sched-map-col">
               <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px">
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                  <button type="button" id="btn-sched-manual" class="btn-sm" style="font-size:10px;padding:5px 10px;background:linear-gradient(135deg,#3b82f6,#2563eb);border:1px solid #2563eb;border-radius:4px;cursor:pointer;color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(59,130,246,0.35)">Créer / Tracer manuellement</button>
+                  <button type="button" id="btn-sched-manual" class="btn-sm" style="font-size:12px;padding:7px 14px;background:linear-gradient(135deg,#7c3aed,#2563eb);border:1px solid #7c3aeb;border-radius:6px;cursor:pointer;color:#fff;font-weight:700;box-shadow:0 3px 10px rgba(59,130,246,0.45);white-space:nowrap">Tracer manuellement (points 50 m)</button>
                   <button type="button" id="btn-sched-edit-trace" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Éditer le tracé</button>
                   <button type="button" id="btn-sched-delete-point" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Supprimer point</button>
                   <button type="button" id="btn-sched-clear-manual" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Effacer tracé</button>
                   <button type="button" id="btn-sched-return-mode" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Tracer le retour</button>
                   <span id="sched-mode-label" style="font-size:10px;color:var(--text2);margin-left:auto;padding:2px 6px;border-radius:4px;background:var(--bg2)">Aller</span>
                 </div>
-                <span id="sched-manual-hint" style="font-size:10px;color:var(--text3)">Cliquez sur une gare ou un point de voie pour construire le trajet.</span>
+                <span id="sched-manual-hint" style="font-size:10px;color:var(--text3)">1. Choisissez une gare/point de voie de départ. 2. Appuyez sur « Tracer manuellement ». 3. Cliquez sur la carte pour ajouter des points tous les 50 m. Shift+clic pour déplacer un point, Ctrl+clic pour supprimer.</span>
               </div>
               <div class="sched-map-container">
                 <canvas id="sched-map-canvas"></canvas>
               </div>
-              <p class="sched-hint">Gares et points de voie uniquement sur la carte. Le tracé magenta suit l'itinéraire ferroviaire ORM. Mode manuel si ORM ne trouve pas le bon chemin. Shift + clic sur le tracé pour ajouter un point, glisser pour déplacer, Ctrl + clic pour supprimer.</p>
+              <p class="sched-hint">
+                <span style="display:inline-block;width:12px;height:4px;background:#facc15;vertical-align:middle;margin:0 4px 0 0"></span>Tracé manuel (actuel)
+                <span style="display:inline-block;width:12px;height:4px;background:#e879f9;vertical-align:middle;margin:0 4px 0 8px"></span>Itinéraire ORM (objectif)
+                <span style="display:inline-block;width:12px;height:4px;background:#38bdf8;vertical-align:middle;margin:0 4px 0 8px"></span>Tracé en cours
+                — Gares/points de voie sur la carte. Mode manuel si ORM ne trouve pas le bon chemin. Shift+clic sur un segment pour ajouter un point, glisser pour déplacer, Ctrl+clic pour supprimer.
+              </p>
             </div>
             <div class="sched-form-col">
               <div class="form-row">
@@ -872,14 +877,14 @@
               <div class="form-row">
                 <div class="form-group" style="flex:1">
                   <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Jours de circulation</label>
-                  <div style="display:flex;gap:6px;flex-wrap:wrap">
-                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
-                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
-                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
-                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
-                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
-                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
-                    <label style="font-size:10px"><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
+                  <div class="sched-days-grid">
+                    <label><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
+                    <label><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
+                    <label><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
+                    <label><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
+                    <label><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
+                    <label><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
+                    <label><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
                   </div>
                 </div>
                 <div class="form-group" style="flex:1">

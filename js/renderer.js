@@ -686,6 +686,14 @@ export class Renderer {
           ctx.lineTo(p.x, p.y);
         }
         ctx.stroke();
+        // Player note / Annex 10c : visible dots along the traced route.
+        ctx.fillStyle = '#fff';
+        for (let i = step; i < route.length; i += step) {
+          const p = this.latLonToScreen(route[i].lat, route[i].lon);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
       ctx.shadowBlur = 0;
     };

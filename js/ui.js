@@ -605,6 +605,7 @@ export class UI {
   selectService(svc) {
     this.selectedService = svc;
     this._lvpKey = null; // force un rebuild complet
+    this._lastSelectedForScroll = null; // force le bandeau à scroller sur la carte
     this._syncLivemapPanel();
   }
 
@@ -653,6 +654,7 @@ export class UI {
 
   deselectService() {
     this.selectedService = null;
+    this._lastSelectedForScroll = null;
     document.getElementById('livemap-train-panel')?.classList.add('hidden');
   }
 
@@ -681,31 +683,47 @@ export class UI {
       : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
     const world = this.game.world;
     const fmt = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
+    const curIdx = svc.currentStopIndex || 0;
+
+    // Annex 5 — planned (crossed-out) vs recalculated (violet circle) times.
+    const buildTimes = (s, i) => {
+      const isFirst = i === 0;
+      const isLast = i === stops.length - 1;
+      const isWp = s.type === 'waypoint' || !s.stationId;
+      const arr = s.arrivalTime ?? s.departureTime ?? 0;
+      const dep = s.departureTime ?? s.arrivalTime ?? 0;
+      const actualArr = arr + d;
+      const actualDep = dep + d;
+      const baseLabel = isFirst ? `dép ${fmt(dep)}`
+        : isLast ? `arr ${fmt(arr)}`
+        : isWp ? `pass ${fmt(arr)}`
+        : `${fmt(arr)}–${fmt(dep)}`;
+      const actLabel = isFirst ? `dép ${fmt(actualDep)}`
+        : isLast ? `arr ${fmt(actualArr)}`
+        : isWp ? `pass ${fmt(actualArr)}`
+        : `${fmt(actualArr)}–${fmt(actualDep)}`;
+      const showRecalc = d !== 0 && i >= curIdx;
+      if (!showRecalc) return `<span class="lvp-base-time">${baseLabel}</span>`;
+      const cls = d > 0 ? 'lvp-recalc-late' : 'lvp-recalc-early';
+      return `<span class="lvp-base-time" style="text-decoration:line-through;color:#888;margin-right:4px">${baseLabel}</span><span class="lvp-recalc ${cls}">${actLabel}</span>`;
+    };
 
     const rows = stops.map((s, i) => {
       const isWp = s.type === 'waypoint' || !s.stationId;
       const name = isWp ? 'Waypoint' : (world.getStationById(s.stationId)?.name || '—');
-      const arr = s.arrivalTime ?? s.departureTime ?? 0;
-      const dep = s.departureTime ?? s.arrivalTime ?? 0;
-      let times;
-      if (i === 0) times = `dép ${fmt(dep)}`;
-      else if (i === stops.length - 1) times = `arr ${fmt(arr)}`;
-      else if (isWp) times = `pass ${fmt(arr)}`;
-      else times = `${fmt(arr)}–${fmt(dep)}`;
-      const cur = i === svc.currentStopIndex ? ' cur' : '';
-      const plat = s.platform ? ` V${s.platform}` : '';
+      const cur = i === curIdx ? ' cur' : '';
+      const plat = s.platform ? ` (Voie ${s.platform})` : '';
       const typeBadge = s.stopCode ? `<span class="lvp-stop-type">${s.stopCode}</span>` : (isWp ? '<span class="lvp-stop-type wp">WPT</span>' : '');
-      return `<div class="lvp-stop${cur}">${typeBadge}<span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${times}</span></div>`;
+      return `<div class="lvp-stop${cur}">${typeBadge}<span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${buildTimes(s, i)}</span></div>`;
     }).join('');
 
-    const upcoming = stops.slice(svc.currentStopIndex || 0)
+    const upcoming = stops.slice(curIdx)
       .filter(s => s.stationId)
       .map(s => world.getStationById(s.stationId)?.name)
       .filter(Boolean);
     const bandeau = upcoming.length ? `Prochains arrêts : ${upcoming.join('  •  ')}` : 'Service terminé';
 
     // Annex 5 — detailed situational info
-    const curIdx = svc.currentStopIndex || 0;
     const prevStop = stops[curIdx - 1];
     const curStop = stops[curIdx];
     const nextStop = stops[curIdx + 1];
@@ -721,7 +739,7 @@ export class UI {
 
     const rame = svc.rame;
     const composition = rame
-      ? `<div style="padding:6px 10px;font-size:10px;color:var(--text2);border-bottom:1px solid var(--border);background:var(--bg3)">
+      ? `<div style="padding:6px 10px;font-size:10px;color:var(--text2);border-bottom:1px solid #333;background:#0d0d0d">
            <b>Composition :</b> ${rame.name}<br>
            Long: ${rame.totalLength.toFixed(1)}m · Tonnage: ${rame.totalTonnage}t · Vmax: ${rame.maxSpeed} km/h · Traction: ${rame.traction}
          </div>`
@@ -731,10 +749,10 @@ export class UI {
     let payloadInfo = '';
     if (rame) {
       if (cat === 'fret' || rame.totalFreightCapacity > 0) {
-        const load = Math.round(rame.totalFreightCapacity * 0.7);
-        payloadInfo = `${load} t de fret transportées`;
+        const load = Math.max(0, Math.round(rame.totalFreightCapacity * 0.7));
+        payloadInfo = `${load} tonnes de frets transportées`;
       } else if (cat === 'voyageur' || rame.totalCapacity > 0) {
-        const pax = Math.round(rame.totalCapacity * 0.7);
+        const pax = Math.max(0, Math.round(rame.totalCapacity * 0.7));
         payloadInfo = `${pax} passagers à bord`;
       }
     }
@@ -747,11 +765,11 @@ export class UI {
         <button class="lvp-close" onclick="game.ui.deselectService()" title="Fermer">×</button>
       </div>
       <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
-      <div style="padding:5px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border)">${situation}</div>
-      ${t.delayReason ? `<div style="padding:4px 10px;font-size:10px;background:#7f1d1d;color:#fff;border-bottom:1px solid var(--border)">${t.delayReason}</div>` : ''}
-      <div style="padding:4px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border)">Prochain: <b>${nextName}</b> · Destination: <b>${destName}</b></div>
+      <div class="lvp-situation">${situation}</div>
+      ${t.delayReason ? `<div class="lvp-delay-reason">${t.delayReason}</div>` : ''}
+      <div class="lvp-next">Prochain: <b>${nextName}</b> · Destination: <b>${destName}</b></div>
       ${composition}
-      ${payloadInfo ? `<div style="padding:4px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)">${payloadInfo}</div>` : ''}
+      ${payloadInfo ? `<div class="lvp-payload">${payloadInfo}</div>` : ''}
       <div class="lvp-bandeau"><span class="lvp-bandeau-track">${bandeau}</span></div>
       <div class="lvp-stops">${rows}</div>
       <div class="lvp-legend">dép = départ · pass = passage · arr = arrivée</div>
@@ -816,10 +834,13 @@ export class UI {
     document.getElementById('station-name').value = '';
     document.getElementById('station-platforms').value = '4';
     document.getElementById('station-platform-names').value = '';
+    // Player note: creation mode hides platforms/connection, defaults are applied.
+    document.getElementById('station-platforms-row').style.display = 'none';
+    const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
+    if (connectGroup) { connectGroup.style.display = 'none'; }
+    document.getElementById('station-connect').value = '_nearest';
     const closedCb = document.getElementById('station-closed');
     if (closedCb) closedCb.checked = false;
-    const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
-    if (connectGroup) connectGroup.style.display = '';
     const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
     if (terminusGroup) terminusGroup.style.display = '';
     const saveBtn = document.getElementById('btn-save-station');
@@ -1223,6 +1244,8 @@ export class UI {
     // Note joueurs : GPS et type modifiables en édition
     document.getElementById('station-lat').readOnly = false;
     document.getElementById('station-lon').readOnly = false;
+    // Show hidden fields from creation mode so they can be edited.
+    document.getElementById('station-platforms-row').style.display = '';
     document.getElementById('station-type').value = station.type;
     document.getElementById('station-platforms').value = station.platforms || 4;
     document.getElementById('station-platform-names').value = (station.platformNames || []).join(', ');
@@ -1265,8 +1288,9 @@ export class UI {
     this.game.world.removeStation(stationId);
     this._editingStationId = null;
     // Restore modal state
+    document.getElementById('station-platforms-row').style.display = 'none';
     const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
-    if (connectGroup) connectGroup.style.display = '';
+    if (connectGroup) connectGroup.style.display = 'none';
     const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
     if (terminusGroup) terminusGroup.style.display = '';
     const btn = document.getElementById('btn-save-station');
@@ -3018,7 +3042,9 @@ export class UI {
 
     if (!this._schedReturnPlatforms) this._schedReturnPlatforms = {};
 
-    container.innerHTML = this.schedStops.map((stop, i) => {
+    const header = `<div class="sched-stops-header"><span title="Numéro d'ordre">#</span><span>Gare</span><span title="Type d'arrêt (arrêt / passage / waypoint)">Type</span><span title="C = Commercial, S = Service, [] = sautable (25%)">Code</span><span>Arr</span><span>Dép</span><span>Arrêt</span><span>Voie</span><span></span></div>`;
+
+    container.innerHTML = header + this.schedStops.map((stop, i) => {
       const isFirst = i === 0;
       const isLast = i === this.schedStops.length - 1;
       const travelInfo = (i > 0) ? (() => {
@@ -5879,13 +5905,18 @@ export class UI {
           } else {
             // Annex 5 / phone note : contexte "se situe entre A et B".
             const currentStops = typeof svc.getCurrentStops === 'function' ? svc.getCurrentStops() : [];
-            const prevIdx = Math.max(0, (svc.currentStopIndex || 1) - 1);
+            const curIdx = svc.currentStopIndex || 0;
+            const prevIdx = curIdx > 0 ? curIdx - 1 : 0;
+            const nextIdx = curIdx > 0 ? curIdx : Math.min(1, currentStops.length - 1);
             const prevS = currentStops[prevIdx];
-            const nextS = currentStops[svc.currentStopIndex];
+            const nextS = currentStops[nextIdx];
             const prevName = prevS?.stationName || this.game.world?.getStationById(prevS?.stationId)?.name || '';
             const nextName = nextS?.stationName || this.game.world?.getStationById(nextS?.stationId)?.name || '';
-            if (prevName && nextName) {
+            if (prevName && nextName && prevName !== nextName) {
               contextLabel = `Se situe entre ${prevName} et ${nextName}`;
+              contextClass = 'ctx-between';
+            } else if (nextName) {
+              contextLabel = `Au départ de ${nextName}`;
               contextClass = 'ctx-between';
             }
           }
@@ -5908,7 +5939,7 @@ export class UI {
         }
       }
 
-      // Next stop info — include scheduled voie if set
+      // Next stop info — Annex 4: "Prochain arrêt : X - Arrivée prévue à XhX"
       const nextStop = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
       const targetStation = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
       let nextInfo;
@@ -5920,9 +5951,12 @@ export class UI {
       } else if (svc.completed) {
         nextInfo = 'Service terminé';
       } else if (nextStop && targetStation) {
-        // For voie point waypoints, name already contains voie info
+        const fmtTime = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
         const voie = (nextStop.platform && nextStop.stationId) ? ` Voie ${nextStop.platform}` : '';
-        nextInfo = `→ ${targetStation.name}${voie}`;
+        const plannedArr = nextStop.arrivalTime ?? 0;
+        const actualArr = plannedArr + delayVal;
+        const arrStr = fmtTime(actualArr);
+        nextInfo = `Prochain arrêt : ${targetStation.name}${voie} — Arrivée prévue à ${arrStr}`;
       } else if (nextStop) {
         nextInfo = `→ ...`;
       } else {
@@ -5963,9 +5997,11 @@ export class UI {
       if (svc.rame && svc.serviceType !== 'work') {
         const rame = svc.rame;
         if (svc.category === 'fret' || rame.totalFreightCapacity > 0) {
-          payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${Math.round(rame.totalFreightCapacity * 0.7)} t de fret</span></div>`;
+          const load = Math.max(0, Math.round(rame.totalFreightCapacity * 0.7));
+          payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${load} tonnes de frets transportées</span></div>`;
         } else if (svc.category === 'voyageur' || rame.totalCapacity > 0) {
-          payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${Math.round(rame.totalCapacity * 0.7)} passagers</span></div>`;
+          const pax = Math.max(0, Math.round(rame.totalCapacity * 0.7));
+          payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${pax} passagers à bord</span></div>`;
         }
       }
 
@@ -6827,6 +6863,14 @@ export class UI {
     return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h00`;
   }
 
+  _fmtDelay(min) {
+    if (min == null || min <= 0) return "a l'heure";
+    if (min < 60) return `retard ${Math.round(min)} min.`;
+    const h = Math.floor(min / 60);
+    const m = Math.round(min % 60);
+    return m > 0 ? `retard ${h}h${m.toString().padStart(2, '0')}` : `retard ${h}h`;
+  }
+
   _showInfogareBoard() {
     const stationId = document.getElementById('infogare-station')?.value;
     const displayType = document.getElementById('infogare-display')?.value;
@@ -6943,7 +6987,7 @@ export class UI {
   _renderSncfDep(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const delayStr = t.delay > 0 ? `<span class="ig-sncf-delay">retard ${t.delay} min.</span>` : '<span class="ig-sncf-ontime">a l\'heure</span>';
+      const delayStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
       const served = t.servedStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
       const voieNum = parseInt(t.voie) || 0;
       const voieClass = voieNum > 10 ? 'ig-sncf-voie-high' : 'ig-sncf-voie-low';
@@ -6978,7 +7022,7 @@ export class UI {
   _renderSncfArr(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const delayStr = t.delay > 0 ? `<span class="ig-sncf-delay">retard ${t.delay} min.</span>` : '<span class="ig-sncf-ontime">a l\'heure</span>';
+      const delayStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
       const from = t.fromStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
       const stateStr = t.state === 'stopped_at_station' && t.isLast ? '<span class="ig-sncf-arrived">arrive</span>' : '';
       const voieNum = parseInt(t.voie) || 0;
@@ -7121,7 +7165,7 @@ export class UI {
   _renderAFLDepart(station, trains, nowStr) {
     const t = trains.find(r => r.isDeparture) || trains[0];
     if (!t) return `<div class="ig-afl-board"><div class="ig-afl-station">${station?.name || ''}</div><div class="ig-afl-msg">Aucun départ prévu</div></div>`;
-    const delay = t.delay > 0 ? `<span class="ig-afl-delay">Retard ${t.delay} min</span>` : '<span class="ig-afl-ontime">à l\'heure</span>';
+    const delay = `<span class="${t.delay > 0 ? 'ig-afl-delay' : 'ig-afl-ontime'}">${this._fmtDelay(t.delay).replace(/^retard /, 'Retard ')}</span>`;
     const via = t.servedStations?.slice(0, 4).join(' – ') || '';
     return `<div class="ig-afl-board" data-svc-id="${t.svcId}">
       <div class="ig-afl-header">${station?.name || ''} <span class="ig-afl-clock">${nowStr}</span></div>
@@ -7172,7 +7216,7 @@ export class UI {
     const lastStop = stops[stops.length - 1];
     const destStation = this.game.world.getStationById(lastStop?.stationId);
     const depTime = stops[stopIdx]?.departureTime;
-    const delayStr = svc.delay > 0 ? `Retard ${svc.delay} min` : '';
+    const delayStr = this._fmtDelay(svc.delay);
     const numCars = svc.rame?.elementDetails?.length || 8;
 
     const board = document.getElementById('infogare-board');
