@@ -2714,8 +2714,6 @@ export class ScheduleCreator {
     let minDep = null;
     for (const [id, dep] of sEntry.map) {
       if (!timeGte(timeOfDay, dep)) continue;
-      const diff = timeDiff(timeOfDay, dep);
-      if (diff > 120) continue;
       if (minId === null || timeDiff(dep, minDep) < 0) {
         minId = id;
         minDep = dep;
