@@ -6,6 +6,43 @@ const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b
 const LVM_CAT_LABELS = { voyageur: 'Voyageur', fret: 'Fret', travaux: 'Travaux', machine: 'Machine' };
 const LVM_CAT_ICONS = { voyageur: 'img/livemap/train_voyageur.png', fret: 'img/livemap/train_fret.png', travaux: 'img/livemap/train_travaux.png', machine: 'img/livemap/train_generic.png' };
 
+// Infogare image overlays — the user's annex images are used as background, dynamic text is placed on top.
+const IG_IMAGE_LAYOUTS = {
+  'sncf-dep': {
+    file: 'img/infogare/AFL-DP.png',
+    width: 1100, height: 610,
+    bg: '#0b1836',
+    header: { bg: '#fff', color: '#000' },
+    headerFields: [
+      { type: 'clock', x: 4, y: 5, w: 12, h: 6, color: '#000', bg: '#fff', fontSize: 20, align: 'left' },
+      { type: 'station', x: 25, y: 5, w: 50, h: 6, color: '#000', bg: '#fff', fontSize: 18, align: 'center', weight: 700 },
+      { type: 'static', x: 88, y: 5, w: 10, h: 6, text: 'SNCF', color: '#c00', bg: '#fff', fontSize: 14, align: 'center', style: 'font-style:italic;font-weight:900' }
+    ],
+    blocks: [
+      { y: 25.9, h: 19.2, viaY: 33.9, viaH: 5.6, remarkY: 40.8, remarkH: 4.3, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, dest:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:26}, remark:{x:30,w:55} },
+      { y: 52.3, h: 13.4, viaY: 60.3, viaH: 5.4, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, dest:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:26} },
+      { y: 78.0, h: 13.3, viaY: 85.9, viaH: 5.4, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, dest:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:26} }
+    ]
+  },
+  'sncf-arr': {
+    file: 'img/infogare/AFL-AR.png',
+    width: 1100, height: 621,
+    bg: '#0b2e12',
+    header: { bg: '#fff', color: '#000' },
+    headerFields: [
+      { type: 'clock', x: 4, y: 5, w: 12, h: 6, color: '#000', bg: '#fff', fontSize: 20, align: 'left' },
+      { type: 'station', x: 25, y: 5, w: 50, h: 6, color: '#000', bg: '#fff', fontSize: 18, align: 'center', weight: 700 },
+      { type: 'static', x: 88, y: 5, w: 10, h: 6, text: 'SNCF', color: '#c00', bg: '#fff', fontSize: 14, align: 'center', style: 'font-style:italic;font-weight:900' }
+    ],
+    blocks: [
+      { y: 23.8, h: 12.4, viaY: 31.9, viaH: 4.3, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, provenance:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:16}, voie:{x:88,w:9} },
+      { y: 40.9, h: 14.5, viaY: 49.8, viaH: 5.6, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, provenance:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:16}, voie:{x:88,w:9} },
+      { y: 59.9, h: 12.1, viaY: 67.6, viaH: 4.4, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, provenance:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:16}, voie:{x:88,w:9} },
+      { y: 77.8, h: 11.9, viaY: 85.5, viaH: 4.2, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, provenance:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:16}, voie:{x:88,w:9} }
+    ]
+  }
+};
+
 // NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
 // contenu mais sont regroupées sous une page parente via des sous-onglets.
 // child -> parent (le bouton de nav du parent reste actif sur l'enfant).
@@ -7130,8 +7167,8 @@ export class UI {
     switch (displayType) {
       case 'rer-ratp': board.innerHTML = this._renderRerRatp(station, trains, nowStr); break;
       case 'rer-sncf': board.innerHTML = this._renderRerSncf(station, trains, nowStr); break;
-      case 'sncf-dep': board.innerHTML = this._renderSncfDep(station, trains, nowStr); break;
-      case 'sncf-arr': board.innerHTML = this._renderSncfArr(station, trains, nowStr); break;
+      case 'sncf-dep': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
+      case 'sncf-arr': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
       case 'old-sncf': board.innerHTML = this._renderPalette(station, trains, nowStr); break;
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
       case 'cati-3-3': board.innerHTML = this._renderCATI3_3(station, trains, nowStr); break;
@@ -7317,7 +7354,9 @@ export class UI {
   _renderSncfDep(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const [type, num] = (t.trainNumber || t.name).split(/(?<=^[A-Za-z]+)/);
+      const m = (t.trainNumber || t.name).match(/^([A-Za-z]+)(.*)$/);
+      const type = m ? m[1] : (t.seriesName || 'TER');
+      const num = m ? m[2].trim() : (t.trainNumber || t.name);
       let statusStr = '', remark = '';
       if (t.isCancelled) {
         statusStr = `<span class="ig-sncf-cancelled">supprimé</span>`;
@@ -7368,7 +7407,9 @@ export class UI {
   _renderSncfArr(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const [type, num] = (t.trainNumber || t.name).split(/(?<=^[A-Za-z]+)/);
+      const m = (t.trainNumber || t.name).match(/^([A-Za-z]+)(.*)$/);
+      const type = m ? m[1] : (t.seriesName || 'TER');
+      const num = m ? m[2].trim() : (t.trainNumber || t.name);
       let statusStr = '', remark = '';
       if (t.isCancelled) {
         statusStr = `<span class="ig-sncf-cancelled">supprimé</span>`;
@@ -8005,5 +8046,102 @@ export class UI {
       const container = document.getElementById('shunting-container');
       this.game.shuntingManager.render(container, this.game);
     } catch(e) { console.warn('Shunting render error:', e); }
+  }
+
+  // --- Infogare image-overlay renderer (annex images as background) ---
+  _renderImageMode(displayType, station, trains, nowStr) {
+    const layout = IG_IMAGE_LAYOUTS[displayType];
+    if (!layout) return '';
+    const isArr = displayType.includes('arr');
+    const dirField = isArr ? 'provenance' : 'dest';
+
+    const fmtStyle = (f, extra = '') => {
+      const parts = [
+        `left:${f.x}%`, `top:${f.y}%`, `width:${f.w}%`, `height:${f.h}%`,
+        `color:${f.color || '#fff'}`,
+        f.bg ? `background:${f.bg}` : '',
+        `font-size:${f.fontSize || 14}px`,
+        `text-align:${f.align || 'left'}`,
+        `justify-content:${f.align === 'center' ? 'center' : (f.align === 'right' ? 'flex-end' : 'flex-start')}`,
+        f.weight ? `font-weight:${f.weight}` : '',
+        f.style || '', extra
+      ];
+      return parts.filter(Boolean).join(';');
+    };
+
+    let html = `<div class="ig-image-board" style="background-image:url('${layout.file}');">`;
+
+    // header fields
+    for (const f of layout.headerFields || []) {
+      let txt = '';
+      if (f.type === 'clock') txt = nowStr;
+      else if (f.type === 'station') txt = station?.name || '';
+      else if (f.type === 'static') txt = f.text || '';
+      html += `<div class="ig-image-field ig-image-header-field" style="${fmtStyle(f)}">${txt}</div>`;
+    }
+
+    // train blocks
+    const use = trains.slice(0, layout.blocks.length);
+    for (let i = 0; i < layout.blocks.length; i++) {
+      const b = layout.blocks[i];
+      const t = use[i];
+      html += `<div class="ig-image-block" style="top:${b.y}%;height:${b.h}%;background:${layout.bg};"></div>`;
+      if (!t) continue;
+      const m = (t.trainNumber || t.name).match(/^([A-Za-z]+)(.*)$/);
+      const type = m ? m[1] : (t.seriesName || 'TER');
+      const num = m ? m[2].trim() : (t.trainNumber || t.name);
+      const viaStops = isArr ? (t.fromStations || []) : (t.servedStations || []);
+      const stops = viaStops.slice(0, 8).join(' \u2022 ');
+      const viaText = stops;
+      let statusHtml = '', remarkTxt = '';
+      if (t.isCancelled) {
+        statusHtml = `<span style="color:#fff;background:#dc2626;padding:2px 6px;border-radius:3px;text-transform:uppercase;">supprimé</span>`;
+        remarkTxt = 'La clientèle est invitée à emprunter le train suivant.';
+      } else if (t.delay > 0) {
+        statusHtml = `<span style="color:#facc15;">retardé ${Math.round(t.delay)} min</span>`;
+        remarkTxt = t.delayReason || 'Incident en cours d\'identification';
+      } else {
+        statusHtml = `<span style="color:#4ade80;">à l'heure</span>`;
+      }
+
+      // time
+      const timeStr = this._fmtTime(isArr ? t.arrTime : t.depTime);
+      html += this._igField(b.time, timeStr, { color: '#facc15', fontSize: 18, weight: 700 }, b.y);
+      // type + number (stacked)
+      html += this._igField(b.type, type || t.seriesName || 'TER', { color: '#fff', fontSize: 13, weight: 700 }, b.y);
+      html += this._igField(b.num, num || t.trainNumber || t.name, { color: '#93c5fd', fontSize: 13, weight: 700 }, b.y + (b.num?.yOff || 0));
+      // destination / provenance
+      const destTxt = isArr ? (t.origin || '') : (t.destination || '');
+      html += this._igField(b[dirField], destTxt, { color: '#fff', fontSize: 17, weight: 700, textTransform: 'uppercase' }, b.y);
+      // via stops
+      html += this._igField(b.via, viaText, { color: '#93c5fd', fontSize: 11 }, b.y + (b.viaY - b.y));
+      // status
+      html += this._igField(b.status, statusHtml, { color: '#facc15', fontSize: 12, weight: 700, align: 'right' }, b.y);
+      // voie (arrivals)
+      if (b.voie) {
+        html += this._igField(b.voie, t.voie || '', { color: '#fff', fontSize: 16, weight: 900, align: 'center', bg: '#f59e0b' }, b.y);
+      }
+      // remark (departures)
+      if (b.remark && remarkTxt) {
+        html += this._igField(b.remark, remarkTxt, { color: '#facc15', fontSize: 11 }, b.y + (b.remarkY - b.y));
+      }
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  _igField(spec, content, extra, yOff = 0) {
+    if (!spec) return '';
+    const style = [
+      `left:${spec.x}%`, `top:${(spec.y || 0) + yOff}%`, `width:${spec.w}%`, `height:${spec.h}%`,
+      `color:${extra.color || '#fff'}`, `font-size:${extra.fontSize || 14}px`,
+      `text-align:${extra.align || 'left'}`,
+      `justify-content:${extra.align === 'center' ? 'center' : (extra.align === 'right' ? 'flex-end' : 'flex-start')}`,
+      `text-transform:${extra.textTransform || 'none'}`,
+      extra.weight ? `font-weight:${extra.weight}` : '',
+      extra.bg ? `background:${extra.bg}` : '',
+      extra.style || ''
+    ].filter(Boolean).join(';');
+    return `<div class="ig-image-field" style="${style}">${content}</div>`;
   }
 }
