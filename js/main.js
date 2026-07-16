@@ -1,45 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784232100';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784232100';
-import { World, createDefaultWorld } from './world.js?v=1784232100';
-import { Renderer } from './renderer.js?v=1784232100';
-import { UI } from './ui.js?v=1784232100';
-import { Economy } from './economy.js?v=1784232100';
-import { IncidentManager } from './incidents.js?v=1784232100';
-import { FreightManager } from './freight.js?v=1784232100';
-import { ScheduleManager } from './schedule.js?v=1784232100';
-import { GameStorage } from './storage.js?v=1784232100';
-import { AccountManager } from './account.js?v=1784232100';
-import { RollingStockManager } from './rolling-stock.js?v=1784232100';
-import { RameManager } from './rame.js?v=1784232100';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784232100';
-import { DepotManager } from './depot.js?v=1784232100';
-import { WorksManager } from './works.js?v=1784232100';
-import { ORMClient } from './orm.js?v=1784232100';
-import { LineManager, PlatformManager } from './line.js?v=1784232100';
-import { SillonManager } from './sillon.js?v=1784232100';
-import { VoiePointManager } from './voie-points.js?v=1784232100';
-import { Dashboard } from './dashboard.js?v=1784232100';
-import { GraphMarche } from './graph-marche.js?v=1784232100';
-import { StaffManager } from './staff.js?v=1784232100';
-import { Tutorial } from './tutorial.js?v=1784232100';
-import { Bank } from './bank.js?v=1784232100';
-import { Weather } from './weather.js?v=1784232100';
-import { Unions } from './unions.js?v=1784232100';
-import { SeasonalSchedule } from './seasonal.js?v=1784232100';
-import { Connections } from './connections.js?v=1784232100';
-import { StationUpgrades } from './station-upgrades.js?v=1784232100';
-import { A12Model } from './a12-model.js?v=1784232100';
-import { PlayerSignalManager } from './signaling.js?v=1784232100';
-import { JunctionManager } from './junctions.js?v=1784232100';
-import { CargoTypeManager } from './cargo-types.js?v=1784232100';
-import { ITEModules } from './ite-modules.js?v=1784232100';
-import { IndustrialClients } from './industrial-clients.js?v=1784232100';
-import { ShuntingManager } from './shunting.js?v=1784232100';
-import { haversineDistance } from './simulation.js?v=1784232100';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784232100';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784232100';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784232100';
-import { adminSync } from './admin-sync.js?v=1784232100';
+import { SimulationEngine } from './engine.js?v=1784232200';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784232200';
+import { World, createDefaultWorld } from './world.js?v=1784232200';
+import { Renderer } from './renderer.js?v=1784232200';
+import { UI } from './ui.js?v=1784232200';
+import { Economy } from './economy.js?v=1784232200';
+import { IncidentManager } from './incidents.js?v=1784232200';
+import { FreightManager } from './freight.js?v=1784232200';
+import { ScheduleManager } from './schedule.js?v=1784232200';
+import { GameStorage } from './storage.js?v=1784232200';
+import { AccountManager } from './account.js?v=1784232200';
+import { RollingStockManager } from './rolling-stock.js?v=1784232200';
+import { RameManager } from './rame.js?v=1784232200';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784232200';
+import { DepotManager } from './depot.js?v=1784232200';
+import { WorksManager } from './works.js?v=1784232200';
+import { ORMClient } from './orm.js?v=1784232200';
+import { LineManager, PlatformManager } from './line.js?v=1784232200';
+import { SillonManager } from './sillon.js?v=1784232200';
+import { VoiePointManager } from './voie-points.js?v=1784232200';
+import { Dashboard } from './dashboard.js?v=1784232200';
+import { GraphMarche } from './graph-marche.js?v=1784232200';
+import { StaffManager } from './staff.js?v=1784232200';
+import { Tutorial } from './tutorial.js?v=1784232200';
+import { Bank } from './bank.js?v=1784232200';
+import { Weather } from './weather.js?v=1784232200';
+import { Unions } from './unions.js?v=1784232200';
+import { SeasonalSchedule } from './seasonal.js?v=1784232200';
+import { Connections } from './connections.js?v=1784232200';
+import { StationUpgrades } from './station-upgrades.js?v=1784232200';
+import { A12Model } from './a12-model.js?v=1784232200';
+import { PlayerSignalManager } from './signaling.js?v=1784232200';
+import { JunctionManager } from './junctions.js?v=1784232200';
+import { CargoTypeManager } from './cargo-types.js?v=1784232200';
+import { ITEModules } from './ite-modules.js?v=1784232200';
+import { IndustrialClients } from './industrial-clients.js?v=1784232200';
+import { ShuntingManager } from './shunting.js?v=1784232200';
+import { haversineDistance } from './simulation.js?v=1784232200';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784232200';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784232200';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784232200';
+import { adminSync } from './admin-sync.js?v=1784232200';
 
 class RailEmpire {
   constructor() {
@@ -754,6 +754,12 @@ class RailEmpire {
     // et non prioritaire risque de partir avant d'être mis au garage.
     try { this.staffManager.tickRegulateurs(this.scheduleCreator.getActiveServices(), timeOfDay, dateStr, this.realismSettings); } catch(e) { /* graceful */ }
 
+    // INC-03 : incidents (gare, voie, train) doivent être appliqués AVANT
+    // scheduleTick, sinon un départ prévu à la même minute qu'un incident
+    // ne serait pas bloqué en gare.
+    this.incidentManager.update(timeOfDay, activeSchedules, this.depotManager, this.world, dateStr, this.weather?.season);
+    this.worksManager.update(dateStr, timeOfDay, this.world);
+
     // scheduleTick: moving trains already have their state managed by moveUpdate,
     // so only call scheduleTick on non-moving trains (waiting, stopped_at_station, etc.)
     for (let i = 0; i < activeSchedules.length; i++) {
@@ -762,9 +768,6 @@ class RailEmpire {
       svc.scheduleTick(timeOfDay, dateStr, this.economy);
       this.scheduleCreator.updateServiceIndexes(svc, timeOfDay);
     }
-
-    this.incidentManager.update(timeOfDay, activeSchedules, this.depotManager, this.world, dateStr, this.weather?.season);
-    this.worksManager.update(dateStr, timeOfDay, this.world);
 
     // Update repair & maintenance queues
     const { repaired, maintainedIds } = this.depotManager.updateRepairs(1);
