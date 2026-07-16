@@ -662,9 +662,30 @@ export class Renderer {
     }
   }
 
-  // LVM-01 — flèche directionnelle colorée selon la catégorie (annexe 2a).
-  // La pointe de la flèche est orientée dans le sens du mouvement (heading).
+  // LVM-01 — icônes de train directionnelles (annexes 2a images 2-5).
+  // Utilise les PNG colorés par catégorie ; la pointe de la flèche est orientée
+  // dans le sens du mouvement (heading). Fallback polygon si l'image n'est pas chargée.
   _drawTrainIcon(ctx, p, cat, color, bs, state, heading = 0) {
+    const key = (TRAIN_ICON_IMAGES[cat] ? cat : 'generic');
+    const img = TRAIN_ICON_IMAGES[key];
+    if (img && img.complete && img.naturalWidth) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(heading);
+      if (state === 'waiting') {
+        ctx.filter = 'grayscale(100%) brightness(0.55)';
+      }
+      const size = bs * 5;
+      const scale = size / Math.max(img.naturalWidth, img.naturalHeight);
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      ctx.restore();
+      return;
+    }
+
+    // Fallback arrow
     const len = bs * 5;
     const wid = bs * 2;
     ctx.save();
