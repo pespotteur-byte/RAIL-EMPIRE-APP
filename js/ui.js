@@ -5914,15 +5914,15 @@ export class UI {
         <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${svc.id}')">
           <div class="tc-line tc-header">
             <span class="train-color" style="background:${catColor}"></span>
-            <span class="tc-name">${displayName}</span>
+            <div class="tc-scroll"><span class="tc-scroll-text tc-name">${displayName}</span></div>
           </div>
           ${imageHtml}
           <div class="tc-line"><span class="tc-speed">${Math.round(t.speed)} km/h</span></div>
           <div class="tc-line"><span class="${delayClass}">${delayLabel}</span></div>
-          ${contextLabel ? `<div class="tc-line"><span class="${contextClass}">${contextLabel}</span></div>` : ''}
+          ${contextLabel ? `<div class="tc-line tc-scroll"><span class="tc-scroll-text ${contextClass}">${contextLabel}</span></div>` : ''}
           ${circuleSurVoie ? `<div class="tc-line"><span style="color:#94a3b8;font-size:10px">${circuleSurVoie}</span></div>` : ''}
           ${platformLabel ? `<div class="tc-line"><span class="tc-voie">${platformLabel}</span></div>` : ''}
-          <div class="tc-line"><span class="tc-next">${nextInfo}</span></div>
+          <div class="tc-line tc-scroll"><span class="tc-scroll-text tc-next">${nextInfo}</span></div>
           ${incidentHtml}
           ${breakdownHtml}
           ${maintenanceHtml}
