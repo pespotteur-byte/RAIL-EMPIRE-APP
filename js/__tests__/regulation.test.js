@@ -243,4 +243,25 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
       setGlobalRng(prev);
     }
   });
+
+  it('REG-01/02/04 — zones régulateurs et postes AC couvrent par axe', () => {
+    const staff = new StaffManager();
+    const econ = { balance: 100000, addExpense() {} };
+    const zone = staff.addZone('Zone Paris', 48.85, 2.35, 150, 'l1');
+    const regs = staff.hire(econ, 'Régulateur', 'regulateur', { count: 3 });
+    for (const r of regs) r.assignedTo = zone.id;
+
+    const sb = staff.addSignalBox({ name: 'Poste B', lat: 48.85, lon: 2.35, radiusKm: 10, lineId: 'l1' });
+    const agents = staff.hire(econ, 'Agent circulation', 'agent_circulation', { count: 1 });
+    agents[0].assignedTo = sb.id;
+
+    const eff = staff.getRegulationEffects(48.85, 2.35, [], ['l1']);
+    assert.equal(eff.regulator.name, 'Zone Paris', 'zone régulateur couverte');
+    assert.equal(eff.signalBox.name, 'Poste B', 'signal box couverte');
+
+    const staff2 = new StaffManager();
+    staff2.addZone('Zone vide', 48.85, 2.35, 150, 'l1');
+    const eff2 = staff2.getRegulationEffects(48.85, 2.35, [], ['l1']);
+    assert.equal(eff2.regulator, null, 'pas assez de régulateurs = pas de couverture');
+  });
 });
