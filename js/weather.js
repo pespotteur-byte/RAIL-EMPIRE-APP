@@ -4,7 +4,7 @@
  * Falls back to simulated weather if API is unavailable.
  */
 import { icon } from './icons.js';
-import { getGlobalRng } from './rng.js?v=1784201500';
+import { getGlobalRng } from './rng.js?v=1784239919';
 export class Weather {
   constructor() {
     this.current = 'clear';      // clear, rain, snow, storm, heat, fog

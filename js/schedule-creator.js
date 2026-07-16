@@ -1,7 +1,7 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1784232201';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1784239919';
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
-import { getGlobalRng } from './rng.js?v=1779724771';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1779724771';
+import { getGlobalRng } from './rng.js?v=1784239919';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784239919';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
@@ -295,6 +295,16 @@ export class ActiveService {
     return this._adjustedStops || this.stops;
   }
 
+  // Returns the raw first stop of the *current* leg, without skippable-stop
+  // randomisation, so scheduling indexes use the actual next/current station.
+  _getCurrentFirstStop() {
+    if (this.isReturnLeg) {
+      if (!this.returnStops?.length) this.returnStops = this.buildReturnStops();
+      return this.returnStops?.[0] || null;
+    }
+    return this._adjustedStops?.[0] || this.stops?.[0] || null;
+  }
+
   // MET-01/03/04/05/06 — météo locale au point courant
   _getWeatherEffects() {
     if (!this.weather) return { brakeFactor: 1.0, speedCap: Infinity, speedMult: 1.0, type: 'clear' };
@@ -577,6 +587,9 @@ export class ActiveService {
       // Compute service window
       const lastStop = currentStops[currentStops.length - 1];
       const endTime = lastStop?.arrivalTime ?? firstDep + 120;
+      const plannedDuration = Math.max(0, endTime - firstDep);
+      const maxRuntime = Math.max(120, plannedDuration * 2 + 30);
+      const windowEnd = firstDep + maxRuntime;
 
       // CVO-04 : attendre l'arrivée de l'EVO avant le premier départ
       if (this.serviceType !== 'evo' && this._evoServiceId && !this._evoCompleted) {
@@ -592,8 +605,18 @@ export class ActiveService {
         }
       }
 
-      // Don't show train if not in service window (uses direct comparison, no ±720 wrapping)
-      if (this.currentStopIndex === 0 && !isInServiceWindow(timeOfDay, firstDep - 1, endTime + 31)) {
+      // Don't show train if not in service window. If the window has been missed,
+      // cancel the service instead of keeping it waiting forever.
+      if (this.currentStopIndex === 0 && !isInServiceWindow(timeOfDay, firstDep - 1, windowEnd)) {
+        if (timeDiff(timeOfDay, windowEnd) > 0) {
+          this.completed = true;
+          this.cancelled = true;
+          this.state = 'cancelled';
+          this.completedDate = dateStr;
+          this.position = null;
+          this.train.stoppedAt = null;
+          return;
+        }
         this.position = null;
         this.train.stoppedAt = null;
         return;
@@ -631,7 +654,7 @@ export class ActiveService {
 
         // Cancel only if the whole service window is missed (end + 31 min grace).
         // Within the window the train departs late so delay is reported, not cancelled.
-        if (!isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
+        if (!isInServiceWindow(timeOfDay, firstDep, windowEnd)) {
           this.completed = true;
           this.cancelled = true;
           this.state = 'cancelled';
@@ -640,7 +663,7 @@ export class ActiveService {
           this.train.stoppedAt = null;
           return;
         }
-        if (isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
+        if (isInServiceWindow(timeOfDay, firstDep, windowEnd)) {
           // Section VI — une rame ne peut pas effectuer 2 trajets en même temps
           if (this.rameId && window.game?.scheduleCreator?.isRameInUse(this.rameId, this.id, timeOfDay)) {
             // Rame already used by another active service; stay waiting and retry next tick
@@ -2297,11 +2320,11 @@ export class ActiveService {
       return;
     }
 
-    this.state = 'waiting';
+    this.state = 'completed';
     this.currentStopIndex = 0;
     this.speed = 0;
     this.train.speed = 0;
-    this.train.state = 'waiting';
+    this.train.state = 'completed';
     this.train.blockedBy = false;
     this.delay = 0;
     this.train.delay = 0;
@@ -2638,8 +2661,8 @@ export class ScheduleCreator {
 
   _addToTickIndexes(svc, timeOfDay) {
     const rameId = svc.rameId;
-    const firstStop = svc.stops?.[0];
-    if (rameId && firstStop) {
+    const currentFirst = svc._getCurrentFirstStop();
+    if (rameId && currentFirst) {
       let rEntry = this._rameUsage.get(rameId);
       if (!rEntry) {
         rEntry = { moving: null, waiting: new Map() };
@@ -2648,16 +2671,16 @@ export class ScheduleCreator {
       if (svc.state === 'moving' || svc.state === 'stopped_at_station' || svc.state === 'departing') {
         rEntry.moving = svc.id;
       } else if (svc.state === 'waiting' && svc.currentStopIndex === 0) {
-        const firstDep = firstStop.departureTime ?? firstStop.time;
+        const firstDep = currentFirst.departureTime ?? currentFirst.time;
         if (firstDep != null) {
           const diff = timeDiff(timeOfDay, firstDep);
           if (diff >= -2 && diff <= 5) rEntry.waiting.set(svc.id, firstDep);
         }
       }
     }
-    if (svc.serviceType === 'passager' && svc.state !== 'moving' && svc.state !== 'departing' && firstStop && svc.currentStopIndex === 0) {
-      const depStationId = firstStop.stationId;
-      const dep = firstStop.departureTime ?? firstStop.time;
+    if (svc.serviceType === 'passager' && svc.state !== 'moving' && svc.state !== 'departing' && currentFirst && svc.currentStopIndex === 0) {
+      const depStationId = currentFirst.stationId;
+      const dep = currentFirst.departureTime ?? currentFirst.time;
       if (depStationId != null && dep != null) {
         let sEntry = this._stationPriority.get(depStationId);
         if (!sEntry) {
@@ -2675,9 +2698,9 @@ export class ScheduleCreator {
       if (rEntry.moving === svc.id) rEntry.moving = null;
       rEntry.waiting.delete(svc.id);
     }
-    const firstStop = svc.stops?.[0];
-    if (firstStop?.stationId != null) {
-      const sEntry = this._stationPriority?.get(firstStop.stationId);
+    const currentFirst = svc._getCurrentFirstStop();
+    if (currentFirst?.stationId != null) {
+      const sEntry = this._stationPriority?.get(currentFirst.stationId);
       if (sEntry) sEntry.map.delete(svc.id);
     }
   }
@@ -2699,7 +2722,8 @@ export class ScheduleCreator {
         if (svc.completed) continue;
         if (svc.state === 'moving' || svc.state === 'stopped_at_station' || svc.state === 'departing') return true;
         if (svc.state === 'waiting' && svc.currentStopIndex === 0) {
-          const firstDep = svc.stops?.[0]?.departureTime ?? svc.stops?.[0]?.time;
+          const currentFirst = svc._getCurrentFirstStop();
+          const firstDep = currentFirst?.departureTime ?? currentFirst?.time;
           if (firstDep != null) {
             const diff = timeDiff(timeOfDay, firstDep);
             if (diff >= -2 && diff <= 5) return true;

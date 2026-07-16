@@ -2,7 +2,7 @@
 // Voie points are unnamed geographic markers that define which voie (track) a train is on
 // Troncons connect voie points and/or stations with ORM-traced routes
 
-import { haversineDistance } from './simulation.js?v=1779724771';
+import { haversineDistance } from './simulation.js?v=1784239919';
 
 let nextVoiePointId = 1;
 let nextTronconId = 1;
