@@ -2232,12 +2232,26 @@ export class UI {
         }
       }
 
-      // Draw editable trace points (SC-04 / remaster IV — points every 50 m).
-      // All route vertices are shown as small dots; selected/drag point is larger.
+      // Draw editable trace (SC-04 / remaster IV — points every 50 m).
+      // Tracé actuel en jaune, points de contrôle visibles.
       if (this._manualRoutes) {
         for (let leg = 0; leg < this._manualRoutes.length; leg++) {
           const route = this._manualRoutes[leg];
           if (!route || route.length < 2) continue;
+
+          // Yellow continuous line for the current trace
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const p0 = tileMap.worldToScreen(route[0].lat, route[0].lon, canvas.width, canvas.height);
+          ctx.moveTo(p0.x, p0.y);
+          for (let i = 1; i < route.length; i++) {
+            const pt = route[i];
+            const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+            ctx.lineTo(p.x, p.y);
+          }
+          ctx.stroke();
+
           for (let i = 0; i < route.length; i++) {
             const pt = route[i];
             const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
