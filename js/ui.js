@@ -7232,42 +7232,50 @@ export class UI {
   _renderSncfDep(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      let statusStr = '';
+      const [type, num] = (t.trainNumber || t.name).split(/(?<=^[A-Za-z]+)/);
+      let statusStr = '', remark = '';
       if (t.isCancelled) {
         statusStr = `<span class="ig-sncf-cancelled">supprimé</span>`;
+        remark = 'La clientèle est invitée à emprunter le train suivant.';
       } else if (t.isFull || t.isFreightFull) {
         statusStr = `<span class="ig-sncf-full">TRAIN COMPLET</span>`;
+      } else if (t.delay > 0) {
+        statusStr = `<span class="ig-sncf-delay">retardé ${Math.round(t.delay)} min</span>`;
+        remark = t.delayReason || 'Incident en cours d’identification';
       } else {
-        statusStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
+        statusStr = `<span class="ig-sncf-ontime">à l'heure</span>`;
       }
-      const served = t.servedStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
-      const voieNum = parseInt(t.voie) || 0;
-      const voieClass = voieNum > 10 ? 'ig-sncf-voie-high' : 'ig-sncf-voie-low';
+      const stops = t.servedStations.slice(0, 6).join(' \u2022 ');
       rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
         <div class="ig-sncf-main">
-          <span class="ig-sncf-logo-icon">${t.seriesName || 'SNCF'}</span>
-          <span class="ig-sncf-status">${statusStr}</span>
           <span class="ig-sncf-time">${this._fmtTime(t.depTime)}</span>
-          <span class="ig-sncf-dest">${t.destination}</span>
-          <span class="ig-sncf-voie">${t.voie ? `<span class="ig-sncf-voie-num ${voieClass}">${t.voie}</span>` : ''}</span>
+          <span class="ig-sncf-trainid">
+            <span class="ig-sncf-type">${type || t.seriesName || 'TER'}</span>
+            <span class="ig-sncf-trainnum">${num || t.trainNumber || t.name}</span>
+          </span>
+          <span class="ig-sncf-destcol">
+            <span class="ig-sncf-dest">${t.destination}</span>
+            ${stops ? `<span class="ig-sncf-stops">${stops}</span>` : ''}
+          </span>
+          <span class="ig-sncf-status">${statusStr}</span>
         </div>
-        ${served ? `<div class="ig-sncf-served">${served}</div>` : ''}
+        ${remark ? `<div class="ig-sncf-remark">${remark}</div>` : ''}
       </div>`;
     }
 
     return `<div class="ig-sncf-board ig-sncf-dep">
+      <div class="ig-sncf-topbar">
+        <div class="ig-sncf-topclock">${nowStr}</div>
+        <div class="ig-sncf-topstation">${station?.name || ''}</div>
+        <div class="ig-sncf-topsncf">SNCF</div>
+      </div>
       <div class="ig-sncf-header ig-sncf-header-dep">
-        <div class="ig-sncf-header-title">Départs Grandes Lignes</div>
-        <div class="ig-sncf-header-sub">Mainline departures — Abfahrt Fernverkehr</div>
+        <span></span>
+        <span>N°</span>
+        <span>DESTINATION</span>
+        <span></span>
       </div>
-      <div class="ig-sncf-colheader"><span>train n°</span><span>heure</span><span>destination</span><span>voie</span></div>
       <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
-      <div class="ig-sncf-side">départs</div>
-      <div class="ig-sncf-footer">
-        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 à 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 à 30</div>
-        <div class="ig-sncf-clock">${nowStr.replace(':','.')}</div>
-        <div class="ig-sncf-logo">SNCF</div>
-      </div>
     </div>`;
   }
 
@@ -7275,43 +7283,47 @@ export class UI {
   _renderSncfArr(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      let statusStr = '';
+      const [type, num] = (t.trainNumber || t.name).split(/(?<=^[A-Za-z]+)/);
+      let statusStr = '', remark = '';
       if (t.isCancelled) {
         statusStr = `<span class="ig-sncf-cancelled">supprimé</span>`;
-      } else if (t.isFull || t.isFreightFull) {
-        statusStr = `<span class="ig-sncf-full">TRAIN COMPLET</span>`;
+      } else if (t.delay > 0) {
+        statusStr = `<span class="ig-sncf-delay">retardé ${Math.round(t.delay)} min</span>`;
+        remark = t.delayReason || 'Conditions climatiques exceptionnelles';
       } else {
-        statusStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
+        statusStr = `<span class="ig-sncf-ontime">à l'heure</span>`;
       }
-      const from = t.fromStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
-      const stateStr = t.state === 'stopped_at_station' && t.isLast ? '<span class="ig-sncf-arrived">arrive</span>' : '';
-      const voieNum = parseInt(t.voie) || 0;
-      const voieClass = voieNum > 10 ? 'ig-sncf-voie-high' : 'ig-sncf-voie-low';
       rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
         <div class="ig-sncf-main">
-          <span class="ig-sncf-logo-icon">${t.seriesName || 'SNCF'}</span>
-          <span class="ig-sncf-status">${t.isCancelled ? statusStr : (stateStr || statusStr)}</span>
           <span class="ig-sncf-time">${this._fmtTime(t.arrTime)}</span>
-          <span class="ig-sncf-dest">${t.origin}</span>
-          <span class="ig-sncf-voie">${t.voie ? `<span class="ig-sncf-voie-num ${voieClass}">${t.voie}</span>` : ''}</span>
+          <span class="ig-sncf-trainid">
+            <span class="ig-sncf-type">${type || t.seriesName || 'TER'}</span>
+            <span class="ig-sncf-trainnum">${num || t.trainNumber || t.name}</span>
+          </span>
+          <span class="ig-sncf-destcol">
+            <span class="ig-sncf-dest">${t.origin}</span>
+          </span>
+          <span class="ig-sncf-status">${statusStr}</span>
+          <span class="ig-sncf-voie">${t.voie || ''}</span>
         </div>
-        ${from ? `<div class="ig-sncf-served">${from}</div>` : ''}
+        ${remark ? `<div class="ig-sncf-remark">${remark}</div>` : ''}
       </div>`;
     }
 
     return `<div class="ig-sncf-board ig-sncf-arr">
+      <div class="ig-sncf-topbar">
+        <div class="ig-sncf-topclock">${nowStr}</div>
+        <div class="ig-sncf-topstation">${station?.name || ''}</div>
+        <div class="ig-sncf-topsncf">SNCF</div>
+      </div>
       <div class="ig-sncf-header ig-sncf-header-arr">
-        <div class="ig-sncf-header-title">Arrivées Grandes Lignes</div>
-        <div class="ig-sncf-header-sub">Mainline arrivals — Ankunft Fernverkehr</div>
+        <span></span>
+        <span>N°</span>
+        <span>PROVENANCE</span>
+        <span></span>
+        <span>VOIE</span>
       </div>
-      <div class="ig-sncf-colheader"><span>train n°</span><span>heure</span><span>provenance</span><span>voie</span></div>
       <div class="ig-sncf-rows">${rows || '<div style="color:#ccc;padding:16px;text-align:center">Aucun train prevu</div>'}</div>
-      <div class="ig-sncf-side ig-sncf-side-arr">arrivées</div>
-      <div class="ig-sncf-footer">
-        <div class="ig-sncf-legend"><span class="ig-sncf-legend-sq" style="background:#d4a017"></span> voies 2 à 12, <span class="ig-sncf-legend-sq" style="background:#3366cc"></span> voies 23 à 30</div>
-        <div class="ig-sncf-clock">${nowStr.replace(':','.')}</div>
-        <div class="ig-sncf-logo">SNCF</div>
-      </div>
     </div>`;
   }
 
@@ -7380,7 +7392,7 @@ export class UI {
 
     return `<div class="ig-flash-sign">
       <div class="ig-flash-sign-bar">
-        <span class="ig-flash-sign-title">flash circulation</span>
+        <span class="ig-flash-sign-title"><span class="big">flash</span><span class="small">circulation</span></span>
       </div>
       <div class="ig-flash-sign-body">
         <div class="ig-flash-sign-msg">${mainText}</div>
@@ -7391,41 +7403,34 @@ export class UI {
     </div>`;
   }
 
-  // --- CATI 3-3 : tableau 3+3 départs à 24h ---
+  // --- CATI 3-3 : 2 groupes de 3 lignes (tableau compact) ---
   _renderCATI3_3(station, trains, nowStr) {
-    const dep = trains.filter(r => r.isDeparture).slice(0, 14);
+    const dep = trains.filter(r => r.isDeparture).slice(0, 6);
     const mid = Math.ceil(dep.length / 2);
     const left = dep.slice(0, mid);
     const right = dep.slice(mid);
-    const particulars = (t) => {
-      if (t.isCancelled) return '<span style="color:#f87171;font-weight:700">Supprimé</span>';
-      if (t.isFull || t.isFreightFull) return '<span style="color:#fbbf24;font-weight:700">TRAIN COMPLET</span>';
-      const d = this._fmtDelay(t.delay);
-      return d === "a l'heure" ? "<span style=\"color:#4ade80\">à l'heure</span>" : `<span style="color:#fbbf24">${d}</span>`;
+    const cell = t => {
+      const stops = t.servedStations.slice(0, 2).join(' ');
+      return `<div class="ig-cati-33-row" data-svc-id="${t.svcId}">
+        <span class="ig-cati-33-stops">${stops}</span>
+        <span class="ig-cati-33-time">${this._fmtTime(t.depTime)}</span>
+        <span class="ig-cati-33-dest">${t.destination}</span>
+      </div>`;
     };
-    const head = `<div class="ig-cati-row ig-cati-head">
-      <span>Train</span><span>N°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
-    </div>`;
-    const cell = t => `<div class="ig-cati-row" data-svc-id="${t.svcId}">
-      <span class="ig-cati-train">${t.name.split(' ')[0] || t.name}</span>
-      <span class="ig-cati-num">${t.trainNumber || ''}</span>
-      <span class="ig-cati-time">${this._fmtTime(t.depTime)}</span>
-      <span class="ig-cati-dest">${t.destination}</span>
-      <span class="ig-cati-part">${particulars(t)}</span>
-      <span class="ig-cati-voie">${t.voie || '—'}</span>
-    </div>`;
-    const col = items => items.length ? (head + items.map(cell).join('')) : '<div class="ig-cati-empty">Aucun départ</div>';
-    return `<div class="ig-cati-board">
+    const col = items => items.length ? items.map(cell).join('') : '<div class="ig-cati-empty">Aucun départ</div>';
+    const first = dep[0];
+    const topInfo = first ? `${this._fmtTime(first.depTime)} ${first.destination}` : 'Aucun train';
+    return `<div class="ig-cati-board ig-cati-3-3">
       <div class="ig-cati-header">
         <span class="ig-cati-station">${station?.name || ''}</span>
-        <span class="ig-cati-title">Départs</span>
+        <span class="ig-cati-title">${topInfo}</span>
         <span class="ig-cati-clock">${nowStr}</span>
       </div>
-      <div class="ig-cati-cols" style="padding-right:26px">
-        <div class="ig-cati-col">${col(left)}</div>
-        <div class="ig-cati-col">${col(right)}</div>
+      <div class="ig-cati-33-cols">
+        <div class="ig-cati-33-col">${col(left)}</div>
+        <div class="ig-cati-33-col">${col(right)}</div>
       </div>
-      <div class="ig-cati-footer"><span>24h • Toutes destinations</span><span>${nowStr}</span></div>
+      <div class="ig-cati-footer"><span>CATI 3-3</span><span>${nowStr}</span></div>
       <div class="ig-cati-side">départs</div>
     </div>`;
   }
@@ -7614,25 +7619,17 @@ export class UI {
     </div>`;
   }
 
-  // --- CATI Complet : liste unique pleine largeur ---
+  // --- CATI Complet : liste pleine largeur 4 colonnes ---
   _renderCATIComplet(station, trains, nowStr) {
-    const dep = trains.filter(r => r.isDeparture).slice(0, 24);
-    const particulars = (t) => {
-      if (t.isCancelled) return '<span style="color:#f87171;font-weight:700">Supprimé</span>';
-      if (t.isFull || t.isFreightFull) return '<span style="color:#fbbf24;font-weight:700">TRAIN COMPLET</span>';
-      const d = this._fmtDelay(t.delay);
-      return d === "a l'heure" ? "<span style=\"color:#4ade80\">à l'heure</span>" : `<span style="color:#fbbf24">${d}</span>`;
-    };
+    const dep = trains.filter(r => r.isDeparture).slice(0, 12);
     const head = `<div class="ig-cati-row ig-cati-head">
-      <span>Train</span><span>N°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
+      <span class="ig-cati-logo-h"></span><span>Train</span><span>Heure</span><span>Destination</span>
     </div>`;
     const cell = t => `<div class="ig-cati-row" data-svc-id="${t.svcId}">
-      <span class="ig-cati-train">${t.name.split(' ')[0] || t.name}</span>
-      <span class="ig-cati-num">${t.trainNumber || ''}</span>
+      <span class="ig-cati-logo">SNCF</span>
+      <span class="ig-cati-num">${t.trainNumber || t.name.split(' ')[0] || t.name}</span>
       <span class="ig-cati-time">${this._fmtTime(t.depTime)}</span>
       <span class="ig-cati-dest">${t.destination}</span>
-      <span class="ig-cati-part">${particulars(t)}</span>
-      <span class="ig-cati-voie">${t.voie || '—'}</span>
     </div>`;
     return `<div class="ig-cati-board ig-cati-complet">
       <div class="ig-cati-header">
@@ -7640,7 +7637,7 @@ export class UI {
         <span class="ig-cati-title">Départs — Affichage complet</span>
         <span class="ig-cati-clock">${nowStr}</span>
       </div>
-      <div class="ig-cati-full" style="padding-right:26px">${head}${dep.length ? dep.map(cell).join('') : '<div class="ig-cati-empty">Aucun départ</div>'}</div>
+      <div class="ig-cati-full">${head}${dep.length ? dep.map(cell).join('') : '<div class="ig-cati-empty">Aucun départ</div>'}</div>
       <div class="ig-cati-footer"><span>24h • Toutes destinations</span><span>${nowStr}</span></div>
       <div class="ig-cati-side">départs</div>
     </div>`;
@@ -7656,6 +7653,7 @@ export class UI {
     const trainNum = t.trainNumber || t.name;
     return `<div class="ig-quai-board">
       <div class="ig-quai-left">
+        <div class="ig-quai-watermark">départ</div>
         <div class="ig-quai-sncf">SNCF</div>
         <div class="ig-quai-time">${this._fmtTime(t.depTime)}</div>
         <div class="ig-quai-status">${msg}</div>
