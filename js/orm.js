@@ -1139,7 +1139,7 @@ export class ORMClient {
     if (lat >= 46 && lat <= 48.3 && lon >= 5.9 && lon <= 10.5) return 'CH';
     if (lat >= 49.5 && lat <= 51.5 && lon >= 2.5 && lon <= 6.4) return 'BE';
     if (lat >= 50.7 && lat <= 53.6 && lon >= 3.3 && lon <= 7.2) return 'NL';
-    if (lat >= 49.5 && lat <= 51.5 && lon >= -5.5 && lon <= 1.8) return 'GB';
+    if (lat >= 49.5 && lat <= 51.6 && lon >= -5.5 && lon <= 1.8) return 'GB';
     if (lat >= 36 && lat <= 43.8 && lon >= -9.5 && lon <= 3.4) return 'ES';
     if (lat >= 36 && lat <= 47.1 && lon >= 6.6 && lon <= 18.5) return 'IT';
     if (lat >= 47 && lat <= 55.1 && lon >= 5.9 && lon <= 15.1) return 'DE';
