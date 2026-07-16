@@ -2504,7 +2504,7 @@ export class UI {
       if (totalDragDist < 5) {
         const x = e.offsetX, y = e.offsetY;
 
-        // Manual trace mode (SC-04): clicks add control points, station/voie-point click finishes.
+        // Manual trace mode (SC-04): choose a start point, add waypoints, then click a target point to finish — like livemap.
         if (this._manualMode) {
           const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
           let closestVP = null, minVPDist = Infinity;
@@ -2521,6 +2521,31 @@ export class UI {
             const d = Math.hypot(p.x - x, p.y - y);
             if (d < minDist && d < 20) { minDist = d; closest = st; }
           }
+
+          if (!this._manualStartCoords) {
+            // Livemap-style: first click on a station/voie point sets the departure.
+            if (!closest && !closestVP) {
+              this._updateManualUI();
+              schedDrag = false; schedDragStart = null;
+              return;
+            }
+            // If this is the very first stop of the service, add it now.
+            if (this.schedStops.length === 0) {
+              if (closestVP && minVPDist < minDist) {
+                await this.addSchedVoiePointStop(closestVP);
+              } else if (closest) {
+                await this.addSchedStop(closest);
+              }
+            }
+            const lastStop = this.schedStops[this.schedStops.length - 1];
+            this._manualStartCoords = this._getStopCoords(lastStop);
+            this._manualControlPoints = [];
+            this._updateManualUI();
+            if (this._drawSchedMap) this._drawSchedMap();
+            schedDrag = false; schedDragStart = null;
+            return;
+          }
+
           if (closestVP && minVPDist < minDist) {
             await this.addSchedVoiePointStop(closestVP);
           } else if (closest) {
@@ -2594,12 +2619,8 @@ export class UI {
       this._manualStartCoords = null;
       this._manualControlPoints = [];
     } else {
-      if (this.schedStops.length === 0) {
-        alert('Choisissez d\'abord la gare de depart.');
-        return;
-      }
       this._manualMode = true;
-      this._manualStartCoords = this._getStopCoords(this.schedStops[this.schedStops.length - 1]);
+      this._manualStartCoords = this.schedStops.length > 0 ? this._getStopCoords(this.schedStops[this.schedStops.length - 1]) : null;
       this._manualControlPoints = [];
     }
     this._updateManualUI();
@@ -2642,11 +2663,14 @@ export class UI {
       return;
     }
     if (this._manualMode) {
-      btn.textContent = 'Terminer (cliquer gare/point)';
+      const hasStart = !!this._manualStartCoords;
+      btn.textContent = hasStart ? 'Terminer (cliquer gare/point)' : 'Choisir le départ';
       btn.style.background = '#3b82f6';
       btn.style.color = '#fff';
       clear.classList.remove('hidden');
-      hint.textContent = 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.';
+      hint.textContent = hasStart
+        ? 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.'
+        : 'Mode manuel — cliquez sur la gare ou le point de voie de départ (comme sur la livemap).';
     } else {
       btn.textContent = 'Tracer manuellement (points 50 m)';
       btn.style.background = '';
@@ -2806,8 +2830,10 @@ export class UI {
   }
 
   _addManualPoint(lat, lon) {
-    this._manualControlPoints.push({ lat, lon });
-    if (this._drawSchedMap) this._drawSchedMap();
+    if (this._manualStartCoords) {
+      this._manualControlPoints.push({ lat, lon });
+      if (this._drawSchedMap) this._drawSchedMap();
+    }
   }
 
   _finishManualLeg(endStop, maxSpeed = 30) {
