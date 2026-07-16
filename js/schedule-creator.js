@@ -507,22 +507,6 @@ export class ActiveService {
       return;
     }
 
-    // FAST EARLY REJECT for waiting trains far from departure
-    // This avoids expensive Date parsing and service window checks for 99% of services
-    if (this.state === 'waiting' && this.currentStopIndex === 0 && !this.train.breakdown && !this.train.inMaintenance) {
-      const dep0 = this._cachedFirstDep;
-      if (dep0 !== undefined) {
-        // Quick check: if departure is more than 2 min in the future, skip.
-        // timeDiff(dep0, timeOfDay) > 0 means dep0 is ahead of timeOfDay.
-        const diff = timeDiff(dep0, timeOfDay);
-        if (diff > 2) {
-          this.position = null;
-          this.train.stoppedAt = null;
-          return;
-        }
-      }
-    }
-
     // Check if train runs today (day of week + specific dates)
     if (this.state === 'waiting' || (this.state === 'stopped_at_station' && this.currentStopIndex === 0)) {
       // Cache DOW check per date to avoid repeated Date construction
@@ -551,6 +535,22 @@ export class ActiveService {
       this.position = null;
       this.train.stoppedAt = null;
       return;
+    }
+
+    // FAST EARLY REJECT for waiting trains far from departure
+    // This avoids expensive Date parsing and service window checks for 99% of services
+    if (this.state === 'waiting' && this.currentStopIndex === 0 && !this.train.breakdown && !this.train.inMaintenance) {
+      const dep0 = this._cachedFirstDep;
+      if (dep0 !== undefined) {
+        // Quick check: if departure is more than 2 min in the future, skip.
+        // timeDiff(dep0, timeOfDay) > 0 means dep0 is ahead of timeOfDay.
+        const diff = timeDiff(dep0, timeOfDay);
+        if (diff > 2) {
+          this.position = null;
+          this.train.stoppedAt = null;
+          return;
+        }
+      }
     }
 
     // RH-05 : grève — bloque le départ des services concernés
