@@ -312,6 +312,30 @@ export class Renderer {
         ctx.stroke();
       }
 
+      // Annex 6 — direction arrows for main tracks at high zoom
+      if (zoom >= 14) {
+        const startLat = track.route?.[0]?.lat ?? stA.lat;
+        const startLon = track.route?.[0]?.lon ?? stA.lon;
+        const endLat = track.route?.[track.route.length - 1]?.lat ?? stB.lat;
+        const endLon = track.route?.[track.route.length - 1]?.lon ?? stB.lon;
+        const start = this.latLonToScreen(startLat, startLon);
+        const end = this.latLonToScreen(endLat, endLon);
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const len = Math.hypot(dx, dy);
+        if (len > 20) {
+          const angle = Math.atan2(dy, dx);
+          this._drawArrow(ctx, (start.x + end.x) / 2, (start.y + end.y) / 2, angle, 5, '#e2e8f0');
+          ctx.save();
+          ctx.fillStyle = '#e2e8f0';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`→ ${stB.name}`, (start.x + end.x) / 2 + 8, (start.y + end.y) / 2);
+          ctx.restore();
+        }
+      }
+
       // Draw incident/works label on track at midpoint
       if ((hasInterruption || hasSlowdown) && this.tileMap.zoomLevel >= 8) {
         const midA = stA, midB = stB;
@@ -928,6 +952,7 @@ export class Renderer {
     // Batch troncons by color (occupied vs free) for fewer state changes
     const freeTrcs = [];
     const occupiedTrcs = [];
+    const visibleTrcs = [];
 
     for (const trc of voiePointManager.getAllTroncons()) {
       if (!trc.route || trc.route.length < 2) {
@@ -941,6 +966,7 @@ export class Renderer {
         const maxLon = Math.max(ptA.lon, ptB.lon);
         if (maxLat < vpMinLat || minLat > vpMaxLat || maxLon < vpMinLon || minLon > vpMaxLon) continue;
         (trc.occupiedBy ? occupiedTrcs : freeTrcs).push(trc);
+        visibleTrcs.push(trc);
         continue;
       }
       // Viewport cull using first/last route points
@@ -951,6 +977,7 @@ export class Renderer {
       const maxLon = Math.max(rF.lon, rL.lon);
       if (maxLat < vpMinLat || minLat > vpMaxLat || maxLon < vpMinLon || minLon > vpMaxLon) continue;
       (trc.occupiedBy ? occupiedTrcs : freeTrcs).push(trc);
+      visibleTrcs.push(trc);
     }
 
     // Route simplification step based on zoom
@@ -1012,6 +1039,54 @@ export class Renderer {
       }
       ctx.stroke();
     }
+
+    // Annex 6 — direction arrows + PA/PB markers on user tronçons at high zoom
+    if (zoom >= 14 && visibleTrcs.length > 0) {
+      ctx.save();
+      ctx.fillStyle = '#e2e8f0';
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (const trc of visibleTrcs) {
+        const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
+        const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
+        if (!ptA || !ptB) continue;
+        const start = this.latLonToScreen(ptA.lat, ptA.lon);
+        const end = this.latLonToScreen(ptB.lat, ptB.lon);
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const len = Math.hypot(dx, dy);
+        if (len < 12) continue;
+        const angle = Math.atan2(dy, dx);
+        const perp = angle + Math.PI / 2;
+        const off = 10;
+        const ox = Math.cos(perp) * off;
+        const oy = Math.sin(perp) * off;
+        // PA / PB labels
+        ctx.fillText('PA', start.x + ox, start.y + oy);
+        ctx.fillText('PB', end.x + ox, end.y + oy);
+        // Direction arrow at midpoint
+        const midX = (start.x + end.x) / 2;
+        const midY = (start.y + end.y) / 2;
+        this._drawArrow(ctx, midX, midY, angle, 5, '#e2e8f0');
+      }
+      ctx.restore();
+    }
+  }
+
+  _drawArrow(ctx, x, y, angle, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(size, 0);
+    ctx.lineTo(-size / 2, -size / 2);
+    ctx.lineTo(-size / 2, size / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   /**
