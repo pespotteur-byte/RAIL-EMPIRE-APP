@@ -2591,7 +2591,7 @@ export class UI {
       clear.classList.remove('hidden');
       hint.textContent = 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.';
     } else {
-      btn.textContent = 'Créer / Tracer manuellement';
+      btn.textContent = 'Tracer manuellement (points 50 m)';
       btn.style.background = '';
       btn.style.color = '';
       clear.classList.add('hidden');
