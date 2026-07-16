@@ -1,45 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784231300';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784231300';
-import { World, createDefaultWorld } from './world.js?v=1784231300';
-import { Renderer } from './renderer.js?v=1784231300';
-import { UI } from './ui.js?v=1784231300';
-import { Economy } from './economy.js?v=1784231300';
-import { IncidentManager } from './incidents.js?v=1784231300';
-import { FreightManager } from './freight.js?v=1784231300';
-import { ScheduleManager } from './schedule.js?v=1784231300';
-import { GameStorage } from './storage.js?v=1784231300';
-import { AccountManager } from './account.js?v=1784231300';
-import { RollingStockManager } from './rolling-stock.js?v=1784231300';
-import { RameManager } from './rame.js?v=1784231300';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784231300';
-import { DepotManager } from './depot.js?v=1784231300';
-import { WorksManager } from './works.js?v=1784231300';
-import { ORMClient } from './orm.js?v=1784231300';
-import { LineManager, PlatformManager } from './line.js?v=1784231300';
-import { SillonManager } from './sillon.js?v=1784231300';
-import { VoiePointManager } from './voie-points.js?v=1784231300';
-import { Dashboard } from './dashboard.js?v=1784231300';
-import { GraphMarche } from './graph-marche.js?v=1784231300';
-import { StaffManager } from './staff.js?v=1784231300';
-import { Tutorial } from './tutorial.js?v=1784231300';
-import { Bank } from './bank.js?v=1784231300';
-import { Weather } from './weather.js?v=1784231300';
-import { Unions } from './unions.js?v=1784231300';
-import { SeasonalSchedule } from './seasonal.js?v=1784231300';
-import { Connections } from './connections.js?v=1784231300';
-import { StationUpgrades } from './station-upgrades.js?v=1784231300';
-import { A12Model } from './a12-model.js?v=1784231300';
-import { PlayerSignalManager } from './signaling.js?v=1784231300';
-import { JunctionManager } from './junctions.js?v=1784231300';
-import { CargoTypeManager } from './cargo-types.js?v=1784231300';
-import { ITEModules } from './ite-modules.js?v=1784231300';
-import { IndustrialClients } from './industrial-clients.js?v=1784231300';
-import { ShuntingManager } from './shunting.js?v=1784231300';
-import { haversineDistance } from './simulation.js?v=1784231300';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784231300';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784231300';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784231300';
-import { adminSync } from './admin-sync.js?v=1784231300';
+import { SimulationEngine } from './engine.js?v=1784231400';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784231400';
+import { World, createDefaultWorld } from './world.js?v=1784231400';
+import { Renderer } from './renderer.js?v=1784231400';
+import { UI } from './ui.js?v=1784231400';
+import { Economy } from './economy.js?v=1784231400';
+import { IncidentManager } from './incidents.js?v=1784231400';
+import { FreightManager } from './freight.js?v=1784231400';
+import { ScheduleManager } from './schedule.js?v=1784231400';
+import { GameStorage } from './storage.js?v=1784231400';
+import { AccountManager } from './account.js?v=1784231400';
+import { RollingStockManager } from './rolling-stock.js?v=1784231400';
+import { RameManager } from './rame.js?v=1784231400';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784231400';
+import { DepotManager } from './depot.js?v=1784231400';
+import { WorksManager } from './works.js?v=1784231400';
+import { ORMClient } from './orm.js?v=1784231400';
+import { LineManager, PlatformManager } from './line.js?v=1784231400';
+import { SillonManager } from './sillon.js?v=1784231400';
+import { VoiePointManager } from './voie-points.js?v=1784231400';
+import { Dashboard } from './dashboard.js?v=1784231400';
+import { GraphMarche } from './graph-marche.js?v=1784231400';
+import { StaffManager } from './staff.js?v=1784231400';
+import { Tutorial } from './tutorial.js?v=1784231400';
+import { Bank } from './bank.js?v=1784231400';
+import { Weather } from './weather.js?v=1784231400';
+import { Unions } from './unions.js?v=1784231400';
+import { SeasonalSchedule } from './seasonal.js?v=1784231400';
+import { Connections } from './connections.js?v=1784231400';
+import { StationUpgrades } from './station-upgrades.js?v=1784231400';
+import { A12Model } from './a12-model.js?v=1784231400';
+import { PlayerSignalManager } from './signaling.js?v=1784231400';
+import { JunctionManager } from './junctions.js?v=1784231400';
+import { CargoTypeManager } from './cargo-types.js?v=1784231400';
+import { ITEModules } from './ite-modules.js?v=1784231400';
+import { IndustrialClients } from './industrial-clients.js?v=1784231400';
+import { ShuntingManager } from './shunting.js?v=1784231400';
+import { haversineDistance } from './simulation.js?v=1784231400';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784231400';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784231400';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784231400';
+import { adminSync } from './admin-sync.js?v=1784231400';
 
 class RailEmpire {
   constructor() {
@@ -749,6 +749,11 @@ class RailEmpire {
     // are O(k) instead of O(n²) during this tick.
     this.scheduleCreator.beginTick(timeOfDay);
 
+    // REG-03 : régulation (ordre de passage / garage temporaire) doit être calculée
+    // AVANT que scheduleTick ne fasse démarrer les trains, sinon un train retardé
+    // et non prioritaire risque de partir avant d'être mis au garage.
+    try { this.staffManager.tickRegulateurs(this.scheduleCreator.getActiveServices(), timeOfDay, dateStr, this.realismSettings); } catch(e) { /* graceful */ }
+
     // scheduleTick: moving trains already have their state managed by moveUpdate,
     // so only call scheduleTick on non-moving trains (waiting, stopped_at_station, etc.)
     for (let i = 0; i < activeSchedules.length; i++) {
@@ -806,8 +811,6 @@ class RailEmpire {
     try { this.staffManager.tickConductors(activeSchedules, timeOfDay, dateStr); } catch(e) { /* graceful */ }
     // Contrôleurs: random ticket inspections on passenger trains
     try { this.staffManager.tickControleurs(this.economy, activeSchedules, timeOfDay); } catch(e) { /* graceful */ }
-    // REG-03 : régulation (ordre de passage / garage) prise par le jeu
-    try { this.staffManager.tickRegulateurs(this.scheduleCreator.getActiveServices(), timeOfDay, dateStr, this.realismSettings); } catch(e) { /* graceful */ }
 
     // Revenue collected inside service.completeService -> economy.processServiceRevenue
 
