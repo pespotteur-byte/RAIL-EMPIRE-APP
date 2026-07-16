@@ -3,7 +3,92 @@
 // No conversion to intermediate tronçons — the OSM graph IS the network.
 import { segmentsFromRoute, simulateProfile } from './train-physics.js';
 
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.osm.ch/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+
+const DB_NAME = 'rail-empire-orm';
+const DB_STORE = 'areas';
+const DB_VERSION = 1;
+const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
+
+class ORMIndexedCache {
+  constructor() {
+    this._db = null;
+    this._openPromise = null;
+  }
+
+  open() {
+    if (this._openPromise) return this._openPromise;
+    if (typeof indexedDB === 'undefined') {
+      this._openPromise = Promise.resolve(false);
+      return this._openPromise;
+    }
+    this._openPromise = new Promise((resolve) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(DB_STORE)) {
+          const store = db.createObjectStore(DB_STORE, { keyPath: 'key' });
+          store.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+      };
+      req.onsuccess = (e) => { this._db = e.target.result; resolve(true); };
+      req.onerror = () => resolve(false);
+      req.onblocked = () => resolve(false);
+    });
+    return this._openPromise;
+  }
+
+  async get(key) {
+    if (!this._db) await this.open();
+    if (!this._db) return null;
+    return new Promise((resolve) => {
+      const tx = this._db.transaction(DB_STORE, 'readonly');
+      const store = tx.objectStore(DB_STORE);
+      const req = store.get(key);
+      req.onsuccess = () => {
+        const rec = req.result;
+        if (!rec) return resolve(null);
+        if (Date.now() - rec.timestamp > CACHE_MAX_AGE_MS) {
+          this._delete(key);
+          return resolve(null);
+        }
+        resolve(rec);
+      };
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  async set(key, value) {
+    if (!this._db) await this.open();
+    if (!this._db) return;
+    return new Promise((resolve) => {
+      const tx = this._db.transaction(DB_STORE, 'readwrite');
+      const store = tx.objectStore(DB_STORE);
+      const req = store.put({ key, ...value, timestamp: Date.now() });
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    });
+  }
+
+  _delete(key) {
+    if (!this._db) return;
+    const tx = this._db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(key);
+  }
+}
+
+function localStorageGet(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+}
+function localStorageSet(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* full or disabled */ }
+}
+function localStorageKey(k) { return 'orm-area-' + k; }
 
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -72,6 +157,10 @@ export class ORMClient {
     this.areaCache = new Map(); // bbox key -> raw ways array
     this.loading = false;
 
+    // Persistent cache (IndexedDB + localStorage fallback) for offline / slow network
+    this._persistentCache = new ORMIndexedCache();
+    this._cacheReady = this._persistentCache.open();
+
     // ORM Direct: unified graph from all loaded areas
     this._graph = null; // { nodes: Map, adjacency: Map, _index }
     this._ways = new Map(); // wayId -> way object (all loaded ways)
@@ -102,44 +191,81 @@ export class ORMClient {
     const key = `${south.toFixed(3)},${west.toFixed(3)},${north.toFixed(3)},${east.toFixed(3)}`;
     if (this.areaCache.has(key)) return this.areaCache.get(key);
 
+    // Try persistent cache first (offline / fast fallback)
+    await this._cacheReady;
+    const cached = await this._loadCachedArea(key);
+    if (cached) {
+      for (const w of cached.ways) this._ways.set(w.id, w);
+      for (const st of cached.stations) {
+        if (!this._stationsOSM.find(s => s.id === st.id)) this._stationsOSM.push(st);
+      }
+      this._graphDirty = true;
+      if (!this._loadedBboxes.find(b => b.key === key)) {
+        this._loadedBboxes.push({ south, west, north, east, key, fromCache: true });
+      }
+      this.areaCache.set(key, cached.ways);
+      console.log('ORM: served area from persistent cache', key);
+      return cached.ways;
+    }
+
     // Fetch ways + stations in one query
     const query = `[out:json][timeout:90];(way["railway"="rail"](${south},${west},${north},${east});node["railway"~"^(station|halt)$"](${south},${west},${north},${east}););out body geom;`;
 
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        if (attempt > 0) await new Promise(r => setTimeout(r, 2000 * attempt));
-        const resp = await fetch(OVERPASS_URL, {
-          method: 'POST',
-          body: 'data=' + encodeURIComponent(query),
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        });
-        if (resp.status === 429) {
-          console.warn(`Overpass rate limited, retry ${attempt + 1}/3...`);
-          continue;
-        }
-        if (!resp.ok) throw new Error(`Overpass ${resp.status}`);
-        const data = await resp.json();
-        const ways = this.parseWays(data);
-        const stations = this._parseStations(data);
+    let lastError = null;
+    for (const url of OVERPASS_URLS) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          if (attempt > 0) await new Promise(r => setTimeout(r, 1500 * attempt));
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30000); // 30 s per endpoint
+          const resp = await fetch(url, {
+            method: 'POST',
+            body: 'data=' + encodeURIComponent(query),
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          if (resp.status === 429) {
+            console.warn(`ORM rate limited on ${url}, retry ${attempt + 1}/2...`);
+            continue;
+          }
+          if (!resp.ok) throw new Error(`Overpass ${resp.status}`);
+          const data = await resp.json();
+          const ways = this.parseWays(data);
+          const stations = this._parseStations(data);
 
-        // Register in unified graph
-        for (const w of ways) this._ways.set(w.id, w);
-        for (const st of stations) {
-          if (!this._stationsOSM.find(s => s.id === st.id)) this._stationsOSM.push(st);
-        }
-        this._graphDirty = true;
-        this._loadedBboxes.push({ south, west, north, east });
+          // Register in unified graph
+          for (const w of ways) this._ways.set(w.id, w);
+          for (const st of stations) {
+            if (!this._stationsOSM.find(s => s.id === st.id)) this._stationsOSM.push(st);
+          }
+          this._graphDirty = true;
+          this._loadedBboxes.push({ south, west, north, east, key });
 
-        this.areaCache.set(key, ways);
-        return ways;
-      } catch (e) {
-        if (attempt === 2) {
-          console.warn('Overpass fetch failed after retries:', e);
-          return [];
+          this.areaCache.set(key, ways);
+          await this._saveCachedArea(key, { bbox: { south, west, north, east }, ways, stations });
+          return ways;
+        } catch (e) {
+          lastError = e;
+          console.warn(`ORM fetch ${url} attempt ${attempt + 1} failed:`, e.message || e);
         }
       }
     }
+
+    console.warn('ORM fetch failed on all endpoints:', lastError);
     return [];
+  }
+
+  async _loadCachedArea(key) {
+    const rec = await this._persistentCache.get(key);
+    if (rec) return { ways: rec.ways, stations: rec.stations };
+    const legacy = localStorageGet(localStorageKey(key));
+    return legacy ? { ways: legacy.ways || [], stations: legacy.stations || [] } : null;
+  }
+
+  async _saveCachedArea(key, payload) {
+    await this._persistentCache.set(key, payload);
+    localStorageSet(localStorageKey(key), payload);
   }
 
   parseWays(data) {

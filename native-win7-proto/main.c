@@ -3,7 +3,7 @@
  * Goal: simulate 100 000 trains at 30 FPS on Windows 7 / 3 GB RAM.
  *
  * Build (cross-compile from Linux):
- *   i686-w64-mingw32-gcc -O3 -march=i686 -mfpmath=sse -msse2 -pthread \
+ *   i686-w64-mingw32-gcc -O3 -march=i686 -mfpmath=sse -msse2 \
  *     -o re-native.exe main.c -lgdi32 -luser32 -lkernel32
  *
  * Run on Windows 7:
@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <pthread.h>
 
 #define WIDTH 1024
 #define HEIGHT 768
@@ -34,7 +33,7 @@ typedef struct {
     float t;          /* 0..1 position along route */
     float speed;      /* pixels per frame */
     float target;     /* target speed */
-    int dir;          /* +1 / -1 */
+    float dir;        /* +1 / -1 */
     uint32_t color;
 } Train;
 
@@ -43,18 +42,19 @@ typedef struct {
     int start;
     int count;
     float dt;
-    int running;
+    HANDLE hEventStart;
+    HANDLE hEventDone;
+    volatile LONG running;
 } WorkerArg;
 
 static Vec2 route[ROUTE_POINTS];
 static Train trains[MAX_TRAINS];
 static int trainCount = 100000;
-static volatile int gFrame = 0;
-static volatile int gReady = 0;
-static pthread_t workers[WORKER_THREADS];
+static volatile LONG gFrame = 0;
+static HANDLE workerEventsStart[WORKER_THREADS];
+static HANDLE workerEventsDone[WORKER_THREADS];
 static WorkerArg wargs[WORKER_THREADS];
-static pthread_mutex_t readyMutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t readyCond = PTHREAD_COND_INITIALIZER;
+static HANDLE workerHandles[WORKER_THREADS];
 
 static __inline uint32_t rgb(uint8_t r, uint8_t g, uint8_t b) {
     return (r << 16) | (g << 8) | b;
@@ -69,25 +69,23 @@ static void buildRoute(void) {
 }
 
 static Vec2 routePos(float t) {
-    t = fmodf(t, 1.0f);
+    t = (float)fmod(t, 1.0);
     if (t < 0) t += 1.0f;
     float idx = t * (ROUTE_POINTS - 1);
     int i = (int)idx;
     int j = i + 1;
     if (j >= ROUTE_POINTS) j = ROUTE_POINTS - 1;
-    float frac = idx - i;
+    float frac = idx - (float)i;
     Vec2 p;
     p.x = route[i].x * (1.0 - frac) + route[j].x * frac;
     p.y = route[i].y * (1.0 - frac) + route[j].y * frac;
     return p;
 }
 
-static void* workerThread(void *arg) {
+static DWORD WINAPI workerThread(LPVOID arg) {
     WorkerArg *w = (WorkerArg*)arg;
     while (1) {
-        pthread_mutex_lock(&readyMutex);
-        while (!w->running) pthread_cond_wait(&readyCond, &readyMutex);
-        pthread_mutex_unlock(&readyMutex);
+        WaitForSingleObject(w->hEventStart, INFINITE);
         if (w->count == 0) break;
 
         Train *T = w->trains + w->start;
@@ -100,34 +98,33 @@ static void* workerThread(void *arg) {
             if (s < 0) s = 0;
             T[i].speed = s;
             T[i].t += s * T[i].dir * 0.00005f;
-            if (T[i].t > 1.0f) { T[i].t = 1.0f; T[i].dir = -1; T[i].target *= 0.7f; }
-            if (T[i].t < 0.0f) { T[i].t = 0.0f; T[i].dir = 1; T[i].target = 3.0f + (float)(rand() & 7); }
+            if (T[i].t > 1.0f) { T[i].t = 1.0f; T[i].dir = -1.0f; T[i].target *= 0.7f; }
+            if (T[i].t < 0.0f) { T[i].t = 0.0f; T[i].dir = 1.0f; T[i].target = 3.0f + (float)(rand() & 7); }
         }
 
-        pthread_mutex_lock(&readyMutex);
-        w->running = 0;
-        pthread_mutex_unlock(&readyMutex);
+        SetEvent(w->hEventDone);
     }
-    return NULL;
+    return 0;
 }
 
 static void startUpdate(float dt) {
     int chunk = (trainCount + WORKER_THREADS - 1) / WORKER_THREADS;
     for (int i = 0; i < WORKER_THREADS; i++) {
         wargs[i].start = i * chunk;
-        wargs[i].count = (i + 1) * chunk > trainCount ? trainCount - i * chunk : chunk;
+        int end = (i + 1) * chunk;
+        wargs[i].count = end > trainCount ? trainCount - i * chunk : chunk;
         wargs[i].dt = dt;
-        pthread_mutex_lock(&readyMutex);
-        wargs[i].running = 1;
-        pthread_mutex_unlock(&readyMutex);
+        ResetEvent(wargs[i].hEventDone);
     }
-    pthread_cond_broadcast(&readyCond);
+    for (int i = 0; i < WORKER_THREADS; i++) SetEvent(wargs[i].hEventStart);
+    WaitForMultipleObjects(WORKER_THREADS, workerEventsDone, TRUE, INFINITE);
+}
 
-    for (int i = 0; i < WORKER_THREADS; i++) {
-        pthread_mutex_lock(&readyMutex);
-        while (wargs[i].running) pthread_cond_wait(&readyCond, &readyMutex);
-        pthread_mutex_unlock(&readyMutex);
-    }
+static void stopWorkers(void) {
+    for (int i = 0; i < WORKER_THREADS; i++) wargs[i].count = 0;
+    for (int i = 0; i < WORKER_THREADS; i++) SetEvent(wargs[i].hEventStart);
+    WaitForMultipleObjects(WORKER_THREADS, workerHandles, TRUE, INFINITE);
+    for (int i = 0; i < WORKER_THREADS; i++) CloseHandle(workerHandles[i]);
 }
 
 static void initTrains(void) {
@@ -136,7 +133,7 @@ static void initTrains(void) {
         trains[i].t = (float)i / trainCount;
         trains[i].speed = 1.0f + (float)(rand() % 40) / 10.0f;
         trains[i].target = trains[i].speed;
-        trains[i].dir = (rand() & 1) ? 1 : -1;
+        trains[i].dir = (rand() & 1) ? 1.0f : -1.0f;
         uint8_t r = 80 + (rand() % 120);
         uint8_t g = 120 + (rand() % 135);
         uint8_t b = 200 + (rand() % 55);
@@ -175,11 +172,21 @@ static void drawTrains(uint32_t *buf) {
         int x = (int)p.x;
         int y = (int)p.y;
         uint32_t c = trains[i].color;
-        /* 2x2 pixel dot */
         plotPixel(buf, x, y, c);
         plotPixel(buf, x+1, y, c);
         plotPixel(buf, x, y+1, c);
         plotPixel(buf, x+1, y+1, c);
+    }
+}
+
+static void printMemoryStatus(void) {
+    MEMORYSTATUSEX ms;
+    ms.dwLength = sizeof(ms);
+    if (GlobalMemoryStatusEx(&ms)) {
+        printf("Memory: %llu MB free / %llu MB total (%.1f%% used)\n",
+               ms.ullAvailPhys / (1024*1024),
+               ms.ullTotalPhys / (1024*1024),
+               100.0 * (ms.ullTotalPhys - ms.ullAvailPhys) / ms.ullTotalPhys);
     }
 }
 
@@ -202,8 +209,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int nC
 
     for (int i = 0; i < WORKER_THREADS; i++) {
         wargs[i].trains = trains;
-        wargs[i].running = 0;
-        pthread_create(&workers[i], NULL, workerThread, &wargs[i]);
+        wargs[i].hEventStart = CreateEvent(NULL, FALSE, FALSE, NULL);
+        wargs[i].hEventDone = CreateEvent(NULL, FALSE, FALSE, NULL);
+        workerEventsStart[i] = wargs[i].hEventStart;
+        workerEventsDone[i] = wargs[i].hEventDone;
+        workerHandles[i] = CreateThread(NULL, 0, workerThread, &wargs[i], 0, NULL);
     }
 
     WNDCLASS wc = {0};
@@ -275,17 +285,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int nC
             frames = 0;
             last = now;
         }
-        gFrame++;
+        InterlockedIncrement(&gFrame);
     }
 
+    stopWorkers();
     for (int i = 0; i < WORKER_THREADS; i++) {
-        pthread_mutex_lock(&readyMutex);
-        wargs[i].running = 1;
-        wargs[i].count = 0;
-        pthread_mutex_unlock(&readyMutex);
+        CloseHandle(wargs[i].hEventStart);
+        CloseHandle(wargs[i].hEventDone);
     }
-    pthread_cond_broadcast(&readyCond);
-    for (int i = 0; i < WORKER_THREADS; i++) pthread_join(workers[i], NULL);
 
     DeleteObject(bmp);
     DeleteDC(memDC);
