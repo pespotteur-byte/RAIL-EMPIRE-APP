@@ -47,10 +47,10 @@ class RailEmpire {
     setGlobalRng(this.rng);
     // DET-05 : curseurs de réalisme (1.0 = normal)
     this.realismSettings = {
-      physics: 1.0,
-      weather: 1.0,
-      breakdown: 1.0,
-      delayTolerance: 30,
+      physics: 2.0,
+      weather: 2.0,
+      breakdown: 2.0,
+      delayTolerance: 120,
     };
     this.engine = new SimulationEngine();
     this.world = createDefaultWorld();

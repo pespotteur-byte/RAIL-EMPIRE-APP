@@ -160,6 +160,7 @@ export class Renderer {
       this._drawTempTrace(ctx, window.game.ui._manualTronconWaypoints);
     }
     if (showTrains) this.drawServices(ctx, world, services);
+    this.drawSelectedServiceRoute(ctx, world);
   }
 
   _drawCloudOverlay(ctx, w, h) {
@@ -659,6 +660,65 @@ export class Renderer {
           ctx.fillText(`- ${Math.abs(svc.train.delay)} min`, p.x + bs + 4, p.y + 22);
         }
       }
+    }
+  }
+
+  // LVM-06 — tracer le service sélectionné sur la livemap avec ses arrêts.
+  drawSelectedServiceRoute(ctx, world) {
+    const svc = window.game?.ui?.selectedService;
+    if (!svc || !world || !this.tileMap) return;
+
+    const drawRoute = (routes, color) => {
+      if (!routes) return;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      for (const route of routes) {
+        if (!route || route.length < 2) continue;
+        const step = Math.max(1, Math.floor(route.length / 80));
+        ctx.beginPath();
+        const p0 = this.latLonToScreen(route[0].lat, route[0].lon);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = step; i < route.length; i += step) {
+          const p = this.latLonToScreen(route[i].lat, route[i].lon);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+    };
+
+    drawRoute(svc.routes, '#22d3ee');
+    if (svc.roundTrip) {
+      const returnRoutes = svc._returnRoutes || (svc.routes ? svc.routes.slice().reverse().map(r => r ? [...r].reverse() : null) : null);
+      drawRoute(returnRoutes, '#c084fc');
+    }
+
+    const drawStop = (stop, color) => {
+      let lat, lon;
+      if (stop.voiePointId && window.game?.voiePointManager) {
+        const vp = window.game.voiePointManager.getVoiePointById(stop.voiePointId);
+        if (vp) { lat = vp.lat; lon = vp.lon; }
+      } else if (stop.stationId) {
+        const st = world.getStationById(stop.stationId);
+        if (st) { lat = st.lat; lon = st.lon; }
+      }
+      if (lat == null || lon == null) return;
+      const p = this.latLonToScreen(lat, lon);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    };
+
+    for (const s of svc.stops || []) drawStop(s, '#22d3ee');
+    if (svc.roundTrip) {
+      const returnStops = svc.returnStops?.length ? svc.returnStops : (svc._returnStopsData || (svc.stops ? svc.stops.slice().reverse() : []));
+      for (const s of returnStops) drawStop(s, '#c084fc');
     }
   }
 
