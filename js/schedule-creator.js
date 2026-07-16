@@ -566,6 +566,14 @@ export class ActiveService {
     this._cachedFirstDep = firstDep;
 
     if (this.state === 'waiting') {
+      // INC-03 : incident en gare (bagage abandonné, etc.) bloque le départ immédiat
+      if (this.train.incident?.effect === 'stop') {
+        this.delay = Math.max(0, timeDiff(timeOfDay, firstDep));
+        this.train.delay = this.delay;
+        this.train.delayReason = this.train.incident.name || 'Incident';
+        return;
+      }
+
       // Compute service window
       const lastStop = currentStops[currentStops.length - 1];
       const endTime = lastStop?.arrivalTime ?? firstDep + 120;

@@ -174,4 +174,23 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     svc2.arriveAtStation(stationB, 11, economy);
     assert.equal(svc2.state, 'stopped_at_station', 'le train 2 entre en gare une fois la voie libre');
   });
+
+  it('INC-03 — incident en gare bloque le départ au même moment', () => {
+    const sc = new ScheduleCreator();
+    global.window.game.scheduleCreator = sc;
+    const world = makeWorld();
+    const svc = makeService(sc, world, 'TGV 600', 'r1', 600);
+
+    svc.train.incident = { effect: 'stop', name: 'Bagage abandonné' };
+    sc.beginTick(601);
+    svc.scheduleTick(601, '2024-01-01', economy);
+    assert.equal(svc.state, 'waiting', 'le départ est bloqué par un incident stop');
+    assert.equal(svc.train.delayReason, 'Bagage abandonné');
+    assert.ok(svc.delay > 0, 'le retard est compté');
+
+    svc.train.incident = null;
+    sc.beginTick(601);
+    svc.scheduleTick(601, '2024-01-01', economy);
+    assert.equal(svc.state, 'moving', 'le train repart une fois l incident levé');
+  });
 });
