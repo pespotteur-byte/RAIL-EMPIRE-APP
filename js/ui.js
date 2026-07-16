@@ -46,6 +46,7 @@ const IG_IMAGE_LAYOUTS = {
     width: 1100, height: 611,
     bg: '#0b2e12',
     headerFields: [
+      { type: 'station', x: 0, y: 0, w: 100, h: 10, color: '#fff', bg: '#0b2e12', fontSize: 16, align: 'left', weight: 700 },
       { type: 'clock', x: 86, y: 91, w: 12, h: 7, color: '#fff', bg: '#1e40af', fontSize: 16, align: 'center', weight: 700 }
     ],
     blocks: [
@@ -55,6 +56,39 @@ const IG_IMAGE_LAYOUTS = {
       { y: 51.5, h: 15.5, viaY: 59, viaH: 7.5, status:{x:9,w:14,h:7.5}, time: {x:24,w:12,h:7.5}, provenance:{x:38,w:45,h:7.5}, via:{x:9,w:74,h:7.5} },
       { y: 67, h: 15.5, viaY: 74.5, viaH: 7.5, status:{x:9,w:14,h:7.5}, time: {x:24,w:12,h:7.5}, provenance:{x:38,w:45,h:7.5}, via:{x:9,w:74,h:7.5} },
       { y: 81.5, h: 13.5, viaY: 86, viaH: 7.5, status:{x:9,w:14,h:6.5}, time: {x:24,w:12,h:6.5}, provenance:{x:38,w:45,h:6.5}, via:{x:9,w:74,h:6.5} }
+    ]
+  },
+  'cati-3-3': {
+    file: 'img/infogare/CATI-3-3.png',
+    width: 250, height: 138,
+    bg: '#0b1836',
+    headerFields: [
+      { type: 'station', x: 0, y: 0, w: 100, h: 11, color: '#fff', bg: '#0b1836', fontSize: 8, align: 'left', weight: 700 },
+      { type: 'clock', x: 86, y: 91, w: 13, h: 7, color: '#fbbf24', bg: '#0b1836', fontSize: 8, align: 'center', weight: 700 }
+    ],
+    blocks: [
+      { y: 12, h: 13, viaY: 19, viaH: 6, type: {x:0,w:10,h:3.5,fontSize:5}, num: {x:0,yOff:3.5,w:10,h:3.5,fontSize:5}, status: {x:10,w:10,h:7,fontSize:5}, time: {x:20,w:10,h:7,fontSize:8}, dest: {x:30,w:40,h:7,fontSize:7}, via: {x:0,w:70,h:6,fontSize:5}, voie: {x:80,w:10,yOff:7,h:6,bg:'#fff',color:'#003366',fontSize:7,align:'center',weight:900} },
+      { y: 25, h: 13, viaY: 32, viaH: 6, type: {x:0,w:10,h:3.5,fontSize:5}, num: {x:0,yOff:3.5,w:10,h:3.5,fontSize:5}, status: {x:10,w:10,h:7,fontSize:5}, time: {x:20,w:10,h:7,fontSize:8}, dest: {x:30,w:40,h:7,fontSize:7}, via: {x:0,w:70,h:6,fontSize:5}, voie: {x:80,w:10,yOff:7,h:6,bg:'#fff',color:'#003366',fontSize:7,align:'center',weight:900} },
+      { y: 38, h: 13, viaY: 45, viaH: 6, type: {x:0,w:10,h:3.5,fontSize:5}, num: {x:0,yOff:3.5,w:10,h:3.5,fontSize:5}, status: {x:10,w:10,h:7,fontSize:5}, time: {x:20,w:10,h:7,fontSize:8}, dest: {x:30,w:40,h:7,fontSize:7}, via: {x:0,w:70,h:6,fontSize:5}, voie: {x:80,w:10,yOff:7,h:6,bg:'#fff',color:'#003366',fontSize:7,align:'center',weight:900} },
+      { y: 51, h: 13, viaY: 58, viaH: 6, type: {x:0,w:10,h:3.5,fontSize:5}, num: {x:0,yOff:3.5,w:10,h:3.5,fontSize:5}, status: {x:10,w:10,h:7,fontSize:5}, time: {x:20,w:10,h:7,fontSize:8}, dest: {x:30,w:40,h:7,fontSize:7}, via: {x:0,w:70,h:6,fontSize:5}, voie: {x:80,w:10,yOff:7,h:6,bg:'#fff',color:'#003366',fontSize:7,align:'center',weight:900} },
+      { y: 64, h: 13, viaY: 71, viaH: 6, type: {x:0,w:10,h:3.5,fontSize:5}, num: {x:0,yOff:3.5,w:10,h:3.5,fontSize:5}, status: {x:10,w:10,h:7,fontSize:5}, time: {x:20,w:10,h:7,fontSize:8}, dest: {x:30,w:40,h:7,fontSize:7}, via: {x:0,w:70,h:6,fontSize:5}, voie: {x:80,w:10,yOff:7,h:6,bg:'#fff',color:'#003366',fontSize:7,align:'center',weight:900} },
+      { y: 77, h: 13, viaY: 84, viaH: 6, type: {x:0,w:10,h:3.5,fontSize:5}, num: {x:0,yOff:3.5,w:10,h:3.5,fontSize:5}, status: {x:10,w:10,h:7,fontSize:5}, time: {x:20,w:10,h:7,fontSize:8}, dest: {x:30,w:40,h:7,fontSize:7}, via: {x:0,w:70,h:6,fontSize:5}, voie: {x:80,w:10,yOff:7,h:6,bg:'#fff',color:'#003366',fontSize:7,align:'center',weight:900} }
+    ]
+  },
+  'cati-complet': {
+    file: 'img/infogare/CATI-COMPLET.png',
+    width: 250, height: 137,
+    bg: '#0b1836',
+    headerFields: [
+      { type: 'station', x: 0, y: 0, w: 100, h: 11, color: '#fff', bg: '#0b1836', fontSize: 8, align: 'left', weight: 700 },
+      { type: 'clock', x: 86, y: 91, w: 13, h: 7, color: '#fbbf24', bg: '#0b1836', fontSize: 8, align: 'center', weight: 700 }
+    ],
+    blocks: [
+      { y: 12, h: 14, viaY: 17, viaH: 5, type: {x:5,w:15,h:5,fontSize:5}, num: {x:5,yOff:5,w:15,h:5,fontSize:5}, time: {x:20,w:10,h:5,fontSize:6}, dest: {x:32,w:38,h:5,fontSize:5}, via: {x:5,w:65,h:5,fontSize:5}, voie: {x:82,w:10,h:5,bg:'#fff',color:'#003366',fontSize:6,align:'center',weight:900} },
+      { y: 26, h: 14, viaY: 31, viaH: 5, type: {x:5,w:15,h:5,fontSize:5}, num: {x:5,yOff:5,w:15,h:5,fontSize:5}, time: {x:20,w:10,h:5,fontSize:6}, dest: {x:32,w:38,h:5,fontSize:5}, via: {x:5,w:65,h:5,fontSize:5}, voie: {x:82,w:10,h:5,bg:'#fff',color:'#003366',fontSize:6,align:'center',weight:900} },
+      { y: 40, h: 14, viaY: 45, viaH: 5, type: {x:5,w:15,h:5,fontSize:5}, num: {x:5,yOff:5,w:15,h:5,fontSize:5}, time: {x:20,w:10,h:5,fontSize:6}, dest: {x:32,w:38,h:5,fontSize:5}, via: {x:5,w:65,h:5,fontSize:5}, voie: {x:82,w:10,h:5,bg:'#fff',color:'#003366',fontSize:6,align:'center',weight:900} },
+      { y: 54, h: 14, viaY: 59, viaH: 5, type: {x:5,w:15,h:5,fontSize:5}, num: {x:5,yOff:5,w:15,h:5,fontSize:5}, time: {x:20,w:10,h:5,fontSize:6}, dest: {x:32,w:38,h:5,fontSize:5}, via: {x:5,w:65,h:5,fontSize:5}, voie: {x:82,w:10,h:5,bg:'#fff',color:'#003366',fontSize:6,align:'center',weight:900} },
+      { y: 68, h: 14, viaY: 73, viaH: 5, type: {x:5,w:15,h:5,fontSize:5}, num: {x:5,yOff:5,w:15,h:5,fontSize:5}, time: {x:20,w:10,h:5,fontSize:6}, dest: {x:32,w:38,h:5,fontSize:5}, via: {x:5,w:65,h:5,fontSize:5}, voie: {x:82,w:10,h:5,bg:'#fff',color:'#003366',fontSize:6,align:'center',weight:900} }
     ]
   }
 };
@@ -7073,6 +7107,14 @@ export class UI {
           if (st) fromStations.push(st.name);
         }
 
+        // Prochains arrêts avec horaires (pour écran quai)
+        const nextStops = [];
+        for (let j = i + 1; j < stops.length; j++) {
+          if (stops[j].type === 'waypoint' || stops[j].type === 'passage') continue;
+          const st = this.game.world.getStationById(stops[j].stationId);
+          if (st) nextStops.push({ name: st.name, time: stops[j].arrivalTime });
+        }
+
         // Time diff for "X min" display
         let waitMin = null;
         if (isDeparture && depTime != null) {
@@ -7110,7 +7152,7 @@ export class UI {
           origin: origStation?.name || '?',
           depTime, arrTime, waitMin,
           isDeparture, isArrival, isFirst, isLast,
-          servedStations, fromStations,
+          servedStations, fromStations, nextStops,
           delay,
           isCancelled,
           isFull,
@@ -7119,7 +7161,7 @@ export class UI {
           lineCode: line?.code || '',
           lineName: line?.name || '',
           lineColor: line?.color || '#3b82f6',
-          voie: stop.platform || svc.train?.platform || '',
+          voie: stop.platform || svc.train?.platform || String(i + 1),
           state: svc.state,
           speed: svc.speed || 0,
           rame: svc.rame,
@@ -7190,8 +7232,8 @@ export class UI {
       case 'cati-ar': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
       case 'old-sncf': board.innerHTML = this._renderPalette(station, trains, nowStr); break;
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
-      case 'cati-3-3': board.innerHTML = this._renderCATI3_3(station, trains, nowStr); break;
-      case 'cati-complet': board.innerHTML = this._renderCATIComplet(station, trains, nowStr); break;
+      case 'cati-3-3': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
+      case 'cati-complet': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
       case 'ecran-quai': board.innerHTML = this._renderEcranQuai(station, trains, nowStr); break;
     }
 
@@ -7514,7 +7556,7 @@ export class UI {
     });
   }
 
-  // --- Flash Circulation : panneau bleu/jaune d'info trafic réseau ---
+  // --- Flash Circulation : panneau bleu/jaune d'info trafic réseau (image annexe INFOGARE) ---
   _renderFlashCirculation(station, nowStr) {
     const im = this.game.incidentManager;
     const bulletins = im?.getBulletins?.() || [];
@@ -7532,17 +7574,17 @@ export class UI {
     const mainText = items.length ? items.join(' / ') : 'Trafic fluide sur le réseau.';
     const ticker = items.length ? `${items.join('   +++   ')}   +++   ` : 'Circulation normale.';
 
-    return `<div class="ig-flash-sign">
-      <div class="ig-flash-sign-bar">
-        <span class="ig-flash-sign-title"><span class="big">flash</span><span class="small">circulation</span></span>
-      </div>
-      <div class="ig-flash-sign-body">
-        <div class="ig-flash-sign-msg">${mainText}</div>
-        <div class="ig-flash-sign-info">INFORMATIONS A SUIVRE</div>
-      </div>
-      <div class="ig-flash-sign-ticker"><span class="ig-flash-sign-track">${ticker}</span></div>
-      <div class="ig-flash-sign-clock">${nowStr.replace(':',' ')}</div>
-    </div>`;
+    const W = 250, H = 140, scale = 3;
+    const img = 'img/infogare/FLASH-CIRCULATION.png';
+    let html = `<div class="ig-image-board" style="background-image:url('${img}');width:${W * scale}px;max-width:${W * scale}px;aspect-ratio:${W}/${H};">`;
+    html += `<div class="ig-image-block" style="top:0;left:22%;width:78%;height:100%;background:#fec152;"></div>`;
+    html += this._igField({x:28,y:11,w:66,h:55}, mainText, {color:'#000080',fontSize:6*scale,weight:700,style:'white-space:normal;overflow-wrap:break-word;line-height:1.2;'}, 0);
+    html += this._igField({x:28,y:72,w:67,h:10}, 'INFORMATIONS A SUIVRE', {color:'#000080',fontSize:6*scale,weight:700,align:'center'}, 0);
+    html += this._igField({x:4,y:86,w:69,h:8}, ticker, {color:'#fff',fontSize:5*scale,bg:'#0b4f9b',style:'white-space:nowrap;'}, 0);
+    const clock = nowStr.replace(':', ' ');
+    html += this._igField({x:73,y:90,w:23,h:7}, clock, {color:'#fff',fontSize:6*scale,bg:'#0b4f9b',align:'center',weight:700}, 0);
+    html += `</div>`;
+    return html;
   }
 
   // --- CATI 3-3 : 2 groupes de 3 lignes (tableau compact) ---
@@ -7822,90 +7864,93 @@ export class UI {
   // --- Écran quai : prochain départ sur la voie (image annexe INFOGARE) ---
   _renderEcranQuai(station, trains, nowStr) {
     const t = trains.find(r => r.isDeparture);
-    if (!t) return `<div class="ig-quai-board"><div class="ig-quai-header">${station?.name || ''}</div><div class="ig-quai-msg">Aucun départ prévu</div></div>`;
-    const served = t.servedStations.slice(0, 12);
-    const stops = served.map(s => `<div class="ig-quai-stop"><span class="ig-quai-dot">•</span>${s}</div>`).join('');
-    const msg = t.isCancelled ? 'SUPPRIMÉ' : (t.delay > 0 ? `RETARD ${this._fmtDelay(t.delay)}` : "À L'HEURE");
+    if (!t) return `<div class="ig-image-board" style="background:#0b4f9b;width:1100px;max-width:1100px;aspect-ratio:1100/616;align-items:center;justify-content:center;color:#fff;display:flex;font-size:24px;">Aucun départ prévu</div>`;
+    const msg = t.isCancelled ? 'SUPPRIMÉ' : (t.delay > 0 ? `RETARD ${this._fmtDelay(t.delay)}` : "à l'heure");
     const trainNum = t.trainNumber || t.name;
-    return `<div class="ig-quai-board">
-      <div class="ig-quai-left">
-        <div class="ig-quai-watermark">départ</div>
-        <div class="ig-quai-sncf">SNCF</div>
-        <div class="ig-quai-time">${this._fmtTime(t.depTime)}</div>
-        <div class="ig-quai-status">${msg}</div>
-        <div class="ig-quai-dest">${t.destination}</div>
-        <div class="ig-quai-num">${t.name.split(' ')[0] || t.name} ${trainNum}</div>
-      </div>
-      <div class="ig-quai-right">
-        <div class="ig-quai-watermark">départ</div>
-        <div class="ig-quai-stops-title">Gares desservies</div>
-        <div class="ig-quai-stops">${stops || '<div class="ig-quai-stop">Terminus</div>'}</div>
-      </div>
-      <div class="ig-quai-bottom">
-        <div class="ig-quai-ticker"><span>${station?.name || ''} — Prochain départ à ${this._fmtTime(t.depTime)} pour ${t.destination}</span></div>
-        <div class="ig-quai-clock">${nowStr}</div>
-      </div>
-    </div>`;
+    const W = 1100, H = 616, scale = 1;
+    const img = 'img/infogare/ECRAN-QUAI.png';
+    const pt = this.game.engine?.getParisTime?.();
+    const clockStr = pt ? `${String(pt.hours).padStart(2,'0')} ${String(pt.minutes).padStart(2,'0')} ${String(pt.seconds).padStart(2,'0')}` : nowStr.replace(':', ' ');
+    let html = `<div class="ig-image-board" style="background-image:url('${img}');width:${W * scale}px;max-width:${W * scale}px;aspect-ratio:${W}/${H};">`;
+    // masques pour cacher le texte de l'image d'origine
+    html += `<div class="ig-image-block" style="top:8%;left:0;width:38%;height:82%;background:#f5eef4;"></div>`;
+    html += `<div class="ig-image-block" style="top:0;left:38%;width:62%;height:90%;background:#0b4f9b;"></div>`;
+    html += `<div class="ig-image-block" style="top:90%;left:0;width:100%;height:10%;background:#0b4f9b;"></div>`;
+    html += this._igField({x:5,y:9,w:15,h:10}, this._fmtTime(t.depTime), {color:'#000',fontSize:20*scale,weight:700}, 0);
+    html += this._igField({x:22,y:12,w:15,h:6}, msg, {color:'#16a34a',fontSize:12*scale,weight:700}, 0);
+    html += this._igField({x:5,y:21,w:35,h:10}, t.destination, {color:'#000',fontSize:18*scale,weight:700,textTransform:'uppercase'}, 0);
+    html += this._igField({x:5,y:32,w:30,h:6}, `${t.name.split(' ')[0] || t.name} ${trainNum}`, {color:'#000',fontSize:13*scale,weight:700}, 0);
+    const nextStops = (t.nextStops || []).slice(0, 15);
+    const rowH = 5.2;
+    const startY = 10;
+    for (let i = 0; i < nextStops.length; i++) {
+      const s = nextStops[i];
+      const y = startY + i * rowH;
+      const txt = `<span style="color:#facc15">•</span> <span style="color:#fff">${this._fmtTime(s.time)} ${s.name}</span>`;
+      html += this._igField({x:42,y,w:55,h:rowH - 0.2}, txt, {color:'#fff',fontSize:13*scale,weight:600}, 0);
+    }
+    const ticker = `ON. LES VOYAGEURS A DESTINATION DE ${t.destination}`;
+    html += this._igField({x:5,y:92,w:70,h:5}, ticker, {color:'#fff',fontSize:12*scale,weight:700,style:'white-space:nowrap;'}, 0);
+    html += this._igField({x:82,y:92,w:12,h:5}, clockStr, {color:'#fff',fontSize:12*scale,align:'center',weight:700}, 0);
+    html += `</div>`;
+    return html;
   }
 
   // --- Palette SNCF moderne (image annexe INFOGARE : 2 colonnes, horloge, défilant) ---
   _renderPalette(station, trains, nowStr) {
     const all = trains.filter(r => r.isDeparture).slice(0, 32);
-    const mid = Math.ceil(all.length / 2);
-    const left = all.slice(0, mid);
-    const right = all.slice(mid);
-    const buildRow = t => {
+    const left = all.filter((_, i) => i % 2 === 0).slice(0, 11);
+    const right = all.filter((_, i) => i % 2 === 1).slice(0, 11);
+    const W = 1100, H = 207, scale = 1;
+    const img = 'img/infogare/PALETTE.png';
+    const bg = '#1a1a1a';
+    const pt = this.game.engine?.getParisTime?.();
+    const clockStr = pt ? `${String(pt.hours).padStart(2,'0')} ${String(pt.minutes).padStart(2,'0')}` : nowStr.replace(':', ' ');
+
+    // incidents / ticker
+    const im = this.game.incidentManager;
+    const bulletins = im?.getBulletins?.() || [];
+    const tickerText = bulletins.length ? bulletins[0].name.toUpperCase() : 'CIRCULATION NORMALE';
+
+    let html = `<div class="ig-image-board" style="background-image:url('${img}');width:${W * scale}px;max-width:${W * scale}px;aspect-ratio:${W}/${H};">`;
+    html += `<div class="ig-image-block" style="top:0%;height:11%;background:${bg};"></div>`;
+    html += this._igField({x:1,y:2,w:85,h:6}, 'Trains au départ  •  Train departures  •  Abfahrende Züge', {color:'#facc15',fontSize:12*scale,bg:'#1a1a1a',weight:700}, 0);
+
+    const rowH = 7.6;
+    const startY = 11;
+    const col = (t, base, rowY) => {
+      if (!t) return '';
       const type = (t.name.split(' ')[0] || t.name).toUpperCase();
-      const dest = t.destination.toUpperCase();
-      const via = t.servedStations.slice(0, 2).join(' ').toUpperCase();
-      const full = via ? `${dest}  ${via}` : dest;
-      const num = t.trainNumber || '';
-      let part = (t.seriesName || '').toUpperCase();
+      const num = (t.trainNumber || '').toUpperCase();
+      const time = this._fmtTime(t.depTime).replace('h', ':');
+      const dest = (t.destination || '').toUpperCase();
+      let part = (t.seriesName || 'TER').toUpperCase();
       if (t.isCancelled) part = 'SUPP';
       else if (t.isFull || t.isFreightFull) part = 'PLEIN';
-      return `<div class="ig-palette-row" data-svc-id="${t.svcId}">
-        <span class="ig-palette-cell ig-palette-train">${type}</span>
-        <span class="ig-palette-cell ig-palette-num">${num}</span>
-        <span class="ig-palette-cell ig-palette-time">${this._fmtTime(t.depTime).replace('h','.')}</span>
-        <span class="ig-palette-cell ig-palette-dest">${full}</span>
-        <span class="ig-palette-cell ig-palette-part">${part}</span>
-        <span class="ig-palette-cell ig-palette-voie">${t.voie || ''}</span>
-      </div>`;
+      const status = t.delay > 0 ? `RET ${t.delay}M` : (t.isCancelled ? 'SUPP' : "OK");
+      let s = '';
+      s += this._igField({x:base + 2, y:rowY + 0.5, w:6, h:4.5}, type, {color:'#facc15', fontSize:9*scale, weight:700, bg:bg}, 0);
+      s += this._igField({x:base + 8, y:rowY + 0.5, w:8, h:4.5}, num, {color:'#facc15', fontSize:9*scale, weight:700, bg:bg}, 0);
+      s += this._igField({x:base + 16, y:rowY + 0.5, w:8, h:4.5}, time, {color:'#facc15', fontSize:9*scale, weight:700, bg:bg}, 0);
+      s += this._igField({x:base + 24, y:rowY + 0.5, w:15, h:4.5}, dest, {color:'#fff', fontSize:9*scale, weight:700, bg:bg}, 0);
+      s += this._igField({x:base + 39, y:rowY + 0.5, w:7, h:4.5}, part, {color:'#facc15', fontSize:9*scale, weight:700, bg:bg}, 0);
+      s += this._igField({x:base + 46, y:rowY + 0.5, w:7, h:4.5}, status, {color:'#4ade80', fontSize:9*scale, weight:700, bg:bg}, 0);
+      s += this._igField({x:base + 53, y:rowY + 0.5, w:4, h:4.5}, t.voie || '', {color:'#000', fontSize:9*scale, weight:900, align:'center', bg:'#facc15'}, 0);
+      return s;
     };
-    const colRows = arr => arr.length ? arr.map(buildRow).join('') : '<div class="ig-palette-empty">AUCUN TRAIN PRÉVU</div>';
-    const ticker = 'VÉRIFIEZ LES HORAIRES EN TEMPS RÉEL.  ' + (station?.name || '').toUpperCase();
-    const pt = this.game.engine.getParisTime();
-    const hourDeg = (pt.hours % 12) * 30 + pt.minutes * 0.5;
-    const minDeg = pt.minutes * 6;
-    return `<div class="ig-palette-board" style="position:relative">
-      <div class="ig-palette-sncf-logo">SNCF</div>
-      <div class="ig-palette-header">
-        <span>Trains au départ</span>
-        <span>Train departures</span>
-        <span>Abfahrende Züge</span>
-      </div>
-      <div class="ig-palette-body">
-        <div class="ig-palette-left">
-          <div class="ig-palette-subheader">
-            <span>Train</span><span>n°</span><span>Heure</span><span>Destination</span><span>Particularités</span><span>Voie</span>
-          </div>
-          <div class="ig-palette-cols">
-            <div class="ig-palette-col">${colRows(left)}</div>
-            <div class="ig-palette-col">${colRows(right)}</div>
-          </div>
-        </div>
-        <div class="ig-palette-right">
-          <div class="ig-palette-clock-face">
-            <div class="ig-palette-clock-hand" style="transform:rotate(${hourDeg}deg)"></div>
-            <div class="ig-palette-clock-hand-min" style="transform:rotate(${minDeg}deg)"></div>
-          </div>
-          <div class="ig-palette-marquee"><span>${ticker}</span></div>
-        </div>
-      </div>
-      <div class="ig-palette-footer">
-        <div class="ig-palette-time-digital">${nowStr.replace(':','.')}</div>
-      </div>
-    </div>`;
+
+    for (let i = 0; i < 10; i++) {
+      const rowY = startY + i * rowH;
+      html += `<div class="ig-image-block" style="top:${rowY}%;height:${rowH}%;background:${bg};"></div>`;
+      html += col(left[i], 0, rowY);
+      html += col(right[i], 50, rowY);
+    }
+
+    // horloge numérique sur cadran + défilant
+    html += this._igField({x:86,y:87,w:8,h:8}, clockStr, {color:'#facc15',fontSize:10*scale,bg:bg,align:'center',weight:700}, 0);
+    html += this._igField({x:89,y:85,w:9,h:14}, tickerText, {color:'#000',fontSize:8*scale,bg:'#f97316',weight:700,style:'white-space:normal;overflow-wrap:break-word;line-height:1.1;'}, 0);
+    html += `</div>`;
+    return html;
   }
 
   // ==================== DASHBOARD ====================
@@ -8070,13 +8115,14 @@ export class UI {
     if (!layout) return '';
     const isArr = ['sncf-arr', 'afl-arrivee', 'cati-ar'].includes(displayType);
     const dirField = isArr ? 'provenance' : 'dest';
+    const scale = layout.scale || (layout.width < 500 ? 2 : 1);
 
     const fmtStyle = (f, extra = '') => {
       const parts = [
         `left:${f.x}%`, `top:${f.y}%`, `width:${f.w}%`, `height:${f.h}%`,
         `color:${f.color || '#fff'}`,
         f.bg ? `background:${f.bg}` : '',
-        `font-size:${f.fontSize || 14}px`,
+        `font-size:${(f.fontSize || 14) * scale}px`,
         `text-align:${f.align || 'left'}`,
         `justify-content:${f.align === 'center' ? 'center' : (f.align === 'right' ? 'flex-end' : 'flex-start')}`,
         f.weight ? `font-weight:${f.weight}` : '',
@@ -8085,7 +8131,7 @@ export class UI {
       return parts.filter(Boolean).join(';');
     };
 
-    let html = `<div class="ig-image-board" style="background-image:url('${layout.file}');">`;
+    let html = `<div class="ig-image-board" style="background-image:url('${layout.file}');width:${layout.width * scale}px;max-width:${layout.width * scale}px;aspect-ratio:${layout.width}/${layout.height};">`;
 
     // header fields
     for (const f of layout.headerFields || []) {
@@ -8122,24 +8168,25 @@ export class UI {
 
       // time
       const timeStr = this._fmtTime(isArr ? t.arrTime : t.depTime);
-      html += this._igField(b.time, timeStr, { color: '#facc15', fontSize: 18, weight: 700 }, b.y);
+      html += this._igField(b.time, timeStr, { color: b.time?.color || '#facc15', fontSize: (b.time?.fontSize || 18) * scale, weight: b.time?.weight || 700, align: b.time?.align }, b.y);
       // type + number (stacked)
-      html += this._igField(b.type, type || t.seriesName || 'TER', { color: '#fff', fontSize: 13, weight: 700 }, b.y);
-      html += this._igField(b.num, num || t.trainNumber || t.name, { color: '#93c5fd', fontSize: 13, weight: 700 }, b.y + (b.num?.yOff || 0));
+      html += this._igField(b.type, type || t.seriesName || 'TER', { color: b.type?.color || '#fff', fontSize: (b.type?.fontSize || 13) * scale, weight: b.type?.weight || 700 }, b.y + (b.type?.yOff || 0));
+      html += this._igField(b.num, num || t.trainNumber || t.name, { color: b.num?.color || '#93c5fd', fontSize: (b.num?.fontSize || 13) * scale, weight: b.num?.weight || 700 }, b.y + (b.num?.yOff || 0));
       // destination / provenance
       const destTxt = isArr ? (t.origin || '') : (t.destination || '');
-      html += this._igField(b[dirField], destTxt, { color: '#fff', fontSize: 17, weight: 700, textTransform: 'uppercase' }, b.y);
+      html += this._igField(b[dirField], destTxt, { color: b[dirField]?.color || '#fff', fontSize: (b[dirField]?.fontSize || 17) * scale, weight: b[dirField]?.weight || 700, textTransform: b[dirField]?.textTransform || 'uppercase' }, b.y);
       // via stops
-      html += this._igField(b.via, viaText, { color: '#ffffff', fontSize: 11 }, b.y + (b.viaY - b.y));
+      html += this._igField(b.via, viaText, { color: b.via?.color || '#ffffff', fontSize: (b.via?.fontSize || 11) * scale }, b.y + (b.viaY - b.y));
       // status
-      html += this._igField(b.status, statusHtml, { color: '#facc15', fontSize: 12, weight: 700, align: 'right' }, b.y);
+      html += this._igField(b.status, statusHtml, { color: b.status?.color || '#facc15', fontSize: (b.status?.fontSize || 12) * scale, weight: b.status?.weight || 700, align: b.status?.align || 'right' }, b.y);
       // voie (arrivals)
       if (b.voie) {
-        html += this._igField(b.voie, t.voie || '', { color: '#fff', fontSize: 16, weight: 900, align: 'center', bg: '#f59e0b' }, b.y);
+        const voieExtra = { color: b.voie.color || '#fff', fontSize: (b.voie.fontSize || 16) * scale, weight: b.voie.weight || 900, align: b.voie.align || 'center', bg: b.voie.bg || '#f59e0b' };
+        html += this._igField(b.voie, t.voie || '', voieExtra, b.y + (b.voie?.yOff || 0));
       }
       // remark (departures)
       if (b.remark && remarkTxt) {
-        html += this._igField(b.remark, remarkTxt, { color: '#facc15', fontSize: 11 }, b.y + (b.remarkY - b.y));
+        html += this._igField(b.remark, remarkTxt, { color: '#facc15', fontSize: 11 * scale }, b.y + (b.remarkY - b.y));
       }
     }
     html += `</div>`;
