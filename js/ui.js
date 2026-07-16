@@ -2330,13 +2330,14 @@ export class UI {
             const pt = route[i];
             const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
             const isEnd = (i === 0 || i === route.length - 1);
-            const isSelected = this._traceSelectedPoint && this._traceSelectedPoint.leg === leg && this._traceSelectedPoint.index === i;
-            ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : 'rgba(255,255,255,0.7)');
+            const isSelected = this._traceSelectedPoint && this._traceSelectedPoint.leg === leg && this._traceSelectedPoint.control === pt;
+            const isControl = pt && pt.control;
+            ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : 'rgba(255,255,255,0.7)'));
             ctx.beginPath();
-            ctx.arc(p.x, p.y, isSelected ? 6 : (isEnd ? 4 : 2.5), 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, isSelected ? 7 : (isEnd ? 5 : (isControl ? 4 : 2.5)), 0, Math.PI * 2);
             ctx.fill();
-            if (isSelected) {
-              ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            if (isSelected || isControl) {
+              ctx.strokeStyle = isSelected ? '#fff' : '#38bdf8'; ctx.lineWidth = 1.5; ctx.stroke();
             }
           }
         }
@@ -2400,14 +2401,20 @@ export class UI {
       const x = e.offsetX, y = e.offsetY;
       // 1) Trace point drag: grab a 50 m vertex to reshape the route.
       const traceHit = this._findNearestTracePoint(x, y, tileMap, canvas);
-      if (traceHit) {
+      if (traceHit && this._traceEditMode) {
+        const route = this._manualRoutes[traceHit.leg];
+        let control = traceHit.pt && traceHit.pt.control ? traceHit.pt : null;
         if (e.ctrlKey || e.button === 2) {
           this._removeTracePoint(traceHit.leg, traceHit.index);
           this._traceSelectedPoint = null;
-          this._recalcAfterTraceEdit(traceHit.leg);
         } else {
-          this._traceSelectedPoint = traceHit;
-          this._traceDragging = { ...traceHit, startX: x, startY: y };
+          if (!control) {
+            // Dragging a densified point creates a new control point at that location.
+            control = this._insertControlAt(traceHit.leg, traceHit.index, traceHit.pt.lat, traceHit.pt.lon);
+          }
+          this._traceSelectedPoint = { leg: traceHit.leg, control };
+          this._traceDragging = { leg: traceHit.leg, control, startX: x, startY: y };
+          requestDraw();
         }
         schedDrag = false; schedDragStart = null; totalDragDist = 0;
         return;
@@ -2420,7 +2427,7 @@ export class UI {
     canvas.onmousemove = (e) => {
       if (this._traceDragging) {
         const w = tileMap.screenToWorld(e.offsetX, e.offsetY, canvas.width, canvas.height);
-        this._moveTracePoint(this._traceDragging.leg, this._traceDragging.index, w.lat, w.lon);
+        this._moveTracePoint(this._traceDragging.leg, this._traceDragging.control, w.lat, w.lon);
         requestDraw();
         return;
       }
@@ -2781,9 +2788,21 @@ export class UI {
 
   _deleteSelectedTracePoint() {
     if (!this._traceSelectedPoint) return;
-    this._removeTracePoint(this._traceSelectedPoint.leg, this._traceSelectedPoint.index);
+    this._removeTraceControl(this._traceSelectedPoint.leg, this._traceSelectedPoint.control);
     this._traceSelectedPoint = null;
     this._updateManualUI();
+  }
+
+  _removeTraceControl(leg, control) {
+    if (!control) return;
+    const route = this._manualRoutes[leg];
+    if (!route) return;
+    const controls = this._extractRouteControls(route);
+    const idx = controls.indexOf(control);
+    if (idx <= 0 || idx >= controls.length - 1) return;
+    controls.splice(idx, 1);
+    this._manualRoutes[leg] = this._densifyRoute(controls);
+    this._recalcAfterTraceEdit(leg);
   }
 
   _addManualPoint(lat, lon) {
@@ -2805,8 +2824,8 @@ export class UI {
   }
 
   _buildManualRoute(start, controls, end, maxSpeed = 30) {
-    const points = [start, ...controls, end];
-    return this._densifyRoute(points.map(p => ({ ...p, maxSpeed })), 0.05);
+    const points = [{ ...start, maxSpeed, control: true }, ...controls.map(p => ({ ...p, maxSpeed, control: true })), { ...end, maxSpeed, control: true }];
+    return this._densifyRoute(points, 0.05);
   }
 
   // --- Sillon picker (Section V integration) ---
@@ -3358,31 +3377,70 @@ export class UI {
   // --- Trace editing helpers (remaster IV — points auto every 50 m) ---
 
   // Densify a polyline so consecutive vertices are at most `spacingKm` apart.
-  // Preserves the original shape by interpolating along cumulative distance.
+  // If the input route has control points (manual trace), keep those vertices
+  // and densify only between them. Otherwise densify the whole polyline.
   _densifyRoute(route, spacingKm = 0.05) {
     if (!route || route.length < 2) return route;
-    const cum = [0];
-    for (let i = 1; i < route.length; i++) {
-      cum[i] = cum[i - 1] + haversineDistance(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
+    const hasControl = route.some(p => p && p.control);
+    if (!hasControl) {
+      const cum = [0];
+      for (let i = 1; i < route.length; i++) {
+        cum[i] = cum[i - 1] + haversineDistance(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
+      }
+      const total = cum[cum.length - 1];
+      if (total <= 0) return [...route];
+      const out = [];
+      const steps = Math.max(1, Math.round(total / spacingKm));
+      for (let s = 0; s <= steps; s++) {
+        const target = Math.min(total, s * spacingKm);
+        let idx = 1;
+        while (idx < cum.length && cum[idx] < target) idx++;
+        const a = route[idx - 1], b = route[idx] || route[route.length - 1];
+        const segLen = (cum[idx] ?? total) - cum[idx - 1];
+        const t = segLen > 0 ? (target - cum[idx - 1]) / segLen : 0;
+        const maxSpeed = b?.maxSpeed ?? a?.maxSpeed ?? 30;
+        const props = {};
+        for (const k of Object.keys(b || a)) {
+          if (k !== 'lat' && k !== 'lon' && k !== 'control') props[k] = (b || a)[k];
+        }
+        out.push({ lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t, maxSpeed, ...props });
+      }
+      return out;
     }
-    const total = cum[cum.length - 1];
-    if (total <= 0) return [...route];
+    // Manual-trace / control-aware densification: keep control points and densify between them.
+    const controls = [];
+    for (let i = 0; i < route.length; i++) {
+      if (route[i].control || i === 0 || i === route.length - 1) {
+        // mutate input objects so downstream edits keep references
+        route[i].control = true;
+        controls.push(route[i]);
+      }
+    }
+    if (controls.length < 2) return [...route];
     const out = [];
-    const steps = Math.max(1, Math.round(total / spacingKm));
-    for (let s = 0; s <= steps; s++) {
-      const target = Math.min(total, s * spacingKm);
-      let idx = 1;
-      while (idx < cum.length && cum[idx] < target) idx++;
-      const a = route[idx - 1], b = route[idx] || route[route.length - 1];
-      const segLen = (cum[idx] ?? total) - cum[idx - 1];
-      const t = segLen > 0 ? (target - cum[idx - 1]) / segLen : 0;
-      const maxSpeed = b?.maxSpeed ?? a?.maxSpeed ?? 30;
-      out.push({
-        lat: a.lat + (b.lat - a.lat) * t,
-        lon: a.lon + (b.lon - a.lon) * t,
-        maxSpeed,
-      });
+    for (let i = 0; i < controls.length - 1; i++) {
+      const a = controls[i], b = controls[i + 1];
+      const dist = haversineDistance(a.lat, a.lon, b.lat, b.lon);
+      if (dist <= 0) continue;
+      const steps = Math.max(1, Math.ceil(dist / spacingKm));
+      for (let s = 0; s < steps; s++) {
+        const t = s / steps;
+        const maxSpeed = b?.maxSpeed ?? a?.maxSpeed ?? 30;
+        if (s === 0) {
+          a.control = true;
+          a.maxSpeed = maxSpeed;
+          out.push(a);
+        } else {
+          const props = {};
+          for (const k of Object.keys(b || a)) {
+            if (k !== 'lat' && k !== 'lon' && k !== 'control') props[k] = (b || a)[k];
+          }
+          out.push({ lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t, maxSpeed, ...props });
+        }
+      }
     }
+    const last = controls[controls.length - 1];
+    out.push({ ...last, control: true });
     return out;
   }
 
@@ -3398,9 +3456,10 @@ export class UI {
       const route = this._manualRoutes[leg];
       if (!route) continue;
       for (let i = 0; i < route.length; i++) {
-        const p = tileMap.worldToScreen(route[i].lat, route[i].lon, canvas.width, canvas.height);
+        const pt = route[i];
+        const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
         const d = Math.hypot(p.x - x, p.y - y);
-        if (d < bestDist) { bestDist = d; best = { leg, index: i }; }
+        if (d < bestDist) { bestDist = d; best = { leg, index: i, pt }; }
       }
     }
     return bestDist <= 10 ? best : null;
@@ -3431,33 +3490,70 @@ export class UI {
     return bestDist <= 8 ? best : null;
   }
 
-  // Insert a point into the trace route at a specific index and resample.
-  _insertTracePoint(leg, index, lat, lon) {
+  // Extract the control vertices from a manual-route densified array.
+  _extractRouteControls(route) {
+    if (!route || route.length < 2) return [];
+    return route.filter(p => p && p.control);
+  }
+
+  // Find the previous and next control points bounding a route index.
+  _controlBoundsForIndex(route, index) {
+    let prev = index, next = index;
+    while (prev > 0 && !route[prev].control) prev--;
+    while (next < route.length - 1 && !route[next].control) next++;
+    return { prev, next };
+  }
+
+  // Insert a new control point on the segment that contains `route[index]` and return it.
+  _insertControlAt(leg, index, lat, lon) {
     const route = this._manualRoutes[leg];
-    if (!route) return;
-    const maxSpeed = route[Math.max(0, index - 1)].maxSpeed || 30;
-    route.splice(index, 0, { lat, lon, maxSpeed });
-    this._manualRoutes[leg] = this._resampleRoute(route);
+    if (!route) return null;
+    const controls = this._extractRouteControls(route);
+    const { prev, next } = this._controlBoundsForIndex(route, index);
+    if (prev < 0 || next < 0 || prev === next) return null;
+    const prevObj = route[prev];
+    const prevIdx = controls.indexOf(prevObj);
+    if (prevIdx < 0) return null;
+    const maxSpeed = prevObj.maxSpeed || 30;
+    const newPt = { lat, lon, maxSpeed, control: true };
+    controls.splice(prevIdx + 1, 0, newPt);
+    this._manualRoutes[leg] = this._densifyRoute(controls);
+    return newPt;
+  }
+
+  // Insert a point into the trace route at a specific segment and resample.
+  _insertTracePoint(leg, index, lat, lon) {
+    this._insertControlAt(leg, index, lat, lon);
     this._recalcAfterTraceEdit(leg);
   }
 
-  // Remove a trace point (start/end are protected).
+  // Remove the nearest control point to the clicked densified point (start/end protected).
   _removeTracePoint(leg, index) {
     const route = this._manualRoutes[leg];
     if (!route || route.length <= 2 || index <= 0 || index >= route.length - 1) return;
-    route.splice(index, 1);
-    this._manualRoutes[leg] = this._resampleRoute(route);
-    this._recalcAfterTraceEdit(leg);
+    const controls = this._extractRouteControls(route);
+    if (controls.length <= 2) return;
+    let bestIdx = -1, bestD = Infinity;
+    for (let i = 1; i < controls.length - 1; i++) {
+      const d = haversineDistance(controls[i].lat, controls[i].lon, route[index].lat, route[index].lon);
+      if (d < bestD) { bestD = d; bestIdx = i; }
+    }
+    if (bestIdx >= 0 && bestD < 0.1) {
+      controls.splice(bestIdx, 1);
+      this._manualRoutes[leg] = this._densifyRoute(controls);
+      this._recalcAfterTraceEdit(leg);
+    }
   }
 
-  // Move a trace point and resample the affected leg.
-  _moveTracePoint(leg, index, lat, lon) {
-    const route = this._manualRoutes[leg];
-    if (!route || index <= 0 || index >= route.length - 1) return;
+  // Move a control point (or insert one at the clicked location) and resample the affected leg.
+  _moveTracePoint(leg, control, lat, lon) {
+    if (!control) return;
     const snapped = this._snapToTrack(lat, lon);
-    route[index].lat = snapped ? snapped.lat : lat;
-    route[index].lon = snapped ? snapped.lon : lon;
-    this._manualRoutes[leg] = this._resampleRoute(route);
+    control.lat = snapped ? snapped.lat : lat;
+    control.lon = snapped ? snapped.lon : lon;
+    const route = this._manualRoutes[leg];
+    const controls = this._extractRouteControls(route);
+    this._manualRoutes[leg] = this._densifyRoute(controls);
   }
 
   async _recalcAfterTraceEdit(leg) {
