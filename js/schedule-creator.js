@@ -774,6 +774,12 @@ export class ActiveService {
         this._updateContinuousDelay(timeOfDay);
         return;
       }
+      // REG-03 : décision régulation — respecter le garage temporaire aussi en arrêt en gare
+      if (this._garageUntil != null && this._garageUntil > timeOfDay) {
+        this.train.delayReason = 'regulation : garage temporaire';
+        this._updateContinuousDelay(timeOfDay);
+        return;
+      }
 
       const depTime = stop.departureTime;
       // Mise à jour du retard pendant l'arrêt (retard à l'arrivée qui s'aggrave si le départ est dépassé)
