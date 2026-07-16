@@ -1187,20 +1187,30 @@ export class ActiveService {
       }
     }
 
-    // --- STATION VOIE POINT OCCUPATION CHECK ---
+    // --- STATION VOIE POINT OCCUPATION CHECK (OCC-01/02) ---
     if (window.game?.voiePointManager && !this.train.blockedBy) {
       const vpm = window.game.voiePointManager;
       const nextStop = this.getNextStop();
       if (nextStop && nextStop.type === 'arret' && target) {
-        const platform = nextStop.platform || nextStop.voiePointId || (this.isReturnLeg ? '2' : '1');
-        const stationVP = nextStop.voiePointId
-          ? vpm.getVoiePointById(nextStop.voiePointId)
-          : vpm.getStationVoiePoint(target.id, platform);
-        if (stationVP && vpm.isVoiePointOccupied(stationVP.id, this.id)) {
-          const remainDist = this._getRemainingDistance(route);
-          if (remainDist < 3) {
+        const remainDist = this._getRemainingDistance(route);
+        if (remainDist < 3) {
+          let canArrive = true;
+          if (nextStop.voiePointId) {
+            canArrive = !vpm.isVoiePointOccupied(nextStop.voiePointId, this.id);
+          } else if (nextStop.platform) {
+            const svp = vpm.getStationVoiePoint(target.id, nextStop.platform);
+            canArrive = !svp || !vpm.isVoiePointOccupied(svp.id, this.id);
+          } else {
+            const stationVPs = vpm.getStationVoiePoints(target.id);
+            // Aucun point de voie défini = pas de contrainte
+            if (stationVPs.length > 0) {
+              canArrive = stationVPs.some(vp => !vpm.isVoiePointOccupied(vp.id, this.id));
+            }
+          }
+          if (!canArrive) {
             effectiveMaxSpeed = 0;
             this.train.blockedBy = true;
+            this.train.delayReason = 'attente voie libre en gare';
           }
         }
       }
@@ -1893,10 +1903,18 @@ export class ActiveService {
     // patiente en approche et ré-essaie au prochain tick.
     if (station && stop && stop.type === 'arret' && window.game?.voiePointManager) {
       const vpm = window.game.voiePointManager;
-      let candidates = vpm.getStationVoiePoints(station.id)
-        .filter(vp => vp.occupiedBy === null || vp.occupiedBy === this.id);
-      if (stop.platform) candidates = candidates.filter(vp => vp.voie === stop.platform);
-      if (candidates.length > 0) {
+      const stationVPs = vpm.getStationVoiePoints(station.id);
+      if (stationVPs.length > 0) {
+        let candidates = stationVPs.filter(vp => vp.occupiedBy === null || vp.occupiedBy === this.id);
+        if (stop.platform) candidates = candidates.filter(vp => vp.voie === stop.platform);
+        if (candidates.length === 0) {
+          // Aucune voie libre : rester en mouvement à vitesse nulle, bloqué en approche
+          this.speed = 0;
+          this.train.speed = 0;
+          this.train.blockedBy = true;
+          this.train.delayReason = 'attente voie libre en gare';
+          return;
+        }
         const chosen = candidates[0];
         stop.voiePointId = chosen.id;
         stop.platform = chosen.voie;
