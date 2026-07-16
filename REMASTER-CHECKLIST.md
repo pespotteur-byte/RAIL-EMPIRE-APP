@@ -93,11 +93,11 @@
 ## OCC — OCCUPATION VOIES & PRIORITÉS  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [x] PR? (arriveAtStation occupe un VP libre, bloque si aucun) |
+| OCC-01 | Occupation gare = occupation d'un point de voie | P0 | A3.5 | [x] PR7 (testé : arriveAtStation occupe un VP libre, bloque si aucun) |
 | OCC-02 | 2 trains même voie n'entrent pas ensemble en gare (sauf points ≠) | P0 | A3.5 | [x] PR6 (arrivée bloquée si aucune voie libre → attente en approche) |
-| OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [x] PR? (voyageur avec départ le plus tôt en priorité) |
+| OCC-03 | Priorité au départ : au train qui part en premier (voyageurs) | P1 | A3.5 | [x] PR7 (testé : voyageur avec départ le plus tôt en priorité) |
 | OCC-04 | Priorité en ligne : plus rapide = prioritaire | P1 | A3.5, réponse #3 | [x] PR? (espacement sécurité fonction vitesse/freinage) |
-| OCC-05 | Écart recommandé ≥ 2 min entre 2 trains (peut descendre au bloc) | P1 | A3.5 | [x] PR? (2 min après libération du canton) |
+| OCC-05 | Écart recommandé ≥ 2 min entre 2 trains (peut descendre au bloc) | P1 | A3.5 | [x] PR7 (corrigé + testé : 2 min après libération du canton, lastReleasedAt minuit-safe) |
 | OCC-06 | Plafond d'attente : max 2 h sur voie de garage → reprise forcée au-delà | P1 | A3.5, réponse #3 | [x] PR? (départ forcé après 120 min) |
 
 ## REG — RÉGULATION  (P1)
@@ -105,7 +105,7 @@
 |----|----------|------|--------|--------|
 | REG-01 | Régulateur : zone d'axe ~150 km | P1 | A3.6 | [x] PR? (StaffManager.getRegulationEffects) |
 | REG-02 | Agent Circulation (AC) : zone 10-30 km sous supervision | P1 | A3.6 | [x] PR? (signal box + agents réduit écart canton) |
-| REG-03 | Décisions (garage, ordre passage) prises par le JEU ; joueur embauche seulement | P1 | A3.6 | [x] PR? (tickRegulateurs : tri par type/horaire + garage temporaire) |
+| REG-03 | Décisions (garage, ordre passage) prises par le JEU ; joueur embauche seulement | P1 | A3.6 | [x] PR7 (corrigé + testé : tickRegulateurs calcule retard à l'instant t et applique garage) |
 | REG-04 | Suppression des cercles d'influence des postes (découpage par axe) | P1 | A3.6 | [x] PR? (zone/signalBox avec lineId + getRegulationEffects par station/axe) |
 
 ## CVO — TYPES DE CONVOIS  (P1)
@@ -123,7 +123,7 @@
 |----|----------|------|--------|--------|
 | RET-01 | Rame en retard au terminus : rouler retour en retard OU supprimer | P1 | A3.9 | [x] PR? |
 | RET-02 | Loi : 1/3 supprimer, 2/3 rouler en retard | P1 | A3.9 | [x] PR? |
-| RET-03 | Si supprimé : repart au prochain trajet prévu depuis cette gare | P1 | A3.9 | [x] PR? (rame.currentLocation mis à jour sur annulation/fin) |
+| RET-03 | Si supprimé : repart au prochain trajet prévu depuis cette gare | P1 | A3.9 | [x] PR7 (testé : 1/3 annulation du retour sur retard au terminus) |
 | RET-04 | Retard causé par train devant = motif "régulation du trafic" | P1 | A3.9 | [x] PR? (train.delayReason + panneau Livemap) |
 
 ## LG — PAGE LIGNE / SILLONS AUTO  (P1)
@@ -217,7 +217,7 @@
 |----|----------|------|--------|--------|
 | INC-01 | Plus de création manuelle : incidents pré-implémentés activables/désactivables | P1 | A10.1, annexe 11 | [x] PR1 (table PREDEFINED_INCIDENT_TYPES + UI toggle) |
 | INC-02 | Zone d'impact LINÉAIRE 5-10 km (pas un cercle) | P1 | A10.1 | [x] PR1 (track/station route-based bbox, pas cercle) |
-| INC-03 | Effets hors zone (bouchons en accordéon) | P1 | A10.1 | [x] PR? (getApproachingIncident, ralentissement progressif jusqu'à l'incident) |
+| INC-03 | Effets hors zone (bouchons en accordéon) | P1 | A10.1 | [x] PR7 (corrigé : incident stop en gare bloque le départ immédiat) |
 | INC-04 | Motifs affichés dans bilans de trajet | P1 | A10.1 | [x] PR? (bilan retard/panne/incident dans sched-detail) |
 | INC-05 | Bulletins spéciaux à côté du récap de compagnie | P1 | A10.1 | [x] PR? (Dashboard.getBulletins + incidents.getBulletins) |
 
