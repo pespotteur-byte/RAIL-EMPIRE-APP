@@ -2892,6 +2892,9 @@ export class ScheduleCreator {
           dl: Math.round(s.delay || 0),
           cf: s._contractFreight || 0,
           cd: s._contractDelivered || 0,
+          cm: s.completed || false,
+          cn: s.cancelled || false,
+          cdt: s.completedDate || '',
         };
         // Save position for mid-journey restore
         if (s.position) {
@@ -3023,18 +3026,39 @@ export class ScheduleCreator {
       const savedSpeed = d._runtime?.speed || 0;
       const savedDelay = d._runtime?.delay || 0;
       const savedStopIdx = d._runtime?.currentStopIndex || 0;
+      const savedCompleted = d._runtime?.cm || false;
+      const savedCancelled = d._runtime?.cn || false;
+      const savedCompletedDate = d._runtime?.cdt || completedDate;
 
-      // Check if service window has expired for this train
-      const svcStops = svc.getCurrentStops();
-      const svcFirstDep = svcStops[0]?.departureTime ?? 0;
-      const svcLastArr = svcStops[svcStops.length - 1]?.arrivalTime ?? svcFirstDep + 120;
-      const minutesPastDep = timeDiff(currentTimeOfDay, svcFirstDep);
-      const minutesPastEnd = timeDiff(currentTimeOfDay, svcLastArr);
-
-      if ((savedState === 'moving' || savedState === 'stopped_at_station') && savedPos) {
+      // Restore terminal states first so completed/cancelled services don't re-enter the schedule.
+      if (savedState === 'completed' || savedState === 'cancelled' || savedCompleted || savedCancelled) {
+        svc.completed = true;
+        if (savedState === 'cancelled' || savedCancelled) {
+          svc.cancelled = true;
+          svc.state = 'cancelled';
+        } else {
+          svc.state = 'completed';
+        }
+        svc.completedDate = savedCompletedDate;
+        svc.position = null;
+        svc.speed = 0;
+        svc.currentStopIndex = 0;
+        svc.isReturnLeg = false;
+        svc.delay = 0;
+        svc.train.delay = 0;
+        svc.train.speed = 0;
+        svc.train.state = 'waiting';
+        svc.train.blockedBy = false;
+        svc.train.stoppedAt = null;
+        svc.train._stoppedSinceGameTime = null;
+      } else if ((savedState === 'moving' || savedState === 'stopped_at_station') && savedPos) {
+        // Check if service window has expired for this train
+        const svcStops = svc.getCurrentStops();
+        const svcLastArr = svcStops[svcStops.length - 1]?.arrivalTime ?? (svcStops[0]?.departureTime ?? 0) + 120;
+        const minutesPastEnd = timeDiff(currentTimeOfDay, svcLastArr);
         // If the service end time has passed, mark completed instead of restoring
         if (minutesPastEnd > 5) {
-          svc.state = 'waiting';
+          svc.state = 'completed';
           svc.position = null;
           svc.speed = 0;
           svc.currentStopIndex = 0;
@@ -3066,9 +3090,16 @@ export class ScheduleCreator {
         }
       } else {
         // Train was waiting — check if departure has already passed
-        if (minutesPastDep > 1) {
-          // Departure was more than 1 min ago: mark completed, don't start late
-          svc.state = 'waiting';
+        const svcStops = svc.getCurrentStops();
+        const svcFirstDep = svcStops[0]?.departureTime ?? 0;
+        const svcLastArr = svcStops[svcStops.length - 1]?.arrivalTime ?? svcFirstDep + 120;
+        const plannedDuration = ((svcLastArr - svcFirstDep + 1440) % 1440) || 120;
+        const maxRuntime = Math.max(120, plannedDuration * 2 + 30);
+        const minutesSinceDep = (currentTimeOfDay - svcFirstDep + 1440) % 1440;
+        const inWindow = isInServiceWindow(currentTimeOfDay, svcFirstDep - 1, svcFirstDep + maxRuntime);
+        if (!inWindow && minutesSinceDep > plannedDuration + 60) {
+          // Departure window has passed: mark completed, don't start late
+          svc.state = 'completed';
           svc.position = null;
           svc.speed = 0;
           svc.currentStopIndex = 0;
@@ -3083,7 +3114,7 @@ export class ScheduleCreator {
           svc.train.stoppedAt = null;
           svc.train._stoppedSinceGameTime = null;
         } else {
-          // Departure is in the future or within 1 min: normal waiting state
+          // Departure is in the future or within the window: normal waiting state
           svc.state = 'waiting';
           svc.position = null;
           svc.speed = 0;
