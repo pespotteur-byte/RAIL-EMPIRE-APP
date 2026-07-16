@@ -1939,7 +1939,16 @@ export class UI {
     document.getElementById('btn-sched-edit-trace')?.addEventListener('click', () => this._toggleTraceEdit());
     document.getElementById('btn-sched-delete-point')?.addEventListener('click', () => this._deleteSelectedTracePoint());
     document.getElementById('btn-sched-return-mode')?.addEventListener('click', () => this._toggleReturnEditMode());
-    document.getElementById('sched-service-type')?.addEventListener('change', () => this._renderContractPicker());
+    document.getElementById('sched-service-type')?.addEventListener('change', () => {
+      const workCb = document.getElementById('sched-work-train');
+      if (workCb) workCb.checked = document.getElementById('sched-service-type').value === 'work';
+      this._renderContractPicker();
+    });
+    document.getElementById('sched-work-train')?.addEventListener('change', (e) => {
+      const typeSel = document.getElementById('sched-service-type');
+      if (typeSel) typeSel.value = e.target.checked ? 'work' : 'passager';
+      this._renderContractPicker();
+    });
     document.getElementById('sched-terminus-wait')?.addEventListener('input', () => {
       // BUG-08 : recalcul auto des horaires de retour quand l'attente terminus change
       if (this._forwardStops?.length > 1 && document.getElementById('sched-round-trip')?.checked) {
@@ -2014,6 +2023,8 @@ export class UI {
       document.getElementById('sched-terminus-wait').value = editService.terminusWait || 5;
       const typeSelect = document.getElementById('sched-service-type');
       if (typeSelect) typeSelect.value = editService.serviceType || (editService.isWorkTrain ? 'work' : 'passager');
+      const workCheck = document.getElementById('sched-work-train');
+      if (workCheck) workCheck.checked = (typeSelect?.value === 'work') || editService.isWorkTrain;
       // Populate run days
       const editDays = editService.runDays || [0,1,2,3,4,5,6];
       document.querySelectorAll('.sched-run-day').forEach(cb => {
@@ -2034,6 +2045,8 @@ export class UI {
       document.getElementById('sched-terminus-wait').value = '5';
       const typeSelectNew = document.getElementById('sched-service-type');
       if (typeSelectNew) typeSelectNew.value = 'passager';
+      const workCheckNew = document.getElementById('sched-work-train');
+      if (workCheckNew) workCheckNew.checked = false;
       // Default: all days checked, no specific dates
       document.querySelectorAll('.sched-run-day').forEach(cb => { cb.checked = true; });
       document.getElementById('sched-run-dates').value = '';
