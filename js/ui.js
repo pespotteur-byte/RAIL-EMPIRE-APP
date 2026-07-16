@@ -731,6 +731,8 @@ export class UI {
     const curName = curStop?.stationId ? (world.getStationById(curStop.stationId)?.name || '—') : (curStop ? 'Waypoint' : '—');
     const nextName = nextStop?.stationId ? (world.getStationById(nextStop.stationId)?.name || '—') : (nextStop ? 'Waypoint' : '—');
     const destName = stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—';
+    const nextArrTime = nextStop ? (nextStop.arrivalTime ?? nextStop.departureTime) : null;
+    const nextArrLabel = nextArrTime != null ? ` · Arr. ${fmt(nextArrTime + d)}` : '';
     const situation = t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)
       ? `Arrêt en gare de <b>${curName}</b>`
       : (curIdx > 0 && curIdx < stops.length)
@@ -749,10 +751,10 @@ export class UI {
     let payloadInfo = '';
     if (rame) {
       if (cat === 'fret' || rame.totalFreightCapacity > 0) {
-        const load = Math.max(0, Math.round(rame.totalFreightCapacity * 0.7));
+        const load = Math.max(0, svc._onboardFreight != null ? Math.round(svc._onboardFreight) : Math.round(rame.totalFreightCapacity * 0.7));
         payloadInfo = `${load} tonnes de frets transportées`;
       } else if (cat === 'voyageur' || rame.totalCapacity > 0) {
-        const pax = Math.max(0, Math.round(rame.totalCapacity * 0.7));
+        const pax = Math.max(0, svc._onboardPax != null ? Math.round(svc._onboardPax) : Math.round(rame.totalCapacity * 0.7));
         payloadInfo = `${pax} passagers à bord`;
       }
     }
@@ -767,7 +769,7 @@ export class UI {
       <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
       <div class="lvp-situation">${situation}</div>
       ${t.delayReason ? `<div class="lvp-delay-reason">${t.delayReason}</div>` : ''}
-      <div class="lvp-next">Prochain: <b>${nextName}</b> · Destination: <b>${destName}</b></div>
+      <div class="lvp-next">Prochain arrêt : <b>${nextName}</b>${nextArrLabel} · Destination: <b>${destName}</b></div>
       ${composition}
       ${payloadInfo ? `<div class="lvp-payload">${payloadInfo}</div>` : ''}
       <div class="lvp-bandeau"><span class="lvp-bandeau-track">${bandeau}</span></div>
@@ -6808,6 +6810,15 @@ export class UI {
         // Delay (integer minutes)
         const delay = Math.round(svc.delay || 0);
 
+        // Annexes 20/23 — TRAIN COMPLET / supprimé
+        const isCancelled = svc.cancelled || svc.state === 'cancelled';
+        const totalPax = svc.rame?.totalCapacity || 0;
+        const onboardPax = svc._onboardPax || 0;
+        const totalFrt = svc.rame?.totalFreightCapacity || 0;
+        const onboardFrt = svc._onboardFreight || 0;
+        const isFull = totalPax > 0 && onboardPax >= totalPax * 0.9;
+        const isFreightFull = totalFrt > 0 && onboardFrt >= totalFrt * 0.9;
+
         results.push({
           svcId: svc.id,
           name: svc.name,
@@ -6819,6 +6830,9 @@ export class UI {
           isDeparture, isArrival, isFirst, isLast,
           servedStations, fromStations,
           delay,
+          isCancelled,
+          isFull,
+          isFreightFull,
           line,
           lineCode: line?.code || '',
           lineName: line?.name || '',
@@ -6987,14 +7001,21 @@ export class UI {
   _renderSncfDep(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const delayStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
+      let statusStr = '';
+      if (t.isCancelled) {
+        statusStr = `<span class="ig-sncf-cancelled">supprimé</span>`;
+      } else if (t.isFull || t.isFreightFull) {
+        statusStr = `<span class="ig-sncf-full">TRAIN COMPLET</span>`;
+      } else {
+        statusStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
+      }
       const served = t.servedStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
       const voieNum = parseInt(t.voie) || 0;
       const voieClass = voieNum > 10 ? 'ig-sncf-voie-high' : 'ig-sncf-voie-low';
       rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
         <div class="ig-sncf-main">
           <span class="ig-sncf-logo-icon">${t.seriesName || 'SNCF'}</span>
-          <span class="ig-sncf-status">${delayStr}</span>
+          <span class="ig-sncf-status">${statusStr}</span>
           <span class="ig-sncf-time">${this._fmtTime(t.depTime)}</span>
           <span class="ig-sncf-dest">${t.destination}</span>
           <span class="ig-sncf-voie">${t.voie ? `<span class="ig-sncf-voie-num ${voieClass}">${t.voie}</span>` : ''}</span>
@@ -7022,7 +7043,14 @@ export class UI {
   _renderSncfArr(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const delayStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
+      let statusStr = '';
+      if (t.isCancelled) {
+        statusStr = `<span class="ig-sncf-cancelled">supprimé</span>`;
+      } else if (t.isFull || t.isFreightFull) {
+        statusStr = `<span class="ig-sncf-full">TRAIN COMPLET</span>`;
+      } else {
+        statusStr = `<span class="${t.delay > 0 ? 'ig-sncf-delay' : 'ig-sncf-ontime'}">${this._fmtDelay(t.delay)}</span>`;
+      }
       const from = t.fromStations.map(s => `<span class="ig-sncf-dot">\u2022</span> ${s}`).join(' ');
       const stateStr = t.state === 'stopped_at_station' && t.isLast ? '<span class="ig-sncf-arrived">arrive</span>' : '';
       const voieNum = parseInt(t.voie) || 0;
@@ -7030,7 +7058,7 @@ export class UI {
       rows += `<div class="ig-sncf-row" data-svc-id="${t.svcId}">
         <div class="ig-sncf-main">
           <span class="ig-sncf-logo-icon">${t.seriesName || 'SNCF'}</span>
-          <span class="ig-sncf-status">${stateStr || delayStr}</span>
+          <span class="ig-sncf-status">${t.isCancelled ? statusStr : (stateStr || statusStr)}</span>
           <span class="ig-sncf-time">${this._fmtTime(t.arrTime)}</span>
           <span class="ig-sncf-dest">${t.origin}</span>
           <span class="ig-sncf-voie">${t.voie ? `<span class="ig-sncf-voie-num ${voieClass}">${t.voie}</span>` : ''}</span>
@@ -7060,7 +7088,9 @@ export class UI {
     for (const t of trains) {
       const servedTxt = t.servedStations.join('  ').toUpperCase();
       const destFull = `${t.destination.toUpperCase()}${servedTxt ? '  ' + servedTxt : ''}`;
-      const remarks = (t.seriesName || '').toUpperCase();
+      let remarks = (t.seriesName || '').toUpperCase();
+      if (t.isCancelled) remarks = 'SUPP';
+      else if (t.isFull || t.isFreightFull) remarks = 'PLEIN';
       rows += `<div class="ig-solari-row" data-svc-id="${t.svcId}">
         <span class="ig-solari-cell ig-solari-time">${this._fmtTime(t.depTime).replace('h', '.')}</span>
         <span class="ig-solari-cell ig-solari-dest">${destFull}</span>

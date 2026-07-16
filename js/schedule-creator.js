@@ -617,6 +617,8 @@ export class ActiveService {
         const minutesLate = timeDiff(timeOfDay, firstDep);
         if (minutesLate > 1) {
           this.completed = true;
+          this.cancelled = true;
+          this.state = 'cancelled';
           this.completedDate = dateStr;
           this.position = null;
           this.train.stoppedAt = null;
@@ -2073,7 +2075,8 @@ export class ActiveService {
       // Section OCC — retard au terminus : 1/3 de supprimer le retour, 2/3 de le faire rouler en retard
       // RET-03 : si supprimé, la rame reste à la gare et repart au prochain trajet prévu depuis cette gare
       if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
-        this.state = 'waiting';
+        this.state = 'cancelled';
+        this.cancelled = true;
         this.speed = 0; this.train.speed = 0;
         this.delay = 0; this.train.delay = 0;
         this.completed = true; this.completedDate = this._currentDate || '';
@@ -2118,7 +2121,8 @@ export class ActiveService {
       // Section OCC — retard au terminus : 1/3 de supprimer le trajet suivant, 2/3 de le faire rouler en retard
       // RET-03 : si supprimé, la rame reste à la gare et repart au prochain trajet prévu depuis cette gare
       if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
-        this.state = 'waiting';
+        this.state = 'cancelled';
+        this.cancelled = true;
         this.speed = 0; this.train.speed = 0;
         this.delay = 0; this.train.delay = 0;
         this.completed = true; this.completedDate = this._currentDate || '';

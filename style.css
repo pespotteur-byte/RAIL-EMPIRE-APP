@@ -670,6 +670,8 @@ header {
 .ig-sncf-ontime { color:#4ade80; font-style:italic; }
 .ig-sncf-delay { color:#f87171; font-weight:700; }
 .ig-sncf-arrived { color:#60a5fa; font-weight:700; }
+.ig-sncf-cancelled { color:#fff; background:#dc2626; font-weight:700; padding:1px 4px; border-radius:3px; text-transform:uppercase; font-size:8px; }
+.ig-sncf-full { color:#000; background:#facc15; font-weight:700; padding:1px 4px; border-radius:3px; text-transform:uppercase; font-size:8px; }
 .ig-sncf-time { color:#5599ee; font-size:15px; font-weight:700; min-width:55px; }
 .ig-sncf-dest { color:#fff; font-size:16px; font-weight:700; flex:1; }
 .ig-sncf-voie { min-width:35px; text-align:right; }
