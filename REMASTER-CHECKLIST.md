@@ -103,10 +103,10 @@
 ## REG — RÉGULATION  (P1)
 | ID | Exigence | Prio | Source | Statut |
 |----|----------|------|--------|--------|
-| REG-01 | Régulateur : zone d'axe ~150 km | P1 | A3.6 | [x] PR? (StaffManager.getRegulationEffects) |
-| REG-02 | Agent Circulation (AC) : zone 10-30 km sous supervision | P1 | A3.6 | [x] PR? (signal box + agents réduit écart canton) |
+| REG-01 | Régulateur : zone d'axe ~150 km | P1 | A3.6 | [x] PR7 (testé : StaffManager.getRegulationEffects couvre par rayon/lineId) |
+| REG-02 | Agent Circulation (AC) : zone 10-30 km sous supervision | P1 | A3.6 | [x] PR7 (testé : signal box + agents couvre par rayon/lineId) |
 | REG-03 | Décisions (garage, ordre passage) prises par le JEU ; joueur embauche seulement | P1 | A3.6 | [x] PR7 (corrigé + testé : tickRegulateurs calcule retard à l'instant t et applique garage) |
-| REG-04 | Suppression des cercles d'influence des postes (découpage par axe) | P1 | A3.6 | [x] PR? (zone/signalBox avec lineId + getRegulationEffects par station/axe) |
+| REG-04 | Suppression des cercles d'influence des postes (découpage par axe) | P1 | A3.6 | [x] PR7 (testé : zone/signalBox couverte par lineId sans rayon) |
 
 ## CVO — TYPES DE CONVOIS  (P1)
 | ID | Exigence | Prio | Source | Statut |
