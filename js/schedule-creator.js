@@ -1009,7 +1009,7 @@ export class ActiveService {
   }
 
   _updateStuckTimer(timeOfDay) {
-    const blocked = this.train && (this.train.blockedBy || this.train.delayReason === 'Incident' || this.train.delayReason === 'travaux' || this.train.delayReason === 'tronçon non électrifié' || this.train.delayReason === 'TTX : ligne non électrifiée' || this.train.delayReason === 'attente voie libre en gare');
+    const blocked = this.train && (this.train.blockedBy || this.train.state === 'en panne' || this.train.delayReason === 'Incident' || this.train.delayReason === 'travaux' || this.train.delayReason === 'tronçon non électrifié' || this.train.delayReason === 'TTX : ligne non électrifiée' || this.train.delayReason === 'attente voie libre en gare' || this.train.delayReason?.startsWith('Panne'));
     if (!blocked) {
       this._blockedSinceGameTime = null;
       return false;
@@ -1055,6 +1055,7 @@ export class ActiveService {
       this.train.speed = 0;
       this.train.delayReason = 'grève';
       this._updateContinuousDelay(timeOfDay);
+      if (this._updateStuckTimer(timeOfDay)) return;
       return;
     }
 
@@ -1064,6 +1065,7 @@ export class ActiveService {
       this.train.speed = 0;
       this.train.state = 'en panne';
       this._updateContinuousDelay(timeOfDay);
+      if (this._updateStuckTimer(timeOfDay)) return;
       if (!this._rescueDispatched && this.position && window.game?.depotManager) {
         window.game.depotManager.dispatchRescue(this.world, this);
         this._rescueDispatched = true;
