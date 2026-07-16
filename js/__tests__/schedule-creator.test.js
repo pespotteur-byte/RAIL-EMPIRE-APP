@@ -190,3 +190,53 @@ describe('SC-05 — Auto 24h creates real round-trip duplicates', () => {
     assert.equal(dups[2].stops[0].departureTime, 480 + 390);
   });
 });
+
+describe('SAV-01 — save/load restores completed and cancelled terminal states', () => {
+  it('round-trips completed and cancelled flags through toSave/loadFromSave', () => {
+    const sc = new ScheduleCreator();
+    const world = { stations: [
+      { id: 'A', name: 'A', lat: 0, lon: 0 },
+      { id: 'B', name: 'B', lat: 0.1, lon: 0 },
+    ] };
+    const base = sc.addService({
+      name: 'Test', rameId: 'r1',
+      stops: [
+        { stationId: 'A', type: 'arret', departureTime: 480, arrivalTime: 480 },
+        { stationId: 'B', type: 'arret', departureTime: 540, arrivalTime: 540 },
+      ],
+      routes: [[{ lat: 0, lon: 0 }, { lat: 0.1, lon: 0 }]],
+    }, null, world);
+    base.state = 'completed';
+    base.completed = true;
+    base.completedDate = '2024-07-15';
+
+    const cancelled = sc.addService({
+      name: 'Test2', rameId: 'r2',
+      stops: [
+        { stationId: 'A', type: 'arret', departureTime: 600, arrivalTime: 600 },
+        { stationId: 'B', type: 'arret', departureTime: 660, arrivalTime: 660 },
+      ],
+      routes: [[{ lat: 0, lon: 0 }, { lat: 0.1, lon: 0 }]],
+    }, null, world);
+    cancelled.state = 'cancelled';
+    cancelled.completed = true;
+    cancelled.cancelled = true;
+    cancelled.completedDate = '2024-07-16';
+
+    const saved = sc.toSave();
+    assert.equal(saved[0]._r.cm, true);
+    assert.equal(saved[0]._r.cdt, '2024-07-15');
+    assert.equal(saved[1]._r.cn, true);
+    assert.equal(saved[1]._r.cdt, '2024-07-16');
+
+    const sc2 = new ScheduleCreator();
+    sc2.loadFromSave(saved, { getById: () => null }, world, 700, '2024-07-17');
+    assert.equal(sc2.services[0].state, 'completed');
+    assert.equal(sc2.services[0].completed, true);
+    assert.equal(sc2.services[0].completedDate, '2024-07-15');
+    assert.equal(sc2.services[1].state, 'cancelled');
+    assert.equal(sc2.services[1].completed, true);
+    assert.equal(sc2.services[1].cancelled, true);
+    assert.equal(sc2.services[1].completedDate, '2024-07-16');
+  });
+});

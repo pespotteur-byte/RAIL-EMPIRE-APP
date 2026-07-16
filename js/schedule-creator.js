@@ -2983,6 +2983,12 @@ export class ScheduleCreator {
           })) : null,
           _contractFreight: d._r.cf || 0,
           _contractDelivered: d._r.cd || 0,
+          completed: d._r.cm || false,
+          cancelled: d._r.cn || false,
+          completedDate: d._r.cdt || '',
+          cm: d._r.cm || false,
+          cn: d._r.cn || false,
+          cdt: d._r.cdt || '',
         };
       }
       return expanded;
