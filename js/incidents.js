@@ -497,7 +497,6 @@ export class IncidentManager {
 
     for (const svc of services) {
       if (!svc.train || !svc.position) continue;
-      if (svc.state !== 'moving') { if (!svc.train.incident) continue; }
       svc.train.incident = null;
 
       const lat = svc.position.lat, lon = svc.position.lon;
@@ -530,7 +529,8 @@ export class IncidentManager {
           speedLimit: worstIncident.speedLimit || 0,
           name: worstIncident.name,
         };
-        if (worstIncident.effect === 'stop' && depotManager && world) {
+        // DDS-02 : secours uniquement pour les incidents spécifiques au train (panne, etc.)
+        if (worstIncident.effect === 'stop' && worstIncident.serviceId && depotManager && world) {
           const alreadyRescued = depotManager.activeRescues?.some(r => r.targetServiceId === svc.id && r.state !== 'done');
           if (!alreadyRescued) {
             depotManager.dispatchRescue(world, svc);

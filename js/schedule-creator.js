@@ -769,6 +769,12 @@ export class ActiveService {
       const stop = stops[this.currentStopIndex - 1];
       if (!stop) { this.state = 'moving'; return; }
 
+      // INC-03 : incident en gare (bagage abandonné, etc.) bloque le départ
+      if (this.train.incident?.effect === 'stop' && this.train.stoppedAt) {
+        this._updateContinuousDelay(timeOfDay);
+        return;
+      }
+
       const depTime = stop.departureTime;
       // Mise à jour du retard pendant l'arrêt (retard à l'arrivée qui s'aggrave si le départ est dépassé)
       if (depTime != null && timeGte(timeOfDay, depTime)) {
