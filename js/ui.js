@@ -766,6 +766,9 @@ export class UI {
     document.getElementById('modal-voie-point')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); this._saveVoiePoint(); }
     });
+    document.getElementById('modal-station')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); this.saveStation(); }
+    });
     // Modals do NOT close on outside click (player feedback)
   }
 
