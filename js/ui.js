@@ -7136,6 +7136,7 @@ export class UI {
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
       case 'cati-3-3': board.innerHTML = this._renderCATI3_3(station, trains, nowStr); break;
       case 'cati-complet': board.innerHTML = this._renderCATIComplet(station, trains, nowStr); break;
+      case 'cati-ar': board.innerHTML = this._renderCATIAr(station, trains, nowStr); break;
       case 'afl-depart': board.innerHTML = this._renderAFLDepart(station, trains, nowStr); break;
       case 'afl-arrivee': board.innerHTML = this._renderAFLArrivee(station, trains, nowStr); break;
       case 'ecran-quai': board.innerHTML = this._renderEcranQuai(station, trains, nowStr); break;
@@ -7640,6 +7641,39 @@ export class UI {
       <div class="ig-cati-full">${head}${dep.length ? dep.map(cell).join('') : '<div class="ig-cati-empty">Aucun départ</div>'}</div>
       <div class="ig-cati-footer"><span>24h • Toutes destinations</span><span>${nowStr}</span></div>
       <div class="ig-cati-side">départs</div>
+    </div>`;
+  }
+
+  // --- CATI Arrivées : tableau vert ---
+  _renderCATIAr(station, trains, nowStr) {
+    const arr = trains.filter(r => r.isArrival).slice(0, 12);
+    const cell = t => {
+      let status = '';
+      if (t.isCancelled) status = '<span style="color:#f87171;font-weight:700">Supprimé</span>';
+      else if (t.delay > 0) status = `<span style="color:#facc15;font-weight:700">retard ${Math.round(t.delay)} min</span>`;
+      const stops = t.fromStations.slice(0, 5).join(' \u2022 ');
+      return `<div class="ig-cati-row" data-svc-id="${t.svcId}">
+        <span class="ig-cati-logo">SNCF</span>
+        <span class="ig-cati-num">${status || '&nbsp;'}</span>
+        <span class="ig-cati-time">${this._fmtTime(t.arrTime)}</span>
+        <span class="ig-cati-destcol">
+          <span class="ig-cati-dest" style="color:#fff">${t.origin}</span>
+          ${stops ? `<span class="ig-cati-stops" style="color:#cbd5e1;font-size:10px">${stops}</span>` : ''}
+        </span>
+      </div>`;
+    };
+    const head = `<div class="ig-cati-row ig-cati-head" style="background:#1a5e1a">
+      <span class="ig-cati-logo-h"></span><span>Retard</span><span>Heure</span><span>Provenance</span>
+    </div>`;
+    return `<div class="ig-cati-board ig-cati-ar" style="background:#0b2e12">
+      <div class="ig-cati-header" style="background:#1a5e1a">
+        <span class="ig-cati-station">${station?.name || ''}</span>
+        <span class="ig-cati-title">Arrivées — Affichage complet</span>
+        <span class="ig-cati-clock">${nowStr}</span>
+      </div>
+      <div class="ig-cati-full">${head}${arr.length ? arr.map(cell).join('') : '<div class="ig-cati-empty">Aucune arrivée</div>'}</div>
+      <div class="ig-cati-footer" style="background:#1a5e1a"><span>24h • Toutes provenances</span><span>${nowStr}</span></div>
+      <div class="ig-cati-side" style="background:#0b2e12">arrivées</div>
     </div>`;
   }
 

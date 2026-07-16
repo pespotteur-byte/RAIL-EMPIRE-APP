@@ -980,3 +980,8 @@ header {
 .ig-cati-logo { color:#fff; font-size:9px; font-weight:900; background:#c00; border-radius:2px; padding:2px 4px; text-align:center; }
 .ig-cati-num { color:#cbd5e1; font-family:'Courier New',monospace; }
 .ig-cati-dest { color:#fff; font-weight:700; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+/* CATI Arrivées (vert) */
+.ig-cati-ar .ig-cati-row { border-bottom-color:#1a4a2a; }
+.ig-cati-ar .ig-cati-row:hover { background:#123a1f; }
+.ig-cati-ar .ig-cati-destcol { display:flex; flex-direction:column; gap:2px; min-width:0; }
