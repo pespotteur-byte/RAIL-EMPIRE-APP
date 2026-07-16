@@ -2,6 +2,7 @@ import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { ScheduleCreator, ActiveService } from '../schedule-creator.js';
 import { StaffManager } from '../staff.js';
+import { CantonManager } from '../simulation.js';
 
 const economy = {
   processStopRevenue() {},
@@ -192,5 +193,23 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     sc.beginTick(601);
     svc.scheduleTick(601, '2024-01-01', economy);
     assert.equal(svc.state, 'moving', 'le train repart une fois l incident levé');
+  });
+
+  it('OCC-05 — écart de 2 min après libération du canton', () => {
+    const mgr = new CantonManager();
+    const route = [{ lat: 0, lon: 0, maxSpeed: 30 }, { lat: 0, lon: 0.005, maxSpeed: 30 }];
+    const assignments = mgr.createRouteCantons(route);
+    const c0 = assignments[0].cantonId;
+
+    mgr.setTime(0);
+    assert.equal(mgr.occupy(c0, 'A'), true);
+    mgr.release(c0, 'A');
+
+    mgr.setTime(1);
+    assert.equal(mgr.reserve(c0, 'B'), false, '1 min après libération, canton non disponible');
+
+    mgr.setTime(2);
+    assert.equal(mgr.reserve(c0, 'B'), true, '2 min après libération, canton disponible');
+    assert.equal(mgr.occupy(c0, 'B'), true);
   });
 });

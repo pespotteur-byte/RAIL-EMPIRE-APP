@@ -172,7 +172,10 @@ itCases('CantonManager reserve / release', (() => {
           assert.equal(cm.isAvailable(id, 'trainA'), true);
           assert.equal(cm.isAvailable(id, 'trainB'), false);
           cm.release(id, 'trainA');
-          assert.equal(cm.isAvailable(id, 'trainB'), true);
+          cm.setTime(1);
+          assert.equal(cm.isAvailable(id, 'trainB'), false, '1 min après libération, canton non disponible');
+          cm.setTime(2);
+          assert.equal(cm.isAvailable(id, 'trainB'), true, '2 min après libération, canton disponible');
         } finally {
           restoreWindow(prev);
         }
