@@ -1,4 +1,5 @@
 import { haversineDistance } from './simulation.js?v=1779724771';
+import { getGlobalRng } from './rng.js?v=1779724771';
 
 let nextIncId = 1;
 
@@ -317,7 +318,8 @@ export class IncidentManager {
   // --- Random incident spawning (Annexe 11) ---
 
   _randomDuration(min, max) {
-    return Math.floor(min + Math.random() * (max - min + 1));
+    const rng = getGlobalRng();
+    return Math.floor(min + rng.random() * (max - min + 1));
   }
 
   _probabilityForType(type, season) {
@@ -342,7 +344,8 @@ export class IncidentManager {
       if (type.timeWindows && !this._inTimeWindow(type, timeOfDay)) continue;
 
       const probability = this._probabilityForType(type, season);
-      if (Math.random() * 100 >= probability) continue;
+      const rng = getGlobalRng();
+      if (rng.random() * 100 >= probability) continue;
 
       try {
         if (type.scope === 'track') this._spawnTrackIncident(type, world);
@@ -360,7 +363,8 @@ export class IncidentManager {
       ? world.tracks.filter(t => t.electrified !== false)
       : [...world.tracks];
     if (candidates.length === 0) return;
-    const track = candidates[Math.floor(Math.random() * candidates.length)];
+    const rng = getGlobalRng();
+    const track = candidates[Math.floor(rng.random() * candidates.length)];
     const duration = this._randomDuration(type.durationMin, type.durationMax);
     const stA = world.getStationById(track.stationA);
     const stB = world.getStationById(track.stationB);
@@ -383,7 +387,8 @@ export class IncidentManager {
 
   _spawnStationIncident(type, world) {
     if (!world || world.stations.length === 0) return;
-    const station = world.stations[Math.floor(Math.random() * world.stations.length)];
+    const rng = getGlobalRng();
+    const station = world.stations[Math.floor(rng.random() * world.stations.length)];
     const duration = this._randomDuration(type.durationMin, type.durationMax);
     // Station incidents block the immediate track(s) connected to the station
     // to keep a 5–10 km impact zone as requested.
@@ -418,7 +423,8 @@ export class IncidentManager {
       candidates = candidates.filter(s => s.state === 'stopped_at_station' || s.train?.stoppedAt);
     }
     if (candidates.length === 0) return;
-    const svc = candidates[Math.floor(Math.random() * candidates.length)];
+    const rng = getGlobalRng();
+    const svc = candidates[Math.floor(rng.random() * candidates.length)];
     const duration = this._randomDuration(type.durationMin, type.durationMax);
     const inc = new Incident({
       typeId: type.id,

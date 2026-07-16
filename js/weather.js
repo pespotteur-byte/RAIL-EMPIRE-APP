@@ -4,6 +4,7 @@
  * Falls back to simulated weather if API is unavailable.
  */
 import { icon } from './icons.js';
+import { getGlobalRng } from './rng.js?v=1784201500';
 export class Weather {
   constructor() {
     this.current = 'clear';      // clear, rain, snow, storm, heat, fog
@@ -210,7 +211,8 @@ export class Weather {
       winter: { clear: 0.25, rain: 0.15, fog: 0.15, storm: 0.10, snow: 0.35, heat: 0.00 },
     };
     const p = probs[this.season] || probs.spring;
-    const r = Math.random();
+    const rng = getGlobalRng();
+    const r = rng.random();
     let cumul = 0;
     for (const [type, prob] of Object.entries(p)) {
       cumul += prob;

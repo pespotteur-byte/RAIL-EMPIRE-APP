@@ -3,6 +3,7 @@
  */
 import { icon } from './icons.js';
 import { haversineDistance } from './simulation.js';
+import { getGlobalRng } from './rng.js?v=1784201500';
 
 let nextStaffId = 1;
 
@@ -109,12 +110,13 @@ export class StaffManager {
   }
 
   generateRandomName(preferredNationality) {
+    const rng = getGlobalRng();
     const nats = preferredNationality ? [preferredNationality] : Object.keys(NATIONALITY_NAMES);
-    const nat = nats[Math.floor(Math.random() * nats.length)];
+    const nat = nats[Math.floor(rng.random() * nats.length)];
     this._lastGeneratedNationality = nat;
     const pool = NATIONALITY_NAMES[nat];
-    const first = pool.first[Math.floor(Math.random() * pool.first.length)];
-    const last = pool.last[Math.floor(Math.random() * pool.last.length)];
+    const first = pool.first[Math.floor(rng.random() * pool.first.length)];
+    const last = pool.last[Math.floor(rng.random() * pool.last.length)];
     return `${first} ${last}`;
   }
 
@@ -242,7 +244,8 @@ export class StaffManager {
         });
 
         if (needsConductor.length > 0) {
-          const pick = needsConductor[Math.floor(Math.random() * needsConductor.length)];
+          const rng = getGlobalRng();
+          const pick = needsConductor[Math.floor(rng.random() * needsConductor.length)];
           c.assignedTo = pick.id;
           if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
         }
@@ -332,9 +335,10 @@ export class StaffManager {
 
     if (!hasControleur) return;
 
+    const rng = getGlobalRng();
     for (const ctrl of controleurs) {
-      if (Math.random() > 0.033) continue;
-      const svc = paxServices[Math.floor(Math.random() * paxServices.length)];
+      if (rng.random() > 0.033) continue;
+      const svc = paxServices[Math.floor(rng.random() * paxServices.length)];
       const paxCount = svc._onboardPax || 0;
       if (paxCount <= 0) continue;
       const frauders = Math.floor(paxCount * effectiveFraudRate);

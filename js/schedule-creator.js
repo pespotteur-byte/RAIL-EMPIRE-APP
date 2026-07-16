@@ -2522,7 +2522,7 @@ export class ScheduleCreator {
         }
       }
     }
-    if (svc.serviceType === 'passager' && svc.state !== 'moving' && svc.state !== 'departing' && firstStop) {
+    if (svc.serviceType === 'passager' && svc.state !== 'moving' && svc.state !== 'departing' && firstStop && svc.currentStopIndex === 0) {
       const depStationId = firstStop.stationId;
       const dep = firstStop.departureTime ?? firstStop.time;
       if (depStationId != null && dep != null) {
@@ -2830,12 +2830,14 @@ export class ScheduleCreator {
     return d;
   }
 
-  loadFromSave(arr, rameManager, world) {
+  loadFromSave(arr, rameManager, world, timeOfDay = 0, dateStr = '') {
     this.services = [];
     this._invalidateActiveCache();
     cantonManager.cantons.clear();
     cantonManager.routeCantons.clear();
     cantonManager.trainCantons.clear();
+    const currentTimeOfDay = timeOfDay;
+    const completedDate = dateStr || '';
     for (let d of arr) {
       d = this._expandCompactService(d);
       const rame = rameManager.getById(d.rameId);
@@ -2845,7 +2847,7 @@ export class ScheduleCreator {
 
       if (d._runtime) {
         const rt = d._runtime;
-        svc.completedDate = rt.completedDate || '';
+        svc.completedDate = rt.completedDate || completedDate;
         svc.direction = rt.direction || 1;
         svc._tripCount = rt._tripCount || 0;
         if (rt._adjustedStops) {
@@ -2854,9 +2856,7 @@ export class ScheduleCreator {
           ));
         }
       }
-      // Compute current game time for validation
-      const now = new Date();
-      const currentTimeOfDay = now.getHours() * 60 + now.getMinutes();
+      // Use the saved game time for validation (not wall clock).
 
       // Restore mid-journey state if train was moving/stopped at station
       const savedState = d._runtime?.state || 'waiting';
@@ -2880,7 +2880,7 @@ export class ScheduleCreator {
           svc.speed = 0;
           svc.currentStopIndex = 0;
           svc.completed = true;
-          svc.completedDate = now.toISOString().slice(0, 10);
+          svc.completedDate = completedDate;
           svc.isReturnLeg = false;
           svc.delay = 0;
           svc.train.delay = 0;
@@ -2914,7 +2914,7 @@ export class ScheduleCreator {
           svc.speed = 0;
           svc.currentStopIndex = 0;
           svc.completed = true;
-          svc.completedDate = now.toISOString().slice(0, 10);
+          svc.completedDate = completedDate;
           svc.isReturnLeg = false;
           svc.delay = 0;
           svc.train.delay = 0;

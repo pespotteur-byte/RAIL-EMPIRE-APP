@@ -3,6 +3,7 @@
 // Applies catalog modifications, deletions, imports
 // Manages admin-defined custom incidents with time-based random triggering
 // Respects player opt-in/opt-out preference
+import { getGlobalRng } from './rng.js?v=1784201500';
 
 const OVERRIDE_URL = 'https://raw.githubusercontent.com/pespotteur-byte/RAIL-EMPIRE-APP/devin/1780231310-catalog-bb7200/data/admin-overrides.json';
 
@@ -17,15 +18,19 @@ export class AdminSync {
   }
 
   _loadOptIn() {
-    const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
-    return settings.incidentsEnabled !== false;
+    try {
+      const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
+      return settings.incidentsEnabled !== false;
+    } catch (e) { return true; }
   }
 
   setOptIn(value) {
     this.optIn = value;
-    const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
-    settings.incidentsEnabled = value;
-    localStorage.setItem('re_player_settings', JSON.stringify(settings));
+    try {
+      const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
+      settings.incidentsEnabled = value;
+      localStorage.setItem('re_player_settings', JSON.stringify(settings));
+    } catch (e) {}
     if (!value) this.activeIncidents = [];
   }
 
@@ -106,7 +111,8 @@ export class AdminSync {
       }
 
       // Probability (%/hour → per-minute)
-      if (Math.random() < (inc.probability / 100 / 60)) {
+      const rng = getGlobalRng();
+      if (rng.random() < (inc.probability / 100 / 60)) {
         this._trigger(inc);
       }
     }

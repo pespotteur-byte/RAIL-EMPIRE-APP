@@ -1,44 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784201500';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784201500';
-import { World, createDefaultWorld } from './world.js?v=1784201500';
-import { Renderer } from './renderer.js?v=1784201500';
-import { UI } from './ui.js?v=1784201500';
-import { Economy } from './economy.js?v=1784201500';
-import { IncidentManager } from './incidents.js?v=1784201500';
-import { FreightManager } from './freight.js?v=1784201500';
-import { ScheduleManager } from './schedule.js?v=1784201500';
-import { GameStorage } from './storage.js?v=1784201500';
-import { AccountManager } from './account.js?v=1784201500';
-import { RollingStockManager } from './rolling-stock.js?v=1784201500';
-import { RameManager } from './rame.js?v=1784201500';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784201500';
-import { DepotManager } from './depot.js?v=1784201500';
-import { WorksManager } from './works.js?v=1784201500';
-import { ORMClient } from './orm.js?v=1784201500';
-import { LineManager, PlatformManager } from './line.js?v=1784201500';
-import { SillonManager } from './sillon.js?v=1784201500';
-import { VoiePointManager } from './voie-points.js?v=1784201500';
-import { Dashboard } from './dashboard.js?v=1784201500';
-import { GraphMarche } from './graph-marche.js?v=1784201500';
-import { StaffManager } from './staff.js?v=1784201500';
-import { Tutorial } from './tutorial.js?v=1784201500';
-import { Bank } from './bank.js?v=1784201500';
-import { Weather } from './weather.js?v=1784201500';
-import { Unions } from './unions.js?v=1784201500';
-import { SeasonalSchedule } from './seasonal.js?v=1784201500';
-import { Connections } from './connections.js?v=1784201500';
-import { StationUpgrades } from './station-upgrades.js?v=1784201500';
-import { A12Model } from './a12-model.js?v=1784201500';
-import { PlayerSignalManager } from './signaling.js?v=1784201500';
-import { JunctionManager } from './junctions.js?v=1784201500';
-import { CargoTypeManager } from './cargo-types.js?v=1784201500';
-import { ITEModules } from './ite-modules.js?v=1784201500';
-import { IndustrialClients } from './industrial-clients.js?v=1784201500';
-import { ShuntingManager } from './shunting.js?v=1784201500';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784201500';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784201500';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784201500';
-import { adminSync } from './admin-sync.js?v=1784201500';
+import { SimulationEngine } from './engine.js?v=1784201800';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784201800';
+import { World, createDefaultWorld } from './world.js?v=1784201800';
+import { Renderer } from './renderer.js?v=1784201800';
+import { UI } from './ui.js?v=1784201800';
+import { Economy } from './economy.js?v=1784201800';
+import { IncidentManager } from './incidents.js?v=1784201800';
+import { FreightManager } from './freight.js?v=1784201800';
+import { ScheduleManager } from './schedule.js?v=1784201800';
+import { GameStorage } from './storage.js?v=1784201800';
+import { AccountManager } from './account.js?v=1784201800';
+import { RollingStockManager } from './rolling-stock.js?v=1784201800';
+import { RameManager } from './rame.js?v=1784201800';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784201800';
+import { DepotManager } from './depot.js?v=1784201800';
+import { WorksManager } from './works.js?v=1784201800';
+import { ORMClient } from './orm.js?v=1784201800';
+import { LineManager, PlatformManager } from './line.js?v=1784201800';
+import { SillonManager } from './sillon.js?v=1784201800';
+import { VoiePointManager } from './voie-points.js?v=1784201800';
+import { Dashboard } from './dashboard.js?v=1784201800';
+import { GraphMarche } from './graph-marche.js?v=1784201800';
+import { StaffManager } from './staff.js?v=1784201800';
+import { Tutorial } from './tutorial.js?v=1784201800';
+import { Bank } from './bank.js?v=1784201800';
+import { Weather } from './weather.js?v=1784201800';
+import { Unions } from './unions.js?v=1784201800';
+import { SeasonalSchedule } from './seasonal.js?v=1784201800';
+import { Connections } from './connections.js?v=1784201800';
+import { StationUpgrades } from './station-upgrades.js?v=1784201800';
+import { A12Model } from './a12-model.js?v=1784201800';
+import { PlayerSignalManager } from './signaling.js?v=1784201800';
+import { JunctionManager } from './junctions.js?v=1784201800';
+import { CargoTypeManager } from './cargo-types.js?v=1784201800';
+import { ITEModules } from './ite-modules.js?v=1784201800';
+import { IndustrialClients } from './industrial-clients.js?v=1784201800';
+import { ShuntingManager } from './shunting.js?v=1784201800';
+import { haversineDistance } from './simulation.js?v=1784201800';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784201800';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784201800';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784201800';
+import { adminSync } from './admin-sync.js?v=1784201800';
 
 class RailEmpire {
   constructor() {
@@ -158,6 +159,12 @@ class RailEmpire {
   }
 
   startGame(savedState) {
+    // SAV : nouvelle partie = heure réelle ; chargement = temps de la sauvegarde
+    if (savedState?.gameTime != null && savedState?.gameDate) {
+      this.engine.setGameTime(savedState.gameTime, savedState.gameDate);
+    } else {
+      this.engine.setGameTime(null, null);
+    }
     document.getElementById('screen-login').classList.remove('active');
     document.getElementById('screen-game').classList.add('active');
     document.getElementById('company-name').textContent = this.account.companyName;
@@ -305,7 +312,10 @@ class RailEmpire {
     const saveBtn = document.getElementById('settings-save');
 
     // Load saved settings
-    const settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
+    let settings = {};
+    try {
+      settings = JSON.parse(localStorage.getItem('re_player_settings') || '{}');
+    } catch (e) {}
     if (settings.realism) {
       this.realismSettings = { ...this.realismSettings, ...settings.realism };
     }
@@ -352,7 +362,7 @@ class RailEmpire {
 
       // Save settings
       const s = { logoUrl, companyColor: color, incidentsEnabled: incEnabled, realism: { ...this.realismSettings } };
-      localStorage.setItem('re_player_settings', JSON.stringify(s));
+      try { localStorage.setItem('re_player_settings', JSON.stringify(s)); } catch (e) {}
 
       // Apply logo
       const logoEl = document.getElementById('company-logo');
@@ -444,11 +454,19 @@ class RailEmpire {
   }
 
   loadState(s) {
+    // SAV : restaurer le temps de jeu sauvegardé (pas l'heure réelle)
+    const savedTime = typeof s.gameTime === 'number' ? s.gameTime : null;
+    const savedDate = s.gameDate || null;
+    if (savedTime != null && savedDate) this.engine.setGameTime(savedTime, savedDate);
+    else this.engine.setGameTime(null, null); // anciennes sauvegardes : heure réelle
+    const loadPt = this.engine.getParisTime();
+    const loadTimeMin = loadPt.hours * 60 + loadPt.minutes;
+    const loadDateStr = this.engine.getParisDate();
     if (s.economy) this.economy.loadFromSave(s.economy);
     if (s.world) this.world.loadFromSave(s.world);
     if (s.rollingStock) this.rollingStock.loadFromSave(s.rollingStock);
     if (s.rames) this.rameManager.loadFromSave(s.rames);
-    if (s.schedules) this.scheduleCreator.loadFromSave(s.schedules, this.rameManager, this.world);
+    if (s.schedules) this.scheduleCreator.loadFromSave(s.schedules, this.rameManager, this.world, loadTimeMin, loadDateStr);
     if (s.depots) this.depotManager.loadFromSave(s.depots);
     if (s.activeIncidents) this.incidentManager.loadFromSave(s.activeIncidents, this.world);
     if (s.incidentEnabledTypes) this.incidentManager.setEnabledTypes(s.incidentEnabledTypes);
@@ -509,6 +527,8 @@ class RailEmpire {
     const state = {
       companyName: this.account.companyName,
       saveTime: Date.now(),
+      gameTime: this._gameTime ?? this.engine.getParisTime().hours * 60 + this.engine.getParisTime().minutes,
+      gameDate: this._currentDate || this.engine.getParisDate(),
       economy: this.economy.toSave(),
       world: this.world.toSave(),
       rollingStock: this.rollingStock.toSave(),
@@ -559,16 +579,25 @@ class RailEmpire {
     // Build route-grouped neighbour lists: for each route, sort services by
     // progress (segment index + progress) so each train only checks a handful
     // of trains ahead/behind instead of scanning the entire moving set.
+    // Group by route *content* (start/end/distance/length), not by object
+    // reference, so duplicated services and stress-test clones share groups.
     const LOOKAHEAD = 5;
     const LOOKBEHIND = 2;
     const routeGroups = new Map();
+    const routeKey = (route, state) => {
+      const first = route[0];
+      const last = route[route.length - 1];
+      const dist = state?.cumDist?.[0] ?? 0;
+      return `${first.lat.toFixed(6)},${first.lon.toFixed(6)}->${last.lat.toFixed(6)},${last.lon.toFixed(6)}@${route.length}@${dist.toFixed(3)}`;
+    };
     for (let i = 0; i < movingCount; i++) {
       const svc = movingSvcs[i];
-      if (!svc.position) continue;
-      const route = svc._state?.cachedRoute || svc.getCurrentRoute?.();
+      if (!svc.position || !svc._state) continue;
+      const route = svc._state.cachedRoute || (svc.getCurrentRoute && svc.getCurrentRoute());
       if (!route || route.length < 2) continue;
-      let group = routeGroups.get(route);
-      if (!group) { group = []; routeGroups.set(route, group); }
+      const key = routeKey(route, svc._state);
+      let group = routeGroups.get(key);
+      if (!group) { group = []; routeGroups.set(key, group); }
       group.push(svc);
     }
     for (const group of routeGroups.values()) {
@@ -606,21 +635,25 @@ class RailEmpire {
                          (this._rrOffset + FULL_BUDGET > movingCount && i < (this._rrOffset + FULL_BUDGET) % movingCount);
 
         if (!inBudget) {
-          // Lightweight interpolation: just advance position along current heading
+          // Lightweight interpolation: advance along the route without overshooting
           if (svc.position && svc.speed > 0) {
             const stepKm = svc.speed * dt / 3600;
-            if (svc._state?.cachedRoute && svc._state.index < svc._state.cachedRoute.length - 1) {
+            if (svc._state?.cachedRoute) {
               const route = svc._state.cachedRoute;
-              const idx = svc._state.index;
-              const to = route[idx + 1];
-              const from = route[idx];
-              const segDist = (svc._state.segDists?.[idx]) || 0.5;
-              if (segDist > 0) {
-                const frac = Math.min(stepKm / segDist, 1);
+              let remaining = stepKm;
+              while (remaining > 1e-6 && svc._state.index < route.length - 1) {
+                const idx = svc._state.index;
+                const to = route[idx + 1];
+                const from = route[idx];
+                const segDist = (svc._state.segDists?.[idx]) || haversineDistance(from.lat, from.lon, to.lat, to.lon);
+                if (segDist <= 0) { svc._state.index++; continue; }
+                const maxFrac = 1 - svc._state.progress;
+                const frac = Math.min(maxFrac, remaining / segDist);
                 svc.position.lat += (to.lat - from.lat) * frac;
                 svc.position.lon += (to.lon - from.lon) * frac;
                 svc._state.progress += frac;
-                if (svc._state.progress >= 1) {
+                remaining -= segDist * frac;
+                if (svc._state.progress >= 1 - 1e-9) {
                   svc._state.progress = 0;
                   svc._state.index++;
                 }
@@ -664,6 +697,8 @@ class RailEmpire {
 
   tick(timeOfDay, dateStr, pt) {
     this.timeOfDay = timeOfDay;
+    this._gameTime = timeOfDay;
+    this._currentDate = dateStr;
     const activeSchedules = this.scheduleCreator.getActiveServices();
 
     // CVO-04 : création automatique des services EVO (garage/gare → gare de départ)
