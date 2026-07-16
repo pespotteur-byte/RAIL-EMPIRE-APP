@@ -685,6 +685,17 @@ export class UI {
     const fmt = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
     const curIdx = svc.currentStopIndex || 0;
 
+    // currentStopIndex semantics: moving = target stop; stopped/waiting = next leg, current station is previous
+    let prevIdx, curStationIdx, nextIdx;
+    if (svc.state === 'moving') {
+      prevIdx = curIdx - 1;
+      curStationIdx = curIdx;
+      nextIdx = curIdx + 1;
+    } else {
+      if (curIdx === 0) { prevIdx = -1; curStationIdx = 0; nextIdx = 1; }
+      else { prevIdx = curIdx - 2; curStationIdx = curIdx - 1; nextIdx = curIdx; }
+    }
+
     // Annex 5 — planned (crossed-out) vs recalculated (violet circle) times.
     const buildTimes = (s, i) => {
       const isFirst = i === 0;
@@ -717,21 +728,25 @@ export class UI {
       return `<div class="lvp-stop${cur}">${typeBadge}<span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${buildTimes(s, i)}</span></div>`;
     }).join('');
 
-    const upcoming = stops.slice(curIdx)
+    const upcoming = stops.slice(curStationIdx + 1)
       .filter(s => s.stationId)
       .map(s => world.getStationById(s.stationId)?.name)
       .filter(Boolean);
     const bandeau = upcoming.length ? `Prochains arrêts : ${upcoming.join('  •  ')}` : 'Service terminé';
 
     // Annex 5 — detailed situational info
-    const prevStop = stops[curIdx - 1];
-    const curStop = stops[curIdx];
-    const nextStop = stops[curIdx + 1];
+    const prevStop = stops[prevIdx];
+    const curStop = stops[curStationIdx];
+    const nextStop = stops[nextIdx];
     const prevName = prevStop?.stationId ? (world.getStationById(prevStop.stationId)?.name || '—') : (prevStop ? 'Waypoint' : '—');
     const curName = curStop?.stationId ? (world.getStationById(curStop.stationId)?.name || '—') : (curStop ? 'Waypoint' : '—');
-    const nextName = nextStop?.stationId ? (world.getStationById(nextStop.stationId)?.name || '—') : (nextStop ? 'Waypoint' : '—');
+    let nextName = nextStop?.stationId ? (world.getStationById(nextStop.stationId)?.name || '—') : (nextStop ? 'Waypoint' : '—');
+    if (svc.state === 'moving') {
+      nextName = curName;
+    }
     const destName = stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—';
-    const nextArrTime = nextStop ? (nextStop.arrivalTime ?? nextStop.departureTime) : null;
+    const displayNext = svc.state === 'moving' ? curStop : nextStop;
+    const nextArrTime = displayNext ? (displayNext.arrivalTime ?? displayNext.departureTime) : null;
     const nextArrLabel = nextArrTime != null ? ` · Arr. ${fmt(nextArrTime + d)}` : '';
     const situation = t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)
       ? `Arrêt en gare de <b>${curName}</b>`
