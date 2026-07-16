@@ -43,13 +43,18 @@ function isInServiceWindow(timeOfDay, start, end) {
 const cantonManager = new CantonManager();
 export { cantonManager };
 
+function wrapTime(t) {
+  const n = Number.isFinite(t) ? t % 1440 : 0;
+  return n < 0 ? n + 1440 : n;
+}
+
 export class ServiceStop {
   constructor(stationId, type, depTime, arrTime, voiePointId, platform, stopCode = '') {
     this.stationId = stationId;
     this.type = type;
     this.stopCode = stopCode || '';
-    this.departureTime = depTime;
-    this.arrivalTime = arrTime || depTime;
+    this.departureTime = wrapTime(depTime);
+    this.arrivalTime = wrapTime(arrTime) || this.departureTime;
     this.voiePointId = voiePointId || null;
     this.platform = platform || '';
   }
@@ -612,10 +617,9 @@ export class ActiveService {
       }
 
       if (this.currentStopIndex === 0 && timeGte(timeOfDay, firstDep)) {
-        // Don't start a train if departure was missed by more than 1 minute
-        // (prevents trains starting late after reload)
-        const minutesLate = timeDiff(timeOfDay, firstDep);
-        if (minutesLate > 1) {
+        // Cancel only if the whole service window is missed (end + 31 min grace).
+        // Within the window the train departs late so delay is reported, not cancelled.
+        if (!isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
           this.completed = true;
           this.cancelled = true;
           this.state = 'cancelled';
@@ -2624,7 +2628,7 @@ export class ScheduleCreator {
         o.td = Math.round((s.totalDistance || 0) * 100) / 100;
         if (s.plannedDistance) o.pd = s.plannedDistance;
         if (!s.active) o.act = false;
-        if (s.serviceType && s.serviceType !== 'passager') o.st = s.serviceType;
+        if (s.serviceType && s.serviceType !== 'passager') o.svt = s.serviceType;
         if (s.isWorkTrain) o.wt = true;
         if (s.assignedContractId) o.ac = s.assignedContractId;
         const allDays = [0,1,2,3,4,5,6];
@@ -2708,8 +2712,8 @@ export class ScheduleCreator {
         totalDistance: d.td || 0,
         plannedDistance: d.pd || 0,
         active: d.act !== false,
-        serviceType: d.st || (d.wt ? 'work' : 'passager'),
-        isWorkTrain: (d.st ? d.st === 'work' : d.wt) || false,
+        serviceType: d.svt || (d.wt ? 'work' : 'passager'),
+        isWorkTrain: (d.svt ? d.svt === 'work' : d.wt) || false,
         assignedContractId: d.ac || '',
         runDays: d.rd || [0,1,2,3,4,5,6],
         runDates: d.rdt || [],
