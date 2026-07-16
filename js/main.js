@@ -1,45 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784201800';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784201800';
-import { World, createDefaultWorld } from './world.js?v=1784201800';
-import { Renderer } from './renderer.js?v=1784201800';
-import { UI } from './ui.js?v=1784201800';
-import { Economy } from './economy.js?v=1784201800';
-import { IncidentManager } from './incidents.js?v=1784201800';
-import { FreightManager } from './freight.js?v=1784201800';
-import { ScheduleManager } from './schedule.js?v=1784201800';
-import { GameStorage } from './storage.js?v=1784201800';
-import { AccountManager } from './account.js?v=1784201800';
-import { RollingStockManager } from './rolling-stock.js?v=1784201800';
-import { RameManager } from './rame.js?v=1784201800';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784201800';
-import { DepotManager } from './depot.js?v=1784201800';
-import { WorksManager } from './works.js?v=1784201800';
-import { ORMClient } from './orm.js?v=1784201800';
-import { LineManager, PlatformManager } from './line.js?v=1784201800';
-import { SillonManager } from './sillon.js?v=1784201800';
-import { VoiePointManager } from './voie-points.js?v=1784201800';
-import { Dashboard } from './dashboard.js?v=1784201800';
-import { GraphMarche } from './graph-marche.js?v=1784201800';
-import { StaffManager } from './staff.js?v=1784201800';
-import { Tutorial } from './tutorial.js?v=1784201800';
-import { Bank } from './bank.js?v=1784201800';
-import { Weather } from './weather.js?v=1784201800';
-import { Unions } from './unions.js?v=1784201800';
-import { SeasonalSchedule } from './seasonal.js?v=1784201800';
-import { Connections } from './connections.js?v=1784201800';
-import { StationUpgrades } from './station-upgrades.js?v=1784201800';
-import { A12Model } from './a12-model.js?v=1784201800';
-import { PlayerSignalManager } from './signaling.js?v=1784201800';
-import { JunctionManager } from './junctions.js?v=1784201800';
-import { CargoTypeManager } from './cargo-types.js?v=1784201800';
-import { ITEModules } from './ite-modules.js?v=1784201800';
-import { IndustrialClients } from './industrial-clients.js?v=1784201800';
-import { ShuntingManager } from './shunting.js?v=1784201800';
-import { haversineDistance } from './simulation.js?v=1784201800';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784201800';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784201800';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784201800';
-import { adminSync } from './admin-sync.js?v=1784201800';
+import { SimulationEngine } from './engine.js?v=1784205000';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784205000';
+import { World, createDefaultWorld } from './world.js?v=1784205000';
+import { Renderer } from './renderer.js?v=1784205000';
+import { UI } from './ui.js?v=1784205000';
+import { Economy } from './economy.js?v=1784205000';
+import { IncidentManager } from './incidents.js?v=1784205000';
+import { FreightManager } from './freight.js?v=1784205000';
+import { ScheduleManager } from './schedule.js?v=1784205000';
+import { GameStorage } from './storage.js?v=1784205000';
+import { AccountManager } from './account.js?v=1784205000';
+import { RollingStockManager } from './rolling-stock.js?v=1784205000';
+import { RameManager } from './rame.js?v=1784205000';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784205000';
+import { DepotManager } from './depot.js?v=1784205000';
+import { WorksManager } from './works.js?v=1784205000';
+import { ORMClient } from './orm.js?v=1784205000';
+import { LineManager, PlatformManager } from './line.js?v=1784205000';
+import { SillonManager } from './sillon.js?v=1784205000';
+import { VoiePointManager } from './voie-points.js?v=1784205000';
+import { Dashboard } from './dashboard.js?v=1784205000';
+import { GraphMarche } from './graph-marche.js?v=1784205000';
+import { StaffManager } from './staff.js?v=1784205000';
+import { Tutorial } from './tutorial.js?v=1784205000';
+import { Bank } from './bank.js?v=1784205000';
+import { Weather } from './weather.js?v=1784205000';
+import { Unions } from './unions.js?v=1784205000';
+import { SeasonalSchedule } from './seasonal.js?v=1784205000';
+import { Connections } from './connections.js?v=1784205000';
+import { StationUpgrades } from './station-upgrades.js?v=1784205000';
+import { A12Model } from './a12-model.js?v=1784205000';
+import { PlayerSignalManager } from './signaling.js?v=1784205000';
+import { JunctionManager } from './junctions.js?v=1784205000';
+import { CargoTypeManager } from './cargo-types.js?v=1784205000';
+import { ITEModules } from './ite-modules.js?v=1784205000';
+import { IndustrialClients } from './industrial-clients.js?v=1784205000';
+import { ShuntingManager } from './shunting.js?v=1784205000';
+import { haversineDistance } from './simulation.js?v=1784205000';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784205000';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784205000';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784205000';
+import { adminSync } from './admin-sync.js?v=1784205000';
 
 class RailEmpire {
   constructor() {
@@ -568,115 +568,150 @@ class RailEmpire {
     const movingSvcs = this.scheduleCreator.getMovingServices();
     const movingCount = movingSvcs.length;
 
-    // --- BUDGET-BASED ROUND-ROBIN ---
-    // At massive scale (>500 moving trains), update a budget of trains per tick
-    // to keep frame time under control. All trains get simple position interpolation,
-    // but only the budget gets full physics.
-    const FULL_BUDGET = 500; // max trains with full physics per tick
-    const useRoundRobin = movingCount > FULL_BUDGET;
-    if (!this._rrOffset) this._rrOffset = 0;
+    // LOD constants tuned for 100k+ simultaneous trains on low-end hardware.
+    const HIGH_BUDGET = 500;        // full physics per tick
+    const MEDIUM_INTERVAL = 10;     // macro update every 1.0 s
+    const LOW_INTERVAL = 30;        // macro update every 3.0 s
+    const MEDIUM_RADIUS_DEG = 0.5;  // ~55 km around camera
 
-    // Build route-grouped neighbour lists: for each route, sort services by
-    // progress (segment index + progress) so each train only checks a handful
-    // of trains ahead/behind instead of scanning the entire moving set.
-    // Group by route *content* (start/end/distance/length), not by object
-    // reference, so duplicated services and stress-test clones share groups.
+    if (!this._tickPhase) this._tickPhase = 0;
+    this._tickPhase++;
+    const lowPhase = this._tickPhase % LOW_INTERVAL;
+    const mediumPhase = this._tickPhase % MEDIUM_INTERVAL;
+
+    // Camera / viewport
+    const tm = this.renderer?.tileMap;
+    const w = this.renderer?.logicalWidth || 1024;
+    const h = this.renderer?.logicalHeight || 768;
+    const center = tm ? tm.screenToWorld(w / 2, h / 2, w, h) : null;
+    const tl = tm ? tm.screenToWorld(0, 0, w, h) : null;
+    const br = tm ? tm.screenToWorld(w, h, w, h) : null;
+    const hasViewport = center && tl && br;
+    const centerLat = center?.lat ?? 0;
+    const centerLon = center?.lon ?? 0;
+    const vpMinLat = hasViewport ? Math.min(tl.lat, br.lat) : -90;
+    const vpMaxLat = hasViewport ? Math.max(tl.lat, br.lat) : 90;
+    const vpMinLon = hasViewport ? Math.min(tl.lon, br.lon) : -180;
+    const vpMaxLon = hasViewport ? Math.max(tl.lon, br.lon) : 180;
+
+    const routeIndex = new Map();
+    const highCandidates = [];
+    const mediumList = [];
+    let lowList = [];
+
+    // No visible renderer: every train runs as low-LOD macro.
+    if (!hasViewport) {
+      for (let i = 0; i < movingCount; i++) {
+        movingSvcs[i]._lod = 'low';
+      }
+      lowList = movingSvcs;
+    } else {
+      for (let i = 0; i < movingCount; i++) {
+        const svc = movingSvcs[i];
+        if (!svc.position || !svc._state) { svc._lod = 'low'; lowList.push(svc); continue; }
+        if (!svc._routeKey) {
+          const legKey = `${svc.currentStopIndex}-${svc.isReturnLeg ? 1 : 0}`;
+          const route = svc.getCurrentRoute();
+          if (route && route.length >= 2) svc._initializeState(route, legKey);
+        }
+        const route = svc._state.cachedRoute;
+        if (!route || route.length < 2) { svc._lod = 'low'; lowList.push(svc); continue; }
+
+        const lat = svc.position.lat;
+        const lon = svc.position.lon;
+        const inViewport = lat >= vpMinLat && lat <= vpMaxLat && lon >= vpMinLon && lon <= vpMaxLon;
+        const dLat = Math.abs(lat - centerLat);
+        const dLon = Math.abs(lon - centerLon);
+        let lod = 'low';
+        if (inViewport) {
+          lod = 'high';
+          svc._lodDist = dLat + dLon;
+          highCandidates.push(svc);
+        } else if (dLat < MEDIUM_RADIUS_DEG && dLon < MEDIUM_RADIUS_DEG) {
+          lod = 'medium';
+          mediumList.push(svc);
+        } else {
+          lowList.push(svc);
+        }
+        svc._lod = lod;
+
+        if (lod !== 'low') {
+          const key = svc._routeKey || '';
+          if (key) {
+            let arr = routeIndex.get(key);
+            if (!arr) { arr = []; routeIndex.set(key, arr); }
+            arr.push(svc);
+          }
+        }
+      }
+    }
+
+    // Cap high-priority services and demote overflow to low.
+    if (highCandidates.length > HIGH_BUDGET) {
+      highCandidates.sort((a, b) => a._lodDist - b._lodDist);
+      const keep = highCandidates.slice(0, HIGH_BUDGET);
+      const keepSet = new Set(keep);
+      for (let i = 0; i < highCandidates.length; i++) {
+        const svc = highCandidates[i];
+        if (!keepSet.has(svc)) {
+          svc._lod = 'low';
+          lowList.push(svc);
+        }
+      }
+      highCandidates.length = keep.length;
+      for (let i = 0; i < keep.length; i++) highCandidates[i] = keep[i];
+    }
+
+    // Pass 2: sort route groups that contain a high-priority train and assign neighbours.
     const LOOKAHEAD = 5;
     const LOOKBEHIND = 2;
-    const routeGroups = new Map();
-    const routeKey = (route, state) => {
-      const first = route[0];
-      const last = route[route.length - 1];
-      const dist = state?.cumDist?.[0] ?? 0;
-      return `${first.lat.toFixed(6)},${first.lon.toFixed(6)}->${last.lat.toFixed(6)},${last.lon.toFixed(6)}@${route.length}@${dist.toFixed(3)}`;
-    };
-    for (let i = 0; i < movingCount; i++) {
-      const svc = movingSvcs[i];
-      if (!svc.position || !svc._state) continue;
-      const route = svc._state.cachedRoute || (svc.getCurrentRoute && svc.getCurrentRoute());
-      if (!route || route.length < 2) continue;
-      const key = routeKey(route, svc._state);
-      let group = routeGroups.get(key);
-      if (!group) { group = []; routeGroups.set(key, group); }
-      group.push(svc);
-    }
-    for (const group of routeGroups.values()) {
-      group.sort((a, b) => (a._state.index + a._state.progress) - (b._state.index + b._state.progress));
-      for (let i = 0; i < group.length; i++) {
-        const svc = group[i];
+    const MAX_GROUP_SORT = 5000;
+    for (const [key, group] of routeIndex) {
+      if (!group.some(s => s._lod === 'high')) continue;
+      let sortGroup = group;
+      if (sortGroup.length > MAX_GROUP_SORT) {
+        sortGroup = sortGroup.filter(s => s._lod === 'high');
+      }
+      sortGroup.sort((a, b) => (a._state.index + a._state.progress) - (b._state.index + b._state.progress));
+      for (let i = 0; i < sortGroup.length; i++) {
+        const svc = sortGroup[i];
+        if (svc._lod !== 'high') continue;
         const start = Math.max(0, i - LOOKBEHIND);
-        const end = Math.min(group.length, i + LOOKAHEAD + 1);
-        const nearby = [];
+        const end = Math.min(sortGroup.length, i + LOOKAHEAD + 1);
+        const nearby = new Array(end - start - 1);
+        let k = 0;
         for (let j = start; j < end; j++) {
-          if (j !== i) nearby.push(group[j]);
+          if (j !== i) nearby[k++] = sortGroup[j];
         }
         svc._nearbyServices = nearby;
       }
     }
 
-    // Incident check — only on the budget slice if round-robin
-    if (useRoundRobin) {
-      // Check incidents every N ticks for full set, but only budget per tick
-      if (!this._incidentCheckTick) this._incidentCheckTick = 0;
-      if (this._incidentCheckTick++ % Math.ceil(movingCount / FULL_BUDGET) === 0) {
-        this.incidentManager.checkTrainPositions(movingSvcs, this.depotManager, this.world);
-      }
-    } else {
-      this.incidentManager.checkTrainPositions(movingSvcs, this.depotManager, this.world);
+    // Pass 3: update high (full physics), medium/low via strided macro updates.
+    for (let i = 0; i < highCandidates.length; i++) {
+      highCandidates[i].moveUpdate(dt, timeOfDay, activeServices);
     }
 
-    // Physics updates
-    for (let i = 0; i < movingCount; i++) {
-      const svc = movingSvcs[i];
-
-      if (useRoundRobin) {
-        // Is this train in the current budget slice?
-        const inBudget = (i >= this._rrOffset && i < this._rrOffset + FULL_BUDGET) ||
-                         (this._rrOffset + FULL_BUDGET > movingCount && i < (this._rrOffset + FULL_BUDGET) % movingCount);
-
-        if (!inBudget) {
-          // Lightweight interpolation: advance along the route without overshooting
-          if (svc.position && svc.speed > 0) {
-            const stepKm = svc.speed * dt / 3600;
-            if (svc._state?.cachedRoute) {
-              const route = svc._state.cachedRoute;
-              let remaining = stepKm;
-              while (remaining > 1e-6 && svc._state.index < route.length - 1) {
-                const idx = svc._state.index;
-                const to = route[idx + 1];
-                const from = route[idx];
-                const segDist = (svc._state.segDists?.[idx]) || haversineDistance(from.lat, from.lon, to.lat, to.lon);
-                if (segDist <= 0) { svc._state.index++; continue; }
-                const maxFrac = 1 - svc._state.progress;
-                const frac = Math.min(maxFrac, remaining / segDist);
-                svc.position.lat += (to.lat - from.lat) * frac;
-                svc.position.lon += (to.lon - from.lon) * frac;
-                svc._state.progress += frac;
-                remaining -= segDist * frac;
-                if (svc._state.progress >= 1 - 1e-9) {
-                  svc._state.progress = 0;
-                  svc._state.index++;
-                }
-              }
-            }
-            svc.totalDistance += stepKm;
-            svc.train.totalKm = svc.totalDistance;
-          }
-          continue;
-        }
-      }
-
-      // Full physics update for trains in budget
-      // _nearbyServices was precomputed from route-group sorting above
-      svc.moveUpdate(dt, timeOfDay, activeServices);
+    const macroDtMedium = dt * MEDIUM_INTERVAL;
+    for (let i = mediumPhase; i < mediumList.length; i += MEDIUM_INTERVAL) {
+      mediumList[i].moveMacro(macroDtMedium, timeOfDay, this.economy);
     }
 
-    // Advance round-robin offset
-    if (useRoundRobin) {
-      this._rrOffset = (this._rrOffset + FULL_BUDGET) % Math.max(1, movingCount);
+    const macroDtLow = dt * LOW_INTERVAL;
+    for (let i = lowPhase; i < lowList.length; i += LOW_INTERVAL) {
+      lowList[i].moveMacro(macroDtLow, timeOfDay, this.economy);
     }
 
-    // Also update stopped_at_station trains (dwell timer)
+    // Incident check on high/medium trains only.
+    if (!this._incidentCheckTick) this._incidentCheckTick = 0;
+    if (this._incidentCheckTick++ % 6 === 0) {
+      const incidentSvcs = [];
+      for (let i = 0; i < highCandidates.length; i++) incidentSvcs.push(highCandidates[i]);
+      for (let i = 0; i < mediumList.length; i++) incidentSvcs.push(mediumList[i]);
+      this.incidentManager.checkTrainPositions(incidentSvcs, this.depotManager, this.world);
+    }
+
+    // Dwell timer for stopped trains.
     for (let i = 0; i < activeServices.length; i++) {
       const svc = activeServices[i];
       if (svc.state === 'stopped_at_station') {
@@ -852,9 +887,10 @@ class RailEmpire {
         if (!this._visibleBuf) this._visibleBuf = [];
         const allVisibleServices = this._visibleBuf;
         allVisibleServices.length = 0;
-        // Moving/departing trains
+        // Moving/departing trains — only high/medium LOD (low are macro/statistical)
         for (let i = 0; i < movingSvcs.length; i++) {
-          if (movingSvcs[i].position) allVisibleServices.push(movingSvcs[i]);
+          const svc = movingSvcs[i];
+          if (svc.position && svc._lod !== 'low') allVisibleServices.push(svc);
         }
         // Add stopped_at_station / waiting-with-position (pre-departure) trains
         // At massive scale, these are tracked via a lightweight Set to avoid O(n) scan

@@ -5973,18 +5973,30 @@ export class UI {
     const container = document.getElementById('trains-list');
     if (!container) return;
 
-    // Show only active trains (moving or stopped at station) + rescue services + breakdowns
-    // DEP-06 : trains en maintenance absents du bandeau train
-    const activeTrains = services.filter(svc =>
-      svc && svc.train && !svc.train.inMaintenance && !(svc.rame && svc.rame.inMaintenance) && (
+    // Show only active trains (moving or stopped at station) + rescue services + breakdowns.
+    // DEP-06 : trains en maintenance absents du bandeau train.
+    // At massive scale we cap the list to keep the DOM small.
+    const MAX_TRAINS_LIST = 100;
+    const activeTrains = [];
+    let overflow = false;
+    for (const svc of services) {
+      if (!svc || !svc.train || svc.train.inMaintenance || (svc.rame && svc.rame.inMaintenance)) continue;
+      const t = svc.train;
+      if (
         svc.isRescue ||
         svc.state === 'moving' || svc.state === 'stopped_at_station' ||
         // LVM-04/Annexe 4 : trains en attente à quai (pré-départ) et trains visibles sur la carte
-        (svc.state === 'waiting' && svc.position && svc.train.stoppedAt) ||
-        svc.train.speed > 0 ||
-        svc.train.breakdown
-      )
-    );
+        (svc.state === 'waiting' && svc.position && t.stoppedAt) ||
+        t.speed > 0 ||
+        t.breakdown
+      ) {
+        activeTrains.push(svc);
+        if (activeTrains.length >= MAX_TRAINS_LIST) {
+          overflow = true;
+          break;
+        }
+      }
+    }
 
     if (activeTrains.length === 0) {
       container.innerHTML = '<p style="color:var(--text3);font-size:11px;text-align:center;padding:10px">Aucun train en service. Creez un trajet dans "Horaires".</p>';
@@ -6231,6 +6243,9 @@ export class UI {
         </div>
       `;
     }).join('');
+    if (overflow) {
+      html += `<div style="color:var(--text3);font-size:10px;text-align:center;padding:6px">+ de nombreux autres trains actifs</div>`;
+    }
     // S10: Only update DOM if content actually changed to avoid flicker
     if (container.innerHTML !== html) container.innerHTML = html;
 

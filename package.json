@@ -6,5 +6,8 @@
   "description": "A real-time railway simulation game running in the browser, powered by OpenRailwayMap data and realistic train physics.",
   "scripts": {
     "test": "node --test js/__tests__/*.test.js"
+  },
+  "devDependencies": {
+    "chrome-remote-interface": "^0.34.0"
   }
 }

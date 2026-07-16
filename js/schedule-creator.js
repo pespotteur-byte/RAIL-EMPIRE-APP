@@ -702,6 +702,12 @@ export class ActiveService {
           // Release any stale cantons and reset simulation state
           cantonManager.releaseAll(this.id);
           this._resetState();
+          // Pre-initialize route state so the first move tick doesn't pay the cost.
+          {
+            const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
+            const route = this.getCurrentRoute();
+            if (route && route.length >= 2) this._initializeState(route, legKey);
+          }
         }
       }
       return;
@@ -745,6 +751,12 @@ export class ActiveService {
           }
           cantonManager.releaseAll(this.id);
           this._resetState();
+          // Pre-initialize route state so the first move tick doesn't pay the cost.
+          {
+            const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
+            const route = this.getCurrentRoute();
+            if (route && route.length >= 2) this._initializeState(route, legKey);
+          }
         }
         return;
       }
@@ -871,6 +883,11 @@ export class ActiveService {
     }
     this._state.segDists = segDists;
     this._state.cumDist = cumDist;
+
+    // Cache a stable content key for route grouping (used by the LOD engine)
+    const first = route[0];
+    const last = route[route.length - 1];
+    this._routeKey = `${first.lat.toFixed(6)},${first.lon.toFixed(6)}->${last.lat.toFixed(6)},${last.lon.toFixed(6)}@${route.length}@${cumDist[0].toFixed(3)}`;
 
     // Find closest point on route to current position
     if (this.position && route.length > 1) {
@@ -1707,6 +1724,56 @@ export class ActiveService {
       this._cumDistCache.set(route, cumDist);
     }
     return cumDist[bestIdx];
+  }
+
+  /**
+   * Lightweight macro movement for distant/low-LOD trains.
+   * No canton/proximity checks, just advance along the route using current speed.
+   */
+  moveMacro(dt, timeOfDay, economy) {
+    if (!this.active || this.state !== 'moving' || !this.position) return;
+    // Ensure route state is initialized (departing trains start with no cachedRoute)
+    const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
+    if (this._state.legKey !== legKey) {
+      const freshRoute = this.getCurrentRoute();
+      if (freshRoute && freshRoute.length >= 2) this._initializeState(freshRoute, legKey);
+      else return;
+    }
+    if (!this._state?.cachedRoute) return;
+    // Macro speed: line/rame limit. Preserves any full-physics speed if lower.
+    const macroSpeed = Math.min(
+      this.rame?.maxSpeed || 300,
+      this.getLineSpeedAtPosition()
+    );
+    this.speed = Math.max(0, Math.min(this.speed || macroSpeed, macroSpeed));
+    this.train.speed = Math.round(this.speed);
+    if (this.speed <= 0) return;
+    const route = this._state.cachedRoute;
+    const stepKm = this.speed * dt / 3600;
+    let remaining = stepKm;
+    while (remaining > 1e-6 && this._state.index < route.length - 1) {
+      const idx = this._state.index;
+      const from = route[idx];
+      const to = route[idx + 1];
+      const segDist = (this._state.segDists?.[idx]) || haversineDistance(from.lat, from.lon, to.lat, to.lon);
+      if (segDist <= 0) { this._state.index++; continue; }
+      const maxFrac = 1 - this._state.progress;
+      const frac = Math.min(maxFrac, remaining / segDist);
+      this.position.lat += (to.lat - from.lat) * frac;
+      this.position.lon += (to.lon - from.lon) * frac;
+      this._state.progress += frac;
+      remaining -= segDist * frac;
+      if (this._state.progress >= 1 - 1e-9) {
+        this._state.progress = 0;
+        this._state.index++;
+      }
+    }
+    this.totalDistance += stepKm;
+    this.train.totalKm = this.totalDistance;
+    if (this._state.index >= route.length - 1) {
+      const target = this.getTargetStation();
+      if (target) this.arriveAtStation(target, timeOfDay, economy);
+    }
   }
 
   // Legacy compatibility
