@@ -6022,15 +6022,15 @@ export class UI {
         }
       }
 
-      // Annexes 4-5 — charge transportée dans le bandeau train.
+      // Annexes 4-5 — charge transportée dans le bandeau train (utilise les comptages réels).
       let payloadHtml = '';
       if (svc.rame && svc.serviceType !== 'work') {
         const rame = svc.rame;
         if (svc.category === 'fret' || rame.totalFreightCapacity > 0) {
-          const load = Math.max(0, Math.round(rame.totalFreightCapacity * 0.7));
+          const load = Math.max(0, svc._onboardFreight != null ? Math.round(svc._onboardFreight) : Math.round(rame.totalFreightCapacity * 0.7));
           payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${load} tonnes de frets transportées</span></div>`;
         } else if (svc.category === 'voyageur' || rame.totalCapacity > 0) {
-          const pax = Math.max(0, Math.round(rame.totalCapacity * 0.7));
+          const pax = Math.max(0, svc._onboardPax != null ? Math.round(svc._onboardPax) : Math.round(rame.totalCapacity * 0.7));
           payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${pax} passagers à bord</span></div>`;
         }
       }
