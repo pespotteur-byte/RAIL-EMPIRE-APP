@@ -10,7 +10,7 @@ const CDP = require('chrome-remote-interface');
   await new Promise(r => setTimeout(r, 3000));
 
   const result = await Runtime.evaluate({
-    expression: `(() => {
+    expression: `((async () => {
       const g = window.game;
       g.account.companyName = 'LongRun';
       g.startGame(null);
@@ -30,26 +30,30 @@ const CDP = require('chrome-remote-interface');
         const stops=[{stationId:A.id,type:'arret',departureTime:dep,arrivalTime:dep},{stationId:B.id,type:'arret',departureTime:depB,arrivalTime:arrB},{stationId:C.id,type:'arret',departureTime:arrC,arrivalTime:arrC}];
         sc.addService({name:'S'+i,rameId:rame.id,serviceType:'passager',roundTrip:true,stops,routes:[routeAB,routeBC]},rame,w);
       }
-      if (g.incidentManager) g.incidentManager.enabledTypes = new Set(['signal-failure','door-problem','train-breakdown','abandoned-luggage']);
       const dateStr='2024-07-15';
-      const logs=[];
-      for(let m=0;m<600;m++){
+      for(let m=0;m<120;m++){
         const hr=Math.floor(m/60), mn=m%60;
         const pt={hours:hr,minutes:mn,date:new Date(dateStr+'T'+String(hr).padStart(2,'0')+':'+String(mn).padStart(2,'0')+':00Z')};
         g.tick(m,dateStr,pt);
         for(let s=0;s<6;s++) g.moveTick(10,m+(s+1)*10/60);
-        if (m>=50 && m%100===0) {
-          const active=sc.getActiveServices();
-          const counts={completed:0,cancelled:0,moving:0,waiting:0};
-          for(const s of active){ if(s.completed){counts.completed++;} else if(s.cancelled){counts.cancelled++;} else if(s.state==='moving'||s.state==='departing'){counts.moving++;} else {counts.waiting++;} }
-          logs.push({m, counts, incidents: g.incidentManager?.activeIncidents?.length || 0, stuck: active.filter(s=>s.state==='waiting' && !s.completed && !s.cancelled && s.delay>90).map(s=>({name:s.name,delay:s.delay}))});
-        }
       }
-      const active=sc.getActiveServices();
+      const state = g.saveState();
+      const saved = g.storage.saveGame ? null : state;
+      const stateBefore = g.scheduleCreator.getActiveServices().map(s=>({name:s.name,completed:s.completed,cancelled:s.cancelled,state:s.state,cur:s.currentStopIndex,ret:s.isReturnLeg}));
+      // Load the saved state back into the same game object (simulates a fresh boot)
+      g.loadState(state);
+      g.startGame(state);
+      for(let m=120;m<400;m++){
+        const hr=Math.floor(m/60), mn=m%60;
+        const pt={hours:hr,minutes:mn,date:new Date(dateStr+'T'+String(hr).padStart(2,'0')+':'+String(mn).padStart(2,'0')+':00Z')};
+        g.tick(m,dateStr,pt);
+        for(let s=0;s<6;s++) g.moveTick(10,m+(s+1)*10/60);
+      }
+      const active=g.scheduleCreator.getActiveServices();
       const final={completed:0,cancelled:0,moving:0,waiting:0};
       for(const s of active){ if(s.completed){final.completed++;} else if(s.cancelled){final.cancelled++;} else if(s.state==='moving'||s.state==='departing'){final.moving++;} else {final.waiting++;} }
-      return JSON.stringify({final, logs});
-    })()`,
+      return JSON.stringify({stateBefore, final, serviceCount: active.length});
+    })())`,
     returnByValue: true,
     awaitPromise: true,
     timeout: 300000

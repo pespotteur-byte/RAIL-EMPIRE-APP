@@ -2,7 +2,7 @@
  * Unions — Strike risk system based on company conditions.
  * Reads game state to compute risk. Strikes disable random % of services.
  */
-import { getGlobalRng } from './rng.js?v=1784239919';
+import { getGlobalRng } from './rng.js?v=1784240818';
 
 export class Unions {
   constructor() {

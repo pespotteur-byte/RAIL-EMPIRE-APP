@@ -1,7 +1,7 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1784239919';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1784240818';
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
-import { getGlobalRng } from './rng.js?v=1784239919';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784239919';
+import { getGlobalRng } from './rng.js?v=1784240818';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784240818';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
