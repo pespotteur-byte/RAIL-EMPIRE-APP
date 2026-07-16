@@ -206,6 +206,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrev, LPSTR lpCmdLine, int nC
 
     buildRoute();
     initTrains();
+    printMemoryStatus();
 
     for (int i = 0; i < WORKER_THREADS; i++) {
         wargs[i].trains = trains;

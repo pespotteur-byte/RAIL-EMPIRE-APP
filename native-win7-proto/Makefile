@@ -1,7 +1,7 @@
 # Cross-compile native Win7 32-bit prototype
 CC = i686-w64-mingw32-gcc
-CFLAGS = -O3 -march=i686 -mfpmath=sse -msse2 -Wall -pthread
-LIBS = -lgdi32 -luser32 -lkernel32 -lpthread
+CFLAGS = -O3 -march=i686 -mfpmath=sse -msse2 -Wall
+LIBS = -lgdi32 -luser32 -lkernel32
 
 TARGET = re-native.exe
 
