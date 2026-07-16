@@ -689,7 +689,8 @@ export class UI {
       else times = `${fmt(arr)}–${fmt(dep)}`;
       const cur = i === svc.currentStopIndex ? ' cur' : '';
       const plat = s.platform ? ` V${s.platform}` : '';
-      return `<div class="lvp-stop${cur}"><span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${times}</span></div>`;
+      const typeBadge = s.stopCode ? `<span class="lvp-stop-type">${s.stopCode}</span>` : (isWp ? '<span class="lvp-stop-type wp">WPT</span>' : '');
+      return `<div class="lvp-stop${cur}">${typeBadge}<span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${times}</span></div>`;
     }).join('');
 
     const upcoming = stops.slice(svc.currentStopIndex || 0)
@@ -789,6 +790,8 @@ export class UI {
     this._editingStationId = null;
     document.getElementById('station-lat').value = lat.toFixed(6);
     document.getElementById('station-lon').value = lon.toFixed(6);
+    document.getElementById('station-lat').readOnly = true;
+    document.getElementById('station-lon').readOnly = true;
     document.getElementById('station-name').value = '';
     document.getElementById('station-platforms').value = '4';
     document.getElementById('station-platform-names').value = '';
@@ -1196,6 +1199,9 @@ export class UI {
     document.getElementById('station-name').value = station.name;
     document.getElementById('station-lat').value = station.lat.toFixed(6);
     document.getElementById('station-lon').value = station.lon.toFixed(6);
+    // Note joueurs : GPS et type modifiables en édition
+    document.getElementById('station-lat').readOnly = false;
+    document.getElementById('station-lon').readOnly = false;
     document.getElementById('station-type').value = station.type;
     document.getElementById('station-platforms').value = station.platforms || 4;
     document.getElementById('station-platform-names').value = (station.platformNames || []).join(', ');
@@ -2426,13 +2432,13 @@ export class UI {
     if (edit) edit.classList.toggle('hidden', !hasTrace);
     if (del) del.classList.toggle('hidden', !this._traceSelectedPoint);
     if (this._manualMode) {
-      btn.textContent = 'Terminer le tracé manuel';
+      btn.textContent = 'Terminer (cliquer gare/point)';
       btn.style.background = '#3b82f6';
       btn.style.color = '#fff';
       clear.classList.remove('hidden');
       hint.textContent = 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.';
     } else {
-      btn.textContent = 'Tracer manuellement';
+      btn.textContent = 'Créer / Tracer manuellement';
       btn.style.background = '';
       btn.style.color = '';
       clear.classList.add('hidden');
@@ -2917,41 +2923,38 @@ export class UI {
         }
       }
 
+      const arrCell = stop.type === 'waypoint' || stop.type === 'passage' || !isFirst
+        ? `<input type="text" value="${stop.arrTimeStr}" placeholder="${stop.type === 'waypoint' ? 'Via' : 'Arr'}" title="Heure ${stop.type === 'waypoint' ? 'de passage' : 'd\'arrivée'}" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">`
+        : '';
+      const depCell = (stop.type === 'arret' || stop.type === 'passage') && !isLast
+        ? `<input type="text" value="${stop.depTimeStr || stop.arrTimeStr}" placeholder="Dép" title="Heure de départ" onchange="game.ui.updateSchedStop(${i}, 'depTime', this.value)">`
+        : '';
+      const dwellCell = (stop.type === 'arret' && !isFirst && !isLast)
+        ? `<div style="display:flex;align-items:center;gap:2px"><input type="number" value="${Math.max(0, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0))}" min="0" max="120" title="Temps d'arrêt" style="width:48px" onchange="game.ui.updateSchedStop(${i}, 'stopDuration', this.value)"><span style="font-size:9px;color:var(--text3);white-space:nowrap">min</span></div>`
+        : '';
+
       return `
         ${travelInfo}
         <div class="sched-stop-row">
-          <span style="color:var(--text3);font-size:10px;width:16px">${i + 1}</span>
-          <span class="stop-name">${stop.stationName}</span>
-          <select onchange="game.ui.updateSchedStop(${i}, 'type', this.value)">
-            <option value="arret" ${stop.type === 'arret' ? 'selected' : ''}>Arret</option>
+          <span style="color:var(--text3);font-size:10px;text-align:center">${i + 1}</span>
+          <span class="stop-name" title="${stop.stationName}">${stop.stationName}</span>
+          <select onchange="game.ui.updateSchedStop(${i}, 'type', this.value)" title="Type d'arrêt">
+            <option value="arret" ${stop.type === 'arret' ? 'selected' : ''}>Arrêt</option>
             <option value="passage" ${stop.type === 'passage' ? 'selected' : ''}>Passage</option>
             <option value="waypoint" ${stop.type === 'waypoint' ? 'selected' : ''}>Waypoint</option>
           </select>
-          <select style="width:52px" onchange="game.ui.updateSchedStop(${i}, 'stopCode', this.value)" title="C=Commercial, S=Service, []=sautable (25%)">
+          <select onchange="game.ui.updateSchedStop(${i}, 'stopCode', this.value)" title="C=Commercial, S=Service, []=sautable (25%)">
             <option value="" ${!stop.stopCode ? 'selected' : ''}>-</option>
             <option value="C" ${stop.stopCode === 'C' ? 'selected' : ''}>C</option>
             <option value="S" ${stop.stopCode === 'S' ? 'selected' : ''}>S</option>
             <option value="[C]" ${stop.stopCode === '[C]' ? 'selected' : ''}>[C]</option>
             <option value="[S]" ${stop.stopCode === '[S]' ? 'selected' : ''}>[S]</option>
           </select>
-          ${stop.type === 'waypoint' ? `
-            <span style="font-size:9px;color:var(--text3);font-style:italic">via</span>
-            ${platformSelect}
-          ` : stop.type === 'passage' ? `
-            <label style="font-size:9px;color:var(--text3)">Pass:</label>
-            <input type="text" value="${stop.arrTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">
-          ` : isFirst ? `
-            <label style="font-size:9px;color:var(--text3)">Dep:</label>
-            <input type="text" value="${stop.depTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'depTime', this.value)">
-            ${platformSelect}
-          ` : `
-            <label style="font-size:9px;color:var(--text3)">Arr:</label>
-            <input type="text" value="${stop.arrTimeStr}" style="width:55px" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">
-            ${!isLast ? `<label style="font-size:9px;color:var(--text3)">Arret:</label>
-            <input type="number" value="${Math.max(0, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0))}" min="0" max="120" style="width:45px" onchange="game.ui.updateSchedStop(${i}, 'stopDuration', this.value)"> <span style="font-size:9px;color:var(--text3)">min</span>` : ''}
-            ${platformSelect}
-          `}
-          <button class="btn-remove-stop" onclick="game.ui.removeSchedStop(${i})">x</button>
+          ${arrCell ? `<div>${arrCell}</div>` : '<div></div>'}
+          ${depCell ? `<div>${depCell}</div>` : '<div></div>'}
+          ${dwellCell ? `<div>${dwellCell}</div>` : '<div></div>'}
+          <div>${platformSelect}</div>
+          <button class="btn-remove-stop" onclick="game.ui.removeSchedStop(${i})" title="Supprimer cet arrêt">x</button>
         </div>
       `;
     }).join('');
@@ -5578,6 +5581,8 @@ export class UI {
       svc && svc.train && !svc.train.inMaintenance && !(svc.rame && svc.rame.inMaintenance) && (
         svc.isRescue ||
         svc.state === 'moving' || svc.state === 'stopped_at_station' ||
+        // LVM-04/Annexe 4 : trains en attente à quai (pré-départ) et trains visibles sur la carte
+        (svc.state === 'waiting' && svc.position && svc.train.stoppedAt) ||
         svc.train.speed > 0 ||
         svc.train.breakdown
       )
@@ -5630,11 +5635,15 @@ export class UI {
       let contextLabel = '', contextClass = '';
       const _nsCtx = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
       const _isWaypoint = _nsCtx?.type === 'waypoint';
-      if (svc.state === 'stopped_at_station' && !_isWaypoint) {
+      if ((svc.state === 'stopped_at_station' || (svc.state === 'waiting' && t.stoppedAt)) && !_isWaypoint) {
         const stName = t.stoppedAt?.name || '';
         const voie = t.platform ? ` Voie ${t.platform}` : '';
         if (svc._atTerminus) {
           contextLabel = stName ? `Terminus — ${stName}${voie}` : 'Terminus';
+          contextClass = 'ctx-quai';
+        } else if (svc.state === 'waiting') {
+          const waitMin = this.game?.engine ? Math.max(0, Math.round(((svc.stops?.[0]?.departureTime ?? 0) - (this.game.engine.getParisTime().hours * 60 + this.game.engine.getParisTime().minutes)))) : 0;
+          contextLabel = stName ? `En attente — ${stName}${voie} (${waitMin} min)` : 'En attente';
           contextClass = 'ctx-quai';
         } else {
           contextLabel = stName ? `À quai — ${stName}${voie}` : 'À quai';
@@ -6030,10 +6039,11 @@ export class UI {
   }
 
   openVoiePointModal(lat, lon) {
-    this.voiePointCreationMode = false;
-    const btn = document.getElementById('btn-create-voie-point');
-    if (btn) { btn.textContent = '+ Point de voie'; btn.classList.remove('active-mode'); }
-    document.getElementById('game-canvas').style.cursor = 'grab';
+    // Mode multi-création : le point de voie reste sélectionné jusqu'à Échap (note joueurs)
+    // this.voiePointCreationMode = false;
+    // const btn = document.getElementById('btn-create-voie-point');
+    // if (btn) { btn.textContent = '+ Point de voie'; btn.classList.remove('active-mode'); }
+    // document.getElementById('game-canvas').style.cursor = 'grab';
 
     this._editingVoiePointId = null;
     document.getElementById('vp-modal-title').textContent = 'Nouveau point de voie';
