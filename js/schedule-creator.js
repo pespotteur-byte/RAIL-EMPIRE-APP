@@ -512,10 +512,10 @@ export class ActiveService {
     if (this.state === 'waiting' && this.currentStopIndex === 0 && !this.train.breakdown && !this.train.inMaintenance) {
       const dep0 = this._cachedFirstDep;
       if (dep0 !== undefined) {
-        // Quick check: if departure is more than 2 min away, skip
-        let diff = dep0 - timeOfDay;
-        if (diff < -180) diff += 1440; // wrap around midnight
-        if (diff > 2 && diff < 1400) {
+        // Quick check: if departure is more than 2 min in the future, skip.
+        // timeDiff(dep0, timeOfDay) > 0 means dep0 is ahead of timeOfDay.
+        const diff = timeDiff(dep0, timeOfDay);
+        if (diff > 2) {
           this.position = null;
           this.train.stoppedAt = null;
           return;
@@ -539,6 +539,18 @@ export class ActiveService {
         this.train.stoppedAt = null;
         return;
       }
+      // Completed on a previous allowed day: reset for a new daily run.
+      if (this.completed && dateStr !== this.completedDate) {
+        this.completed = false;
+        this.position = null;
+        this.train.stoppedAt = null;
+      }
+    }
+
+    if (this.completed) {
+      this.position = null;
+      this.train.stoppedAt = null;
+      return;
     }
 
     // RH-05 : grève — bloque le départ des services concernés
@@ -554,18 +566,6 @@ export class ActiveService {
     this._cachedFirstDep = firstDep;
 
     if (this.state === 'waiting') {
-      if (this.completed && dateStr !== this.completedDate) {
-        this.completed = false;
-        // Reset position so the train is not rendered until near departure
-        this.position = null;
-        this.train.stoppedAt = null;
-      }
-      if (this.completed) {
-        this.position = null;
-        this.train.stoppedAt = null;
-        return;
-      }
-
       // Compute service window
       const lastStop = currentStops[currentStops.length - 1];
       const endTime = lastStop?.arrivalTime ?? firstDep + 120;
@@ -647,14 +647,18 @@ export class ActiveService {
           const myDep = currentStops[0]?.departureTime;
           if (depStationId && myDep != null && this.serviceType === 'passager' && window.game?.scheduleCreator) {
             const others = window.game.scheduleCreator.getActiveServices();
-            const earlier = others.find(s =>
-              s.id !== this.id &&
-              s.serviceType === 'passager' &&
-              !s.completed &&
-              s.state !== 'moving' &&
-              s.stops?.[0]?.stationId === depStationId &&
-              (s.stops[0]?.departureTime ?? Infinity) < myDep
-            );
+            const otherDep = s => s.stops?.[0]?.departureTime;
+            const isEarlierDue = other =>
+              other.id !== this.id &&
+              other.serviceType === 'passager' &&
+              !other.completed &&
+              other.state !== 'moving' &&
+              other.stops?.[0]?.stationId === depStationId &&
+              otherDep(other) != null &&
+              timeDiff(myDep, otherDep(other)) > 0 &&
+              timeGte(timeOfDay, otherDep(other)) &&
+              timeDiff(timeOfDay, otherDep(other)) <= 120;
+            const earlier = others.find(isEarlierDue);
             if (earlier) return;
           }
 
