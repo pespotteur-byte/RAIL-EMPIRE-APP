@@ -296,4 +296,65 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     assert.equal(svc.completed, true);
     assert.equal(svc.position, null, 'le train disparaît du réseau une fois annulé');
   });
+
+  it('MNT-03 — panne bénigne limite la vitesse sans bloquer le train', () => {
+    const sc = new ScheduleCreator();
+    global.window.game.scheduleCreator = sc;
+    const world = makeWorld();
+    const svc = sc.addService({
+      name: 'TGV 600',
+      rameId: 'r1',
+      serviceType: 'passager',
+      stops: [
+        { stationId: 'A', type: 'arret', departureTime: 0, arrivalTime: 0 },
+        { stationId: 'B', type: 'arret', departureTime: 60, arrivalTime: 60 },
+      ],
+      routes: [[{ lat: 0, lon: 0 }, { lat: 0.1, lon: 0 }]],
+    }, null, world);
+
+    svc.state = 'moving';
+    svc.currentStopIndex = 1;
+    svc.position = { lat: 0.05, lon: 0 };
+    svc._initializeState(svc.getCurrentRoute(), '1-0');
+    svc.train.breakdown = { type: 'climatisation', time: 0 };
+
+    let maxSpeed = 0;
+    for (let m = 1; m <= 60; m++) {
+      for (let s = 0; s < 6; s++) svc.moveUpdate(10, m, []);
+      if (svc.speed > maxSpeed) maxSpeed = svc.speed;
+    }
+
+    assert.equal(svc.state, 'completed', 'le train termine malgré la panne bénigne');
+    assert.ok(maxSpeed <= 80 + 1e-6, 'la vitesse est plafonnée à 80 km/h');
+    assert.ok(maxSpeed > 0, 'le train avance malgré la panne');
+  });
+
+  it('MNT-04 — panne moteur arrête le service et l annule après blocage prolongé', () => {
+    const sc = new ScheduleCreator();
+    global.window.game.scheduleCreator = sc;
+    const world = makeWorld();
+    const svc = sc.addService({
+      name: 'TGV 600',
+      rameId: 'r1',
+      serviceType: 'passager',
+      stops: [
+        { stationId: 'A', type: 'arret', departureTime: 0, arrivalTime: 0 },
+        { stationId: 'B', type: 'arret', departureTime: 60, arrivalTime: 60 },
+      ],
+      routes: [[{ lat: 0, lon: 0 }, { lat: 0.1, lon: 0 }]],
+    }, null, world);
+
+    svc.state = 'moving';
+    svc.currentStopIndex = 1;
+    svc.position = { lat: 0.05, lon: 0 };
+    svc._initializeState(svc.getCurrentRoute(), '1-0');
+    svc.train.breakdown = { type: 'moteur', time: 0 };
+
+    for (let m = 1; m <= 200; m++) {
+      for (let s = 0; s < 6; s++) svc.moveUpdate(10, m, []);
+    }
+
+    assert.equal(svc.state, 'cancelled', 'le service est annulé après panne prolongée sans secours');
+    assert.equal(svc.cancelled, true);
+  });
 });
