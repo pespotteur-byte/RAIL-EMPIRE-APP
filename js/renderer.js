@@ -161,6 +161,7 @@ export class Renderer {
     }
     if (showTrains) this.drawServices(ctx, world, services);
     this.drawSelectedServiceRoute(ctx, world);
+    this.drawSignals(ctx, services);
   }
 
   _drawCloudOverlay(ctx, w, h) {
