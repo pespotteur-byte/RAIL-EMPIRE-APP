@@ -217,7 +217,7 @@
 |----|----------|------|--------|--------|
 | INC-01 | Plus de création manuelle : incidents pré-implémentés activables/désactivables | P1 | A10.1, annexe 11 | [x] PR1 (table PREDEFINED_INCIDENT_TYPES + UI toggle) |
 | INC-02 | Zone d'impact LINÉAIRE 5-10 km (pas un cercle) | P1 | A10.1 | [x] PR1 (track/station route-based bbox, pas cercle) |
-| INC-03 | Effets hors zone (bouchons en accordéon) | P1 | A10.1 | [x] PR7 (corrigé : incident stop en gare bloque le départ immédiat + filtrage par segment parcouru) |
+| INC-03 | Effets hors zone (bouchons en accordéon) | P1 | A10.1 | [x] PR7 (corrigé : incident stop en gare bloque le départ immédiat + filtrage par segment parcouru ; incident stop sur la ligne annule le service après blocage prolongé) |
 | INC-04 | Motifs affichés dans bilans de trajet | P1 | A10.1 | [x] PR? (bilan retard/panne/incident dans sched-detail) |
 | INC-05 | Bulletins spéciaux à côté du récap de compagnie | P1 | A10.1 | [x] PR? (Dashboard.getBulletins + incidents.getBulletins) |
 

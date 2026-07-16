@@ -264,4 +264,36 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     const eff2 = staff2.getRegulationEffects(48.85, 2.35, [], ['l1']);
     assert.equal(eff2.regulator, null, 'pas assez de régulateurs = pas de couverture');
   });
+
+  it('INC-03bis — incident stop sur la ligne annule le service après un blocage prolongé', () => {
+    const sc = new ScheduleCreator();
+    global.window.game.scheduleCreator = sc;
+    const world = makeWorld();
+    const svc = sc.addService({
+      name: 'TGV 600',
+      rameId: 'r1',
+      serviceType: 'passager',
+      stops: [
+        { stationId: 'A', type: 'arret', departureTime: 0, arrivalTime: 0 },
+        { stationId: 'B', type: 'arret', departureTime: 60, arrivalTime: 60 },
+      ],
+      routes: [[{ lat: 0, lon: 0 }, { lat: 0.1, lon: 0 }]],
+    }, null, world);
+
+    svc.state = 'moving';
+    svc.currentStopIndex = 1;
+    svc.position = { lat: 0.05, lon: 0 };
+    svc._initializeState(svc.getCurrentRoute(), '1-0');
+    svc.train.incident = { effect: 'stop', name: 'Avalanche' };
+
+    // MoveUpdate is called 6 times per minute; simulate 200 minutes of blocked movement.
+    for (let m = 1; m <= 200; m++) {
+      for (let s = 0; s < 6; s++) svc.moveUpdate(10, m, []);
+    }
+
+    assert.equal(svc.state, 'cancelled', 'le service est annulé après blocage prolongé');
+    assert.equal(svc.cancelled, true);
+    assert.equal(svc.completed, true);
+    assert.equal(svc.position, null, 'le train disparaît du réseau une fois annulé');
+  });
 });

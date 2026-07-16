@@ -979,6 +979,49 @@ export class ActiveService {
     }
   }
 
+  _getMaxRuntimeForCurrentLeg() {
+    const stops = this.getCurrentStops();
+    const idx = Math.max(0, this.currentStopIndex - 1);
+    if (!stops || idx + 1 >= stops.length) return 120;
+    const origin = stops[idx];
+    const dest = stops[idx + 1];
+    const planned = ((dest.arrivalTime - origin.departureTime + 1440) % 1440) || 5;
+    return Math.max(120, planned * 2 + 30);
+  }
+
+  _cancelBlockedService(timeOfDay) {
+    if (this.completed || this.cancelled) return false;
+    this.state = 'cancelled';
+    this.cancelled = true;
+    this.completed = true;
+    this.completedDate = (typeof window !== 'undefined' && window.game?._currentDate) || this._currentDate || '';
+    this.position = null;
+    this.speed = 0;
+    if (this.train) {
+      this.train.speed = 0;
+      this.train.stoppedAt = null;
+      this.train.blockedBy = false;
+      this.train.delayReason = 'annulation après blocage prolongé';
+    }
+    this.delay = 0;
+    cantonManager.releaseAll(this.id);
+    return true;
+  }
+
+  _updateStuckTimer(timeOfDay) {
+    const blocked = this.train && (this.train.blockedBy || this.train.delayReason === 'Incident' || this.train.delayReason === 'travaux' || this.train.delayReason === 'tronçon non électrifié' || this.train.delayReason === 'TTX : ligne non électrifiée' || this.train.delayReason === 'attente voie libre en gare');
+    if (!blocked) {
+      this._blockedSinceGameTime = null;
+      return false;
+    }
+    if (this._blockedSinceGameTime == null) this._blockedSinceGameTime = timeOfDay;
+    const elapsed = (timeOfDay - this._blockedSinceGameTime + 1440) % 1440;
+    if (elapsed > this._getMaxRuntimeForCurrentLeg()) {
+      return this._cancelBlockedService(timeOfDay);
+    }
+    return false;
+  }
+
   _updateHeading(a, b) {
     if (!a || !b || !this.train) return;
     const renderer = window.game?.renderer;
@@ -1113,7 +1156,10 @@ export class ActiveService {
     if (incident?.effect === 'stop') {
       this.speed = 0;
       this.train.speed = 0;
+      this.train.blockedBy = true;
+      this.train.delayReason = 'Incident';
       this._updateContinuousDelay(timeOfDay);
+      if (this._updateStuckTimer(timeOfDay)) return;
       return;
     }
     if (incident?.effect === 'slow') {
@@ -1128,6 +1174,7 @@ export class ActiveService {
       this.train.state = 'travaux';
       this.train.delayReason = 'travaux';
       this._updateContinuousDelay(timeOfDay);
+      if (this._updateStuckTimer(timeOfDay)) return;
       return;
     }
     if (worksLimit !== null) segMaxSpeed = Math.min(segMaxSpeed, worksLimit);
@@ -1139,6 +1186,7 @@ export class ActiveService {
       this.train.blockedBy = true;
       this.train.delayReason = 'TTX : ligne non électrifiée';
       this._updateContinuousDelay(timeOfDay);
+      if (this._updateStuckTimer(timeOfDay)) return;
       return;
     }
 
@@ -1152,6 +1200,7 @@ export class ActiveService {
       this.train.blockedBy = true;
       this.train.delayReason = 'tronçon non électrifié';
       this._updateContinuousDelay(timeOfDay);
+      if (this._updateStuckTimer(timeOfDay)) return;
       return;
     }
 
@@ -1172,6 +1221,7 @@ export class ActiveService {
     // Reset blockedBy/signal alert at start of each tick — each check below will set it if needed
     this.train.blockedBy = false;
     this.train.signalAlert = null;
+    if (this.speed > 0) this._blockedSinceGameTime = null;
 
     // --- TRONCON CISAILLEMENT CHECK (runs first, overrides proximity if on troncon) ---
     let onTroncon = false;
@@ -1325,6 +1375,7 @@ export class ActiveService {
       this.train.speed = 0;
       this.train.state = 'stopped';
       this._updateContinuousDelay(timeOfDay);
+      if (this._updateStuckTimer(timeOfDay)) return;
       return;
     }
 
