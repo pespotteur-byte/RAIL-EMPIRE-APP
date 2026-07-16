@@ -617,6 +617,10 @@ export class ActiveService {
       }
 
       if (this.currentStopIndex === 0 && timeGte(timeOfDay, firstDep)) {
+        // Mise à jour du retard avant les décisions de régulation/priorité
+        this.delay = Math.round(Math.max(0, timeDiff(timeOfDay, firstDep)));
+        this.train.delay = this.delay;
+
         // Cancel only if the whole service window is missed (end + 31 min grace).
         // Within the window the train departs late so delay is reported, not cancelled.
         if (!isInServiceWindow(timeOfDay, firstDep, endTime + 31)) {
@@ -766,6 +770,15 @@ export class ActiveService {
       if (!stop) { this.state = 'moving'; return; }
 
       const depTime = stop.departureTime;
+      // Mise à jour du retard pendant l'arrêt (retard à l'arrivée qui s'aggrave si le départ est dépassé)
+      if (depTime != null && timeGte(timeOfDay, depTime)) {
+        const depDelay = Math.max(0, timeDiff(timeOfDay, depTime));
+        if (depDelay > (this.delay || 0)) {
+          this.delay = Math.round(depDelay);
+          this.train.delay = this.delay;
+        }
+      }
+
       const iteExtra = this._iteDwellExtra || 0;
       const effectiveDep = depTime != null ? depTime + iteExtra : null;
       // OCC-06 : plafond d'attente max 2h en gare (sauf terminus) → départ forcé

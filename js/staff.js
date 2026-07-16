@@ -403,9 +403,11 @@ export class StaffManager {
     const tolerance = realismSettings?.delayTolerance || 30;
     const stationQueues = new Map();
     for (const svc of activeServices) {
-      if (!svc.active || svc.state !== 'waiting' && svc.state !== 'stopped_at_station') continue;
+      if (!svc.active || svc.completed || svc.cancelled) continue;
+      if (svc.state !== 'waiting' && svc.state !== 'stopped_at_station') continue;
       const stops = svc.getCurrentStops ? svc.getCurrentStops() : svc.stops;
-      const next = stops?.[svc.currentStopIndex];
+      const stopIndex = svc.state === 'waiting' ? svc.currentStopIndex : Math.max(0, svc.currentStopIndex - 1);
+      const next = stops?.[stopIndex];
       if (!next) continue;
       const dep = next.departureTime ?? next.arrivalTime ?? 0;
       const delay = svc.delay || 0;
