@@ -10,7 +10,7 @@ const CDP = require('chrome-remote-interface');
   await new Promise(r => setTimeout(r, 3000));
 
   const result = await Runtime.evaluate({
-    expression: `((async () => {
+    expression: `(() => {
       const g = window.game;
       g.account.companyName = 'LongRun';
       g.startGame(null);
@@ -23,37 +23,52 @@ const CDP = require('chrome-remote-interface');
       const routeBC = [{lat:B.lat,lon:B.lon,maxSpeed:160},{lat:(B.lat+C.lat)/2,lon:(B.lon+C.lon)/2,maxSpeed:160},{lat:C.lat,lon:C.lon,maxSpeed:160}];
       const sc = g.scheduleCreator;
       const rm = g.rameManager;
-      const count=5;
+      const count=3;
       for (let i=0;i<count;i++){
         const rame = rm.add({name:'R'+i, elementDetails:[{category:'locomotive',maxSpeed:160,power:4000,mass:80,traction:'electrique',length:20,tonnage:80}]});
-        const dep=5+i*20, arrB=dep+10, depB=arrB+3, arrC=depB+10;
+        const dep=5+i*30, arrB=dep+10, depB=arrB+3, arrC=depB+10;
         const stops=[{stationId:A.id,type:'arret',departureTime:dep,arrivalTime:dep},{stationId:B.id,type:'arret',departureTime:depB,arrivalTime:arrB},{stationId:C.id,type:'arret',departureTime:arrC,arrivalTime:arrC}];
         sc.addService({name:'S'+i,rameId:rame.id,serviceType:'passager',roundTrip:true,stops,routes:[routeAB,routeBC]},rame,w);
       }
       const dateStr='2024-07-15';
-      for(let m=0;m<120;m++){
+      const logs=[];
+      for(let m=0;m<10;m++){
         const hr=Math.floor(m/60), mn=m%60;
         const pt={hours:hr,minutes:mn,date:new Date(dateStr+'T'+String(hr).padStart(2,'0')+':'+String(mn).padStart(2,'0')+':00Z')};
         g.tick(m,dateStr,pt);
         for(let s=0;s<6;s++) g.moveTick(10,m+(s+1)*10/60);
       }
-      const state = g.saveState();
-      const saved = g.storage.saveGame ? null : state;
-      const stateBefore = g.scheduleCreator.getActiveServices().map(s=>({name:s.name,completed:s.completed,cancelled:s.cancelled,state:s.state,cur:s.currentStopIndex,ret:s.isReturnLeg}));
-      // Load the saved state back into the same game object (simulates a fresh boot)
-      g.loadState(state);
-      g.startGame(state);
-      for(let m=120;m<400;m++){
+      const active = sc.getActiveServices();
+      const moving = active.find(s=>s.state==='moving');
+      const snapshot = active.map(s=>({name:s.name,state:s.state,delay:s.delay,pos:s.position?{lat:s.position.lat.toFixed(3),lon:s.position.lon.toFixed(3)}:null}));
+      for(let m=10;m<200;m++){
         const hr=Math.floor(m/60), mn=m%60;
         const pt={hours:hr,minutes:mn,date:new Date(dateStr+'T'+String(hr).padStart(2,'0')+':'+String(mn).padStart(2,'0')+':00Z')};
+        if (m===10) {
+          const inc={active:true,effect:'stop',name:'Test arret voie',speedLimit:0,stationA:A.id,stationB:B.id,route:routeAB,_bbox:[48.83,48.87,2.34,2.41]};
+          const s0=sc.getActiveServices().find(s=>s.name==='S0');
+          window.__dbg={before:s0?{state:s0.state,cur:s0.currentStopIndex,match:g.incidentManager._incidentMatchesServiceLeg(s0,inc)}:null};
+          g.incidentManager.activeIncidents.push(inc);
+        }
+        if (m===80) {
+          g.incidentManager.activeIncidents = g.incidentManager.activeIncidents.filter(i=>i.name!=='Test arret voie');
+        }
         g.tick(m,dateStr,pt);
         for(let s=0;s<6;s++) g.moveTick(10,m+(s+1)*10/60);
+        if ([10,30,60,80,120,199].includes(m)) {
+          const states = sc.getActiveServices().map(s=>({name:s.name,state:s.state,speed:Math.round(s.speed||0),delay:s.delay,pos:s.position?{lat:s.position.lat.toFixed(3),lon:s.position.lon.toFixed(3)}:null,inc:!!s.train.incident}));
+          if (m===10 || m===30) {
+            const s0=sc.getActiveServices().find(s=>s.name==='S0');
+            const inc=g.incidentManager.activeIncidents.find(i=>i.name==='Test arret voie');
+            window.__dbg['m'+m]={state:s0.state,cur:s0.currentStopIndex,isRet:s0.isReturnLeg,inc:!!s0.train.incident,match:inc&&g.incidentManager._incidentMatchesServiceLeg(s0,inc),stops:s0.getCurrentStops().map(s=>({id:s.stationId,type:s.type}))};
+          }
+          logs.push({m, states});
+        }
       }
-      const active=g.scheduleCreator.getActiveServices();
       const final={completed:0,cancelled:0,moving:0,waiting:0};
-      for(const s of active){ if(s.completed){final.completed++;} else if(s.cancelled){final.cancelled++;} else if(s.state==='moving'||s.state==='departing'){final.moving++;} else {final.waiting++;} }
-      return JSON.stringify({stateBefore, final, serviceCount: active.length});
-    })())`,
+      for(const s of sc.getActiveServices()){ if(s.completed){final.completed++;} else if(s.cancelled){final.cancelled++;} else if(s.state==='moving'||s.state==='departing'){final.moving++;} else {final.waiting++;} }
+      return JSON.stringify({final, logs, snapshot, dbg: window.__dbg});
+    })()`,
     returnByValue: true,
     awaitPromise: true,
     timeout: 300000

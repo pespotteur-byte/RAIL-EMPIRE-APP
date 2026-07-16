@@ -1,5 +1,5 @@
-import { haversineDistance } from './simulation.js?v=1784240818';
-import { getGlobalRng } from './rng.js?v=1784240818';
+import { haversineDistance } from './simulation.js?v=1784241352';
+import { getGlobalRng } from './rng.js?v=1784241352';
 
 let nextIncId = 1;
 
@@ -238,6 +238,29 @@ export class IncidentManager {
     return (dA + dB) < totalDist + 2;
   }
 
+  // Track/station-track incidents should only affect a train whose current leg
+  // actually traverses the incident segment. A train stopped at the end of the
+  // segment and departing on another leg must not be blocked by the previous one.
+  _incidentMatchesServiceLeg(svc, inc) {
+    if (inc.stationA === inc.stationB) return true; // pure station incident
+    const stops = svc.getCurrentStops ? svc.getCurrentStops() : null;
+    if (!stops || stops.length < 2) return true;
+    // currentStopIndex is the next stop while moving, and has already been
+    // incremented upon arrival (stopped_at_station). The origin of the current
+    // leg is therefore the previous stop except when the train is still waiting
+    // to start its very first leg.
+    const originIdx = svc.state === 'waiting' ? svc.currentStopIndex : Math.max(0, svc.currentStopIndex - 1);
+    const origin = stops[originIdx];
+    const dest = stops[originIdx + 1];
+    if (!origin || !dest) return true;
+    const a = origin.stationId;
+    const b = dest.stationId;
+    if (a == null || b == null) return true;
+    const incA = inc.stationA;
+    const incB = inc.stationB;
+    return (a === incA && b === incB) || (a === incB && b === incA);
+  }
+
   // INC-03 : distance en avant du train jusqu'au point cible le long du trajet de service
   _distanceAheadOnRoute(svc, targetLat, targetLon) {
     const route = svc._state?.cachedRoute;
@@ -285,6 +308,9 @@ export class IncidentManager {
     for (const inc of this.activeIncidents) {
       if (!inc.active || inc.serviceId) continue; // incidents mono-train gérés directement
       if (inc.effect !== 'stop' && inc.effect !== 'slow') continue;
+      if (inc.stationA != null && inc.stationB != null && inc.stationA !== inc.stationB) {
+        if (!this._incidentMatchesServiceLeg(svc, inc)) continue;
+      }
       const points = [];
       if (inc.route && inc.route.length) points.push(...inc.route);
       else if (world) {
@@ -515,6 +541,11 @@ export class IncidentManager {
           affected = this._isBetweenStations(lat, lon, world, inc);
         }
         if (!affected) continue;
+
+        // Track/station-track incidents must match the train's current leg.
+        if (inc.stationA != null && inc.stationB != null && inc.stationA !== inc.stationB) {
+          if (!this._incidentMatchesServiceLeg(svc, inc)) continue;
+        }
 
         if (!worstIncident || inc.effect === 'stop') {
           worstIncident = inc;
