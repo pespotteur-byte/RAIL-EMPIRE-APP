@@ -727,6 +727,18 @@ export class UI {
          </div>`
       : '';
 
+    // Annexes 4-5 — charge transportée affichée dans le panneau détail.
+    let payloadInfo = '';
+    if (rame) {
+      if (cat === 'fret' || rame.totalFreightCapacity > 0) {
+        const load = Math.round(rame.totalFreightCapacity * 0.7);
+        payloadInfo = `${load} t de fret transportées`;
+      } else if (cat === 'voyageur' || rame.totalCapacity > 0) {
+        const pax = Math.round(rame.totalCapacity * 0.7);
+        payloadInfo = `${pax} passagers à bord`;
+      }
+    }
+
     panel.innerHTML = `
       <div class="lvp-header" style="background:${catColor}">
         <span class="lvp-cat"></span>
@@ -739,6 +751,7 @@ export class UI {
       ${t.delayReason ? `<div style="padding:4px 10px;font-size:10px;background:#7f1d1d;color:#fff;border-bottom:1px solid var(--border)">${t.delayReason}</div>` : ''}
       <div style="padding:4px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border)">Prochain: <b>${nextName}</b> · Destination: <b>${destName}</b></div>
       ${composition}
+      ${payloadInfo ? `<div style="padding:4px 10px;font-size:10px;background:var(--bg3);border-bottom:1px solid var(--border);color:var(--text2)">${payloadInfo}</div>` : ''}
       <div class="lvp-bandeau"><span class="lvp-bandeau-track">${bandeau}</span></div>
       <div class="lvp-stops">${rows}</div>
       <div class="lvp-legend">dép = départ · pass = passage · arr = arrivée</div>
@@ -5931,6 +5944,17 @@ export class UI {
         }
       }
 
+      // Annexes 4-5 — charge transportée dans le bandeau train.
+      let payloadHtml = '';
+      if (svc.rame && svc.serviceType !== 'work') {
+        const rame = svc.rame;
+        if (svc.category === 'fret' || rame.totalFreightCapacity > 0) {
+          payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${Math.round(rame.totalFreightCapacity * 0.7)} t de fret</span></div>`;
+        } else if (svc.category === 'voyageur' || rame.totalCapacity > 0) {
+          payloadHtml = `<div class="tc-line"><span style="color:var(--text2);font-size:10px">${Math.round(rame.totalCapacity * 0.7)} passagers</span></div>`;
+        }
+      }
+
       // Incident status
       let incidentHtml = '';
       if (t.incident) {
@@ -5971,6 +5995,7 @@ export class UI {
             <div class="tc-scroll"><span class="tc-scroll-text tc-name">${displayName}</span></div>
           </div>
           ${imageHtml}
+          ${payloadHtml}
           <div class="tc-line"><span class="tc-speed">${Math.round(t.speed)} km/h</span></div>
           <div class="tc-line"><span class="${delayClass}">${delayLabel}</span></div>
           ${contextLabel ? `<div class="tc-line tc-scroll"><span class="tc-scroll-text ${contextClass}">${contextLabel}</span></div>` : ''}
