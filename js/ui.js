@@ -728,7 +728,7 @@ export class UI {
       return `<div class="lvp-stop${cur}">${typeBadge}<span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${buildTimes(s, i)}</span></div>`;
     }).join('');
 
-    const upcoming = stops.slice(curStationIdx + 1)
+    const upcoming = stops.slice(curIdx)
       .filter(s => s.stationId)
       .map(s => world.getStationById(s.stationId)?.name)
       .filter(Boolean);
