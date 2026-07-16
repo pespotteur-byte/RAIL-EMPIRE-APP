@@ -1590,13 +1590,19 @@ export class UI {
   setupRamePage() {
     document.getElementById('btn-new-rame')?.addEventListener('click', () => this.openRameModal());
     document.getElementById('btn-save-rame')?.addEventListener('click', () => this.saveRame());
-    const search = document.getElementById('rame-search');
-    if (search) search.addEventListener('input', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
+    const pickerSearch = document.getElementById('rame-search');
+    if (pickerSearch) pickerSearch.addEventListener('input', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
     document.getElementById('rame-cat-filter')?.addEventListener('change', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
     document.getElementById('btn-clear-rame')?.addEventListener('click', () => {
       this.currentRameElements = [];
       this.renderRameAssembly();
     });
+    // Section III — recherche et pagination de la liste des rames.
+    this._ramesPage = 0;
+    const ramesSearch = document.getElementById('rames-search');
+    if (ramesSearch) ramesSearch.addEventListener('input', () => { this._ramesPage = 0; this.renderRamesList(); });
+    const ramesPerPage = document.getElementById('rames-per-page');
+    if (ramesPerPage) ramesPerPage.addEventListener('change', () => { this._ramesPage = 0; this.renderRamesList(); });
   }
 
   openRameModal() {
@@ -1780,13 +1786,39 @@ export class UI {
 
   renderRamesList() {
     const container = document.getElementById('rames-list');
+    const pager = document.getElementById('rames-pager');
     if (!container) return;
-    const rames = this.game.rameManager.getAll();
-    if (rames.length === 0) {
+    const all = this.game.rameManager.getAll();
+    if (all.length === 0) {
       container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucune rame. Cliquer "+ Nouvelle rame".</p>';
+      if (pager) pager.innerHTML = '';
       return;
     }
-    container.innerHTML = rames.map(r => `
+
+    const q = (document.getElementById('rames-search')?.value || '').trim().toLowerCase();
+    let items = all;
+    if (q) {
+      items = items.filter(r =>
+        (r.name || '').toLowerCase().includes(q) ||
+        (r.serialNumber || '').toLowerCase().includes(q) ||
+        (r.elementDetails || []).some(e => (e.instanceName || e.name || '').toLowerCase().includes(q))
+      );
+    }
+
+    const perPage = parseInt(document.getElementById('rames-per-page')?.value || '50', 10) || 50;
+    this._ramesPage = this._ramesPage || 0;
+    const pages = Math.max(1, Math.ceil(items.length / perPage));
+    if (this._ramesPage >= pages) this._ramesPage = pages - 1;
+    const start = this._ramesPage * perPage;
+    const view = items.slice(start, start + perPage);
+
+    if (items.length === 0) {
+      container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucun résultat pour cette recherche.</p>';
+      if (pager) pager.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = view.map(r => `
       <div class="rame-card">
         <div class="rame-card-header">
           <span class="card-title">${r.name}${r.serialNumber ? ` <span style="font-size:11px;color:var(--text3);font-weight:400">(${r.serialNumber})</span>` : ''}</span>
@@ -1812,6 +1844,22 @@ export class UI {
         </div>
       </div>
     `).join('');
+
+    if (pager) {
+      if (pages <= 1) { pager.innerHTML = ''; }
+      else {
+        pager.innerHTML = `
+          <button class="btn-sm" ${this._ramesPage === 0 ? 'disabled' : ''} onclick="game.ui.ramesPageGo(${this._ramesPage - 1})">‹ Préc.</button>
+          <span style="margin:0 12px;align-self:center;font-size:13px">Page ${this._ramesPage + 1} / ${pages}</span>
+          <button class="btn-sm" ${this._ramesPage >= pages - 1 ? 'disabled' : ''} onclick="game.ui.ramesPageGo(${this._ramesPage + 1})">Suiv. ›</button>`;
+      }
+    }
+  }
+
+  ramesPageGo(p) {
+    this._ramesPage = p;
+    this.renderRamesList();
+    document.getElementById('rames-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   _rameLocationLabel(r) {

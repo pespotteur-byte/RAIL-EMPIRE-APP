@@ -174,7 +174,19 @@
             <h2>Composition des Rames</h2>
             <button id="btn-new-rame" class="btn-primary">+ Nouvelle rame</button>
           </div>
+          <div class="rames-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+            <input id="rames-search" type="text" placeholder="Rechercher une rame..." style="flex:1;min-width:180px;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;">
+              <span>Par page</span>
+              <select id="rames-per-page" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit;">
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="1000">1000</option>
+              </select>
+            </label>
+          </div>
           <div id="rames-list" class="rames-list-container"></div>
+          <div id="rames-pager" style="display:flex;justify-content:center;margin:16px 0;"></div>
         </div>
       </div>
 
