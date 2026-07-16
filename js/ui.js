@@ -40,6 +40,22 @@ const IG_IMAGE_LAYOUTS = {
       { y: 59.9, h: 12.1, viaY: 67.6, viaH: 4.4, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, provenance:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:16}, voie:{x:88,w:9} },
       { y: 77.8, h: 11.9, viaY: 85.5, viaH: 4.2, time: {x:4,w:10}, type:{x:15,w:8}, num:{x:15,yOff:2.5,w:10}, provenance:{x:30,w:35}, via:{x:30,w:55}, status:{x:70,w:16}, voie:{x:88,w:9} }
     ]
+  },
+  'cati-ar': {
+    file: 'img/infogare/CATI-AR.png',
+    width: 1100, height: 611,
+    bg: '#0b2e12',
+    headerFields: [
+      { type: 'clock', x: 86, y: 91, w: 12, h: 7, color: '#fff', bg: '#1e40af', fontSize: 16, align: 'center', weight: 700 }
+    ],
+    blocks: [
+      { y: 5, h: 15.5, viaY: 12.5, viaH: 7.5, status:{x:9,w:14,h:7.5}, time: {x:24,w:12,h:7.5}, provenance:{x:38,w:45,h:7.5}, via:{x:9,w:74,h:7.5} },
+      { y: 20.5, h: 15.5, viaY: 28, viaH: 7.5, status:{x:9,w:14,h:7.5}, time: {x:24,w:12,h:7.5}, provenance:{x:38,w:45,h:7.5}, via:{x:9,w:74,h:7.5} },
+      { y: 36, h: 15.5, viaY: 43.5, viaH: 7.5, status:{x:9,w:14,h:7.5}, time: {x:24,w:12,h:7.5}, provenance:{x:38,w:45,h:7.5}, via:{x:9,w:74,h:7.5} },
+      { y: 51.5, h: 15.5, viaY: 59, viaH: 7.5, status:{x:9,w:14,h:7.5}, time: {x:24,w:12,h:7.5}, provenance:{x:38,w:45,h:7.5}, via:{x:9,w:74,h:7.5} },
+      { y: 67, h: 15.5, viaY: 74.5, viaH: 7.5, status:{x:9,w:14,h:7.5}, time: {x:24,w:12,h:7.5}, provenance:{x:38,w:45,h:7.5}, via:{x:9,w:74,h:7.5} },
+      { y: 81.5, h: 13.5, viaY: 86, viaH: 7.5, status:{x:9,w:14,h:6.5}, time: {x:24,w:12,h:6.5}, provenance:{x:38,w:45,h:6.5}, via:{x:9,w:74,h:6.5} }
+    ]
   }
 };
 
@@ -7114,7 +7130,7 @@ export class UI {
     // IG-07 — scroll infini sur 24h : on garde les trains dans les prochaines 24h
     const wrap = t => (t % 1440 + 1440) % 1440;
 
-    if (mode === 'sncf-arr' || mode === 'afl-arrivee') {
+    if (mode === 'sncf-arr' || mode === 'afl-arrivee' || mode === 'cati-ar') {
       const arr = results.filter(r => r.isArrival && r.arrTime != null)
         .map(r => ({ ...r, waitMin: wrap(r.arrTime - now) }))
         .filter(r => r.waitMin <= 1440);
@@ -7169,13 +7185,13 @@ export class UI {
       case 'rer-sncf': board.innerHTML = this._renderRerSncf(station, trains, nowStr); break;
       case 'sncf-dep': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
       case 'sncf-arr': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
+      case 'afl-depart': board.innerHTML = this._renderImageMode('sncf-dep', station, trains, nowStr); break;
+      case 'afl-arrivee': board.innerHTML = this._renderImageMode('sncf-arr', station, trains, nowStr); break;
+      case 'cati-ar': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
       case 'old-sncf': board.innerHTML = this._renderPalette(station, trains, nowStr); break;
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
       case 'cati-3-3': board.innerHTML = this._renderCATI3_3(station, trains, nowStr); break;
       case 'cati-complet': board.innerHTML = this._renderCATIComplet(station, trains, nowStr); break;
-      case 'cati-ar': board.innerHTML = this._renderCATIAr(station, trains, nowStr); break;
-      case 'afl-depart': board.innerHTML = this._renderAFLDepart(station, trains, nowStr); break;
-      case 'afl-arrivee': board.innerHTML = this._renderAFLArrivee(station, trains, nowStr); break;
       case 'ecran-quai': board.innerHTML = this._renderEcranQuai(station, trains, nowStr); break;
     }
 
@@ -8052,7 +8068,7 @@ export class UI {
   _renderImageMode(displayType, station, trains, nowStr) {
     const layout = IG_IMAGE_LAYOUTS[displayType];
     if (!layout) return '';
-    const isArr = displayType.includes('arr');
+    const isArr = ['sncf-arr', 'afl-arrivee', 'cati-ar'].includes(displayType);
     const dirField = isArr ? 'provenance' : 'dest';
 
     const fmtStyle = (f, extra = '') => {
@@ -8114,7 +8130,7 @@ export class UI {
       const destTxt = isArr ? (t.origin || '') : (t.destination || '');
       html += this._igField(b[dirField], destTxt, { color: '#fff', fontSize: 17, weight: 700, textTransform: 'uppercase' }, b.y);
       // via stops
-      html += this._igField(b.via, viaText, { color: '#93c5fd', fontSize: 11 }, b.y + (b.viaY - b.y));
+      html += this._igField(b.via, viaText, { color: '#ffffff', fontSize: 11 }, b.y + (b.viaY - b.y));
       // status
       html += this._igField(b.status, statusHtml, { color: '#facc15', fontSize: 12, weight: 700, align: 'right' }, b.y);
       // voie (arrivals)
