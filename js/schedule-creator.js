@@ -646,20 +646,8 @@ export class ActiveService {
           const depStationId = currentStops[0]?.stationId;
           const myDep = currentStops[0]?.departureTime;
           if (depStationId && myDep != null && this.serviceType === 'passager' && window.game?.scheduleCreator) {
-            const others = window.game.scheduleCreator.getActiveServices();
-            const otherDep = s => s.stops?.[0]?.departureTime;
-            const isEarlierDue = other =>
-              other.id !== this.id &&
-              other.serviceType === 'passager' &&
-              !other.completed &&
-              other.state !== 'moving' &&
-              other.stops?.[0]?.stationId === depStationId &&
-              otherDep(other) != null &&
-              timeDiff(myDep, otherDep(other)) > 0 &&
-              timeGte(timeOfDay, otherDep(other)) &&
-              timeDiff(timeOfDay, otherDep(other)) <= 120;
-            const earlier = others.find(isEarlierDue);
-            if (earlier) return;
+            const earliest = window.game.scheduleCreator.getEarliestDueServiceAtStation(depStationId, timeOfDay);
+            if (earliest && earliest.id !== this.id && timeDiff(myDep, earliest.dep) > 0) return;
           }
 
           // Ensure position is set (may not have been set by pre-departure positioning)
@@ -2502,22 +2490,119 @@ export class ScheduleCreator {
   }
 
   // Section VI — une rame ne peut pas effectuer 2 trajets en même temps
-  isRameInUse(rameId, excludeId, timeOfDay) {
-    if (!rameId) return false;
+  // Build per-minute indexes for rame usage and station priority.
+  // Called once per simulation minute; subsequent isRameInUse/priority checks
+  // are O(k) instead of O(n²) during the tick.
+  beginTick(timeOfDay) {
+    this._indexTime = timeOfDay;
+    this._rameUsage = new Map();
+    this._stationPriority = new Map();
     for (const svc of this.getActiveServices()) {
-      if (svc.id === excludeId) continue;
-      if (svc.rameId !== rameId) continue;
-      if (svc.completed) continue;
-      if (svc.state === 'moving' || svc.state === 'stopped_at_station' || svc.state === 'departing') return true;
-      if (svc.state === 'waiting' && svc.currentStopIndex === 0) {
-        const firstDep = svc.stops?.[0]?.departureTime ?? svc.stops?.[0]?.time;
+      if (!svc.active || svc.completed || svc.cancelled) continue;
+      this._addToTickIndexes(svc, timeOfDay);
+    }
+  }
+
+  _addToTickIndexes(svc, timeOfDay) {
+    const rameId = svc.rameId;
+    const firstStop = svc.stops?.[0];
+    if (rameId && firstStop) {
+      let rEntry = this._rameUsage.get(rameId);
+      if (!rEntry) {
+        rEntry = { moving: null, waiting: new Map() };
+        this._rameUsage.set(rameId, rEntry);
+      }
+      if (svc.state === 'moving' || svc.state === 'stopped_at_station' || svc.state === 'departing') {
+        rEntry.moving = svc.id;
+      } else if (svc.state === 'waiting' && svc.currentStopIndex === 0) {
+        const firstDep = firstStop.departureTime ?? firstStop.time;
         if (firstDep != null) {
           const diff = timeDiff(timeOfDay, firstDep);
-          if (diff >= -2 && diff <= 5) return true;
+          if (diff >= -2 && diff <= 5) rEntry.waiting.set(svc.id, firstDep);
         }
       }
     }
+    if (svc.serviceType === 'passager' && svc.state !== 'moving' && svc.state !== 'departing' && firstStop) {
+      const depStationId = firstStop.stationId;
+      const dep = firstStop.departureTime ?? firstStop.time;
+      if (depStationId != null && dep != null) {
+        let sEntry = this._stationPriority.get(depStationId);
+        if (!sEntry) {
+          sEntry = { map: new Map() };
+          this._stationPriority.set(depStationId, sEntry);
+        }
+        sEntry.map.set(svc.id, dep);
+      }
+    }
+  }
+
+  _removeFromTickIndexes(svc) {
+    const rEntry = this._rameUsage?.get(svc.rameId);
+    if (rEntry) {
+      if (rEntry.moving === svc.id) rEntry.moving = null;
+      rEntry.waiting.delete(svc.id);
+    }
+    const firstStop = svc.stops?.[0];
+    if (firstStop?.stationId != null) {
+      const sEntry = this._stationPriority?.get(firstStop.stationId);
+      if (sEntry) sEntry.map.delete(svc.id);
+    }
+  }
+
+  // Refresh indexes for a single service after its scheduleTick has run.
+  updateServiceIndexes(svc, timeOfDay) {
+    if (!this._rameUsage) return;
+    this._removeFromTickIndexes(svc);
+    this._addToTickIndexes(svc, timeOfDay);
+  }
+
+  isRameInUse(rameId, excludeId, timeOfDay) {
+    if (!rameId) return false;
+    // Fallback if beginTick was not called (e.g. unit tests calling directly).
+    if (!this._rameUsage || this._indexTime !== timeOfDay) {
+      for (const svc of this.getActiveServices()) {
+        if (svc.id === excludeId) continue;
+        if (svc.rameId !== rameId) continue;
+        if (svc.completed) continue;
+        if (svc.state === 'moving' || svc.state === 'stopped_at_station' || svc.state === 'departing') return true;
+        if (svc.state === 'waiting' && svc.currentStopIndex === 0) {
+          const firstDep = svc.stops?.[0]?.departureTime ?? svc.stops?.[0]?.time;
+          if (firstDep != null) {
+            const diff = timeDiff(timeOfDay, firstDep);
+            if (diff >= -2 && diff <= 5) return true;
+          }
+        }
+      }
+      return false;
+    }
+    const entry = this._rameUsage.get(rameId);
+    if (!entry) return false;
+    if (entry.moving && entry.moving !== excludeId) return true;
+    for (const [id, dep] of entry.waiting) {
+      if (id === excludeId) continue;
+      const diff = timeDiff(timeOfDay, dep);
+      if (diff >= -2 && diff <= 5) return true;
+    }
     return false;
+  }
+
+  // Returns the active passenger service with the earliest due departure at the station.
+  getEarliestDueServiceAtStation(stationId, timeOfDay) {
+    if (!this._stationPriority || this._indexTime !== timeOfDay) return null;
+    const sEntry = this._stationPriority.get(stationId);
+    if (!sEntry || sEntry.map.size === 0) return null;
+    let minId = null;
+    let minDep = null;
+    for (const [id, dep] of sEntry.map) {
+      if (!timeGte(timeOfDay, dep)) continue;
+      const diff = timeDiff(timeOfDay, dep);
+      if (diff > 120) continue;
+      if (minId === null || timeDiff(dep, minDep) > 0) {
+        minId = id;
+        minDep = dep;
+      }
+    }
+    return minId ? { id: minId, dep: minDep } : null;
   }
 
   /**

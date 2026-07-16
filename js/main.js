@@ -1,44 +1,44 @@
-import { SimulationEngine } from './engine.js?v=1784200600';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784200600';
-import { World, createDefaultWorld } from './world.js?v=1784200600';
-import { Renderer } from './renderer.js?v=1784200600';
-import { UI } from './ui.js?v=1784200600';
-import { Economy } from './economy.js?v=1784200600';
-import { IncidentManager } from './incidents.js?v=1784200600';
-import { FreightManager } from './freight.js?v=1784200600';
-import { ScheduleManager } from './schedule.js?v=1784200600';
-import { GameStorage } from './storage.js?v=1784200600';
-import { AccountManager } from './account.js?v=1784200600';
-import { RollingStockManager } from './rolling-stock.js?v=1784200600';
-import { RameManager } from './rame.js?v=1784200600';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784200600';
-import { DepotManager } from './depot.js?v=1784200600';
-import { WorksManager } from './works.js?v=1784200600';
-import { ORMClient } from './orm.js?v=1784200600';
-import { LineManager, PlatformManager } from './line.js?v=1784200600';
-import { SillonManager } from './sillon.js?v=1784200600';
-import { VoiePointManager } from './voie-points.js?v=1784200600';
-import { Dashboard } from './dashboard.js?v=1784200600';
-import { GraphMarche } from './graph-marche.js?v=1784200600';
-import { StaffManager } from './staff.js?v=1784200600';
-import { Tutorial } from './tutorial.js?v=1784200600';
-import { Bank } from './bank.js?v=1784200600';
-import { Weather } from './weather.js?v=1784200600';
-import { Unions } from './unions.js?v=1784200600';
-import { SeasonalSchedule } from './seasonal.js?v=1784200600';
-import { Connections } from './connections.js?v=1784200600';
-import { StationUpgrades } from './station-upgrades.js?v=1784200600';
-import { A12Model } from './a12-model.js?v=1784200600';
-import { PlayerSignalManager } from './signaling.js?v=1784200600';
-import { JunctionManager } from './junctions.js?v=1784200600';
-import { CargoTypeManager } from './cargo-types.js?v=1784200600';
-import { ITEModules } from './ite-modules.js?v=1784200600';
-import { IndustrialClients } from './industrial-clients.js?v=1784200600';
-import { ShuntingManager } from './shunting.js?v=1784200600';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784200600';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784200600';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784200600';
-import { adminSync } from './admin-sync.js?v=1784200600';
+import { SimulationEngine } from './engine.js?v=1784201500';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784201500';
+import { World, createDefaultWorld } from './world.js?v=1784201500';
+import { Renderer } from './renderer.js?v=1784201500';
+import { UI } from './ui.js?v=1784201500';
+import { Economy } from './economy.js?v=1784201500';
+import { IncidentManager } from './incidents.js?v=1784201500';
+import { FreightManager } from './freight.js?v=1784201500';
+import { ScheduleManager } from './schedule.js?v=1784201500';
+import { GameStorage } from './storage.js?v=1784201500';
+import { AccountManager } from './account.js?v=1784201500';
+import { RollingStockManager } from './rolling-stock.js?v=1784201500';
+import { RameManager } from './rame.js?v=1784201500';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784201500';
+import { DepotManager } from './depot.js?v=1784201500';
+import { WorksManager } from './works.js?v=1784201500';
+import { ORMClient } from './orm.js?v=1784201500';
+import { LineManager, PlatformManager } from './line.js?v=1784201500';
+import { SillonManager } from './sillon.js?v=1784201500';
+import { VoiePointManager } from './voie-points.js?v=1784201500';
+import { Dashboard } from './dashboard.js?v=1784201500';
+import { GraphMarche } from './graph-marche.js?v=1784201500';
+import { StaffManager } from './staff.js?v=1784201500';
+import { Tutorial } from './tutorial.js?v=1784201500';
+import { Bank } from './bank.js?v=1784201500';
+import { Weather } from './weather.js?v=1784201500';
+import { Unions } from './unions.js?v=1784201500';
+import { SeasonalSchedule } from './seasonal.js?v=1784201500';
+import { Connections } from './connections.js?v=1784201500';
+import { StationUpgrades } from './station-upgrades.js?v=1784201500';
+import { A12Model } from './a12-model.js?v=1784201500';
+import { PlayerSignalManager } from './signaling.js?v=1784201500';
+import { JunctionManager } from './junctions.js?v=1784201500';
+import { CargoTypeManager } from './cargo-types.js?v=1784201500';
+import { ITEModules } from './ite-modules.js?v=1784201500';
+import { IndustrialClients } from './industrial-clients.js?v=1784201500';
+import { ShuntingManager } from './shunting.js?v=1784201500';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784201500';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784201500';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784201500';
+import { adminSync } from './admin-sync.js?v=1784201500';
 
 class RailEmpire {
   constructor() {
@@ -556,45 +556,32 @@ class RailEmpire {
     const useRoundRobin = movingCount > FULL_BUDGET;
     if (!this._rrOffset) this._rrOffset = 0;
 
-    // Build spatial hash only for budget trains (no need for all 100K)
-    if (!this._spatialGrid) this._spatialGrid = new Map();
-    this._spatialGrid.clear();
-    // Only build spatial hash for trains that get full physics this tick
-    if (useRoundRobin) {
-      const end = Math.min(this._rrOffset + FULL_BUDGET, movingCount);
-      for (let i = this._rrOffset; i < end; i++) {
-        const svc = movingSvcs[i];
-        if (!svc.position) continue;
-        const gx = Math.floor(svc.position.lat * 20);
-        const gy = Math.floor(svc.position.lon * 20);
-        const key = gx * 10000 + gy; // numeric key (faster than string concat)
-        let cell = this._spatialGrid.get(key);
-        if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
-        cell.push(svc);
-      }
-      // Also hash trains near the budget slice for proximity checks
-      if (this._rrOffset + FULL_BUDGET > movingCount) {
-        for (let i = 0; i < (this._rrOffset + FULL_BUDGET) % movingCount; i++) {
-          const svc = movingSvcs[i];
-          if (!svc.position) continue;
-          const gx = Math.floor(svc.position.lat * 20);
-          const gy = Math.floor(svc.position.lon * 20);
-          const key = gx * 10000 + gy;
-          let cell = this._spatialGrid.get(key);
-          if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
-          cell.push(svc);
+    // Build route-grouped neighbour lists: for each route, sort services by
+    // progress (segment index + progress) so each train only checks a handful
+    // of trains ahead/behind instead of scanning the entire moving set.
+    const LOOKAHEAD = 5;
+    const LOOKBEHIND = 2;
+    const routeGroups = new Map();
+    for (let i = 0; i < movingCount; i++) {
+      const svc = movingSvcs[i];
+      if (!svc.position) continue;
+      const route = svc._state?.cachedRoute || svc.getCurrentRoute?.();
+      if (!route || route.length < 2) continue;
+      let group = routeGroups.get(route);
+      if (!group) { group = []; routeGroups.set(route, group); }
+      group.push(svc);
+    }
+    for (const group of routeGroups.values()) {
+      group.sort((a, b) => (a._state.index + a._state.progress) - (b._state.index + b._state.progress));
+      for (let i = 0; i < group.length; i++) {
+        const svc = group[i];
+        const start = Math.max(0, i - LOOKBEHIND);
+        const end = Math.min(group.length, i + LOOKAHEAD + 1);
+        const nearby = [];
+        for (let j = start; j < end; j++) {
+          if (j !== i) nearby.push(group[j]);
         }
-      }
-    } else {
-      for (let i = 0; i < movingCount; i++) {
-        const svc = movingSvcs[i];
-        if (!svc.position) continue;
-        const gx = Math.floor(svc.position.lat * 20);
-        const gy = Math.floor(svc.position.lon * 20);
-        const key = gx * 10000 + gy;
-        let cell = this._spatialGrid.get(key);
-        if (!cell) { cell = []; this._spatialGrid.set(key, cell); }
-        cell.push(svc);
+        svc._nearbyServices = nearby;
       }
     }
 
@@ -647,19 +634,7 @@ class RailEmpire {
       }
 
       // Full physics update for trains in budget
-      svc._nearbyServices = null;
-      if (svc.position) {
-        const gx = Math.floor(svc.position.lat * 20);
-        const gy = Math.floor(svc.position.lon * 20);
-        const nearby = [];
-        for (let dx = -1; dx <= 1; dx++) {
-          for (let dy = -1; dy <= 1; dy++) {
-            const cell = this._spatialGrid.get((gx+dx) * 10000 + (gy+dy));
-            if (cell) for (const s of cell) { if (s.id !== svc.id) nearby.push(s); }
-          }
-        }
-        svc._nearbyServices = nearby;
-      }
+      // _nearbyServices was precomputed from route-group sorting above
       svc.moveUpdate(dt, timeOfDay, activeServices);
     }
 
@@ -698,12 +673,17 @@ class RailEmpire {
       this.scheduleCreator.ensureEVOForService(svc, this.world, timeOfDay);
     }
 
+    // Build per-minute lookup indexes so isRameInUse and OCC-03 station priority
+    // are O(k) instead of O(n²) during this tick.
+    this.scheduleCreator.beginTick(timeOfDay);
+
     // scheduleTick: moving trains already have their state managed by moveUpdate,
     // so only call scheduleTick on non-moving trains (waiting, stopped_at_station, etc.)
     for (let i = 0; i < activeSchedules.length; i++) {
       const svc = activeSchedules[i];
       if (svc.state === 'moving' || svc.state === 'departing') continue;
       svc.scheduleTick(timeOfDay, dateStr, this.economy);
+      this.scheduleCreator.updateServiceIndexes(svc, timeOfDay);
     }
 
     this.incidentManager.update(timeOfDay, activeSchedules, this.depotManager, this.world, dateStr, this.weather?.season);
