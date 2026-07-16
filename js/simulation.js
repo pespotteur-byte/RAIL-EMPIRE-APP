@@ -17,6 +17,14 @@ export function haversineDistance(lat1, lon1, lat2, lon2) {
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Midnight-safe minute difference, clamped to [-720, 720]
+function timeDiff(a, b) {
+  let d = a - b;
+  if (d > 720) d -= 1440;
+  else if (d < -720) d += 1440;
+  return d;
+}
+
 /**
  * Pre-analyze a route: compute per-segment distances, speeds, and estimated travel times.
  * @param {Array} route - Array of { lat, lon, maxSpeed, tracks }
@@ -209,7 +217,7 @@ export class CantonManager {
     if (c.occupiedBy && c.occupiedBy !== trainId) return false;
     if (c.reservedBy && c.reservedBy !== trainId) return false;
     // OCC-05/REG : écart de 2 min après libération du canton (réduit par régulation/AC)
-    if (this.currentTime - (c.lastReleasedAt || -9999) < this._getSeparation(trainId) && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
+    if (timeDiff(this.currentTime, (c.lastReleasedAt || -9999)) < this._getSeparation(trainId) && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
     c.reservedBy = trainId;
     this._trackCanton(trainId, cantonId);
     return true;
@@ -223,7 +231,7 @@ export class CantonManager {
       if (!this._isTrainGone(c.occupiedBy)) return false;
     }
     // OCC-05/REG : écart de 2 min après libération du canton (réduit par régulation/AC)
-    if (this.currentTime - (c.lastReleasedAt || -9999) < this._getSeparation(trainId) && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
+    if (timeDiff(this.currentTime, (c.lastReleasedAt || -9999)) < this._getSeparation(trainId) && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
     c.occupiedBy = trainId;
     c.reservedBy = null;
     this._trackCanton(trainId, cantonId);
@@ -252,7 +260,7 @@ export class CantonManager {
       else return false;
     }
     // OCC-05/REG : écart de 2 min après libération du canton (réduit par régulation/AC)
-    if (this.currentTime - (c.lastReleasedAt || -9999) < this._getSeparation(trainId) && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
+    if (timeDiff(this.currentTime, (c.lastReleasedAt || -9999)) < this._getSeparation(trainId) && c.occupiedBy !== trainId && c.reservedBy !== trainId) return false;
     return true;
   }
 
