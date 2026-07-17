@@ -96,10 +96,10 @@ const IG_IMAGE_LAYOUTS = {
 // NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
 // contenu mais sont regroupées sous une page parente via des sous-onglets.
 // child -> parent (le bouton de nav du parent reste actif sur l'enfant).
-const PAGE_PARENT = { economy: 'dashboard', bank: 'dashboard', unions: 'staff', seasonal: 'weather' };
+const PAGE_PARENT = { unions: 'staff', seasonal: 'weather' };
 // Groupes de sous-onglets injectés en tête des pages membres.
+// X / XIII — Finance et Banque fusionnées dans Dashboard, onglets séparés supprimés.
 const PAGE_GROUPS = [
-  [['dashboard', 'Dashboard'], ['economy', 'Finances'], ['bank', 'Banque']],
   [['staff', 'Personnel'], ['unions', 'Syndicats']],
   [['weather', 'Météo'], ['seasonal', 'Saisons']],
 ];
@@ -204,6 +204,7 @@ export class UI {
   // membre d'un groupe fusionné, pour naviguer entre parent et enfants.
   _setupPageGroups() {
     for (const tabs of PAGE_GROUPS) {
+      if (tabs.length < 2) continue;
       const barHtml = `<div class="subnav">${tabs
         .map(([p, l]) => `<button class="subnav-btn" data-page="${p}">${l}</button>`)
         .join('')}</div>`;
@@ -220,7 +221,13 @@ export class UI {
   }
 
   switchPage(page) {
+    // X / XIII — Finance et Banque fusionnées dans Dashboard ; toute tentative d'accès redirige.
+    if (page === 'economy' || page === 'bank') page = 'dashboard';
     this.activePage = page;
+    if (page !== 'dashboard' && this._dashboardInterval) {
+      clearInterval(this._dashboardInterval);
+      this._dashboardInterval = null;
+    }
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     // NAV — un enfant fusionné garde le bouton de nav de son parent actif.
     const navKey = PAGE_PARENT[page] || page;
@@ -9386,6 +9393,12 @@ export class UI {
     try {
       const container = document.getElementById('dashboard-container');
       this.game.dashboard.render(container, this.game);
+      // X — real-time refresh every 5s while Dashboard is visible
+      if (this._dashboardInterval) clearInterval(this._dashboardInterval);
+      this._dashboardInterval = setInterval(() => {
+        if (this.activePage !== 'dashboard') { clearInterval(this._dashboardInterval); this._dashboardInterval = null; return; }
+        this.renderDashboard();
+      }, 5000);
     } catch(e) { console.warn('Dashboard render error:', e); }
   }
 

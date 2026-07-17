@@ -79,8 +79,8 @@ export class Dashboard {
       else delayed++;
       totalDelay += d;
     }
-    const avgDelay = movingServices.length > 0 ? Math.round(totalDelay / movingServices.length) : 0;
-    const punctPct = movingServices.length > 0 ? Math.round((onTime / movingServices.length) * 100) : 100;
+    const avgDelay = movingServices.length > 0 ? (totalDelay / movingServices.length) : 0;
+    const punctPct = movingServices.length > 0 ? ((onTime / movingServices.length) * 100) : 100;
 
     // Rames stats
     let ramesInMaint = 0, ramesAvailable = 0, avgWear = 0;
@@ -89,19 +89,19 @@ export class Dashboard {
       else ramesAvailable++;
       avgWear += r.wearLevel || 0;
     }
-    avgWear = rames.length > 0 ? (avgWear / rames.length).toFixed(1) : '0';
+    avgWear = rames.length > 0 ? (avgWear / rames.length) : 0;
 
     // Financial breakdown
     const revBreak = eco.getRevenueBreakdown();
     const expBreak = eco.getExpenseBreakdown();
     const profit = eco.revenue - eco.expenses;
-    const margin = eco.revenue > 0 ? Math.round((profit / eco.revenue) * 100) : 0;
+    const margin = eco.revenue > 0 ? ((profit / eco.revenue) * 100) : 0;
 
     // Total km
     let totalKm = 0;
     for (const r of rames) totalKm += r.totalKmRun || 0;
-    const costPerKm = totalKm > 0 ? (eco.expenses / totalKm).toFixed(2) : '0';
-    const revPerKm = totalKm > 0 ? (eco.revenue / totalKm).toFixed(2) : '0';
+    const costPerKm = totalKm > 0 ? (eco.expenses / totalKm) : 0;
+    const revPerKm = totalKm > 0 ? (eco.revenue / totalKm) : 0;
 
     // Revenue bar data
     const revCategories = [
@@ -170,7 +170,7 @@ export class Dashboard {
         <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin-bottom:8px">
           <span>Services actifs : <b>${activeServices.length}</b></span>
           <span>En circulation : <b>${movingServices.length}</b></span>
-          <span>Retard moyen : <b>${avgDelay} min</b></span>
+          <span>Retard moyen : <b>${fmt(avgDelay)} min</b></span>
           <span>Solde : <b style="color:${eco.balance >= 0 ? 'var(--green)' : '#ef4444'}">${fmtE(eco.balance)}</b></span>
           <span>Resultat net : <b style="color:${profit >= 0 ? 'var(--green)' : '#ef4444'}">${profit >= 0 ? '+' : ''}${fmtE(profit)}</b></span>
         </div>
@@ -181,7 +181,7 @@ export class Dashboard {
               const d = svc.train?.delay || 0;
               return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
                 <span>${svc.name}</span>
-                <span style="color:${Math.abs(d) <= 5 ? 'var(--green)' : '#ef4444'}">${d > 0 ? '+' + d + ' min' : 'A l\'heure'}</span>
+                <span style="color:${Math.abs(d) <= 5 ? 'var(--green)' : '#ef4444'}">${d > 0 ? '+' + fmt(d) + ' min' : 'A l\'heure'}</span>
               </div>`;
             }).join('') || '<span>Aucun service actif</span>'}
           </div>
@@ -195,7 +195,7 @@ export class Dashboard {
         <div class="dash-kpi-grid">
           <div class="dash-kpi">
             <div class="dash-kpi-label">Ponctualit\u00e9</div>
-            <div class="dash-kpi-value" style="color:${punctPct >= 90 ? 'var(--green)' : punctPct >= 70 ? '#facc15' : '#ef4444'}">${punctPct}%</div>
+            <div class="dash-kpi-value" style="color:${punctPct >= 90 ? 'var(--green)' : punctPct >= 70 ? '#facc15' : '#ef4444'}">${fmt(punctPct)}%</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">En circulation</div>
@@ -207,7 +207,7 @@ export class Dashboard {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Retard moyen</div>
-            <div class="dash-kpi-value" style="color:${parseFloat(avgDelay) <= 2 ? 'var(--green)' : '#facc15'}">${avgDelay} min</div>
+            <div class="dash-kpi-value" style="color:${avgDelay <= 2 ? 'var(--green)' : '#facc15'}">${fmt(avgDelay)} min</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Rames dispo</div>
@@ -219,7 +219,7 @@ export class Dashboard {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Usure moy.</div>
-            <div class="dash-kpi-value" style="color:${parseFloat(avgWear) < 50 ? 'var(--green)' : '#ef4444'}">${avgWear}%</div>
+            <div class="dash-kpi-value" style="color:${avgWear < 50 ? 'var(--green)' : '#ef4444'}">${fmt(avgWear)}%</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Km parcourus</div>
@@ -241,7 +241,7 @@ export class Dashboard {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Tarif / km</div>
-            <div class="dash-kpi-value" style="color:#38bdf8">${eco.ticketPricePerKm.toFixed(2)} \u20ac</div>
+            <div class="dash-kpi-value" style="color:#38bdf8">${fmt(eco.ticketPricePerKm)} \u20ac</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Voyageurs total</div>
@@ -253,7 +253,7 @@ export class Dashboard {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Taux fraude</div>
-            <div class="dash-kpi-value" style="color:#ef4444">${(eco.fraudRate * 100).toFixed(0)}%</div>
+            <div class="dash-kpi-value" style="color:#ef4444">${fmt(eco.fraudRate * 100)}%</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Amendes PV</div>
@@ -261,7 +261,7 @@ export class Dashboard {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Recette / km</div>
-            <div class="dash-kpi-value" style="color:#22c55e">${revPerKm} \u20ac</div>
+            <div class="dash-kpi-value" style="color:#22c55e">${fmt(revPerKm)} \u20ac</div>
           </div>
         </div>
       </div>
@@ -287,11 +287,11 @@ export class Dashboard {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Marge</div>
-            <div class="dash-kpi-value" style="color:${margin >= 0 ? 'var(--green)' : '#ef4444'}">${margin}%</div>
+            <div class="dash-kpi-value" style="color:${margin >= 0 ? 'var(--green)' : '#ef4444'}">${fmt(margin)}%</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Co\u00fbt / km</div>
-            <div class="dash-kpi-value" style="color:#f97316">${costPerKm} \u20ac</div>
+            <div class="dash-kpi-value" style="color:#f97316">${fmt(costPerKm)} \u20ac</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">P\u00e9nalit\u00e9s</div>
@@ -309,7 +309,7 @@ export class Dashboard {
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
           ${revCategories.map(c => {
             const val = revBreak[c.key] || 0;
-            const pct = eco.revenue > 0 ? Math.round((val / eco.revenue) * 100) : 0;
+            const pct = eco.revenue > 0 ? fmt((val / eco.revenue) * 100) : 0;
             return val > 0 ? `<div style="flex:1;min-width:120px;background:var(--bg2);border-radius:6px;padding:8px;border-left:3px solid ${c.color}">
               <div style="font-size:9px;color:var(--text3);text-transform:uppercase">${c.label}</div>
               <div style="font-size:14px;font-weight:700;color:${c.color}">${fmtE(val)}</div>
@@ -325,7 +325,7 @@ export class Dashboard {
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
           ${expCategories.map(c => {
             const val = expBreak[c.key] || 0;
-            const pct = eco.expenses > 0 ? Math.round((val / eco.expenses) * 100) : 0;
+            const pct = eco.expenses > 0 ? fmt((val / eco.expenses) * 100) : 0;
             return val > 0 ? `<div style="flex:1;min-width:120px;background:var(--bg2);border-radius:6px;padding:8px;border-left:3px solid ${c.color}">
               <div style="font-size:9px;color:var(--text3);text-transform:uppercase">${c.label}</div>
               <div style="font-size:14px;font-weight:700;color:${c.color}">${fmtE(val)}</div>
@@ -348,7 +348,7 @@ export class Dashboard {
             <span style="color:#22c55e">${fmtE(l.revenue)}</span>
             <span style="color:#ef4444">${fmtE(l.expense)}</span>
             <span style="color:${l.profit >= 0 ? 'var(--green)' : '#ef4444'}">${l.profit >= 0 ? '+' : ''}${fmtE(l.profit)}</span>
-            <span style="color:${l.margin >= 0 ? 'var(--green)' : '#ef4444'}">${l.margin}%</span>
+            <span style="color:${l.margin >= 0 ? 'var(--green)' : '#ef4444'}">${fmt(l.margin)}%</span>
           </div>`).join('')}
         </div>
       </div>` : ''}
@@ -382,9 +382,9 @@ export class Dashboard {
           ${activeServices.map(svc => {
             const state = svc.state === 'moving' ? `${icon('dot_green', 10)} En route` : svc.state === 'waiting' ? `${icon('dot_yellow', 10)} Attente` : `${icon('dot_gray', 10)} Termin\u00e9`;
             const delay = svc.train?.delay || 0;
-            const delayStr = delay > 0 ? `+${delay.toFixed(0)} min` : '\u00c0 l\'heure';
+            const delayStr = delay > 0 ? '+' + fmt(delay) + ' min' : '\u00c0 l\'heure';
             const delayColor = Math.abs(delay) <= 5 ? 'var(--green)' : '#ef4444';
-            const speed = svc.train?.speed ? `${Math.round(svc.train.speed)} km/h` : '-';
+            const speed = svc.train?.speed ? `${fmt(svc.train.speed)} km/h` : '-';
             const nextStop = svc.stops?.[svc.currentStopIndex]?.name || '-';
             const rameName = svc.rame?.name || '-';
             return `<div class="dash-train-row">
@@ -413,7 +413,16 @@ export class Dashboard {
           </div>`).join('') || '<div style="padding:8px;color:var(--text3)">Aucun mouvement</div>'}
         </div>
       </div>
+
+      <div id="dash-bank-section" class="dash-section">
+        <h3>Banque</h3>
+        <div id="dash-bank-container"></div>
+      </div>
     `;
+
+    // Inject bank UI into Dashboard (XIII — fusion Banque/Dashboard)
+    const bankContainer = document.getElementById('dash-bank-container');
+    if (bankContainer && game.bank) game.bank.render(bankContainer, game);
 
     // Draw charts
     this._drawLineChart('dash-chart-punctuality', this.punctualityHistory, '%', '#22c55e', 0, 100);
@@ -438,6 +447,13 @@ export class Dashboard {
         time: d.date, value: d.balance
       })), '\u20ac', '#a78bfa');
     }
+  }
+
+  /**
+   * X — arrondi au 0,1 près pour les graphiques.
+   */
+  _fmt(n) {
+    return (Math.round(n * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
   }
 
   /**
@@ -505,7 +521,7 @@ export class Dashboard {
       ctx.fillStyle = '#94a3b8';
       ctx.font = '10px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(Math.round(val) + unit, pad.left - 5, y + 4);
+      ctx.fillText(this._fmt(val) + unit, pad.left - 5, y + 4);
     }
 
     // X-axis labels (show every ~10th label)
@@ -569,7 +585,7 @@ export class Dashboard {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(`${Math.round((d.value / total) * 100)}%`, x + w / 2, barY + barH / 2 + 4);
+        ctx.fillText(`${this._fmt((d.value / total) * 100)}%`, x + w / 2, barY + barH / 2 + 4);
       }
       x += w;
     }
@@ -583,7 +599,7 @@ export class Dashboard {
       ctx.fillRect(lx, ly - 7, 8, 8);
       ctx.fillStyle = '#94a3b8';
       ctx.textAlign = 'left';
-      const label = `${d.label} (${Math.round(d.value).toLocaleString('fr-FR')}\u20ac)`;
+      const label = `${d.label} (${this._fmt(d.value)}\u20ac)`;
       ctx.fillText(label, lx + 11, ly);
       lx += ctx.measureText(label).width + 22;
       if (lx > W - 50) { lx = 10; }
@@ -616,7 +632,7 @@ export class Dashboard {
       ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
       const val = maxV - (range * i / 4);
       ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(Math.round(val).toLocaleString('fr-FR') + unit, pad.left - 5, y + 4);
+      ctx.fillText(this._fmt(val) + unit, pad.left - 5, y + 4);
     }
 
     // Zero line

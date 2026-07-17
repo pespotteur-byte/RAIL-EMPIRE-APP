@@ -95,6 +95,8 @@ export class Bank {
   render(container, game) {
     if (!container) return;
     const eco = game.economy;
+    const fmt = n => (Math.round(n * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+    const fmtE = n => fmt(n) + ' €';
 
     container.innerHTML = `
       <div class="dash-section">
@@ -102,11 +104,11 @@ export class Bank {
         <div class="dash-kpi-grid">
           <div class="dash-kpi">
             <div class="dash-kpi-label">Dette totale</div>
-            <div class="dash-kpi-value" style="color:${this.getTotalDebt() > 0 ? '#ef4444' : 'var(--green)'}">${this.getTotalDebt().toLocaleString('fr-FR')} &euro;</div>
+            <div class="dash-kpi-value" style="color:${this.getTotalDebt() > 0 ? '#ef4444' : 'var(--green)'}">${fmtE(this.getTotalDebt())}</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Remboursement / jour</div>
-            <div class="dash-kpi-value" style="color:#f97316">${this.getTotalDailyPayment().toLocaleString('fr-FR')} &euro;</div>
+            <div class="dash-kpi-value" style="color:#f97316">${fmtE(this.getTotalDailyPayment())}</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Emprunts actifs</div>
@@ -114,11 +116,11 @@ export class Bank {
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Solde actuel</div>
-            <div class="dash-kpi-value" style="color:${eco.balance >= 0 ? 'var(--green)' : '#ef4444'}">${eco.formatAmount(eco.balance)}</div>
+            <div class="dash-kpi-value" style="color:${eco.balance >= 0 ? 'var(--green)' : '#ef4444'}">${fmtE(eco.balance)}</div>
           </div>
           <div class="dash-kpi">
             <div class="dash-kpi-label">Plafond crédit</div>
-            <div class="dash-kpi-value" style="color:#94a3b8">${this.getCreditLimit().toLocaleString('fr-FR')} &euro;</div>
+            <div class="dash-kpi-value" style="color:#94a3b8">${fmtE(this.getCreditLimit())}</div>
           </div>
         </div>
       </div>
@@ -130,7 +132,7 @@ export class Bank {
             const overLimit = this.getTotalDebt() + cfg.amount > this.getCreditLimit();
             return `
             <button class="bank-borrow-btn btn-primary" data-type="${key}" style="font-size:11px;padding:8px 14px;${overLimit ? 'opacity:0.4;cursor:not-allowed' : ''}">
-              ${cfg.label}<br><span style="font-size:9px;opacity:0.7">${(cfg.rate * 100).toFixed(0)}% sur ${cfg.duration}j</span>
+              ${cfg.label}<br><span style="font-size:9px;opacity:0.7">${fmt(cfg.rate * 100)}% sur ${cfg.duration}j</span>
             </button>
           `;
           }).join('')}
@@ -144,12 +146,12 @@ export class Bank {
             <span>Montant</span><span>Taux</span><span>Restant</span><span>Paiement/jour</span><span>Jours restants</span>
           </div>
           ${this.loans.map(l => {
-            const pct = ((l.totalDays - l.daysLeft) / l.totalDays * 100).toFixed(0);
+            const pct = fmt((l.totalDays - l.daysLeft) / l.totalDays * 100);
             return `<div class="dash-train-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr">
-              <span>${l.principal.toLocaleString('fr-FR')} €</span>
-              <span>${(l.rate * 100).toFixed(0)}%</span>
-              <span style="color:#ef4444">${l.remaining.toLocaleString('fr-FR')} €</span>
-              <span>${l.dailyPayment.toLocaleString('fr-FR')} €</span>
+              <span>${fmtE(l.principal)}</span>
+              <span>${fmt(l.rate * 100)}%</span>
+              <span style="color:#ef4444">${fmtE(l.remaining)}</span>
+              <span>${fmtE(l.dailyPayment)}</span>
               <span>${l.daysLeft}j <span style="font-size:9px;color:var(--text3)">(${pct}%)</span></span>
             </div>`;
           }).join('') || '<div style="padding:8px;color:var(--text3)">Aucun emprunt en cours</div>'}
@@ -166,7 +168,7 @@ export class Bank {
           alert('Plafond de crédit atteint.');
           return;
         }
-        if (confirm(`Emprunter ${cfg.label} à ${(cfg.rate*100).toFixed(0)}% sur ${cfg.duration} jours ?\nRemboursement quotidien: ~${Math.ceil(cfg.amount * (1 + cfg.rate) / cfg.duration).toLocaleString('fr-FR')} €`)) {
+        if (confirm(`Emprunter ${cfg.label} à ${fmt(cfg.rate*100)}% sur ${cfg.duration} jours ?\nRemboursement quotidien: ~${fmtE(Math.ceil(cfg.amount * (1 + cfg.rate) / cfg.duration))}`)) {
           this.borrow(eco, type);
           this.render(container, game);
         }
