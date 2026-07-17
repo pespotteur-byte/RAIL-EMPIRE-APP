@@ -2046,12 +2046,27 @@ export class UI {
     if (this.currentRameElements.length === 0) {
       container.innerHTML = '<p class="rame-empty">Cliquer sur un engin ci-dessous pour l\'ajouter</p>';
     } else {
+      const last = this.currentRameElements.length - 1;
       container.innerHTML = '<div class="rame-assembly-images">' + this.currentRameElements.map((el, i) => {
         const label = el.instanceName || el.name;
-        const inner = el.imageData
-          ? `<img src="${el.imageData}" alt="${label}" title="${label} (clic = retirer)" onclick="game.ui.removeFromRame(${i})" class="rame-element-img">`
-          : `<div class="rame-element-placeholder" title="${label}" onclick="game.ui.removeFromRame(${i})">${label}</div>`;
-        return `<div class="rame-element-wrap">${inner}<span class="rame-element-label">${label}</span></div>`;
+        let imgHtml = '';
+        if (el.imageData) {
+          let style = '';
+          if (el.isDrivingTrailer && this.currentRameElements.length > 1) {
+            const isLeft = i === 0;
+            const isRight = i === last;
+            const isLeftImage = el.imageData.toLowerCase().endsWith('_l.gif');
+            // Cab must face outward. Right-facing image (/_R.gif or .gif) at left end => flip.
+            // Left-facing image (/_L.gif) at right end => flip.
+            if ((isLeft && !isLeftImage) || (isRight && isLeftImage)) {
+              style = 'transform: scaleX(-1);';
+            }
+          }
+          imgHtml = `<img src="${el.imageData}" alt="${label}" title="${label} (clic = retirer)" onclick="game.ui.removeFromRame(${i})" class="rame-element-img"${style ? ` style="${style}"` : ''}>`;
+        } else {
+          imgHtml = `<div class="rame-element-placeholder" title="${label}" onclick="game.ui.removeFromRame(${i})">${label}</div>`;
+        }
+        return `<div class="rame-element-wrap">${imgHtml}<span class="rame-element-label">${label}</span></div>`;
       }).join('') + '</div>';
     }
 

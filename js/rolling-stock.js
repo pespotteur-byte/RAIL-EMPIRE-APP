@@ -21,6 +21,7 @@ export class RollingStockItem {
     this.purchasePrice = data.purchasePrice || 0; // euros
     this.cargoTypes = data.cargoTypes || []; // allowed cargo type keys (wagon only)
     this.wagonSubCategory = data.wagonSubCategory || ''; // Annexe 7
+    this.isDrivingTrailer = data.isDrivingTrailer || false; // voiture-pilote: flip image in rame formation
     // Catalog bookkeeping: pristine catalog items are re-seeded from catalog-data.js
     // on every load, so they are NOT persisted to the save (keeps localStorage small).
     // Once a catalog item is edited, _edited is set and it IS persisted.
@@ -68,7 +69,7 @@ export class RollingStockManager {
     if (!item) return null;
     const editable = ['name', 'category', 'traction', 'maxSpeed', 'tonnage', 'mass',
       'power', 'passengerCapacity', 'freightCapacity', 'length', 'imageData',
-      'seriesName', 'numberStart', 'purchasePrice', 'cargoTypes', 'wagonSubCategory'];
+      'seriesName', 'numberStart', 'purchasePrice', 'cargoTypes', 'wagonSubCategory', 'isDrivingTrailer'];
     for (const k of editable) {
       if (k in data && data[k] !== undefined) item[k] = data[k];
     }
@@ -105,6 +106,7 @@ export class RollingStockManager {
         purchasePrice: i.purchasePrice || 0,
         cargoTypes: i.cargoTypes || [],
         wagonSubCategory: i.wagonSubCategory || '',
+        isDrivingTrailer: i.isDrivingTrailer || false,
         _catalog: i._catalog || undefined,
         _edited: i._edited || undefined,
         _source: i._source || undefined,

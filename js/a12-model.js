@@ -9,14 +9,14 @@ import { VoiePointManager } from './voie-points.js';
 import { LineManager, PlatformManager } from './line.js';
 import { RameManager } from './rame.js';
 import { RollingStockManager } from './rolling-stock.js';
-import { ScheduleCreator } from './schedule-creator.js?v=1784250028';
+import { ScheduleCreator } from './schedule-creator.js?v=1784250030';
 import { FreightManager } from './freight.js';
 import { DepotManager } from './depot.js';
-import { StaffManager } from './staff.js?v=1784250028';
+import { StaffManager } from './staff.js?v=1784250030';
 import { IncidentManager } from './incidents.js';
 import { Economy } from './economy.js';
 import { Weather } from './weather.js';
-import { SillonManager } from './sillon.js?v=1784250028';
+import { SillonManager } from './sillon.js?v=1784250030';
 
 // Entités fondamentales du modèle A12 (Annexe 12)
 export const A12_ENTITIES = [
