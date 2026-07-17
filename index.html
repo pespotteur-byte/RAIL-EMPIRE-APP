@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784250006">
+  <link rel="stylesheet" href="style.css?v=1784250007">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -1112,9 +1112,24 @@
             <label>Nom</label>
             <input type="text" id="works-name" placeholder="ex: Renouvellement LGV Nord">
           </div>
-          <div class="form-group">
-            <label>Section de ligne</label>
-            <select id="works-track"></select>
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>Gare A</label>
+              <select id="works-station-a"><option value="">—</option></select>
+            </div>
+            <div class="form-group" style="flex:1">
+              <label>Gare B</label>
+              <select id="works-station-b"><option value="">—</option></select>
+            </div>
+          </div>
+          <div id="works-manual-hint" class="sched-hint" style="margin-top:6px">Sélectionnez les gares A et B. Le tracé ORM entre les deux sera fermé pendant la période. Activez "Tracer manuellement" pour indiquer une portion précise.</div>
+          <div class="form-row" style="margin-top:6px;gap:6px">
+            <button type="button" id="btn-works-manual" class="btn-sm" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Tracer manuellement</button>
+            <button type="button" id="btn-works-finish-manual" class="btn-sm hidden" style="background:var(--blue);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:#fff">Terminer</button>
+            <button type="button" id="btn-works-clear-manual" class="btn-sm hidden" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Effacer tracé</button>
+          </div>
+          <div class="sched-map-container" style="height:240px;margin-top:8px">
+            <canvas id="works-map-canvas"></canvas>
           </div>
           <p style="font-size:10px;color:var(--text3);margin:6px 0">Periode globale des travaux</p>
           <div class="form-row">
@@ -1474,6 +1489,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784250006"></script>
+  <script type="module" src="js/main.js?v=1784250007"></script>
 </body>
 </html>

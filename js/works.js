@@ -8,6 +8,8 @@ export class PlannedWorks {
     // TRV-03 : fermeture d'un tronçon entre deux gares (portion de ligne)
     this.stationA = data.stationA || '';
     this.stationB = data.stationB || '';
+    this.route = data.route || null;
+    this.manualRoute = data.manualRoute || null;
     this.startDate = data.startDate || '';
     this.startTime = data.startTime || '22:00';
     this.endDate = data.endDate || '';
@@ -111,7 +113,37 @@ export class WorksManager {
       w.active = w.isActiveAt(dateStr, timeOfDay);
       if (!w.active) continue;
 
-      const track = world.tracks.find(t => t.id === w.trackId);
+      let track = world.tracks.find(t => t.id === w.trackId);
+      if (!track && w.stationA && w.stationB) {
+        const matches = world.tracks.filter(t =>
+          (t.stationA === w.stationA && t.stationB === w.stationB) ||
+          (t.stationA === w.stationB && t.stationB === w.stationA)
+        );
+        if (matches.length === 1) {
+          track = matches[0];
+        } else if (matches.length > 1 && w.manualRoute && w.manualRoute.length >= 2) {
+          // Pick the track whose route is closest to the manually traced route
+          let bestIdx = -1, bestScore = Infinity;
+          for (let i = 0; i < matches.length; i++) {
+            const t = matches[i];
+            const tr = t.route;
+            if (!tr || tr.length < 2) continue;
+            let score = 0, count = 0;
+            for (const p of w.manualRoute) {
+              let minD = Infinity;
+              for (let j = 0; j < tr.length - 1; j++) {
+                const d = this._pointToSegmentDistKm(p.lat, p.lon, tr[j].lat, tr[j].lon, tr[j+1].lat, tr[j+1].lon);
+                if (d < minD) minD = d;
+              }
+              score += minD; count++;
+            }
+            if (count > 0 && score / count < bestScore) { bestScore = score / count; bestIdx = i; }
+          }
+          track = bestIdx >= 0 ? matches[bestIdx] : matches[0];
+        } else if (matches.length > 0) {
+          track = matches[0];
+        }
+      }
       if (!track) continue;
 
       if (!track.worksActive) {
@@ -130,10 +162,24 @@ export class WorksManager {
     }
   }
 
+  _pointToSegmentDistKm(pLat, pLon, aLat, aLon, bLat, bLon) {
+    const cosLat = Math.cos(pLat * Math.PI / 180);
+    const dx = (bLon - aLon) * 111 * cosLat;
+    const dy = (bLat - aLat) * 111;
+    const px = (pLon - aLon) * 111 * cosLat;
+    const py = (pLat - aLat) * 111;
+    const segLenSq = dx * dx + dy * dy;
+    if (segLenSq < 0.0001) return Math.sqrt(px * px + py * py);
+    const t = Math.max(0, Math.min(1, (px * dx + py * dy) / segLenSq));
+    const projX = t * dx, projY = t * dy;
+    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+  }
+
   toSave() {
     return this.works.map(w => ({
       id: w.id, name: w.name, trackId: w.trackId,
       stationA: w.stationA, stationB: w.stationB,
+      route: w.route, manualRoute: w.manualRoute,
       startDate: w.startDate, startTime: w.startTime,
       endDate: w.endDate, endTime: w.endTime,
       impact: w.impact, speedLimit: w.speedLimit,

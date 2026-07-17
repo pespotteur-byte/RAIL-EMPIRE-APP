@@ -6365,6 +6365,11 @@ export class UI {
       document.getElementById('works-days-group').style.display = e.target.value === 'weekly' ? 'block' : 'none';
     });
     document.getElementById('btn-save-works')?.addEventListener('click', () => this.saveWorks());
+    document.getElementById('btn-works-manual')?.addEventListener('click', () => this._toggleWorksManualMode());
+    document.getElementById('btn-works-finish-manual')?.addEventListener('click', () => this._finishWorksManual());
+    document.getElementById('btn-works-clear-manual')?.addEventListener('click', () => this._clearWorksManualTrace());
+    document.getElementById('works-station-a')?.addEventListener('change', () => { this._syncWorksManualEndpoints(); this._updateWorksManualUI(); });
+    document.getElementById('works-station-b')?.addEventListener('change', () => { this._syncWorksManualEndpoints(); this._updateWorksManualUI(); });
 
     // Predefined incident type toggles (Annexe 11)
     const typesTable = document.getElementById('incident-types-table');
@@ -6396,18 +6401,55 @@ export class UI {
     document.getElementById('works-days-group')?.style.setProperty('display', 'none');
     document.querySelectorAll('.works-day').forEach(cb => cb.checked = true);
 
-    const select = document.getElementById('works-track');
-    select.innerHTML = this.game.world.tracks.map(t => `<option value="${t.id}">${t.name || t.id}</option>`).join('');
+    const opts = this.game.world.stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+    const aSel = document.getElementById('works-station-a');
+    const bSel = document.getElementById('works-station-b');
+    if (aSel) aSel.innerHTML = '<option value="">—</option>' + opts;
+    if (bSel) bSel.innerHTML = '<option value="">—</option>' + opts;
+
+    this._resetWorksManual();
+    this._updateWorksManualUI();
+    requestAnimationFrame(() => this.setupWorksMap());
   }
 
-  saveWorks() {
+  async saveWorks() {
+    const aId = document.getElementById('works-station-a')?.value;
+    const bId = document.getElementById('works-station-b')?.value;
+    if (!aId || !bId) return alert('Sélectionnez les gares A et B.');
+    if (aId === bId) return alert('Les gares doivent être différentes.');
+    const stA = this.game.world.getStationById(aId);
+    const stB = this.game.world.getStationById(bId);
+    if (!stA || !stB) return alert('Gares invalides.');
+
+    if (this._worksManualPoints && this._worksManualPoints.length > 0 && this._worksManualStart && this._worksManualEnd) {
+      this._rebuildWorksManualRoute();
+    }
+
+    let route = null;
+    let manualRoute = null;
+    if (this._worksManualRoute && this._worksManualRoute.length >= 2) {
+      route = this._worksManualRoute;
+      manualRoute = this._worksManualRoute;
+    } else {
+      try {
+        route = await this.game.orm.findRoute(stA.lat, stA.lon, stB.lat, stB.lon);
+      } catch (e) {
+        console.warn('ORM route failed for works', e);
+      }
+      if (!route || route.length < 2) return alert('Impossible de calculer un itinéraire ferroviaire entre ces gares. Vérifiez le réseau ORM ou utilisez le tracé manuel.');
+      route = this.game.orm.getRouteSegments(route).map(s => ({ lat: s.from.lat, lon: s.from.lon, maxSpeed: s.maxSpeed })).concat([{ lat: route[route.length - 1].lat, lon: route[route.length - 1].lon, maxSpeed: route[route.length - 1].maxSpeed || 160 }]);
+    }
+
     const recurrence = document.getElementById('works-recurrence')?.value || 'daily';
     const daysOfWeek = recurrence === 'weekly'
       ? [...document.querySelectorAll('.works-day:checked')].map(cb => parseInt(cb.value))
       : [0,1,2,3,4,5,6];
     this.game.worksManager.add({
       name: document.getElementById('works-name').value.trim() || 'Travaux',
-      trackId: document.getElementById('works-track').value,
+      stationA: aId,
+      stationB: bId,
+      route,
+      manualRoute,
       startDate: document.getElementById('works-start-date').value,
       startTime: document.getElementById('works-start-time').value || '22:00',
       endDate: document.getElementById('works-end-date').value,
@@ -6417,8 +6459,10 @@ export class UI {
       recurrence,
       daysOfWeek,
     });
+    this._resetWorksManual();
     document.getElementById('modal-works')?.classList.add('hidden');
     this.renderIncidentsPage();
+    this.game.saveState();
   }
 
   renderIncidentsPage() {
@@ -6505,10 +6549,12 @@ export class UI {
       worksList.innerHTML = works.length === 0
         ? '<div class="no-incidents">Aucun travaux programmes</div>'
         : works.map(w => {
-            const track = this.game.world.tracks.find(t => t.id === w.trackId);
+            const stA = this.game.world.getStationById(w.stationA);
+            const stB = this.game.world.getStationById(w.stationB);
+            const sectionName = (stA?.name || '?') + ' — ' + (stB?.name || '?');
             return `
               <div class="works-item">
-                <span class="works-name">${w.name}</span> - ${track ? track.name : w.trackId}<br>
+                <span class="works-name">${w.name}</span> - ${sectionName}${w.manualRoute ? ' (tracé manuel)' : ''}<br>
                 ${w.getDateRange()}<br>
                 <span style="font-size:10px;color:var(--text3)">${w.recurrence === 'once' ? 'Le ' + w.startDate : w.recurrence === 'weekly' ? 'Hebdo : ' + w.daysOfWeek.join(',') : 'Chaque jour'} de ${w.startTime} a ${w.endTime}</span><br>
                 Impact: ${w.impact === 'stop' ? 'Interruption' : 'Ralenti ' + w.speedLimit + ' km/h'}
@@ -6528,6 +6574,311 @@ export class UI {
   deleteWorks(id) {
     this.game.worksManager.remove(id);
     this.renderIncidentsPage();
+  }
+
+  // --- Works manual trace map ---
+  _resetWorksManual() {
+    this._worksManualMode = false;
+    this._worksManualStart = null;
+    this._worksManualEnd = null;
+    this._worksManualPoints = [];
+    this._worksManualRoute = null;
+  }
+
+  _syncWorksManualEndpoints() {
+    const aId = document.getElementById('works-station-a')?.value;
+    const bId = document.getElementById('works-station-b')?.value;
+    const aSt = aId ? this.game.world.getStationById(aId) : null;
+    const bSt = bId ? this.game.world.getStationById(bId) : null;
+    if (aSt) this._worksManualStart = { lat: aSt.lat, lon: aSt.lon, id: aSt.id, name: aSt.name };
+    else this._worksManualStart = null;
+    if (bSt) this._worksManualEnd = { lat: bSt.lat, lon: bSt.lon, id: bSt.id, name: bSt.name };
+    else this._worksManualEnd = null;
+    if (this._worksTileMap) {
+      if (aSt && bSt) {
+        this._worksTileMap.centerLat = (aSt.lat + bSt.lat) / 2;
+        this._worksTileMap.centerLon = (aSt.lon + bSt.lon) / 2;
+        const cosLat = Math.cos(this._worksTileMap.centerLat * Math.PI / 180);
+        const latSpan = Math.abs(aSt.lat - bSt.lat) + 0.05;
+        const lonSpan = Math.abs(aSt.lon - bSt.lon) * cosLat + 0.05;
+        const spanDeg = Math.max(latSpan, lonSpan);
+        this._worksTileMap.zoomLevel = Math.min(18, Math.max(6, Math.log2(1000 / spanDeg)));
+      } else if (aSt) {
+        this._worksTileMap.centerLat = aSt.lat;
+        this._worksTileMap.centerLon = aSt.lon;
+        this._worksTileMap.zoomLevel = 10;
+      }
+    }
+    if (this._worksManualMode) this._rebuildWorksManualRoute();
+    if (this._drawWorksMap) this._drawWorksMap();
+  }
+
+  _rebuildWorksManualRoute() {
+    if (!this._worksManualStart || !this._worksManualEnd) return;
+    const start = { lat: this._worksManualStart.lat, lon: this._worksManualStart.lon, maxSpeed: 160 };
+    const end = { lat: this._worksManualEnd.lat, lon: this._worksManualEnd.lon, maxSpeed: 160 };
+    const controls = this._worksManualPoints.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: 160 }));
+    this._worksManualRoute = this._buildManualRoute(start, controls, end, 160);
+  }
+
+  _toggleWorksManualMode() {
+    const aId = document.getElementById('works-station-a')?.value;
+    const bId = document.getElementById('works-station-b')?.value;
+    if (!this._worksManualMode) {
+      if (!aId || !bId) return alert('Sélectionnez d\'abord les gares A et B.');
+      this._worksManualMode = true;
+      this._syncWorksManualEndpoints();
+    } else {
+      this._worksManualMode = false;
+      if (!this._worksManualRoute) this._worksManualPoints = [];
+    }
+    this._updateWorksManualUI();
+    if (this._drawWorksMap) this._drawWorksMap();
+  }
+
+  _finishWorksManual() {
+    if (!this._worksManualMode) return;
+    this._rebuildWorksManualRoute();
+    if (!this._worksManualRoute || this._worksManualRoute.length < 2) return alert('Tracé invalide.');
+    this._worksManualMode = false;
+    this._updateWorksManualUI();
+    if (this._drawWorksMap) this._drawWorksMap();
+  }
+
+  _clearWorksManualTrace() {
+    this._worksManualPoints = [];
+    this._worksManualRoute = null;
+    this._worksManualMode = false;
+    this._updateWorksManualUI();
+    if (this._drawWorksMap) this._drawWorksMap();
+  }
+
+  _updateWorksManualUI() {
+    const manual = document.getElementById('btn-works-manual');
+    const clear = document.getElementById('btn-works-clear-manual');
+    const finish = document.getElementById('btn-works-finish-manual');
+    const hint = document.getElementById('works-manual-hint');
+    const aId = document.getElementById('works-station-a')?.value;
+    const bId = document.getElementById('works-station-b')?.value;
+    if (manual) {
+      manual.textContent = this._worksManualMode ? 'Quitter le tracé manuel' : 'Tracer manuellement';
+      manual.classList.toggle('active', this._worksManualMode);
+      manual.disabled = !aId || !bId;
+    }
+    if (clear) clear.classList.toggle('hidden', !this._worksManualMode);
+    if (finish) finish.classList.toggle('hidden', !this._worksManualMode);
+    if (hint) {
+      if (this._worksManualMode) hint.textContent = 'Cliquez pour ajouter un point (50 m). Shift+clic sur un point pour le supprimer. Cliquez "Terminer" quand la portion fermée est tracée.';
+      else if (!aId || !bId) hint.textContent = 'Sélectionnez les gares A et B. Le tracé ORM entre les deux sera fermé pendant la période.';
+      else if (this._worksManualRoute) hint.textContent = 'Tracé manuel enregistré. Vous pouvez le refaire avec "Tracer manuellement".';
+      else hint.textContent = 'Sélectionnez les gares A et B, puis cliquez sur "Tracer manuellement" pour indiquer la portion précise fermée.';
+    }
+  }
+
+  setupWorksMap() {
+    const canvas = document.getElementById('works-map-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    if (!container || container.clientWidth === 0 || container.clientHeight === 0) return;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    const ctx = canvas.getContext('2d');
+    const world = this.game.world;
+    if (!this._worksTileMap) {
+      const mainTileMap = this.game.renderer.tileMap;
+      this._worksTileMap = new mainTileMap.constructor();
+    }
+    const tileMap = this._worksTileMap;
+    tileMap.viewportWidth = canvas.width;
+    tileMap.viewportHeight = canvas.height;
+
+    this._syncWorksManualEndpoints();
+
+    let drawPending = false;
+    const requestDraw = () => {
+      if (drawPending) return;
+      drawPending = true;
+      requestAnimationFrame(() => { drawPending = false; drawMap(); });
+    };
+
+    const drawMap = () => {
+      const modal = document.getElementById('modal-works');
+      if (!modal || modal.classList.contains('hidden')) return;
+      tileMap.renderTiles(ctx, canvas.width, canvas.height);
+      const vpTL = tileMap.screenToWorld(0, 0, canvas.width, canvas.height);
+      const vpBR = tileMap.screenToWorld(canvas.width, canvas.height, canvas.width, canvas.height);
+      const vMinLat = Math.min(vpTL.lat, vpBR.lat) - 0.02;
+      const vMaxLat = Math.max(vpTL.lat, vpBR.lat) + 0.02;
+      const vMinLon = Math.min(vpTL.lon, vpBR.lon) - 0.02;
+      const vMaxLon = Math.max(vpTL.lon, vpBR.lon) + 0.02;
+
+      // Existing tracks (faint)
+      for (const t of world.tracks) {
+        if (!t.route || t.route.length < 2) continue;
+        ctx.strokeStyle = 'rgba(148,163,184,0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        const p0 = tileMap.worldToScreen(t.route[0].lat, t.route[0].lon, canvas.width, canvas.height);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < t.route.length; i++) {
+          const p = tileMap.worldToScreen(t.route[i].lat, t.route[i].lon, canvas.width, canvas.height);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      }
+
+      // Planned works (faint red)
+      for (const w of this.game.worksManager.getAll()) {
+        const r = w.manualRoute || w.route;
+        if (!r || r.length < 2) continue;
+        ctx.strokeStyle = 'rgba(239,68,68,0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const p0 = tileMap.worldToScreen(r[0].lat, r[0].lon, canvas.width, canvas.height);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < r.length; i++) {
+          const p = tileMap.worldToScreen(r[i].lat, r[i].lon, canvas.width, canvas.height);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      }
+
+      // Stations
+      for (const st of world.stations) {
+        if (st.lat < vMinLat || st.lat > vMaxLat || st.lon < vMinLon || st.lon > vMaxLon) continue;
+        const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+        const isStart = this._worksManualStart && this._worksManualStart.id === st.id;
+        const isEnd = this._worksManualEnd && this._worksManualEnd.id === st.id;
+        ctx.fillStyle = isStart ? '#22c55e' : isEnd ? '#f97316' : '#3b82f6';
+        ctx.beginPath(); ctx.arc(p.x, p.y, (isStart || isEnd) ? 7 : 5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1; ctx.stroke();
+        if (tileMap.zoomLevel >= 8) {
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '10px sans-serif';
+          ctx.fillText(st.name, p.x + 8, p.y + 4);
+        }
+      }
+
+      // Manual trace
+      let trace = this._worksManualRoute;
+      if (!trace && this._worksManualStart && this._worksManualEnd) {
+        const start = { lat: this._worksManualStart.lat, lon: this._worksManualStart.lon, maxSpeed: 160 };
+        const end = { lat: this._worksManualEnd.lat, lon: this._worksManualEnd.lon, maxSpeed: 160 };
+        const controls = this._worksManualPoints.map(p => ({ ...p, maxSpeed: 160 }));
+        trace = this._densifyRoute([start, ...controls, end], 0.05);
+      }
+      if (trace && trace.length >= 2) {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const p0 = tileMap.worldToScreen(trace[0].lat, trace[0].lon, canvas.width, canvas.height);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < trace.length; i++) {
+          const p = tileMap.worldToScreen(trace[i].lat, trace[i].lon, canvas.width, canvas.height);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+        for (let i = 0; i < trace.length; i++) {
+          const pt = trace[i];
+          if (!pt.control && i !== 0 && i !== trace.length - 1) continue;
+          const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+          const isEnd = (i === 0 || i === trace.length - 1);
+          ctx.fillStyle = isEnd ? '#f59e0b' : '#fca5a5';
+          ctx.beginPath(); ctx.arc(p.x, p.y, isEnd ? 5 : 3, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+        }
+      } else if (this._worksManualStart && this._worksManualEnd) {
+        ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const a = tileMap.worldToScreen(this._worksManualStart.lat, this._worksManualStart.lon, canvas.width, canvas.height);
+        const b = tileMap.worldToScreen(this._worksManualEnd.lat, this._worksManualEnd.lon, canvas.width, canvas.height);
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    };
+
+    this._drawWorksMap = drawMap;
+
+    if (canvas._worksBound) {
+      requestDraw();
+      return;
+    }
+    canvas._worksBound = true;
+
+    let drag = false, dragStart = null, totalDragDist = 0;
+    canvas.onmousedown = (e) => { drag = true; dragStart = { x: e.offsetX, y: e.offsetY }; totalDragDist = 0; };
+    canvas.onmousemove = (e) => {
+      if (drag && dragStart) {
+        const dx = e.offsetX - dragStart.x;
+        const dy = e.offsetY - dragStart.y;
+        totalDragDist += Math.abs(dx) + Math.abs(dy);
+        tileMap.pan(dx, dy);
+        dragStart = { x: e.offsetX, y: e.offsetY };
+        requestDraw();
+      }
+    };
+    canvas.onmouseup = (e) => {
+      if (totalDragDist < 5) {
+        const x = e.offsetX, y = e.offsetY;
+        if (this._worksManualMode) {
+          if (e.shiftKey) {
+            let bestIdx = -1, bestD = Infinity;
+            for (let i = 0; i < this._worksManualPoints.length; i++) {
+              const p = tileMap.worldToScreen(this._worksManualPoints[i].lat, this._worksManualPoints[i].lon, canvas.width, canvas.height);
+              const d = Math.hypot(p.x - x, p.y - y);
+              if (d < bestD) { bestD = d; bestIdx = i; }
+            }
+            if (bestIdx >= 0 && bestD < 12) {
+              this._worksManualPoints.splice(bestIdx, 1);
+              this._rebuildWorksManualRoute();
+              requestDraw();
+            }
+            drag = false; dragStart = null; totalDragDist = 0;
+            return;
+          }
+          const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
+          if (!this._worksManualStart || !this._worksManualEnd) return;
+          const snapped = this._snapToTrack(worldPos.lat, worldPos.lon);
+          const pt = snapped || worldPos;
+          this._worksManualPoints.push({ lat: pt.lat, lon: pt.lon });
+          this._rebuildWorksManualRoute();
+          requestDraw();
+        } else {
+          let closest = null, minDist = Infinity;
+          for (const st of world.stations) {
+            const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < minDist && d < 20) { minDist = d; closest = st; }
+          }
+          if (closest) {
+            const aSel = document.getElementById('works-station-a');
+            const bSel = document.getElementById('works-station-b');
+            if (aSel && !aSel.value) {
+              aSel.value = closest.id;
+              this._syncWorksManualEndpoints();
+              this._updateWorksManualUI();
+            } else if (bSel && !bSel.value) {
+              bSel.value = closest.id;
+              this._syncWorksManualEndpoints();
+              this._updateWorksManualUI();
+            }
+          }
+        }
+      }
+      drag = false; dragStart = null; totalDragDist = 0;
+    };
+    canvas.onwheel = (e) => { e.preventDefault(); tileMap.applyZoom(e.deltaY < 0 ? 1 : -1, e.offsetX, e.offsetY); requestDraw(); };
+    canvas.oncontextmenu = (e) => { e.preventDefault(); };
+
+    this._worksMapInterval = setInterval(() => {
+      if (document.getElementById('modal-works')?.classList.contains('hidden')) return;
+      requestDraw();
+    }, 250);
+
+    requestDraw();
   }
 
   // --- ECONOMY ---

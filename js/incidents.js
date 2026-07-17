@@ -68,7 +68,7 @@ export const PREDEFINED_INCIDENT_TYPES = [
     seasons: ['all'],
     durationMin: 5,
     durationMax: 10,
-    effect: 'slow',
+    effect: 'stop',
     speedLimit: 0,
     scope: 'train',
     requirePassenger: true,
