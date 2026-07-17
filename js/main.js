@@ -1,45 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784250001';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784250001';
-import { World, createDefaultWorld } from './world.js?v=1784250001';
-import { Renderer } from './renderer.js?v=1784250001';
-import { UI } from './ui.js?v=1784250001';
-import { Economy } from './economy.js?v=1784250001';
-import { IncidentManager } from './incidents.js?v=1784250001';
-import { FreightManager } from './freight.js?v=1784250001';
-import { ScheduleManager } from './schedule.js?v=1784250001';
-import { GameStorage } from './storage.js?v=1784250001';
-import { AccountManager } from './account.js?v=1784250001';
-import { RollingStockManager } from './rolling-stock.js?v=1784250001';
-import { RameManager } from './rame.js?v=1784250001';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784250001';
-import { DepotManager } from './depot.js?v=1784250001';
-import { WorksManager } from './works.js?v=1784250001';
-import { ORMClient } from './orm.js?v=1784250001';
-import { LineManager, PlatformManager } from './line.js?v=1784250001';
-import { SillonManager } from './sillon.js?v=1784250001';
-import { VoiePointManager } from './voie-points.js?v=1784250001';
-import { Dashboard } from './dashboard.js?v=1784250001';
-import { GraphMarche } from './graph-marche.js?v=1784250001';
-import { StaffManager } from './staff.js?v=1784250001';
-import { Tutorial } from './tutorial.js?v=1784250001';
-import { Bank } from './bank.js?v=1784250001';
-import { Weather } from './weather.js?v=1784250001';
-import { Unions } from './unions.js?v=1784250001';
-import { SeasonalSchedule } from './seasonal.js?v=1784250001';
-import { Connections } from './connections.js?v=1784250001';
-import { StationUpgrades } from './station-upgrades.js?v=1784250001';
-import { A12Model } from './a12-model.js?v=1784250001';
-import { PlayerSignalManager } from './signaling.js?v=1784250001';
-import { JunctionManager } from './junctions.js?v=1784250001';
-import { CargoTypeManager } from './cargo-types.js?v=1784250001';
-import { ITEModules } from './ite-modules.js?v=1784250001';
-import { IndustrialClients } from './industrial-clients.js?v=1784250001';
-import { ShuntingManager } from './shunting.js?v=1784250001';
-import { haversineDistance } from './simulation.js?v=1784250001';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784250001';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784250001';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250001';
-import { adminSync } from './admin-sync.js?v=1784250001';
+import { SimulationEngine } from './engine.js?v=1784250002';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784250002';
+import { World, createDefaultWorld } from './world.js?v=1784250002';
+import { Renderer } from './renderer.js?v=1784250002';
+import { UI } from './ui.js?v=1784250002';
+import { Economy } from './economy.js?v=1784250002';
+import { IncidentManager } from './incidents.js?v=1784250002';
+import { FreightManager } from './freight.js?v=1784250002';
+import { ScheduleManager } from './schedule.js?v=1784250002';
+import { GameStorage } from './storage.js?v=1784250002';
+import { AccountManager } from './account.js?v=1784250002';
+import { RollingStockManager } from './rolling-stock.js?v=1784250002';
+import { RameManager } from './rame.js?v=1784250002';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784250002';
+import { DepotManager } from './depot.js?v=1784250002';
+import { WorksManager } from './works.js?v=1784250002';
+import { ORMClient } from './orm.js?v=1784250002';
+import { LineManager, PlatformManager } from './line.js?v=1784250002';
+import { SillonManager } from './sillon.js?v=1784250002';
+import { VoiePointManager } from './voie-points.js?v=1784250002';
+import { Dashboard } from './dashboard.js?v=1784250002';
+import { GraphMarche } from './graph-marche.js?v=1784250002';
+import { StaffManager } from './staff.js?v=1784250002';
+import { Tutorial } from './tutorial.js?v=1784250002';
+import { Bank } from './bank.js?v=1784250002';
+import { Weather } from './weather.js?v=1784250002';
+import { Unions } from './unions.js?v=1784250002';
+import { SeasonalSchedule } from './seasonal.js?v=1784250002';
+import { Connections } from './connections.js?v=1784250002';
+import { StationUpgrades } from './station-upgrades.js?v=1784250002';
+import { A12Model } from './a12-model.js?v=1784250002';
+import { PlayerSignalManager } from './signaling.js?v=1784250002';
+import { JunctionManager } from './junctions.js?v=1784250002';
+import { CargoTypeManager } from './cargo-types.js?v=1784250002';
+import { ITEModules } from './ite-modules.js?v=1784250002';
+import { IndustrialClients } from './industrial-clients.js?v=1784250002';
+import { ShuntingManager } from './shunting.js?v=1784250002';
+import { haversineDistance } from './simulation.js?v=1784250002';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784250002';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784250002';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250002';
+import { adminSync } from './admin-sync.js?v=1784250002';
 
 class RailEmpire {
   constructor() {
@@ -596,6 +596,20 @@ class RailEmpire {
     const vpMaxLat = hasViewport ? Math.max(tl.lat, br.lat) : 90;
     const vpMinLon = hasViewport ? Math.min(tl.lon, br.lon) : -180;
     const vpMaxLon = hasViewport ? Math.max(tl.lon, br.lon) : 180;
+
+    // IPCS spatial grid: index moving services by position for O(1) same-track conflict queries
+    const SERVICE_GRID_CELL = 0.02; // ~2.2 km
+    const serviceGrid = new Map();
+    for (const svc of movingSvcs) {
+      if (!svc.position) continue;
+      const latKey = Math.floor(svc.position.lat / SERVICE_GRID_CELL);
+      const lonKey = Math.floor(svc.position.lon / SERVICE_GRID_CELL);
+      const key = `${latKey},${lonKey}`;
+      if (!serviceGrid.has(key)) serviceGrid.set(key, []);
+      serviceGrid.get(key).push(svc);
+    }
+    this._serviceGrid = serviceGrid;
+    this._serviceGridCell = SERVICE_GRID_CELL;
 
     const routeIndex = new Map();
     const highCandidates = [];

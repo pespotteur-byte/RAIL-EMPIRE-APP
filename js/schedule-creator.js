@@ -936,6 +936,7 @@ export class ActiveService {
     this._cantonAssignments = null;
     this._cachedTroncon = null;
     this._cachedTronconTime = null;
+    this._trackKey = null;
   }
 
   /**
@@ -961,6 +962,10 @@ export class ActiveService {
     const first = route[0];
     const last = route[route.length - 1];
     this._routeKey = `${first.lat.toFixed(6)},${first.lon.toFixed(6)}->${last.lat.toFixed(6)},${last.lon.toFixed(6)}@${route.length}@${cumDist[0].toFixed(3)}`;
+    // Direction-agnostic key for IPCS / same-track detection (same endpoints, either direction)
+    const aKey = `${first.lat.toFixed(5)},${first.lon.toFixed(5)}`;
+    const bKey = `${last.lat.toFixed(5)},${last.lon.toFixed(5)}`;
+    this._trackKey = aKey < bKey ? `${aKey}|${bKey}` : `${bKey}|${aKey}`;
 
     // Find closest point on route to current position
     if (this.position && route.length > 1) {
@@ -1322,6 +1327,16 @@ export class ActiveService {
       if (blockLimit !== null) {
         effectiveMaxSpeed = Math.min(effectiveMaxSpeed, blockLimit);
         if (blockLimit === 0) this.train.blockedBy = true;
+      }
+
+      // IPCS runtime: stop opposite-direction trains on the same track (Section IV / Annexe 10d)
+      const ipcsLimit = this._ipcsBlockCheck(allServices);
+      if (ipcsLimit !== null) {
+        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, ipcsLimit);
+        if (ipcsLimit === 0) {
+          this.train.blockedBy = true;
+          this.train.delayReason = this.train.delayReason || 'attente IPCS / sens inverse';
+        }
       }
     }
 
@@ -1876,6 +1891,76 @@ export class ActiveService {
   }
 
   /**
+   * IPCS runtime helpers: stop trains travelling in opposite directions on the same track.
+   */
+  _getIpcsCandidates(candidates) {
+    if (typeof window !== 'undefined' && window.game?._serviceGrid) {
+      const grid = window.game._serviceGrid;
+      const cellSize = window.game._serviceGridCell || 0.02;
+      const latKey = Math.floor(this.position.lat / cellSize);
+      const lonKey = Math.floor(this.position.lon / cellSize);
+      const list = [];
+      for (let dl = -1; dl <= 1; dl++) {
+        for (let dn = -1; dn <= 1; dn++) {
+          const cell = grid.get(`${latKey + dl},${lonKey + dn}`);
+          if (cell) list.push(...cell);
+        }
+      }
+      return list;
+    }
+    return candidates || this._nearbyServices || [];
+  }
+
+  _isNearRoute(pos, route, hintIndex = 0) {
+    if (!pos || !route || route.length < 2) return false;
+    const NEAR_KM = 0.15;
+    const start = Math.max(0, hintIndex - 50);
+    const end = Math.min(route.length, hintIndex + 150);
+    for (let i = start; i < end; i++) {
+      const dlat = (pos.lat - route[i].lat) * 111;
+      const dlon = (pos.lon - route[i].lon) * 111 * Math.cos(pos.lat * Math.PI / 180);
+      if (dlat * dlat + dlon * dlon < NEAR_KM * NEAR_KM) return true;
+    }
+    return false;
+  }
+
+  _ipcsBlockCheck(candidates = null) {
+    if (!this.position || !this._state?.cachedRoute) return null;
+    const route = this._state.cachedRoute;
+    if (route.length < 2) return null;
+    const myIdx = this._state.index;
+    if (myIdx >= route.length - 1) return null;
+    const mySpeed = this.speed || 0;
+    const decel = this.train?.decel || 4;
+    const myH = Math.atan2(route[myIdx + 1].lon - route[myIdx].lon, route[myIdx + 1].lat - route[myIdx].lat);
+    const list = this._getIpcsCandidates(candidates);
+    const myTrackKey = this._trackKey;
+    for (const other of list) {
+      if (other.id === this.id) continue;
+      if (!other.position) continue;
+      if (other.state === 'waiting' || other.state === 'completed') continue;
+      if (myTrackKey && other._trackKey && other._trackKey !== myTrackKey) continue;
+      const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
+      if (rawDist > 5) continue;
+      if (!myTrackKey && !this._isNearRoute(other.position, route, myIdx)) continue;
+      const otherRoute = other._state?.cachedRoute || (typeof other.getCurrentRoute === 'function' ? other.getCurrentRoute() : null);
+      if (!otherRoute || otherRoute.length < 2) continue;
+      const oi = other._state?.index || 0;
+      if (oi >= otherRoute.length - 1) continue;
+      const oH = Math.atan2(otherRoute[oi + 1].lon - otherRoute[oi].lon, otherRoute[oi + 1].lat - otherRoute[oi].lat);
+      let hDiff = Math.abs(myH - oH);
+      if (hDiff > Math.PI) hDiff = 2 * Math.PI - hDiff;
+      if (hDiff <= Math.PI / 2) continue; // not opposite direction
+      const otherSpeed = other.speed || 0;
+      const vClose = mySpeed + otherSpeed;
+      const dSafe = Math.max(0.3, (vClose * vClose) / (2 * decel * 3600) + 0.3);
+      if (rawDist < dSafe) return 0;
+      if (rawDist < dSafe + 0.5) return 20;
+    }
+    return null;
+  }
+
+  /**
    * Lightweight macro movement for distant/low-LOD trains.
    * No canton/proximity checks, just advance along the route using current speed.
    */
@@ -1896,6 +1981,18 @@ export class ActiveService {
     );
     this.speed = Math.max(0, Math.min(this.speed || macroSpeed, macroSpeed));
     this.train.speed = Math.round(this.speed);
+
+    // IPCS runtime for low-LOD trains: stop before a head-on collision on single track
+    const ipcsLimit = this._ipcsBlockCheck();
+    if (ipcsLimit === 0) {
+      this.speed = 0;
+      this.train.speed = 0;
+      this.train.state = 'stopped';
+      this.train.delayReason = this.train.delayReason || 'attente IPCS / sens inverse';
+      return;
+    }
+    if (ipcsLimit) this.speed = Math.min(this.speed, ipcsLimit);
+
     if (this.speed <= 0) return;
     const route = this._state.cachedRoute;
     const stepKm = this.speed * dt / 3600;
