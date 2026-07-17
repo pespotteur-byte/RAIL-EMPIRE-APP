@@ -6141,7 +6141,14 @@ export class UI {
 
       const ramesHere = this.game.rameManager.getAll().filter(r => r.depotId === d.id);
       const ramesList = ramesHere.length > 0
-        ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><div style="font-size:11px;font-weight:600;margin-bottom:4px">Rames affectées (${ramesHere.length})</div>${ramesHere.map(r => `<div style="font-size:10px;padding:2px 0">${r.name}</div>`).join('')}</div>`
+        ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"><div style="font-size:11px;font-weight:600;margin-bottom:4px">Rames affectées (${ramesHere.length})</div>${ramesHere.map(r => {
+            const engines = (r.elementDetails || []).map(e => `<div style="padding-left:8px;font-size:9px;color:var(--text3)">• ${e.instanceName || e.name} (${e.category})</div>`).join('');
+            return `<div style="font-size:10px;padding:2px 0"><b>${r.name}</b>${engines}</div>`;
+          }).join('')}</div>`
+        : '';
+      const maintenanceCount = this.game.rameManager.getAll().filter(r => r.recommendedMaintenance && !this.game.depotManager.isRameInMaintenance(r.id)).length;
+      const bulkMaintButton = (d.type === 'depot' && maintenanceCount > 0)
+        ? `<button class="btn-sm" style="font-size:9px;margin-top:6px" onclick="game.ui.bulkSendToMaintenance('${d.id}')">Rapatrier ${maintenanceCount} rame(s) recommandée(s)</button>`
         : '';
 
       return `
@@ -6153,6 +6160,7 @@ export class UI {
             <b>Voies:</b> ${d.tracks} | <b>Cout:</b> ${d.cost.toLocaleString()} EUR${d.infrastructure?.length ? '<br><b>Infra:</b> ' + d.infrastructure.join(', ') : ''}
           </div>
           ${ramesList}
+          ${bulkMaintButton}
           ${d.type === 'depot' ? `
             <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
               <div style="font-size:11px;font-weight:600;margin-bottom:4px">Machines de secours (max 2)</div>
@@ -6324,6 +6332,26 @@ export class UI {
     }
     this.game.depotManager.sendRameToMaintenance(rameId, rame.name, depotId);
     this.game.saveState();
+    this.renderDepotsList();
+  }
+
+  bulkSendToMaintenance(depotId) {
+    const rames = this.game.rameManager.getAll().filter(r => r.recommendedMaintenance && !this.game.depotManager.isRameInMaintenance(r.id));
+    let count = 0;
+    for (const rame of rames) {
+      rame.inMaintenance = true;
+      const services = this.game.scheduleCreator.getActiveServices();
+      for (const svc of services) {
+        if (svc.rame && svc.rame.id === rame.id) {
+          svc.train.inMaintenance = true;
+          svc.speed = 0;
+          svc.train.speed = 0;
+        }
+      }
+      this.game.depotManager.sendRameToMaintenance(rame.id, rame.name, depotId);
+      count++;
+    }
+    if (count > 0) this.game.saveState();
     this.renderDepotsList();
   }
 
