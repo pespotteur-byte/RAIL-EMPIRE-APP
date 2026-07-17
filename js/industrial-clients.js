@@ -5,7 +5,7 @@
  * Real GPS coordinates from industrial sites.
  */
 import { icon } from './icons.js';
-import { getGlobalRng } from './rng.js?v=1784250024';
+import { getGlobalRng } from './rng.js?v=1784250025';
 
 let nextClientId = 1;
 
@@ -4412,11 +4412,20 @@ export class IndustrialClients {
     };
     // Player-moved industry sites: key `${type}|${name}` -> {lat, lon}.
     this.locationOverrides = {};
+    // Custom sites created by the player on the livemap (XXI).
+    this.customSites = [];
+    // Static real locations hidden by the player (XXI).
+    this.hiddenStaticKeys = new Set();
   }
 
-  // Persist a player-moved industry location (keyed by type|name).
+  // Persist a player-moved industry location (static or custom).
   setLocationOverride(key, lat, lon) {
     if (!key) return;
+    if (String(key).startsWith('custom|')) {
+      const s = this.customSites.find(s => s._key === key);
+      if (s) { s.lat = lat; s.lon = lon; }
+      return;
+    }
     this.locationOverrides[key] = { lat, lon };
   }
 
@@ -4434,6 +4443,7 @@ export class IndustrialClients {
       if (!ind.realLocations) continue;
       for (const loc of ind.realLocations) {
         const key = ind.type + '|' + loc.name;
+        if (this.hiddenStaticKeys.has(key)) continue;
         const ov = this.locationOverrides[key];
         locs.push({
           ...loc,
@@ -4447,7 +4457,73 @@ export class IndustrialClients {
         });
       }
     }
+    for (const s of this.customSites) {
+      const ind = this.getIndustryInfo(s.type) || {};
+      locs.push({
+        ...s,
+        industryType: s.type,
+        industryName: s.industryName || ind.name || s.name,
+        industryIcon: s.icon || ind.icon || 'factory',
+        color: INDUSTRY_COLORS[s.type] || '#94a3b8',
+        _key: s._key,
+        custom: true,
+      });
+    }
     return locs;
+  }
+
+  // XXI — CRUD sites industriels (création / modif / suppression / déplacement)
+  addCustomSite(type, name, lat, lon, country = 'FR') {
+    const id = `cs-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const _key = `custom|${id}`;
+    const s = { id, type, name, lat, lon, country: country || 'FR', _key };
+    this.customSites.push(s);
+    return s;
+  }
+
+  removeSite(key) {
+    if (String(key).startsWith('custom|')) {
+      this.customSites = this.customSites.filter(s => s._key !== key);
+    } else {
+      this.hiddenStaticKeys.add(key);
+      delete this.locationOverrides[key];
+    }
+  }
+
+  restoreStaticSite(key) {
+    this.hiddenStaticKeys.delete(key);
+  }
+
+  updateSite(key, data) {
+    if (String(key).startsWith('custom|')) {
+      const s = this.customSites.find(s => s._key === key);
+      if (!s) return null;
+      if (data.name != null) s.name = data.name;
+      if (data.type != null) s.type = data.type;
+      if (data.country != null) s.country = data.country;
+      if (data.lat != null) s.lat = parseFloat(data.lat);
+      if (data.lon != null) s.lon = parseFloat(data.lon);
+      return s;
+    }
+    // Static sites can only be renamed/hidden/moved; name override stored in locationOverrides.
+    if (data.name != null) {
+      this.locationOverrides[key] = this.locationOverrides[key] || {};
+      this.locationOverrides[key].name = data.name;
+    }
+    return null;
+  }
+
+  getSiteByKey(key) {
+    if (String(key).startsWith('custom|')) {
+      return this.customSites.find(s => s._key === key) || null;
+    }
+    for (const ind of INDUSTRY_TYPES) {
+      if (!ind.realLocations) continue;
+      for (const loc of ind.realLocations) {
+        if (ind.type + '|' + loc.name === key) return { ...loc, _key: key, type: ind.type };
+      }
+    }
+    return null;
   }
 
   attractClient(industryType, stationId, depotId, economy) {
@@ -4634,6 +4710,8 @@ export class IndustrialClients {
         </div>
       </div>
 
+      ${this._renderSitesSection(game)}
+
       ${activeClients.length > 0 ? `
       <div class="dash-section">
         <h3>Clients installés</h3>
@@ -4797,6 +4875,157 @@ export class IndustrialClients {
     };
     filterCountry?.addEventListener('change', updateFilter);
     filterType?.addEventListener('change', updateFilter);
+
+    // XXI — custom industrial sites CRUD bindings
+    container.querySelector('#btn-use-map-center')?.addEventListener('click', () => {
+      const tm = game.renderer?.tileMap;
+      if (!tm) return;
+      const latInput = container.querySelector('#new-site-lat');
+      const lonInput = container.querySelector('#new-site-lon');
+      if (latInput) latInput.value = Number(tm.centerLat).toFixed(5);
+      if (lonInput) lonInput.value = Number(tm.centerLon).toFixed(5);
+    });
+
+    container.querySelector('#btn-add-custom-site')?.addEventListener('click', () => {
+      const type = container.querySelector('#new-site-type')?.value;
+      const name = (container.querySelector('#new-site-name')?.value || '').trim();
+      const lat = parseFloat(container.querySelector('#new-site-lat')?.value);
+      const lon = parseFloat(container.querySelector('#new-site-lon')?.value);
+      const country = (container.querySelector('#new-site-country')?.value || 'FR').trim();
+      if (!type || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+        alert('Remplissez type, nom, latitude et longitude.'); return;
+      }
+      this.addCustomSite(type, name, lat, lon, country);
+      this.render(container, game);
+    });
+
+    container.querySelectorAll('.site-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        const s = this.getSiteByKey(key) || {};
+        const name = prompt('Nom du site :', s.name || '');
+        if (name === null) return;
+        const type = prompt('Type (laissez vide pour inchangé) :', s.type || '');
+        if (type === null) return;
+        const lat = prompt('Latitude :', s.lat ?? '');
+        if (lat === null) return;
+        const lon = prompt('Longitude :', s.lon ?? '');
+        if (lon === null) return;
+        const country = prompt('Pays :', s.country || 'FR');
+        if (country === null) return;
+        this.updateSite(key, {
+          name: name.trim() || undefined,
+          type: type.trim() || undefined,
+          lat: lat.trim() ? parseFloat(lat) : undefined,
+          lon: lon.trim() ? parseFloat(lon) : undefined,
+          country: country.trim() || undefined,
+        });
+        this.render(container, game);
+      });
+    });
+
+    container.querySelectorAll('.site-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (confirm('Supprimer ce site ?')) { this.removeSite(btn.dataset.key); this.render(container, game); }
+      });
+    });
+
+    container.querySelectorAll('.site-reset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        delete this.locationOverrides[btn.dataset.key];
+        this.render(container, game);
+      });
+    });
+
+    container.querySelectorAll('.site-restore').forEach(btn => {
+      btn.addEventListener('click', () => { this.restoreStaticSite(btn.dataset.key); this.render(container, game); });
+    });
+  }
+
+  _renderSitesSection(game) {
+    const typeOptions = INDUSTRY_TYPES.map(ind => `<option value="${ind.type}">${ind.name}</option>`).join('');
+
+    const customRows = this.customSites.map(s => {
+      const ind = this.getIndustryInfo(s.type) || {};
+      const color = INDUSTRY_COLORS[s.type] || '#94a3b8';
+      return `
+        <div class="dash-train-row" style="grid-template-columns:0.3fr 0.8fr 1.2fr 0.5fr 0.5fr 0.4fr 0.8fr">
+          <span>${icon(s.icon || ind.icon || 'factory', 12)}</span>
+          <span style="font-size:10px;color:${color}">${ind.name || s.type}</span>
+          <span style="font-size:10px">${s.name}</span>
+          <span style="font-size:9px;color:var(--text3)">${s.lat.toFixed(3)}</span>
+          <span style="font-size:9px;color:var(--text3)">${s.lon.toFixed(3)}</span>
+          <span style="font-size:9px;color:var(--text3)">${s.country}</span>
+          <span style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn-primary site-edit" data-key="${s._key}" style="font-size:9px;padding:3px 6px;background:#3b82f6">Modifier</button>
+            <button class="btn-primary site-delete" data-key="${s._key}" style="font-size:9px;padding:3px 6px;background:#991b1b">Supprimer</button>
+          </span>
+        </div>
+      `;
+    }).join('');
+
+    const movedRows = Object.entries(this.locationOverrides).filter(([k, v]) => !k.startsWith('custom|') && (v.lat != null || v.lon != null)).map(([key, ov]) => {
+      const site = this.getSiteByKey(key) || {};
+      return `
+        <div class="dash-train-row" style="grid-template-columns:0.3fr 0.8fr 1.2fr 0.5fr 0.5fr 0.4fr 0.8fr">
+          <span>${icon('move', 12)}</span>
+          <span style="font-size:10px;color:var(--text3)">Déplacé</span>
+          <span style="font-size:10px">${site.name || key}</span>
+          <span style="font-size:9px;color:var(--text3)">${(ov.lat ?? site.lat ?? 0).toFixed(3)}</span>
+          <span style="font-size:9px;color:var(--text3)">${(ov.lon ?? site.lon ?? 0).toFixed(3)}</span>
+          <span style="font-size:9px;color:var(--text3)">${site.country || ''}</span>
+          <span><button class="btn-primary site-reset" data-key="${key}" style="font-size:9px;padding:3px 6px;background:#6366f1">Reset</button></span>
+        </div>
+      `;
+    }).join('');
+
+    const hiddenRows = [...this.hiddenStaticKeys].map(key => {
+      const site = this.getSiteByKey(key) || {};
+      return `
+        <div class="dash-train-row" style="grid-template-columns:0.3fr 0.8fr 1.2fr 0.5fr 0.5fr 0.4fr 0.8fr">
+          <span>${icon('eye-off', 12)}</span>
+          <span style="font-size:10px;color:var(--text3)">Masqué</span>
+          <span style="font-size:10px">${site.name || key}</span>
+          <span style="font-size:9px;color:var(--text3)">${(site.lat ?? 0).toFixed(3)}</span>
+          <span style="font-size:9px;color:var(--text3)">${(site.lon ?? 0).toFixed(3)}</span>
+          <span style="font-size:9px;color:var(--text3)">${site.country || ''}</span>
+          <span><button class="btn-primary site-restore" data-key="${key}" style="font-size:9px;padding:3px 6px;background:#047857">Restaurer</button></span>
+        </div>
+      `;
+    }).join('');
+
+    const hasRows = customRows || movedRows || hiddenRows;
+
+    return `
+      <div class="dash-section">
+        <h3>${icon('factory', 16)} Mes sites industriels</h3>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Créez un site, ou déplacez/supprimez directement sur la livemap (Shift+drag / Ctrl+clic).</p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <select id="new-site-type" style="padding:6px;font-size:12px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+            <option value="">Type d'industrie...</option>
+            ${typeOptions}
+          </select>
+          <input id="new-site-name" type="text" placeholder="Nom du site" style="padding:6px;font-size:12px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+          <input id="new-site-lat" type="number" step="any" placeholder="Latitude" style="padding:6px;font-size:12px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+          <input id="new-site-lon" type="number" step="any" placeholder="Longitude" style="padding:6px;font-size:12px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+          <input id="new-site-country" type="text" placeholder="Pays (FR)" value="FR" style="padding:6px;font-size:12px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button id="btn-use-map-center" class="btn-sm btn-map-action" style="background:#334155">Utiliser le centre de la carte</button>
+          <button id="btn-add-custom-site" class="btn-sm btn-map-action" style="background:#047857">Créer le site</button>
+        </div>
+
+        ${hasRows ? `
+        <div class="dash-train-table" style="max-height:300px;overflow-y:auto">
+          <div class="dash-train-header" style="grid-template-columns:0.3fr 0.8fr 1.2fr 0.5fr 0.5fr 0.4fr 0.8fr">
+            <span></span><span>Type</span><span>Nom</span><span>Lat</span><span>Lon</span><span>Pays</span><span>Actions</span>
+          </div>
+          ${customRows}${movedRows}${hiddenRows}
+        </div>` : ''}
+      </div>
+    `;
   }
 
   _renderLocationsRows(countryFilter, typeFilter) {
@@ -4828,6 +5057,8 @@ export class IndustrialClients {
       stats: this.stats,
       _nextClientId: nextClientId,
       locationOverrides: this.locationOverrides,
+      customSites: this.customSites,
+      hiddenStaticKeys: [...this.hiddenStaticKeys],
     };
   }
 
@@ -4837,5 +5068,7 @@ export class IndustrialClients {
     this.stats = s.stats || { totalClients: 0, totalTonnage: 0, totalRevenue: 0, contractsGenerated: 0 };
     if (s._nextClientId) nextClientId = s._nextClientId;
     this.locationOverrides = s.locationOverrides || {};
+    this.customSites = s.customSites || [];
+    this.hiddenStaticKeys = new Set(s.hiddenStaticKeys || []);
   }
 }

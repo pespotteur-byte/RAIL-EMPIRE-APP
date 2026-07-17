@@ -121,6 +121,7 @@ export class UI {
     this._schedPage = 0;
     this._infogarePage = 0; // IX — scrolling pages over 24h of trains
     this.iteCreationMode = false;
+    this.industryCreationMode = false;
     this._pendingITE = null;
     this._iteMapTileMap = null;
     this._iteMapInterval = null;
@@ -272,6 +273,14 @@ export class UI {
         canvas.style.cursor = 'move';
         return;
       }
+      // Industry suppression (ctrl+click / cmd+click)
+      if ((e.ctrlKey || e.metaKey) && this._hoveredIndustry) {
+        if (confirm('Supprimer ce site industriel ?')) {
+          this.game.industrialClients.removeSite(this._hoveredIndustry._key);
+          this.game.saveState();
+        }
+        return;
+      }
       this.isDragging = true;
       this.dragStart = { x: e.clientX, y: e.clientY };
       this.dragMoved = false;
@@ -356,7 +365,8 @@ export class UI {
         // LVM-04/06 — clic sur un train : sélection + panneau détail.
         const _anyMode = this._pickConnectionMode || this.tronconCreationMode
           || this.manualTronconMode || this.tracerLigneMode || this.voiePointCreationMode
-          || this.stationCreationMode || this.iteCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
+          || this.stationCreationMode || this.iteCreationMode || this.industryCreationMode
+          || this.game._pendingSignalBox || this.game._pendingRegZone;
         if (!_anyMode && this.activePage === 'map') {
           const picked = this._findServiceAtScreen(x, y);
           if (picked) { this.selectService(picked); this.isDragging = false; return; }
@@ -421,6 +431,28 @@ export class UI {
           document.getElementById('game-canvas').style.cursor = 'grab';
           this._hidePickHint();
           this.openItemModal(worldPos.lat, worldPos.lon);
+          this.isDragging = false;
+          return;
+        }
+
+        // XXI — industrial site creation on the livemap
+        if (this.industryCreationMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          this.industryCreationMode = false;
+          const btn = document.getElementById('btn-create-industry');
+          if (btn) { btn.textContent = '+ Industrie'; btn.classList.remove('active-mode'); }
+          document.getElementById('game-canvas').style.cursor = 'grab';
+          this._hidePickHint();
+          const types = this.game.industrialClients.getIndustryTypes();
+          const typeList = types.map(t => `${t.type} - ${t.name}`).join('\n');
+          const typeInput = prompt(`Type d'industrie :\n${typeList}`) || '';
+          const type = typeInput.split(' - ')[0].trim();
+          if (!types.find(t => t.type === type)) { this.isDragging = false; return; }
+          const name = prompt('Nom du site :')?.trim();
+          if (!name) { this.isDragging = false; return; }
+          const country = (prompt('Pays (FR) :') || 'FR').trim();
+          this.game.industrialClients.addCustomSite(type, name, worldPos.lat, worldPos.lon, country);
+          this.game.saveState();
           this.isDragging = false;
           return;
         }
@@ -492,6 +524,7 @@ export class UI {
         if (this.manualTronconMode) this.toggleManualTronconCreation();
         if (this.tracerLigneMode) this.toggleTracerLigne();
         if (this.iteCreationMode) this._closeITECreator();
+        if (this.industryCreationMode) this.toggleIndustryCreation();
         if (this._insertAfterIndex != null) {
           this._insertAfterIndex = null;
           this._updateManualUI();
@@ -584,7 +617,7 @@ export class UI {
         // LVM-04/06 — tap sur un train : sélection + panneau détail.
         const _tapMode = this._pickConnectionMode || this.tronconCreationMode
           || this.manualTronconMode || this.tracerLigneMode || this.voiePointCreationMode
-          || this.stationCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
+          || this.stationCreationMode || this.industryCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
         if (!_tapMode && this.activePage === 'map') {
           const picked = this._findServiceAtScreen(x, y);
           if (picked) {
@@ -681,7 +714,7 @@ export class UI {
     if (document.getElementById('toggle-industries')?.checked) {
       const ind = renderer.getIndustryAt(x, y);
       if (ind) {
-        tooltip.innerHTML = `<div class="tt-name">${ind.name}</div><div class="tt-info">${ind.industryName}</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Shift+drag pour deplacer</div>`;
+        tooltip.innerHTML = `<div class="tt-name">${ind.name}</div><div class="tt-info">${ind.industryName}</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Shift+drag pour déplacer | Ctrl+clic pour supprimer</div>`;
         tooltip.style.left = (x + 15) + 'px';
         tooltip.style.top = (y - 10) + 'px';
         tooltip.classList.remove('hidden');
@@ -971,6 +1004,23 @@ export class UI {
     }
     const canvas = document.getElementById('game-canvas');
     if (canvas) canvas.style.cursor = this.stationCreationMode ? 'crosshair' : 'grab';
+  }
+
+  // XXI — toggle industrial site creation on the livemap
+  toggleIndustryCreation() {
+    this.industryCreationMode = !this.industryCreationMode;
+    const btn = document.getElementById('btn-create-industry');
+    if (btn) {
+      btn.textContent = this.industryCreationMode ? '✕ Annuler' : '+ Industrie';
+      btn.classList.toggle('active-mode', this.industryCreationMode);
+    }
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = this.industryCreationMode ? 'crosshair' : 'grab';
+    if (this.industryCreationMode) {
+      this._showPickHint('Cliquez sur la carte pour placer une nouvelle industrie (Echap pour annuler)');
+    } else {
+      this._hidePickHint();
+    }
   }
 
   openStationCreationModal(lat, lon) {
@@ -7911,6 +7961,11 @@ export class UI {
       this.game._pendingSignalBox = null;
       this._showPickHint('Cliquez sur la carte pour placer la zone de régulation');
       document.getElementById('game-canvas').style.cursor = 'crosshair';
+    });
+
+    // XXI — create an industrial site directly on the livemap
+    document.getElementById('btn-create-industry')?.addEventListener('click', () => {
+      this.toggleIndustryCreation();
     });
   }
 
