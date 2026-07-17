@@ -837,12 +837,18 @@ export class UI {
     const destName = stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—';
     const displayNext = svc.state === 'moving' ? curStop : nextStop;
     const nextArrTime = displayNext ? (displayNext.arrivalTime ?? displayNext.departureTime) : null;
-    const nextArrLabel = nextArrTime != null ? ` · Arr. ${fmt(nextArrTime + d)}` : '';
-    const situation = t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)
-      ? `Arrêt en gare de <b>${curName}</b>`
-      : (curIdx > 0 && curIdx < stops.length)
-        ? `Se situe entre <b>${prevName}</b> et <b>${curName}</b>`
-        : (curIdx === 0 ? `Au départ de <b>${curName}</b>` : `Service terminé`);
+    const nextArrLabel = nextArrTime != null
+      ? (d !== 0
+          ? ` · Arr. <span style="text-decoration:line-through;color:#888">${fmt(nextArrTime)}</span> <span class="lvp-recalc ${d > 0 ? 'lvp-recalc-late' : 'lvp-recalc-early'}">${fmt(nextArrTime + d)}</span>`
+          : ` · Arr. ${fmt(nextArrTime)}`)
+      : '';
+    const situation = svc.cancelled
+      ? '<span style="color:#ef4444;font-weight:600">Service supprimé</span>'
+      : (t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)
+        ? `Arrêt en gare de <b>${curName}</b>`
+        : (curIdx > 0 && curIdx < stops.length
+          ? `Se situe entre <b>${prevName}</b> et <b>${curName}</b>`
+          : (curIdx === 0 ? `Au départ de <b>${curName}</b>` : `Service terminé`)));
 
     const rame = svc.rame;
     const composition = rame
@@ -6265,6 +6271,8 @@ export class UI {
         const currentMin = pt ? pt.hours * 60 + pt.minutes : 0;
         const waitMin = Math.max(0, Math.round(svc._nextDepartureTime - currentMin));
         nextInfo = `Terminus — départ dans ${waitMin} min`;
+      } else if (svc.cancelled) {
+        nextInfo = 'Service supprimé';
       } else if (svc.completed) {
         nextInfo = 'Service terminé';
       } else if (nextStop && targetStation) {
@@ -6272,8 +6280,12 @@ export class UI {
         const voie = (nextStop.platform && nextStop.stationId) ? ` Voie ${nextStop.platform}` : '';
         const plannedArr = nextStop.arrivalTime ?? 0;
         const actualArr = plannedArr + delayVal;
-        const arrStr = fmtTime(actualArr);
+        const plannedStr = fmtTime(plannedArr);
+        const actualStr = fmtTime(actualArr);
         const distStr = nextDistKm != null ? ` — ${Math.round(nextDistKm)} km` : '';
+        const arrStr = delayVal !== 0
+          ? `<span style="text-decoration:line-through;color:#888">${plannedStr}</span> <span style="color:#facc15;font-weight:600">${actualStr}</span>`
+          : actualStr;
         nextInfo = `Prochain arrêt : ${targetStation.name}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
       } else if (nextStop) {
         nextInfo = `→ ...`;
@@ -6363,6 +6375,7 @@ export class UI {
           <div class="tc-line tc-header">
             <img src="${iconSrc}" class="tc-icon" alt="" style="background:${catColor}">
             <div class="tc-scroll"><span class="tc-scroll-text tc-name">${displayName}</span></div>
+            ${svc.cancelled ? '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:auto;flex-shrink:0">Supprimé</span>' : (svc.completed ? '<span style="background:#16a34a;color:#fff;font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:auto;flex-shrink:0">Terminé</span>' : '')}
           </div>
           ${imageHtml}
           ${payloadHtml}
