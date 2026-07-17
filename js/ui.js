@@ -1816,7 +1816,8 @@ export class UI {
     document.getElementById('btn-save-rame')?.addEventListener('click', () => this.saveRame());
     const pickerSearch = document.getElementById('rame-search');
     if (pickerSearch) pickerSearch.addEventListener('input', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
-    document.getElementById('rame-cat-filter')?.addEventListener('change', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
+    document.getElementById('rame-cat-filter')?.addEventListener('change', () => { this._ramePickerPage = 0; this._populateRameSubcatFilter(); this.renderRamePicker(); });
+    document.getElementById('rame-subcat-filter')?.addEventListener('change', () => { this._ramePickerPage = 0; this.renderRamePicker(); });
     document.getElementById('btn-clear-rame')?.addEventListener('click', () => {
       this.currentRameElements = [];
       this.renderRameAssembly();
@@ -1829,6 +1830,29 @@ export class UI {
     if (ramesPerPage) ramesPerPage.addEventListener('change', () => { this._ramesPage = 0; this.renderRamesList(); });
   }
 
+  _populateRameSubcatFilter() {
+    const sel = document.getElementById('rame-subcat-filter');
+    const catFilter = document.getElementById('rame-cat-filter');
+    if (!sel || !catFilter) return;
+    const isWagon = catFilter.value === 'wagon';
+    sel.style.display = isWagon ? 'inline-block' : 'none';
+    if (!isWagon) { sel.value = ''; return; }
+    const current = sel.value;
+    const labels = {
+      tombereau: 'Tombercau', citerne: 'Citerne', gaz: 'Gazier', 'porte-auto': 'Porte-Auto',
+      tremie: 'Trémic', cerealier: 'Céréalier', ciment: 'Ciment', silos: 'Silos',
+      plat: 'Plat', ttx: 'TTX', intermodal: 'Intermodal', speciaux: 'Spéciaux',
+      couvert: 'Couvert', bache: 'Bâché', infra: 'Infral'
+    };
+    const distinct = new Set(this.game.rollingStock.getAll().filter(i => i.category === 'wagon' && i.wagonSubCategory).map(i => i.wagonSubCategory));
+    let html = '<option value="">Tous les wagons</option>';
+    for (const [val, label] of Object.entries(labels)) {
+      if (distinct.has(val)) html += `<option value="${val}">${label}</option>`;
+    }
+    sel.innerHTML = html;
+    if (Array.from(sel.options).some(o => o.value === current)) sel.value = current;
+  }
+
   openRameModal() {
     this.currentRameElements = [];
     this.editingRameId = null;
@@ -1837,7 +1861,9 @@ export class UI {
     const ser = document.getElementById('rame-serial'); if (ser) ser.value = '';
     const s = document.getElementById('rame-search'); if (s) s.value = '';
     const c = document.getElementById('rame-cat-filter'); if (c) c.value = '';
+    const sc = document.getElementById('rame-subcat-filter'); if (sc) sc.value = '';
     const q = document.getElementById('rame-qty'); if (q) q.value = '1';
+    this._populateRameSubcatFilter();
     const depotSel = document.getElementById('rame-depot');
     if (depotSel) {
       const depots = this.game.depotManager.getDepots();
@@ -1860,15 +1886,19 @@ export class UI {
       if (countEl) countEl.textContent = '';
       return;
     }
+    this._populateRameSubcatFilter();
     const query = (document.getElementById('rame-search')?.value || '').trim().toLowerCase();
     const cat = document.getElementById('rame-cat-filter')?.value || '';
+    const subcat = document.getElementById('rame-subcat-filter')?.value || '';
     let items = all;
     if (cat) items = items.filter(i => i.category === cat);
+    if (subcat) items = items.filter(i => i.wagonSubCategory === subcat);
     if (query) items = items.filter(i =>
       (i.name || '').toLowerCase().includes(query) ||
       (i.seriesName || '').toLowerCase().includes(query) ||
       (i.category || '').toLowerCase().includes(query) ||
-      (i.traction || '').toLowerCase().includes(query));
+      (i.traction || '').toLowerCase().includes(query) ||
+      (i.wagonSubCategory || '').toLowerCase().includes(query));
     const PAGE = 60;
     const total = items.length;
     const pages = Math.max(1, Math.ceil(total / PAGE));
@@ -1909,6 +1939,9 @@ export class UI {
     if (!isFinite(qty) || qty < 1) qty = 1;
     let currentLength = this.currentRameElements.reduce((s, e) => s + e.length, 0);
     let added = 0;
+    const nameInput = document.getElementById('rame-name');
+    const serialInput = document.getElementById('rame-serial');
+    const firstInRame = this.currentRameElements.length === 0;
     for (let n = 0; n < qty; n++) {
       if (currentLength + item.length > 750) break;
       // Annexe 8 : numérotation automatique par série dans la rame.
@@ -1917,6 +1950,11 @@ export class UI {
         : null;
       const instanceName = instanceNumber || item.name;
       this.currentRameElements.push({ ...item, stockId: item.id, instanceName, instanceNumber });
+      // Annexe 8 : le nom/n° de série de la rame reprend le premier engin numéroté.
+      if (firstInRame && n === 0) {
+        if (nameInput && !nameInput.value.trim()) nameInput.value = instanceName;
+        if (serialInput && !serialInput.value.trim()) serialInput.value = instanceName;
+      }
       currentLength += item.length;
       added++;
     }

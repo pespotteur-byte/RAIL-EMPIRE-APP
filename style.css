@@ -224,7 +224,8 @@ header {
 .card-actions { margin-top: 8px; display: flex; gap: 6px; }
 .stock-card .stock-line { display: flex; gap: 4px; flex-wrap: wrap; }
 .stock-card .stock-label { color: var(--text3); min-width: 48px; }
-.stock-toolbar { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+.stock-toolbar, .rames-toolbar { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+select option { background: var(--input-bg); color: var(--text); }
 
 /* RAME DISPLAY - rames listed vertically, images side-by-side aligned bottom */
 .rames-list-container { display: flex; flex-direction: column; gap: 10px; }
