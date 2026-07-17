@@ -9569,14 +9569,6 @@ export class UI {
     } catch(e) { console.warn('IndustrialClients render error:', e); }
   }
 
-  // ==================== SHUNTING ====================
-  renderShuntingPage() {
-    try {
-      const container = document.getElementById('shunting-container');
-      this.game.shuntingManager.render(container, this.game);
-    } catch(e) { console.warn('Shunting render error:', e); }
-  }
-
   // --- Infogare image-overlay renderer (annex images as background) ---
   _renderImageMode(displayType, station, trains, nowStr, page = 0) {
     const layout = IG_IMAGE_LAYOUTS[displayType];
