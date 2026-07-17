@@ -193,6 +193,182 @@ export const CATALOG_CARGO_TYPES = [
     "unit": "t",
     "pricePerUnit": 22,
     "hazard": false
+  },
+  {
+    "category": "animaux",
+    "type": "livestock",
+    "name": "Bétail",
+    "unit": "t",
+    "pricePerUnit": 34,
+    "hazard": false
+  },
+  {
+    "category": "postal",
+    "type": "post",
+    "name": "Courrier",
+    "unit": "t",
+    "pricePerUnit": 50,
+    "hazard": false
+  },
+  {
+    "category": "granulats",
+    "type": "aggregates",
+    "name": "Granulats",
+    "unit": "t",
+    "pricePerUnit": 16,
+    "hazard": false
+  },
+  {
+    "category": "granulats",
+    "type": "limestone",
+    "name": "Calcaire",
+    "unit": "t",
+    "pricePerUnit": 14,
+    "hazard": false
+  },
+  {
+    "category": "granulats",
+    "type": "cement",
+    "name": "Ciment",
+    "unit": "t",
+    "pricePerUnit": 20,
+    "hazard": false
+  },
+  {
+    "category": "granulats",
+    "type": "clinker",
+    "name": "Clinker",
+    "unit": "t",
+    "pricePerUnit": 18,
+    "hazard": false
+  },
+  {
+    "category": "cereales",
+    "type": "sugar",
+    "name": "Sucre",
+    "unit": "t",
+    "pricePerUnit": 24,
+    "hazard": false
+  },
+  {
+    "category": "cereales",
+    "type": "salt",
+    "name": "Sel",
+    "unit": "t",
+    "pricePerUnit": 12,
+    "hazard": false
+  },
+  {
+    "category": "minerai",
+    "type": "coke",
+    "name": "Coke",
+    "unit": "t",
+    "pricePerUnit": 25,
+    "hazard": false
+  },
+  {
+    "category": "minerai",
+    "type": "bauxite",
+    "name": "Bauxite",
+    "unit": "t",
+    "pricePerUnit": 28,
+    "hazard": false
+  },
+  {
+    "category": "chimie",
+    "type": "fertilizer",
+    "name": "Engrais",
+    "unit": "t",
+    "pricePerUnit": 28,
+    "hazard": false
+  },
+  {
+    "category": "chimie",
+    "type": "potash",
+    "name": "Potasse",
+    "unit": "t",
+    "pricePerUnit": 26,
+    "hazard": false
+  },
+  {
+    "category": "chimie",
+    "type": "phosphate",
+    "name": "Phosphate",
+    "unit": "t",
+    "pricePerUnit": 30,
+    "hazard": false
+  },
+  {
+    "category": "chimie",
+    "type": "kaolin",
+    "name": "Kaolin",
+    "unit": "t",
+    "pricePerUnit": 22,
+    "hazard": false
+  },
+  {
+    "category": "chimie",
+    "type": "alumina",
+    "name": "Alumine",
+    "unit": "t",
+    "pricePerUnit": 32,
+    "hazard": false
+  },
+  {
+    "category": "acier",
+    "type": "sinter",
+    "name": "Aggloméré",
+    "unit": "t",
+    "pricePerUnit": 30,
+    "hazard": false
+  },
+  {
+    "category": "acier",
+    "type": "scrap",
+    "name": "Ferraille",
+    "unit": "t",
+    "pricePerUnit": 20,
+    "hazard": false
+  },
+  {
+    "category": "acier",
+    "type": "pig-iron",
+    "name": "Fonte",
+    "unit": "t",
+    "pricePerUnit": 35,
+    "hazard": false
+  },
+  {
+    "category": "liquides",
+    "type": "acid",
+    "name": "Acide",
+    "unit": "t",
+    "pricePerUnit": 50,
+    "hazard": true
+  },
+  {
+    "category": "liquides",
+    "type": "ammonia",
+    "name": "Ammoniac",
+    "unit": "t",
+    "pricePerUnit": 55,
+    "hazard": true
+  },
+  {
+    "category": "liquides",
+    "type": "lng",
+    "name": "GNL",
+    "unit": "t",
+    "pricePerUnit": 60,
+    "hazard": true
+  },
+  {
+    "category": "liquides",
+    "type": "lpg",
+    "name": "GPL",
+    "unit": "t",
+    "pricePerUnit": 58,
+    "hazard": true
   }
 ];
 
@@ -79620,16 +79796,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/W/SNCF_Fourg_CouvEtat_V_B_R.gif",
     "seriesName": "SNCF Cabooses Transformed covered wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-SNCF_Fourg_CouvEtat_V_B_L",
@@ -79640,16 +79819,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/W/SNCF_Fourg_CouvEtat_V_B_L.gif",
     "seriesName": "SNCF Cabooses Transformed covered wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-SNCF_Fourg_CouvEtat_SV_B_R",
@@ -79660,16 +79842,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/W/SNCF_Fourg_CouvEtat_SV_B_R.gif",
     "seriesName": "SNCF Cabooses Transformed covered wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-SNCF_Fourg_CouvEtat_SV_B_L",
@@ -79680,16 +79865,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/W/SNCF_Fourg_CouvEtat_SV_B_L.gif",
     "seriesName": "SNCF Cabooses Transformed covered wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-SNCF_Fourg_CouvEtat_SV_RW_R",
@@ -79700,16 +79888,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/W/SNCF_Fourg_CouvEtat_SV_RW_R.gif",
     "seriesName": "SNCF Cabooses Transformed covered wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-SNCF_Fourg_CouvEtat_SV_RW_L",
@@ -79720,16 +79911,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/W/SNCF_Fourg_CouvEtat_SV_RW_L.gif",
     "seriesName": "SNCF Cabooses Transformed covered wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-SNCF_Fourg_StdD_B_R",
@@ -79964,12 +80158,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-E_PLM07M_L",
@@ -79987,12 +80185,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Tyw_TP",
@@ -80010,12 +80212,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_E9_31",
@@ -80033,12 +80239,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-E_Linz",
@@ -80056,12 +80266,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-E_Klagenfurt",
@@ -80079,12 +80293,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-E_KlagenfurtM",
@@ -80102,12 +80320,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Eamnos5840_Nacco",
@@ -80125,12 +80347,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_E71_V",
@@ -80148,12 +80374,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_E71_G",
@@ -80171,12 +80401,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_E74",
@@ -80194,12 +80428,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_E78_BS",
@@ -80217,12 +80455,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_E78_BM",
@@ -80240,12 +80482,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_E79",
@@ -80263,12 +80509,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Fcs_40_2_R",
@@ -80286,12 +80536,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Fcs_40_2_L",
@@ -80309,12 +80563,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-F70",
@@ -80332,12 +80590,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_1S_BSF_R",
@@ -80355,12 +80617,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_1S_BSF_L",
@@ -80378,12 +80644,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_1S_BS_R",
@@ -80401,12 +80671,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_1S_BS_L",
@@ -80424,12 +80698,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_1S_BMF_R",
@@ -80447,12 +80725,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_1S_BMF_L",
@@ -80470,12 +80752,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_2S_BSF_R",
@@ -80493,12 +80779,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_2S_BSF_L",
@@ -80516,12 +80806,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_2S_BS_R",
@@ -80539,12 +80833,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T13_2S_BS_L",
@@ -80562,12 +80860,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T14_R",
@@ -80585,12 +80887,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T14_L",
@@ -80608,12 +80914,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_T60_R",
@@ -80631,12 +80941,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T60_L",
@@ -80654,12 +80963,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T60a_R",
@@ -80677,12 +80985,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T60a_L",
@@ -80700,12 +81007,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T61_R",
@@ -80723,12 +81029,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T61_L",
@@ -80746,12 +81051,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T90_BS_Fret_R",
@@ -80769,12 +81073,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T90_BS_Fret_L",
@@ -80792,12 +81095,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T90_BM_R",
@@ -80815,12 +81117,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_T90_BM_L",
@@ -80838,12 +81139,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_Nord33_B",
@@ -80861,12 +81161,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Glm1_62_RW",
@@ -80884,12 +81183,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_OCEM19_B",
@@ -80907,12 +81205,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gm1_21_B",
@@ -80930,8 +81227,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -80953,12 +81250,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gm1_21_RW",
@@ -80976,8 +81272,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -80999,12 +81295,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_OCEM29_B",
@@ -81022,12 +81317,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gms2_21_B",
@@ -81045,8 +81339,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -81068,12 +81362,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_OCEM29F_L",
@@ -81091,12 +81384,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gms2_21b_B",
@@ -81114,8 +81406,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -81137,12 +81429,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_OCEM29p_RW",
@@ -81160,12 +81451,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_OCEM35_B",
@@ -81183,12 +81473,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gbks7_21_RW",
@@ -81206,12 +81495,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Primeurs_OCEM28_B",
@@ -81229,12 +81517,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Ghks5_21_RW",
@@ -81252,12 +81539,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_MuKa_B",
@@ -81275,12 +81561,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "salt",
+      "ore",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_WD_B",
@@ -81298,12 +81585,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "ore",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_TP4P",
@@ -81321,12 +81608,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "ore",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_StdA_B",
@@ -81344,12 +81631,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gs3_11_B",
@@ -81367,12 +81653,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_StdA_RW",
@@ -81390,12 +81675,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gs3_11_RW",
@@ -81413,12 +81697,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gs3_11p_RW",
@@ -81436,12 +81719,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_StdB_B",
@@ -81459,12 +81741,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gs3_12_B",
@@ -81482,12 +81763,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Couv_StdB_RW",
@@ -81505,12 +81785,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gs3_12p_RW",
@@ -81528,12 +81807,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-G_UIC_Bois_B",
@@ -81551,12 +81829,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-G_UIC_Bois_RW",
@@ -81574,12 +81851,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-G4_Bois",
@@ -81597,12 +81873,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-G_UIC_RW",
@@ -81620,12 +81895,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-G_UIC_RWPE",
@@ -81643,12 +81917,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gs41_6",
@@ -81666,12 +81939,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gbs_7_23_E3RW",
@@ -81689,8 +81961,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -81712,12 +81984,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gas80",
@@ -81735,12 +82006,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gas86",
@@ -81758,12 +82028,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gakkss16_6",
@@ -81781,12 +82050,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gahkkss10_6_1S",
@@ -81804,12 +82072,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gahkkss10_6_2S",
@@ -81827,12 +82094,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gakkss11_6",
@@ -81850,12 +82116,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gahkkss12_6",
@@ -81873,12 +82138,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gahkkss16_6",
@@ -81896,12 +82160,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gahkkss13_6",
@@ -81919,12 +82182,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gahkss02_6",
@@ -81942,12 +82204,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Gabs50",
@@ -81965,12 +82226,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_CouvCoch_UR_B",
@@ -81988,12 +82248,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Hes_09_6",
@@ -82011,12 +82270,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-H37",
@@ -82034,12 +82292,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Habis81_6_Unimetal",
@@ -82057,12 +82314,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Habils87_6_ExEVS",
@@ -82080,12 +82336,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "waste"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "waste"
   },
   {
     "id": "cat-SNCF_Habils87_6_Fret",
@@ -82103,12 +82358,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Habbiss96_6_Fret",
@@ -82126,12 +82380,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I85",
@@ -82149,12 +82402,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_I87_R",
@@ -82172,12 +82424,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_I87_L",
@@ -82195,12 +82446,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_I87_Fruits_R",
@@ -82218,12 +82468,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_I87_Fruits_L",
@@ -82241,12 +82490,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_I87_Ermewa_R",
@@ -82264,12 +82512,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_I87_Ermewa_L",
@@ -82287,12 +82534,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Plat_OCEM19A_B",
@@ -82310,13 +82556,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_OCEM19A_RW",
@@ -82334,13 +82583,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_OCEM19B_B",
@@ -82358,13 +82610,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-K_OCEM29",
@@ -82382,13 +82637,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-K_OCEM29_E4",
@@ -82406,13 +82664,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_Stuttgart_B",
@@ -82430,13 +82691,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Klms4_56_RW",
@@ -82454,13 +82719,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_StdD_B",
@@ -82478,13 +82747,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Kms4_14_RW",
@@ -82502,13 +82774,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_UIC_B",
@@ -82526,13 +82801,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_K50_B",
@@ -82550,13 +82828,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_UIC_RW",
@@ -82574,13 +82855,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_K50_RW",
@@ -82598,13 +82882,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Kils70_6_B",
@@ -82622,13 +82909,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Kils70_6_BFret",
@@ -82646,13 +82936,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Kils70_6_G",
@@ -82670,13 +82963,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-L31",
@@ -82694,13 +82990,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-L42",
@@ -82718,13 +83017,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Lgs50_6",
@@ -82742,13 +83044,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_WD_G",
@@ -82766,13 +83071,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R_TP_BB",
@@ -82790,13 +83099,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R_TP_BB_E4",
@@ -82814,13 +83127,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Plat_TP_RW",
@@ -82838,13 +83155,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R_TP_Ranchers",
@@ -82862,13 +83183,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R_PLM_Ranchers",
@@ -82886,13 +83211,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rmmos_R11_6",
@@ -82910,13 +83239,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R66",
@@ -82934,13 +83267,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "ore",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Remms_10_2",
@@ -82958,13 +83295,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R40",
@@ -82982,13 +83322,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_R80",
@@ -83006,13 +83349,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Rs_80_1",
@@ -83030,13 +83376,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Res90_8HBS",
@@ -83054,13 +83403,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Res90_8HBM",
@@ -83078,13 +83430,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Res90_9HBS",
@@ -83102,13 +83457,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Res90_9HBM",
@@ -83126,13 +83484,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rloos_R50_6_BS",
@@ -83150,13 +83511,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rloos_R50_6_BM",
@@ -83174,13 +83538,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Roos_R54_6_BS",
@@ -83198,13 +83565,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Roos_R54_6_BM",
@@ -83222,13 +83592,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Roos_R56_1S_BS",
@@ -83246,13 +83619,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Roos_R56_1S_BM",
@@ -83270,13 +83646,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Roos_R56_2S",
@@ -83294,13 +83673,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Roos_R58",
@@ -83318,13 +83700,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Roos_R59_9",
@@ -83342,13 +83727,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rilmms0_16_G",
@@ -83366,13 +83754,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rilmms00_6_G",
@@ -83390,13 +83781,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rilmms00_6_GFret",
@@ -83414,13 +83808,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils20_6_BS_G",
@@ -83438,13 +83835,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils20_6_BS_GFret",
@@ -83462,13 +83862,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils20_6_BM_G",
@@ -83486,13 +83889,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils20_6_BM_GFret",
@@ -83510,13 +83916,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils26_6_BS_B",
@@ -83534,13 +83943,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R27",
@@ -83558,13 +83970,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-R27_FRETR",
@@ -83582,13 +83997,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils30_9_G",
@@ -83606,13 +84024,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils30_9_OFret",
@@ -83630,13 +84051,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Rils31_9_G",
@@ -83654,13 +84078,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_S40",
@@ -83678,13 +84105,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_S41",
@@ -83702,13 +84132,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Sgss60_6",
@@ -83726,13 +84159,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-S63",
@@ -83750,13 +84186,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-S73",
@@ -83774,13 +84213,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-S89",
@@ -83798,13 +84240,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Slmmps96_6",
@@ -83822,13 +84267,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-S20",
@@ -83846,13 +84294,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-S26_6",
@@ -83870,13 +84322,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-S32",
@@ -83894,13 +84350,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-S32_6",
@@ -83918,13 +84378,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Shimms_50_1_R",
@@ -83942,13 +84406,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Shimms_50_1_L",
@@ -83966,13 +84434,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Shimms53_9_BS_G",
@@ -83990,13 +84462,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Shimms53_9_BS_GFret",
@@ -84014,13 +84490,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Shimms53_9_BM_G",
@@ -84038,13 +84518,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Shimms58_9_G",
@@ -84062,13 +84546,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCF_Shimmns18_6_Ermewa",
@@ -84086,13 +84574,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
       "steel",
-      "vehicles"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-TGS_R",
@@ -85243,16 +85735,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X3886_ARE_R.gif",
     "seriesName": "SNCF Experimental EAD X3886 ARE",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X3886_ARE_L",
@@ -85263,16 +85757,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X3886_ARE_L.gif",
     "seriesName": "SNCF Experimental EAD X3886 ARE",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X_72500_ETCS_comp",
@@ -85283,16 +85779,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/composed/X_72500_ETCS.png",
     "seriesName": "SNCF Experimental EAD X 72500 ETCS",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X2061_R",
@@ -85303,16 +85801,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X2061_R.gif",
     "seriesName": "SNCF Experimental Turbotrains X2061",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X2061_L",
@@ -85323,16 +85823,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X2061_L.gif",
     "seriesName": "SNCF Experimental Turbotrains X2061",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X1500_Astree_R",
@@ -85343,16 +85845,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X1500_Astree_R.gif",
     "seriesName": "SNCF Experimental Turbotrains X1501 / 1502",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X1500_Astree_L",
@@ -85363,16 +85867,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X1500_Astree_L.gif",
     "seriesName": "SNCF Experimental Turbotrains X1501 / 1502",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X1500_ERTMS_R",
@@ -85383,16 +85889,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X1500_ERTMS_R.gif",
     "seriesName": "SNCF Experimental Turbotrains X1501 / 1502",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X1500_ERTMS_L",
@@ -85403,16 +85911,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X1500_ERTMS_L.gif",
     "seriesName": "SNCF Experimental Turbotrains X1501 / 1502",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X1500_ERTMS_Infra_R",
@@ -85423,16 +85933,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X1500_ERTMS_Infra_R.gif",
     "seriesName": "SNCF Experimental Turbotrains X1501 / 1502",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X1500_ERTMS_Infra_L",
@@ -85443,16 +85955,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/X1500_ERTMS_Infra_L.gif",
     "seriesName": "SNCF Experimental Turbotrains X1501 / 1502",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001_M_R",
@@ -85463,16 +85977,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001_M_R.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001_M_L",
@@ -85483,16 +85999,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001_M_L.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001_N_M_R",
@@ -85503,16 +86021,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001_N_M_R.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001_N_M_L",
@@ -85523,16 +86043,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001_N_M_L.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001_R_R",
@@ -85543,16 +86065,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001_R_R.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001_R_L",
@@ -85563,16 +86087,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001_R_L.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001A_M_R",
@@ -85583,16 +86109,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001A_M_R.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001A_M_L",
@@ -85603,16 +86131,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001A_M_L.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001A_R_R",
@@ -85623,16 +86153,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001A_R_R.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV001A_R_L",
@@ -85643,16 +86175,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV001A_R_L.gif",
     "seriesName": "SNCF TGV TGV001",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_M_R",
@@ -85663,16 +86197,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_M_R.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_M_L",
@@ -85683,16 +86219,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_M_L.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_R1_R",
@@ -85703,16 +86241,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_R1_R.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_R1_L",
@@ -85723,16 +86263,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_R1_L.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_RI_R",
@@ -85743,16 +86285,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_RI_R.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_RI_L",
@@ -85763,16 +86307,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_RI_L.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_Bar_R",
@@ -85783,16 +86329,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_Bar_R.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_Bar_L",
@@ -85803,16 +86351,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_Bar_L.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_R8_R",
@@ -85823,16 +86373,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_R8_R.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGV02301_R8_L",
@@ -85843,16 +86395,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGV02301_R8_L.gif",
     "seriesName": "SNCF TGV TGV 02301/02302 (train 88)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_M_R",
@@ -85863,16 +86417,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_M_R.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_M_L",
@@ -85883,16 +86439,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_M_L.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R1_R",
@@ -85903,16 +86461,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R1_R.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R1_L",
@@ -85923,16 +86483,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R1_L.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R2_R",
@@ -85943,16 +86505,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R2_R.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R2_L",
@@ -85963,16 +86527,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R2_L.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R4_R",
@@ -85983,16 +86549,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R4_R.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R4_L",
@@ -86003,16 +86571,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R4_L.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R8_R",
@@ -86023,16 +86593,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R8_R.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP01_R8_L",
@@ -86043,16 +86615,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Exp/TGVP01_R8_L.gif",
     "seriesName": "SNCF TGV TGV P01 (train 101)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X2464_C_R",
@@ -86063,16 +86637,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/X2464_C_R.gif",
     "seriesName": "SNCF Measures DMU X 2400",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X2464_C_L",
@@ -86083,16 +86659,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/X2464_C_L.gif",
     "seriesName": "SNCF Measures DMU X 2400",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X3997_V_R",
@@ -86103,16 +86681,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/X3997_V_R.gif",
     "seriesName": "SNCF Measures DMU X 3800",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X3997_V_L",
@@ -86123,16 +86703,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/X3997_V_L.gif",
     "seriesName": "SNCF Measures DMU X 3800",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X3997_C_R",
@@ -86143,16 +86725,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/X3997_C_R.gif",
     "seriesName": "SNCF Measures DMU X 3800",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X3997_C_L",
@@ -86163,16 +86747,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/X3997_C_L.gif",
     "seriesName": "SNCF Measures DMU X 3800",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_MatisaM562_L1_R",
@@ -86183,16 +86769,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_MatisaM562_L1_R.gif",
     "seriesName": "SNCF Measures DMU Matisa M562",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_MatisaM562_L1_L",
@@ -86203,16 +86791,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_MatisaM562_L1_L.gif",
     "seriesName": "SNCF Measures DMU Matisa M562",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_MatisaM562_Vigirail_R",
@@ -86223,16 +86813,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_MatisaM562_Vigirail_R.gif",
     "seriesName": "SNCF Measures DMU Matisa M562",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_MatisaM562_Vigirail_L",
@@ -86243,16 +86835,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_MatisaM562_Vigirail_L.gif",
     "seriesName": "SNCF Measures DMU Matisa M562",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures133_C_R",
@@ -86263,16 +86857,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures133_C_R.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 133",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures133_C_L",
@@ -86283,16 +86879,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures133_C_L.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 133",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures133_BI_R",
@@ -86303,16 +86901,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures133_BI_R.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 133",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures133_BI_L",
@@ -86323,16 +86923,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures133_BI_L.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 133",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures133_GJInfra_R",
@@ -86343,16 +86945,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures133_GJInfra_R.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 133",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures133_GJInfra_L",
@@ -86363,16 +86967,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures133_GJInfra_L.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 133",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures136_V",
@@ -86383,16 +86989,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures136_V.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 136",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures136_BC",
@@ -86403,16 +87011,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures136_BC.gif",
     "seriesName": "SNCF Track control coaches Measures coach nr 136",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures195_BRTBC_R",
@@ -86423,16 +87033,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures195_BRTBC_R.gif",
     "seriesName": "SNCF Radio measuring coaches Measures coach nr 195",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures195_BRTBC_L",
@@ -86443,16 +87055,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures195_BRTBC_L.gif",
     "seriesName": "SNCF Radio measuring coaches Measures coach nr 195",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures195_BRTBI_R",
@@ -86463,16 +87077,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures195_BRTBI_R.gif",
     "seriesName": "SNCF Radio measuring coaches Measures coach nr 195",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures195_BRTBI_L",
@@ -86483,16 +87099,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures195_BRTBI_L.gif",
     "seriesName": "SNCF Radio measuring coaches Measures coach nr 195",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures196_R_R",
@@ -86503,16 +87121,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures196_R_R.gif",
     "seriesName": "SNCF Radio measuring coaches CRIS 196",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures196_R_L",
@@ -86523,16 +87143,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures196_R_L.gif",
     "seriesName": "SNCF Radio measuring coaches CRIS 196",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures196_RI_R",
@@ -86543,16 +87165,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures196_RI_R.gif",
     "seriesName": "SNCF Radio measuring coaches CRIS 196",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures196_RI_L",
@@ -86563,16 +87187,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures196_RI_L.gif",
     "seriesName": "SNCF Radio measuring coaches CRIS 196",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Cris196_GJI_R",
@@ -86583,16 +87209,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Cris196_GJI_R.gif",
     "seriesName": "SNCF Radio measuring coaches CRIS 196",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Cris196_GJI_L",
@@ -86603,16 +87231,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Cris196_GJI_L.gif",
     "seriesName": "SNCF Radio measuring coaches CRIS 196",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures198_RN_R",
@@ -86623,16 +87253,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures198_RN_R.gif",
     "seriesName": "SNCF Radio measuring coaches CRISTEL 198",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures198_RN_L",
@@ -86643,16 +87275,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures198_RN_L.gif",
     "seriesName": "SNCF Radio measuring coaches CRISTEL 198",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures198_GJ_R",
@@ -86663,16 +87297,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures198_GJ_R.gif",
     "seriesName": "SNCF Radio measuring coaches CRISTEL 198",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures198_GJ_L",
@@ -86683,16 +87319,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures198_GJ_L.gif",
     "seriesName": "SNCF Radio measuring coaches CRISTEL 198",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_IES142_GJ_R",
@@ -86703,16 +87341,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_IES142_GJ_R.gif",
     "seriesName": "SNCF IES coaches IES 142 and 143",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_IES142_GJ_L",
@@ -86723,16 +87363,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_IES142_GJ_L.gif",
     "seriesName": "SNCF IES coaches IES 142 and 143",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES161_V_L",
@@ -86743,16 +87385,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES161_V_L.gif",
     "seriesName": "SNCF IES coaches IES 161",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_C_R",
@@ -86763,16 +87407,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_C_R.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_C_L",
@@ -86783,16 +87429,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_C_L.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_BC_R",
@@ -86803,16 +87451,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_BC_R.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_BC_L",
@@ -86823,16 +87473,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_BC_L.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_BI_R",
@@ -86843,16 +87495,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_BI_R.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_BI_L",
@@ -86863,16 +87517,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_BI_L.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_GJ_R",
@@ -86883,16 +87539,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_GJ_R.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-IES171_GJ_L",
@@ -86903,16 +87561,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/IES171_GJ_L.gif",
     "seriesName": "SNCF IES coaches IES 171",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Lucie_R_R",
@@ -86923,16 +87583,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Lucie_R_R.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Lucie_R_L",
@@ -86943,16 +87605,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Lucie_R_L.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Lucie_GJ_R",
@@ -86963,16 +87627,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Lucie_GJ_R.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Lucie_GJ_L",
@@ -86983,16 +87649,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Lucie_GJ_L.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Helene_R_R",
@@ -87003,16 +87671,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Helene_R_R.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Helene_R_L",
@@ -87023,16 +87693,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Helene_R_L.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Helene_B_R",
@@ -87043,16 +87715,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Helene_B_R.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Helene_B_L",
@@ -87063,16 +87737,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Helene_B_L.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Helene_BI_R",
@@ -87083,16 +87759,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Helene_BI_R.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Helene_BI_L",
@@ -87103,16 +87781,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Helene_BI_L.gif",
     "seriesName": "SNCF IES coaches IES 183 \"Lucie\" et 184 \"Hélène\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Veronique185_R_R",
@@ -87123,16 +87803,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Veronique185_R_R.gif",
     "seriesName": "SNCF IES coaches IES 185 \"Véronique\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Veronique185_R_L",
@@ -87143,16 +87825,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Veronique185_R_L.gif",
     "seriesName": "SNCF IES coaches IES 185 \"Véronique\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Veronique185_GJ_R",
@@ -87163,16 +87847,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Veronique185_GJ_R.gif",
     "seriesName": "SNCF IES coaches IES 185 \"Véronique\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Veronique185_GJ_L",
@@ -87183,16 +87869,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Veronique185_GJ_L.gif",
     "seriesName": "SNCF IES coaches IES 185 \"Véronique\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Ssmyfi444_R",
@@ -87203,16 +87891,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Ssmyfi444_R.gif",
     "seriesName": "SNCF Catenary control coaches Ssmyfi 444",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Ssmyfi444_L",
@@ -87223,16 +87913,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Ssmyfi444_L.gif",
     "seriesName": "SNCF Catenary control coaches Ssmyfi 444",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Mes162_BR_R",
@@ -87243,16 +87935,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Mes162_BR_R.gif",
     "seriesName": "SNCF Catenary control coaches Ssmyfi 444",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Mes162_BR_L",
@@ -87263,16 +87957,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Mes162_BR_L.gif",
     "seriesName": "SNCF Catenary control coaches Ssmyfi 444",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Mes152_BI_R",
@@ -87283,16 +87979,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Mes152_BI_R.gif",
     "seriesName": "SNCF Catenary control coaches VZC 152",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Mes152_BI_L",
@@ -87303,16 +88001,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Mes152_BI_L.gif",
     "seriesName": "SNCF Catenary control coaches VZC 152",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Mes152_GJInfra_R",
@@ -87323,16 +88023,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Mes152_GJInfra_R.gif",
     "seriesName": "SNCF Catenary control coaches VZC 152",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_Mes152_GJInfra_L",
@@ -87343,16 +88045,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_Mes152_GJInfra_L.gif",
     "seriesName": "SNCF Catenary control coaches VZC 152",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_OU_R",
@@ -87363,16 +88067,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_OU_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_OU_L",
@@ -87383,16 +88089,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_OU_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_BC_R",
@@ -87403,16 +88111,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_BC_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_BC_L",
@@ -87423,16 +88133,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_BC_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_BI_R",
@@ -87443,16 +88155,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_BI_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_BI_L",
@@ -87463,16 +88177,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_BI_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_GJ_R",
@@ -87483,16 +88199,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_GJ_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin211_GJ_L",
@@ -87503,16 +88221,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin211_GJ_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 211",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin212_BC_R",
@@ -87523,16 +88243,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin212_BC_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 212",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin212_BC_L",
@@ -87543,16 +88265,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin212_BC_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 212",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin212_BI_R",
@@ -87563,16 +88287,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin212_BI_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 212",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin212_BI_L",
@@ -87583,16 +88309,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin212_BI_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 212",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_C_R",
@@ -87603,16 +88331,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_C_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_C_L",
@@ -87623,16 +88353,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_C_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_BN_R",
@@ -87643,16 +88375,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_BN_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_BN_L",
@@ -87663,16 +88397,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_BN_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_BC_R",
@@ -87683,16 +88419,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_BC_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_BC_L",
@@ -87703,16 +88441,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_BC_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_BI_R",
@@ -87723,16 +88463,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_BI_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_BI_L",
@@ -87743,16 +88485,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_BI_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_GJ_R",
@@ -87763,16 +88507,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_GJ_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin213_GJ_L",
@@ -87783,16 +88529,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin213_GJ_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 213",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ssmyfi439_L",
@@ -87803,16 +88551,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Ssmyfi439_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_GMR_R",
@@ -87823,16 +88573,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_GMR_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Mauzin214_GMR_L",
@@ -87843,16 +88596,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_GMR_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Mauzin214_C_R",
@@ -87863,16 +88619,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_C_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_C_L",
@@ -87883,16 +88641,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_C_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_CN_R",
@@ -87903,16 +88663,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_CN_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_CN_L",
@@ -87923,16 +88685,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_CN_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_BC_R",
@@ -87943,16 +88707,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_BC_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_BC_L",
@@ -87963,16 +88729,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_BC_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_BI_R",
@@ -87983,16 +88751,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_BI_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_BI_L",
@@ -88003,16 +88773,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_BI_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_GJ_R",
@@ -88023,16 +88795,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_GJ_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin214_GJ_L",
@@ -88043,16 +88817,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin214_GJ_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 214",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_BR_R",
@@ -88063,16 +88839,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_BR_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_BR_L",
@@ -88083,16 +88861,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_BR_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_BC_R",
@@ -88103,16 +88883,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_BC_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_BC_L",
@@ -88123,16 +88905,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_BC_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_BI_R",
@@ -88143,16 +88927,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_BI_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_BI_L",
@@ -88163,16 +88949,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_BI_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_GInfra_R",
@@ -88183,16 +88971,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_GInfra_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzin216_GInfra_L",
@@ -88203,16 +88993,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzin216_GInfra_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches Mauzin 216",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzinette_RC_R",
@@ -88223,16 +89015,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzinette_RC_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches \"Mauzinettes\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzinette_RC_L",
@@ -88243,16 +89037,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzinette_RC_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches \"Mauzinettes\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzinette_RCM_R",
@@ -88263,16 +89059,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzinette_RCM_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches \"Mauzinettes\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzinette_RCM_L",
@@ -88283,16 +89081,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzinette_RCM_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches \"Mauzinettes\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzinette_GB_R",
@@ -88303,16 +89103,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzinette_GB_R.gif",
     "seriesName": "SNCF \"Mauzin\" coaches \"Mauzinettes\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mauzinette_GB_L",
@@ -88323,16 +89125,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mauzinette_GB_L.gif",
     "seriesName": "SNCF \"Mauzin\" coaches \"Mauzinettes\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VTU_GJ_R",
@@ -88343,16 +89147,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VTU_GJ_R.gif",
     "seriesName": "SNCF Coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VTU_GJ_L",
@@ -88363,16 +89169,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VTU_GJ_L.gif",
     "seriesName": "SNCF Coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_VU_A4B6_GJInfra_R",
@@ -88383,16 +89191,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_VU_A4B6_GJInfra_R.gif",
     "seriesName": "SNCF Coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SNCF_VU_A4B6_GJInfra_L",
@@ -88403,16 +89213,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/SNCF_VU_A4B6_GJInfra_L.gif",
     "seriesName": "SNCF Coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VU_GJ_R",
@@ -88423,16 +89235,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VU_GJ_R.gif",
     "seriesName": "SNCF Coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VU_GJ_L",
@@ -88443,16 +89257,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VU_GJ_L.gif",
     "seriesName": "SNCF Coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Melusine_GG_R",
@@ -88463,16 +89279,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Melusine_GG_R.gif",
     "seriesName": "SNCF Measures with TGV Melusine",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Melusine_GG_L",
@@ -88483,16 +89301,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Melusine_GG_L.gif",
     "seriesName": "SNCF Measures with TGV Melusine",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Melusine_GB_R",
@@ -88503,16 +89323,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Melusine_GB_R.gif",
     "seriesName": "SNCF Measures with TGV Melusine",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Melusine_GB_L",
@@ -88523,16 +89345,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Melusine_GB_L.gif",
     "seriesName": "SNCF Measures with TGV Melusine",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_M_Vigirail_R",
@@ -88543,16 +89367,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_M_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_M_Vigirail_L",
@@ -88563,16 +89389,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_M_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R1_Vigirail_R",
@@ -88583,16 +89411,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R1_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R1_Vigirail_L",
@@ -88603,16 +89433,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R1_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R2_Vigirail_R",
@@ -88623,16 +89455,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R2_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R2_Vigirail_L",
@@ -88643,16 +89477,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R2_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R3_Vigirail_R",
@@ -88663,16 +89499,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R3_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R3_Vigirail_L",
@@ -88683,16 +89521,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R3_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R4_Vigirail_R",
@@ -88703,16 +89543,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R4_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R4_Vigirail_L",
@@ -88723,16 +89565,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R4_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R5_Vigirail_R",
@@ -88743,16 +89587,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R5_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R5_Vigirail_L",
@@ -88763,16 +89609,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R5_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R6_Vigirail_R",
@@ -88783,16 +89631,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R6_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R6_Vigirail_L",
@@ -88803,16 +89653,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R6_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R8_Vigirail_R",
@@ -88823,16 +89675,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R8_Vigirail_R.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVR_IRIS320_R8_Vigirail_L",
@@ -88843,16 +89697,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/TGVR_IRIS320_R8_Vigirail_L.gif",
     "seriesName": "SNCF Measures with TGV IRIS 320",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET201_GMR_R",
@@ -88863,16 +89719,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET201_GMR_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 201",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET201_GMR_L",
@@ -88883,16 +89742,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET201_GMR_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 201",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET201_C_R",
@@ -88903,16 +89765,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET201_C_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 201",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET201_C_L",
@@ -88923,16 +89787,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET201_C_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 201",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET202_GMR_R",
@@ -88943,16 +89809,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET202_GMR_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 202",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET202_GMR_L",
@@ -88963,16 +89832,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET202_GMR_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 202",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET202_C_R",
@@ -88983,16 +89855,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET202_C_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 202",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET202_C_L",
@@ -89003,16 +89877,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET202_C_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 202",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VDyn2_VTN_R",
@@ -89023,16 +89899,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VDyn2_VTN_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VDyn2_VTN_L",
@@ -89043,16 +89921,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VDyn2_VTN_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET203_GMR_R",
@@ -89063,16 +89943,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_GMR_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET203_GMR_L",
@@ -89083,16 +89966,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_GMR_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET203_BR_R",
@@ -89103,16 +89989,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_BR_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET203_BR_L",
@@ -89123,16 +90011,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_BR_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET203_SP_BR_R",
@@ -89143,16 +90033,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_SP_BR_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET203_SP_BR_L",
@@ -89163,16 +90055,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_SP_BR_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET203_SP_BC_R",
@@ -89183,16 +90077,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_SP_BC_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET203_SP_BC_L",
@@ -89203,16 +90099,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET203_SP_BC_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 203",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET204_GMR_R",
@@ -89223,16 +90121,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET204_GMR_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 204",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET204_GMR_L",
@@ -89243,16 +90144,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET204_GMR_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 204",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "paper",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-VET204_BR_R",
@@ -89263,16 +90167,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET204_BR_R.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 204",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VET204_BR_L",
@@ -89283,16 +90189,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/VET204_BR_L.gif",
     "seriesName": "SNCF \"Voitures électrotechniques\" VET 204",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mes242_GC_R",
@@ -89303,16 +90211,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mes242_GC_R.gif",
     "seriesName": "SNCF Miscellaenous measures For sound measures",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mes242_GC_L",
@@ -89323,16 +90233,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mes242_GC_L.gif",
     "seriesName": "SNCF Miscellaenous measures For sound measures",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mes242_BC_R",
@@ -89343,16 +90255,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mes242_BC_R.gif",
     "seriesName": "SNCF Miscellaenous measures For sound measures",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mes242_BC_L",
@@ -89363,16 +90277,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mes242_BC_L.gif",
     "seriesName": "SNCF Miscellaenous measures For sound measures",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures 10003",
@@ -89383,16 +90299,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures 10003.gif",
     "seriesName": "SNCF Measures coaches (misc.)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mes262_C_R",
@@ -89403,16 +90321,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mes262_C_R.gif",
     "seriesName": "SNCF Measures coaches (misc.)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mesures271_C_L",
@@ -89423,16 +90343,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/Mesures271_C_L.gif",
     "seriesName": "SNCF Measures coaches (misc.)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-USI61_Mesures_R",
@@ -89443,16 +90365,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/USI61_Mesures_R.gif",
     "seriesName": "SNCF Measures coaches (misc.)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-USI_Mesures",
@@ -89463,16 +90387,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Mes/USI_Mesures.gif",
     "seriesName": "SNCF Measures coaches (misc.)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac3_E4A_R",
@@ -89483,16 +90409,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac3_E4A_R.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac3_E4A_L",
@@ -89503,16 +90431,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac3_E4A_L.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac3_E4B_EB_R",
@@ -89523,16 +90453,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac3_E4B_EB_R.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac3_E4B_EB_L",
@@ -89543,16 +90475,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac3_E4B_EB_L.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac3_E4B_ER_R",
@@ -89563,16 +90497,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac3_E4B_ER_R.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac3_E4B_ER_L",
@@ -89583,16 +90519,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac3_E4B_ER_L.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac4_E4A_R",
@@ -89603,16 +90541,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac4_E4A_R.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Langeac4_E4A_L",
@@ -89623,16 +90563,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Langeac4_E4A_L.gif",
     "seriesName": "SNCF Wagons Langeac",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Flanger64_R",
@@ -89643,16 +90585,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Flanger64_R.gif",
     "seriesName": "SNCF Wagons Flanger",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Flanger64_L",
@@ -89663,16 +90607,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Flanger64_L.gif",
     "seriesName": "SNCF Wagons Flanger",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Flanger80",
@@ -89683,16 +90629,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/Flanger80.gif",
     "seriesName": "SNCF Wagons Flanger",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CN_Pontarlier_E4_R",
@@ -89703,16 +90651,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/CN_Pontarlier_E4_R.gif",
     "seriesName": "SNCF Rotating snowplows",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CN_Pontarlier_E4_L",
@@ -89723,16 +90673,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/CN_Pontarlier_E4_L.gif",
     "seriesName": "SNCF Rotating snowplows",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CN_Chambery_E4_R",
@@ -89743,16 +90695,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/CN_Chambery_E4_R.gif",
     "seriesName": "SNCF Rotating snowplows",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CN_Chambery_E4_L",
@@ -89763,16 +90717,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/CN_Chambery_E4_L.gif",
     "seriesName": "SNCF Rotating snowplows",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CN_Chambery_B_R",
@@ -89783,16 +90739,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/CN_Chambery_B_R.gif",
     "seriesName": "SNCF Rotating snowplows",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CN_Chambery_B_L",
@@ -89803,16 +90761,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/CN/CN_Chambery_B_L.gif",
     "seriesName": "SNCF Rotating snowplows",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-D1_100",
@@ -89883,16 +90843,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU49M_R.gif",
     "seriesName": "SNCF Unified (DU) DU 49",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU49M_L",
@@ -89903,16 +90865,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU49M_L.gif",
     "seriesName": "SNCF Unified (DU) DU 49",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU65_R",
@@ -89923,16 +90887,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU65_R.gif",
     "seriesName": "SNCF Unified (DU) DU 65",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU65_L",
@@ -89943,16 +90909,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU65_L.gif",
     "seriesName": "SNCF Unified (DU) DU 65",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU65M_R",
@@ -89963,16 +90931,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU65M_R.gif",
     "seriesName": "SNCF Unified (DU) DU 65",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU65M_L",
@@ -89983,16 +90953,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU65M_L.gif",
     "seriesName": "SNCF Unified (DU) DU 65",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU65M_J_R",
@@ -90003,16 +90975,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU65M_J_R.gif",
     "seriesName": "SNCF Unified (DU) DU 65",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU65M_J_L",
@@ -90023,16 +90997,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU65M_J_L.gif",
     "seriesName": "SNCF Unified (DU) DU 65",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU84_RCN_R",
@@ -90043,16 +91019,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU84_RCN_R.gif",
     "seriesName": "SNCF Unified (DU) DU 84",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU84_RCN_L",
@@ -90063,16 +91041,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU84_RCN_L.gif",
     "seriesName": "SNCF Unified (DU) DU 84",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU84_RC_R",
@@ -90083,16 +91063,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU84_RC_R.gif",
     "seriesName": "SNCF Unified (DU) DU 84",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU84_RC_L",
@@ -90103,16 +91085,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU84_RC_L.gif",
     "seriesName": "SNCF Unified (DU) DU 84",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU84_C2_J_R",
@@ -90123,16 +91107,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU84_C2_J_R.gif",
     "seriesName": "SNCF Unified (DU) DU 84",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DU84_C2_J_L",
@@ -90143,16 +91129,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/DU84_C2_J_L.gif",
     "seriesName": "SNCF Unified (DU) DU 84",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-4P621_TC_R",
@@ -90163,16 +91151,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/4P621_TC_R.gif",
     "seriesName": "SNCF Transformations",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-4P621_TC_L",
@@ -90183,16 +91173,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/4P621_TC_L.gif",
     "seriesName": "SNCF Transformations",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-4P621_TR_R",
@@ -90203,16 +91195,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/4P621_TR_R.gif",
     "seriesName": "SNCF Transformations",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-4P621_TR_L",
@@ -90223,16 +91217,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/4P621_TR_L.gif",
     "seriesName": "SNCF Transformations",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Lorry_Rails",
@@ -90243,16 +91239,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/Lorry_Rails.gif",
     "seriesName": "SNCF Lorries",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Lorry_Tomb",
@@ -90263,16 +91261,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/Draisines/Lorry_Tomb.gif",
     "seriesName": "SNCF Lorries",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X3215_V_R",
@@ -90283,16 +91283,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 40,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/X3215_V_R.gif",
     "seriesName": "SNCF \"Autorails de commandement\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "vehicles"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 58,
+    "wagonSubCategory": "vehicles"
   },
   {
     "id": "cat-X3215_V_L",
@@ -90303,16 +91305,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 40,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/X3215_V_L.gif",
     "seriesName": "SNCF \"Autorails de commandement\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "vehicles"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 58,
+    "wagonSubCategory": "vehicles"
   },
   {
     "id": "cat-X3896_V_R",
@@ -90323,16 +91327,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 40,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/X3896_V_R.gif",
     "seriesName": "SNCF \"Autorails de commandement\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "vehicles"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 58,
+    "wagonSubCategory": "vehicles"
   },
   {
     "id": "cat-X3896_V_L",
@@ -90343,16 +91349,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 40,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/X3896_V_L.gif",
     "seriesName": "SNCF \"Autorails de commandement\"",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "vehicles"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 58,
+    "wagonSubCategory": "vehicles"
   },
   {
     "id": "cat-DD4s_LestI_R",
@@ -90363,16 +91371,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/DD4s_LestI_R.gif",
     "seriesName": "SNCF Weight cars for test trains",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DD4s_LestI_L",
@@ -90383,16 +91393,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/DD4s_LestI_L.gif",
     "seriesName": "SNCF Weight cars for test trains",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DDMC76_LestI_R",
@@ -90403,16 +91415,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/DDMC76_LestI_R.gif",
     "seriesName": "SNCF Weight cars for test trains",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DDMC76_LestI_L",
@@ -90423,16 +91437,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/DDMC76_LestI_L.gif",
     "seriesName": "SNCF Weight cars for test trains",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VU_VEV2N_R",
@@ -90443,16 +91459,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VU_VEV2N_R.gif",
     "seriesName": "SNCF Transition coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-VU_VEV2N_L",
@@ -90463,16 +91481,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VU_VEV2N_L.gif",
     "seriesName": "SNCF Transition coaches",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DEVAOC_Graisseur_401_B",
@@ -90483,16 +91503,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/DEVAOC_Graisseur_401_B.gif",
     "seriesName": "SNCF Catenary oilers",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general",
+      "oil"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DEVAOC_Graisseur_402_R",
@@ -90503,16 +91526,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/DEVAOC_Graisseur_402_R.gif",
     "seriesName": "SNCF Catenary oilers",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general",
+      "oil"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DEVAOC_Graisseur_402_B",
@@ -90523,16 +91549,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/DEVAOC_Graisseur_402_B.gif",
     "seriesName": "SNCF Catenary oilers",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general",
+      "oil"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ua_R09_6_V",
@@ -90543,16 +91572,23 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 60,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Ua_R09_6_V.gif",
     "seriesName": "SNCF Flat wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 78,
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Uas_S39_2_V",
@@ -90563,16 +91599,23 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 60,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Uas_S39_2_V.gif",
     "seriesName": "SNCF Flat wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 78,
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Uas_S39_6_V",
@@ -90583,16 +91626,23 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 60,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Uas_S39_6_V.gif",
     "seriesName": "SNCF Flat wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 78,
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CouplBallastStd_E3RW",
@@ -90603,16 +91653,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/CouplBallastStd_E3RW.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "ballast",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CouplBallastStd_E4",
@@ -90623,16 +91676,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/CouplBallastStd_E4.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "ballast",
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TremieVB_R",
@@ -90643,16 +91699,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 80,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/TremieVB_R.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "flour",
+      "grain"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 98,
+    "wagonSubCategory": "tremie"
   },
   {
     "id": "cat-TremieVB_L",
@@ -90663,16 +91722,19 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 80,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/TremieVB_L.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "flour",
+      "grain"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 98,
+    "wagonSubCategory": "tremie"
   },
   {
     "id": "cat-Us_C12_2_V_R",
@@ -90683,16 +91745,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Us_C12_2_V_R.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Us_C12_2_V_L",
@@ -90703,16 +91767,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Us_C12_2_V_L.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Uas_D12_6_V_R",
@@ -90723,16 +91789,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Uas_D12_6_V_R.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Uas_D12_6_V_L",
@@ -90743,16 +91811,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Uas_D12_6_V_L.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Uas_D12_6_Infra_R",
@@ -90763,16 +91833,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Uas_D12_6_Infra_R.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Uas_D12_6_Infra_L",
@@ -90783,16 +91855,18 @@ export const CATALOG = [
     "mass": 18,
     "power": 0,
     "passengerCapacity": 0,
-    "freightCapacity": 0,
+    "freightCapacity": 50,
     "length": 10.0,
     "imageData": "img/catalog/SNCF/Serv/VB/Uas_D12_6_Infra_L.gif",
     "seriesName": "SNCF Silo wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [],
+    "cargoTypes": [
+      "general"
+    ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 18,
-    "wagonSubCategory": "service"
+    "tonnage": 68,
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X73500_T2Als",
@@ -114432,7 +115506,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP_M_L",
@@ -114454,7 +115528,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP_RE_R",
@@ -114476,7 +115550,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP_RE_L",
@@ -114498,7 +115572,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP_RI_R",
@@ -114520,7 +115594,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP_RI_L",
@@ -114542,7 +115616,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_M_R",
@@ -114564,7 +115638,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_M_L",
@@ -114586,7 +115660,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_RE_R",
@@ -114608,7 +115682,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_RE_L",
@@ -114630,7 +115704,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_RIPL_R",
@@ -114652,7 +115726,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_RIPL_L",
@@ -114674,7 +115748,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_RIGL_R",
@@ -114696,7 +115770,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP2_RIGL_L",
@@ -114718,7 +115792,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_M_R",
@@ -114740,7 +115814,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_M_L",
@@ -114762,7 +115836,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_RE_R",
@@ -114784,7 +115858,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_RE_L",
@@ -114806,7 +115880,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_RISL_R",
@@ -114828,7 +115902,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_RISL_L",
@@ -114850,7 +115924,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_RIAL_R",
@@ -114872,7 +115946,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TGVP3_RIAL_L",
@@ -114894,7 +115968,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X94750_P1_R",
@@ -114916,7 +115990,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X94750_P1_L",
@@ -114938,7 +116012,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X94750_P2_R",
@@ -114960,7 +116034,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-X94750_P2_L",
@@ -114982,7 +116056,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16_1914",
@@ -115004,7 +116078,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16_1924",
@@ -115026,7 +116100,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA10_TN_R",
@@ -115048,7 +116122,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA10_TN_L",
@@ -115070,7 +116144,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE10_B_R",
@@ -115092,7 +116166,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE10_B_L",
@@ -115114,7 +116188,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE10P_TN_R",
@@ -115136,7 +116210,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE10P_TN_L",
@@ -115158,7 +116232,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA16_TN_R",
@@ -115180,7 +116254,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA16_TN_L",
@@ -115202,7 +116276,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA16_B_R",
@@ -115224,7 +116298,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA16_B_L",
@@ -115246,7 +116320,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA16_J_R",
@@ -115268,7 +116342,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA16_J_L",
@@ -115290,7 +116364,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16D_TN",
@@ -115312,7 +116386,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16D_B",
@@ -115334,7 +116408,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16_B",
@@ -115356,7 +116430,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16_J",
@@ -115378,7 +116452,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE16AL_TN_R",
@@ -115400,7 +116474,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE16AL_TN_L",
@@ -115422,7 +116496,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16AL_B_R",
@@ -115444,7 +116518,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16AL_B_L",
@@ -115466,7 +116540,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16AL_J_L",
@@ -115488,7 +116562,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16AL_Y24_B_R",
@@ -115510,7 +116584,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE16AL_Y24_B_L",
@@ -115532,7 +116606,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18_TN",
@@ -115554,7 +116628,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18S_B",
@@ -115576,7 +116650,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18_Y24_J",
@@ -115598,7 +116672,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18a_B_R",
@@ -115620,7 +116694,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18a_B_L",
@@ -115642,7 +116716,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18a_J_R",
@@ -115664,7 +116738,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18a_J_L",
@@ -115686,7 +116760,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18a_Y24_J_R",
@@ -115708,7 +116782,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18a_Y24_J_L",
@@ -115730,7 +116804,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_TN_R",
@@ -115752,7 +116826,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_TN_L",
@@ -115774,7 +116848,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_B_R",
@@ -115796,7 +116870,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_B_L",
@@ -115818,7 +116892,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_JP_R",
@@ -115840,7 +116914,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_JP_L",
@@ -115862,7 +116936,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_Y24B_J2_R",
@@ -115884,7 +116958,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE18FL_Y24B_J2_L",
@@ -115906,7 +116980,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PEMed_TN_R",
@@ -115928,7 +117002,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PEMed_TN_L",
@@ -115950,7 +117024,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PEMed_R",
@@ -115972,7 +117046,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PEMed_L",
@@ -115994,7 +117068,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21_TN_R",
@@ -116016,7 +117090,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21_TN_L",
@@ -116038,7 +117112,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21S_B_R",
@@ -116060,7 +117134,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21S_B_L",
@@ -116082,7 +117156,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21B_B_R",
@@ -116104,7 +117178,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21B_B_L",
@@ -116126,7 +117200,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21S_JP_R",
@@ -116148,7 +117222,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21S_JP_L",
@@ -116170,7 +117244,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21_J_R",
@@ -116192,7 +117266,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21_J_L",
@@ -116214,7 +117288,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21_J2_R",
@@ -116236,7 +117310,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21_J2_L",
@@ -116258,7 +117332,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21Y_J_R",
@@ -116280,7 +117354,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21Y_J_L",
@@ -116302,7 +117376,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21Y_J2_R",
@@ -116324,7 +117398,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA21Y_J2_L",
@@ -116346,7 +117420,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE21S_B_R",
@@ -116368,7 +117442,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE21S_B_L",
@@ -116390,7 +117464,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE21B_B_R",
@@ -116412,7 +117486,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE21B_B_L",
@@ -116434,7 +117508,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE21_J2_R",
@@ -116456,7 +117530,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAE21_J2_L",
@@ -116478,7 +117552,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21_TN_R",
@@ -116500,7 +117574,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21_TN_L",
@@ -116522,7 +117596,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21S_B_R",
@@ -116544,7 +117618,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21S_B_L",
@@ -116566,7 +117640,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21B_B_R",
@@ -116588,7 +117662,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21B_B_L",
@@ -116610,7 +117684,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21SY_B_R",
@@ -116632,7 +117706,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21SY_B_L",
@@ -116654,7 +117728,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21BY_B_R",
@@ -116676,7 +117750,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21BY_B_L",
@@ -116698,7 +117772,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21SY_JP_R",
@@ -116720,7 +117794,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21SY_JP_L",
@@ -116742,7 +117816,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21BY_JP_R",
@@ -116764,7 +117838,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21BY_JP_L",
@@ -116786,7 +117860,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21_J_R",
@@ -116808,7 +117882,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21_J_L",
@@ -116830,7 +117904,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21Y_J_R",
@@ -116852,7 +117926,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21Y_J_L",
@@ -116874,7 +117948,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21Y_J2_R",
@@ -116896,7 +117970,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE21Y_J2_L",
@@ -116918,7 +117992,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PEC21Y_J2_R",
@@ -116936,11 +118010,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "combi"
   },
   {
     "id": "cat-Poste_PEC21Y_J2_L",
@@ -116958,11 +118033,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "combi"
   },
   {
     "id": "cat-Poste_PAEAL21_TN_R",
@@ -116984,7 +118060,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAEAL21_TN_L",
@@ -117006,7 +118082,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAEAL21_B1_R",
@@ -117028,7 +118104,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PAEAL21_B1_L",
@@ -117050,7 +118126,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_TP21_TN_R",
@@ -117072,7 +118148,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_TP21_TN_L",
@@ -117094,7 +118170,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_TPPE21SY_B_R",
@@ -117116,7 +118192,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_TPPE21SY_B_L",
@@ -117138,7 +118214,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_TPPE21BY_B_R",
@@ -117160,7 +118236,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_TPPE21BY_B_L",
@@ -117182,7 +118258,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_TPPE21BY_J_L",
@@ -117204,7 +118280,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA26_B_R",
@@ -117226,7 +118302,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA26_B_L",
@@ -117248,7 +118324,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA26_J_R",
@@ -117270,7 +118346,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA26_J_L",
@@ -117292,7 +118368,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA26_J2_R",
@@ -117314,7 +118390,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PA26_J2_L",
@@ -117336,7 +118412,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE26_B",
@@ -117358,7 +118434,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PE26_J2",
@@ -117380,7 +118456,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Poste_PEC26_J2",
@@ -117402,7 +118478,7 @@ export const CATALOG = [
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "post"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-NMPP_CIWL8P_E3_R",
@@ -118204,12 +119280,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DG_211_O_L",
@@ -118227,12 +119302,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SECO_211_O2_R",
@@ -118294,12 +119368,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-COLAS_211_RG_O2_L",
@@ -118317,12 +119390,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SECO_212_O2_R",
@@ -118384,12 +119456,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-COLAS_212_RG_O2_L",
@@ -118407,12 +119478,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DG_CC65507_O1_R",
@@ -118974,138 +120044,122 @@ export const CATALOG = [
   {
     "id": "cat-Ferrotract_G1000_R",
     "name": "G1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Travaux/Ferrotract_G1000_R.gif",
     "seriesName": "Private railways Ferrotract Mak G1000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Ferrotract_G1000_L",
     "name": "G1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Travaux/Ferrotract_G1000_L.gif",
     "seriesName": "Private railways Ferrotract Mak G1000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Ferrotract_DE18_R",
     "name": "G1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/Travaux/Ferrotract_DE18_R.gif",
     "seriesName": "Private railways Ferrotract Mak DE18",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Ferrotract_DE18_L",
     "name": "G1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/Travaux/Ferrotract_DE18_L.gif",
     "seriesName": "Private railways Ferrotract Mak DE18",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Ferrotract_G2000_3_Vossloh_R",
     "name": "G2000-3",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Travaux/Ferrotract_G2000_3_Vossloh_R.gif",
     "seriesName": "Private railways Ferrotract Mak G2000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Ferrotract_G2000_3_Vossloh_L",
     "name": "G2000-3",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Travaux/Ferrotract_G2000_3_Vossloh_L.gif",
     "seriesName": "Private railways Ferrotract Mak G2000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-TSO_C61000_Anim_R",
@@ -119280,48 +120334,42 @@ export const CATALOG = [
   {
     "id": "cat-TSO_G1206_MC_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Travaux/TSO_G1206_MC_R.gif",
     "seriesName": "Private railways TSO (Travaux du Sud-Ouest) Vossloh G 1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-TSO_G1206_MC_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Travaux/TSO_G1206_MC_L.gif",
     "seriesName": "Private railways TSO (Travaux du Sud-Ouest) Vossloh G 1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-TSO_75000_R",
@@ -119414,46 +120462,42 @@ export const CATALOG = [
   {
     "id": "cat-TSO_Y8000_R",
     "name": "Y 8000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/Travaux/TSO_Y8000_R.gif",
     "seriesName": "Private railways TSO (Travaux du Sud-Ouest) Shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-TSO_Y8000_L",
     "name": "Y 8000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/Travaux/TSO_Y8000_L.gif",
     "seriesName": "Private railways TSO (Travaux du Sud-Ouest) Shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_27000_L1_R",
@@ -119648,278 +120692,242 @@ export const CATALOG = [
   {
     "id": "cat-RegioRail_66II_Beacon_R",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_66II_Beacon_R.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_66II_Beacon_L",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_66II_Beacon_L.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_77500_AkiemG_R",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_77500_AkiemG_R.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_77500_AkiemG_L",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_77500_AkiemG_L.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_77500_AkiemGCR_R",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_77500_AkiemGCR_R.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_77500_AkiemGCR_L",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_77500_AkiemGCR_L.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_G1206_AT61000_R",
     "name": "G1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_G1206_AT61000_R.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters G1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_G1206_AT61000_L",
     "name": "G1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_G1206_AT61000_L.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters G1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_G1206_Akiem_R",
     "name": "G1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_G1206_Akiem_R.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters G1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_G1206_Akiem_L",
     "name": "G1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_G1206_Akiem_L.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters G1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_G1206_Bx_R",
     "name": "G1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_G1206_Bx_R.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters G1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_G1206_Bx_L",
     "name": "G1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_G1206_Bx_L.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters G1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_G1206_CC_ATB_R",
@@ -119975,12 +120983,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "salt",
       "general",
-      "paper"
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-RegioRail_DE18_L",
@@ -119998,12 +121007,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "salt",
       "general",
-      "paper"
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-RegioRail_BB71000_Anim_R",
@@ -120046,94 +121056,82 @@ export const CATALOG = [
   {
     "id": "cat-RegioRail_Y7400_R",
     "name": "Y 7400",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_Y7400_R.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters Formerly SNCF",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RegioRail_Y7400_L",
     "name": "Y 7400",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RegioRail_Y7400_L.gif",
     "seriesName": "French private Railways Diesel locomotives and shunters Formerly SNCF",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-CFR_G1000_R",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/CFR_G1000_R.gif",
     "seriesName": "French private Railways CFR",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-CFR_G1000_L",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/CFR_G1000_L.gif",
     "seriesName": "French private Railways CFR",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_27000_R",
@@ -120328,46 +121326,42 @@ export const CATALOG = [
   {
     "id": "cat-VFLI_62400_R",
     "name": "BB 62400",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_62400_R.gif",
     "seriesName": "French private Railways Diesel locomotives BB 62400 and BB 00 formerly HBL",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_62400_L",
     "name": "BB 62400",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_62400_L.gif",
     "seriesName": "French private Railways Diesel locomotives BB 62400 and BB 00 formerly HBL",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_BB006_R",
@@ -120752,48 +121746,42 @@ export const CATALOG = [
   {
     "id": "cat-VFLI_G1206_MC_R2_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/VFLI_G1206_MC_R2_R.gif",
     "seriesName": "French private Railways Diesel locomotives Vossloh G 1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_G1206_MC_R2_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/VFLI_G1206_MC_R2_L.gif",
     "seriesName": "French private Railways Diesel locomotives Vossloh G 1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_G1206_CC_MRCEDL_R",
@@ -120836,134 +121824,122 @@ export const CATALOG = [
   {
     "id": "cat-VFLI_75000_Akiem_R",
     "name": "BB 27000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_75000_Akiem_R.gif",
     "seriesName": "French private Railways Diesel locomotives BB 75000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_75000_Akiem_L",
     "name": "BB 27000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_75000_Akiem_L.gif",
     "seriesName": "French private Railways Diesel locomotives BB 75000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_77500_L1_R",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_77500_L1_R.gif",
     "seriesName": "French private Railways Diesel locomotives \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_77500_L1_L",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_77500_L1_L.gif",
     "seriesName": "French private Railways Diesel locomotives \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_77500_L2_R",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_77500_L2_R.gif",
     "seriesName": "French private Railways Diesel locomotives \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_77500_L2_L",
     "name": "\"Class 66\"",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFLI_77500_L2_L.gif",
     "seriesName": "French private Railways Diesel locomotives \"Class 66\" (EMD JT42CWRM)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFLI_E4000_L1_R",
@@ -120981,7 +121957,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -121003,7 +121981,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -121025,7 +122005,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -121047,7 +122029,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -121226,46 +122210,42 @@ export const CATALOG = [
   {
     "id": "cat-CFD_Class20_R",
     "name": "2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/CFD_Class20_R.gif",
     "seriesName": "Private Railways CFD Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-CFD_Class20_L",
     "name": "2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/CFD_Class20_L.gif",
     "seriesName": "Private Railways CFD Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-CFD_A75DB_R",
@@ -121685,140 +122665,122 @@ export const CATALOG = [
   {
     "id": "cat-Colas_G1206_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Colas_G1206_R.gif",
     "seriesName": "Private Railways Colas Rail Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Colas_G1206_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Colas_G1206_L.gif",
     "seriesName": "Private Railways Colas Rail Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Colas_G1000_R",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Colas_G1000_R.gif",
     "seriesName": "Private Railways Colas Rail Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Colas_G1000_L",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Colas_G1000_L.gif",
     "seriesName": "Private Railways Colas Rail Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Colas_G2000_R",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Colas_G2000_R.gif",
     "seriesName": "Private Railways Colas Rail Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Colas_G2000_L",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Colas_G2000_L.gif",
     "seriesName": "Private Railways Colas Rail Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Colas_DE18_R",
@@ -121836,7 +122798,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -121858,7 +122822,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -121999,48 +122965,42 @@ export const CATALOG = [
   {
     "id": "cat-Veolia_G1000_R",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G1000_R.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Veolia_G1000_L",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G1000_L.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Connex_G1206_CC_ATB_R",
@@ -122121,140 +123081,122 @@ export const CATALOG = [
   {
     "id": "cat-Veolia_G1206_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G1206_R.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Veolia_G1206_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G1206_L.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Veolia_G1206_MRCE_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G1206_MRCE_R.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Veolia_G1206_MRCE_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G1206_MRCE_L.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Veolia_G2000_B_R",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G2000_B_R.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Veolia_G2000_B_L",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Veolia_G2000_B_L.gif",
     "seriesName": "Private Railways Connex / Veolia Freight operator",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_E186_R",
@@ -122379,48 +123321,42 @@ export const CATALOG = [
   {
     "id": "cat-ECR_G1000_R",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/ECR_G1000_R.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_G1000_L",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/ECR_G1000_L.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_G1206_CC_Bx_R",
@@ -122463,92 +123399,82 @@ export const CATALOG = [
   {
     "id": "cat-ECR_G2000_R",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/ECR_G2000_R.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_G2000_L",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/ECR_G2000_L.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_66_R",
     "name": "Class 66 (EMD JT42CWR)",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/ECR_66_R.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_66_L",
     "name": "Class 66 (EMD JT42CWR)",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/ECR_66_L.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_77_R",
@@ -122566,7 +123492,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -122588,7 +123516,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -122597,46 +123527,42 @@ export const CATALOG = [
   {
     "id": "cat-ECR_Y8000_R",
     "name": "Y8000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/ECR_Y8000_R.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_Y8000_L",
     "name": "Y8000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/ECR_Y8000_L.gif",
     "seriesName": "Private Railways ECR (Euro Cargo Rail) Shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ECR_EX100_R",
@@ -122849,48 +123775,42 @@ export const CATALOG = [
   {
     "id": "cat-ETF_G1206_MC_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/ETF_G1206_MC_R.gif",
     "seriesName": "Private Railways ETF Services Diesel Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ETF_G1206_MC_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/ETF_G1206_MC_L.gif",
     "seriesName": "Private Railways ETF Services Diesel Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-ETF_60000_exFret_R",
@@ -122908,11 +123828,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-ETF_60000_exFret_L",
@@ -122930,11 +123851,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-ETF_75000_B_R",
@@ -122952,11 +123874,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-ETF_75000_B_L",
@@ -122974,11 +123897,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-ETF_E4000_R",
@@ -122996,11 +123920,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-ETF_E4000_L",
@@ -123018,11 +123943,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-ETF_Fanps47_R",
@@ -123039,12 +123965,10 @@ export const CATALOG = [
     "seriesName": "Private Railways ETF Services Wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-ETF_Fanps47_L",
@@ -123061,12 +123985,10 @@ export const CATALOG = [
     "seriesName": "Private Railways ETF Services Wagons",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-Europorte_E37500_R",
@@ -123128,7 +124050,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -123150,7 +124074,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -123172,7 +124098,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -123194,7 +124122,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -123203,140 +124133,122 @@ export const CATALOG = [
   {
     "id": "cat-Europorte_G1000_LV_R",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G1000_LV_R.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_G1000_LV_L",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G1000_LV_L.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_G1000_R",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G1000_R.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_G1000_L",
     "name": "G 1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G1000_L.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_G1206_LV_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G1206_LV_R.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_G1206_LV_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G1206_LV_L.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_G1206_CC_ATB_R",
@@ -123379,48 +124291,42 @@ export const CATALOG = [
   {
     "id": "cat-Europorte_G2000_ATB_R",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G2000_ATB_R.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_G2000_ATB_L",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Europorte_G2000_ATB_L.gif",
     "seriesName": "Private Railways Europorte",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Europorte_DE18_R",
@@ -123513,46 +124419,42 @@ export const CATALOG = [
   {
     "id": "cat-MStC_Y6100_R",
     "name": "Y 6100",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/MStC_Y6100_R.gif",
     "seriesName": "Private Railways Mamers St Calais Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-MStC_Y6100_L",
     "name": "Y 6100",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/MStC_Y6100_L.gif",
     "seriesName": "Private Railways Mamers St Calais Diesel locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-MStC_020C",
@@ -123570,7 +124472,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -123701,12 +124605,10 @@ export const CATALOG = [
     "seriesName": "Private Railways Mesea Service trains",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-Mesea_BroomV160_L",
@@ -123723,12 +124625,10 @@ export const CATALOG = [
     "seriesName": "Private Railways Mesea Service trains",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-OSR_27000_R",
@@ -123809,136 +124709,122 @@ export const CATALOG = [
   {
     "id": "cat-OSR_75000_R",
     "name": "BB 75000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/OSR_75000_R.gif",
     "seriesName": "Private Railways OSR Diesel Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-OSR_75000_L",
     "name": "BB 75000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/OSR_75000_L.gif",
     "seriesName": "Private Railways OSR Diesel Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-OSR_75000_L2_R",
     "name": "BB 75000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/OSR_75000_L2_R.gif",
     "seriesName": "Private Railways OSR Diesel Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-OSR_75000_L2_L",
     "name": "BB 75000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/OSR_75000_L2_L.gif",
     "seriesName": "Private Railways OSR Diesel Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Railcoop_G1000_R",
     "name": "G1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Railcoop_G1000_R.gif",
     "seriesName": "Private Railways Railcoop Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Railcoop_G1000_L",
     "name": "G1000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/Railcoop_G1000_L.gif",
     "seriesName": "Private Railways Railcoop Locomotives",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-Railcoop_Rils20_6_BS_Ermewa",
@@ -124493,94 +125379,82 @@ export const CATALOG = [
   {
     "id": "cat-RDT13_G1206_R",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RDT13_G1206_R.gif",
     "seriesName": "Private Railways RDT13 (formerly BDR) G 1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RDT13_G1206_L",
     "name": "G 1206",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RDT13_G1206_L.gif",
     "seriesName": "Private Railways RDT13 (formerly BDR) G 1206",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RDT13_G2000_R",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RDT13_G2000_R.gif",
     "seriesName": "Private Railways RDT13 (formerly BDR) G 2000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RDT13_G2000_L",
     "name": "G 2000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 13.5,
     "imageData": "img/catalog/F_P/RDT13_G2000_L.gif",
     "seriesName": "Private Railways RDT13 (formerly BDR) G 2000",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-RTA_ABJ4_R",
@@ -124661,7 +125535,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -124683,7 +125559,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -124705,7 +125583,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -124727,7 +125607,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -124749,7 +125631,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -124771,7 +125655,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -124793,7 +125679,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "salt",
+      "general",
+      "oil"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -124821,90 +125709,82 @@ export const CATALOG = [
   {
     "id": "cat-VFL_71000_Anim_R",
     "name": "BB 71000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFL_71000_Anim_R.gif",
     "seriesName": "Private Railways VFL Diesel locomotives and shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFL_71000_Anim_L",
     "name": "BB 71000",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFL_71000_Anim_L.gif",
     "seriesName": "Private Railways VFL Diesel locomotives and shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFL_63500_R",
     "name": "BB 63500",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFL_63500_R.gif",
     "seriesName": "Private Railways VFL Diesel locomotives and shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFL_63500_L",
     "name": "BB 63500",
-    "category": "wagon",
-    "traction": "none",
+    "category": "locomotive",
+    "traction": "diesel",
     "maxSpeed": 100,
     "mass": 22,
-    "power": 0,
+    "power": 2000,
     "passengerCapacity": 0,
-    "freightCapacity": 50,
+    "freightCapacity": 0,
     "length": 14.0,
     "imageData": "img/catalog/F_P/VFL_63500_L.gif",
     "seriesName": "Private Railways VFL Diesel locomotives and shunters",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
-    "tonnage": 72,
-    "wagonSubCategory": "default"
+    "tonnage": 22,
+    "wagonSubCategory": ""
   },
   {
     "id": "cat-VFL_BB63622_R",
@@ -124979,8 +125859,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -125002,8 +125882,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -125025,11 +125905,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_CIMT",
@@ -125047,11 +125928,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV2_O",
@@ -125069,11 +125951,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV2_U",
@@ -125091,11 +125974,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV2_SRVV",
@@ -125113,11 +125997,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV2_SRLV",
@@ -125135,11 +126020,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV2_Renault",
@@ -125157,11 +126043,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV3",
@@ -125179,11 +126066,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV3_BJ",
@@ -125201,11 +126089,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4",
@@ -125223,11 +126112,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4_BJ",
@@ -125245,11 +126135,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4_BJL",
@@ -125267,11 +126158,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4_Champ",
@@ -125289,11 +126181,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4PM_Kro",
@@ -125311,11 +126204,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4PM_R",
@@ -125333,11 +126227,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4PM_RBJ",
@@ -125355,11 +126250,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4PM_Peug1_R",
@@ -125377,11 +126273,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4PM_Peug1_L",
@@ -125399,11 +126296,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4PM_Peug2_R",
@@ -125421,11 +126319,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-EVS_Hs_SNAV4PM_Peug2_L",
@@ -125443,11 +126342,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Habiss EVS",
@@ -125465,11 +126365,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Habiss EVS_B",
@@ -125487,11 +126388,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Habiss_Franprix",
@@ -125509,11 +126411,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Habiss_KRO",
@@ -125531,11 +126434,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "waste"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 82,
-    "wagonSubCategory": "waste"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Silo ciment EVS",
@@ -126807,13 +127711,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_PLC2",
@@ -126831,13 +127733,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_RB1",
@@ -126855,13 +127755,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_RC1",
@@ -126879,13 +127777,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_RC3",
@@ -126903,13 +127799,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_RC4",
@@ -126927,13 +127821,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_TB2",
@@ -126951,13 +127843,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_TC1",
@@ -126975,13 +127865,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_TE1",
@@ -126999,13 +127887,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_TE2",
@@ -127023,13 +127909,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_TE3_SH",
@@ -127047,13 +127931,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_T1",
@@ -127071,13 +127953,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Railtrans_TE4",
@@ -127095,13 +127975,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "containers",
-      "steel",
-      "vehicles"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "flat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SGW_TH30_VillachMet_E3",
@@ -127119,12 +127997,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127146,12 +128024,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127173,12 +128051,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127200,12 +128078,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127227,12 +128105,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127254,12 +128132,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127281,12 +128159,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127308,12 +128186,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127335,12 +128213,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127362,12 +128240,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127389,12 +128267,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127416,12 +128294,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127443,12 +128321,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127470,12 +128348,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127497,12 +128375,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127524,12 +128402,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127551,12 +128429,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127578,12 +128456,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127605,12 +128483,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127632,12 +128510,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127659,12 +128537,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127686,12 +128564,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127713,12 +128591,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127740,12 +128618,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127767,12 +128645,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127794,12 +128672,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127821,12 +128699,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127848,12 +128726,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127875,12 +128753,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127902,12 +128780,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127929,12 +128807,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127956,12 +128834,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -127983,12 +128861,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128010,12 +128888,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128037,12 +128915,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128064,12 +128942,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128091,12 +128969,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128118,12 +128996,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128145,12 +129023,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128172,12 +129050,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128199,12 +129077,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128226,12 +129104,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128253,12 +129131,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128280,12 +129158,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128307,12 +129185,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128334,12 +129212,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128361,12 +129239,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128388,12 +129266,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128415,12 +129293,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128442,16 +129320,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Faboo_EFc_EDF",
@@ -128469,16 +129342,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SGW_EFc_STEMI",
@@ -128496,12 +129364,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128523,12 +129391,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128550,12 +129418,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128577,12 +129445,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128604,12 +129472,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128631,12 +129499,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128658,12 +129526,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128685,12 +129553,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128712,12 +129580,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128739,12 +129607,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128766,12 +129634,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128793,12 +129661,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128820,12 +129688,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128847,12 +129715,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128874,12 +129742,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128901,12 +129769,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128928,12 +129796,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128955,12 +129823,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -128982,12 +129850,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129009,12 +129877,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129036,12 +129904,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129063,12 +129931,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129090,12 +129958,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129117,12 +129985,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129144,12 +130012,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129171,12 +130039,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129198,12 +130066,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129225,12 +130093,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129252,12 +130120,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129279,12 +130147,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129306,12 +130174,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129333,12 +130201,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129360,12 +130228,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129387,12 +130255,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129414,12 +130282,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129441,12 +130309,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129468,12 +130336,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129495,12 +130363,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129522,12 +130390,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129549,12 +130417,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129576,12 +130444,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129603,12 +130471,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129630,12 +130498,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129657,12 +130525,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129684,12 +130552,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129711,12 +130579,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129738,12 +130606,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129765,12 +130633,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129792,12 +130660,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129819,12 +130687,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129846,12 +130714,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129873,12 +130741,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129900,12 +130768,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129927,12 +130795,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129954,12 +130822,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -129981,12 +130849,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130008,12 +130876,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130035,12 +130903,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130062,12 +130930,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130089,12 +130957,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130116,12 +130985,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130143,12 +131013,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130170,12 +131041,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130197,12 +131069,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130224,12 +131097,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130251,12 +131125,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130278,12 +131153,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130305,12 +131181,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130332,12 +131209,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130359,12 +131237,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130386,12 +131265,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130413,12 +131293,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130440,12 +131321,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130467,12 +131349,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130494,12 +131377,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130521,12 +131405,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130548,12 +131433,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130575,12 +131461,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130602,12 +131489,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130629,12 +131517,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130656,12 +131545,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130683,12 +131573,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130710,12 +131601,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130737,12 +131629,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130764,12 +131657,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -130791,12 +131685,13 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "ballast",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -131676,13 +132571,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FW_E79",
@@ -131700,13 +132598,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FW_Gahkss02_6",
@@ -131724,13 +132625,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
       "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-FW_R90_Gadoues",
@@ -131748,13 +132648,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FW_Tams_M30_R",
@@ -131772,13 +132675,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tams_M30_L",
@@ -131796,13 +132697,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tapps_BS_R",
@@ -131820,13 +132719,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tapps_BS_L",
@@ -131844,13 +132741,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tapps_BS_Sucre_R",
@@ -131868,13 +132763,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tapps_BS_Sucre_L",
@@ -131892,13 +132785,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tapps_BM_Sucre_R",
@@ -131916,13 +132807,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tapps_BM_Sucre_L",
@@ -131940,13 +132829,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tanpps_BS_L1_R",
@@ -131964,13 +132851,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tanpps_BS_L1_L",
@@ -131988,13 +132873,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tanpps_BM_L1_R",
@@ -132012,13 +132895,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FW_Tanpps_BM_L1_L",
@@ -132036,13 +132917,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Sernam_Gahkkss10_6_1S_L1",
@@ -132060,13 +132939,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
       "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Sernam_Gahkkss00_6",
@@ -132084,13 +132962,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
       "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Sernam_Gahkss06_6",
@@ -132108,13 +132985,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
       "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Sernam_Gahkss02_6",
@@ -132132,13 +133008,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
       "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63E_G_R",
@@ -132156,13 +133031,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63E_G_L",
@@ -132180,13 +133053,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63E_J_R",
@@ -132204,13 +133075,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63E_J_L",
@@ -132228,13 +133097,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63K_N_R",
@@ -132252,13 +133119,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63K_N_L",
@@ -132276,13 +133141,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63K_G_R",
@@ -132300,13 +133163,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63K_G_L",
@@ -132324,13 +133185,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63K_J_R",
@@ -132348,13 +133207,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_CFMF63K_J_L",
@@ -132372,13 +133229,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_HKP65_R",
@@ -132396,13 +133251,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_HKP65_L",
@@ -132420,13 +133273,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_Orval70_R",
@@ -132444,13 +133295,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Taoos_Orval70_L",
@@ -132468,13 +133317,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Uacs_HKP60_R",
@@ -132492,13 +133339,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Uacs_HKP60_L",
@@ -132516,13 +133361,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Uacs_FG62_R",
@@ -132540,13 +133383,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Simotra_Uacs_FG62_L",
@@ -132564,13 +133405,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_T60_R",
@@ -132588,13 +133427,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_T60_L",
@@ -132612,13 +133450,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tads_B_R",
@@ -132636,13 +133473,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tads_B_L",
@@ -132660,13 +133496,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tads_R",
@@ -132684,13 +133519,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tads_L",
@@ -132708,13 +133542,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Taoos65_R",
@@ -132732,13 +133565,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Taoos65_L",
@@ -132756,13 +133588,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Taoos70_R",
@@ -132780,13 +133611,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Taoos70_L",
@@ -132804,13 +133634,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tapps_BS_R",
@@ -132828,13 +133657,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tapps_BS_L",
@@ -132852,13 +133680,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tanpps_BS_R",
@@ -132876,13 +133703,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tanpps_BS_L",
@@ -132900,13 +133726,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tanpps_BM_R",
@@ -132924,13 +133749,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tanpps_BM_L",
@@ -132948,13 +133772,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tanpps_BM_Erme_R",
@@ -132972,13 +133795,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-TransEngrais_Tanpps_BM_Erme_L",
@@ -132996,13 +133818,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper",
-      "wood"
+      "fertilizer",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 70,
-    "wagonSubCategory": "general"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Contrex_Rils_BS_L1",
@@ -133020,16 +133841,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Contrex_Rils_BS_L2",
@@ -133047,16 +133863,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Contrex_Rils_BM_L1",
@@ -133074,16 +133885,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Contrex_Rils_BM_L2",
@@ -133101,16 +133907,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Evian_Rils",
@@ -133128,16 +133929,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Kronenbourg_Rils",
@@ -133155,16 +133951,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Vittel_Rils_BS",
@@ -133182,16 +133973,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Vittel_Rils_BM",
@@ -133209,16 +133995,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
-      "steel-sheet",
-      "steel-beams",
-      "containers",
-      "wood"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
-    "wagonSubCategory": "plat"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Transcereales_Us_R",
@@ -133236,8 +134017,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133259,8 +134040,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133282,8 +134063,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133305,8 +134086,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133328,8 +134109,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133351,8 +134132,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133374,8 +134155,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133397,8 +134178,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133420,8 +134201,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133443,8 +134224,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133466,8 +134247,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133489,8 +134270,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133512,8 +134293,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133535,8 +134316,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133558,8 +134339,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133581,8 +134362,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133604,8 +134385,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133627,8 +134408,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133650,8 +134431,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133673,8 +134454,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133696,8 +134477,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133719,8 +134500,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133742,8 +134523,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133765,8 +134546,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133788,8 +134569,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133811,8 +134592,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133834,8 +134615,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133857,8 +134638,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133880,8 +134661,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133903,8 +134684,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133926,8 +134707,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133949,8 +134730,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133972,8 +134753,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -133995,8 +134776,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134018,8 +134799,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134041,8 +134822,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134064,8 +134845,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134087,8 +134868,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134110,8 +134891,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134133,8 +134914,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134156,8 +134937,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134179,8 +134960,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134202,8 +134983,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134225,8 +135006,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134248,8 +135029,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134271,8 +135052,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134294,8 +135075,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134317,8 +135098,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134340,8 +135121,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134363,8 +135144,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134386,8 +135167,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134409,8 +135190,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134432,8 +135213,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134455,8 +135236,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134478,8 +135259,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134501,8 +135282,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134524,8 +135305,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134547,8 +135328,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134570,8 +135351,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134593,8 +135374,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134616,8 +135397,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134639,8 +135420,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134662,8 +135443,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134685,8 +135466,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134708,8 +135489,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134731,8 +135512,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134754,8 +135535,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134777,8 +135558,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134800,8 +135581,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134823,8 +135604,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134846,8 +135627,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134869,8 +135650,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134892,8 +135673,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134915,8 +135696,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134938,8 +135719,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134961,8 +135742,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -134984,8 +135765,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135007,8 +135788,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135030,8 +135811,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135053,8 +135834,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135076,8 +135857,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135099,8 +135880,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135122,8 +135903,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135145,8 +135926,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135168,8 +135949,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135191,8 +135972,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135214,8 +135995,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135237,8 +136018,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135260,8 +136041,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135283,8 +136064,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135306,8 +136087,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135329,8 +136110,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135352,8 +136133,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135375,8 +136156,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135398,8 +136179,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135421,8 +136202,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135444,8 +136225,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135467,8 +136248,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135490,8 +136271,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135513,8 +136294,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135536,8 +136317,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135559,8 +136340,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135582,8 +136363,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135605,8 +136386,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135628,8 +136409,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135651,8 +136432,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135674,8 +136455,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135697,8 +136478,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135720,8 +136501,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135743,8 +136524,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135766,8 +136547,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135789,8 +136570,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135812,8 +136593,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135835,8 +136616,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135858,8 +136639,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135881,8 +136662,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135904,8 +136685,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135927,8 +136708,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135950,8 +136731,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135973,8 +136754,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -135996,12 +136777,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Cereal2E1_TC_UNCAC_R",
@@ -136019,8 +136799,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136042,8 +136822,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136065,8 +136845,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136088,8 +136868,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136111,8 +136891,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136134,8 +136914,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136157,8 +136937,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136180,8 +136960,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136203,8 +136983,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136226,8 +137006,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136249,8 +137029,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136272,8 +137052,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136295,8 +137075,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136318,8 +137098,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136341,8 +137121,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136364,8 +137144,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136387,8 +137167,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136410,8 +137190,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136433,8 +137213,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136456,8 +137236,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136479,8 +137259,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136502,8 +137282,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136525,8 +137305,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136548,8 +137328,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136571,8 +137351,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136594,8 +137374,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136617,8 +137397,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136640,8 +137420,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136663,8 +137443,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136686,8 +137466,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136709,8 +137489,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136732,8 +137512,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136755,8 +137535,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136778,8 +137558,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136801,8 +137581,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136824,8 +137604,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136847,8 +137627,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136870,8 +137650,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136893,8 +137673,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136916,8 +137696,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136939,8 +137719,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136962,8 +137742,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -136985,8 +137765,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137008,8 +137788,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137031,8 +137811,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137054,8 +137834,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137077,8 +137857,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137100,8 +137880,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137123,8 +137903,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137146,8 +137926,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137169,8 +137949,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137192,8 +137972,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137215,8 +137995,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137238,8 +138018,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137261,8 +138041,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137284,8 +138064,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137307,8 +138087,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137330,8 +138110,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137353,8 +138133,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137376,8 +138156,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137399,8 +138179,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137422,8 +138202,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137445,8 +138225,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137468,8 +138248,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137491,8 +138271,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137514,8 +138294,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137537,8 +138317,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137560,8 +138340,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137583,8 +138363,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137606,8 +138386,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137629,8 +138409,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137652,8 +138432,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137675,8 +138455,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137698,8 +138478,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137721,8 +138501,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137744,8 +138524,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137767,8 +138547,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137790,8 +138570,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137813,8 +138593,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137836,8 +138616,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137859,8 +138639,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137882,8 +138662,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137905,8 +138685,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137928,8 +138708,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137951,8 +138731,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137974,8 +138754,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -137997,8 +138777,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138020,8 +138800,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138043,8 +138823,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138066,8 +138846,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138089,8 +138869,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138112,8 +138892,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138135,8 +138915,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138158,8 +138938,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138181,8 +138961,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138204,8 +138984,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138227,8 +139007,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138250,8 +139030,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138273,8 +139053,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138296,8 +139076,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138319,8 +139099,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138342,8 +139122,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138365,8 +139145,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138388,8 +139168,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138411,8 +139191,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138434,8 +139214,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138457,8 +139237,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138480,8 +139260,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138503,8 +139283,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138526,8 +139306,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138549,8 +139329,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138572,8 +139352,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138595,8 +139375,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138618,8 +139398,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138641,8 +139421,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138664,8 +139444,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138687,8 +139467,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138710,8 +139490,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138733,8 +139513,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138756,8 +139536,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138779,8 +139559,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138802,8 +139582,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138825,8 +139605,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138848,8 +139628,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138871,8 +139651,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138894,8 +139674,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138917,8 +139697,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138940,8 +139720,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138963,8 +139743,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -138986,8 +139766,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139009,8 +139789,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139032,8 +139812,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139055,8 +139835,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139078,8 +139858,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139101,8 +139881,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139124,8 +139904,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139147,8 +139927,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139170,8 +139950,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139193,8 +139973,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139216,8 +139996,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139239,8 +140019,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139262,8 +140042,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139285,8 +140065,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139308,8 +140088,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139331,8 +140111,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139354,8 +140134,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139377,8 +140157,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139400,8 +140180,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139423,8 +140203,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139446,8 +140226,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139469,8 +140249,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139492,8 +140272,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139515,8 +140295,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139538,8 +140318,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139561,8 +140341,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139584,8 +140364,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139607,8 +140387,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139630,8 +140410,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139653,8 +140433,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139676,8 +140456,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139699,8 +140479,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139722,8 +140502,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139745,8 +140525,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139768,8 +140548,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139791,8 +140571,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139814,8 +140594,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139837,8 +140617,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139860,8 +140640,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139883,8 +140663,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139906,8 +140686,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139929,8 +140709,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139952,8 +140732,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139975,8 +140755,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -139998,8 +140778,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140021,8 +140801,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140044,8 +140824,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140067,8 +140847,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140090,8 +140870,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140113,8 +140893,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140136,8 +140916,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140159,8 +140939,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140182,8 +140962,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140205,8 +140985,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140228,8 +141008,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140251,8 +141031,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140274,8 +141054,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140297,8 +141077,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140320,8 +141100,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140343,8 +141123,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140366,8 +141146,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140389,8 +141169,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140412,8 +141192,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140435,8 +141215,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140458,8 +141238,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140481,8 +141261,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140504,8 +141284,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140527,8 +141307,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140550,8 +141330,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140573,8 +141353,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140596,8 +141376,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140619,8 +141399,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140642,8 +141422,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140665,8 +141445,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140688,8 +141468,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140711,8 +141491,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140734,8 +141514,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140757,8 +141537,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140780,8 +141560,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140803,8 +141583,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140826,8 +141606,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140849,8 +141629,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140872,8 +141652,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140895,8 +141675,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140918,8 +141698,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140941,8 +141721,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140964,8 +141744,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -140987,8 +141767,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141010,8 +141790,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141033,8 +141813,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141056,8 +141836,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141079,8 +141859,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141102,8 +141882,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141125,8 +141905,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141148,8 +141928,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141171,8 +141951,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141194,8 +141974,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141217,8 +141997,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141240,8 +142020,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141263,8 +142043,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141286,8 +142066,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141309,8 +142089,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141332,8 +142112,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141355,8 +142135,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141378,8 +142158,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141401,8 +142181,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141424,8 +142204,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141447,8 +142227,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141470,8 +142250,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141493,8 +142273,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141516,8 +142296,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141539,8 +142319,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141562,8 +142342,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141585,8 +142365,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141608,8 +142388,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141631,8 +142411,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141654,8 +142434,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141677,8 +142457,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141700,8 +142480,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141723,8 +142503,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141746,8 +142526,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141769,8 +142549,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141792,8 +142572,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141815,8 +142595,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141838,8 +142618,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141861,8 +142641,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141884,8 +142664,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141907,8 +142687,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141930,8 +142710,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141953,8 +142733,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141976,8 +142756,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -141999,8 +142779,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142022,8 +142802,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142045,8 +142825,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142068,8 +142848,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142091,8 +142871,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142114,8 +142894,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142137,8 +142917,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142160,8 +142940,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142183,8 +142963,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142206,8 +142986,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142229,8 +143009,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142252,8 +143032,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142275,8 +143055,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142298,8 +143078,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142321,8 +143101,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142344,8 +143124,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142367,8 +143147,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142390,8 +143170,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142413,8 +143193,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142436,8 +143216,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142459,8 +143239,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142482,8 +143262,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142505,8 +143285,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142528,8 +143308,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142551,8 +143331,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142574,8 +143354,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142597,8 +143377,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142620,8 +143400,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142643,8 +143423,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142666,8 +143446,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142689,8 +143469,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142712,8 +143492,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142735,8 +143515,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142758,8 +143538,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142781,8 +143561,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142804,8 +143584,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142827,8 +143607,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142850,8 +143630,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142873,8 +143653,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142896,8 +143676,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142919,8 +143699,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142942,8 +143722,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142965,8 +143745,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -142988,8 +143768,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143011,8 +143791,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143034,8 +143814,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143057,8 +143837,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143080,8 +143860,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143103,8 +143883,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143126,8 +143906,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143149,8 +143929,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143172,8 +143952,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143195,8 +143975,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143218,8 +143998,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143241,8 +144021,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143264,8 +144044,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143287,8 +144067,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143310,8 +144090,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143333,8 +144113,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143356,8 +144136,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143379,8 +144159,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143402,8 +144182,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143425,8 +144205,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143448,8 +144228,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143471,8 +144251,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143494,8 +144274,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143517,8 +144297,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143540,8 +144320,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143563,8 +144343,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143586,8 +144366,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143609,8 +144389,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143632,8 +144412,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143655,8 +144435,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143678,8 +144458,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143701,8 +144481,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143724,8 +144504,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143747,8 +144527,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143770,8 +144550,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143793,8 +144573,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143816,8 +144596,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143839,8 +144619,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143862,8 +144642,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143885,8 +144665,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143908,8 +144688,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143931,8 +144711,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143954,8 +144734,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -143977,8 +144757,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144000,8 +144780,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144023,8 +144803,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144046,8 +144826,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144069,8 +144849,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144092,8 +144872,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144115,8 +144895,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144138,8 +144918,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144161,8 +144941,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144184,8 +144964,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144207,8 +144987,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144230,8 +145010,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144253,8 +145033,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144276,8 +145056,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144299,8 +145079,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144322,8 +145102,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144345,8 +145125,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144368,8 +145148,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144391,8 +145171,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144414,8 +145194,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144437,8 +145217,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144460,8 +145240,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144483,8 +145263,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144506,8 +145286,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144529,8 +145309,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144552,8 +145332,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144575,8 +145355,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144598,8 +145378,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144621,8 +145401,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144644,8 +145424,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144667,8 +145447,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144690,8 +145470,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144713,8 +145493,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144736,8 +145516,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144759,8 +145539,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144782,8 +145562,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144805,8 +145585,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144828,8 +145608,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144851,8 +145631,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144874,8 +145654,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144897,8 +145677,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144920,8 +145700,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144943,8 +145723,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144966,8 +145746,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -144989,8 +145769,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145012,8 +145792,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145035,8 +145815,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145058,8 +145838,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145081,8 +145861,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145104,8 +145884,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145127,8 +145907,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145150,8 +145930,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145173,8 +145953,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145196,8 +145976,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145219,8 +145999,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145242,8 +146022,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145265,8 +146045,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145288,8 +146068,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145311,8 +146091,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145334,8 +146114,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145357,8 +146137,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145380,8 +146160,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145403,8 +146183,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145426,8 +146206,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145449,8 +146229,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145472,8 +146252,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145495,8 +146275,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145518,8 +146298,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145541,8 +146321,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145564,8 +146344,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145587,8 +146367,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145610,8 +146390,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145633,8 +146413,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145656,8 +146436,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145679,8 +146459,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145702,8 +146482,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145725,8 +146505,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145748,8 +146528,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145771,8 +146551,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145794,8 +146574,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145817,8 +146597,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145840,8 +146620,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145863,8 +146643,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145886,8 +146666,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145909,8 +146689,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145932,8 +146712,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145955,8 +146735,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -145978,8 +146758,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146001,8 +146781,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146024,8 +146804,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146047,8 +146827,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146070,8 +146850,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146093,8 +146873,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146116,8 +146896,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146139,8 +146919,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146162,8 +146942,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146185,8 +146965,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146208,8 +146988,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146231,8 +147011,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146254,8 +147034,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146277,8 +147057,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146300,8 +147080,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146323,8 +147103,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146346,8 +147126,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146369,8 +147149,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146392,8 +147172,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146415,8 +147195,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146438,8 +147218,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146461,8 +147241,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146484,8 +147264,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146507,8 +147287,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146530,8 +147310,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146553,8 +147333,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146576,8 +147356,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146599,8 +147379,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146622,8 +147402,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146645,8 +147425,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146668,8 +147448,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "flour",
+      "grain"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -146691,12 +147471,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_UIC_MM",
@@ -146714,12 +147493,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I71_MM",
@@ -146737,12 +147515,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_MM_DR1",
@@ -146760,12 +147537,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_MM_DR2P_UIC",
@@ -146783,12 +147559,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_MM_DR3",
@@ -146806,12 +147581,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_MM_DR4",
@@ -146829,12 +147603,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_Std_STEF_TN",
@@ -146852,12 +147625,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_Std_STEF",
@@ -146875,12 +147647,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_Std_STEF_E4",
@@ -146898,12 +147669,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_Cadoux_STEF_E3",
@@ -146921,12 +147691,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_UIC_STEF_E3",
@@ -146944,12 +147713,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_UIC_STEF1",
@@ -146967,12 +147735,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_UIC_STEF2",
@@ -146990,12 +147757,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I59_STEF1",
@@ -147013,12 +147779,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I59_STEF2",
@@ -147036,12 +147801,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_TPIso_STEF",
@@ -147059,12 +147823,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I71_STEF1",
@@ -147082,12 +147845,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I71_STEF2",
@@ -147105,12 +147867,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I71_STEF2_GervaisFindus",
@@ -147128,12 +147889,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_DRIso_STEF1",
@@ -147151,12 +147911,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-I_STEF_DRBerlin",
@@ -147174,12 +147933,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Bauxite_Fal_A_R",
@@ -147197,12 +147955,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general",
+      "bauxite"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Bauxite_Fal_A_L",
@@ -147220,12 +147978,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general",
+      "bauxite"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Bauxite_Fal_B",
@@ -147243,12 +148001,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general",
+      "bauxite"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Bauxite_Fal_C",
@@ -147266,12 +148024,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general",
+      "bauxite"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Calcaire_Orval63_R",
@@ -147289,12 +148047,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "limestone",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Calcaire_Orval63_L",
@@ -147312,12 +148070,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "limestone",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Calcaire_Orval63_Novacarb_R",
@@ -147335,12 +148093,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "limestone",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Calcaire_Orval63_Novacarb_L",
@@ -147358,12 +148116,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "limestone",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Calcaire_Orval63_Solvay_R",
@@ -147381,12 +148139,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "limestone",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Calcaire_Orval63_Solvay_L",
@@ -147404,12 +148162,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "limestone",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboSoude_Richard53_Solvay_E3",
@@ -147427,12 +148185,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboSoude_70_R",
@@ -147450,12 +148207,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboSoude_70_L",
@@ -147473,12 +148229,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboSoude_70_Y25_R",
@@ -147496,12 +148251,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboSoude_70_Y25_L",
@@ -147519,12 +148273,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboSoude_73_R",
@@ -147542,12 +148295,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboSoude_73_L",
@@ -147565,12 +148317,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Chaux_CFMCF2E58_Dugny_R",
@@ -147588,12 +148339,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Chaux_CFMCF2E58_Dugny_L",
@@ -147611,12 +148361,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Chaux_DeDietrich50_Dugny_R",
@@ -147634,12 +148383,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Chaux_DeDietrich50_Dugny_L",
@@ -147657,12 +148405,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Chaux_Tads_Nacco_R",
@@ -147680,12 +148427,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Chaux_Tads_Nacco_L",
@@ -147703,12 +148449,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80a_G_R",
@@ -147726,12 +148471,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80a_G_L",
@@ -147749,12 +148493,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80a_N_R",
@@ -147772,12 +148515,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80a_N_L",
@@ -147795,12 +148537,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_G_R",
@@ -147818,12 +148559,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_G_L",
@@ -147841,12 +148581,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_GCofrablack_R",
@@ -147864,12 +148603,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_GCofrablack_L",
@@ -147887,12 +148625,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_BCofrablack_R",
@@ -147910,12 +148647,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_BCofrablack_L",
@@ -147933,12 +148669,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_N_R",
@@ -147956,12 +148691,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_Orval80b_N_L",
@@ -147979,12 +148713,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_FG128_R",
@@ -148002,12 +148735,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CarboBlack_FG128_L",
@@ -148025,12 +148757,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Taoos_Orval70_SucreAquitaine_R",
@@ -148048,12 +148779,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general",
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Taoos_Orval70_SucreAquitaine_L",
@@ -148071,12 +148802,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general",
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SucreFG94G_SucreTMFCita_R",
@@ -148094,8 +148825,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148117,8 +148849,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148140,8 +148873,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148163,8 +148897,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148186,8 +148921,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148209,8 +148945,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148232,8 +148969,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148255,8 +148993,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "flour",
       "grain",
-      "flour"
+      "sugar"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
@@ -148278,12 +149017,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ucs_30_SCFDLR",
@@ -148301,12 +149039,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ucs_30_SCFG",
@@ -148324,12 +149061,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ucs_30_SCFJ",
@@ -148347,12 +149083,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ucs_ciment1_Omya",
@@ -148370,12 +149105,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ucs_Mariage34_BMP1",
@@ -148393,12 +149127,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ucs_Mariage34_BMP2",
@@ -148416,12 +149149,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Ucs_Mariage34_OMYA",
@@ -148439,12 +149171,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CitVin_Danzas12_R",
@@ -148462,11 +149193,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148488,11 +149219,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148514,11 +149245,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148540,11 +149271,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148566,11 +149297,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148592,11 +149323,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148618,11 +149349,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148644,11 +149375,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148670,11 +149401,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148696,11 +149427,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148722,11 +149453,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148748,11 +149479,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148774,11 +149505,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148800,11 +149531,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148826,11 +149557,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148852,11 +149583,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148878,11 +149609,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148904,11 +149635,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148930,11 +149661,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148956,11 +149687,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -148982,11 +149713,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149008,11 +149739,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149034,11 +149765,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149060,11 +149791,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149086,11 +149817,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149112,11 +149843,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "lpg",
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149138,11 +149870,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "lpg",
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149164,11 +149897,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "lpg",
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149190,15 +149924,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
-      "chemicals",
-      "milk",
-      "wine",
-      "sulphur"
+      "lpg",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
-    "wagonSubCategory": "citerne"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-ERMEWASATI_Propane",
@@ -149216,15 +149947,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
-      "chemicals",
-      "milk",
-      "wine",
-      "sulphur"
+      "lpg",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
-    "wagonSubCategory": "citerne"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-ERMEWASATI_Ammoniac",
@@ -149242,11 +149970,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "ammonia",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149268,11 +149997,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149294,11 +150023,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149320,11 +150049,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149346,11 +150075,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149372,11 +150101,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149398,11 +150127,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149424,11 +150153,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149450,11 +150179,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149476,11 +150205,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149502,11 +150231,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149528,11 +150257,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149554,11 +150283,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149580,11 +150309,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149606,11 +150335,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149632,11 +150361,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149658,11 +150387,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149684,11 +150413,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149710,11 +150439,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149736,11 +150465,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "oil",
       "chemicals",
+      "sulphur",
       "milk",
-      "wine",
-      "sulphur"
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 104,
@@ -149961,11 +150690,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Kang2E_SEGI_R",
@@ -149984,11 +150713,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Kang2E_SEGI_E4_R",
@@ -150007,11 +150736,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Kang2E_ALGECO_R",
@@ -150030,11 +150759,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SEGI_K67_R",
@@ -150053,11 +150782,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SEGI_K67_L",
@@ -150076,11 +150805,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SEGI_KB_R",
@@ -150099,11 +150828,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SEGI_KB_L",
@@ -150122,11 +150851,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SEGI_KM_R",
@@ -150145,11 +150874,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-SEGI_KM_L",
@@ -150168,11 +150897,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Novatrans_KC",
@@ -150190,7 +150919,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -150212,7 +150942,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -150234,7 +150965,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -150256,7 +150988,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -150279,11 +151012,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-KangB_Novatrans_R",
@@ -150302,11 +151035,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CNC_L56",
@@ -150324,7 +151057,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -150346,7 +151080,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -150369,11 +151104,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Novatrans_Lgs",
@@ -150392,11 +151127,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Modalohr_WE_R",
@@ -170354,12 +171089,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Elo1213B1",
@@ -170377,11 +171116,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_E1215A5",
@@ -170399,11 +171143,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Eaos_1415A1",
@@ -170421,11 +171170,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Eaos_1415A2",
@@ -170443,11 +171197,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Eaos_1415A3",
@@ -170465,11 +171224,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fals1000F2",
@@ -170487,11 +171251,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fals1000F3",
@@ -170509,11 +171278,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fals1000F5",
@@ -170531,11 +171305,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fals1000F5_BCV",
@@ -170553,11 +171332,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1000F9_R",
@@ -170575,11 +171359,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1000F9_L",
@@ -170597,11 +171386,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1000F9_BCV_R",
@@ -170619,11 +171413,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1000F9_BCV_L",
@@ -170641,11 +171440,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1001F9_BCV_R",
@@ -170663,11 +171467,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1001F9_BCV_L",
@@ -170685,11 +171494,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1003F9_BCSRV_R",
@@ -170707,11 +171521,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Falns1003F9_BCSRV_L",
@@ -170729,11 +171548,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fd1000G2",
@@ -170751,12 +171575,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fb1222B1",
@@ -170774,11 +171602,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fas1415G6_VBC",
@@ -170796,12 +171629,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fas1415G6_VSL",
@@ -170819,12 +171656,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fas1415G8_VBC",
@@ -170842,12 +171683,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Fas1415G8_VSL",
@@ -170865,12 +171710,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Glms_2211A",
@@ -170888,8 +171737,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -170911,8 +171760,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -170934,8 +171783,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -170957,11 +171806,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-SNCB_Ks3212B0_B",
@@ -170979,11 +171829,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Ks3212B0_V",
@@ -171001,11 +171856,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Kps3212B4_B",
@@ -171023,11 +171883,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Kps3212B4_V",
@@ -171045,11 +171910,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Lgnss3210A2_VCargo",
@@ -171067,12 +171937,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Lgnss3210A3_VCargo",
@@ -171090,12 +171964,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_R3514B3",
@@ -171113,11 +171991,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_R3514B5",
@@ -171135,11 +172018,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Remms3514C0_B",
@@ -171157,11 +172045,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Remms3514C0_BI",
@@ -171179,11 +172072,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Remms3514C3_B",
@@ -171201,11 +172099,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Remms3514C3_V",
@@ -171223,11 +172126,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Rmmns3514C5_B",
@@ -171245,11 +172153,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_R3514G1",
@@ -171267,12 +172180,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_S3614A2",
@@ -171290,11 +172207,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_S3614A8",
@@ -171312,11 +172234,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614B1_R",
@@ -171334,11 +172261,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614B1_L",
@@ -171356,11 +172288,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614B2_R",
@@ -171378,11 +172315,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614B2_L",
@@ -171400,11 +172342,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614D5_BVBC",
@@ -171422,11 +172369,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614D5_VSL",
@@ -171444,11 +172396,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614D9_VBC",
@@ -171466,11 +172423,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614D9_VSL",
@@ -171488,11 +172450,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shmmns3614E1_VBC",
@@ -171510,11 +172477,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shmmns3614E2_VBC",
@@ -171532,11 +172504,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614H2",
@@ -171554,11 +172531,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614L1_VBC",
@@ -171576,11 +172558,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Shimmns3614L1_VSL",
@@ -171598,11 +172585,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Sgns491_B",
@@ -171620,12 +172612,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Sgnss3714B2_VCargo",
@@ -171643,12 +172639,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_BC_R",
@@ -171666,11 +172666,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_BC_L",
@@ -171688,11 +172693,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_SL_R",
@@ -171710,11 +172720,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_SL_L",
@@ -171732,11 +172747,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_VBC_R",
@@ -171754,11 +172774,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_VBC_L",
@@ -171776,11 +172801,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_VSL_R",
@@ -171798,11 +172828,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tads1004D0_VSL_L",
@@ -171820,11 +172855,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tms1215B1_R",
@@ -171842,11 +172882,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tms1215B1_L",
@@ -171864,11 +172909,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_T1416B1_R",
@@ -171886,11 +172936,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_T1416B1_L",
@@ -171908,11 +172963,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tbis2215A0",
@@ -171930,11 +172990,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tahms3614A3_R",
@@ -171952,11 +173017,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tahms3614A3_L",
@@ -171974,11 +173044,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tahms3614A5_R",
@@ -171996,11 +173071,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-SNCB_Tahms3614A5_L",
@@ -172018,11 +173098,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Falns6624B1_V_R",
@@ -172040,11 +173125,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Falns6624B1_V_L",
@@ -172062,11 +173152,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Falns6624B3_SRV_R",
@@ -172084,11 +173179,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Falns6624B3_SRV_L",
@@ -172106,11 +173206,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Fals6626B0_V",
@@ -172128,11 +173233,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Fals6627B0_B",
@@ -172150,11 +173260,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Shmmns3614E1_V2",
@@ -172172,11 +173287,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Xpedys_Shmmns3614E2_V",
@@ -172194,11 +173314,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-IFB_Eaos6503B0_G",
@@ -172216,12 +173341,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-IFB_Eaos6503B0_B",
@@ -172239,11 +173368,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-IFB_Lgnss3210A2_V",
@@ -172261,12 +173395,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-IFB_Lgnss3210A3_V",
@@ -172284,12 +173422,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-IFB_Sgnss6454B0_V",
@@ -172307,12 +173449,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-B_1000H0_CAIB",
@@ -172330,11 +173476,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-B_1000H0_VTG",
@@ -172352,12 +173503,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-B_6608B0_B_Cockerill",
@@ -172375,11 +173530,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-B_6614B0_B_OnRail",
@@ -172397,11 +173557,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-B_CerealFG92P_Amylum_R",
@@ -172419,12 +173584,15 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "chemicals",
+      "sulphur",
+      "milk",
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "citerne"
   },
   {
     "id": "cat-B_CerealFG92P_Amylum_L",
@@ -172442,12 +173610,15 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "chemicals",
+      "sulphur",
+      "milk",
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "citerne"
   },
   {
     "id": "cat-B_CerealFG94P_Amylum_R",
@@ -172465,12 +173636,15 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "chemicals",
+      "sulphur",
+      "milk",
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "citerne"
   },
   {
     "id": "cat-B_CerealFG94P_Amylum_L",
@@ -172488,12 +173662,15 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "grain",
-      "flour"
+      "chemicals",
+      "sulphur",
+      "milk",
+      "oil",
+      "wine"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 102,
-    "wagonSubCategory": "tremie"
+    "wagonSubCategory": "citerne"
   },
   {
     "id": "cat-Lineas_HLE13_R",
@@ -181468,12 +182645,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFL_Fcs6451_GB_L",
@@ -181491,12 +182667,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFL_Fcs6451_G_R",
@@ -181514,12 +182689,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFL_Fcs6451_G_L",
@@ -181537,12 +182711,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFL_Gs_StdC",
@@ -181560,8 +182733,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -181583,8 +182756,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -181606,8 +182779,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -181629,11 +182802,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Rnss",
@@ -181651,11 +182829,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Rilnss_EuroLuxCargo",
@@ -181673,12 +182856,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Shimmnss_EuroLuxCargoB_R",
@@ -181696,12 +182883,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Shimmnss_EuroLuxCargoB_L",
@@ -181719,12 +182910,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Shimmnss_EuroLuxCargoG_R",
@@ -181742,12 +182937,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Shimmnss_EuroLuxCargoG_L",
@@ -181765,12 +182964,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Slps1_L",
@@ -181788,11 +182991,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFL_Talns",
@@ -181810,11 +183018,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-CFL_Tdgs",
@@ -181832,8 +183041,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -181855,11 +183064,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-DB_E04_R",
@@ -270781,11 +271991,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E032_H_U2_R",
@@ -270803,11 +272018,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E032_H_U2_L",
@@ -270825,11 +272045,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E034",
@@ -270847,11 +272072,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E035",
@@ -270869,11 +272099,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E035_H_R",
@@ -270891,11 +272126,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E035_H_L",
@@ -270913,11 +272153,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E036_U1",
@@ -270935,11 +272180,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E039",
@@ -270957,11 +272207,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Es045",
@@ -270979,11 +272234,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Es045_K",
@@ -271001,11 +272261,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E025_K",
@@ -271023,11 +272288,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_E027_K",
@@ -271045,11 +272315,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25",
@@ -271067,11 +272342,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25_K",
@@ -271089,11 +272369,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_1PY25_K",
@@ -271111,11 +272396,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25H_R",
@@ -271133,11 +272423,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25H_L",
@@ -271155,11 +272450,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25H_K_R",
@@ -271177,11 +272477,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25H_K_L",
@@ -271199,11 +272504,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25H1P_K_R",
@@ -271221,11 +272531,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_Y25H1P_K_L",
@@ -271243,11 +272558,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650",
@@ -271265,11 +272585,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650_K",
@@ -271287,11 +272612,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650H_R",
@@ -271309,11 +272639,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650H_L",
@@ -271331,11 +272666,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650H_K_R",
@@ -271353,11 +272693,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650H_K_L",
@@ -271375,11 +272720,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650H1P_SL_R",
@@ -271397,11 +272747,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos051_650H1P_SL_L",
@@ -271419,11 +272774,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos075_RN",
@@ -271441,11 +272801,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos075_RDL",
@@ -271463,11 +272828,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos075_F_RN_R",
@@ -271485,11 +272855,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaos075_F_RN_L",
@@ -271507,11 +272882,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052",
@@ -271529,11 +272909,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052_K",
@@ -271551,11 +272936,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052_H_R",
@@ -271573,11 +272963,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052_H_L",
@@ -271595,11 +272990,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052_H_K_R",
@@ -271617,11 +273017,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052_H_K_L",
@@ -271639,11 +273044,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052_1P_SL",
@@ -271661,11 +273071,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos052_Y25_K",
@@ -271683,11 +273098,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanosx055_DBC",
@@ -271705,11 +273125,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanosx055_VRSL",
@@ -271727,11 +273152,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanos059_VR",
@@ -271749,11 +273179,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanosx056_B",
@@ -271771,11 +273206,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanosx056_DBC",
@@ -271793,11 +273233,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eanosx056_VRSL",
@@ -271815,11 +273260,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaosx057_K",
@@ -271837,11 +273287,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaosx057_1PR_K",
@@ -271859,11 +273314,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eaosx057_1PL_K",
@@ -271881,11 +273341,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Ealost058_K",
@@ -271903,11 +273368,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eas067_K",
@@ -271925,11 +273395,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eans069_K",
@@ -271947,11 +273422,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eas070_K",
@@ -271969,11 +273449,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eas071_K",
@@ -271991,11 +273476,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Ealos053_K",
@@ -272013,11 +273503,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Ealos053_Y25_K",
@@ -272035,11 +273530,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Ealos053_1P_Y25_K",
@@ -272057,11 +273557,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Eas073_K",
@@ -272079,11 +273584,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Ommi51",
@@ -272607,12 +274117,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Fcs092_Preussag_L",
@@ -272630,12 +274139,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Fcs088_K_R",
@@ -274699,8 +276207,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general",
-      "paper"
+      "salt"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274722,8 +276231,9 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general",
-      "paper"
+      "salt"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274745,8 +276255,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274768,8 +276278,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274791,8 +276301,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274814,8 +276324,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274837,8 +276347,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274860,8 +276370,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274883,8 +276393,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274906,8 +276416,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274929,8 +276439,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274952,8 +276462,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274975,8 +276485,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -274998,8 +276508,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275021,8 +276531,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275044,8 +276554,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275067,8 +276577,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275090,8 +276600,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275113,8 +276623,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275136,8 +276646,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275159,8 +276669,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275182,8 +276692,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275205,8 +276715,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275228,8 +276738,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275251,8 +276761,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275274,8 +276784,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275297,8 +276807,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275320,8 +276830,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275343,8 +276853,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275366,8 +276876,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275389,8 +276899,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275412,8 +276922,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275435,8 +276945,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275458,8 +276968,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275481,8 +276991,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275504,8 +277014,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275527,8 +277037,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275550,8 +277060,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275573,8 +277083,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275596,8 +277106,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275619,8 +277129,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275642,8 +277152,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275665,8 +277175,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275688,8 +277198,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275711,8 +277221,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275734,8 +277244,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275757,8 +277267,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275780,8 +277290,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275803,8 +277313,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275826,8 +277336,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275849,8 +277359,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275872,8 +277382,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275895,8 +277405,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275918,8 +277428,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275941,8 +277451,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275964,8 +277474,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -275987,8 +277497,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276010,8 +277520,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276033,8 +277543,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276056,8 +277566,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276079,8 +277589,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276102,8 +277612,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276125,8 +277635,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276148,8 +277658,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276171,8 +277681,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276194,8 +277704,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276217,8 +277727,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276240,8 +277750,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276263,8 +277773,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276286,8 +277796,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276309,8 +277819,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276332,8 +277842,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276355,8 +277865,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276378,8 +277888,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276401,8 +277911,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276424,8 +277934,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276447,8 +277957,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276470,8 +277980,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276493,8 +278003,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276516,8 +278026,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276539,8 +278049,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276562,8 +278072,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276585,8 +278095,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -276608,12 +278118,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbistt293_DBC",
@@ -276631,12 +278140,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbistt293_RN",
@@ -276654,12 +278162,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbistt293_VRSL",
@@ -276677,12 +278184,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbis299",
@@ -276700,12 +278206,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbis299_L2K",
@@ -276723,12 +278228,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbills302",
@@ -276746,12 +278250,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbillns302_K",
@@ -276769,12 +278272,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbillns302_DBC",
@@ -276792,12 +278294,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbikks302_K",
@@ -276815,12 +278316,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbillns302_WI_K",
@@ -276838,12 +278338,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbins302_VR",
@@ -276861,12 +278360,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbillns303",
@@ -276884,12 +278382,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbillns303_K",
@@ -276907,12 +278404,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbillns303_DBC",
@@ -276930,12 +278426,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbis306",
@@ -276953,12 +278448,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbis306_L2",
@@ -276976,12 +278470,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbis306_L2K",
@@ -276999,12 +278492,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbis306_L3K",
@@ -277022,12 +278514,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbis306_DBC",
@@ -277045,12 +278536,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbillss307_ICE",
@@ -277068,12 +278558,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbills308",
@@ -277091,12 +278580,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbinstt309_VR",
@@ -277114,12 +278602,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbills310_VRSL",
@@ -277137,12 +278624,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbills310_VR",
@@ -277160,12 +278646,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbills311_VRSL",
@@ -277183,12 +278668,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hbbills311_VR",
@@ -277206,12 +278690,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hiirrstt324_RN",
@@ -277229,12 +278712,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hiirrstt324_RDL",
@@ -277252,12 +278734,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hirrstt325_DBC",
@@ -277275,12 +278756,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hirrstt325_RN1",
@@ -277298,12 +278778,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hirrstt325_RN",
@@ -277321,12 +278800,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hirrstt325_VRSL",
@@ -277344,12 +278822,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Himrrstt326_RN",
@@ -277367,12 +278844,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hkksuvz332_R",
@@ -277390,12 +278866,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hkksuvz332_L",
@@ -277413,12 +278888,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hksvz333_R",
@@ -277436,12 +278910,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Hksvz333_L",
@@ -277459,12 +278932,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Habbiins344_RN",
@@ -277482,12 +278954,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Habbis345",
@@ -277505,12 +278976,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Habbis345_K",
@@ -277528,12 +278998,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Habbis345_DBC",
@@ -277551,12 +279020,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Habbis345_VRSL",
@@ -277574,12 +279042,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Habbiins352_VR",
@@ -277597,12 +279064,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Ihs377",
@@ -277620,12 +279086,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Ibblps379",
@@ -277643,12 +279108,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Ibbhs396",
@@ -277666,12 +279130,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Ibbhs399",
@@ -277689,12 +279152,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Ibbhlps401",
@@ -277712,12 +279174,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "refrigerated",
-      "meat"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 76,
-    "wagonSubCategory": "frigo"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Rr30",
@@ -277845,12 +279306,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "steel",
-      "steel-coils",
+      "wood",
       "steel-sheet",
+      "steel-coils",
       "steel-beams",
-      "containers",
-      "wood"
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80,
@@ -278070,11 +279531,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmms56_L",
@@ -278092,11 +279558,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kbs442_R",
@@ -278114,11 +279585,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kbs442_L",
@@ -278136,11 +279612,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kbs442_K_R",
@@ -278158,11 +279639,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kbs442_K_L",
@@ -278180,11 +279666,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmms56_H_R",
@@ -278202,11 +279693,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmms56_H_L",
@@ -278224,11 +279720,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kbs442_H_R",
@@ -278246,11 +279747,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kbs442_H_L",
@@ -278268,11 +279774,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmmso56_R",
@@ -278290,11 +279801,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmmso56_L",
@@ -278312,11 +279828,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kls442_R",
@@ -278334,11 +279855,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kls442_L",
@@ -278356,11 +279882,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kls442_K_R",
@@ -278378,11 +279909,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kls442_K_L",
@@ -278400,11 +279936,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmmso56_H_R",
@@ -278422,11 +279963,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmmso56_H_L",
@@ -278444,11 +279990,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kls442_H_R",
@@ -278466,11 +280017,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kls442_H_L",
@@ -278488,11 +280044,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmmso61_R",
@@ -278510,11 +280071,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Rlmmso61_L",
@@ -278532,11 +280098,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kglps563_R",
@@ -278554,12 +280125,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Kglps563_L",
@@ -278577,12 +280152,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Ks446_K",
@@ -278666,7 +280245,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278688,7 +280268,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278710,7 +280291,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278732,7 +280314,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278754,7 +280337,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278776,7 +280360,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278798,7 +280383,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278820,7 +280406,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278842,7 +280429,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278864,7 +280452,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278886,7 +280475,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278908,7 +280498,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278930,7 +280521,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278952,7 +280544,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278974,7 +280567,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -278996,7 +280590,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279018,7 +280613,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279040,7 +280636,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279062,7 +280659,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279084,7 +280682,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279106,7 +280705,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279128,7 +280728,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279150,7 +280751,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279172,7 +280774,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279194,7 +280797,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279216,7 +280820,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279238,7 +280843,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279260,7 +280866,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279282,7 +280889,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "vehicles"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279304,7 +280912,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279326,7 +280935,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279348,7 +280958,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279370,7 +280981,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279392,7 +281004,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "general",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -279415,11 +281028,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgs575_L2",
@@ -279438,11 +281051,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgs575_K",
@@ -279461,11 +281074,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgjns576",
@@ -279484,11 +281097,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgjns576_K",
@@ -279507,11 +281120,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgjns576_VR",
@@ -279530,11 +281143,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgs579_DBC",
@@ -279553,11 +281166,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgs579_VRSL",
@@ -279576,11 +281189,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgs580_DBC",
@@ -279599,11 +281212,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgs580_VRSL",
@@ -279622,11 +281235,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Lgs580_VR",
@@ -279645,11 +281258,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Ssyl19",
@@ -280723,12 +282336,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Res676_K",
@@ -280922,11 +282534,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sammsu454_K",
@@ -280944,11 +282561,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sammsu454_DBC",
@@ -280966,11 +282588,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Salmms454_DBC",
@@ -280988,11 +282615,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms489_VRSL_R",
@@ -281010,11 +282642,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms489_VRSL_L",
@@ -281032,11 +282669,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms489_DBS_R",
@@ -281054,11 +282696,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms489_DBS_L",
@@ -281076,11 +282723,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns691_DBC_R",
@@ -281098,12 +282750,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns691_DBC_L",
@@ -281121,12 +282777,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns691_RN1_R",
@@ -281144,12 +282804,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns691_RN1_L",
@@ -281167,12 +282831,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns691_VR_R",
@@ -281190,12 +282858,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns691_VR_L",
@@ -281213,12 +282885,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns694_R",
@@ -281236,12 +282912,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns694_L",
@@ -281259,12 +282939,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns694_K_R",
@@ -281282,12 +282966,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns694_K_L",
@@ -281305,12 +282993,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sammnps694_DBS",
@@ -281328,11 +283020,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms695",
@@ -281350,11 +283047,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgns696_VR",
@@ -281372,12 +283074,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgmms697",
@@ -281395,12 +283101,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgmms697_K",
@@ -281418,12 +283128,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgss703",
@@ -281441,12 +283155,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgnss704_RDL_R",
@@ -281464,12 +283182,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgnss704_RDL_L",
@@ -281487,12 +283209,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgnss704_VR_R",
@@ -281510,12 +283236,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgnss704_VR_L",
@@ -281533,12 +283263,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Salmmnps706_B",
@@ -281556,11 +283290,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Salmmnps706_BK",
@@ -281578,11 +283317,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sammnps706_BK",
@@ -281600,11 +283344,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahlmmps706_B",
@@ -281622,11 +283371,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahlmmps706_BK",
@@ -281644,11 +283398,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimms708_R",
@@ -281666,11 +283425,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimms708_L",
@@ -281688,11 +283452,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns708_4_DBS",
@@ -281710,11 +283479,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns708_4_VR",
@@ -281732,11 +283506,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms709",
@@ -281754,11 +283533,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms709_K",
@@ -281776,11 +283560,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms709_B",
@@ -281798,11 +283587,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms709",
@@ -281820,11 +283614,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms709_K",
@@ -281842,11 +283641,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms710",
@@ -281864,11 +283668,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Samms710_K",
@@ -281886,11 +283695,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms710",
@@ -281908,11 +283722,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms710_K",
@@ -281930,11 +283749,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms711_1SS",
@@ -281952,11 +283776,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms711_1S",
@@ -281974,11 +283803,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms711_1S_K",
@@ -281996,11 +283830,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms711_2S",
@@ -282018,11 +283857,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahmms711_2S_K",
@@ -282040,11 +283884,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgjs712",
@@ -282062,12 +283911,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgjs712_K",
@@ -282085,12 +283938,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahlmmps713_VR",
@@ -282108,11 +283965,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sggmrs715",
@@ -282130,12 +283992,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgjs716",
@@ -282153,12 +284019,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgjs716_OR_K",
@@ -282176,12 +284046,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgs717_K",
@@ -282199,12 +284073,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns718_DBC",
@@ -282222,11 +284100,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns718_VRSL",
@@ -282244,11 +284127,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns718_RDL",
@@ -282266,11 +284154,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns718_DBCOR",
@@ -282288,11 +284181,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sps719_K",
@@ -282310,11 +284208,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns720_VRSL",
@@ -282332,11 +284235,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns722_VRSL",
@@ -282354,11 +284262,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns722_RN",
@@ -282376,11 +284289,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns724_DBS",
@@ -282398,11 +284316,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sns727_VRSL",
@@ -282420,11 +284343,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns730_K_R",
@@ -282442,11 +284370,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Shimmns730_K_L",
@@ -282464,11 +284397,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgmmns738_R",
@@ -282486,12 +284424,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgmmns738_L",
@@ -282509,12 +284451,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgmmns738_K_R",
@@ -282532,12 +284478,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sgmmns738_K_L",
@@ -282555,12 +284505,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sdggmrss738_VR",
@@ -282578,12 +284532,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sdggmrs744_R",
@@ -282601,12 +284559,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sdggmrs744_L",
@@ -282624,12 +284586,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms900",
@@ -282647,11 +284613,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms900_K",
@@ -282669,11 +284640,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms900_DBC",
@@ -282691,11 +284667,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms900_2_VR",
@@ -282713,11 +284694,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms901_B",
@@ -282735,11 +284721,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms901_BK",
@@ -282757,11 +284748,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms901_VR",
@@ -282779,11 +284775,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms901_RN",
@@ -282801,11 +284802,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms901_RDL",
@@ -282823,11 +284829,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Sahimms901_DBS",
@@ -282845,11 +284856,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_KKt45_R",
@@ -283065,11 +285081,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tims858_1S",
@@ -283087,11 +285108,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tims858_1S_K",
@@ -283109,11 +285135,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tims858_2S",
@@ -283131,11 +285162,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tims858_2S_K",
@@ -283153,11 +285189,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis869A",
@@ -283175,11 +285216,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis869A_L2",
@@ -283197,11 +285243,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis869A_L2K",
@@ -283219,11 +285270,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis869B",
@@ -283241,11 +285297,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis869B_L2",
@@ -283263,11 +285324,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis869B_L2K",
@@ -283285,11 +285351,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis870_1s",
@@ -283307,11 +285378,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis870_1s_L2",
@@ -283329,11 +285405,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis870_2s",
@@ -283351,11 +285432,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis870_2s_L2",
@@ -283373,11 +285459,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis870_2s_L2K",
@@ -283395,11 +285486,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis871",
@@ -283417,11 +285513,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis871_L2",
@@ -283439,11 +285540,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis871_L2K",
@@ -283461,11 +285567,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tbis874",
@@ -283483,11 +285594,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns886_R",
@@ -283505,11 +285621,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns886_L",
@@ -283527,11 +285648,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns886_K_R",
@@ -283549,11 +285675,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns886_K_L",
@@ -283571,11 +285702,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems887",
@@ -283593,11 +285729,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems888",
@@ -283615,11 +285756,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems889_R",
@@ -283637,11 +285783,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems889_L",
@@ -283659,11 +285810,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems889_K_R",
@@ -283681,11 +285837,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems889_K_L",
@@ -283703,11 +285864,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems890",
@@ -283725,11 +285891,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems890_K",
@@ -283747,11 +285918,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems890_Y25_K",
@@ -283769,11 +285945,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems891",
@@ -283791,11 +285972,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems891_K",
@@ -283813,11 +285999,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems892_R",
@@ -283835,11 +286026,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems892_L",
@@ -283857,11 +286053,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems892_K_R",
@@ -283879,11 +286080,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taems892_K_L",
@@ -283901,11 +286107,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns893_R",
@@ -283923,11 +286134,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns893_L",
@@ -283945,11 +286161,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns893_K_R",
@@ -283967,11 +286188,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns893_K_L",
@@ -283989,11 +286215,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns893_DBC_R",
@@ -284011,11 +286242,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns893_DBC_L",
@@ -284033,11 +286269,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_K_R",
@@ -284055,11 +286296,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_K_L",
@@ -284077,11 +286323,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_DBC_R",
@@ -284099,11 +286350,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_DBC_L",
@@ -284121,11 +286377,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_RN_R",
@@ -284143,11 +286404,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_RN_L",
@@ -284165,11 +286431,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_VRSL_R",
@@ -284187,11 +286458,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Taoos894_VRSL_L",
@@ -284209,11 +286485,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns895_DBC_R",
@@ -284231,11 +286512,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tamns895_DBC_L",
@@ -284253,11 +286539,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_DBC_R",
@@ -284275,11 +286566,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_DBC_L",
@@ -284297,11 +286593,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_VRSL_R",
@@ -284319,11 +286620,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_VRSL_L",
@@ -284341,11 +286647,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_RN_R",
@@ -284363,11 +286674,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_RN_L",
@@ -284385,11 +286701,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_RDL_R",
@@ -284407,11 +286728,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_RDL_L",
@@ -284429,11 +286755,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_DBS_R",
@@ -284451,11 +286782,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tanoos896_DBS_L",
@@ -284473,11 +286809,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tagnoos898_RN_R",
@@ -284495,12 +286836,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tagnoos898_RN_L",
@@ -284518,12 +286863,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tagnoos898_DBS_R",
@@ -284541,12 +286890,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tagnoos898_DBS_L",
@@ -284564,12 +286917,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_R",
@@ -284587,11 +286944,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_L",
@@ -284609,11 +286971,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_K_R",
@@ -284631,11 +286998,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_K_L",
@@ -284653,11 +287025,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_QW_R",
@@ -284675,11 +287052,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_QW_L",
@@ -284697,11 +287079,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_QWK_R",
@@ -284719,11 +287106,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Td925_QWK_L",
@@ -284741,11 +287133,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tdgs930_R",
@@ -284763,12 +287160,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tdgs930_L",
@@ -284786,12 +287187,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tds930_K_R",
@@ -284809,11 +287214,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tds930_K_L",
@@ -284831,11 +287241,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tds930_QW_R",
@@ -284853,11 +287268,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tds930_QW_L",
@@ -284875,11 +287295,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tds930_QWK_R",
@@ -284897,11 +287322,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tds930_QWK_L",
@@ -284919,11 +287349,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tdgs930_DBC_R",
@@ -284941,12 +287376,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tdgs930_DBC_L",
@@ -284964,12 +287403,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tdgs940_K_R",
@@ -284987,12 +287430,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tdgs940_K_L",
@@ -285010,12 +287457,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tads957_K",
@@ -285033,11 +287484,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs957_K",
@@ -285055,12 +287511,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tads958_K",
@@ -285078,11 +287538,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tads958_VR",
@@ -285100,11 +287565,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs958_K",
@@ -285122,12 +287592,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_661_R",
@@ -285145,12 +287619,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_661_L",
@@ -285168,12 +287646,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_Y25_R",
@@ -285191,12 +287673,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_Y25_L",
@@ -285214,12 +287700,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_Y25_K_R",
@@ -285237,12 +287727,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_Y25_K_L",
@@ -285260,12 +287754,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_Y25_DBC_R",
@@ -285283,12 +287781,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tadgs959_Y25_DBC_L",
@@ -285306,12 +287808,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tal964",
@@ -285329,11 +287835,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tal964_K",
@@ -285351,11 +287862,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tals966",
@@ -285373,11 +287889,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tals966_K",
@@ -285395,11 +287916,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tals967",
@@ -285417,11 +287943,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tals967_K",
@@ -285439,11 +287970,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tals968",
@@ -285461,11 +287997,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tals968_K",
@@ -285483,11 +288024,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Tals968_DBC",
@@ -285505,11 +288051,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_3_DBC_R",
@@ -285527,11 +288078,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_3_DBC_L",
@@ -285549,11 +288105,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_VR_R",
@@ -285571,11 +288132,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_VR_L",
@@ -285593,11 +288159,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_VRSL_R",
@@ -285615,11 +288186,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_VRSL_L",
@@ -285637,11 +288213,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_RN_R",
@@ -285659,11 +288240,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns969_RN_L",
@@ -285681,11 +288267,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns970_3_DBS_R",
@@ -285703,11 +288294,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Talns970_3_DBS_L",
@@ -285725,11 +288321,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DB_Ucs908_25_R",
@@ -286407,12 +289008,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs41_K2_L",
@@ -286430,12 +289030,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs41_K2b_R",
@@ -286453,12 +289052,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs41_K2b_L",
@@ -286476,12 +289074,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs41_R",
@@ -286499,12 +289096,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs41_L",
@@ -286522,12 +289118,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs41_b_R",
@@ -286545,12 +289140,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs41_b_L",
@@ -286568,12 +289162,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs041_R",
@@ -286591,12 +289184,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs041_L",
@@ -286614,12 +289206,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs041_UF_R",
@@ -286637,12 +289228,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs041_UF_L",
@@ -286660,12 +289250,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs44_R",
@@ -286683,12 +289272,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwgs44_L",
@@ -286706,12 +289294,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwghs54_R",
@@ -286729,12 +289316,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwghs54_L",
@@ -286752,12 +289338,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwghs054_R",
@@ -286775,12 +289360,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwghs054_L",
@@ -286798,12 +289382,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwghs_ABi28_R",
@@ -286821,12 +289404,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwghs_ABi28_L",
@@ -286844,12 +289426,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_Pwghs_Bi28",
@@ -286867,12 +289448,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-ATG_Laaes556",
@@ -286929,11 +289509,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-KOWAG_Sggnos715_L1",
@@ -286952,11 +289532,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-KOWAG_Sggnos715_L2",
@@ -286975,11 +289555,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-KOWAG_Sdggnos744_R",
@@ -286998,11 +289578,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-KOWAG_Sdggnos744_L",
@@ -287021,11 +289601,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-DB_701_PR_R",
@@ -332338,12 +334918,10 @@ export const CATALOG = [
     "seriesName": "DR Miscellaneous Caboose : Daa",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-DR_Daa_V_L",
@@ -332360,12 +334938,10 @@ export const CATALOG = [
     "seriesName": "DR Miscellaneous Caboose : Daa",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-DR_DBmu_O2_R",
@@ -332649,8 +335225,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -332672,8 +335248,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -332695,8 +335271,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -332718,8 +335294,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -332741,8 +335317,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -332764,8 +335340,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -336891,11 +339467,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DSB_E_H_R",
@@ -336913,11 +339494,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DSB_E_H_L",
@@ -336935,11 +339521,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-DSB_Gs",
@@ -336957,8 +339548,8 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "paper",
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
@@ -336980,11 +339571,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-DSB_Hbillns",
@@ -337002,11 +339594,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-DSB_Hbikks",
@@ -337024,11 +339617,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-DB_EG3100_ExDSB",
@@ -368160,12 +370754,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FS_Gbs",
@@ -368183,12 +370776,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FS_Gbhs",
@@ -368206,12 +370798,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FS_Gabs_PA_L1",
@@ -368229,12 +370820,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FS_Gabs_PA_L2",
@@ -368252,12 +370842,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FS_Gabs_PB_L1",
@@ -368275,12 +370864,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FS_Gabs_PB_L2",
@@ -368298,12 +370886,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-FS_Hbilnns",
@@ -368475,11 +371062,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Shimmns_L1_R",
@@ -368497,11 +371089,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Shimmns_L1_L",
@@ -368519,11 +371116,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Shimmns_L2_R",
@@ -368541,11 +371143,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Shimmns_L2_L",
@@ -368563,11 +371170,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Shimmns_L3_R",
@@ -368585,11 +371197,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Shimmns_L3_L",
@@ -368607,11 +371224,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Shimmns4677_T",
@@ -368629,11 +371251,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Tadgns_L2_R",
@@ -368651,12 +371278,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-FS_Tadgns_L2_L",
@@ -368674,12 +371305,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-MIR_E405_R",
@@ -395569,12 +398204,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Eaos_GE5",
@@ -395592,12 +398226,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Eaos_R",
@@ -395659,12 +398292,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Fbkk_F_R",
@@ -395682,11 +398319,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Fbkk_F_L",
@@ -395704,11 +398346,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Fbkk_F_Logo_R",
@@ -395726,12 +398373,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Fbkk_F_Logo_L",
@@ -395749,12 +398400,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Gs",
@@ -395772,12 +398427,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gs_Logo",
@@ -395795,12 +398449,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gs_E5",
@@ -395818,12 +398471,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1500_E4_R",
@@ -395841,12 +398493,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1500_E4_L",
@@ -395864,12 +398515,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1500_E4b_R",
@@ -395887,12 +398537,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1500_E4b_L",
@@ -395910,12 +398559,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1500_E5_R",
@@ -395933,12 +398581,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1500_E5_L",
@@ -395956,12 +398603,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1501_E4_R",
@@ -395979,12 +398625,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1501_E4_L",
@@ -396002,12 +398647,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1501_E4b_R",
@@ -396025,12 +398669,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1501_E4b_L",
@@ -396048,12 +398691,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1501_E5_R",
@@ -396071,12 +398713,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gbs1501_E5_L",
@@ -396094,12 +398735,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Gklm_R",
@@ -396116,13 +398756,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Gklm_L",
@@ -396139,13 +398776,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Gklm_fGdB_R",
@@ -396162,13 +398796,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Gklm_fGdB_L",
@@ -396185,13 +398816,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Gms_R",
@@ -396208,13 +398836,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Gms_L",
@@ -396231,13 +398856,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Gms_fGdB_R",
@@ -396254,13 +398876,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Gms_fGdB_L",
@@ -396277,13 +398896,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Hk_R",
@@ -396300,12 +398916,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Hk_L",
@@ -396322,12 +398936,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Hk_fGdB_R",
@@ -396344,13 +398956,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Hk_fGdB_L",
@@ -396367,13 +398976,10 @@ export const CATALOG = [
     "seriesName": "Switzerland Parcels service",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general",
-      "paper"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Hbis_1S_F_E4_R",
@@ -396677,12 +399283,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Habils_1S_L1",
@@ -396788,12 +399393,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Ks_E4",
@@ -396811,11 +399415,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Ks_E5",
@@ -396833,11 +399442,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Rs_E4",
@@ -396855,11 +399469,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Res_E4",
@@ -396877,11 +399496,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Res_E5",
@@ -396899,11 +399523,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Sps_E5",
@@ -396921,11 +399550,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Shimmns_V_R",
@@ -396943,11 +399577,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Shimmns_V_L",
@@ -396965,11 +399604,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFF_Tgpps_GE4_R",
@@ -396987,12 +399631,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tgpps_GE4_L",
@@ -397010,12 +399653,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tgpps_GE5_R",
@@ -397033,12 +399675,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tgpps_GE5_L",
@@ -397056,12 +399697,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tgpps_BE4_R",
@@ -397079,12 +399719,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tgpps_BE4_L",
@@ -397102,12 +399741,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tgpps_BE5_R",
@@ -397125,12 +399763,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tgpps_BE5_L",
@@ -397148,12 +399785,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tagpps_L1_R",
@@ -397171,12 +399807,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tagpps_L1_L",
@@ -397194,12 +399829,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tagpps_L2_R",
@@ -397217,12 +399851,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tagpps_L2_L",
@@ -397240,12 +399873,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tagnpps_Cargo_R",
@@ -397263,12 +399895,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tagnpps_Cargo_L",
@@ -397286,12 +399917,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-CFF_Tbis_E4",
@@ -397660,12 +400290,10 @@ export const CATALOG = [
     "seriesName": "Switzerland \"Cabooses\" (coaches for the train chief)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CFF_Dd_M_L",
@@ -397682,12 +400310,10 @@ export const CATALOG = [
     "seriesName": "Switzerland \"Cabooses\" (coaches for the train chief)",
     "numberStart": "",
     "purchasePrice": 0,
-    "cargoTypes": [
-      "general"
-    ],
+    "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "service"
   },
   {
     "id": "cat-CHPost_Z320_V1_R",
@@ -403959,12 +406585,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-BLS_Gklm_L",
@@ -403982,12 +406607,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-BLS_Gkkms_R",
@@ -404005,12 +406629,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-BLS_Gkkms_L",
@@ -404028,12 +406651,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-BLS_Xds_R",
@@ -443161,12 +445783,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Eaos5334",
@@ -443470,12 +446091,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Gbs",
@@ -443493,12 +446113,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Gbkkssvx_B",
@@ -443516,12 +446135,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Gabs1810",
@@ -443539,12 +446157,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Gabs1811_R",
@@ -443562,12 +446179,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Gabs1811_L",
@@ -443585,12 +446201,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Gabkqssx_B",
@@ -443608,12 +446223,11 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-OBB_Hbis_L1",
@@ -443631,11 +446245,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-OBB_Hbis_L1b",
@@ -443653,11 +446268,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-OBB_Hbis_L2",
@@ -443675,11 +446291,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-OBB_Hbbills",
@@ -443697,11 +446314,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-RCA_Habbins2740",
@@ -443719,11 +446337,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-OBB_Habbins2742a",
@@ -443741,11 +446360,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-OBB_Habbins2742b",
@@ -443763,11 +446383,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-RCA_Habbins2743",
@@ -443785,11 +446406,12 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
+      "paper",
       "general"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "couvert"
   },
   {
     "id": "cat-OBB_Kbs",
@@ -443807,11 +446429,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Ks",
@@ -443829,11 +446456,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Laaprs",
@@ -443851,11 +446483,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Rnsz3991",
@@ -443873,11 +446510,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Ros",
@@ -443895,11 +446537,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Rnoos3523",
@@ -443917,11 +446564,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Sgns4575",
@@ -443939,12 +446591,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Sgnss_R",
@@ -443962,12 +446618,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Sgnss_L",
@@ -443985,12 +446645,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Sgnss_R",
@@ -444008,12 +446672,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Sgnss_L",
@@ -444031,12 +446699,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Sggmrrss4931",
@@ -444054,12 +446726,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns_R",
@@ -444077,11 +446753,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns_L",
@@ -444099,11 +446781,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns_RCA_R",
@@ -444121,11 +446809,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns_RCA_L",
@@ -444143,11 +446837,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns4673_Steel",
@@ -444165,11 +446865,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns4673_RCA",
@@ -444187,11 +446893,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns4674_RCA",
@@ -444209,11 +446921,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Shimmns_ERR_EIRCA",
@@ -444231,11 +446949,17 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "oil",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Tdgs_R",
@@ -444253,12 +446977,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Tdgs_L",
@@ -444276,12 +447004,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Tadns_R",
@@ -444299,11 +447031,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OBB_Tadns_L",
@@ -444321,11 +447058,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Tadnpss_B_R",
@@ -444343,11 +447085,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Tadnpss_B_L",
@@ -444365,11 +447112,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Tadnpss_G_R",
@@ -444387,12 +447139,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Tadnpss_G_L",
@@ -444410,12 +447166,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general",
-      "paper"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Talns0665_R",
@@ -444433,11 +447193,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-RCA_Talns0665_L",
@@ -444455,11 +447220,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-OPost_Post050_V_R",
@@ -457767,11 +460537,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFLC_Rilnss_L2",
@@ -457789,11 +460564,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFLC_T3000e",
@@ -457811,11 +460591,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFLC_Shimmnss_BL2_R",
@@ -457833,11 +460618,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFLC_Shimmnss_BL2_L",
@@ -457855,11 +460645,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFLC_Shimmnss_BL3_R",
@@ -457877,11 +460672,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFLC_Shimmnss_BL3_L",
@@ -457899,11 +460699,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-CFLC_Shimmns_ERR",
@@ -457921,11 +460726,16 @@ export const CATALOG = [
     "numberStart": "",
     "purchasePrice": 0,
     "cargoTypes": [
-      "general"
+      "wood",
+      "steel-sheet",
+      "steel-coils",
+      "steel-beams",
+      "steel",
+      "containers"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "default"
+    "wagonSubCategory": "plat"
   },
   {
     "id": "cat-Adria_1216_R",
@@ -459084,11 +461894,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "wood"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-BLG_Laaers800",
@@ -459107,11 +461917,11 @@ export const CATALOG = [
     "purchasePrice": 0,
     "cargoTypes": [
       "general",
-      "paper"
+      "wood"
     ],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 72,
-    "wagonSubCategory": "couvert"
+    "wagonSubCategory": "default"
   },
   {
     "id": "cat-Mosolf_Laaers700",
@@ -469717,4 +472527,4 @@ export const CATALOG = [
     "_source": "MLG Traffic (CC BY-NC-SA 3.0)",
     "tonnage": 80
   }
-];;;;;;
+];;;;;;;

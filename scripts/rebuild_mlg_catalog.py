@@ -57,6 +57,26 @@ CARGO_META = {
     'paper':   {'category': 'papier',       'name': 'Papier',        'unit': 't', 'pricePerUnit': 26, 'hazard': False},
     'livestock': {'category': 'animaux',    'name': 'Bétail',        'unit': 't', 'pricePerUnit': 34, 'hazard': False},
     'post':    {'category': 'postal',       'name': 'Courrier',      'unit': 't', 'pricePerUnit': 50, 'hazard': False},
+    'aggregates': {'category': 'granulats', 'name': 'Granulats',     'unit': 't', 'pricePerUnit': 16, 'hazard': False},
+    'limestone': {'category': 'granulats',  'name': 'Calcaire',      'unit': 't', 'pricePerUnit': 14, 'hazard': False},
+    'cement':  {'category': 'granulats',    'name': 'Ciment',        'unit': 't', 'pricePerUnit': 20, 'hazard': False},
+    'clinker': {'category': 'granulats',    'name': 'Clinker',       'unit': 't', 'pricePerUnit': 18, 'hazard': False},
+    'sugar':   {'category': 'cereales',     'name': 'Sucre',         'unit': 't', 'pricePerUnit': 24, 'hazard': False},
+    'salt':    {'category': 'cereales',     'name': 'Sel',           'unit': 't', 'pricePerUnit': 12, 'hazard': False},
+    'coke':    {'category': 'minerai',      'name': 'Coke',          'unit': 't', 'pricePerUnit': 25, 'hazard': False},
+    'bauxite': {'category': 'minerai',      'name': 'Bauxite',       'unit': 't', 'pricePerUnit': 28, 'hazard': False},
+    'fertilizer': {'category': 'chimie',     'name': 'Engrais',       'unit': 't', 'pricePerUnit': 28, 'hazard': False},
+    'potash':  {'category': 'chimie',       'name': 'Potasse',       'unit': 't', 'pricePerUnit': 26, 'hazard': False},
+    'phosphate': {'category': 'chimie',     'name': 'Phosphate',     'unit': 't', 'pricePerUnit': 30, 'hazard': False},
+    'kaolin':  {'category': 'chimie',       'name': 'Kaolin',        'unit': 't', 'pricePerUnit': 22, 'hazard': False},
+    'alumina': {'category': 'chimie',       'name': 'Alumine',       'unit': 't', 'pricePerUnit': 32, 'hazard': False},
+    'sinter':  {'category': 'acier',        'name': 'Aggloméré',     'unit': 't', 'pricePerUnit': 30, 'hazard': False},
+    'scrap':   {'category': 'acier',        'name': 'Ferraille',     'unit': 't', 'pricePerUnit': 20, 'hazard': False},
+    'pig-iron': {'category': 'acier',       'name': 'Fonte',         'unit': 't', 'pricePerUnit': 35, 'hazard': False},
+    'acid':    {'category': 'liquides',     'name': 'Acide',         'unit': 't', 'pricePerUnit': 50, 'hazard': True},
+    'ammonia': {'category': 'liquides',     'name': 'Ammoniac',      'unit': 't', 'pricePerUnit': 55, 'hazard': True},
+    'lng':     {'category': 'liquides',      'name': 'GNL',          'unit': 't', 'pricePerUnit': 60, 'hazard': True},
+    'lpg':     {'category': 'liquides',      'name': 'GPL',          'unit': 't', 'pricePerUnit': 58, 'hazard': True},
 }
 
 WAGON_DEFAULTS = {
@@ -260,9 +280,12 @@ def guess_traction(category, niv1, niv2, ligne, image_rel):
     return 'none'
 
 
-def get_category_and_wagon_sub(xml_name, image_rel, nompage2):
+def get_category_and_wagon_sub(xml_name, image_rel, nompage2, nom, series_name):
     low = image_rel.lower()
     base = Path(image_rel).name.lower()
+    low_nom = (nom or '').lower()
+    low_series = (series_name or '').lower()
+    has_locomotive = 'locomotive' in low_series or 'locomotives' in low_series
     # Direct directory hints first
     if '/le/' in low or 'locomotive' in xml_name.lower() or xml_name.startswith('SNCF_E_LE'):
         return 'locomotive', ''
@@ -283,30 +306,55 @@ def get_category_and_wagon_sub(xml_name, image_rel, nompage2):
     if '/vm/' in low or xml_name.startswith('SNCF_E_VM'):
         return 'voiture', ''
     if '/w/' in low or 'wagon' in xml_name.lower() or '_w_' in xml_name.lower() or xml_name.endswith('_W.xml'):
-        sub = guess_wagon_sub(xml_name, base)
+        sub = guess_wagon_sub(xml_name, base, nom, series_name)
         return 'wagon', sub
     if '/serv/' in low or '/draisine' in low or xml_name.startswith('SNCF_E_S_'):
         return 'wagon', 'service'
     if '/f_wp/' in low or '/f_p/' in low:
         # private / work wagons vs locos
-        if any(x in low for x in ['_bb', '_cc', '_loco', '_27000', '_37000', '_63000', '_66000', '_67000']):
+        if re.search(r'\b(bb\s*\d|cc\s*\d|y\s*\d{3,4}|hle\s*\d|g\s*\d{3,4}|class\s*\d+|lineas\s*\d+)\b', low_nom):
+            return 'locomotive', ''
+        if has_locomotive and re.search(r'\b(bb|cc|y|hle|g|class|lineas|t|x)\s*\d', low_nom):
+            return 'locomotive', ''
+        if any(x in low for x in ['_bb', '_cc', '_loco', '_27000', '_37000', '_63000', '_66000', '_67000', '_g1206', '_g1000', '_g2000', '_class', '_66', '_77', '_hle']):
             return 'locomotive', ''
         if any(x in low for x in ['_z', '_x', '_automot']):
             return 'automotrice', ''
-        sub = guess_wagon_sub(xml_name, base)
+        sub = guess_wagon_sub(xml_name, base, nom, series_name)
         return 'wagon', sub
     if '/f_poste/' in low or xml_name.startswith('France_E_Poste'):
         return 'wagon', 'post'
     return 'locomotive', ''
 
 
-def guess_wagon_sub(xml_name, image_basename):
+def guess_wagon_sub(xml_name, image_basename, nom='', series_name=''):
     tail = Path(xml_name).stem.split('_')[-1]
     m = XML_WAGON_MAP.get(tail)
     if m:
         return m['sub']
-    # Try from basename
     low = image_basename.lower()
+    name_low = (nom or '').lower()
+    series_low = (series_name or '').lower()
+    combined = low + ' ' + name_low + ' ' + series_low
+    # Context-aware overrides from descriptive text
+    if 'citerne' in combined or 'tank' in combined or 'soufre' in combined or 'gaz' in combined or 'gpl' in combined or 'lng' in combined or 'chemical' in combined:
+        return 'citerne'
+    if 'cereal' in combined or 'grain' in combined or 'hopper' in combined or 'tremie' in combined or 'trémie' in combined or 'round walls' in combined or 'flat walls' in combined and 'm3' in combined:
+        return 'tremie'
+    if 'frigo' in combined or 'frigor' in combined or 'refrig' in combined:
+        return 'frigo'
+    if 'couvert' in combined or 'covered' in combined:
+        return 'couvert'
+    if 'combi' in combined or 'contene' in combined:
+        return 'combi'
+    if 'gefc' in combined or 'stva' in combined or 'auto' in combined or 'vehic' in combined:
+        return 'vehicles'
+    if 'fourgon' in combined or 'caboose' in combined or 'service' in combined or 'draisine' in combined:
+        return 'service'
+    if 'waste' in combined or 'evs' in combined or 'dechet' in combined:
+        return 'waste'
+    if 'plat' in combined or 'open wagon' in combined or 'flat' in combined or 'sgw' in combined or 'klms' in combined:
+        return 'plat'
     if 'cit' in low or 'citerne' in low or 'soufre' in low or 'gaz' in low:
         return 'citerne'
     if 'plat' in low or 'stuttgart' in low or 'klms' in low or 'sgw' in low:
@@ -315,7 +363,7 @@ def guess_wagon_sub(xml_name, image_basename):
         return 'tremie'
     if 'frigo' in low or 'frigor' in low or 'refrig' in low:
         return 'frigo'
-    if 'couvert' in low or 'g' in low or 'gm' in low:
+    if 'couvert' in low or 'gm' in low:
         return 'couvert'
     if 'combi' in low:
         return 'combi'
@@ -335,17 +383,17 @@ def get_wagon_cargos(sub):
         if m['sub'] == sub:
             return list(m['cargo'])
     if sub == 'tremie':
-        return ['coal', 'ore', 'gravel', 'sand', 'ballast', 'grain']
+        return ['coal', 'ore', 'gravel', 'sand', 'ballast', 'grain', 'flour', 'sugar', 'salt', 'fertilizer', 'potash', 'phosphate', 'kaolin', 'alumina', 'coke', 'bauxite', 'cement', 'clinker', 'limestone', 'aggregates']
     if sub == 'citerne':
-        return ['oil', 'chemicals', 'milk', 'wine']
+        return ['oil', 'chemicals', 'milk', 'wine', 'sulphur', 'acid', 'ammonia', 'lng', 'lpg']
     if sub == 'plat':
-        return ['steel', 'steel-coils', 'steel-sheet', 'containers', 'wood']
+        return ['steel', 'steel-coils', 'steel-sheet', 'steel-beams', 'scrap', 'containers', 'wood', 'vehicles', 'sinter', 'pig-iron', 'general']
     if sub == 'couvert':
-        return ['general', 'paper', 'wood']
+        return ['general', 'paper', 'wood', 'sugar', 'salt', 'fertilizer', 'cement']
     if sub == 'frigo':
         return ['refrigerated', 'meat']
     if sub == 'combi':
-        return ['containers', 'general']
+        return ['containers', 'general', 'steel', 'wood']
     if sub == 'vehicles':
         return ['vehicles']
     if sub == 'waste':
@@ -651,11 +699,11 @@ def build_entry(xml_name, niv0, niv1, niv2, ligne, image_rel, side, existing_by_
     else:
         image_path = f'img/catalog/{local_rel}.gif'
 
-    category, sub = get_category_and_wagon_sub(xml_name, image_rel, text_of(niv0.find('Nompage2')))
+    series_name = build_series_name(xml_name, niv0, niv1, niv2)
+    category, sub = get_category_and_wagon_sub(xml_name, image_rel, text_of(niv0.find('Nompage2')), nom, series_name)
     traction = guess_traction(category, niv1, niv2, ligne, image_rel)
     if category in ('voiture', 'wagon'):
         traction = 'none'
-    series_name = build_series_name(xml_name, niv0, niv1, niv2)
 
     # Use only the model name shown to the left of the image on the site.
     name = nom or series_name or Path(rel_base).name
