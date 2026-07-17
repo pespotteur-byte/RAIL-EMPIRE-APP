@@ -24,129 +24,8 @@ CACHE_FILE = REPO / 'scripts/.mlg_cache.json'
 MLG_BASE = 'http://www.mlgtraffic.net'
 HEADERS = {'User-Agent': 'Mozilla/5.0 (compatible; RailEmpireCatalog/1.0)'}
 
-FRANCE_XML_URLS = [
-    # SNCF electric locomotives
-    'http://www.mlgtraffic.net/SNCF_E_LE_Alsthom.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_9200.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_9400.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_ARAP.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_ARAT.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_BBNC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_CCNC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_Danseuses.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_FaR.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_Jacquemin.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_Proto.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LE_SyAsy.xml',
-    # SNCF diesel locomotives
-    'http://www.mlgtraffic.net/SNCF_E_LD_63000.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LD_66000.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LD_67000.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LD_CC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LD_Divers.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LD_NG.xml',
-    'http://www.mlgtraffic.net/SNCF_E_LD_Y.xml',
-    # SNCF EMUs
-    'http://www.mlgtraffic.net/SNCF_E_AEL.xml',
-    'http://www.mlgtraffic.net/SNCF_E_AE_AR.xml',
-    'http://www.mlgtraffic.net/SNCF_E_AE_Banlieue.xml',
-    'http://www.mlgtraffic.net/SNCF_E_AE_TER.xml',
-    'http://www.mlgtraffic.net/SNCF_E_Turbo.xml',
-    # SNCF DMUs
-    'http://www.mlgtraffic.net/SNCF_E_AD_AR.xml',
-    'http://www.mlgtraffic.net/SNCF_E_AD_U1.xml',
-    'http://www.mlgtraffic.net/SNCF_E_AD_U2.xml',
-    'http://www.mlgtraffic.net/SNCF_E_XR.xml',
-    # SNCF coaches
-    'http://www.mlgtraffic.net/SNCF_E_V_2N.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_AR.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_BanAR.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_BanRIB.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_DEVAo.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_DEVInox.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_DR.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_Fourgons.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_Met.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_MetSO.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_OCEM.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_Resto.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_TEE.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_UIC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_USI.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_VL.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_VTU.xml',
-    'http://www.mlgtraffic.net/SNCF_E_V_VU.xml',
-    'http://www.mlgtraffic.net/SNCF_E_VM.xml',
-    # SNCF service
-    'http://www.mlgtraffic.net/SNCF_E_S_CN.xml',
-    'http://www.mlgtraffic.net/SNCF_E_S_CtrlInfra.xml',
-    'http://www.mlgtraffic.net/SNCF_E_S_Divers.xml',
-    'http://www.mlgtraffic.net/SNCF_E_S_Draisines.xml',
-    'http://www.mlgtraffic.net/SNCF_E_S_Exp.xml',
-    'http://www.mlgtraffic.net/SNCF_E_S_Mes.xml',
-    'http://www.mlgtraffic.net/SNCF_E_S_VB.xml',
-    # SNCF wagons
-    'http://www.mlgtraffic.net/SNCF_E_WEFT.xml',
-    'http://www.mlgtraffic.net/SNCF_E_WFMVAC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_WG.xml',
-    'http://www.mlgtraffic.net/SNCF_E_WHI.xml',
-    'http://www.mlgtraffic.net/SNCF_E_WKLRS.xml',
-    # TGV
-    'http://www.mlgtraffic.net/SNCF_E_TGV.xml',
-    # Regional / Ile-de-France / Affret
-    'http://www.mlgtraffic.net/SNCF_E_REG_Als.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Aq.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_AuRA.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Auv.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_BFC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_BN.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Bou.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Bre.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_CA.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_CVdL.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Cen.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_FC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_GdEst.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_HN.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_HdF.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Li.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Lor.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_MP.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_NAq.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_NPC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Norm.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Occ.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_PC.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_PdL.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_Pic.xml',
-    'http://www.mlgtraffic.net/SNCF_E_REG_RA.xml',
-    'http://www.mlgtraffic.net/SNCF_E_IdF_A.xml',
-    'http://www.mlgtraffic.net/SNCF_E_IdF_LV.xml',
-    'http://www.mlgtraffic.net/SNCF_E_Affret.xml',
-    # France other
-    'http://www.mlgtraffic.net/France_E_MetricCFC.xml',
-    'http://www.mlgtraffic.net/France_E_Poste.xml',
-    'http://www.mlgtraffic.net/France_E_Priv.xml',
-    'http://www.mlgtraffic.net/France_E_Trv.xml',
-    'http://www.mlgtraffic.net/France_E_W_Citernes.xml',
-    'http://www.mlgtraffic.net/France_E_W_Plats.xml',
-    'http://www.mlgtraffic.net/France_E_W_CerealB.xml',
-    'http://www.mlgtraffic.net/France_E_W_CerealE.xml',
-    'http://www.mlgtraffic.net/France_E_W_Frigo.xml',
-    'http://www.mlgtraffic.net/France_E_W_Combi.xml',
-    'http://www.mlgtraffic.net/France_E_W_GEFCO.xml',
-    'http://www.mlgtraffic.net/France_E_W_STVA.xml',
-    'http://www.mlgtraffic.net/France_E_W_SGW.xml',
-    'http://www.mlgtraffic.net/France_E_W_Railtrans.xml',
-    'http://www.mlgtraffic.net/France_E_W_Tremies.xml',
-    'http://www.mlgtraffic.net/France_E_W_Div.xml',
-    'http://www.mlgtraffic.net/France_E_W_EVS.xml',
-    # Private operators
-    'http://www.mlgtraffic.net/RegioRail_E.xml',
-    'http://www.mlgtraffic.net/VFLI_E.xml',
-    # RATP
-    'http://www.mlgtraffic.net/RATP_E_RER.xml',
-]
+# All collection XML URLs discovered from http://www.mlgtraffic.net/index.html
+ALL_MLG_URLS = [u.strip() for u in (REPO / 'scripts/all_mlg_urls.txt').read_text().splitlines() if u.strip()]
 
 DRIVING_TRAILER_NOMS = {'bx', 'abx', 'bdx', 'bd', 'vp'}
 DRIVING_TRAILER_SUFFIXES = {'_vp', '_bdx', '_bx', '_abx'}
@@ -660,6 +539,10 @@ def fetch_specs(model, category, car_count, xml_name, niv1_title, cache):
     key = f"{model}|{category}|{car_count}"
     if key in cache:
         return cache[key]
+    # Trains d'Europe currently only covers SNCF/French rolling stock
+    if not xml_name.startswith(('SNCF_', 'France_', 'RATP_')):
+        cache[key] = {}
+        return {}
     urls = trains_europe_urls(model, category, niv1_title)
     for url in urls:
         data = http_get(url, timeout=15)
@@ -680,10 +563,12 @@ def image_rel_to_local(image_value, xml_name):
     """image_value like 'images/SNCF/LE/BB8100_VO'. Return local relative path without extension."""
     rel = image_value[len('images/'):] if image_value.startswith('images/') else image_value
     top = rel.split('/')[0]
-    known_tops = {d.name for d in IMG_DIR.iterdir() if d.is_dir()}
-    if top not in known_tops:
-        # Most often missing country prefix for SNCF wagons (images/W/ -> SNCF/W)
-        rel = 'SNCF/' + rel
+    is_french = xml_name.startswith(('SNCF_', 'France_', 'RATP_')) or xml_name.lower() in ('constructeurs_e.xml', 'coll_rosco_e.htm')
+    if is_french:
+        known_tops = {d.name for d in IMG_DIR.iterdir() if d.is_dir()}
+        if top not in known_tops:
+            # Most often missing country prefix for SNCF wagons (images/W/ -> SNCF/W)
+            rel = 'SNCF/' + rel
     return rel
 
 
@@ -982,27 +867,27 @@ def ensure_cargo_types(cargo_types, keys):
         })
 
 
-FRANCE_PREFIXES = ('img/catalog/SNCF/', 'img/catalog/F_', 'img/catalog/RATP/')
+MLG_IMAGE_PREFIX = 'img/catalog/'
 
-def is_france_entry(e):
-    return any(str(e.get('imageData') or '').startswith(p) for p in FRANCE_PREFIXES) or any(str(e.get('id') or '').startswith('cat-') and str(e.get('imageData') or '').startswith(p) for p in FRANCE_PREFIXES)
+def is_mlg_entry(e):
+    return str(e.get('imageData') or '').startswith(MLG_IMAGE_PREFIX)
 
 
 def main():
     print('Loading catalog...', flush=True)
     cargo, catalog, prefix, suffix = load_catalog()
-    # Strip old France entries to avoid id duplicates and stale data
+    # Strip all old MLG entries to rebuild the catalog from scratch
     before = len(catalog)
-    catalog = [e for e in catalog if not is_france_entry(e)]
+    catalog = [e for e in catalog if not is_mlg_entry(e)]
     removed = before - len(catalog)
-    print(f'  {len(catalog)} existing entries (removed {removed} old France entries)', flush=True)
+    print(f'  {len(catalog)} existing entries (removed {removed} old MLG entries)', flush=True)
     existing_by_image = {e.get('imageData'): e for e in catalog if e.get('imageData')}
     cache = load_cache()
     new_entries = []
     seen_ids = {e['id'] for e in catalog}
     max_workers = int(os.environ.get('CATALOG_WORKERS', '40'))
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for url in FRANCE_XML_URLS:
+        for url in ALL_MLG_URLS:
             entries = process_xml(url, existing_by_image, cargo, cache, executor=executor)
             for e in entries:
                 if e['id'] in seen_ids:
