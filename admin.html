@@ -327,7 +327,6 @@ th:nth-child(12),td:nth-child(12){width:90px}
 <script type="module">
 // ============ LOAD ALL CATALOGS ============
 import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784250028';
-import { getWTrafficCatalog } from './js/catalog-data-wtraffic.js?v=1784250028';
 import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784250028';
 
 let allItems = [];
@@ -346,11 +345,6 @@ function loadCatalogs() {
   if (Array.isArray(CATALOG)) {
     for (const c of CATALOG) allItems.push({...c, _source: c._source || 'MLG'});
   }
-  // WTraffic
-  try {
-    const wt = getWTrafficCatalog();
-    if (Array.isArray(wt)) for (const c of wt) allItems.push({...c, _source: c._source || 'WTraffic'});
-  } catch(e) { console.warn('WTraffic load error', e); }
   // Pack RE
   if (Array.isArray(CATALOG_PACK_RE)) {
     for (const c of CATALOG_PACK_RE) allItems.push({...c, _source: c._source || 'PACK RE'});

@@ -36,7 +36,6 @@ import { IndustrialClients } from './industrial-clients.js?v=1784250028';
 import { ShuntingManager } from './shunting.js?v=1784250028';
 import { haversineDistance } from './simulation.js?v=1784250028';
 import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784250028';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784250028';
 import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250028';
 import { adminSync } from './admin-sync.js?v=1784250028';
 
@@ -273,12 +272,8 @@ class RailEmpire {
     if (Array.isArray(CATALOG_CARGO_TYPES) && this.cargoTypes?.ensureType) {
       for (const ct of CATALOG_CARGO_TYPES) this.cargoTypes.ensureType(ct.category, ct);
     }
-    // 2) Seed the rolling-stock entries (MLG + WTraffic).
+    // 2) Seed the rolling-stock entries (MLG + Pack RE).
     let allCatalog = [...(Array.isArray(CATALOG) ? CATALOG : [])];
-    try {
-      const wt = getWTrafficCatalog();
-      if (Array.isArray(wt)) allCatalog = allCatalog.concat(wt);
-    } catch(e) { console.warn('WTraffic catalog load error:', e); }
     if (Array.isArray(CATALOG_PACK_RE)) allCatalog = allCatalog.concat(CATALOG_PACK_RE);
     // 3) Apply admin overrides (modifications, deletions, imports published by admin)
     allCatalog = adminSync.applyCatalogOverrides(allCatalog);
