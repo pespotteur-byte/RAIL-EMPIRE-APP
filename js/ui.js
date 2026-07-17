@@ -109,6 +109,7 @@ export class UI {
     this.game = game;
     this.activePage = 'map';
     this.selectedService = null;
+    this._followService = null;
     this.isDragging = false;
     this.dragStart = null;
     this.schedStops = [];
@@ -308,7 +309,10 @@ export class UI {
       if (this.isDragging && this.game.renderer) {
         const dx = e.clientX - this.dragStart.x;
         const dy = e.clientY - this.dragStart.y;
-        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) this.dragMoved = true;
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+          this.dragMoved = true;
+          this._followService = null; // panner la carte arrête le suivi
+        }
         this.game.renderer.tileMap.pan(dx, dy);
         this.dragStart = { x: e.clientX, y: e.clientY };
       }
@@ -692,8 +696,16 @@ export class UI {
 
   selectService(svc) {
     this.selectedService = svc;
+    this._followService = svc;
     this._lvpKey = null; // force un rebuild complet
     this._lastSelectedForScroll = null; // force le bandeau à scroller sur la carte
+    // LVM-04/06 — centre immédiatement sur le train cliqué
+    if (svc && svc.position && this.game.renderer?.tileMap) {
+      const tm = this.game.renderer.tileMap;
+      tm.centerLat = svc.position.lat;
+      tm.centerLon = svc.position.lon;
+      tm.markDirty();
+    }
     this._syncLivemapPanel();
   }
 
@@ -742,8 +754,23 @@ export class UI {
 
   deselectService() {
     this.selectedService = null;
+    this._followService = null;
     this._lastSelectedForScroll = null;
     document.getElementById('livemap-train-panel')?.classList.add('hidden');
+  }
+
+  // LVM-04/06 — suit le train sélectionné à chaque frame
+  applyCameraFollow() {
+    const svc = this._followService;
+    if (!svc || !svc.position || !this.game.renderer?.tileMap) return;
+    if (svc.state === 'completed' || !this.game.scheduleCreator?.services.includes(svc)) {
+      this._followService = null;
+      return;
+    }
+    const tm = this.game.renderer.tileMap;
+    tm.centerLat = svc.position.lat;
+    tm.centerLon = svc.position.lon;
+    tm.markDirty();
   }
 
   // LVM-03/04/06 — panneau détail du train sélectionné (annexes 4-5).
