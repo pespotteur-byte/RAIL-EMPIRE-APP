@@ -772,11 +772,8 @@ def build_entry(xml_name, niv0, niv1, niv2, ligne, image_rel, side, existing_by_
         traction = 'none'
     series_name = build_series_name(xml_name, niv0, niv1, niv2)
 
-    name = nom
-    if notes:
-        name = f"{nom} — {series_name} ({notes})" if series_name else f"{nom} ({notes})"
-    elif series_name:
-        name = f"{nom} — {series_name}"
+    # Use only the model name shown to the left of the image on the site.
+    name = nom or series_name or Path(rel_base).name
 
     base_id = comp_name if is_composite else Path(rel_base).name
     entry_id = make_id(base_id, side if not is_composite else '', is_composite)
