@@ -1143,13 +1143,10 @@
           <div class="form-group">
             <label>Type</label>
             <select id="station-type">
-              <option value="voyageur">Gare voyageurs</option>
-              <option value="marchandise">Gare marchandises</option>
               <option value="mixed">Gare mixte</option>
-              <option value="ite">ITE (Installation Terminale Embranchee)</option>
-              <option value="depot">Depot de maintenance</option>
+              <option value="depot">ITE Dépôt de maintenance</option>
               <option value="poste_aiguillage">Poste d'aiguillage</option>
-              <option value="poste_regulation">Poste de regulation</option>
+              <option value="poste_regulation">Poste de régulation</option>
             </select>
           </div>
           <div class="form-group hidden" id="station-radius-group">
@@ -1162,7 +1159,7 @@
               <label>Nombre de voies</label>
               <input type="number" id="station-platforms" value="4" min="1" max="30">
             </div>
-            <div class="form-group">
+            <div class="form-group" style="display:none">
               <label>Ligne (optionnel)</label>
               <select id="station-line"><option value="">Aucune</option></select>
             </div>
@@ -1172,12 +1169,11 @@
             <input type="text" id="station-platform-names" placeholder="ex: 1, 2, 3A, 3B, 4, 5 ou A, B, C">
             <span style="font-size:9px;color:var(--text3)">Laissez vide pour numerotation auto (1, 2, 3...)</span>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="display:none">
             <label>Connecter a (gare de raccordement)</label>
             <input type="text" id="station-connect-search" placeholder="Filtrer les gares..." style="margin-bottom:4px;width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit">
             <div style="display:flex;gap:4px;align-items:center">
               <select id="station-connect" style="flex:1">
-                <option value="_nearest">La plus proche (auto)</option>
                 <option value="">Aucune connexion</option>
               </select>
               <button type="button" id="btn-pick-connect-map" class="btn-sm" title="Choisir sur la carte" style="white-space:nowrap;font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Carte</button>
@@ -1187,7 +1183,7 @@
           <div class="form-group">
             <label><input type="checkbox" id="station-closed"> Gare fermee (aucun train ne peut desservir)</label>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="display:none">
             <label><input type="checkbox" id="station-terminus"> Gare terminus (cree ou termine une ligne)</label>
             <div id="station-terminus-options" class="hidden" style="margin-top:4px">
               <select id="station-terminus-line" style="width:100%">

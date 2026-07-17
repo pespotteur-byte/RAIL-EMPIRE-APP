@@ -948,11 +948,10 @@ export class UI {
     if (platformNamesGroup) { platformNamesGroup.style.display = 'none'; }
     const connectGroup = document.getElementById('station-connect')?.closest('.form-group');
     if (connectGroup) { connectGroup.style.display = 'none'; }
-    document.getElementById('station-connect').value = '_nearest';
     const closedCb = document.getElementById('station-closed');
     if (closedCb) closedCb.checked = false;
     const terminusGroup = document.getElementById('station-terminus')?.closest('.form-group');
-    if (terminusGroup) terminusGroup.style.display = '';
+    if (terminusGroup) terminusGroup.style.display = 'none';
     const saveBtn = document.getElementById('btn-save-station');
     if (saveBtn) saveBtn.textContent = 'Creer la gare';
     // Hide delete button in creation mode
@@ -987,13 +986,13 @@ export class UI {
           const name = s.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           return name.includes(term);
         });
-        connectSelect.innerHTML = '<option value="_nearest">La plus proche (auto)</option>' +
-          '<option value="">Aucune connexion</option>' +
+        connectSelect.innerHTML = '<option value="">Aucune connexion</option>' +
           filtered.map(s =>
             `<option value="${s.id}">${s.name} (${Math.round(s.dist)} km)</option>`
           ).join('');
       };
       renderOptions();
+      connectSelect.value = '';
 
       if (connectSearch) {
         connectSearch.value = '';
@@ -1062,12 +1061,15 @@ export class UI {
     const _updateTypeFields = () => {
       const val = typeSelect.value;
       const isPoste = val === 'poste_aiguillage' || val === 'poste_regulation';
+      const isDepot = val === 'depot';
       if (radiusGroup) radiusGroup.classList.toggle('hidden', !isPoste);
       if (platformsRow) platformsRow.style.display = isPoste ? 'none' : '';
       if (platformNamesGroup) platformNamesGroup.style.display = isPoste ? 'none' : '';
-      if (connectGroup) connectGroup.style.display = isPoste ? 'none' : '';
-      if (terminusGroup) terminusGroup.style.display = isPoste ? 'none' : '';
+      if (connectGroup) connectGroup.style.display = 'none';
+      if (terminusGroup) terminusGroup.style.display = 'none';
       if (closedGroup) closedGroup.style.display = isPoste ? 'none' : '';
+      const lineSelectGroup = document.getElementById('station-line')?.closest('.form-group');
+      if (lineSelectGroup) lineSelectGroup.style.display = 'none';
       if (val === 'poste_aiguillage') {
         if (modalTitle) modalTitle.textContent = "Créer un poste d'aiguillage";
         if (saveBtn) saveBtn.textContent = "Créer le poste d'aiguillage";
@@ -1076,6 +1078,10 @@ export class UI {
         if (modalTitle) modalTitle.textContent = 'Créer un poste de régulation';
         if (saveBtn) saveBtn.textContent = 'Créer le poste de régulation';
         if (nameInput) nameInput.placeholder = 'ex: Régulation Île-de-France';
+      } else if (isDepot) {
+        if (modalTitle) modalTitle.textContent = this._editingStationId ? "Modifier l'ITE Dépôt" : 'Créer un ITE Dépôt de maintenance';
+        if (saveBtn) saveBtn.textContent = this._editingStationId ? "Modifier l'ITE Dépôt" : "Créer l'ITE Dépôt";
+        if (nameInput) nameInput.placeholder = 'ex: Dépôt de Lyon Vénissieux';
       } else {
         if (modalTitle) modalTitle.textContent = this._editingStationId ? 'Modifier la gare' : 'Creer une gare';
         if (saveBtn) saveBtn.textContent = this._editingStationId ? 'Modifier la gare' : 'Creer la gare';
@@ -1087,7 +1093,7 @@ export class UI {
       }
     };
     if (typeSelect) {
-      typeSelect.value = 'voyageur';
+      typeSelect.value = 'mixed';
       typeSelect.onchange = _updateTypeFields;
     }
     _updateTypeFields();
@@ -1283,7 +1289,7 @@ export class UI {
     }
 
     if (type === 'depot') {
-      this.game.depotManager.add({ type: 'depot', name: `Depot ${name}`, stationId: station.id, tracks: platforms, cost: 0 });
+      this.game.depotManager.add({ type: 'depot', name: `Depot ${name}`, stationId: station.id, tracks: platforms, cost: 0, infrastructure: ['rotonde', 'technicentre'] }, this.game.economy);
     }
     if (type === 'ite') {
       this.game.depotManager.add({ type: 'ite-fret', name: `ITE ${name}`, stationId: station.id, tracks: 2, cost: 0 });
