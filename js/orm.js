@@ -177,6 +177,7 @@ export class ORMClient {
     this._serviceSpeedKmh = 30; // yards/sidings default speed cap
     this._turnPenaltyDeg = 100; // above this angle a movement counts as a reversal
     this._reversalPenaltyH = 6;  // ~6h penalty ≫ any real leg → forbids arbitrary back-up
+    this._switchDivergePenaltyH = 0.25; // ~15 min penalty for taking a non-straight path at a switch (Annexe 10d)
     this._maxFallbackKm = 1.0;   // only fabricate straight connectors up to 1 km (R-03)
     // R-07 : plafond V160 par défaut pour le calcul d'itinéraire (matériel joueur)
     this._routingSpeedCapKmh = 160;
@@ -535,6 +536,21 @@ export class ORMClient {
     const b2 = this._edgeBearing(graph, intoEdge);
     const turn = angleBetween(b1, b2);
     if (turn > this._turnPenaltyDeg) return this._reversalPenaltyH;
+
+    // Annexe 10d — at a switch, prefer the straightest continuation (direct line
+    // priority). If the chosen edge is not the straightest available one, apply a
+    // small diverging penalty so trains take the main track when possible.
+    const node = graph.nodes.get(intoEdge.from);
+    if (node && node.edges.length > 2) {
+      let bestTurn = Infinity;
+      for (const e of node.edges) {
+        if (e.to === fromEdge.from && e.wayId === fromEdge.wayId) continue; // back-up
+        bestTurn = Math.min(bestTurn, angleBetween(b1, this._edgeBearing(graph, e)));
+      }
+      if (bestTurn < Infinity && turn > bestTurn + 1e-6) {
+        return this._switchDivergePenaltyH;
+      }
+    }
     return 0;
   }
 
@@ -1138,57 +1154,37 @@ export class ORMClient {
   }
 
   // Travel time (minutes) for a route.
-  // `rame` may be a number (max speed km/h — legacy zone estimate) or a Rame-like
+  // `rame` may be a number (max speed km/h — generic physics estimate) or a Rame-like
   // object (totalMass/totalPower/totalLength/maxSpeed) → realistic traction
   // physics via train-physics.js (PH-01→PH-07, VIT-02/03).
   calculateTravelTime(route, rame, opts = null) {
+    if (!Array.isArray(route) || route.length < 2) return 1;
+
+    // Use the real rame physics whenever mass and power are available.
     if (rame && typeof rame === 'object') {
       const physical = this._physicalTravelTime(route, rame, opts);
       if (physical !== null) return physical;
+      // No power / no mass: fall through to the conservative generic estimate below.
     }
+
     const rameMaxSpeed = typeof rame === 'number' ? rame : (rame && rame.maxSpeed) || 160;
-    const segments = this.getRouteSegments(route);
-    if (segments.length === 0) return 1;
+    const segs = segmentsFromRoute(route, rameMaxSpeed, haversine);
+    if (segs.length === 0) return 1;
 
-    // Merge consecutive segments into speed zones
-    const zones = [];
-    for (const seg of segments) {
-      const vMax = Math.min(rameMaxSpeed, seg.maxSpeed);
-      if (vMax <= 0) continue;
-      if (zones.length > 0 && zones[zones.length - 1].vMax === vMax) {
-        zones[zones.length - 1].distKm += seg.distance;
-      } else {
-        zones.push({ vMax, distKm: seg.distance });
-      }
-    }
-    if (zones.length === 0) return 1;
-
-    const totalDistKm = zones.reduce((s, z) => s + z.distKm, 0);
-    if (totalDistKm <= 0) return 1;
-
-    // Cruise time per zone
-    let totalSeconds = 0;
-    for (const z of zones) {
-      totalSeconds += (z.distKm / z.vMax) * 3600;
-    }
-
-    // Accel/decel at start and end only (rate = 0.7 m/s² ≈ 2.52 km/h/s)
-    const accelRate = 2.52;
-    const startSpeed = zones[0].vMax;
-    const endSpeed = zones[zones.length - 1].vMax;
-    totalSeconds += (startSpeed / accelRate) / 2;
-    totalSeconds += (endSpeed / accelRate) / 2;
-
-    // Speed transitions between zones (only significant ones > 20 km/h diff)
-    for (let i = 1; i < zones.length; i++) {
-      const speedDiff = Math.abs(zones[i].vMax - zones[i - 1].vMax);
-      if (speedDiff > 20) {
-        totalSeconds += (speedDiff / accelRate) / 2;
-      }
-    }
-
-    const totalMinutes = totalSeconds / 60;
-    return Math.round(totalMinutes) || 1;
+    // Generic conservative trainset: enough power to be plausible, but not
+    // optimistic. This path is used for raw speed numbers or unpowered rames.
+    const massT = 500;
+    const powerPerTonne = 12; // kW/t — middle-of-the-road regional/LGV mix
+    const massKg = massT * 1000;
+    const powerW = massKg * powerPerTonne;
+    const res = simulateProfile(segs, {
+      massKg,
+      powerW,
+      lengthM: 200,
+      weather: opts?.weather,
+      brakeServiceMs2: opts?.brakeServiceMs2,
+    });
+    return Math.round(res.timeSec / 60) || 1;
   }
 
   // Realistic travel time (minutes) using traction physics. Returns null when

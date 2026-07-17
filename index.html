@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784241357">
+  <link rel="stylesheet" href="style.css?v=1784250000">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -831,6 +831,7 @@
               <div class="sched-map-container">
                 <canvas id="sched-map-canvas"></canvas>
               </div>
+              <input type="text" id="sched-map-search" class="sched-map-search" placeholder="Rechercher un lieu...">
               <p class="sched-hint">
                 <span style="display:inline-block;width:12px;height:4px;background:#ff00ff;vertical-align:middle;margin:0 4px 0 0"></span>Tracé objectif (bon trajet)
                 <span style="display:inline-block;width:12px;height:4px;background:#facc15;vertical-align:middle;margin:0 4px 0 8px"></span>Tracé actuel
@@ -855,11 +856,9 @@
                 </div>
               </div>
               <div class="form-row">
-                <div class="form-group" style="display:flex;align-items:center;gap:6px;min-width:160px">
-                  <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="sched-round-trip"> Aller-retour</label>
-                </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:6px;min-width:220px">
-                  <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="sched-work-train"> Train de travaux (non affecté par les travaux)</label>
+                <div class="form-group">
+                  <label>Attente au terminus (min)</label>
+                  <input type="number" id="sched-terminus-wait" value="5" min="1" max="120">
                 </div>
                 <div class="form-group">
                   <label>Nb allers-retours</label>
@@ -868,9 +867,21 @@
                     <button type="button" id="btn-auto-ar" class="btn-sm" title="Calcul auto pour ne pas depasser 24h" style="font-size:9px;padding:3px 6px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Auto 24h</button>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label>Attente au terminus (min)</label>
-                  <input type="number" id="sched-terminus-wait" value="5" min="1" max="120">
+                <div class="form-group" style="display:flex;align-items:center;gap:6px;min-width:160px">
+                  <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="sched-round-trip"> Aller-retour</label>
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:6px;min-width:220px">
+                  <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="sched-work-train"> Train de travaux (non affecté par les travaux)</label>
+                </div>
+              </div>
+              <div id="sched-route-summary" class="sched-route-summary">
+                <div class="sched-summary-col">
+                  <strong>Aller</strong>
+                  <div id="sched-summary-aller" class="sched-summary-stops">—</div>
+                </div>
+                <div class="sched-summary-col">
+                  <strong>Retour</strong>
+                  <div id="sched-summary-retour" class="sched-summary-stops">—</div>
                 </div>
               </div>
               <div class="form-row">
@@ -1396,6 +1407,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784241357"></script>
+  <script type="module" src="js/main.js?v=1784250000"></script>
 </body>
 </html>

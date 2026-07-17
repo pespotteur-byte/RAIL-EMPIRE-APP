@@ -2748,7 +2748,10 @@ export class UI {
           } else if (closest) {
             await this.addSchedStop(closest);
           } else {
-            this._addManualPoint(worldPos.lat, worldPos.lon);
+            // SC-XX — éviter les points de contrôle ajoutés par accident en mode manuel.
+            if (confirm('Ajouter un point de contrôle manuel (50 m) à cet endroit ?')) {
+              this._addManualPoint(worldPos.lat, worldPos.lon);
+            }
           }
           schedDrag = false; schedDragStart = null;
           return;
@@ -2804,6 +2807,32 @@ export class UI {
     canvas.oncontextmenu = (e) => { e.preventDefault(); };
 
     this._drawSchedMap = drawMap;
+
+    // Map search bar (Annexe 10a)
+    const searchInput = document.getElementById('sched-map-search');
+    if (searchInput) {
+      searchInput.onkeydown = (e) => {
+        if (e.key !== 'Enter') return;
+        const q = searchInput.value.trim().toLowerCase();
+        if (!q) return;
+        let best = null;
+        for (const st of world.stations) {
+          if (st.name?.toLowerCase().includes(q)) { best = st; break; }
+        }
+        if (!best && this.game.voiePointManager) {
+          for (const vp of this.game.voiePointManager.getAll()) {
+            if (vp.name?.toLowerCase().includes(q) || (vp.voie && String(vp.voie).toLowerCase().includes(q))) { best = vp; break; }
+          }
+        }
+        if (best) {
+          tileMap.centerLat = best.lat;
+          tileMap.centerLon = best.lon;
+          tileMap.zoomLevel = Math.max(tileMap.zoomLevel, 13);
+          requestDraw();
+        }
+      };
+    }
+
     this._recalcPreviewRoutes();
   }
 
@@ -3482,6 +3511,63 @@ export class UI {
         </div>`;
       }
     }
+
+    this._renderRouteSummary();
+  }
+
+  _renderRouteSummary() {
+    const allerEl = document.getElementById('sched-summary-aller');
+    const retourEl = document.getElementById('sched-summary-retour');
+    if (!allerEl || !retourEl) return;
+
+    const fmt = (t) => this.minToTimeStr(((Math.round(t) % 1440) + 1440) % 1440);
+    const row = (name, time, cls = '') => `<div class="ss-row ${cls}"><span class="ss-name">${name}</span><span class="ss-time">${time}</span></div>`;
+
+    const allerRows = this.schedStops.map((stop, i) => {
+      const isFirst = i === 0;
+      const isLast = i === this.schedStops.length - 1;
+      let t = '';
+      if (stop.type === 'waypoint') t = `Pass ${fmt(stop.arrTimeMin || 0)}`;
+      else if (isFirst) t = `Dép ${fmt(stop.depTimeMin || 0)}`;
+      else if (isLast) t = `Arr ${fmt(stop.arrTimeMin || 0)}`;
+      else t = `${fmt(stop.arrTimeMin || 0)}-${fmt(stop.depTimeMin || 0)}`;
+      return row(stop.stationName || '?', t);
+    }).join('');
+    allerEl.innerHTML = allerRows || '—';
+
+    const rtChecked = document.getElementById('sched-round-trip')?.checked;
+    if (!rtChecked || this.schedStops.length < 2) {
+      retourEl.innerHTML = '—';
+      return;
+    }
+
+    const reversed = [...this.schedStops].reverse();
+    const termWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+    const lastArr = this.schedStops[this.schedStops.length - 1].arrTimeMin ?? this.schedStops[this.schedStops.length - 1].depTimeMin ?? 0;
+    const retTimes = [];
+    for (let j = 0; j < reversed.length; j++) {
+      if (j === 0) { retTimes.push({ arr: lastArr + termWait, dep: lastArr + termWait }); continue; }
+      const arrLater = this.schedStops[this.schedStops.length - j].arrTimeMin ?? this.schedStops[this.schedStops.length - j].depTimeMin ?? 0;
+      const depEarlier = this.schedStops[this.schedStops.length - 1 - j].depTimeMin ?? this.schedStops[this.schedStops.length - 1 - j].arrTimeMin ?? 0;
+      const travel = Math.max(0, arrLater - depEarlier);
+      const arr = retTimes[j - 1].dep + travel;
+      const here = this.schedStops[this.schedStops.length - 1 - j];
+      const dwell = Math.max(0, (here.depTimeMin ?? here.arrTimeMin ?? 0) - (here.arrTimeMin ?? here.depTimeMin ?? 0));
+      retTimes.push({ arr, dep: arr + dwell });
+    }
+
+    const retourRows = reversed.map((stop, i) => {
+      const isFirst = i === 0;
+      const isLast = i === reversed.length - 1;
+      const rt = retTimes[i] || { arr: 0, dep: 0 };
+      let t = '';
+      if (stop.type === 'waypoint') t = `Pass ${fmt(rt.arr)}`;
+      else if (isFirst) t = `Dép ${fmt(rt.dep)}`;
+      else if (isLast) t = `Arr ${fmt(rt.arr)}`;
+      else t = `${fmt(rt.arr)}-${fmt(rt.dep)}`;
+      return row(stop.stationName || '?', t);
+    }).join('');
+    retourEl.innerHTML = retourRows || '—';
   }
 
   async updateSchedStop(index, field, value) {
@@ -3905,7 +3991,20 @@ export class UI {
     const curCoords = this._getStopCoords(curStop);
     if (!prevCoords || !curCoords) return 15;
     const dist = this._approxRailDistance(prevCoords.lat, prevCoords.lon, curCoords.lat, curCoords.lon);
-    return Math.round((dist / rameSpeed) * 60) || 1;
+    if (dist <= 0) return 1;
+    // No ORM route found: build a straight synthetic route and run the same
+    // physics so the estimate is no longer "instant top speed".
+    const steps = 20;
+    const synthetic = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      synthetic.push({
+        lat: prevCoords.lat + (curCoords.lat - prevCoords.lat) * t,
+        lon: prevCoords.lon + (curCoords.lon - prevCoords.lon) * t,
+        maxSpeed: rameSpeed
+      });
+    }
+    return this.game.orm.calculateTravelTime(synthetic, rame || rameSpeed);
   }
 
   async recalcStopsFrom(fromIndex) {
@@ -4038,6 +4137,8 @@ export class UI {
     if (!name) return alert('Nom requis');
 
     const rame = this.game.rameManager.getById(rameId);
+    if (!rame) return alert('Veuillez choisir une rame.');
+    if ((rame.totalPower || 0) <= 0) return alert('La rame selectionnée n\'a pas de motrice (locomotive / automotrice) et ne peut pas rouler.');
     const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
     const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
@@ -4176,6 +4277,8 @@ export class UI {
 
     if (sortMode === 'departure') {
       sorted.sort((a, b) => (a.stops[0]?.departureTime || 0) - (b.stops[0]?.departureTime || 0));
+    } else if (sortMode === 'creation') {
+      sorted.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
     } else if (sortMode === 'rame') {
       sorted.sort((a, b) => {
         const ra = this.game.rameManager.getById(a.rameId);
@@ -4192,7 +4295,6 @@ export class UI {
       });
     }
 
-    // Build group headers for rame and route sort modes
     let lastGroupKey = null;
     const getGroupKey = (svc) => {
       if (sortMode === 'rame') {
@@ -4207,13 +4309,31 @@ export class UI {
       return null;
     };
 
+    this._schedPage = this._schedPage || 0;
     const perPage = 50;
     const total = sorted.length;
     const pageCount = Math.ceil(total / perPage) || 1;
     this._schedPage = Math.max(0, Math.min(this._schedPage, pageCount - 1));
     const start = this._schedPage * perPage;
     const pageItems = sorted.slice(start, start + perPage);
-    const itemsHtml = pageItems.map(svc => {
+
+    const dayNames = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
+    const typeLabels = { passager: 'Voy', w: 'W', hlp: 'HLP', tm: 'TM', evo: 'EVO', work: 'Travaux' };
+
+    const rows = pageItems.map(svc => {
+      const firstSt = this.game.world.getStationById(svc.stops[0]?.stationId);
+      const lastSt = this.game.world.getStationById(svc.stops[svc.stops.length - 1]?.stationId);
+      const rame = this.game.rameManager.getById(svc.rameId);
+      const depTime = this.minToTimeStr(svc.stops[0]?.departureTime || 0);
+      const arrTime = this.minToTimeStr(svc.stops[svc.stops.length - 1]?.arrivalTime || 0);
+      const rd = svc.runDays || [0,1,2,3,4,5,6];
+      const daysLabel = rd.length === 7 ? 'TLJ' : rd.map(d => dayNames[d]).join(' ');
+      const typeBadge = svc.serviceType && svc.serviceType !== 'passager'
+        ? `<span style="display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;color:#94a3b8">${typeLabels[svc.serviceType] || svc.serviceType}</span>`
+        : '';
+      const tripInfo = svc.roundTrip && svc.multiDepartures > 1 ? ` x${svc.multiDepartures} AR` : svc.roundTrip ? ' A/R' : '';
+
+      // Detail content
       const stopsPreview = svc.stops.map(s => {
         const st = this.game.world.getStationById(s.stationId);
         const name = st ? st.name : s.stationId;
@@ -4223,11 +4343,8 @@ export class UI {
         return `<span class="sched-stop-tag ${s.type}">${s.type === 'passage' ? arr : `${arr}-${dep}`} ${name}</span>`;
       }).join('<span style="color:var(--text3)"> → </span>');
 
-      // SC-02 — display computed passage times for every real station on the route.
       const passagePreview = (svc._passageStops?.length)
-        ? `<div class="sched-stops-preview" style="margin-top:4px"><span style="color:#22c55e;font-size:9px;margin-right:4px">Passages :</span>${svc._passageStops.map(p => {
-          return `<span class="sched-stop-tag passage">${this.minToTimeStr(p.time)} ${p.name}</span>`;
-        }).join('<span style="color:var(--text3)"> → </span>')}</div>`
+        ? `<div class="sched-stops-preview" style="margin-top:4px"><span style="color:#22c55e;font-size:9px;margin-right:4px">Passages :</span>${svc._passageStops.map(p => `<span class="sched-stop-tag passage">${this.minToTimeStr(p.time)} ${p.name}</span>`).join('<span style="color:var(--text3)"> → </span>')}</div>`
         : '';
 
       let returnPreview = '';
@@ -4244,14 +4361,6 @@ export class UI {
         returnPreview = `<div class="sched-stops-preview" style="margin-top:4px"><span style="color:#f59e0b;font-size:9px;margin-right:4px">↩ Retour (${svc.terminusWait} min attente):</span>${retStr}</div>`;
       }
 
-      const rame = this.game.rameManager.getById(svc.rameId);
-      const typeLabels = {
-        passager: 'Voy', w: 'W', hlp: 'HLP', tm: 'TM', evo: 'EVO', work: 'Travaux'
-      };
-      const typeBadge = svc.serviceType && svc.serviceType !== 'passager'
-        ? `<span style="display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;color:#94a3b8;margin-right:6px">${typeLabels[svc.serviceType] || svc.serviceType}</span>`
-        : '';
-      // INC-04 — motifs de retard/panne/incident dans le bilan du trajet
       const delayReason = svc.train?.delayReason || svc.delayReason || '';
       const breakdown = svc.train?.breakdown;
       const incident = svc.train?.incident;
@@ -4260,58 +4369,52 @@ export class UI {
       if (delayReason) bilanRows.push(`<span style="color:#f59e0b">Retard : ${delayReason}</span>`);
       if (breakdown?.type) bilanRows.push(`<span style="color:#ef4444">Panne : ${breakdown.type}</span>`);
       if (incident?.name || incident?.effect) bilanRows.push(`<span style="color:#ef4444">Incident : ${incident.name || incident.effect}</span>`);
-      const bilanHtml = bilanRows.length > 0
+      const bilanHtml = bilanRows.length
         ? `<div class="sched-bilan" style="margin-top:6px;padding:6px 8px;background:var(--bg3);border-radius:4px;font-size:10px;display:flex;flex-wrap:wrap;gap:8px">${bilanRows.join('')}</div>`
         : '';
-      const statusLabel = svc.isReturnLeg ? '<span style="color:#f59e0b;font-size:9px"> (retour)</span>' : '';
-      // S11: Show trip count and direction names
-      const firstSt = this.game.world.getStationById(svc.stops[0]?.stationId);
-      const lastSt = this.game.world.getStationById(svc.stops[svc.stops.length - 1]?.stationId);
-      const dirLabel = firstSt && lastSt ? `${firstSt.name} → ${lastSt.name}` : '';
-      const tripInfo = svc.roundTrip && svc.multiDepartures > 1 ? ` x${svc.multiDepartures} AR` : svc.roundTrip ? ' A/R' : '';
-      const dayNames = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
-      const rd = svc.runDays || [0,1,2,3,4,5,6];
-      const daysLabel = rd.length === 7 ? 'TLJ' : rd.map(d => dayNames[d]).join(' ');
-      const datesLabel = svc.runDates && svc.runDates.length > 0 ? ` +${svc.runDates.length} date(s)` : '';
-      // Group header
-      let groupHeader = '';
-      const gk = getGroupKey(svc);
-      if (gk !== null && gk !== lastGroupKey) {
-        lastGroupKey = gk;
-        groupHeader = `<div style="background:var(--bg3);padding:6px 12px;margin:8px 0 4px;border-radius:4px;font-size:12px;font-weight:600;color:var(--accent);border-left:3px solid var(--accent)">${gk}</div>`;
-      }
 
-      const depTime = this.minToTimeStr(svc.stops[0]?.departureTime || 0);
-      // SC-03 — numéro de service : aller impair / retour pair.
       const numLabel = svc.number != null
-        ? `<span style="color:#fbbf24;font-size:10px;font-weight:700;min-width:34px" title="N° aller${svc.roundTrip ? ' / retour' : ''}">N°${svc.number}${svc.roundTrip && svc.returnNumber != null ? '/' + svc.returnNumber : ''}</span>`
+        ? `<span style="color:#fbbf24;font-size:10px;font-weight:700" title="N° aller${svc.roundTrip ? ' / retour' : ''}">N°${svc.number}${svc.roundTrip && svc.returnNumber != null ? '/' + svc.returnNumber : ''}</span>`
         : '';
 
+      // Group header row
+      const gk = getGroupKey(svc);
+      let groupHeader = '';
+      if (gk !== null && gk !== lastGroupKey) {
+        lastGroupKey = gk;
+        groupHeader = `<tr><td colspan="8" class="sched-group-header">${gk}</td></tr>`;
+      }
+
       return `${groupHeader}
-        <div class="sched-item">
-          <div class="sched-item-header" onclick="game.ui.toggleSchedDetail('${svc.id}')" style="cursor:pointer">
-            <span class="sched-caret" id="sched-caret-${svc.id}" style="color:var(--text3);font-size:10px;width:12px;transition:transform .15s">▸</span>
-            <span style="color:var(--text3);font-size:10px;min-width:38px">${depTime}</span>
-            ${numLabel}
-            ${typeBadge}
-            <span class="sched-item-name">${svc.name}${statusLabel}</span>
-            <span class="sched-item-rame">${rame ? rame.name : 'N/A'}</span>
-            <span style="color:var(--text3);font-size:10px">${Math.round(svc.plannedDistance || svc.totalDistance)} km${tripInfo}</span>
-            <span style="color:#60a5fa;font-size:9px">${daysLabel}${datesLabel}</span>
+        <tr class="sched-row" onclick="game.ui.toggleSchedDetail('${svc.id}')">
+          <td>${numLabel}</td>
+          <td><strong>${svc.name}</strong>${typeBadge}</td>
+          <td>${rame ? rame.name : 'N/A'}</td>
+          <td>${firstSt ? firstSt.name : '?'}<br><span style="color:var(--text3)">${depTime}</span></td>
+          <td>${lastSt ? lastSt.name : '?'}<br><span style="color:var(--text3)">${arrTime}</span></td>
+          <td><span style="color:var(--text3)">${Math.round(svc.plannedDistance || svc.totalDistance || 0)} km${tripInfo}</span></td>
+          <td><span style="color:#60a5fa">${daysLabel}</span></td>
+          <td class="sched-row-actions">
             <button class="btn-sm" onclick="event.stopPropagation();game.ui.editSchedule('${svc.id}')">Modifier</button>
             <button class="btn-sm" onclick="event.stopPropagation();game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
             <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
             <button class="btn-sm danger" onclick="event.stopPropagation();game.ui.deleteSchedule('${svc.id}')">Supprimer</button>
-          </div>
-          <div class="sched-detail hidden" id="sched-detail-${svc.id}">
-            <div style="font-size:10px;color:var(--text2);margin:4px 0 2px">${dirLabel}</div>
-            <div class="sched-stops-preview">${stopsPreview}</div>
-            ${passagePreview}
-            ${returnPreview}
-            ${bilanHtml}
-          </div>
-        </div>
-      `;
+          </td>
+        </tr>
+        <tr id="sched-detail-${svc.id}" class="hidden">
+          <td colspan="8" class="sched-detail-cell">
+            <div class="sched-detail-inner">
+              <div class="close-row">
+                <span style="font-size:10px;color:var(--text2)">Détail du trajet</span>
+                <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedDetail('${svc.id}')">X</button>
+              </div>
+              <div class="sched-stops-preview">${stopsPreview}</div>
+              ${passagePreview}
+              ${returnPreview}
+              ${bilanHtml}
+            </div>
+          </td>
+        </tr>`;
     }).join('');
 
     const controls = pageCount > 1 ? `
@@ -4322,7 +4425,26 @@ export class UI {
           <button class="btn-sm" ${this._schedPage >= pageCount - 1 ? 'disabled' : ''} onclick="game.ui.changeSchedPage(1)">Suivant</button>
         </div>
       </div>` : '';
-    container.innerHTML = itemsHtml + controls;
+
+    container.innerHTML = `
+      <table class="schedules-table">
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Nom</th>
+            <th>Rame</th>
+            <th>Départ A</th>
+            <th>Arrivée B</th>
+            <th>Distance</th>
+            <th>Jours</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      ${controls}`;
   }
 
   changeSchedPage(delta) {

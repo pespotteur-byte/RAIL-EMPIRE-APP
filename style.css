@@ -377,6 +377,14 @@ select option { background: var(--input-bg); color: var(--text); }
 .sched-map-container { height: 55vh; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 10px; overflow: hidden; position: relative; }
 .sched-map-container canvas { width: 100%; height: 100%; display: block; }
 .sched-stops { margin-bottom: 10px; }
+.sched-map-search { width: 100%; padding: 6px 10px; background: var(--input-bg, var(--bg2)); border: 1px solid var(--input-border, var(--border)); color: var(--text); border-radius: 4px; font-size: 11px; margin-top: 6px; }
+.sched-route-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 10px; }
+.sched-summary-col strong { display: block; color: var(--text2); font-size: 10px; margin-bottom: 4px; text-transform: uppercase; }
+.sched-summary-stops { color: var(--text); line-height: 1.35; }
+.sched-summary-stops .ss-row { display: flex; justify-content: space-between; gap: 6px; border-bottom: 1px solid var(--bg3); padding: 2px 0; }
+.sched-summary-stops .ss-row:last-child { border-bottom: none; }
+.sched-summary-stops .ss-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sched-summary-stops .ss-time { color: var(--text2); font-variant-numeric: tabular-nums; }
 .sched-stops-header { display: grid; grid-template-columns: 18px minmax(80px, 1.2fr) 85px 58px 70px 70px 60px 75px 48px; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 9px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; align-items: center; }
 .sched-stop-row { display: grid; grid-template-columns: 18px minmax(80px, 1.2fr) 85px 58px 70px 70px 60px 75px 48px; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--bg3); font-size: 11px; align-items: center; }
 .sched-stop-row select { width: 100%; padding: 2px 4px; font-size: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 3px; }
@@ -393,10 +401,16 @@ select option { background: var(--input-bg); color: var(--text); }
 
 /* SCHEDULES LIST */
 .schedules-list { display: flex; flex-direction: column; gap: 8px; }
-.sched-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
-.sched-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
-.sched-item-name { font-weight: 700; font-size: 14px; }
-.sched-item-rame { color: var(--text3); font-size: 11px; }
+.schedules-table { width: 100%; border-collapse: collapse; font-size: 11px; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.schedules-table th { background: var(--bg3); color: var(--text2); padding: 8px 10px; text-align: left; font-weight: 600; }
+.schedules-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.schedules-table tr:last-child td { border-bottom: none; }
+.schedules-table tbody tr.sched-row:hover { background: var(--bg3); cursor: pointer; }
+.schedules-table .sched-row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+.sched-group-header { background: var(--bg3); font-weight: 700; color: var(--accent); padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.sched-detail-cell { padding: 0; background: var(--bg); }
+.sched-detail-inner { padding: 10px; border-bottom: 1px solid var(--border); }
+.sched-detail-inner .close-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .sched-stops-preview { font-size: 10px; display: flex; flex-wrap: wrap; gap: 2px; align-items: center; }
 .sched-stop-tag { background: var(--bg3); padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
 .sched-stop-tag.passage { background: transparent; border: 1px solid var(--bg3); }
