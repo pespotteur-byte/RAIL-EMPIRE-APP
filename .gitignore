@@ -3,3 +3,7 @@ package-lock.json
 .DS_Store
 *.log
 scripts/.mlg_cache.json
+scripts/.dbcargo_page_cache.json
+scripts/.wagon_specs_cache.json
+scripts/__pycache__/
+*.pyc
