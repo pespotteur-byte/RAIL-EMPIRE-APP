@@ -171,7 +171,6 @@ export class UI {
     else if (this.activePage === 'dashboard') this.renderDashboard();
     else if (this.activePage === 'graph-marche') this.renderGraphMarche();
     else if (this.activePage === 'staff') this.renderStaffPage();
-    else if (this.activePage === 'bank') this.renderBankPage();
     else if (this.activePage === 'weather') this.renderWeatherPage();
     else if (this.activePage === 'seasonal') this.renderSeasonalPage();
     else if (this.activePage === 'connections') this.renderConnectionsPage();
@@ -246,7 +245,6 @@ export class UI {
     if (page === 'dashboard') this.renderDashboard();
     if (page === 'graph-marche') this.renderGraphMarche();
     if (page === 'staff') this.renderStaffPage();
-    if (page === 'bank') this.renderBankPage();
     if (page === 'weather') this.renderWeatherPage();
     if (page === 'seasonal') this.renderSeasonalPage();
     if (page === 'connections') this.renderConnectionsPage();
@@ -9414,14 +9412,6 @@ export class UI {
       const container = document.getElementById('staff-container');
       this.game.staffManager.render(container, this.game);
     } catch(e) { console.warn('Staff render error:', e); }
-  }
-
-  // ==================== BANK ====================
-  renderBankPage() {
-    try {
-      const container = document.getElementById('bank-container');
-      this.game.bank.render(container, this.game);
-    } catch(e) { console.warn('Bank render error:', e); }
   }
 
   // ==================== WEATHER ====================
