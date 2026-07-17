@@ -3206,23 +3206,24 @@ export class UI {
 
   async _pickSillonForLeg(prevStop, newStop, legIdx) {
     if (!this.game.sillonManager || !prevStop?.stationId || !newStop?.stationId) return null;
-    const sillons = this.game.sillonManager.getBetween(prevStop.stationId, newStop.stationId);
-    if (!sillons.length) return null;
+    // Section V : propose direct + chained (multi-hop) auto-sillon paths.
+    const paths = this.game.sillonManager.findPaths(prevStop.stationId, newStop.stationId, 4);
+    if (!paths.length) return null;
 
     const prevName = prevStop.stationName;
     const newName = newStop.stationName;
-    const choice = await this.openSillonPicker(sillons, prevName, newName);
+    const choice = await this.openSillonPicker(paths, prevName, newName);
     if (choice === null || choice === 'orm') return null;
 
-    const sillon = sillons[choice];
-    if (!sillon || !sillon.route?.length) return null;
+    const path = paths[choice];
+    if (!path || !path.route?.length) return null;
 
     // Densify to 50 m points like manual trace.
-    const route = this._densifyRoute(sillon.route.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: p.maxSpeed || sillon.maxSpeed })));
+    const route = this._densifyRoute(path.route.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: p.maxSpeed || path.maxSpeed })));
     if (!this._manualRoutes) this._manualRoutes = [];
     this._manualRoutes[legIdx] = route;
     this._sillonLegSelection = this._sillonLegSelection || {};
-    this._sillonLegSelection[legIdx] = sillon.name;
+    this._sillonLegSelection[legIdx] = path.name;
     return route;
   }
 
@@ -4650,7 +4651,13 @@ export class UI {
     document.getElementById('btn-save-sillon')?.addEventListener('click', () => this.saveSillon());
     document.getElementById('btn-cancel-sillon')?.addEventListener('click', () => {
       document.getElementById('sillon-creator')?.classList.add('hidden');
+      this._resetSillonManual();
     });
+    document.getElementById('btn-sillon-manual')?.addEventListener('click', () => this._toggleSillonManualMode());
+    document.getElementById('btn-sillon-clear-manual')?.addEventListener('click', () => this._clearSillonManualTrace());
+    document.getElementById('btn-sillon-finish-manual')?.addEventListener('click', () => this._finishSillonManual());
+    document.getElementById('sillon-from')?.addEventListener('change', () => { this._updateSillonName(); this._syncSillonManualEndpoints(); });
+    document.getElementById('sillon-to')?.addEventListener('change', () => { this._updateSillonName(); this._syncSillonManualEndpoints(); });
 
     const sillonsList = document.getElementById('sillons-list');
     if (sillonsList && !sillonsList._delegated) {
@@ -4741,6 +4748,7 @@ export class UI {
     if (loadingEl) loadingEl.classList.add('hidden');
     document.getElementById('lines-station-creator')?.classList.add('hidden');
     this.game.saveState();
+    this.game.renderer?.invalidateStatic();
     this.renderLinesList();
   }
 
@@ -5102,6 +5110,7 @@ export class UI {
     document.getElementById('modal-line')?.classList.add('hidden');
     this.renderLinesList();
     this.game.saveState();
+    this.game.renderer?.invalidateStatic();
   }
 
   renderLinesList() {
@@ -5296,8 +5305,12 @@ export class UI {
     const opts = this.game.world.stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
     if (fromSel) fromSel.innerHTML = '<option value="">—</option>' + opts;
     if (toSel) toSel.innerHTML = '<option value="">—</option>' + opts;
-    document.getElementById('sillon-name').value = 'V1';
+    this._resetSillonManual();
+    this._updateSillonName();
+    this._updateSillonManualUI();
     creator.classList.remove('hidden');
+    // Le canvas a besoin d'un reflow pour avoir une taille ; on initialise la carte au prochain frame.
+    requestAnimationFrame(() => this.setupSillonMap());
   }
 
   async saveSillon() {
@@ -5316,21 +5329,35 @@ export class UI {
     if (loadingEl) loadingEl.classList.remove('hidden');
 
     let route = null;
-    try {
-      route = await this.game.orm.findRoute(stA.lat, stA.lon, stB.lat, stB.lon);
-    } catch (e) {
-      console.warn('ORM route failed for sillon', e);
+    let distance = 0;
+    let maxSpeed = 160;
+    let electrified = true;
+
+    if (this._sillonManualRoute && this._sillonManualRoute.length >= 2) {
+      route = this._sillonManualRoute;
+    } else {
+      try {
+        route = await this.game.orm.findRoute(stA.lat, stA.lon, stB.lat, stB.lon);
+      } catch (e) {
+        console.warn('ORM route failed for sillon', e);
+      }
+      if (!route || route.length < 2) {
+        if (loadingEl) loadingEl.classList.add('hidden');
+        return alert('Impossible de calculer un itineraire ferroviaire entre ces gares. Vérifiez le réseau ORM ou utilisez le tracé manuel.');
+      }
+      distance = this.game.orm.getRouteDistance(route);
+      const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+      maxSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 160;
+      electrified = route.some(r => r.electrified === false) ? false : true;
+      route = this.game.orm.getRouteSegments(route).map(s => ({ lat: s.from.lat, lon: s.from.lon, maxSpeed: s.maxSpeed })).concat([{ lat: route[route.length - 1].lat, lon: route[route.length - 1].lon, maxSpeed: route[route.length - 1].maxSpeed || 160 }]);
     }
 
-    if (loadingEl) loadingEl.classList.add('hidden');
-
-    if (!route || route.length < 2) {
-      return alert('Impossible de calculer un itineraire ferroviaire entre ces gares. Verifiez le reseau ORM ou utilisez des gares proches.');
+    if (route && route.length >= 2) {
+      distance = this.game.orm.getRouteDistance(route);
+      const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+      maxSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 160;
+      electrified = route.some(r => r.electrified === false) ? false : true;
     }
-
-    const distance = this.game.orm.getRouteDistance(route);
-    const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
-    const maxSpeed = speeds.length ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length) : 160;
 
     this.game.sillonManager.add({
       name,
@@ -5338,13 +5365,15 @@ export class UI {
       toStationId: toId,
       fromStationName: stA.name,
       toStationName: stB.name,
-      route: this.game.orm.getRouteSegments(route).map(s => ({ lat: s.from.lat, lon: s.from.lon, maxSpeed: s.maxSpeed })).concat([{ lat: route[route.length - 1].lat, lon: route[route.length - 1].lon, maxSpeed: route[route.length - 1].maxSpeed || 160 }]),
+      route,
       distance,
       maxSpeed,
-      electrified: route.some(r => r.electrified === false) ? false : true,
+      electrified,
     });
 
+    if (loadingEl) loadingEl.classList.add('hidden');
     document.getElementById('sillon-creator')?.classList.add('hidden');
+    this._resetSillonManual();
     this.renderLinesList();
     this.game.saveState();
   }
@@ -5373,6 +5402,319 @@ export class UI {
     this.game.sillonManager.remove(id);
     this.renderLinesList();
     this.game.saveState();
+  }
+
+  // --- Sillon manual trace helpers (Section V) ---
+
+  _updateSillonName() {
+    const fromId = document.getElementById('sillon-from')?.value;
+    const toId = document.getElementById('sillon-to')?.value;
+    const nameInput = document.getElementById('sillon-name');
+    if (!fromId || !toId || !nameInput) return;
+    const next = this.game.sillonManager.getNextName(fromId, toId);
+    const current = nameInput.value.trim();
+    if (!current || /^V\d+[A-Z]*$/i.test(current)) {
+      nameInput.value = next;
+    }
+  }
+
+  _resetSillonManual() {
+    this._sillonManualMode = false;
+    this._sillonManualStart = null;
+    this._sillonManualEnd = null;
+    this._sillonManualPoints = [];
+    this._sillonManualRoute = null;
+  }
+
+  _syncSillonManualEndpoints() {
+    const fromId = document.getElementById('sillon-from')?.value;
+    const toId = document.getElementById('sillon-to')?.value;
+    const fromSt = fromId ? this.game.world.getStationById(fromId) : null;
+    const toSt = toId ? this.game.world.getStationById(toId) : null;
+    if (fromSt) this._sillonManualStart = { lat: fromSt.lat, lon: fromSt.lon, id: fromSt.id, name: fromSt.name };
+    else this._sillonManualStart = null;
+    if (toSt) this._sillonManualEnd = { lat: toSt.lat, lon: toSt.lon, id: toSt.id, name: toSt.name };
+    else this._sillonManualEnd = null;
+    if (this._sillonTileMap) {
+      if (fromSt && toSt) {
+        this._sillonTileMap.centerLat = (fromSt.lat + toSt.lat) / 2;
+        this._sillonTileMap.centerLon = (fromSt.lon + toSt.lon) / 2;
+        const cosLat = Math.cos(this._sillonTileMap.centerLat * Math.PI / 180);
+        const latSpan = Math.abs(fromSt.lat - toSt.lat) + 0.05;
+        const lonSpan = Math.abs(fromSt.lon - toSt.lon) * cosLat + 0.05;
+        const spanDeg = Math.max(latSpan, lonSpan);
+        this._sillonTileMap.zoomLevel = Math.min(18, Math.max(6, Math.log2(1000 / spanDeg)));
+      } else if (fromSt) {
+        this._sillonTileMap.centerLat = fromSt.lat;
+        this._sillonTileMap.centerLon = fromSt.lon;
+        this._sillonTileMap.zoomLevel = 10;
+      }
+    }
+    if (this._sillonManualMode) this._rebuildSillonManualRoute();
+    if (this._drawSillonMap) this._drawSillonMap();
+  }
+
+  _rebuildSillonManualRoute() {
+    if (!this._sillonManualStart || !this._sillonManualEnd) return;
+    const start = { lat: this._sillonManualStart.lat, lon: this._sillonManualStart.lon, maxSpeed: 160 };
+    const end = { lat: this._sillonManualEnd.lat, lon: this._sillonManualEnd.lon, maxSpeed: 160 };
+    const controls = this._sillonManualPoints.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: 160 }));
+    this._sillonManualRoute = this._buildManualRoute(start, controls, end, 160);
+  }
+
+  _toggleSillonManualMode() {
+    const fromId = document.getElementById('sillon-from')?.value;
+    const toId = document.getElementById('sillon-to')?.value;
+    if (!this._sillonManualMode) {
+      if (!fromId || !toId) return alert('Sélectionnez d\'abord les gares A et B.');
+      this._sillonManualMode = true;
+      this._syncSillonManualEndpoints();
+    } else {
+      this._sillonManualMode = false;
+      if (!this._sillonManualRoute) this._sillonManualPoints = [];
+    }
+    this._updateSillonManualUI();
+    if (this._drawSillonMap) this._drawSillonMap();
+  }
+
+  _finishSillonManual() {
+    if (!this._sillonManualMode) return;
+    this._rebuildSillonManualRoute();
+    if (!this._sillonManualRoute || this._sillonManualRoute.length < 2) return alert('Tracé invalide.');
+    this._sillonManualMode = false;
+    this._updateSillonManualUI();
+    if (this._drawSillonMap) this._drawSillonMap();
+  }
+
+  _clearSillonManualTrace() {
+    this._sillonManualPoints = [];
+    this._sillonManualRoute = null;
+    this._sillonManualMode = false;
+    this._updateSillonManualUI();
+    if (this._drawSillonMap) this._drawSillonMap();
+  }
+
+  _updateSillonManualUI() {
+    const manual = document.getElementById('btn-sillon-manual');
+    const clear = document.getElementById('btn-sillon-clear-manual');
+    const finish = document.getElementById('btn-sillon-finish-manual');
+    const hint = document.getElementById('sillon-manual-hint');
+    const fromId = document.getElementById('sillon-from')?.value;
+    const toId = document.getElementById('sillon-to')?.value;
+    if (manual) {
+      manual.textContent = this._sillonManualMode ? 'Quitter le tracé manuel' : 'Tracer manuellement';
+      manual.classList.toggle('active', this._sillonManualMode);
+      manual.disabled = !fromId || !toId;
+    }
+    if (clear) clear.classList.toggle('hidden', !this._sillonManualMode);
+    if (finish) finish.classList.toggle('hidden', !this._sillonManualMode);
+    if (hint) {
+      if (this._sillonManualMode) hint.textContent = 'Cliquez sur la carte pour ajouter des points de contrôle (50 m). Cliquez "Terminer" quand le tracé est complet.';
+      else if (!fromId || !toId) hint.textContent = 'Sélectionnez les gares A et B, puis cliquez sur "Tracer manuellement" pour dessiner le sillon sur la carte.';
+      else if (this._sillonManualRoute) hint.textContent = 'Tracé manuel enregistré. Vous pouvez le refaire avec "Tracer manuellement".';
+      else hint.textContent = 'Cliquez sur "Tracer manuellement" pour dessiner le sillon, ou laissez l\'ORM calculer automatiquement.';
+    }
+  }
+
+  setupSillonMap() {
+    const canvas = document.getElementById('sillon-map-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    if (!container || container.clientWidth === 0 || container.clientHeight === 0) return;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    const ctx = canvas.getContext('2d');
+    const world = this.game.world;
+    if (!this._sillonTileMap) {
+      const mainTileMap = this.game.renderer.tileMap;
+      this._sillonTileMap = new mainTileMap.constructor();
+    }
+    const tileMap = this._sillonTileMap;
+    tileMap.viewportWidth = canvas.width;
+    tileMap.viewportHeight = canvas.height;
+
+    const fromId = document.getElementById('sillon-from')?.value;
+    const toId = document.getElementById('sillon-to')?.value;
+    const fromSt = fromId ? world.getStationById(fromId) : null;
+    const toSt = toId ? world.getStationById(toId) : null;
+    if (fromSt && toSt) {
+      tileMap.centerLat = (fromSt.lat + toSt.lat) / 2;
+      tileMap.centerLon = (fromSt.lon + toSt.lon) / 2;
+      const cosLat = Math.cos(tileMap.centerLat * Math.PI / 180);
+      const latSpan = Math.abs(fromSt.lat - toSt.lat) + 0.05;
+      const lonSpan = Math.abs(fromSt.lon - toSt.lon) * cosLat + 0.05;
+      const spanDeg = Math.max(latSpan, lonSpan);
+      tileMap.zoomLevel = Math.min(18, Math.max(6, Math.log2(1000 / spanDeg)));
+    } else if (fromSt) {
+      tileMap.centerLat = fromSt.lat;
+      tileMap.centerLon = fromSt.lon;
+      tileMap.zoomLevel = 10;
+    } else if (world.stations.length > 0) {
+      let sumLat = 0, sumLon = 0;
+      for (const st of world.stations) { sumLat += st.lat; sumLon += st.lon; }
+      tileMap.centerLat = sumLat / world.stations.length;
+      tileMap.centerLon = sumLon / world.stations.length;
+      tileMap.zoomLevel = world.stations.length > 5 ? 7 : 8;
+    } else {
+      tileMap.centerLat = 46.8;
+      tileMap.centerLon = 2.3;
+      tileMap.zoomLevel = 6;
+    }
+
+    let drawPending = false;
+    const requestDraw = () => {
+      if (drawPending) return;
+      drawPending = true;
+      requestAnimationFrame(() => { drawPending = false; drawMap(); });
+    };
+
+    const drawMap = () => {
+      const creator = document.getElementById('sillon-creator');
+      if (!creator || creator.classList.contains('hidden')) return;
+      tileMap.renderTiles(ctx, canvas.width, canvas.height);
+      const vpTL = tileMap.screenToWorld(0, 0, canvas.width, canvas.height);
+      const vpBR = tileMap.screenToWorld(canvas.width, canvas.height, canvas.width, canvas.height);
+      const vMinLat = Math.min(vpTL.lat, vpBR.lat) - 0.02;
+      const vMaxLat = Math.max(vpTL.lat, vpBR.lat) + 0.02;
+      const vMinLon = Math.min(vpTL.lon, vpBR.lon) - 0.02;
+      const vMaxLon = Math.max(vpTL.lon, vpBR.lon) + 0.02;
+
+      // Existing sillons (faint)
+      for (const s of this.game.sillonManager.getAll()) {
+        if (!s.route || s.route.length < 2) continue;
+        ctx.strokeStyle = 'rgba(74,222,128,0.2)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const p0 = tileMap.worldToScreen(s.route[0].lat, s.route[0].lon, canvas.width, canvas.height);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < s.route.length; i++) {
+          const p = tileMap.worldToScreen(s.route[i].lat, s.route[i].lon, canvas.width, canvas.height);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      }
+
+      // Stations
+      for (const st of world.stations) {
+        if (st.lat < vMinLat || st.lat > vMaxLat || st.lon < vMinLon || st.lon > vMaxLon) continue;
+        const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+        const isStart = this._sillonManualStart && this._sillonManualStart.id === st.id;
+        const isEnd = this._sillonManualEnd && this._sillonManualEnd.id === st.id;
+        ctx.fillStyle = isStart ? '#22c55e' : isEnd ? '#f97316' : '#3b82f6';
+        ctx.beginPath(); ctx.arc(p.x, p.y, (isStart || isEnd) ? 7 : 5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1; ctx.stroke();
+        if (tileMap.zoomLevel >= 8) {
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '10px sans-serif';
+          ctx.fillText(st.name, p.x + 8, p.y + 4);
+        }
+      }
+
+      // Manual trace
+      let trace = this._sillonManualRoute;
+      if (!trace && this._sillonManualStart && this._sillonManualEnd) {
+        const start = { lat: this._sillonManualStart.lat, lon: this._sillonManualStart.lon, maxSpeed: 160 };
+        const end = { lat: this._sillonManualEnd.lat, lon: this._sillonManualEnd.lon, maxSpeed: 160 };
+        const controls = this._sillonManualPoints.map(p => ({ ...p, maxSpeed: 160 }));
+        trace = this._densifyRoute([start, ...controls, end], 0.05);
+      }
+      if (trace && trace.length >= 2) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const p0 = tileMap.worldToScreen(trace[0].lat, trace[0].lon, canvas.width, canvas.height);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < trace.length; i++) {
+          const p = tileMap.worldToScreen(trace[i].lat, trace[i].lon, canvas.width, canvas.height);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+        for (let i = 0; i < trace.length; i++) {
+          const pt = trace[i];
+          if (!pt.control && i !== 0 && i !== trace.length - 1) continue;
+          const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+          const isEnd = (i === 0 || i === trace.length - 1);
+          ctx.fillStyle = isEnd ? '#f59e0b' : '#a5f3fc';
+          ctx.beginPath(); ctx.arc(p.x, p.y, isEnd ? 5 : 3, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+        }
+      } else if (this._sillonManualStart && this._sillonManualEnd) {
+        ctx.strokeStyle = 'rgba(250,204,21,0.4)';
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const a = tileMap.worldToScreen(this._sillonManualStart.lat, this._sillonManualStart.lon, canvas.width, canvas.height);
+        const b = tileMap.worldToScreen(this._sillonManualEnd.lat, this._sillonManualEnd.lon, canvas.width, canvas.height);
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    };
+
+    this._drawSillonMap = drawMap;
+
+    if (canvas._sillonBound) {
+      requestDraw();
+      return;
+    }
+    canvas._sillonBound = true;
+
+    let drag = false, dragStart = null, totalDragDist = 0;
+    canvas.onmousedown = (e) => { drag = true; dragStart = { x: e.offsetX, y: e.offsetY }; totalDragDist = 0; };
+    canvas.onmousemove = (e) => {
+      if (drag && dragStart) {
+        const dx = e.offsetX - dragStart.x;
+        const dy = e.offsetY - dragStart.y;
+        totalDragDist += Math.abs(dx) + Math.abs(dy);
+        tileMap.pan(dx, dy);
+        dragStart = { x: e.offsetX, y: e.offsetY };
+        requestDraw();
+      }
+    };
+    canvas.onmouseup = (e) => {
+      if (totalDragDist < 5) {
+        const x = e.offsetX, y = e.offsetY;
+        const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
+        if (this._sillonManualMode) {
+          if (!this._sillonManualStart || !this._sillonManualEnd) return;
+          const snapped = this._snapToTrack(worldPos.lat, worldPos.lon);
+          const pt = snapped || worldPos;
+          this._sillonManualPoints.push({ lat: pt.lat, lon: pt.lon });
+          this._rebuildSillonManualRoute();
+          requestDraw();
+        } else {
+          let closest = null, minDist = Infinity;
+          for (const st of world.stations) {
+            const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < minDist && d < 20) { minDist = d; closest = st; }
+          }
+          if (closest) {
+            const fromSel = document.getElementById('sillon-from');
+            const toSel = document.getElementById('sillon-to');
+            if (fromSel && !fromSel.value) {
+              fromSel.value = closest.id;
+              this._updateSillonName();
+              this._syncSillonManualEndpoints();
+            } else if (toSel && !toSel.value) {
+              toSel.value = closest.id;
+              this._updateSillonName();
+              this._syncSillonManualEndpoints();
+            }
+          }
+        }
+      }
+      drag = false; dragStart = null; totalDragDist = 0;
+    };
+    canvas.onwheel = (e) => { e.preventDefault(); tileMap.applyZoom(e.deltaY < 0 ? 1 : -1, e.offsetX, e.offsetY); requestDraw(); };
+    canvas.oncontextmenu = (e) => { e.preventDefault(); };
+
+    this._sillonMapInterval = setInterval(() => {
+      if (document.getElementById('sillon-creator')?.classList.contains('hidden')) return;
+      requestDraw();
+    }, 250);
+
+    requestDraw();
   }
 
   // --- DEPOTS / ITE ---

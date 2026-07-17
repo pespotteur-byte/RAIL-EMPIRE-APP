@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784250002">
+  <link rel="stylesheet" href="style.css?v=1784250003">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -344,9 +344,16 @@
                   <select id="sillon-to"><option value="">—</option></select>
                 </div>
               </div>
-              <div style="display:flex;gap:6px;margin-top:6px">
-                <button id="btn-save-sillon" class="btn-primary" style="flex:1">Creer</button>
-                <button id="btn-cancel-sillon" class="btn-sm" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 12px;cursor:pointer;color:var(--text)">Annuler</button>
+              <div id="sillon-manual-hint" class="sched-hint" style="margin-top:6px">Sélectionnez les gares A et B, puis cliquez sur "Tracer manuellement" pour dessiner le sillon sur la carte.</div>
+              <div class="form-row" style="margin-top:6px;gap:6px">
+                <button id="btn-sillon-manual" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Tracer manuellement</button>
+                <button id="btn-sillon-clear-manual" class="btn-sm hidden" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Effacer le tracé</button>
+                <button id="btn-sillon-finish-manual" class="btn-sm hidden" type="button" style="background:var(--blue);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:#fff">Terminer le tracé</button>
+                <button id="btn-save-sillon" class="btn-primary" type="button" style="margin-left:auto">Creer</button>
+                <button id="btn-cancel-sillon" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 12px;cursor:pointer;color:var(--text)">Annuler</button>
+              </div>
+              <div class="sched-map-container" style="height:240px;margin-top:8px">
+                <canvas id="sillon-map-canvas"></canvas>
               </div>
               <div id="sillon-creator-loading" class="hidden" style="color:var(--blue);font-size:11px;padding:4px">Calcul du tracé ferroviaire...</div>
             </div>
@@ -1407,6 +1414,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784250002"></script>
+  <script type="module" src="js/main.js?v=1784250003"></script>
 </body>
 </html>
