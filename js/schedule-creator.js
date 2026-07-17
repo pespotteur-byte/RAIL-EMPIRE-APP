@@ -212,6 +212,11 @@ export class ActiveService {
     // Garage/shunting state
     this._garage = null; // { vpId, route, savedRoute, savedStopIndex, savedState, blockerTrainId }
 
+    // Section VI — ITE state
+    this._iteHardBlock = false;
+    this._iteDwellExtra = 0;
+    this._iteCargoMismatch = false;
+
     // Position will be set by scheduleTick when in pre-departure window
     // (don't set here to avoid ghost trains on the map)
 
@@ -829,6 +834,23 @@ export class ActiveService {
         return;
       }
 
+      // Section VI — ITE : bloque le départ si le train est trop long pour l'ITE
+      if (this._iteHardBlock && stop?.type === 'arret' && stop?.stationId && window.game?.depotManager && window.game?.world) {
+        const station = window.game.world.getStationById(stop.stationId);
+        if (station) {
+          const trainLength = this.rame ? this.rame.totalLength : (this.train.length || 20);
+          const rameCargo = this.rame?.elementDetails?.find(e => Array.isArray(e.cargoTypes) && e.cargoTypes.length > 0)?.cargoTypes?.[0] || '';
+          const iteInfo = window.game.depotManager.getITEInfo(station.id, trainLength, rameCargo);
+          if (iteInfo?.isITE && !iteInfo.canFit) {
+            this.train.iteInfo = { ...this.train.iteInfo, canFit: false };
+            this.train.delayReason = 'ITE : train trop long';
+            this._updateContinuousDelay(timeOfDay);
+            return;
+          }
+        }
+        this._iteHardBlock = false;
+      }
+
       const depTime = stop.departureTime;
       // Mise à jour du retard pendant l'arrêt (retard à l'arrivée qui s'aggrave si le départ est dépassé)
       if (depTime != null && timeGte(timeOfDay, depTime)) {
@@ -865,6 +887,7 @@ export class ActiveService {
         this.train.stoppedAt = null;
         this._lastTronconId = null;
         this._iteDwellExtra = 0;
+        this._iteHardBlock = false;
         this.train.iteInfo = null;
         if (this.currentStopIndex >= stops.length) {
           this.completeService(economy);
@@ -937,6 +960,7 @@ export class ActiveService {
     this._cachedTroncon = null;
     this._cachedTronconTime = null;
     this._trackKey = null;
+    this._iteHardBlock = false;
   }
 
   /**
@@ -1623,6 +1647,7 @@ export class ActiveService {
   _updateDelayReason() {
     const t = this.train;
     if (!t) return;
+    if (this._iteHardBlock) { t.delayReason = 'ITE : train trop long'; return; }
     if (this._rescueDispatched || t.state === 'en panne') { t.delayReason = 'Panne — attente secours'; return; }
     if (t.breakdown) { t.delayReason = `Panne ${t.breakdown.type}`; return; }
     if (t.incident) { t.delayReason = t.incident.name || 'Incident'; return; }
@@ -2212,6 +2237,8 @@ export class ActiveService {
         const craneCount = iteMods?.getCraneCount ? iteMods.getCraneCount(station.id) : 0;
         this.train.iteInfo = { totalLength: iteInfo.totalLength, trainLength, trancheCount: iteInfo.trancheCount, canFit: iteInfo.canFit, cargoMatch: iteInfo.cargoMatch, craneCount };
         this._iteCargoMismatch = iteInfo.cargoMatch === false;
+        this._iteHardBlock = iteInfo.isITE && !iteInfo.canFit;
+        if (this._iteHardBlock) this.train.delayReason = 'ITE : train trop long';
         // ITE-06 : temps de manœuvre/déchargement/rechargement selon type de cargaison + longueur/tranches
         const cargo = (rameCargo || '').toLowerCase();
         let factor = 1.0; // minutes par 100 m de train
@@ -3062,6 +3089,8 @@ export class ScheduleCreator {
           cm: s.completed || false,
           cn: s.cancelled || false,
           cdt: s.completedDate || '',
+          ih: s._iteHardBlock || false,
+          ie: s._iteDwellExtra || 0,
         };
         // Save position for mid-journey restore
         if (s.position) {
@@ -3156,6 +3185,8 @@ export class ScheduleCreator {
           cm: d._r.cm || false,
           cn: d._r.cn || false,
           cdt: d._r.cdt || '',
+          iteHardBlock: d._r.ih || false,
+          iteDwellExtra: d._r.ie || 0,
         };
       }
       return expanded;
@@ -3185,6 +3216,8 @@ export class ScheduleCreator {
         svc.completedDate = rt.completedDate || completedDate;
         svc.direction = rt.direction || 1;
         svc._tripCount = rt._tripCount || 0;
+        svc._iteHardBlock = rt.iteHardBlock || false;
+        svc._iteDwellExtra = rt.iteDwellExtra || 0;
         if (rt._adjustedStops) {
           svc._adjustedStops = rt._adjustedStops.map(s => new ServiceStop(
             s.stationId, s.type, s.departureTime, s.arrivalTime
