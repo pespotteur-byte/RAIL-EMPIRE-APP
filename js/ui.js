@@ -1392,9 +1392,13 @@ export class UI {
 
     document.getElementById('modal-station')?.classList.add('hidden');
     this.game.saveState();
-    // Multi-creation: re-enter station creation mode
-    if (this._multiCreateMode === 'station') {
-      setTimeout(() => this.toggleStationCreation(), 100);
+    // Keep the station creation tool selected so the player can chain placements.
+    // (Échap or a click on the button deselects it.)
+    if (!this._editingStationId) {
+      setTimeout(() => {
+        if (!this.stationCreationMode) this.toggleStationCreation();
+        this._showPickHint('Gare creee — cliquez sur la carte pour en placer une autre, Echap pour quitter.');
+      }, 100);
     }
   }
 

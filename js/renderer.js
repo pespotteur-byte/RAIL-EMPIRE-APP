@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1784250027';
+import { TileMap } from './map.js?v=1784250028';
 
 // LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
 export const LIVEMAP_CATEGORY_COLORS = {
@@ -88,14 +88,28 @@ export class Renderer {
         trains: document.getElementById('toggle-trains'),
         voie: document.getElementById('toggle-voie-points'),
         orm: document.getElementById('toggle-orm'),
+        basic: document.getElementById('toggle-basic'),
         radar: document.getElementById('toggle-radar'),
         satellite: document.getElementById('toggle-satellite'),
         clouds: document.getElementById('toggle-clouds'),
       };
       if (this._toggleEls.orm) {
         this._toggleEls.orm.addEventListener('change', () => {
+          // If basic mode is active and the user re-enables ORM, turn basic off.
+          if (this.tileMap.basicMode && this._toggleEls.orm.checked) {
+            this._toggleEls.basic.checked = false;
+            this.tileMap.toggleBasic();
+          }
           this.tileMap.railEnabled = this._toggleEls.orm.checked;
           this.tileMap.markDirty();
+        });
+      }
+      if (this._toggleEls.basic) {
+        this._toggleEls.basic.addEventListener('change', () => {
+          const isBasic = this.tileMap.toggleBasic();
+          this._toggleEls.basic.checked = isBasic;
+          this._toggleEls.orm.checked = this.tileMap.railEnabled;
+          this._toggleEls.orm.disabled = isBasic;
         });
       }
       if (this._toggleEls.radar) {

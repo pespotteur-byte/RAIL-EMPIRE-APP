@@ -41,11 +41,17 @@ export class TileMap {
     this._pendingTiles = 0;
     this._lastPendingTiles = 0;
 
-    this.baseTileUrls = [
+    this._darkBaseTileUrls = [
       'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
       'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
       'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
     ];
+    this._lightBaseTileUrls = [
+      'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+      'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+      'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    ];
+    this.baseTileUrls = this._darkBaseTileUrls;
     this.satelliteTileUrls = [
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     ];
@@ -63,6 +69,8 @@ export class TileMap {
     ];
 
     this.railEnabled = true; // ORM layer visible by default
+    this.basicMode = false; // basic map: light base, no ORM overlay
+    this._basicWasRail = true; // remember ORM state when switching back from basic
 
     // Weather radar overlay (RainViewer)
     this.radarEnabled = false;
@@ -470,6 +478,37 @@ export class TileMap {
     this._tileBufferValid = false;
     this._dirty = true;
     return this.cloudEnabled;
+  }
+
+  toggleBasic() {
+    this.basicMode = !this.basicMode;
+    if (this.basicMode) {
+      this._basicWasRail = this.railEnabled;
+      this.railEnabled = false;
+      this.baseTileUrls = this._lightBaseTileUrls;
+      this.labelTileUrls = [
+        'https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
+      ];
+    } else {
+      this.railEnabled = this._basicWasRail;
+      this.baseTileUrls = this._darkBaseTileUrls;
+      this.labelTileUrls = [
+        'https://a.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
+      ];
+    }
+    // Clear base / label cache so new style loads fresh
+    for (const [k] of this.tileCache) {
+      if (k.endsWith('/b') || k.endsWith('/l')) this.tileCache.delete(k);
+    }
+    this._baseQueue = [];
+    this._baseLoading = 0;
+    this._tileBufferValid = false;
+    this._dirty = true;
+    return this.basicMode;
   }
 
   toggleSatellite() {

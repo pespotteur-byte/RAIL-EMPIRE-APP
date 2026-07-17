@@ -1,4 +1,4 @@
-import { getGlobalRng } from './rng.js?v=1784250027';
+import { getGlobalRng } from './rng.js?v=1784250028';
 
 export class Economy {
   constructor() {
