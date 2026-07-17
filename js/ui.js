@@ -8600,6 +8600,8 @@ export class UI {
       'flash-circulation': 0,
       'rer-ratp': 8,
       'rer-sncf': 8,
+      'afl-depart': 1,
+      'afl-arrivee': 1,
     };
     return map[displayType] || 4;
   }
@@ -8619,15 +8621,15 @@ export class UI {
 
     const perPage = this._infogarePerPage(displayType);
     const totalPages = (perPage > 0 && trains.length > 0) ? Math.max(1, Math.ceil(trains.length / perPage)) : 1;
-    const page = this._infogarePage % totalPages;
+    const page = ((this._infogarePage % totalPages) + totalPages) % totalPages;
 
     switch (displayType) {
       case 'rer-ratp': board.innerHTML = this._renderRerRatp(station, trains, nowStr, page); break;
       case 'rer-sncf': board.innerHTML = this._renderRerSncf(station, trains, nowStr, page); break;
       case 'sncf-dep': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
       case 'sncf-arr': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
-      case 'afl-depart': board.innerHTML = this._renderAFLDepart(station, trains, nowStr); break;
-      case 'afl-arrivee': board.innerHTML = this._renderAFLArrivee(station, trains, nowStr); break;
+      case 'afl-depart': board.innerHTML = this._renderAFLDepart(station, trains, nowStr, page); break;
+      case 'afl-arrivee': board.innerHTML = this._renderAFLArrivee(station, trains, nowStr, page); break;
       case 'cati-ar': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
       case 'old-sncf': board.innerHTML = this._renderPalette(station, trains, nowStr, page); break;
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
@@ -8636,18 +8638,24 @@ export class UI {
       case 'ecran-quai': board.innerHTML = this._renderEcranQuai(station, trains, nowStr, page); break;
     }
 
-    // advance the carousel for next refresh
-    if (perPage > 0 && totalPages > 1) {
-      this._infogarePage = (this._infogarePage + 1) % totalPages;
-    } else {
-      this._infogarePage = 0;
-    }
-
     // Setup train click handlers for platform display
     board.querySelectorAll('[data-svc-id]').forEach(el => {
       el.style.cursor = 'pointer';
       el.addEventListener('click', () => this._showPlatformDisplay(el.dataset.svcId, stationId));
     });
+
+    // Mouse-wheel paging for 24h infinite scroll (image boards); RER boards keep their native CSS scroll
+    if (!['rer-ratp', 'rer-sncf'].includes(displayType)) {
+      board.onwheel = e => {
+        e.preventDefault();
+        if (perPage <= 0 || totalPages <= 1) return;
+        if (e.deltaY > 0) this._infogarePage = (this._infogarePage + 1) % totalPages;
+        else this._infogarePage = (this._infogarePage - 1 + totalPages) % totalPages;
+        this._showInfogareBoard();
+      };
+    } else {
+      board.onwheel = null;
+    }
 
     this._animateInfogareBoard(board, displayType);
 
@@ -9026,8 +9034,9 @@ export class UI {
   }
 
   // --- AFL Départ : annonce lumineuse du prochain départ ---
-  _renderAFLDepart(station, trains, nowStr) {
-    const t = trains.find(r => r.isDeparture) || trains[0];
+  _renderAFLDepart(station, trains, nowStr, page = 0) {
+    const deps = trains.filter(r => r.isDeparture);
+    const t = deps[page] || deps[0];
     if (!t) return `<div class="ig-afl-board"><div class="ig-afl-station">${station?.name || ''}</div><div class="ig-afl-msg">Aucun départ prévu</div></div>`;
     const delay = `<span class="${t.delay > 0 ? 'ig-afl-delay' : 'ig-afl-ontime'}">${this._fmtDelay(t.delay).replace(/^retard /, 'Retard ')}</span>`;
     const via = t.servedStations?.slice(0, 4).join(' – ') || '';
@@ -9042,8 +9051,9 @@ export class UI {
   }
 
   // --- AFL Arrivée : annonce lumineuse de la prochaine arrivée ---
-  _renderAFLArrivee(station, trains, nowStr) {
-    const t = trains.find(r => r.isArrival) || trains[0];
+  _renderAFLArrivee(station, trains, nowStr, page = 0) {
+    const arrs = trains.filter(r => r.isArrival);
+    const t = arrs[page] || arrs[0];
     if (!t) return `<div class="ig-afl-board ig-afl-arr"><div class="ig-afl-station">${station?.name || ''}</div><div class="ig-afl-msg">Aucune arrivée prévue</div></div>`;
     const status = t.state === 'stopped_at_station' && t.isLast ? 'Arrivé' : `dans ${this._fmtWait(t.waitMin) || '—'}`;
     const from = t.fromStations?.slice(-3).join(' – ') || '';
