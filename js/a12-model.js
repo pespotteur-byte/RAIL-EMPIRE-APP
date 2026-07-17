@@ -9,7 +9,7 @@ import { VoiePointManager } from './voie-points.js';
 import { LineManager, PlatformManager } from './line.js';
 import { RameManager } from './rame.js';
 import { RollingStockManager } from './rolling-stock.js';
-import { ScheduleCreator } from './schedule-creator.js?v=1784241354';
+import { ScheduleCreator } from './schedule-creator.js?v=1784241355';
 import { FreightManager } from './freight.js';
 import { DepotManager } from './depot.js';
 import { StaffManager } from './staff.js?v=1784241352';

@@ -811,7 +811,7 @@ export class UI {
       else { prevIdx = curIdx - 2; curStationIdx = curIdx - 1; nextIdx = curIdx; }
     }
 
-    // Annex 5 — planned (crossed-out) vs recalculated (violet circle) times.
+    // Annex 5 — planned (grey crossed-out below) vs recalculated (purple circle) times.
     const buildTimes = (s, i) => {
       const isFirst = i === 0;
       const isLast = i === stops.length - 1;
@@ -821,28 +821,26 @@ export class UI {
       const actualArr = arr + d;
       const actualDep = dep + d;
       const dwell = (!isFirst && !isLast && !isWp && dep > arr) ? Math.max(0, Math.round(dep - arr)) : 0;
-      const dwellTxt = dwell > 0 ? ` · ${dwell} min d'arrêt` : '';
       const baseLabel = isFirst ? `dép ${fmt(dep)}`
         : isLast ? `arr ${fmt(arr)}`
         : isWp ? `pass ${fmt(arr)}`
-        : `${fmt(arr)}–${fmt(dep)}${dwellTxt}`;
+        : `${fmt(arr)}–${fmt(dep)}`;
       const actLabel = isFirst ? `dép ${fmt(actualDep)}`
         : isLast ? `arr ${fmt(actualArr)}`
         : isWp ? `pass ${fmt(actualArr)}`
-        : `${fmt(actualArr)}–${fmt(actualDep)}${dwellTxt}`;
+        : `${fmt(actualArr)}–${fmt(actualDep)}`;
       const showRecalc = d !== 0 && i >= curIdx;
-      if (!showRecalc) return `<span class="lvp-base-time">${baseLabel}</span>`;
-      const cls = d > 0 ? 'lvp-recalc-late' : 'lvp-recalc-early';
-      return `<span class="lvp-base-time" style="text-decoration:line-through;color:#888;margin-right:4px">${baseLabel}</span><span class="lvp-recalc ${cls}">${actLabel}</span>`;
+      return { base: baseLabel, actual: actLabel, showRecalc, dwell };
     };
 
     const rows = stops.map((s, i) => {
       const isWp = s.type === 'waypoint' || !s.stationId;
       const name = isWp ? 'Waypoint' : (world.getStationById(s.stationId)?.name || '—');
       const cur = i === curIdx ? ' cur' : '';
-      const plat = s.platform ? ` (Voie ${s.platform})` : '';
-      const typeBadge = s.stopCode ? `<span class="lvp-stop-type">${s.stopCode}</span>` : (isWp ? '<span class="lvp-stop-type wp">WPT</span>' : '');
-      return `<div class="lvp-stop${cur}">${typeBadge}<span class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${plat}</span><span class="lvp-stop-times">${buildTimes(s, i)}</span></div>`;
+      const voie = s.platform ? `Voie ${s.platform}` : '';
+      const { base, actual, showRecalc, dwell } = buildTimes(s, i);
+      const plannedHtml = showRecalc ? `<div class="lvp-stop-planned">${base}</div>` : '';
+      return `<div class="lvp-stop${cur}"><div class="lvp-stop-left"><div class="lvp-stop-time">${actual}</div>${plannedHtml}</div><div class="lvp-stop-info"><div class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${voie ? ` <span class="lvp-stop-voie">${voie}</span>` : ''}</div>${dwell > 0 ? `<div class="lvp-stop-dwell">${dwell} min d'arrêt</div>` : ''}</div></div>`;
     }).join('');
 
     const upcoming = stops.slice(curIdx)
@@ -6173,15 +6171,15 @@ export class UI {
       // S1.1: Delay status with ±0.5 min neutral zone to avoid flickering
       const rawDelay = t.delay || 0;
       const delayVal = rawDelay === 0 ? 0 : Math.round(rawDelay);
-      let delayLabel, delayClass;
+      let delayDisplay, delayClass;
       if (delayVal > 0) {
-        delayLabel = `+${delayVal} min`;
+        delayDisplay = `Retard: +${delayVal} min`;
         delayClass = 'delay-late';
       } else if (delayVal < 0) {
-        delayLabel = `- ${Math.abs(delayVal)} min`;
+        delayDisplay = `Avance: ${Math.abs(delayVal)} min`;
         delayClass = 'delay-early';
       } else {
-        delayLabel = 'À l\'heure';
+        delayDisplay = 'À l\'heure';
         delayClass = 'delay-ok';
       }
 
@@ -6395,23 +6393,36 @@ export class UI {
 
       const cat = svc.category || t.category || 'voyageur';
       const catColor = LVM_CAT_COLORS[cat] || t.color;
-      const iconSrc = LVM_CAT_ICONS[cat] || LVM_CAT_ICONS.generic;
       const selCls = this.selectedService?.id === svc.id ? ' tc-selected' : '';
+
+      // LVM-04 — statut ligne / situation
+      let statusText = 'En ligne', statusColor = '#22c55e';
+      if (svc.cancelled) { statusText = 'Supprimé'; statusColor = '#ef4444'; }
+      else if (svc.completed) { statusText = 'Terminé'; statusColor = '#16a34a'; }
+      else if (svc.state === 'stopped_at_station' || (svc.state === 'waiting' && t.stoppedAt)) { statusText = 'À quai'; }
+      else if (svc.state === 'waiting') { statusText = 'En attente'; statusColor = '#f59e0b'; }
+      else if (t.speed === 0) { statusText = 'Arrêté'; statusColor = '#f59e0b'; }
+
+      const statusBadge = svc.cancelled
+        ? `<span style="color:#ef4444;font-weight:700;font-size:10px;margin-left:auto">✕ Supprimé</span>`
+        : (svc.completed ? `<span style="color:#16a34a;font-weight:700;font-size:10px;margin-left:auto">Terminé</span>` : '');
+
       return `
         <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${svc.id}')">
           <div class="tc-line tc-header">
-            <img src="${iconSrc}" class="tc-icon" alt="" style="background:${catColor}">
+            <span class="tc-status-dot" style="background:${catColor}"></span>
             <div class="tc-scroll"><span class="tc-scroll-text tc-name">${displayName}</span></div>
-            ${svc.cancelled ? '<span style="background:#ef4444;color:#fff;font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:auto;flex-shrink:0">Supprimé</span>' : (svc.completed ? '<span style="background:#16a34a;color:#fff;font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:auto;flex-shrink:0">Terminé</span>' : '')}
+            <span class="tc-speed" style="margin-left:auto">${Math.round(t.speed)} km/h</span>
           </div>
           ${imageHtml}
-          ${payloadHtml}
-          <div class="tc-line"><span class="tc-speed">${Math.round(t.speed)} km/h</span></div>
-          <div class="tc-line"><span class="${delayClass}">${delayLabel}</span></div>
+          <div class="tc-line" style="display:flex;gap:8px;align-items:center">
+            <span class="tc-status" style="color:${statusColor}">${statusText}</span>
+            <span class="tc-delay ${delayClass}">${delayDisplay}</span>
+            ${statusBadge}
+          </div>
           ${contextLabel ? `<div class="tc-line tc-scroll"><span class="tc-scroll-text ${contextClass}">${contextLabel}</span></div>` : ''}
-          ${circuleSurVoie ? `<div class="tc-line"><span style="color:#94a3b8;font-size:10px">${circuleSurVoie}</span></div>` : ''}
-          ${platformLabel ? `<div class="tc-line"><span class="tc-voie">${platformLabel}</span></div>` : ''}
-          <div class="tc-line tc-scroll"><span class="tc-scroll-text tc-next">${nextInfo}</span></div>
+          <div class="tc-line tc-scroll"><span class="tc-scroll-text tc-next" style="color:#22c55e">${nextInfo}</span></div>
+          ${payloadHtml}
           ${incidentHtml}
           ${breakdownHtml}
           ${maintenanceHtml}
