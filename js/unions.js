@@ -4,6 +4,11 @@
  */
 import { getGlobalRng } from './rng.js?v=1784241352';
 
+function _daysBetween(a, b) {
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+  try { return Math.floor((parse(b) - parse(a)) / 86400000); } catch { return 0; }
+}
+
 export class Unions {
   constructor() {
     this.satisfaction = 75;       // 0-100
@@ -24,7 +29,9 @@ export class Unions {
   dailyUpdate(game) {
     const eco = game.economy;
     const staff = game.staffManager;
-    const conductors = staff?.conductors?.length || 0;
+    const dateStr = game.engine?.getCurrentDate?.() || new Date().toISOString().split('T')[0];
+    const allStaff = staff?.staff || [];
+    const staffCount = allStaff.length || 1;
 
     // Satisfaction factors
     let sat = 50;
@@ -45,6 +52,7 @@ export class Unions {
     // Staffing: overwork = unhappy
     const services = game.scheduleCreator?.getActiveServices?.() || [];
     const activeCount = services.filter(s => s.state === 'running').length;
+    const conductors = staff?.getByRole('conducteur')?.length || 0;
     if (conductors > 0 && activeCount > conductors * 2) sat -= 15;
 
     // Punctuality: lots of delays = stressful
@@ -53,6 +61,26 @@ export class Unions {
       if (punctuality < 50) sat -= 10;
       else if (punctuality > 90) sat += 5;
     }
+
+    // 3-8 compliance: overtime / missed weekly rest increases social risk and lowers satisfaction
+    let overworkCount = 0;
+    let weeklyViolationCount = 0;
+    let totalSocialRisk = 0;
+    for (const m of allStaff) {
+      totalSocialRisk += m.socialRisk || 0;
+      if ((m.shiftWorkedMin || 0) > 480 || (m.socialRisk || 0) > 50) overworkCount++;
+      if (m.lastWeeklyRestDate == null) {
+        if (m.hireDate && _daysBetween(new Date(m.hireDate).toISOString().split('T')[0], dateStr) >= 6) {
+          weeklyViolationCount++;
+        }
+      } else if (_daysBetween(m.lastWeeklyRestDate, dateStr) >= 6) {
+        weeklyViolationCount++;
+      }
+    }
+    const avgSocialRisk = totalSocialRisk / staffCount;
+    sat -= Math.min(20, Math.round(avgSocialRisk / 5));          // 0..20 penalty
+    if (overworkCount > staffCount * 0.1) sat -= 10;             // >10% overworked
+    if (weeklyViolationCount > 0) sat -= weeklyViolationCount * 2;
 
     // Clamp
     this.satisfaction = Math.max(0, Math.min(100, sat));
@@ -79,7 +107,7 @@ export class Unions {
     }
 
     // Generate demands
-    this._generateDemands(game);
+    this._generateDemands(game, { overworkCount, weeklyViolationCount, avgSocialRisk });
   }
 
   _startStrike(game, rng = getGlobalRng()) {
@@ -120,7 +148,7 @@ export class Unions {
     return (Math.abs(hash) % 100) < this.strikePercent;
   }
 
-  _generateDemands(game) {
+  _generateDemands(game, opts = {}) {
     this.demands = [];
     if (this.satisfaction < 70) {
       this.demands.push('Augmentation des salaires');
@@ -131,6 +159,12 @@ export class Unions {
     if (this.satisfaction < 30) {
       this.demands.push('Amélioration des conditions de travail');
       this.demands.push('Prime de risque pour intempéries');
+    }
+    if (opts.weeklyViolationCount > 0 || opts.avgSocialRisk > 40) {
+      this.demands.push('Respect du repos hebdomadaire de 24h');
+    }
+    if (opts.overworkCount > 0 || opts.avgSocialRisk > 25) {
+      this.demands.push('Respect du temps de repos entre les services (3-8)');
     }
   }
 

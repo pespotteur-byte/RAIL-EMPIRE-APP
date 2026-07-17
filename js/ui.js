@@ -96,11 +96,11 @@ const IG_IMAGE_LAYOUTS = {
 // NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
 // contenu mais sont regroupées sous une page parente via des sous-onglets.
 // child -> parent (le bouton de nav du parent reste actif sur l'enfant).
-const PAGE_PARENT = { unions: 'staff', seasonal: 'weather' };
+const PAGE_PARENT = { seasonal: 'weather' };
 // Groupes de sous-onglets injectés en tête des pages membres.
 // X / XIII — Finance et Banque fusionnées dans Dashboard, onglets séparés supprimés.
+// XII — Page Syndicats fusionnée dans Personnel.
 const PAGE_GROUPS = [
-  [['staff', 'Personnel'], ['unions', 'Syndicats']],
   [['weather', 'Météo'], ['seasonal', 'Saisons']],
 ];
 
@@ -173,7 +173,6 @@ export class UI {
     else if (this.activePage === 'staff') this.renderStaffPage();
     else if (this.activePage === 'bank') this.renderBankPage();
     else if (this.activePage === 'weather') this.renderWeatherPage();
-    else if (this.activePage === 'unions') this.renderUnionsPage();
     else if (this.activePage === 'seasonal') this.renderSeasonalPage();
     else if (this.activePage === 'connections') this.renderConnectionsPage();
     else if (this.activePage === 'station-upgrades') this.renderStationUpgradesPage();
@@ -249,7 +248,6 @@ export class UI {
     if (page === 'staff') this.renderStaffPage();
     if (page === 'bank') this.renderBankPage();
     if (page === 'weather') this.renderWeatherPage();
-    if (page === 'unions') this.renderUnionsPage();
     if (page === 'seasonal') this.renderSeasonalPage();
     if (page === 'connections') this.renderConnectionsPage();
     if (page === 'station-upgrades') this.renderStationUpgradesPage();
@@ -9436,14 +9434,6 @@ export class UI {
       this.game.weather.render(document.getElementById('weather-content'));
       this.game.seasonal.render(document.getElementById('weather-seasonal'), this.game);
     } catch(e) { console.warn('Weather render error:', e); }
-  }
-
-  // ==================== UNIONS ====================
-  renderUnionsPage() {
-    try {
-      const container = document.getElementById('unions-container');
-      this.game.unions.render(container, this.game);
-    } catch(e) { console.warn('Unions render error:', e); }
   }
 
   // ==================== SEASONAL ====================

@@ -44,13 +44,13 @@ const NATIONALITY_NAMES = {
 };
 
 const ROLES = {
-  conducteur:           { label: 'Conducteur',              salary: 120, hiringCost: 2000, assignTo: 'service' },
-  conducteur_manoeuvre:  { label: 'Conducteur de manœuvre',  salary: 100, hiringCost: 1500, assignTo: 'depot' },
-  agent_gare:           { label: 'Agent en gare',           salary: 90,  hiringCost: 1000, assignTo: 'station' },
-  agent_maintenance:    { label: 'Agent de maintenance',    salary: 110, hiringCost: 1800, assignTo: 'depot' },
-  controleur:           { label: 'Contrôleur',              salary: 100, hiringCost: 1500, assignTo: 'zone' },
-  regulateur:           { label: 'Régulateur',              salary: 150, hiringCost: 3000, assignTo: 'zone' },
-  agent_circulation:    { label: 'Agent de circulation',    salary: 130, hiringCost: 2500, assignTo: 'signalbox' },
+  conducteur:           { label: 'Conducteur',              salary: 120, hiringCost: 2000, assignTo: 'service', description: 'Pilote les trains. Service en 3×8 (8h) avec repos de 8h et 24h hebdomadaire obligatoires.' },
+  conducteur_manoeuvre:  { label: 'Conducteur de manœuvre',  salary: 100, hiringCost: 1500, assignTo: 'depot', description: 'Effectue les manoeuvres et les remontées en dépôt/ITE.' },
+  agent_gare:           { label: 'Agent en gare',           salary: 90,  hiringCost: 1000, assignTo: 'station', description: 'Gère l\'accueil, la sécurité quai et l\'information voyageurs en gare.' },
+  agent_maintenance:    { label: 'Agent de maintenance',    salary: 110, hiringCost: 1800, assignTo: 'depot', description: 'Répare et entretient le matériel roulant au dépôt le plus proche.' },
+  controleur:           { label: 'Contrôleur',              salary: 100, hiringCost: 1500, assignTo: 'zone', description: 'Contrôle les billets dans les trains de sa zone et verbalise les fraudeurs.' },
+  regulateur:           { label: 'Régulateur',              salary: 150, hiringCost: 3000, assignTo: 'zone', description: 'Organise la circulation sur une zone. Il faut 3 régulateurs par zone pour une couverture 24/7.' },
+  agent_circulation:    { label: 'Agent de circulation',    salary: 130, hiringCost: 2500, assignTo: 'signalbox', description: 'Gère les postes d\'aiguillage et le cantonnement sur un tronçon.' },
 };
 
 export { ROLES as STAFF_ROLES };
@@ -190,6 +190,7 @@ export class StaffManager {
           c.resting = false;
           c.shiftWorkedMin = 0;
           c.shiftStartMin = -1;
+          c.shiftOverdue = false;
           if (c.restType === 'weekly') {
             c.weeklyWorkMin = 0;
             c.lastWeeklyRestDate = dateStr;
@@ -199,44 +200,56 @@ export class StaffManager {
         continue;
       }
 
-      // If assigned, track shift time only while actually driving
+      // If assigned, track shift time while driving or waiting with a service
       if (c.assignedTo) {
         const svc = activeServices.find(s => s.id === c.assignedTo);
-        if (svc && svc.state === 'moving') {
+        const isWithTrain = svc && (svc.state === 'moving' || svc.state === 'waiting' || svc.state === 'stopped_at_station');
+        if (isWithTrain) {
           if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
-          c.shiftWorkedMin += delta;
-          c.weeklyWorkMin += delta;
+          // Count driving time toward the 8h shift; waiting time does not extend the shift indefinitely
+          if (svc.state === 'moving') {
+            c.shiftWorkedMin += delta;
+            c.weeklyWorkMin += delta;
+          }
         }
 
-        // Service completed => release conductor and check rest
+        const weeklyOverdue = this._isWeeklyRestOverdue(c, dateStr, WEEKLY_WORK_LIMIT);
+        const shiftOverdue = c.shiftWorkedMin >= SHIFT_DURATION;
+
+        // RH-03/04 — accumulate social risk if 3-8 rules are violated
+        if (weeklyOverdue || shiftOverdue) {
+          c.socialRisk = Math.min(100, c.socialRisk + 0.05 * delta);
+        } else {
+          c.socialRisk = Math.max(0, c.socialRisk - 0.01 * delta);
+        }
+
+        // Service completed => release conductor and start mandatory rest
         if (svc && svc.completed) {
           c.assignedTo = null;
           c.totalTrips++;
-          if (c.shiftWorkedMin >= SHIFT_DURATION) {
-            this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
-          }
+          c.shiftOverdue = false;
+          this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
           continue;
         }
 
-        // Enforce 8h max per shift then mandatory rest (RH-03)
-        if (c.shiftWorkedMin >= SHIFT_DURATION) {
+        // If the train is stopped/waiting and the conductor has reached 8h or is overdue for weekly rest,
+        // release the conductor so a relief can take over, then start rest.
+        if (shiftOverdue || weeklyOverdue) {
           if (!svc || svc.state !== 'moving') {
             c.assignedTo = null;
             c.totalTrips++;
+            c.shiftOverdue = false;
             this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
-            continue;
+          } else {
+            // Still driving: flag overdue but continue until the train stops
+            c.shiftOverdue = true;
           }
         }
-
-        // RH-04 — accumulate social risk if weekly rest is overdue
-        const overdue = this._isWeeklyRestOverdue(c, dateStr, WEEKLY_WORK_LIMIT);
-        if (overdue) c.socialRisk = Math.min(100, c.socialRisk + 0.05 * delta);
-        else c.socialRisk = Math.max(0, c.socialRisk - 0.01 * delta);
         continue;
       }
 
       // Available conductor: try to take another service within the same shift
-      if (c.shiftWorkedMin < SHIFT_DURATION && !c.resting) {
+      if (c.shiftWorkedMin < SHIFT_DURATION && !c.resting && !c.shiftOverdue) {
         const needsConductor = activeServices.filter(svc => {
           if (!svc.active || svc.completed) return false;
           if (svc.state !== 'waiting' && svc.state !== 'stopped_at_station') return false;
@@ -535,13 +548,22 @@ export class StaffManager {
           <button id="staff-hire-btn" class="btn-primary" style="font-size:11px;padding:6px 12px">Embaucher</button>
           <span style="font-size:10px;color:var(--text3)">Solde: ${eco.formatAmount(eco.balance)}</span>
         </div>
+        <p id="staff-role-desc" style="font-size:10px;color:var(--text3);margin:8px 0 0;min-height:14px">${ROLES[roleKeys[0]].description || ''}</p>
       </div>
+
+      <div id="staff-social-container"></div>
 
       ${this._renderZonesSection(game)}
       ${this._renderSignalBoxSection(game)}
 
       ${roleKeys.map(role => this._renderRoleSection(role, activeServices, stations, depots, game)).join('')}
     `;
+
+    // Inject syndicats section into the Personnel page (fusion page syndicat)
+    const socialContainer = container.querySelector ? container.querySelector('#staff-social-container') : null;
+    if (socialContainer && game.unions?.render) {
+      game.unions.render(socialContainer, game);
+    }
 
     this._bindEvents(container, game, eco);
   }
@@ -697,6 +719,12 @@ export class StaffManager {
   }
 
   _bindEvents(container, game, eco) {
+    // Role description update
+    document.getElementById('staff-hire-role')?.addEventListener('change', (e) => {
+      const descEl = document.getElementById('staff-role-desc');
+      if (descEl) descEl.textContent = ROLES[e.target.value]?.description || '';
+    });
+
     // Hire
     document.getElementById('staff-hire-btn')?.addEventListener('click', () => {
       const role = document.getElementById('staff-hire-role')?.value || 'conducteur';
