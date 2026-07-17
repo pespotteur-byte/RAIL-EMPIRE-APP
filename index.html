@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784250026">
+  <link rel="stylesheet" href="style.css?v=1784250027">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -1338,6 +1338,32 @@
             <input type="range" id="settings-delay-tolerance" min="0" max="120" step="5" value="120" style="width:100%">
           </div>
           <hr style="border-color:#334155;margin:16px 0">
+          <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Tarifs au km</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>Slow (≤120 km/h)</span><span id="settings-price-slow-val">0.08 €/pax·km</span></label>
+            <input type="number" id="settings-price-slow" step="0.01" min="0" value="0.08" style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>Régional (120–160)</span><span id="settings-price-regional-val">0.12 €/pax·km</span></label>
+            <input type="number" id="settings-price-regional" step="0.01" min="0" value="0.12" style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>Intercités (160–200)</span><span id="settings-price-intercity-val">0.18 €/pax·km</span></label>
+            <input type="number" id="settings-price-intercity" step="0.01" min="0" value="0.18" style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>Rapide (200–250)</span><span id="settings-price-fast-val">0.30 €/pax·km</span></label>
+            <input type="number" id="settings-price-fast" step="0.01" min="0" value="0.30" style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>TGV (>250)</span><span id="settings-price-tgv-val">0.50 €/pax·km</span></label>
+            <input type="number" id="settings-price-tgv" step="0.01" min="0" value="0.50" style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em">
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>Fret (€/t·km)</span><span id="settings-freight-val">0.08 €/t·km</span></label>
+            <input type="number" id="settings-freight" step="0.01" min="0" value="0.08" style="width:100%;padding:8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:.9em">
+          </div>
+          <hr style="border-color:#334155;margin:16px 0">
           <div class="form-group" style="margin-bottom:14px">
             <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:.9em;cursor:pointer">
               <input type="checkbox" id="settings-incidents-enabled" checked style="width:18px;height:18px">
@@ -1373,6 +1399,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784250026"></script>
+  <script type="module" src="js/main.js?v=1784250027"></script>
 </body>
 </html>

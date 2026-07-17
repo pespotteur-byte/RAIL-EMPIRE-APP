@@ -1,45 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784250026';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784250026';
-import { World, createDefaultWorld } from './world.js?v=1784250026';
-import { Renderer } from './renderer.js?v=1784250026';
-import { UI } from './ui.js?v=1784250026';
-import { Economy } from './economy.js?v=1784250026';
-import { IncidentManager } from './incidents.js?v=1784250026';
-import { FreightManager } from './freight.js?v=1784250026';
-import { ScheduleManager } from './schedule.js?v=1784250026';
-import { GameStorage } from './storage.js?v=1784250026';
-import { AccountManager } from './account.js?v=1784250026';
-import { RollingStockManager } from './rolling-stock.js?v=1784250026';
-import { RameManager } from './rame.js?v=1784250026';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784250026';
-import { DepotManager } from './depot.js?v=1784250026';
-import { WorksManager } from './works.js?v=1784250026';
-import { ORMClient } from './orm.js?v=1784250026';
-import { LineManager, PlatformManager } from './line.js?v=1784250026';
-import { SillonManager } from './sillon.js?v=1784250026';
-import { VoiePointManager } from './voie-points.js?v=1784250026';
-import { Dashboard } from './dashboard.js?v=1784250026';
-import { GraphMarche } from './graph-marche.js?v=1784250026';
-import { StaffManager } from './staff.js?v=1784250026';
-import { Tutorial } from './tutorial.js?v=1784250026';
-import { Bank } from './bank.js?v=1784250026';
-import { Weather } from './weather.js?v=1784250026';
-import { Unions } from './unions.js?v=1784250026';
-import { SeasonalSchedule } from './seasonal.js?v=1784250026';
-import { Connections } from './connections.js?v=1784250026';
-import { StationUpgrades } from './station-upgrades.js?v=1784250026';
-import { A12Model } from './a12-model.js?v=1784250026';
-import { PlayerSignalManager } from './signaling.js?v=1784250026';
-import { JunctionManager } from './junctions.js?v=1784250026';
-import { CargoTypeManager } from './cargo-types.js?v=1784250026';
-import { ITEModules } from './ite-modules.js?v=1784250026';
-import { IndustrialClients } from './industrial-clients.js?v=1784250026';
-import { ShuntingManager } from './shunting.js?v=1784250026';
-import { haversineDistance } from './simulation.js?v=1784250026';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784250026';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784250026';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250026';
-import { adminSync } from './admin-sync.js?v=1784250026';
+import { SimulationEngine } from './engine.js?v=1784250027';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784250027';
+import { World, createDefaultWorld } from './world.js?v=1784250027';
+import { Renderer } from './renderer.js?v=1784250027';
+import { UI } from './ui.js?v=1784250027';
+import { Economy } from './economy.js?v=1784250027';
+import { IncidentManager } from './incidents.js?v=1784250027';
+import { FreightManager } from './freight.js?v=1784250027';
+import { ScheduleManager } from './schedule.js?v=1784250027';
+import { GameStorage } from './storage.js?v=1784250027';
+import { AccountManager } from './account.js?v=1784250027';
+import { RollingStockManager } from './rolling-stock.js?v=1784250027';
+import { RameManager } from './rame.js?v=1784250027';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784250027';
+import { DepotManager } from './depot.js?v=1784250027';
+import { WorksManager } from './works.js?v=1784250027';
+import { ORMClient } from './orm.js?v=1784250027';
+import { LineManager, PlatformManager } from './line.js?v=1784250027';
+import { SillonManager } from './sillon.js?v=1784250027';
+import { VoiePointManager } from './voie-points.js?v=1784250027';
+import { Dashboard } from './dashboard.js?v=1784250027';
+import { GraphMarche } from './graph-marche.js?v=1784250027';
+import { StaffManager } from './staff.js?v=1784250027';
+import { Tutorial } from './tutorial.js?v=1784250027';
+import { Bank } from './bank.js?v=1784250027';
+import { Weather } from './weather.js?v=1784250027';
+import { Unions } from './unions.js?v=1784250027';
+import { SeasonalSchedule } from './seasonal.js?v=1784250027';
+import { Connections } from './connections.js?v=1784250027';
+import { StationUpgrades } from './station-upgrades.js?v=1784250027';
+import { A12Model } from './a12-model.js?v=1784250027';
+import { PlayerSignalManager } from './signaling.js?v=1784250027';
+import { JunctionManager } from './junctions.js?v=1784250027';
+import { CargoTypeManager } from './cargo-types.js?v=1784250027';
+import { ITEModules } from './ite-modules.js?v=1784250027';
+import { IndustrialClients } from './industrial-clients.js?v=1784250027';
+import { ShuntingManager } from './shunting.js?v=1784250027';
+import { haversineDistance } from './simulation.js?v=1784250027';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784250027';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784250027';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250027';
+import { adminSync } from './admin-sync.js?v=1784250027';
 
 class RailEmpire {
   constructor() {
@@ -309,6 +309,18 @@ class RailEmpire {
     const weatherVal = document.getElementById('settings-weather-val');
     const breakdownVal = document.getElementById('settings-breakdown-val');
     const delayToleranceVal = document.getElementById('settings-delay-tolerance-val');
+    const priceSlowInput = document.getElementById('settings-price-slow');
+    const priceRegionalInput = document.getElementById('settings-price-regional');
+    const priceIntercityInput = document.getElementById('settings-price-intercity');
+    const priceFastInput = document.getElementById('settings-price-fast');
+    const priceTgvInput = document.getElementById('settings-price-tgv');
+    const freightPriceInput = document.getElementById('settings-freight');
+    const priceSlowVal = document.getElementById('settings-price-slow-val');
+    const priceRegionalVal = document.getElementById('settings-price-regional-val');
+    const priceIntercityVal = document.getElementById('settings-price-intercity-val');
+    const priceFastVal = document.getElementById('settings-price-fast-val');
+    const priceTgvVal = document.getElementById('settings-price-tgv-val');
+    const freightVal = document.getElementById('settings-freight-val');
     const saveBtn = document.getElementById('settings-save');
 
     // Load saved settings
@@ -327,8 +339,21 @@ class RailEmpire {
       if (delayToleranceVal) delayToleranceVal.textContent = delayToleranceInput.value;
     };
 
+    const fmtPrice = (v, unit) => `${Number(v).toFixed(2)} ${unit}`;
+    const updatePriceLabels = () => {
+      if (priceSlowVal) priceSlowVal.textContent = fmtPrice(priceSlowInput.value, '€/pax·km');
+      if (priceRegionalVal) priceRegionalVal.textContent = fmtPrice(priceRegionalInput.value, '€/pax·km');
+      if (priceIntercityVal) priceIntercityVal.textContent = fmtPrice(priceIntercityInput.value, '€/pax·km');
+      if (priceFastVal) priceFastVal.textContent = fmtPrice(priceFastInput.value, '€/pax·km');
+      if (priceTgvVal) priceTgvVal.textContent = fmtPrice(priceTgvInput.value, '€/pax·km');
+      if (freightVal) freightVal.textContent = fmtPrice(freightPriceInput.value, '€/t·km');
+    };
+
     [physicsInput, weatherInput, breakdownInput, delayToleranceInput].forEach(el => {
       el?.addEventListener('input', updateRealismLabels);
+    });
+    [priceSlowInput, priceRegionalInput, priceIntercityInput, priceFastInput, priceTgvInput, freightPriceInput].forEach(el => {
+      el?.addEventListener('input', updatePriceLabels);
     });
 
     btnSettings.addEventListener('click', () => {
@@ -340,7 +365,15 @@ class RailEmpire {
       weatherInput.value = this.realismSettings.weather ?? 1;
       breakdownInput.value = this.realismSettings.breakdown ?? 1;
       delayToleranceInput.value = this.realismSettings.delayTolerance ?? 30;
+      const prices = this.economy.passengerPriceByClass || {};
+      priceSlowInput.value = prices.slow ?? 0.08;
+      priceRegionalInput.value = prices.regional ?? 0.12;
+      priceIntercityInput.value = prices.intercity ?? 0.18;
+      priceFastInput.value = prices.fast ?? 0.30;
+      priceTgvInput.value = prices.tgv ?? 0.50;
+      freightPriceInput.value = this.economy.freightPricePerTKm ?? 0.08;
       updateRealismLabels();
+      updatePriceLabels();
       modal.classList.remove('hidden');
     });
 
@@ -359,6 +392,16 @@ class RailEmpire {
       this.realismSettings.weather = parseFloat(weatherInput.value) || 1;
       this.realismSettings.breakdown = parseFloat(breakdownInput.value) || 1;
       this.realismSettings.delayTolerance = parseInt(delayToleranceInput.value) || 30;
+
+      // Section X — tarifs au km modifiables par le joueur, persistés dans la sauvegarde
+      this.economy.passengerPriceByClass = {
+        slow: parseFloat(priceSlowInput.value) || 0,
+        regional: parseFloat(priceRegionalInput.value) || 0,
+        intercity: parseFloat(priceIntercityInput.value) || 0,
+        fast: parseFloat(priceFastInput.value) || 0,
+        tgv: parseFloat(priceTgvInput.value) || 0,
+      };
+      this.economy.freightPricePerTKm = parseFloat(freightPriceInput.value) || 0;
 
       // Save settings
       const s = { logoUrl, companyColor: color, incidentsEnabled: incEnabled, realism: { ...this.realismSettings } };

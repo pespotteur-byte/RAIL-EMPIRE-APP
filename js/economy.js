@@ -1,4 +1,4 @@
-import { getGlobalRng } from './rng.js?v=1784250026';
+import { getGlobalRng } from './rng.js?v=1784250027';
 
 export class Economy {
   constructor() {
@@ -7,8 +7,16 @@ export class Economy {
     this.expenses = 0;
     this.penalties = 0;
     this.history = [];
-    this.ticketPricePerKm = 0.12;
+    this.ticketPricePerKm = 0.12; // legacy base, kept for backward compat
     this.freightPricePerTKm = 0.08;
+    // Section X — prix au km différencié par classification (vitesse max)
+    this.passengerPriceByClass = {
+      slow: 0.08,      // ≤ 120 km/h
+      regional: 0.12,  // 120–160 km/h
+      intercity: 0.18, // 160–200 km/h
+      fast: 0.30,      // 200–250 km/h
+      tgv: 0.50,       // > 250 km/h
+    };
     this.dailyProcessed = {};
     this.totalPassengers = 0;
     this.totalFreightTonnes = 0;
@@ -65,6 +73,16 @@ export class Economy {
     this._currentDayByCategory['exp_penalty'] = (this._currentDayByCategory['exp_penalty'] || 0) + amount;
     this.history.push({ type: 'expense', amount, category: 'penalty', description, time: Date.now() });
     if (this.history.length > 500) this.history.shift();
+  }
+
+  // Section X — prix au km différencié selon la classification (vitesse max)
+  getPassengerPricePerKm(maxSpeed = 100) {
+    const tiers = this.passengerPriceByClass || {};
+    if (maxSpeed <= 120) return tiers.slow ?? 0.08;
+    if (maxSpeed <= 160) return tiers.regional ?? 0.12;
+    if (maxSpeed <= 200) return tiers.intercity ?? 0.18;
+    if (maxSpeed <= 250) return tiers.fast ?? 0.30;
+    return tiers.tgv ?? 0.50;
   }
 
   // Legacy — kept for backward compat but now empty (revenue is per-stop)
@@ -198,14 +216,9 @@ export class Economy {
       // Revenue = descended passengers * distance they traveled * ticket price
       // Section X — prix au km différencié selon la classification (vitesse max)
       const maxSpeed = service.rame.maxSpeed || 100;
-      let priceMult = 1.0;
-      if (maxSpeed <= 120) priceMult = 0.8;
-      else if (maxSpeed <= 160) priceMult = 1.0;
-      else if (maxSpeed <= 200) priceMult = 1.3;
-      else if (maxSpeed <= 250) priceMult = 1.8;
-      else priceMult = 2.5;
+      const pricePerKm = this.getPassengerPricePerKm(maxSpeed);
 
-      let paxRevenue = Math.round(paxDescend * distFromPrev * this.ticketPricePerKm * priceMult);
+      let paxRevenue = Math.round(paxDescend * distFromPrev * pricePerKm);
 
       // Delay penalty: reduce passenger revenue by 25% (contract already penalized in fulfillAtStation)
       if (service.train && service.train.delay >= delayTolerance) {
@@ -367,6 +380,7 @@ export class Economy {
       penalties: this.penalties,
       ticketPricePerKm: this.ticketPricePerKm,
       freightPricePerTKm: this.freightPricePerTKm,
+      passengerPriceByClass: { ...this.passengerPriceByClass },
       history: this.history.slice(-500),
       dailyProcessed: this.dailyProcessed,
       totalPassengers: this.totalPassengers,
@@ -397,6 +411,19 @@ export class Economy {
     this.penalties = s.penalties || 0;
     this.ticketPricePerKm = s.ticketPricePerKm || 0.12;
     this.freightPricePerTKm = s.freightPricePerTKm || 0.08;
+    // Backward compat : si passengerPriceByClass n'existe pas, on dérive de l'ancien ticketPricePerKm
+    if (s.passengerPriceByClass) {
+      this.passengerPriceByClass = { ...this.passengerPriceByClass, ...s.passengerPriceByClass };
+    } else if (s.ticketPricePerKm) {
+      const base = s.ticketPricePerKm;
+      this.passengerPriceByClass = {
+        slow: base * 0.8,
+        regional: base * 1.0,
+        intercity: base * 1.3,
+        fast: base * 1.8,
+        tgv: base * 2.5,
+      };
+    }
     this.history = s.history || [];
     this.dailyProcessed = s.dailyProcessed || {};
     this.totalPassengers = s.totalPassengers || 0;
