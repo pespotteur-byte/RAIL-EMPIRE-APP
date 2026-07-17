@@ -4,7 +4,7 @@
  * Falls back to simulated weather if API is unavailable.
  */
 import { icon } from './icons.js';
-import { getGlobalRng } from './rng.js?v=1784241352';
+import { getGlobalRng } from './rng.js?v=1784250023';
 export class Weather {
   constructor() {
     this.current = 'clear';      // clear, rain, snow, storm, heat, fog
@@ -198,9 +198,14 @@ export class Weather {
   }
 
   getCloudTileUrl(path) {
-    if (!path) return null;
-    // RainViewer infrared satellite tiles — color scheme 0 (original), smooth=1
-    return `${this.radarHost}${path}/256/{z}/{x}/{y}/0/0_0.png`;
+    if (path) {
+      // Legacy RainViewer infrared satellite path (gardé pour tests/compat)
+      return `${this.radarHost}${path}/256/{z}/{x}/{y}/0/0_0.png`;
+    }
+    // XIV — vraies images satellites : NASA GIBS VIIRS/NOAA-20 True Color
+    // (RainViewer IR satellite a été discontinué en 2026)
+    const date = new Date().toISOString().split('T')[0];
+    return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg`;
   }
 
   _fallbackWeather() {

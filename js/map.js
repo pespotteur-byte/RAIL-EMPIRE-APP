@@ -67,12 +67,12 @@ export class TileMap {
     // Weather radar overlay (RainViewer)
     this.radarEnabled = false;
     this._radarTileUrl = null;
-    this._radarMaxZoom = 12; // RainViewer max supported zoom
+    this._radarMaxZoom = 7; // RainViewer max zoom officiel
 
-    // Cloud overlay (RainViewer infrared satellite)
+    // Cloud overlay — NASA GIBS true-color satellite (XIV)
     this.cloudEnabled = false;
     this._cloudTileUrl = null;
-    this._cloudMaxZoom = 12;
+    this._cloudMaxZoom = 9; // GIBS VIIRS/NOAA-20 True Color max zoom
   }
 
   markDirty() { this._dirty = true; this._tileBufferValid = false; }
@@ -214,7 +214,9 @@ export class TileMap {
     while (queue.length > 0 && loading < max) {
       const item = queue.shift();
       if (item.tile.loaded || item.tile.error) continue;
-      if (item.z !== undefined && item.z !== curZ) continue;
+      // XIV : les tuiles météo (radar/nuages) peuvent être volontairement
+      // demandées à un zoom inférieur au zoom courant (upscale).
+      if (item.z !== undefined && item.z !== curZ && !item.isWeather) continue;
       loading++;
       if (isRail) this._railLoading = loading; else this._baseLoading = loading;
       this._fetchTile(item.tile, item.url, isRail);
@@ -248,7 +250,8 @@ export class TileMap {
   getTile(tx, ty, z, urlTemplate) {
     const isRail = urlTemplate.includes('openrailway');
     const isRadar = urlTemplate.includes('rainviewer') && urlTemplate.includes('/2/1_1.');
-    const isCloud = urlTemplate.includes('rainviewer') && urlTemplate.includes('/0/0_0.');
+    const isCloud = (this._cloudTileUrl && urlTemplate === this._cloudTileUrl) ||
+                     (urlTemplate.includes('rainviewer') && urlTemplate.includes('/0/0_0.'));
     const isSat = urlTemplate.includes('arcgisonline');
     const isLabel = urlTemplate.includes('only_labels');
     const suffix = isRadar ? 'w' : (isCloud ? 'c' : (isRail ? 'r' : (isSat ? 's' : (isLabel ? 'l' : 'b'))));
@@ -266,7 +269,8 @@ export class TileMap {
     this.tileCache.set(key, tile);
 
     const url = urlTemplate.replace('{z}', z).replace('{x}', tx).replace('{y}', ty);
-    if (isRail || isRadar || isCloud || isLabel) this._railQueue.push({ tile, url, z });
+    const isWeather = isRadar || isCloud;
+    if (isRail || isWeather || isLabel) this._railQueue.push({ tile, url, z, isWeather });
     else this._baseQueue.push({ tile, url, z });
     this._processQueue();
 
@@ -356,8 +360,8 @@ export class TileMap {
       const isCloudLayer = this.cloudEnabled && urls[0] === this._cloudTileUrl;
       const isSatLayer = this.satelliteEnabled && urls === baseUrls;
       const isWeatherOverlay = isRadarLayer || isCloudLayer;
-      if (isRadarLayer) tctx.globalAlpha = 0.5;
-      else if (isCloudLayer) tctx.globalAlpha = 0.45;
+      if (isRadarLayer) tctx.globalAlpha = 0.70;
+      else if (isCloudLayer) tctx.globalAlpha = 0.85;
 
       let layerZ = z;
       if (isRadarLayer) layerZ = Math.min(z, this._radarMaxZoom);
@@ -388,10 +392,10 @@ export class TileMap {
             const tile = this.getTile(wrappedTx, ty, layerZ, urls[(wrappedTx + ty) % urlsLen]);
             if (tile.loaded && tile.img) {
               tctx.drawImage(tile.img, pxBase, py, scaledTileSize, scaledTileSize);
-            } else if (!tile.error && !isWeatherOverlay) {
+            } else if (!tile.error && !isRadarLayer) {
               this._pendingTiles++;
               const isOverlay = urls === this.railTileUrls;
-              const suffix = isSatLayer ? 's' : (isOverlay ? 'r' : 'b');
+              const suffix = isCloudLayer ? 'c' : (isSatLayer ? 's' : (isOverlay ? 'r' : 'b'));
               for (let fz = layerZ - 1; fz >= this.minZoom; fz--) {
                 const fScale = 1 << (layerZ - fz);
                 const ftx = wrappedTx >> (layerZ - fz);

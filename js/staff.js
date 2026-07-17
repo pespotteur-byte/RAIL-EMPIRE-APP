@@ -2,8 +2,8 @@
  * Staff Management — Multi-role personnel for Rail Empire.
  */
 import { icon } from './icons.js';
-import { haversineDistance, timeDiff } from './simulation.js?v=1784241352';
-import { getGlobalRng } from './rng.js?v=1784241352';
+import { haversineDistance, timeDiff } from './simulation.js?v=1784250023';
+import { getGlobalRng } from './rng.js?v=1784250023';
 
 let nextStaffId = 1;
 

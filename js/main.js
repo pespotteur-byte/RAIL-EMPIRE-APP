@@ -1,45 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784250019';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784250019';
-import { World, createDefaultWorld } from './world.js?v=1784250019';
-import { Renderer } from './renderer.js?v=1784250019';
-import { UI } from './ui.js?v=1784250019';
-import { Economy } from './economy.js?v=1784250019';
-import { IncidentManager } from './incidents.js?v=1784250019';
-import { FreightManager } from './freight.js?v=1784250019';
-import { ScheduleManager } from './schedule.js?v=1784250019';
-import { GameStorage } from './storage.js?v=1784250019';
-import { AccountManager } from './account.js?v=1784250019';
-import { RollingStockManager } from './rolling-stock.js?v=1784250019';
-import { RameManager } from './rame.js?v=1784250019';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784250019';
-import { DepotManager } from './depot.js?v=1784250019';
-import { WorksManager } from './works.js?v=1784250019';
-import { ORMClient } from './orm.js?v=1784250019';
-import { LineManager, PlatformManager } from './line.js?v=1784250019';
-import { SillonManager } from './sillon.js?v=1784250019';
-import { VoiePointManager } from './voie-points.js?v=1784250019';
-import { Dashboard } from './dashboard.js?v=1784250019';
-import { GraphMarche } from './graph-marche.js?v=1784250019';
-import { StaffManager } from './staff.js?v=1784250019';
-import { Tutorial } from './tutorial.js?v=1784250019';
-import { Bank } from './bank.js?v=1784250019';
-import { Weather } from './weather.js?v=1784250019';
-import { Unions } from './unions.js?v=1784250019';
-import { SeasonalSchedule } from './seasonal.js?v=1784250019';
-import { Connections } from './connections.js?v=1784250019';
-import { StationUpgrades } from './station-upgrades.js?v=1784250019';
-import { A12Model } from './a12-model.js?v=1784250019';
-import { PlayerSignalManager } from './signaling.js?v=1784250019';
-import { JunctionManager } from './junctions.js?v=1784250019';
-import { CargoTypeManager } from './cargo-types.js?v=1784250019';
-import { ITEModules } from './ite-modules.js?v=1784250019';
-import { IndustrialClients } from './industrial-clients.js?v=1784250019';
-import { ShuntingManager } from './shunting.js?v=1784250019';
-import { haversineDistance } from './simulation.js?v=1784250019';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784250019';
-import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784250019';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250019';
-import { adminSync } from './admin-sync.js?v=1784250019';
+import { SimulationEngine } from './engine.js?v=1784250023';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784250023';
+import { World, createDefaultWorld } from './world.js?v=1784250023';
+import { Renderer } from './renderer.js?v=1784250023';
+import { UI } from './ui.js?v=1784250023';
+import { Economy } from './economy.js?v=1784250023';
+import { IncidentManager } from './incidents.js?v=1784250023';
+import { FreightManager } from './freight.js?v=1784250023';
+import { ScheduleManager } from './schedule.js?v=1784250023';
+import { GameStorage } from './storage.js?v=1784250023';
+import { AccountManager } from './account.js?v=1784250023';
+import { RollingStockManager } from './rolling-stock.js?v=1784250023';
+import { RameManager } from './rame.js?v=1784250023';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784250023';
+import { DepotManager } from './depot.js?v=1784250023';
+import { WorksManager } from './works.js?v=1784250023';
+import { ORMClient } from './orm.js?v=1784250023';
+import { LineManager, PlatformManager } from './line.js?v=1784250023';
+import { SillonManager } from './sillon.js?v=1784250023';
+import { VoiePointManager } from './voie-points.js?v=1784250023';
+import { Dashboard } from './dashboard.js?v=1784250023';
+import { GraphMarche } from './graph-marche.js?v=1784250023';
+import { StaffManager } from './staff.js?v=1784250023';
+import { Tutorial } from './tutorial.js?v=1784250023';
+import { Bank } from './bank.js?v=1784250023';
+import { Weather } from './weather.js?v=1784250023';
+import { Unions } from './unions.js?v=1784250023';
+import { SeasonalSchedule } from './seasonal.js?v=1784250023';
+import { Connections } from './connections.js?v=1784250023';
+import { StationUpgrades } from './station-upgrades.js?v=1784250023';
+import { A12Model } from './a12-model.js?v=1784250023';
+import { PlayerSignalManager } from './signaling.js?v=1784250023';
+import { JunctionManager } from './junctions.js?v=1784250023';
+import { CargoTypeManager } from './cargo-types.js?v=1784250023';
+import { ITEModules } from './ite-modules.js?v=1784250023';
+import { IndustrialClients } from './industrial-clients.js?v=1784250023';
+import { ShuntingManager } from './shunting.js?v=1784250023';
+import { haversineDistance } from './simulation.js?v=1784250023';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784250023';
+import { getWTrafficCatalog } from './catalog-data-wtraffic.js?v=1784250023';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250023';
+import { adminSync } from './admin-sync.js?v=1784250023';
 
 class RailEmpire {
   constructor() {
@@ -873,9 +873,9 @@ class RailEmpire {
       if (radarPath && this.renderer?.tileMap) {
         this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(radarPath));
       }
-      const cloudPath = this.weather.getLatestCloudPath();
-      if (cloudPath && this.renderer?.tileMap) {
-        this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl(cloudPath));
+      // XIV — satellite true color mis à jour chaque minute
+      if (this.renderer?.tileMap) {
+        this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl());
       }
     } catch(e) { /* graceful */ }
 
@@ -944,8 +944,8 @@ class RailEmpire {
             try {
               const rp = this.weather.getLatestRadarPath();
               if (rp) this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(rp));
-              const cp = this.weather.getLatestCloudPath();
-              if (cp) this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl(cp));
+              // XIV — satellite true color mis à jour toutes les 2 s
+              this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl());
             } catch(e) { /* graceful */ }
           }
           this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);
