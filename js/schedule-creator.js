@@ -139,9 +139,14 @@ export class ActiveService {
       progress: 0,
       legKey: null,
       cachedRoute: null,
+      worksLimitCache: null,
     };
     this._routeAnalysis = null;
     this._cantonAssignments = null;
+
+    // TRV-06 — automatic alternate route search when a leg is closed
+    this._pendingAltRoute = null; // { key, completed, route, failed }
+    this._altRouteFailedKeys = new Set();
 
     // Mass-based physics: compute accel/decel from rame properties
     let accel = 3.0; // default km/h/s
@@ -955,6 +960,7 @@ export class ActiveService {
     this._state.progress = 0;
     this._state.legKey = null;
     this._state.cachedRoute = null;
+    this._state.worksLimitCache = null;
     this._routeAnalysis = null;
     this._cantonAssignments = null;
     this._cachedTroncon = null;
@@ -970,6 +976,7 @@ export class ActiveService {
   _initializeState(route, legKey) {
     this._state.legKey = legKey;
     this._state.cachedRoute = route;
+    this._state.worksLimitCache = null;
     this._state.progress = 0;
 
     // Cache segment distances for O(1) remaining-distance lookups
@@ -1055,7 +1062,7 @@ export class ActiveService {
   }
 
   _updateStuckTimer(timeOfDay) {
-    const blocked = this.train && (this.train.blockedBy || this.train.state === 'en panne' || this.train.delayReason === 'Incident' || this.train.delayReason === 'travaux' || this.train.delayReason === 'tronçon non électrifié' || this.train.delayReason === 'TTX : ligne non électrifiée' || this.train.delayReason === 'attente voie libre en gare' || this.train.delayReason?.startsWith('Panne'));
+    const blocked = this.train && (this.train.blockedBy || this.train.state === 'en panne' || this.train.delayReason === 'Incident' || this.train.delayReason === 'travaux' || this.train.delayReason?.startsWith('travaux :') || this.train.delayReason === 'tronçon non électrifié' || this.train.delayReason === 'TTX : ligne non électrifiée' || this.train.delayReason === 'attente voie libre en gare' || this.train.delayReason?.startsWith('Panne'));
     if (!blocked) {
       this._blockedSinceGameTime = null;
       return false;
@@ -1217,10 +1224,17 @@ export class ActiveService {
     // Works speed limit (S15: work trains are unaffected)
     const worksLimit = this.isWorkTrain ? null : this.getWorksSpeedLimit(timeOfDay);
     if (worksLimit === 0) {
+      const dateStr = this._currentDate || (typeof window !== 'undefined' && window.game?._currentDate) || '';
+      this._startAlternateRouteSearch(timeOfDay, dateStr);
+      const search = this._pendingAltRoute;
+      if (search && search.completed && search.route) {
+        this._applyAlternateRoute(search.route, timeOfDay);
+        return; // next tick will follow the alternate route
+      }
       this.speed = 0;
       this.train.speed = 0;
       this.train.state = 'travaux';
-      this.train.delayReason = 'travaux';
+      this.train.delayReason = (search && search.completed && !search.route) ? 'travaux : aucun itinéraire alternatif' : 'travaux';
       this._updateContinuousDelay(timeOfDay);
       if (this._updateStuckTimer(timeOfDay)) return;
       return;
@@ -2106,42 +2120,161 @@ export class ActiveService {
     const currentStops = this.getCurrentStops();
     if (this.currentStopIndex <= 0 || this.currentStopIndex >= currentStops.length) return null;
 
-    const prevStop = currentStops[this.currentStopIndex - 1];
-    const nextStop = currentStops[this.currentStopIndex];
-    if (!prevStop || !nextStop) return null;
+    const route = this._state.cachedRoute;
+    if (!route || route.length < 2) return null;
 
-    const prevId = prevStop.stationId;
-    const nextId = nextStop.stationId;
+    const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
+    const dateStr = this._currentDate || (typeof window !== 'undefined' && window.game?._currentDate) || '';
+    const cacheKey = `${legKey}|${dateStr}|${Math.floor(timeOfDay)}|${route.length}`;
+    if (this._state.worksLimitCache && this._state.worksLimitCache.key === cacheKey) {
+      return this._state.worksLimitCache.limit;
+    }
+    const limit = this._computeWorksLimit(route, dateStr, timeOfDay);
+    this._state.worksLimitCache = { key: cacheKey, limit };
+    return limit;
+  }
 
+  _computeWorksLimit(route, dateStr, timeOfDay) {
+    const blocking = this._getBlockingWorksForRoute(route, dateStr, timeOfDay);
+    if (blocking.length === 0) return null;
+    const limits = blocking.map(w => (w.impact === 'stop' || w.speedLimit === 0) ? 0 : (Number.isFinite(w.speedLimit) ? w.speedLimit : 40));
+    return Math.min(...limits);
+  }
+
+  // TRV-06 — helpers for route/works intersection and alternate routing
+  _pointToSegmentDistKm(pLat, pLon, aLat, aLon, bLat, bLon) {
+    const cosLat = Math.cos(pLat * Math.PI / 180);
+    const dx = (bLon - aLon) * 111 * cosLat;
+    const dy = (bLat - aLat) * 111;
+    const px = (pLon - aLon) * 111 * cosLat;
+    const py = (pLat - aLat) * 111;
+    const segLenSq = dx * dx + dy * dy;
+    if (segLenSq < 0.0001) return Math.sqrt(px * px + py * py);
+    const t = Math.max(0, Math.min(1, (px * dx + py * dy) / segLenSq));
+    const projX = t * dx, projY = t * dy;
+    return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+  }
+
+  _minDistToPolyline(lat, lon, polyline) {
+    if (!polyline || polyline.length < 2) return Infinity;
+    let minD = Infinity;
+    for (let i = 0; i < polyline.length - 1; i++) {
+      const d = this._pointToSegmentDistKm(lat, lon, polyline[i].lat, polyline[i].lon, polyline[i + 1].lat, polyline[i + 1].lon);
+      if (d < minD) minD = d;
+    }
+    return minD;
+  }
+
+  _routeIntersectsPolyline(route, polyline, bufferKm = 0.1) {
+    if (!route || route.length < 2 || !polyline || polyline.length < 2) return false;
+    for (const p of route) {
+      if (this._minDistToPolyline(p.lat, p.lon, polyline) <= bufferKm) return true;
+    }
+    for (const p of polyline) {
+      if (this._minDistToPolyline(p.lat, p.lon, route) <= bufferKm) return true;
+    }
+    return false;
+  }
+
+  _isFallbackRoute(route) {
+    return Array.isArray(route) && route.length > 0 && route.some(p => p && p.fallback);
+  }
+
+  _getBlockingWorksForRoute(route, dateStr, timeOfDay) {
+    const blocking = [];
+    if (!route || route.length < 2 || !this.world) return blocking;
+    const currentStops = this.getCurrentStops();
+    const prevId = currentStops[this.currentStopIndex - 1]?.stationId;
+    const nextId = currentStops[this.currentStopIndex]?.stationId;
     for (const track of this.world.tracks) {
       if (!track.worksActive) continue;
-      const matches = (track.stationA === prevId && track.stationB === nextId) ||
-                      (track.stationA === nextId && track.stationB === prevId);
-      if (matches) {
-        if (track.worksImpact === 'stop' || track.worksSpeedLimit === 0) return 0;
-        return Number.isFinite(track.worksSpeedLimit) ? track.worksSpeedLimit : 40;
-      }
+      const poly = track.route;
+      if (poly && poly.length >= 2) {
+        if (!this._routeIntersectsPolyline(route, poly, 0.1)) continue;
+      } else if (prevId && nextId) {
+        const pairMatches = (track.stationA === prevId && track.stationB === nextId) || (track.stationA === nextId && track.stationB === prevId);
+        if (!pairMatches) continue;
+      } else continue;
+      blocking.push({ impact: track.worksImpact || 'stop', speedLimit: track.worksSpeedLimit, stationA: track.stationA, stationB: track.stationB, route: track.route });
     }
-
-    // TRV-03 : fermeture de portion entre deux gares (indépendamment du trackId)
-    const worksMgr = window.game?.worksManager;
+    const worksMgr = typeof window !== 'undefined' && window.game?.worksManager;
     if (worksMgr) {
-      const closures = worksMgr.getActiveClosuresBetween(prevId, nextId, this._currentDate, timeOfDay);
-      if (closures.length > 0) {
-        const limits = closures.map(w => {
-          if (w.impact === 'stop' || w.speedLimit === 0) return 0;
-          return Number.isFinite(w.speedLimit) ? w.speedLimit : 40;
-        });
-        return Math.min(...limits);
+      for (const w of worksMgr.getActive(dateStr, timeOfDay)) {
+        const poly = w.manualRoute || w.route;
+        if (poly && poly.length >= 2) {
+          if (!this._routeIntersectsPolyline(route, poly, 0.1)) continue;
+        } else if (prevId && nextId) {
+          const pairMatches = (w.stationA === prevId && w.stationB === nextId) || (w.stationA === nextId && w.stationB === prevId);
+          if (!pairMatches) continue;
+        } else continue;
+        blocking.push({ impact: w.impact || 'stop', speedLimit: Number.isFinite(w.speedLimit) ? w.speedLimit : 40, stationA: w.stationA, stationB: w.stationB, route: w.manualRoute || w.route });
       }
     }
+    return blocking;
+  }
 
-    // SIG-08 — signaux ajoutables par le joueur sur un tronçon
-    const signalLimit = window.game?.signalManager?.getSpeedLimit(prevId, nextId);
-    if (signalLimit === 0) return 0;
-    if (Number.isFinite(signalLimit) && signalLimit > 0) return signalLimit;
-
+  async _findAlternateRoute(prevId, nextId, dateStr, timeOfDay) {
+    const prev = this.world?.getStationById(prevId);
+    const next = this.world?.getStationById(nextId);
+    if (!prev || !next) return null;
+    const orm = typeof window !== 'undefined' && window.game?.orm ? window.game.orm : null;
+    if (!orm) return null;
+    const blocking = this._getBlockingWorksForRoute(this._state.cachedRoute, dateStr, timeOfDay);
+    if (blocking.length === 0) return null;
+    const avoidPairs = blocking.map(w => {
+      const a = this.world?.getStationById(w.stationA);
+      const b = this.world?.getStationById(w.stationB);
+      return {
+        latA: a?.lat ?? w.route?.[0]?.lat ?? prev.lat,
+        lonA: a?.lon ?? w.route?.[0]?.lon ?? prev.lon,
+        latB: b?.lat ?? w.route?.[w.route?.length - 1]?.lat ?? next.lat,
+        lonB: b?.lon ?? w.route?.[w.route?.length - 1]?.lon ?? next.lon,
+      };
+    });
+    // First: direct route avoiding the closed pair/segment
+    let direct = await orm.findConstrainedRoute(prev.lat, prev.lon, next.lat, next.lon, [], { avoidStationPairs: avoidPairs });
+    if (direct && !this._isFallbackRoute(direct) && this._getBlockingWorksForRoute(direct, dateStr, timeOfDay).length === 0) return direct;
+    // Then: try detours via nearby stations
+    const mid = { lat: (prev.lat + next.lat) / 2, lon: (prev.lon + next.lon) / 2 };
+    const candidates = this.world.stations
+      .filter(s => s.id !== prevId && s.id !== nextId)
+      .map(s => ({ s, d: haversineDistance(s.lat, s.lon, mid.lat, mid.lon) }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 12);
+    for (const { s } of candidates) {
+      const via = await orm.findConstrainedRoute(prev.lat, prev.lon, next.lat, next.lon, [{ lat: s.lat, lon: s.lon }], { avoidStationPairs: avoidPairs });
+      if (via && !this._isFallbackRoute(via) && this._getBlockingWorksForRoute(via, dateStr, timeOfDay).length === 0) return via;
+    }
     return null;
+  }
+
+  _startAlternateRouteSearch(timeOfDay, dateStr) {
+    const currentStops = this.getCurrentStops();
+    if (this.currentStopIndex <= 0 || this.currentStopIndex >= currentStops.length) return;
+    const prev = currentStops[this.currentStopIndex - 1];
+    const next = currentStops[this.currentStopIndex];
+    if (!prev || !next) return;
+    const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
+    const key = `${legKey}|${dateStr || ''}|${Math.floor(timeOfDay / 5)}`;
+    if (this._pendingAltRoute && this._pendingAltRoute.key === key && !this._pendingAltRoute.completed) return;
+    if (this._altRouteFailedKeys.has(key)) return;
+    const search = { key, completed: false, route: null, failed: false };
+    this._pendingAltRoute = search;
+    this._findAlternateRoute(prev.stationId, next.stationId, dateStr, timeOfDay)
+      .then(route => { search.route = route; search.completed = true; if (!route) this._altRouteFailedKeys.add(key); })
+      .catch(() => { search.completed = true; search.failed = true; this._altRouteFailedKeys.add(key); });
+  }
+
+  _applyAlternateRoute(route, timeOfDay) {
+    if (!route || route.length < 2) return;
+    cantonManager.releaseAll(this.id);
+    this._initializeState(route, this._state.legKey);
+    this._state.worksLimitCache = null;
+    this._pendingAltRoute = null;
+    this._altRouteFailedKeys.clear();
+    this.train.blockedBy = false;
+    this.train.delayReason = 'déroutement';
+    this.train.state = 'moving';
   }
 
   arriveAtStation(station, timeOfDay, economy) {

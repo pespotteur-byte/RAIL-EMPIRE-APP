@@ -130,8 +130,21 @@ export class Dashboard {
     const fmt = n => (Math.round(n * 10) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
     const fmtE = n => fmt(n) + ' \u20ac';
 
-    // INC-05 — bulletins spéciaux incidents à côté du récap compagnie
-    const bulletins = game.incidentManager?.getBulletins() || [];
+    // INC-05 / TRV-07 — bulletins spéciaux incidents + travaux actifs
+    const incidentBulletins = game.incidentManager?.getBulletins() || [];
+    const dateStr = game._currentDate || '';
+    const timeOfDay = game.timeOfDay ?? game._gameTime ?? 0;
+    const worksBulletins = (game.worksManager?.getActive(dateStr, timeOfDay) || []).map(w => {
+      const impact = (w.impact === 'stop' || w.speedLimit === 0) ? 'stop' : 'slow';
+      return {
+        name: w.name || 'Travaux',
+        location: `${w.stationA || '?'} → ${w.stationB || '?'}`,
+        effect: impact,
+        speedLimit: Number.isFinite(w.speedLimit) ? w.speedLimit : 40,
+        remaining: 'en cours',
+      };
+    });
+    const bulletins = [...incidentBulletins, ...worksBulletins];
     const bulletinsHtml = bulletins.length === 0 ? '' : `
       <div class="dash-section" style="border-left:3px solid #ef4444;padding-left:14px">
         <h3 style="margin-top:0">Bulletins spéciaux</h3>
