@@ -312,48 +312,48 @@ export class Renderer {
         ctx.stroke();
       }
 
-      // Annex 6 / LVM — direction arrows + track labels for main tracks at high zoom
-      if (zoom >= 13) {
-        const route = track.route || [];
-        const startLat = route[0]?.lat ?? stA.lat;
-        const startLon = route[0]?.lon ?? stA.lon;
-        const endLat = route[route.length - 1]?.lat ?? stB.lat;
-        const endLon = route[route.length - 1]?.lon ?? stB.lon;
-        const start = this.latLonToScreen(startLat, startLon);
-        const end = this.latLonToScreen(endLat, endLon);
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const len = Math.hypot(dx, dy);
-        if (len > 20) {
-          const angle = Math.atan2(dy, dx);
-          const mx = (start.x + end.x) / 2;
-          const my = (start.y + end.y) / 2;
-
-          // Track label (OSM ref/name/trackRef) at midpoint
-          const trkLabel = track.name || track.ref || '';
-          if (trkLabel) {
+      // Annex 3A / LVM — per-segment voie labels + direction arrows from OSM railway:track_ref
+      if (zoom >= 13 && track.route && track.route.length > 1) {
+        const route = track.route;
+        const screenPoints = route.map(r => this.latLonToScreen(r.lat, r.lon));
+        let i = 1;
+        while (i < route.length) {
+          const ref = (route[i].trackRef || '').toString().trim();
+          if (!ref) { i++; continue; }
+          let j = i;
+          while (j < route.length && (route[j].trackRef || '').toString().trim() === ref) j++;
+          const pStart = screenPoints[i - 1];
+          const pEnd = screenPoints[j - 1];
+          const dx = pEnd.x - pStart.x;
+          const dy = pEnd.y - pStart.y;
+          const len = Math.hypot(dx, dy);
+          if (len > 25) {
+            let sumX = 0, sumY = 0, n = 0;
+            for (let k = i; k < j; k++) {
+              sumX += screenPoints[k].x;
+              sumY += screenPoints[k].y;
+              n++;
+            }
+            const mx = sumX / n;
+            const my = sumY / n;
+            const angle = Math.atan2(dy, dx);
+            const label = `VOIE ${ref}`;
             ctx.save();
             ctx.font = 'bold 9px sans-serif';
-            const metrics = ctx.measureText(trkLabel);
-            const pad = 2;
-            ctx.fillStyle = 'rgba(30, 58, 138, 0.85)';
-            ctx.fillRect(mx - metrics.width / 2 - pad, my - 20, metrics.width + pad * 2, 14);
+            const metrics = ctx.measureText(label);
+            const pad = 3;
+            const bw = metrics.width + pad * 2;
+            const bh = 14;
+            ctx.fillStyle = 'rgba(30, 58, 138, 0.9)';
+            ctx.fillRect(mx - bw / 2, my - bh / 2, bw, bh);
             ctx.fillStyle = '#e0e7ff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(trkLabel, mx, my - 13);
+            ctx.fillText(label, mx, my);
             ctx.restore();
+            this._drawArrow(ctx, mx, my, angle, 5, '#e2e8f0');
           }
-
-          // Direction arrow + label
-          this._drawArrow(ctx, mx, my, angle, 5, '#e2e8f0');
-          ctx.save();
-          ctx.fillStyle = '#e2e8f0';
-          ctx.font = 'bold 9px sans-serif';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(`Direction ${stB.name}`, mx + 8, my + 10);
-          ctx.restore();
+          i = j;
         }
       }
 
