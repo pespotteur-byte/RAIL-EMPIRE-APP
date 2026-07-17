@@ -123,6 +123,7 @@ export class UI {
     this._draggingVoiePoint = null;
     this._schedTileMap = null;
     this._schedPage = 0;
+    this._infogarePage = 0; // IX — scrolling pages over 24h of trains
     this.iteCreationMode = false;
     this._pendingITE = null;
     this._iteMapTileMap = null;
@@ -8434,8 +8435,9 @@ export class UI {
     if (!sel) return;
     const stations = this.game.world.stations.filter(s => !s.closed);
     sel.innerHTML = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    this._infogarePage = 0;
     const btn = document.getElementById('btn-infogare-show');
-    if (btn) btn.onclick = () => this._showInfogareBoard();
+    if (btn) btn.onclick = () => { this._infogarePage = 0; this._showInfogareBoard(); };
   }
 
   _getInfogareTrains(stationId, mode) {
@@ -8586,6 +8588,22 @@ export class UI {
     return m > 0 ? `retard ${h}h${m.toString().padStart(2, '0')}` : `retard ${h}h`;
   }
 
+  _infogarePerPage(displayType) {
+    const map = {
+      'sncf-dep': 3,
+      'sncf-arr': 4,
+      'cati-ar': 6,
+      'cati-3-3': 6,
+      'cati-complet': 5,
+      'old-sncf': 22,
+      'ecran-quai': 1,
+      'flash-circulation': 0,
+      'rer-ratp': 8,
+      'rer-sncf': 8,
+    };
+    return map[displayType] || 4;
+  }
+
   _showInfogareBoard() {
     const stationId = document.getElementById('infogare-station')?.value;
     const displayType = document.getElementById('infogare-display')?.value;
@@ -8599,19 +8617,30 @@ export class UI {
     const pt = this.game.engine.getParisTime();
     const nowStr = `${pt.hours.toString().padStart(2,'0')}:${pt.minutes.toString().padStart(2,'0')}`;
 
+    const perPage = this._infogarePerPage(displayType);
+    const totalPages = (perPage > 0 && trains.length > 0) ? Math.max(1, Math.ceil(trains.length / perPage)) : 1;
+    const page = this._infogarePage % totalPages;
+
     switch (displayType) {
-      case 'rer-ratp': board.innerHTML = this._renderRerRatp(station, trains, nowStr); break;
-      case 'rer-sncf': board.innerHTML = this._renderRerSncf(station, trains, nowStr); break;
-      case 'sncf-dep': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
-      case 'sncf-arr': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
-      case 'afl-depart': board.innerHTML = this._renderImageMode('sncf-dep', station, trains, nowStr); break;
-      case 'afl-arrivee': board.innerHTML = this._renderImageMode('sncf-arr', station, trains, nowStr); break;
-      case 'cati-ar': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
-      case 'old-sncf': board.innerHTML = this._renderPalette(station, trains, nowStr); break;
+      case 'rer-ratp': board.innerHTML = this._renderRerRatp(station, trains, nowStr, page); break;
+      case 'rer-sncf': board.innerHTML = this._renderRerSncf(station, trains, nowStr, page); break;
+      case 'sncf-dep': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
+      case 'sncf-arr': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
+      case 'afl-depart': board.innerHTML = this._renderAFLDepart(station, trains, nowStr); break;
+      case 'afl-arrivee': board.innerHTML = this._renderAFLArrivee(station, trains, nowStr); break;
+      case 'cati-ar': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
+      case 'old-sncf': board.innerHTML = this._renderPalette(station, trains, nowStr, page); break;
       case 'flash-circulation': board.innerHTML = this._renderFlashCirculation(station, nowStr); break;
-      case 'cati-3-3': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
-      case 'cati-complet': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr); break;
-      case 'ecran-quai': board.innerHTML = this._renderEcranQuai(station, trains, nowStr); break;
+      case 'cati-3-3': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
+      case 'cati-complet': board.innerHTML = this._renderImageMode(displayType, station, trains, nowStr, page); break;
+      case 'ecran-quai': board.innerHTML = this._renderEcranQuai(station, trains, nowStr, page); break;
+    }
+
+    // advance the carousel for next refresh
+    if (perPage > 0 && totalPages > 1) {
+      this._infogarePage = (this._infogarePage + 1) % totalPages;
+    } else {
+      this._infogarePage = 0;
     }
 
     // Setup train click handlers for platform display
@@ -8789,7 +8818,7 @@ export class UI {
   _renderSncfDep(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const m = (t.trainNumber || t.name).match(/^([A-Za-z]+)(.*)$/);
+      const m = (t.name || '').match(/^([A-Za-z]+)(.*)$/);
       const type = m ? m[1] : (t.seriesName || 'TER');
       const num = m ? m[2].trim() : (t.trainNumber || t.name);
       let statusStr = '', remark = '';
@@ -8842,7 +8871,7 @@ export class UI {
   _renderSncfArr(station, trains, nowStr) {
     let rows = '';
     for (const t of trains) {
-      const m = (t.trainNumber || t.name).match(/^([A-Za-z]+)(.*)$/);
+      const m = (t.name || '').match(/^([A-Za-z]+)(.*)$/);
       const type = m ? m[1] : (t.seriesName || 'TER');
       const num = m ? m[2].trim() : (t.trainNumber || t.name);
       let statusStr = '', remark = '';
@@ -9239,10 +9268,12 @@ export class UI {
   }
 
   // --- Écran quai : prochain départ sur la voie (image annexe INFOGARE) ---
-  _renderEcranQuai(station, trains, nowStr) {
-    const t = trains.find(r => r.isDeparture);
+  _renderEcranQuai(station, trains, nowStr, page = 0) {
+    const deps = trains.filter(r => r.isDeparture);
+    const t = deps[page] || deps[0];
     if (!t) return `<div class="ig-image-board" style="background:#0b4f9b;width:1100px;max-width:1100px;aspect-ratio:1100/616;align-items:center;justify-content:center;color:#fff;display:flex;font-size:24px;">Aucun départ prévu</div>`;
-    const msg = t.isCancelled ? 'SUPPRIMÉ' : (t.delay > 0 ? `RETARD ${this._fmtDelay(t.delay)}` : "à l'heure");
+    const delayText = this._fmtDelay(t.delay).replace(/^retard /i, '');
+    const msg = t.isCancelled ? 'SUPPRIMÉ' : (t.delay > 0 ? `RETARD ${delayText}` : "à l'heure");
     const trainNum = t.trainNumber || t.name;
     const W = 1100, H = 616, scale = 1;
     const img = 'img/infogare/ECRAN-QUAI.png';
@@ -9269,13 +9300,19 @@ export class UI {
     const ticker = `ON. LES VOYAGEURS A DESTINATION DE ${t.destination}`;
     html += this._igField({x:5,y:92,w:70,h:5}, ticker, {color:'#fff',fontSize:12*scale,weight:700,style:'white-space:nowrap;'}, 0);
     html += this._igField({x:82,y:92,w:12,h:5}, clockStr, {color:'#fff',fontSize:12*scale,align:'center',weight:700}, 0);
+    if (deps.length > 1) {
+      html += `<div class="ig-image-field" style="left:5%;top:4%;width:30%;height:3%;color:#000;font-size:${10 * scale}px;text-align:left">Train ${page + 1}/${deps.length}</div>`;
+    }
     html += `</div>`;
     return html;
   }
 
   // --- Palette SNCF moderne (image annexe INFOGARE : 2 colonnes, horloge, défilant) ---
-  _renderPalette(station, trains, nowStr) {
-    const all = trains.filter(r => r.isDeparture).slice(0, 32);
+  _renderPalette(station, trains, nowStr, page = 0) {
+    const perPage = 22;
+    const start = page * perPage;
+    const paged = trains.filter(r => r.isDeparture).slice(start, start + perPage);
+    const all = paged.slice(0, 22);
     const left = all.filter((_, i) => i % 2 === 0).slice(0, 11);
     const right = all.filter((_, i) => i % 2 === 1).slice(0, 11);
     const W = 1100, H = 207, scale = 1;
@@ -9326,6 +9363,10 @@ export class UI {
     // horloge numérique sur cadran + défilant
     html += this._igField({x:86,y:87,w:8,h:8}, clockStr, {color:'#facc15',fontSize:10*scale,bg:bg,align:'center',weight:700}, 0);
     html += this._igField({x:89,y:85,w:9,h:14}, tickerText, {color:'#000',fontSize:8*scale,bg:'#f97316',weight:700,style:'white-space:normal;overflow-wrap:break-word;line-height:1.1;'}, 0);
+    if (trains.filter(r => r.isDeparture).length > perPage) {
+      const totalPages = Math.max(1, Math.ceil(trains.filter(r => r.isDeparture).length / perPage));
+      html += `<div class="ig-image-field" style="left:88%;top:95%;width:10%;height:3%;color:#fff;font-size:${10 * scale}px;text-align:right;padding-right:2%">${page + 1}/${totalPages}</div>`;
+    }
     html += `</div>`;
     return html;
   }
@@ -9487,12 +9528,13 @@ export class UI {
   }
 
   // --- Infogare image-overlay renderer (annex images as background) ---
-  _renderImageMode(displayType, station, trains, nowStr) {
+  _renderImageMode(displayType, station, trains, nowStr, page = 0) {
     const layout = IG_IMAGE_LAYOUTS[displayType];
     if (!layout) return '';
     const isArr = ['sncf-arr', 'afl-arrivee', 'cati-ar'].includes(displayType);
     const dirField = isArr ? 'provenance' : 'dest';
     const scale = layout.scale || (layout.width < 500 ? 2 : 1);
+    const perPage = layout.blocks.length;
 
     const fmtStyle = (f, extra = '') => {
       const parts = [
@@ -9519,14 +9561,15 @@ export class UI {
       html += `<div class="ig-image-field ig-image-header-field" style="${fmtStyle(f)}">${txt}</div>`;
     }
 
-    // train blocks
-    const use = trains.slice(0, layout.blocks.length);
-    for (let i = 0; i < layout.blocks.length; i++) {
+    // train blocks — page offset lets the board scroll through 24h of trains
+    const start = page * perPage;
+    const use = trains.slice(start, start + perPage);
+    for (let i = 0; i < perPage; i++) {
       const b = layout.blocks[i];
       const t = use[i];
       html += `<div class="ig-image-block" style="top:${b.y}%;height:${b.h}%;background:${layout.bg};"></div>`;
       if (!t) continue;
-      const m = (t.trainNumber || t.name).match(/^([A-Za-z]+)(.*)$/);
+      const m = (t.name || '').match(/^([A-Za-z]+)(.*)$/);
       const type = m ? m[1] : (t.seriesName || 'TER');
       const num = m ? m[2].trim() : (t.trainNumber || t.name);
       const viaStops = isArr ? (t.fromStations || []) : (t.servedStations || []);
@@ -9546,9 +9589,11 @@ export class UI {
       // time
       const timeStr = this._fmtTime(isArr ? t.arrTime : t.depTime);
       html += this._igField(b.time, timeStr, { color: b.time?.color || '#facc15', fontSize: (b.time?.fontSize || 18) * scale, weight: b.time?.weight || 700, align: b.time?.align }, b.y);
-      // type + number (stacked)
-      html += this._igField(b.type, type || t.seriesName || 'TER', { color: b.type?.color || '#fff', fontSize: (b.type?.fontSize || 13) * scale, weight: b.type?.weight || 700 }, b.y + (b.type?.yOff || 0));
-      html += this._igField(b.num, num || t.trainNumber || t.name, { color: b.num?.color || '#93c5fd', fontSize: (b.num?.fontSize || 13) * scale, weight: b.num?.weight || 700 }, b.y + (b.num?.yOff || 0));
+      // type + number (stacked); prefer seriesName as type if the parsed type looks like a number
+      const parsedType = (m && m[1] && !/^\d+$/.test(m[1])) ? m[1] : (t.seriesName || 'TER');
+      const parsedNum = (m && m[1] && !/^\d+$/.test(m[1])) ? m[2].trim() : (t.trainNumber || t.name);
+      html += this._igField(b.type, parsedType, { color: b.type?.color || '#fff', fontSize: (b.type?.fontSize || 13) * scale, weight: b.type?.weight || 700 }, b.y + (b.type?.yOff || 0));
+      html += this._igField(b.num, parsedNum, { color: b.num?.color || '#93c5fd', fontSize: (b.num?.fontSize || 13) * scale, weight: b.num?.weight || 700 }, b.y + (b.num?.yOff || 0));
       // destination / provenance
       const destTxt = isArr ? (t.origin || '') : (t.destination || '');
       html += this._igField(b[dirField], destTxt, { color: b[dirField]?.color || '#fff', fontSize: (b[dirField]?.fontSize || 17) * scale, weight: b[dirField]?.weight || 700, textTransform: b[dirField]?.textTransform || 'uppercase' }, b.y);
@@ -9565,6 +9610,11 @@ export class UI {
       if (b.remark && remarkTxt) {
         html += this._igField(b.remark, remarkTxt, { color: '#facc15', fontSize: 11 * scale }, b.y + (b.remarkY - b.y));
       }
+    }
+    // page counter footer when the board scrolls through 24h of trains
+    if (trains.length > perPage) {
+      const totalPages = Math.max(1, Math.ceil(trains.length / perPage));
+      html += `<div class="ig-image-field" style="left:88%;top:96%;width:10%;height:3%;color:#fff;font-size:${10 * scale}px;text-align:right;padding-right:2%">${page + 1}/${totalPages}</div>`;
     }
     html += `</div>`;
     return html;
