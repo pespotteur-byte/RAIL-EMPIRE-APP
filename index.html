@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784250023">
+  <link rel="stylesheet" href="style.css?v=1784250024">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -428,84 +428,6 @@
         </div>
       </div>
 
-      <!-- ECONOMY PAGE -->
-      <div id="page-economy" class="page">
-        <div class="page-content">
-          <div class="eco-section">
-            <h3>Resume financier</h3>
-            <div class="eco-stats">
-              <div class="eco-stat">
-                <div class="eco-label">Solde</div>
-                <div class="eco-value" id="eco-balance">500 k&euro;</div>
-              </div>
-              <div class="eco-stat">
-                <div class="eco-label">Recettes totales</div>
-                <div class="eco-value revenue" id="eco-revenue">+0 &euro;</div>
-              </div>
-              <div class="eco-stat">
-                <div class="eco-label">Depenses totales</div>
-                <div class="eco-value expense" id="eco-expenses">-0 &euro;</div>
-              </div>
-              <div class="eco-stat">
-                <div class="eco-label">Amendes retard (&gt;30min = -25%)</div>
-                <div class="eco-value penalty" id="eco-penalties">0 &euro;</div>
-              </div>
-            </div>
-            <div class="eco-stats" style="margin-top:10px">
-              <div class="eco-stat">
-                <div class="eco-label">Passagers transport&eacute;s</div>
-                <div class="eco-value" id="eco-passengers" style="color:#38bdf8">0</div>
-              </div>
-              <div class="eco-stat">
-                <div class="eco-label">Fret transport&eacute; (tonnes)</div>
-                <div class="eco-value" id="eco-freight-tonnes" style="color:#facc15">0</div>
-              </div>
-              <div class="eco-stat">
-                <div class="eco-label">Km de voies poss&eacute;d&eacute;s</div>
-                <div class="eco-value" id="eco-track-km" style="color:#a78bfa">0</div>
-              </div>
-              <div class="eco-stat">
-                <div class="eco-label">Kilom&eacute;trage total trains</div>
-                <div class="eco-value" id="eco-total-train-km" style="color:#34d399">0</div>
-              </div>
-            </div>
-          </div>
-          <div class="eco-section">
-            <h3>Configuration des tarifs</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Prix billet / km (&euro;)</label>
-                <input type="number" id="eco-ticket-price" value="0.12" min="0.01" max="1" step="0.01">
-              </div>
-              <div class="form-group">
-                <label>Prix fret / t / km (&euro;)</label>
-                <input type="number" id="eco-freight-price" value="0.08" min="0.01" max="1" step="0.01">
-              </div>
-            </div>
-          </div>
-          <div class="eco-section">
-            <h3>Compagnie</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Logo de la compagnie</label>
-                <div id="logo-drop" class="image-drop" style="width:80px;height:80px;cursor:pointer">
-                  <span style="font-size:10px">Cliquer ou glisser</span>
-                  <input type="file" id="logo-input" accept="image/*" style="display:none">
-                </div>
-              </div>
-              <div class="form-group" style="display:flex;align-items:end;gap:8px;flex-wrap:wrap">
-                <button id="btn-generate-bulletin" class="btn-primary">Bulletin de compagnie (PDF)</button>
-                <button id="btn-generate-fiche-horaire" class="btn-primary" style="background:#1e3a5f">Fiche horaire de gare (PDF)</button>
-              </div>
-            </div>
-          </div>
-          <div class="eco-section">
-            <h3>Historique</h3>
-            <div id="eco-history" class="eco-history"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- DASHBOARD PAGE -->
       <div id="page-dashboard" class="page">
         <div class="page-content" id="dashboard-container"></div>
@@ -526,34 +448,9 @@
         <div class="page-content" id="weather-container"></div>
       </div>
 
-      <!-- SEASONAL PAGE -->
-      <div id="page-seasonal" class="page">
-        <div class="page-content" id="seasonal-container"></div>
-      </div>
-
-      <!-- CONNECTIONS PAGE -->
-      <div id="page-connections" class="page">
-        <div class="page-content" id="connections-container"></div>
-      </div>
-
-      <!-- STATION UPGRADES PAGE -->
-      <div id="page-station-upgrades" class="page">
-        <div class="page-content" id="station-upgrades-container"></div>
-      </div>
-
-      <!-- JUNCTIONS PAGE -->
-      <div id="page-junctions" class="page">
-        <div class="page-content" id="junctions-container"></div>
-      </div>
-
       <!-- CARGO TYPES PAGE -->
       <div id="page-cargo-types" class="page">
         <div class="page-content" id="cargo-types-container"></div>
-      </div>
-
-      <!-- ITE MODULES PAGE -->
-      <div id="page-ite-modules" class="page">
-        <div class="page-content" id="ite-modules-container"></div>
       </div>
 
       <!-- INDUSTRIAL CLIENTS PAGE -->
@@ -561,10 +458,6 @@
         <div class="page-content" id="industrial-clients-container"></div>
       </div>
 
-      <!-- SHUNTING PAGE -->
-      <div id="page-shunting" class="page">
-        <div class="page-content" id="shunting-container"></div>
-      </div>
     </div>
 
     <!-- MODALS -->
@@ -1479,6 +1372,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784250023"></script>
+  <script type="module" src="js/main.js?v=1784250024"></script>
 </body>
 </html>

@@ -96,13 +96,9 @@ const IG_IMAGE_LAYOUTS = {
 // NAV-01/02/03/04 — fusions de pages (A1.2). Les pages fusionnées gardent leur
 // contenu mais sont regroupées sous une page parente via des sous-onglets.
 // child -> parent (le bouton de nav du parent reste actif sur l'enfant).
-const PAGE_PARENT = { seasonal: 'weather' };
 // Groupes de sous-onglets injectés en tête des pages membres.
-// X / XIII — Finance et Banque fusionnées dans Dashboard, onglets séparés supprimés.
-// XII — Page Syndicats fusionnée dans Personnel.
-const PAGE_GROUPS = [
-  [['weather', 'Météo'], ['seasonal', 'Saisons']],
-];
+const PAGE_PARENT = {};
+const PAGE_GROUPS = [];
 
 export class UI {
   constructor(game) {
@@ -166,20 +162,13 @@ export class UI {
     else if (this.activePage === 'lines') this.renderLinesList();
     else if (this.activePage === 'depots') this.renderDepotsList();
     else if (this.activePage === 'incidents') this.renderIncidentsPage();
-    else if (this.activePage === 'economy') this.renderEconomyPage();
     else if (this.activePage === 'infogare') this.renderInfogarePage();
     else if (this.activePage === 'dashboard') this.renderDashboard();
     else if (this.activePage === 'graph-marche') this.renderGraphMarche();
     else if (this.activePage === 'staff') this.renderStaffPage();
     else if (this.activePage === 'weather') this.renderWeatherPage();
-    else if (this.activePage === 'seasonal') this.renderSeasonalPage();
-    else if (this.activePage === 'connections') this.renderConnectionsPage();
-    else if (this.activePage === 'station-upgrades') this.renderStationUpgradesPage();
-    else if (this.activePage === 'junctions') this.renderJunctionsPage();
     else if (this.activePage === 'cargo-types') this.renderCargoTypesPage();
-    else if (this.activePage === 'ite-modules') this.renderITEModulesPage();
     else if (this.activePage === 'industrial-clients') this.renderIndustrialClientsPage();
-    else if (this.activePage === 'shunting') this.renderShuntingPage();
   }
 
   setupNav() {
@@ -219,8 +208,18 @@ export class UI {
   }
 
   switchPage(page) {
-    // X / XIII — Finance et Banque fusionnées dans Dashboard ; toute tentative d'accès redirige.
-    if (page === 'economy' || page === 'bank') page = 'dashboard';
+    // XV-XX : pages supprimées ou fusionnées — redirections.
+    const DELETED_PAGES = {
+      seasonal: 'weather',
+      connections: 'map',
+      'station-upgrades': 'map',
+      junctions: 'map',
+      'ite-modules': 'map',
+      shunting: 'map',
+      economy: 'dashboard',
+      bank: 'dashboard',
+    };
+    if (DELETED_PAGES[page]) page = DELETED_PAGES[page];
     this.activePage = page;
     if (page !== 'dashboard' && this._dashboardInterval) {
       clearInterval(this._dashboardInterval);
@@ -240,20 +239,13 @@ export class UI {
     if (page === 'lines') this.renderLinesList();
     if (page === 'depots') this.renderDepotsList();
     if (page === 'incidents') this.renderIncidentsPage();
-    if (page === 'economy') this.renderEconomyPage();
     if (page === 'infogare') this.renderInfogarePage();
     if (page === 'dashboard') this.renderDashboard();
     if (page === 'graph-marche') this.renderGraphMarche();
     if (page === 'staff') this.renderStaffPage();
     if (page === 'weather') this.renderWeatherPage();
-    if (page === 'seasonal') this.renderSeasonalPage();
-    if (page === 'connections') this.renderConnectionsPage();
-    if (page === 'station-upgrades') this.renderStationUpgradesPage();
-    if (page === 'junctions') this.renderJunctionsPage();
     if (page === 'cargo-types') this.renderCargoTypesPage();
-    if (page === 'ite-modules') this.renderITEModulesPage();
     if (page === 'industrial-clients') this.renderIndustrialClientsPage();
-    if (page === 'shunting') this.renderShuntingPage();
   }
 
   setupMapEvents() {
