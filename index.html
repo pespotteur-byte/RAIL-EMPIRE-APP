@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784241355">
+  <link rel="stylesheet" href="style.css?v=1784241356">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -152,13 +152,22 @@
             <button id="btn-add-stock" class="btn-primary">+ Ajouter un engin</button>
           </div>
           <div class="stock-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-            <input id="stock-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:200px;padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
-            <select id="stock-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--border,#ccc);background:var(--input-bg,#fff);color:inherit;">
+            <input id="stock-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:200px;padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
+            <select id="stock-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
               <option value="">Toutes catégories</option>
               <option value="locomotive">Locomotives</option>
               <option value="automotrice">Automotrices</option>
               <option value="voiture">Voitures</option>
               <option value="wagon">Wagons</option>
+            </select>
+            <select id="stock-subcat-filter" style="display:none;padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
+              <option value="">Tous les wagons</option>
+            </select>
+            <select id="stock-per-page" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
+              <option value="50">50 / page</option>
+              <option value="100">100 / page</option>
+              <option value="500">500 / page</option>
+              <option value="1000">1000 / page</option>
             </select>
             <span id="stock-count" style="opacity:.7;font-size:13px;"></span>
           </div>
@@ -1384,6 +1393,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784241355"></script>
+  <script type="module" src="js/main.js?v=1784241356"></script>
 </body>
 </html>

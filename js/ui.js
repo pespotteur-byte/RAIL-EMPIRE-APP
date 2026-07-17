@@ -1468,7 +1468,33 @@ export class UI {
     const search = document.getElementById('stock-search');
     const catFilter = document.getElementById('stock-cat-filter');
     search?.addEventListener('input', () => { this._stockPage = 0; this.renderStockList(); });
-    catFilter?.addEventListener('change', () => { this._stockPage = 0; this.renderStockList(); });
+    catFilter?.addEventListener('change', () => { this._stockPage = 0; this._populateStockSubcatFilter(); this.renderStockList(); });
+    document.getElementById('stock-subcat-filter')?.addEventListener('change', () => { this._stockPage = 0; this.renderStockList(); });
+    document.getElementById('stock-per-page')?.addEventListener('change', () => { this._stockPage = 0; this.renderStockList(); });
+    this._populateStockSubcatFilter();
+  }
+
+  _populateStockSubcatFilter() {
+    const sel = document.getElementById('stock-subcat-filter');
+    const catFilter = document.getElementById('stock-cat-filter');
+    if (!sel || !catFilter) return;
+    const isWagon = catFilter.value === 'wagon';
+    sel.style.display = isWagon ? 'inline-block' : 'none';
+    if (!isWagon) { sel.value = ''; return; }
+    const current = sel.value;
+    const labels = {
+      tombereau: 'Tombercau', citerne: 'Citerne', gaz: 'Gazier', 'porte-auto': 'Porte-Auto',
+      tremie: 'Trémic', cerealier: 'Céréalier', ciment: 'Ciment', silos: 'Silos',
+      plat: 'Plat', ttx: 'TTX', intermodal: 'Intermodal', speciaux: 'Spéciaux',
+      couvert: 'Couvert', bache: 'Bâché', infra: 'Infral'
+    };
+    const distinct = new Set(this.game.rollingStock.getAll().filter(i => i.category === 'wagon' && i.wagonSubCategory).map(i => i.wagonSubCategory));
+    let html = '<option value="">Tous les wagons</option>';
+    for (const [val, label] of Object.entries(labels)) {
+      if (distinct.has(val)) html += `<option value="${val}">${label}</option>`;
+    }
+    sel.innerHTML = html;
+    if (Array.from(sel.options).some(o => o.value === current)) sel.value = current;
   }
 
   openStockModal() {
@@ -1703,6 +1729,7 @@ export class UI {
   renderStockList() {
     const container = document.getElementById('stock-list');
     if (!container) return;
+    this._populateStockSubcatFilter();
     const pager = document.getElementById('stock-pager');
     const countEl = document.getElementById('stock-count');
     const all = this.game.rollingStock.getAll();
@@ -1714,14 +1741,17 @@ export class UI {
     }
     const q = (document.getElementById('stock-search')?.value || '').trim().toLowerCase();
     const cat = document.getElementById('stock-cat-filter')?.value || '';
+    const subcat = document.getElementById('stock-subcat-filter')?.value || '';
     let items = all;
     if (cat) items = items.filter(i => i.category === cat);
+    if (subcat) items = items.filter(i => i.wagonSubCategory === subcat);
     if (q) items = items.filter(i =>
       (i.name || '').toLowerCase().includes(q) ||
       (i.seriesName || '').toLowerCase().includes(q) ||
       (i.category || '').toLowerCase().includes(q) ||
-      (i.traction || '').toLowerCase().includes(q));
-    const PAGE = 60;
+      (i.traction || '').toLowerCase().includes(q) ||
+      (i.wagonSubCategory || '').toLowerCase().includes(q));
+    const PAGE = parseInt(document.getElementById('stock-per-page')?.value) || 60;
     const total = items.length;
     const pages = Math.max(1, Math.ceil(total / PAGE));
     if (this._stockPage == null) this._stockPage = 0;
@@ -1734,24 +1764,28 @@ export class UI {
       if (pager) pager.innerHTML = '';
       return;
     }
-    container.innerHTML = view.map(item => `
-      <div class="card">
+    container.innerHTML = view.map(item => {
+      const subLabel = item.wagonSubCategory ? ` — ${item.wagonSubCategory}` : '';
+      const powerTxt = item.power ? ` · ${item.power} kW` : '';
+      const cargoTxt = item.cargoTypes?.length ? ` · ${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return info?.name || ct; }).join(', ')}` : '';
+      return `
+      <div class="card stock-card">
         ${item.imageData ? `<img src="${item.imageData}" loading="lazy" class="card-img" alt="${item.name}">` : ''}
-        <div class="card-title">${item.name}</div>
+        <div class="card-title" title="${item.name}">${item.name}</div>
         <div class="card-info">
-          <b>Cat:</b> ${item.category}${item.wagonSubCategory ? ` — ${item.wagonSubCategory}` : ''} | <b>Tract:</b> ${item.traction}<br>
-          <b>Vmax:</b> ${item.maxSpeed} km/h | <b>Long:</b> ${item.length}m<br>
-          <b>Tonnage:</b> ${item.tonnage}t | <b>Masse:</b> ${item.mass}t${item.power ? ` | <b>P:</b> ${item.power}kW` : ''} | <b>Places:</b> ${item.passengerCapacity} | <b>Fret:</b> ${item.freightCapacity}t
-          ${item.purchasePrice ? `<br><b>Prix:</b> ${item.purchasePrice.toLocaleString('fr-FR')} €` : ''}
-          ${item.seriesName ? `<br><b>Serie:</b> ${item.seriesName}` : ''}
-          ${item.cargoTypes?.length ? `<br><b>Chargements:</b> <span style="font-size:9px">${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return info?.name || ct; }).join(', ')}</span>` : ''}
+          <div class="stock-line"><span class="stock-label">Cat :</span> ${item.category}${subLabel}</div>
+          <div class="stock-line"><span class="stock-label">Tract :</span> ${item.traction || '—'}${powerTxt}</div>
+          <div class="stock-line"><span class="stock-label">Perf :</span> ${item.maxSpeed} km/h · ${item.length}m · ${item.tonnage}t</div>
+          <div class="stock-line"><span class="stock-label">Charge :</span> ${item.passengerCapacity} places · ${item.freightCapacity}t fret${cargoTxt}</div>
+          ${item.purchasePrice ? `<div class="stock-line"><span class="stock-label">Prix :</span> ${item.purchasePrice.toLocaleString('fr-FR')} €</div>` : ''}
+          ${item.seriesName ? `<div class="stock-line"><span class="stock-label">Série :</span> ${item.seriesName}</div>` : ''}
         </div>
         <div class="card-actions">
           <button class="btn-sm" onclick="game.ui.editStock('${item.id}')">Modifier</button>
           <button class="btn-sm danger" onclick="game.ui.deleteStock('${item.id}')">Supprimer</button>
         </div>
       </div>
-    `).join('');
+    `;}).join('');
     if (pager) {
       if (pages <= 1) { pager.innerHTML = ''; }
       else {
