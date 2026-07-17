@@ -41,7 +41,7 @@ const VISA_STEPS = [
 //   > 200 km/h     → 2000 m
 export function cantonLengthKm(lineSpeedKmh) {
   const v = lineSpeedKmh || 0;
-  if (v < 60) return 0.5;
+  if (v <= 60) return 0.5;
   if (v <= 100) return 0.9;
   if (v <= 160) return 1.2;
   if (v <= 200) return 1.5;
@@ -51,9 +51,9 @@ export function cantonLengthKm(lineSpeedKmh) {
 // SIG-06 / SIG-05 — VISA speed cap (km/h) as a function of the distance (m)
 // remaining to a CLOSED signal. Returns 0 inside the stop margin, the matching
 // VISA step within 300 m, or null when the signal is far enough to ignore.
-export function visaSpeedCapKmh(distToClosedSignalM) {
+export function visaSpeedCapKmh(distToClosedSignalM, marginM = CARRE_STOP_MARGIN_M) {
   if (!(distToClosedSignalM >= 0)) return null;
-  if (distToClosedSignalM <= CARRE_STOP_MARGIN_M) return 0;
+  if (distToClosedSignalM <= marginM) return 0;
   for (const [maxD, spd] of VISA_STEPS) {
     if (distToClosedSignalM <= maxD) return spd;
   }
@@ -74,7 +74,7 @@ export function aspectFromOccupancy(nextOccupied, secondOccupied) {
 // Speed cap (km/h) implied by an aspect, given the line speed and (for a closed
 // signal) the distance to it. Returns the line speed for CLEAR, a
 // stop-capable/graduated value for CAUTION, and the VISA/stop cap for CLOSED.
-export function aspectSpeedCapKmh(aspect, lineSpeedKmh, distToSignalM = Infinity) {
+export function aspectSpeedCapKmh(aspect, lineSpeedKmh, distToSignalM = Infinity, marginM = CARRE_STOP_MARGIN_M) {
   switch (aspect) {
     case ASPECT.CLEAR:
       return lineSpeedKmh;
@@ -82,7 +82,7 @@ export function aspectSpeedCapKmh(aspect, lineSpeedKmh, distToSignalM = Infinity
       // Be able to stop at the next signal: never exceed the restart speed.
       return Math.min(lineSpeedKmh, RESTART_SPEED_KMH);
     case ASPECT.CLOSED: {
-      const visa = visaSpeedCapKmh(distToSignalM);
+      const visa = visaSpeedCapKmh(distToSignalM, marginM);
       return visa === null ? Math.min(lineSpeedKmh, RESTART_SPEED_KMH) : visa;
     }
     default:

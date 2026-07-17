@@ -335,7 +335,7 @@ itCases('haversineDistance', (() => {
 itCases('cantonLengthKm', (() => {
   const cases = [];
   const expected = [
-    [0, 0.5], [30, 0.5], [59, 0.5], [60, 0.9], [100, 0.9],
+    [0, 0.5], [30, 0.5], [59, 0.5], [60, 0.5], [100, 0.9],
     [101, 1.2], [160, 1.2], [161, 1.5], [200, 1.5], [201, 2.0], [300, 2.0],
   ];
   for (const [v, e] of expected) {

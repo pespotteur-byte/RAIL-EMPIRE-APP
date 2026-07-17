@@ -43,6 +43,18 @@ function isInServiceWindow(timeOfDay, start, end) {
 const cantonManager = new CantonManager();
 export { cantonManager };
 
+// Deterministic [0,1) pseudo-random from a string seed (does not advance global RNG)
+function _seeded01(seed) {
+  let h = 0;
+  const s = String(seed);
+  for (let i = 0; i < s.length; i++) h = ((h * 31) + s.charCodeAt(i)) >>> 0;
+  // xorshift32
+  h ^= h << 13; h >>>= 0;
+  h ^= h >>> 17; h >>>= 0;
+  h ^= h << 5; h >>>= 0;
+  return (h >>> 0) / 4294967296;
+}
+
 function wrapTime(t) {
   const n = Number.isFinite(t) ? t % 1440 : 0;
   return n < 0 ? n + 1440 : n;
@@ -206,6 +218,11 @@ export class ActiveService {
     // SC-02 — pre-compute passage times at every real station encountered on
     // each leg, even if it is not a scheduled stop or waypoint.
     this._passageStops = this._computePassageStops();
+
+    // LVM — randomized response margins per service (Annexe 3A : 25-50 m carré, 50-150 m ralentissement)
+    // Deterministic from service id so save/load and tests stay stable.
+    this._carreMarginM = 25 + _seeded01(this.id + ':carre') * 25;
+    this._negativeBufferKm = 0.05 + _seeded01(this.id + ':neg') * 0.10;
   }
 
   _computePassageStops() {
@@ -446,7 +463,7 @@ export class ActiveService {
     if (!segDists || !cumDist || currentSpeed <= 0) return null;
     const totalDist = cumDist[0];
     const frontDist = totalDist - cumDist[segIdx] + progress * segDists[segIdx];
-    const bufferKm = 0.10; // 100 m (50-150 m)
+    const bufferKm = this._negativeBufferKm != null ? this._negativeBufferKm : 0.10;
     let cap = Infinity;
     for (let i = segIdx + 1; i < route.length; i++) {
       const nextSpeed = route[i].maxSpeed || 30;
@@ -1285,7 +1302,7 @@ export class ActiveService {
               + ((this._state.cumDist[segIdx + 1] || 0) - (this._state.cumDist[nextCanton.startIndex] || 0));
             distM = Math.max(0, distKm * 1000);
           }
-          const cap = visaSpeedCapKmh(distM);
+          const cap = visaSpeedCapKmh(distM, this._carreMarginM);
           const visaCap = (cap === null) ? RESTART_SPEED_KMH : cap;
           effectiveMaxSpeed = Math.min(effectiveMaxSpeed, visaCap);
           this.train.blockedBy = visaCap === 0;
