@@ -4658,6 +4658,7 @@ export class UI {
     document.getElementById('btn-sillon-finish-manual')?.addEventListener('click', () => this._finishSillonManual());
     document.getElementById('sillon-from')?.addEventListener('change', () => { this._updateSillonName(); this._syncSillonManualEndpoints(); });
     document.getElementById('sillon-to')?.addEventListener('change', () => { this._updateSillonName(); this._syncSillonManualEndpoints(); });
+    document.getElementById('sillon-name')?.addEventListener('input', () => { this._sillonNameTouched = true; });
 
     const sillonsList = document.getElementById('sillons-list');
     if (sillonsList && !sillonsList._delegated) {
@@ -5306,6 +5307,7 @@ export class UI {
     if (fromSel) fromSel.innerHTML = '<option value="">—</option>' + opts;
     if (toSel) toSel.innerHTML = '<option value="">—</option>' + opts;
     this._resetSillonManual();
+    this._sillonNameTouched = false;
     this._updateSillonName();
     this._updateSillonManualUI();
     creator.classList.remove('hidden');
@@ -5416,9 +5418,10 @@ export class UI {
     const toId = document.getElementById('sillon-to')?.value;
     const nameInput = document.getElementById('sillon-name');
     if (!fromId || !toId || !nameInput) return;
+    if (this._sillonNameTouched) return;
     const next = this.game.sillonManager.getNextName(fromId, toId);
     const current = nameInput.value.trim();
-    if (!current || /^V\d+[A-Z]*$/i.test(current)) {
+    if (!current) {
       nameInput.value = next;
     }
   }
