@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784250003">
+  <link rel="stylesheet" href="style.css?v=1784250004">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -112,6 +112,7 @@
             <button id="btn-tracer-ligne" class="btn-sm btn-map-action" style="background:#065f46">Tracer ligne</button>
             <button id="btn-create-signalbox" class="btn-sm btn-map-action" style="background:#6d28d9">+ Poste aiguillage</button>
             <button id="btn-create-regzone" class="btn-sm btn-map-action" style="background:#0369a1">+ Zone régulation</button>
+            <button id="btn-create-ite" class="btn-sm btn-map-action" style="background:#047857">+ ITE</button>
           </div>
           <div class="map-toggles">
             <label><input type="checkbox" id="toggle-stations" checked> Gares</label>
@@ -1002,6 +1003,65 @@
       </div>
     </div>
 
+    <!-- ITE Creation Modal -->
+    <div id="modal-ite" class="modal hidden">
+      <div class="modal-content">
+        <button class="modal-close">&times;</button>
+        <h3>Créer un ITE</h3>
+        <div class="modal-body">
+          <input type="hidden" id="ite-lat">
+          <input type="hidden" id="ite-lon">
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" id="ite-name" placeholder="ex: ITE Dijon-Perrigny">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select id="ite-type">
+                <option value="ite-fret">ITE Fret</option>
+                <option value="ite-industrie">ITE Industrie</option>
+                <option value="ite-logistique">ITE Logistique</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Voies</label>
+              <input type="number" id="ite-tracks" value="2" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label>Coût (&euro;)</label>
+              <input type="number" id="ite-cost" value="50000" min="0" step="5000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Types de fret acceptés</label>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:12px">
+              <label><input type="checkbox" class="ite-cargo" value="vrac_solide"> Vrac solide</label>
+              <label><input type="checkbox" class="ite-cargo" value="cereales_agri"> Céréales</label>
+              <label><input type="checkbox" class="ite-cargo" value="conteneurs"> Conteneurs</label>
+              <label><input type="checkbox" class="ite-cargo" value="liquides"> Liquides</label>
+              <label><input type="checkbox" class="ite-cargo" value="gaz"> Gaz</label>
+              <label><input type="checkbox" class="ite-cargo" value="produits_chimiques"> Chimique</label>
+              <label><input type="checkbox" class="ite-cargo" value="automobiles"> Automobiles</label>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:10px">
+            <div style="font-size:11px;font-weight:600;margin-bottom:6px">Tracer une voie ITE</div>
+            <div class="form-row">
+              <input type="text" id="ite-track-name" placeholder="Nom voie" style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit">
+              <button type="button" id="btn-ite-finish-track" class="btn-sm hidden">Terminer voie</button>
+            </div>
+            <div id="ite-track-hint" style="font-size:10px;color:var(--text3);margin:6px 0">Cliquez sur la carte pour placer les points de la voie (50 m). Shift+clic pour supprimer un point.</div>
+            <div class="sched-map-container" style="height:240px;margin-top:8px">
+              <canvas id="ite-map-canvas"></canvas>
+            </div>
+            <div id="ite-tracks-list" style="margin-top:6px;font-size:10px"></div>
+          </div>
+          <button id="btn-save-ite" class="btn-primary btn-full">Créer l'ITE</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Incident Creation Modal -->
     <div id="modal-incident" class="modal hidden">
       <div class="modal-content">
@@ -1414,6 +1474,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784250003"></script>
+  <script type="module" src="js/main.js?v=1784250004"></script>
 </body>
 </html>

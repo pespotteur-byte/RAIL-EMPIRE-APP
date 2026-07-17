@@ -123,6 +123,11 @@ export class UI {
     this._draggingVoiePoint = null;
     this._schedTileMap = null;
     this._schedPage = 0;
+    this.iteCreationMode = false;
+    this._pendingITE = null;
+    this._iteMapTileMap = null;
+    this._iteMapInterval = null;
+    this._iteTrackPoints = [];
     // Global blink timer for "À l'approche" (survives DOM re-renders)
     this._approachVisible = true;
     this._approachInterval = setInterval(() => {
@@ -144,6 +149,7 @@ export class UI {
     this.setupSchedulePage();
     this.setupLinePage();
     this.setupDepotPage();
+    this.setupITEPage();
     this.setupIncidentPage();
     this.setupEconomyPage();
     this.setupModals();
@@ -354,7 +360,7 @@ export class UI {
         // LVM-04/06 — clic sur un train : sélection + panneau détail.
         const _anyMode = this._pickConnectionMode || this.tronconCreationMode
           || this.manualTronconMode || this.tracerLigneMode || this.voiePointCreationMode
-          || this.stationCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
+          || this.stationCreationMode || this.iteCreationMode || this.game._pendingSignalBox || this.game._pendingRegZone;
         if (!_anyMode && this.activePage === 'map') {
           const picked = this._findServiceAtScreen(x, y);
           if (picked) { this.selectService(picked); this.isDragging = false; return; }
@@ -410,6 +416,17 @@ export class UI {
         if (this.stationCreationMode) {
           const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
           this.openStationCreationModal(worldPos.lat, worldPos.lon);
+        }
+
+        // ITE creation placement mode
+        if (this.iteCreationMode) {
+          const worldPos = this.game.renderer.tileMap.screenToWorld(x, y, this.game.renderer.logicalWidth, this.game.renderer.logicalHeight);
+          this.iteCreationMode = false;
+          document.getElementById('game-canvas').style.cursor = 'grab';
+          this._hidePickHint();
+          this.openItemModal(worldPos.lat, worldPos.lon);
+          this.isDragging = false;
+          return;
         }
 
         // Signal box placement mode
@@ -478,6 +495,7 @@ export class UI {
         if (this.tronconCreationMode) this.toggleTronconCreation();
         if (this.manualTronconMode) this.toggleManualTronconCreation();
         if (this.tracerLigneMode) this.toggleTracerLigne();
+        if (this.iteCreationMode) this._closeITECreator();
         if (this._insertAfterIndex != null) {
           this._insertAfterIndex = null;
           this._updateManualUI();
@@ -5740,7 +5758,263 @@ export class UI {
     requestDraw();
   }
 
-  // --- DEPOTS / ITE ---
+  // --- ITE ---
+  setupITEPage() {
+    document.getElementById('btn-create-ite')?.addEventListener('click', () => this.openITECreation());
+    document.getElementById('btn-ite-finish-track')?.addEventListener('click', () => this._finishITETrack());
+    document.getElementById('btn-save-ite')?.addEventListener('click', () => this.saveITE());
+    document.getElementById('modal-ite')?.querySelector('.modal-close')?.addEventListener('click', () => this._closeITECreator());
+  }
+
+  openITECreation() {
+    this.iteCreationMode = true;
+    this._pendingITE = { lat: null, lon: null, tracks: [] };
+    this._iteTrackPoints = [];
+    this._showPickHint('Cliquez sur la carte pour placer l\'ITE');
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = 'crosshair';
+  }
+
+  _closeITECreator() {
+    this.iteCreationMode = false;
+    this._pendingITE = null;
+    this._iteTrackPoints = [];
+    if (this._iteMapInterval) { clearInterval(this._iteMapInterval); this._iteMapInterval = null; }
+    this._iteMapTileMap = null;
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) canvas.style.cursor = 'grab';
+    this._hidePickHint();
+    document.getElementById('modal-ite')?.classList.add('hidden');
+  }
+
+  openItemModal(lat, lon) {
+    const modal = document.getElementById('modal-ite');
+    if (!modal) return;
+    document.getElementById('ite-lat').value = lat;
+    document.getElementById('ite-lon').value = lon;
+    document.getElementById('ite-name').value = '';
+    document.getElementById('ite-type').value = 'ite-fret';
+    document.getElementById('ite-tracks').value = 2;
+    document.getElementById('ite-cost').value = 50000;
+    document.querySelectorAll('.ite-cargo').forEach(cb => cb.checked = false);
+    document.getElementById('ite-track-name').value = '';
+    this._pendingITE = { lat, lon, tracks: [] };
+    this._iteTrackPoints = [];
+    this._updateITETrackUI();
+    modal.classList.remove('hidden');
+    requestAnimationFrame(() => this.setupITEMap());
+  }
+
+  setupITEMap() {
+    const canvas = document.getElementById('ite-map-canvas');
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    if (!container || container.clientWidth === 0 || container.clientHeight === 0) return;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!this._iteMapTileMap) {
+      const mainTileMap = this.game.renderer.tileMap;
+      this._iteMapTileMap = new mainTileMap.constructor();
+    }
+    const tileMap = this._iteMapTileMap;
+    tileMap.viewportWidth = canvas.width;
+    tileMap.viewportHeight = canvas.height;
+    const lat = parseFloat(document.getElementById('ite-lat')?.value);
+    const lon = parseFloat(document.getElementById('ite-lon')?.value);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      tileMap.centerLat = lat;
+      tileMap.centerLon = lon;
+      tileMap.zoomLevel = 15;
+    } else {
+      tileMap.centerLat = 46.8; tileMap.centerLon = 2.3; tileMap.zoomLevel = 6;
+    }
+
+    let drawPending = false;
+    const requestDraw = () => {
+      if (drawPending) return;
+      drawPending = true;
+      requestAnimationFrame(() => { drawPending = false; drawMap(); });
+    };
+
+    const drawMap = () => {
+      const modal = document.getElementById('modal-ite');
+      if (!modal || modal.classList.contains('hidden')) return;
+      tileMap.renderTiles(ctx, canvas.width, canvas.height);
+      const vpTL = tileMap.screenToWorld(0, 0, canvas.width, canvas.height);
+      const vpBR = tileMap.screenToWorld(canvas.width, canvas.height, canvas.width, canvas.height);
+      const vMinLat = Math.min(vpTL.lat, vpBR.lat) - 0.02;
+      const vMaxLat = Math.max(vpTL.lat, vpBR.lat) + 0.02;
+      const vMinLon = Math.min(vpTL.lon, vpBR.lon) - 0.02;
+      const vMaxLon = Math.max(vpTL.lon, vpBR.lon) + 0.02;
+
+      // ITE marker
+      const center = tileMap.worldToScreen(lat, lon, canvas.width, canvas.height);
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath(); ctx.arc(center.x, center.y, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+      // Track polyline
+      if (this._iteTrackPoints.length >= 2) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const p0 = tileMap.worldToScreen(this._iteTrackPoints[0].lat, this._iteTrackPoints[0].lon, canvas.width, canvas.height);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < this._iteTrackPoints.length; i++) {
+          const p = tileMap.worldToScreen(this._iteTrackPoints[i].lat, this._iteTrackPoints[i].lon, canvas.width, canvas.height);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+      }
+      if (this._iteTrackPoints.length > 0) {
+        for (const pt of this._iteTrackPoints) {
+          const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+          ctx.fillStyle = '#a5f3fc';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+        }
+      }
+      // Dashed line from ITE marker to first point
+      if (this._iteTrackPoints.length === 1) {
+        const p = tileMap.worldToScreen(this._iteTrackPoints[0].lat, this._iteTrackPoints[0].lon, canvas.width, canvas.height);
+        ctx.strokeStyle = 'rgba(250,204,21,0.5)';
+        ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    };
+
+    this._drawITEMap = drawMap;
+
+    if (canvas._iteBound) { requestDraw(); return; }
+    canvas._iteBound = true;
+
+    let drag = false, dragStart = null, totalDragDist = 0;
+    canvas.onmousedown = (e) => { drag = true; dragStart = { x: e.offsetX, y: e.offsetY }; totalDragDist = 0; };
+    canvas.onmousemove = (e) => {
+      if (drag && dragStart) {
+        const dx = e.offsetX - dragStart.x;
+        const dy = e.offsetY - dragStart.y;
+        totalDragDist += Math.abs(dx) + Math.abs(dy);
+        tileMap.pan(dx, dy);
+        dragStart = { x: e.offsetX, y: e.offsetY };
+        requestDraw();
+      }
+    };
+    canvas.onmouseup = (e) => {
+      if (totalDragDist < 5) {
+        const x = e.offsetX, y = e.offsetY;
+        if (e.shiftKey) {
+          let bestIdx = -1, bestD = Infinity;
+          for (let i = 0; i < this._iteTrackPoints.length; i++) {
+            const p = tileMap.worldToScreen(this._iteTrackPoints[i].lat, this._iteTrackPoints[i].lon, canvas.width, canvas.height);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < bestD) { bestD = d; bestIdx = i; }
+          }
+          if (bestIdx >= 0 && bestD < 12) {
+            this._iteTrackPoints.splice(bestIdx, 1);
+            this._updateITETrackUI();
+            requestDraw();
+          }
+          drag = false; dragStart = null; totalDragDist = 0;
+          return;
+        }
+        const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
+        this._iteTrackPoints.push({ lat: worldPos.lat, lon: worldPos.lon });
+        this._updateITETrackUI();
+        requestDraw();
+      }
+      drag = false; dragStart = null; totalDragDist = 0;
+    };
+    canvas.onwheel = (e) => { e.preventDefault(); tileMap.applyZoom(e.deltaY < 0 ? 1 : -1, e.offsetX, e.offsetY); requestDraw(); };
+    canvas.oncontextmenu = (e) => { e.preventDefault(); };
+
+    this._iteMapInterval = setInterval(() => {
+      const modal = document.getElementById('modal-ite');
+      if (!modal || modal.classList.contains('hidden')) return;
+      requestDraw();
+    }, 250);
+
+    requestDraw();
+  }
+
+  _updateITETrackUI() {
+    const finish = document.getElementById('btn-ite-finish-track');
+    const hint = document.getElementById('ite-track-hint');
+    if (finish) finish.classList.toggle('hidden', this._iteTrackPoints.length < 2);
+    if (hint) {
+      if (this._iteTrackPoints.length < 2) hint.textContent = 'Cliquez sur la carte pour placer les points de la voie (50 m). Shift+clic pour supprimer un point.';
+      else hint.textContent = `${this._iteTrackPoints.length} point(s). Cliquez "Terminer voie" pour valider.`;
+    }
+  }
+
+  _finishITETrack() {
+    if (!this._pendingITE || this._iteTrackPoints.length < 2) return;
+    const nameInput = document.getElementById('ite-track-name');
+    const name = (nameInput?.value.trim()) || `Voie ${(this._pendingITE.tracks.length + 1)}`;
+    const route = this._densifyRoute(this._iteTrackPoints.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: 30 })));
+    const lengthM = Math.round(this.game.orm.getRouteDistance(route) * 1000);
+    this._pendingITE.tracks.push({ name, length: lengthM, route });
+    this._iteTrackPoints = [];
+    if (nameInput) nameInput.value = '';
+    this._updateITETrackUI();
+    this._renderITEPendingTracks();
+    if (this._drawITEMap) this._drawITEMap();
+  }
+
+  _renderITEPendingTracks() {
+    const list = document.getElementById('ite-tracks-list');
+    if (!list || !this._pendingITE) return;
+    list.innerHTML = this._pendingITE.tracks.length === 0
+      ? '<span style="color:var(--text3)">Aucune voie tracée</span>'
+      : this._pendingITE.tracks.map((t, i) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:3px 0;border-bottom:1px solid var(--border)">
+          <span><b>${t.name}</b> — ${t.length} m</span>
+          <button class="btn-sm danger" style="font-size:9px;padding:1px 4px" onclick="game.ui._removeITEPendingTrack(${i})">x</button>
+        </div>`).join('');
+  }
+
+  _removeITEPendingTrack(index) {
+    if (!this._pendingITE) return;
+    this._pendingITE.tracks.splice(index, 1);
+    this._renderITEPendingTracks();
+  }
+
+  saveITE() {
+    const modal = document.getElementById('modal-ite');
+    if (!modal) return;
+    const name = document.getElementById('ite-name')?.value.trim() || 'ITE';
+    const type = document.getElementById('ite-type')?.value || 'ite-fret';
+    const lat = parseFloat(document.getElementById('ite-lat')?.value);
+    const lon = parseFloat(document.getElementById('ite-lon')?.value);
+    const tracks = parseInt(document.getElementById('ite-tracks')?.value) || 2;
+    const cost = parseInt(document.getElementById('ite-cost')?.value) || 50000;
+    const cargoTypes = [...document.querySelectorAll('.ite-cargo:checked')].map(cb => cb.value);
+    if (isNaN(lat) || isNaN(lon)) return alert('Localisation invalide.');
+
+    const station = this.game.world.addStation({ name, lat, lon, type: 'ite', platforms: tracks, platformNames: [] });
+    station.country = this.game.orm.getCountryAtPoint(lat, lon);
+    this.game.platformManager.initStation(station.id, tracks);
+
+    this.game.depotManager.add({
+      type,
+      name,
+      stationId: station.id,
+      tracks,
+      cost,
+      iteTracks: (this._pendingITE?.tracks || []).map(t => ({ name: t.name, length: t.length, cargoType: '' })),
+      iteCargoTypes: cargoTypes,
+    }, this.game.economy);
+
+    this.game.saveState();
+    this.game.renderer?.invalidateStatic();
+    this._closeITECreator();
+    this.renderDepotsList();
+  }
+
+  // --- DEPOTS ---
   setupDepotPage() {
     document.getElementById('btn-add-depot')?.addEventListener('click', () => this.openDepotModal());
     document.getElementById('btn-save-depot')?.addEventListener('click', () => this.saveDepot());
