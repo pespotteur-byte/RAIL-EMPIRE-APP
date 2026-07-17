@@ -5325,6 +5325,11 @@ export class UI {
     const stB = this.game.world.getStationById(toId);
     if (!stA || !stB) return alert('Gares invalides');
 
+    // If the player traced points but did not click "Finish", auto-finalize on save.
+    if (this._sillonManualPoints && this._sillonManualPoints.length > 0 && this._sillonManualStart && this._sillonManualEnd) {
+      this._rebuildSillonManualRoute();
+    }
+
     const loadingEl = document.getElementById('sillon-creator-loading');
     if (loadingEl) loadingEl.classList.remove('hidden');
 
@@ -5509,7 +5514,7 @@ export class UI {
     if (clear) clear.classList.toggle('hidden', !this._sillonManualMode);
     if (finish) finish.classList.toggle('hidden', !this._sillonManualMode);
     if (hint) {
-      if (this._sillonManualMode) hint.textContent = 'Cliquez sur la carte pour ajouter des points de contrôle (50 m). Cliquez "Terminer" quand le tracé est complet.';
+      if (this._sillonManualMode) hint.textContent = 'Cliquez pour ajouter un point (50 m). Shift+clic sur un point pour le supprimer. Cliquez "Terminer" quand le tracé est complet.';
       else if (!fromId || !toId) hint.textContent = 'Sélectionnez les gares A et B, puis cliquez sur "Tracer manuellement" pour dessiner le sillon sur la carte.';
       else if (this._sillonManualRoute) hint.textContent = 'Tracé manuel enregistré. Vous pouvez le refaire avec "Tracer manuellement".';
       else hint.textContent = 'Cliquez sur "Tracer manuellement" pour dessiner le sillon, ou laissez l\'ORM calculer automatiquement.';
@@ -5674,8 +5679,23 @@ export class UI {
     canvas.onmouseup = (e) => {
       if (totalDragDist < 5) {
         const x = e.offsetX, y = e.offsetY;
-        const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
         if (this._sillonManualMode) {
+          if (e.shiftKey) {
+            let bestIdx = -1, bestD = Infinity;
+            for (let i = 0; i < this._sillonManualPoints.length; i++) {
+              const p = tileMap.worldToScreen(this._sillonManualPoints[i].lat, this._sillonManualPoints[i].lon, canvas.width, canvas.height);
+              const d = Math.hypot(p.x - x, p.y - y);
+              if (d < bestD) { bestD = d; bestIdx = i; }
+            }
+            if (bestIdx >= 0 && bestD < 12) {
+              this._sillonManualPoints.splice(bestIdx, 1);
+              this._rebuildSillonManualRoute();
+              requestDraw();
+            }
+            drag = false; dragStart = null; totalDragDist = 0;
+            return;
+          }
+          const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
           if (!this._sillonManualStart || !this._sillonManualEnd) return;
           const snapped = this._snapToTrack(worldPos.lat, worldPos.lon);
           const pt = snapped || worldPos;
