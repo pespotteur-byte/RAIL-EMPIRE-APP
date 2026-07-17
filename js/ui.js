@@ -2279,6 +2279,8 @@ export class UI {
     this._manualMode = false;
     this._manualControlPoints = [];
     this._manualStartCoords = null;
+    this._manualEndCoords = null;
+    this._manualRetraceLeg = null;
     this._traceEditMode = false;
     this._traceSelectedPoint = null;
     this._traceDragging = null;
@@ -2546,7 +2548,9 @@ export class UI {
         ctx.beginPath();
         const pStart = tileMap.worldToScreen(this._manualStartCoords.lat, this._manualStartCoords.lon, canvas.width, canvas.height);
         ctx.moveTo(pStart.x, pStart.y);
-        for (const pt of this._manualControlPoints) {
+        const drawPts = [...this._manualControlPoints];
+        if (this._manualEndCoords) drawPts.push(this._manualEndCoords);
+        for (const pt of drawPts) {
           const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
           ctx.lineTo(p.x, p.y);
         }
@@ -2555,6 +2559,11 @@ export class UI {
         for (const pt of [this._manualStartCoords, ...this._manualControlPoints]) {
           const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
           ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+        }
+        if (this._manualEndCoords) {
+          const p = tileMap.worldToScreen(this._manualEndCoords.lat, this._manualEndCoords.lon, canvas.width, canvas.height);
+          ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
           ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
         }
       }
@@ -2702,8 +2711,32 @@ export class UI {
         const x = e.offsetX, y = e.offsetY;
 
         // Manual trace mode (SC-04): choose a start point, add waypoints, then click a target point to finish — like livemap.
+        // Also supports deleting an existing control point to redraw its segment by hand.
         if (this._manualMode) {
           const worldPos = tileMap.screenToWorld(x, y, canvas.width, canvas.height);
+
+          // Retrace in progress: finish by clicking the target end control, or add another point.
+          if (this._manualEndCoords) {
+            const pEnd = tileMap.worldToScreen(this._manualEndCoords.lat, this._manualEndCoords.lon, canvas.width, canvas.height);
+            if (Math.hypot(pEnd.x - x, pEnd.y - y) <= 20) {
+              await this._finishManualRetrace();
+            } else {
+              this._addManualPoint(worldPos.lat, worldPos.lon);
+            }
+            schedDrag = false; schedDragStart = null;
+            return;
+          }
+
+          // If the user clicks an existing internal control point, delete it and enter retrace.
+          const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
+          if (controlHit) {
+            if (confirm('Supprimer ce point de contrôle et retracer manuellement le segment entre les points fixes ?')) {
+              this._startManualRetrace(controlHit.leg, controlHit.index);
+            }
+            schedDrag = false; schedDragStart = null;
+            return;
+          }
+
           let closestVP = null, minVPDist = Infinity;
           if (this.game.voiePointManager) {
             for (const vp of this.game.voiePointManager.getAll()) {
@@ -2843,10 +2876,14 @@ export class UI {
       // cancel manual mode, keep control points? If no next stop yet, just exit
       this._manualMode = false;
       this._manualStartCoords = null;
+      this._manualEndCoords = null;
+      this._manualRetraceLeg = null;
       this._manualControlPoints = [];
     } else {
       this._manualMode = true;
       this._manualStartCoords = this.schedStops.length > 0 ? this._getStopCoords(this.schedStops[this.schedStops.length - 1]) : null;
+      this._manualEndCoords = null;
+      this._manualRetraceLeg = null;
       this._manualControlPoints = [];
     }
     this._updateManualUI();
@@ -2858,6 +2895,8 @@ export class UI {
     this._manualControlPoints = [];
     this._manualMode = false;
     this._manualStartCoords = null;
+    this._manualEndCoords = null;
+    this._manualRetraceLeg = null;
     this._updateManualUI();
     this._recalcPreviewRoutes();
   }
@@ -2890,13 +2929,19 @@ export class UI {
     }
     if (this._manualMode) {
       const hasStart = !!this._manualStartCoords;
-      btn.textContent = hasStart ? 'Terminer (cliquer gare/point)' : 'Choisir le départ';
+      const isRetrace = this._manualEndCoords != null;
+      if (isRetrace) {
+        btn.textContent = 'Terminer le retracé';
+        hint.textContent = 'Retracez le segment supprimé — cliquez pour ajouter des points, puis cliquez sur le point d\'arrivée pour terminer.';
+      } else {
+        btn.textContent = hasStart ? 'Terminer (cliquer gare/point)' : 'Choisir le départ';
+        hint.textContent = hasStart
+          ? 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.'
+          : 'Mode manuel — cliquez sur la gare ou le point de voie de départ (comme sur la livemap).';
+      }
       btn.style.background = '#3b82f6';
       btn.style.color = '#fff';
       clear.classList.remove('hidden');
-      hint.textContent = hasStart
-        ? 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.'
-        : 'Mode manuel — cliquez sur la gare ou le point de voie de départ (comme sur la livemap).';
     } else {
       btn.textContent = 'Tracer manuellement (points 50 m)';
       btn.style.background = '';
@@ -2939,6 +2984,8 @@ export class UI {
     this._manualMode = false;
     this._manualControlPoints = [];
     this._manualStartCoords = null;
+    this._manualEndCoords = null;
+    this._manualRetraceLeg = null;
     this._updateManualUI();
     this.renderSchedStops();
     this._recalcPreviewRoutes();
@@ -3057,7 +3104,8 @@ export class UI {
 
   _addManualPoint(lat, lon) {
     if (this._manualStartCoords) {
-      this._manualControlPoints.push({ lat, lon });
+      const maxSpeed = this._manualStartCoords.maxSpeed || 30;
+      this._manualControlPoints.push({ lat, lon, maxSpeed });
       if (this._drawSchedMap) this._drawSchedMap();
     }
   }
@@ -3072,7 +3120,52 @@ export class UI {
     this._manualMode = false;
     this._manualControlPoints = [];
     this._manualStartCoords = null;
+    this._manualEndCoords = null;
+    this._manualRetraceLeg = null;
     this._updateManualUI();
+  }
+
+  _startManualRetrace(leg, controlIndex) {
+    const route = this._manualRoutes[leg];
+    if (!route || route.length < 3) return;
+    const controls = this._extractRouteControls(route);
+    const clicked = route[controlIndex];
+    const ci = controls.indexOf(clicked);
+    if (ci <= 0 || ci >= controls.length - 1) return;
+    const startControl = controls[ci - 1];
+    const endControl = controls[ci + 1];
+    const startIdx = route.indexOf(startControl);
+    const endIdx = route.indexOf(endControl);
+    if (startIdx < 0 || endIdx < 0 || startIdx >= endIdx) return;
+    this._manualRetraceLeg = leg;
+    this._manualStartCoords = startControl;
+    this._manualEndCoords = endControl;
+    this._manualControlPoints = [];
+    // Strip the old segment between the fixed controls; it will be redrawn by hand.
+    this._manualRoutes[leg] = [...route.slice(0, startIdx + 1), ...route.slice(endIdx)];
+    this._updateManualUI();
+    if (this._drawSchedMap) this._drawSchedMap();
+  }
+
+  async _finishManualRetrace() {
+    if (!this._manualMode || this._manualRetraceLeg == null || !this._manualStartCoords || !this._manualEndCoords) return;
+    const leg = this._manualRetraceLeg;
+    const newSegment = this._densifyRoute([this._manualStartCoords, ...this._manualControlPoints, this._manualEndCoords], 0.05);
+    const route = this._manualRoutes[leg] || [];
+    const startIdx = route.indexOf(this._manualStartCoords);
+    const endIdx = route.indexOf(this._manualEndCoords);
+    if (startIdx >= 0 && endIdx >= 0 && startIdx < endIdx) {
+      this._manualRoutes[leg] = [...route.slice(0, startIdx + 1), ...newSegment.slice(1, -1), ...route.slice(endIdx)];
+    } else {
+      this._manualRoutes[leg] = newSegment;
+    }
+    this._manualMode = false;
+    this._manualControlPoints = [];
+    this._manualStartCoords = null;
+    this._manualEndCoords = null;
+    this._manualRetraceLeg = null;
+    this._updateManualUI();
+    await this._recalcAfterTraceEdit(leg);
   }
 
   _buildManualRoute(start, controls, end, maxSpeed = 30) {
@@ -3772,6 +3865,21 @@ export class UI {
       }
     }
     return bestDist <= 10 ? best : null;
+  }
+
+  _findNearestControlPoint(x, y, tileMap, canvas) {
+    if (!this._manualRoutes || this._manualRoutes.length === 0) return null;
+    for (let leg = 0; leg < this._manualRoutes.length; leg++) {
+      const route = this._manualRoutes[leg];
+      if (!route || route.length < 3) continue;
+      const controls = this._extractRouteControls(route);
+      for (let i = 1; i < controls.length - 1; i++) {
+        const pt = controls[i];
+        const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+        if (Math.hypot(p.x - x, p.y - y) <= 14) return { leg, control: pt, index: route.indexOf(pt) };
+      }
+    }
+    return null;
   }
 
   _findNearestSegmentPoint(x, y, tileMap, canvas) {
