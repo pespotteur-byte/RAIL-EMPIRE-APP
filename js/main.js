@@ -29,7 +29,6 @@ import { SeasonalSchedule } from './seasonal.js?v=1784250028';
 import { Connections } from './connections.js?v=1784250028';
 import { StationUpgrades } from './station-upgrades.js?v=1784250028';
 import { A12Model } from './a12-model.js?v=1784250028';
-import { PlayerSignalManager } from './signaling.js?v=1784250028';
 import { JunctionManager } from './junctions.js?v=1784250028';
 import { CargoTypeManager } from './cargo-types.js?v=1784250028';
 import { ITEModules } from './ite-modules.js?v=1784250028';
@@ -81,7 +80,6 @@ class RailEmpire {
     this.bank = new Bank();
     this.weather = new Weather();
     this.a12Model = new A12Model(this);
-    this.signalManager = new PlayerSignalManager();
     this.scheduleCreator.weather = this.weather;
     this.unions = new Unions();
     this.seasonal = new SeasonalSchedule();
@@ -456,7 +454,6 @@ class RailEmpire {
         iteModules: this.iteModules.toSave(),
         industrialClients: this.industrialClients.toSave(),
         shunting: this.shuntingManager.toSave(),
-        signals: this.signalManager.toSave(),
         exportDate: new Date().toISOString(),
       };
       const json = JSON.stringify(state);
@@ -536,7 +533,6 @@ class RailEmpire {
     if (s.iteModules) this.iteModules.loadFromSave(s.iteModules);
     if (s.industrialClients) this.industrialClients.loadFromSave(s.industrialClients);
     if (s.shunting) this.shuntingManager.loadFromSave(s.shunting);
-    if (s.signals) this.signalManager.loadFromSave(s.signals);
     if (this.rng && typeof s.rngState === 'number') this.rng.setState(s.rngState);
     // Clear voie point occupations on reload (prevent ghost occupations after crash)
     for (const vp of this.voiePointManager.getAll()) { vp.occupiedBy = null; }
@@ -601,7 +597,6 @@ class RailEmpire {
       iteModules: this.iteModules.toSave(),
       industrialClients: this.industrialClients.toSave(),
       shunting: this.shuntingManager.toSave(),
-      signals: this.signalManager.toSave(),
       rngState: this.rng ? this.rng.getState() : null,
       realism: { ...this.realismSettings },
     };

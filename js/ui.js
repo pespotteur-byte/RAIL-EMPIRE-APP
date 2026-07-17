@@ -4711,9 +4711,6 @@ export class UI {
     });
     document.getElementById('btn-lsc-save')?.addEventListener('click', () => this.saveStationFromLines());
 
-    // SIG-08 — signaux ajoutables par le joueur
-    document.getElementById('btn-add-signal')?.addEventListener('click', () => this.addPlayerSignal());
-
     // Section V — Sillons automatiques
     document.getElementById('btn-new-sillon')?.addEventListener('click', () => this.openSillonCreator());
     document.getElementById('btn-save-sillon')?.addEventListener('click', () => this.saveSillon());
@@ -5283,7 +5280,6 @@ export class UI {
     }).join('');
 
     this.renderSillonsList();
-    this.renderSignals();
   }
 
   editStationFromLines(stationId) {
@@ -5309,60 +5305,6 @@ export class UI {
     this.game.lineManager.removeLine(id);
     this.renderLinesList();
     this.game.saveState();
-  }
-
-  // --- SIGNAUX JOUEUR (SIG-08) ---
-  _populateSignalStations() {
-    const selA = document.getElementById('signal-station-a');
-    const selB = document.getElementById('signal-station-b');
-    if (!selA || !selB) return;
-    const stations = (this.game.world?.stations || []).map(s => ({ id: s.id, name: s.name })).sort((a, b) => a.name.localeCompare(b.name));
-    const opts = '<option value="">—</option>' + stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    if (selA.innerHTML !== opts) selA.innerHTML = opts;
-    if (selB.innerHTML !== opts) selB.innerHTML = opts;
-  }
-
-  addPlayerSignal() {
-    const name = document.getElementById('signal-name')?.value.trim() || 'Signal';
-    const stationA = document.getElementById('signal-station-a')?.value;
-    const stationB = document.getElementById('signal-station-b')?.value;
-    const type = document.getElementById('signal-type')?.value || 'ralentissement';
-    const speedLimit = parseInt(document.getElementById('signal-speed')?.value) || 40;
-    if (!stationA || !stationB || stationA === stationB) {
-      alert('Selectionnez deux gares differentes.');
-      return;
-    }
-    this.game.signalManager.add({ name, stationA, stationB, type, speedLimit: type === 'arret' ? 0 : speedLimit, active: true });
-    this.game.saveState();
-    this.renderSignals();
-  }
-
-  deletePlayerSignal(id) {
-    if (!confirm('Supprimer ce signal ?')) return;
-    this.game.signalManager.remove(id);
-    this.game.saveState();
-    this.renderSignals();
-  }
-
-  renderSignals() {
-    this._populateSignalStations();
-    const container = document.getElementById('signals-list');
-    if (!container) return;
-    const signals = this.game.signalManager.getAll();
-    if (signals.length === 0) {
-      container.innerHTML = '<span style="color:var(--text3);font-size:11px">Aucun signal personnel.</span>';
-      return;
-    }
-    container.innerHTML = signals.map(s => {
-      const stA = this.game.world.getStationById(s.stationA)?.name || s.stationA;
-      const stB = this.game.world.getStationById(s.stationB)?.name || s.stationB;
-      const color = s.type === 'arret' ? '#ef4444' : s.type === 'avertissement' ? '#f59e0b' : '#38bdf8';
-      const limit = s.type === 'arret' ? 'Arret' : `${s.speedLimit} km/h`;
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
-        <span><b style="color:${color}">${s.name}</b> — ${stA} ↔ ${stB} (${s.type}, ${limit})</span>
-        <button class="btn-sm danger" onclick="game.ui.deletePlayerSignal('${s.id}')">Supprimer</button>
-      </div>`;
-    }).join('');
   }
 
   // --- SILLONS (Section V) ---
