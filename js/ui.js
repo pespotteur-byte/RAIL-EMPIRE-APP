@@ -2997,8 +2997,7 @@ export class UI {
       this._manualControlDrag = null;
       this._traceDragging = null;
       const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
-      if (controlHit && controlHit.control) {
-        if (!controlHit.control.control) controlHit.control.control = true;
+      if (controlHit) {
         this._manualMode = true;
         this._startManualRetrace(controlHit.leg, controlHit.index);
       }
