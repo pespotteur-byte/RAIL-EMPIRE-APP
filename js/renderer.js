@@ -802,10 +802,9 @@ export class Renderer {
       if (state === 'waiting') {
         ctx.filter = 'grayscale(100%) brightness(0.55)';
       }
-      const size = bs * 5;
-      const scale = size / Math.max(img.naturalWidth, img.naturalHeight);
-      const w = img.naturalWidth * scale;
-      const h = img.naturalHeight * scale;
+      // Images affichées à 100% (taille native)
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, -w / 2, -h / 2, w, h);
       ctx.restore();

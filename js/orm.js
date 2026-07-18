@@ -1204,6 +1204,7 @@ export class ORMClient {
     }
 
     const rameMaxSpeed = typeof rame === 'number' ? rame : (rame && rame.maxSpeed) || 160;
+    const rameMaxMs = rameMaxSpeed / 3.6;
     const segs = segmentsFromRoute(route, rameMaxSpeed, haversine);
     if (segs.length === 0) return 1;
 
@@ -1219,6 +1220,8 @@ export class ORMClient {
       lengthM: 200,
       weather: opts?.weather,
       brakeServiceMs2: opts?.brakeServiceMs2,
+      startMs: opts?.startMs ?? 0,
+      endMs: opts?.endMs ?? 0,
     });
     return Math.round(res.timeSec / 60) || 1;
   }
@@ -1233,6 +1236,7 @@ export class ORMClient {
     if (massKg <= 0 || powerW <= 0) return null;
 
     const maxSpeedKmh = rame.maxSpeed || 160;
+    const maxSpeedMs = maxSpeedKmh / 3.6;
     const segs = segmentsFromRoute(route, maxSpeedKmh, haversine);
     if (segs.length === 0) return null;
 
@@ -1242,6 +1246,8 @@ export class ORMClient {
       lengthM: rame.totalLength || 200,
       weather: opts?.weather,
       brakeServiceMs2: opts?.brakeServiceMs2,
+      startMs: opts?.startMs ?? 0,
+      endMs: opts?.endMs ?? 0,
     });
     return Math.round(res.timeSec / 60) || 1;
   }

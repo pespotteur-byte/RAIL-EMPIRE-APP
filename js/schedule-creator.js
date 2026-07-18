@@ -859,7 +859,7 @@ export class ActiveService {
       const depTime = stop.departureTime;
       // Mise à jour du retard pendant l'arrêt (retard à l'arrivée qui s'aggrave si le départ est dépassé)
       if (depTime != null && timeGte(timeOfDay, depTime)) {
-        const depDelay = Math.max(0, timeDiff(timeOfDay, depTime));
+        const depDelay = timeDiff(timeOfDay, depTime);
         if (depDelay > (this.delay || 0)) {
           this.delay = Math.round(depDelay);
           this.train.delay = this.delay;
@@ -1715,8 +1715,7 @@ export class ActiveService {
 
     // Expected time at current position = depA + scheduledTravelTime * progress
     const expectedTime = depA + scheduledTravelTime * progress;
-    // Clamp to 0 minimum: trains cannot be "en avance"
-    this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
+    this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
     this.train.delay = this.delay;
 
     // DEP-05 : mise à jour continue de la localisation permanente de la rame
@@ -2321,7 +2320,7 @@ export class ActiveService {
     if (stop?.type === 'arret') {
       const expectedTime = stop.arrivalTime;
       if (expectedTime != null) {
-        this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
+        this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
       }
       this.train.delay = this.delay;
     }

@@ -909,28 +909,45 @@ export class UI {
     const nextStop = stops[nextIdx];
     const prevName = stopName(prevStop);
     const curName = stopName(curStop);
-    let nextName = stopName(nextStop);
-    if (svc.state === 'moving') {
-      nextName = curName;
-    }
     const nextArret = nextArretFrom(svc.state === 'moving' ? curIdx : (nextIdx >= 0 ? nextIdx : curIdx));
-    if (nextName === 'Waypoint' && nextArret) nextName = world.getStationById(nextArret.stationId)?.name || '—';
+    const nextName = nextArret ? (world.getStationById(nextArret.stationId)?.name || '—') : '—';
     const lastArret = stops.filter(isArret).pop();
     const destName = lastArret ? (world.getStationById(lastArret.stationId)?.name || '—') : (stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—');
-    const displayNext = svc.state === 'moving' ? curStop : nextStop;
+    const displayNext = nextArret;
     const nextArrTime = displayNext ? (displayNext.arrivalTime ?? displayNext.departureTime) : null;
     const nextArrLabel = nextArrTime != null
       ? (d !== 0
           ? ` · Arr. <span style="text-decoration:line-through;color:#888">${fmt(nextArrTime)}</span> <span class="lvp-recalc ${d > 0 ? 'lvp-recalc-late' : 'lvp-recalc-early'}">${fmt(nextArrTime + d)}</span>`
           : ` · Arr. ${fmt(nextArrTime)}`)
       : '';
-    const situation = svc.cancelled
-      ? '<span style="color:#ef4444;font-weight:600">Service supprimé</span>'
-      : (t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)
-        ? `Arrêt en gare de <b>${curName}</b>`
-        : (curIdx > 0 && curIdx < stops.length
-          ? `Se situe entre <b>${prevName}</b> et <b>${curName}</b>`
-          : (curIdx === 0 ? `Au départ de <b>${curName}</b>` : `Service terminé`)));
+    const findArretStop = (start, dir) => {
+      for (let i = start; dir > 0 ? i < stops.length : i >= 0; i += dir) if (isArret(stops[i])) return stops[i];
+      return null;
+    };
+    const arretStationName = (s) => s?.stationId ? (world.getStationById(s.stationId)?.name || '—') : '—';
+
+    let situation;
+    if (svc.cancelled) {
+      situation = '<span style="color:#ef4444;font-weight:600">Service supprimé</span>';
+    } else if (t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)) {
+      situation = `Arrêt en gare de <b>${curName}</b>`;
+    } else if (curIdx > 0 && curIdx < stops.length) {
+      const prevArretS = findArretStop(curIdx - 1, -1);
+      const nextArretS = findArretStop(curIdx, 1);
+      const pName = arretStationName(prevArretS) || prevName;
+      const nName = arretStationName(nextArretS) || curName;
+      if (pName && nName && pName !== nName) {
+        situation = `Se situe entre <b>${pName}</b> et <b>${nName}</b>`;
+      } else if (nName) {
+        situation = `En route vers <b>${nName}</b>`;
+      } else {
+        situation = 'Service terminé';
+      }
+    } else if (curIdx === 0) {
+      situation = `Au départ de <b>${curName}</b>`;
+    } else {
+      situation = 'Service terminé';
+    }
 
     const rame = svc.rame;
     const composition = rame
@@ -3443,7 +3460,7 @@ export class UI {
       stationId: vpStationId,
       voiePointId: voiePoint.id,
       stationName: vpName,
-      type: voiePoint.stationId ? 'arret' : 'waypoint',
+      type: 'waypoint',
       stopCode: '',
       arrTimeMin: 0,
       depTimeMin: 0,
@@ -4262,8 +4279,19 @@ export class UI {
         route = this._manualRoutes[legIndex];
       }
     }
+
+    // Waypoints/passages are not stops: the train keeps speed through them.
+    // The first leg always starts from 0 (origin); subsequent pass-through legs
+    // start and end at line speed.
+    const isPass = (s) => s?.type === 'waypoint' || s?.type === 'passage';
+    const rameMaxSpeed = rame ? rame.maxSpeed : rameSpeed;
+    const rameMaxMs = rameMaxSpeed / 3.6;
+    const startMs = (isPass(prevStop) && legIndex !== 0) ? rameMaxMs : 0;
+    const endMs = isPass(curStop) ? rameMaxMs : 0;
+    const travelOpts = { startMs, endMs };
+
     if (route && route.length >= 2) {
-      return this.game.orm.calculateTravelTime(route, rame || rameSpeed);
+      return this.game.orm.calculateTravelTime(route, rame || rameSpeed, travelOpts);
     }
     const prevCoords = this._getStopCoords(prevStop);
     const curCoords = this._getStopCoords(curStop);
@@ -4282,7 +4310,7 @@ export class UI {
         maxSpeed: rameSpeed
       });
     }
-    return this.game.orm.calculateTravelTime(synthetic, rame || rameSpeed);
+    return this.game.orm.calculateTravelTime(synthetic, rame || rameSpeed, travelOpts);
   }
 
   async recalcStopsFrom(fromIndex) {
@@ -7619,12 +7647,47 @@ export class UI {
         `;
       }
 
+      // Helper: find previous/next real arret (station) for display, skipping waypoints/passages.
+      const currentStops = typeof svc.getCurrentStops === 'function' ? svc.getCurrentStops() : [];
+      const curIdx = svc.currentStopIndex || 0;
+      const isArretStop = (s) => s && s.type === 'arret' && s.stationId;
+      let prevArret = null, nextArret = null;
+      if (svc.state === 'moving') {
+        for (let i = curIdx - 1; i >= 0; i--) if (isArretStop(currentStops[i])) { prevArret = currentStops[i]; break; }
+        for (let i = curIdx; i < currentStops.length; i++) if (isArretStop(currentStops[i])) { nextArret = currentStops[i]; break; }
+      } else {
+        const curStationIdx = curIdx > 0 ? curIdx - 1 : 0;
+        for (let i = curStationIdx; i >= 0; i--) if (isArretStop(currentStops[i])) { prevArret = currentStops[i]; break; }
+        for (let i = curStationIdx + 1; i < currentStops.length; i++) if (isArretStop(currentStops[i])) { nextArret = currentStops[i]; break; }
+      }
+      const prevArretStation = prevArret ? this.game.world?.getStationById(prevArret.stationId) : null;
+      const nextArretStation = nextArret ? this.game.world?.getStationById(nextArret.stationId) : null;
+      const prevArretName = prevArret?.stationName || prevArretStation?.name || '';
+      const nextArretName = nextArret?.stationName || nextArretStation?.name || '';
+
+      // Distance to next real arret (not a waypoint)
+      let nextDistKm = null;
+      if (svc.state === 'moving' && nextArretStation && svc.position) {
+        let tgtLat = nextArretStation.lat, tgtLon = nextArretStation.lon;
+        if (nextArret?.voiePointId && this.game.voiePointManager) {
+          const vp = this.game.voiePointManager.getVoiePointById(nextArret.voiePointId);
+          if (vp) { tgtLat = vp.lat; tgtLon = vp.lon; }
+        } else if (nextArret?.platform && this.game.voiePointManager) {
+          const svp = this.game.voiePointManager.getStationVoiePoint(nextArret.stationId, nextArret.platform);
+          if (svp) { tgtLat = svp.lat; tgtLon = svp.lon; }
+        }
+        const dLat = (tgtLat - svc.position.lat) * 111;
+        const dLon = (tgtLon - svc.position.lon) * 111 * Math.cos(svc.position.lat * Math.PI / 180);
+        nextDistKm = Math.sqrt(dLat * dLat + dLon * dLon);
+      }
+
       // S3: Approach / platform / regulation status
       let contextLabel = '', contextClass = '';
-      let nextDistKm = null;
-      const _nsCtx = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
-      const _isWaypoint = _nsCtx?.type === 'waypoint';
-      if ((svc.state === 'stopped_at_station' || (svc.state === 'waiting' && t.stoppedAt)) && !_isWaypoint) {
+      const currentStop = svc.state === 'moving'
+        ? (curIdx < currentStops.length ? currentStops[curIdx] : null)
+        : (curIdx > 0 ? currentStops[curIdx - 1] : currentStops[0]);
+      const currentIsWaypoint = currentStop?.type === 'waypoint' || currentStop?.type === 'passage';
+      if ((svc.state === 'stopped_at_station' || (svc.state === 'waiting' && t.stoppedAt)) && !currentIsWaypoint) {
         const stName = t.stoppedAt?.name || '';
         const voie = t.platform ? ` Voie ${t.platform}` : '';
         if (svc._atTerminus) {
@@ -7645,45 +7708,16 @@ export class UI {
         contextLabel = 'Régulation du trafic';
         contextClass = 'ctx-regulation';
       } else if (svc.state === 'moving' && t.speed > 0) {
-        const target = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
-        if (target && svc.position) {
-          let tgtLat = target.lat, tgtLon = target.lon;
-          const ns = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
-          if (ns && this.game.voiePointManager) {
-            // Priority: use exact voie point, then station voie point by platform name
-            if (ns.voiePointId) {
-              const vp = this.game.voiePointManager.getVoiePointById(ns.voiePointId);
-              if (vp) { tgtLat = vp.lat; tgtLon = vp.lon; }
-            } else if (ns.platform) {
-              const svp = this.game.voiePointManager.getStationVoiePoint(target.id, ns.platform);
-              if (svp) { tgtLat = svp.lat; tgtLon = svp.lon; }
-            }
-          }
-          const dLat = (tgtLat - svc.position.lat) * 111;
-          const dLon = (tgtLon - svc.position.lon) * 111 * Math.cos(svc.position.lat * Math.PI / 180);
-          const distKm = Math.sqrt(dLat * dLat + dLon * dLon);
-          if (distKm < 0.3 && !_isWaypoint) {
+        if (nextArretStation && svc.position && nextDistKm != null) {
+          if (nextDistKm < 0.3) {
             contextLabel = 'À l\'approche';
             contextClass = 'ctx-approach';
-          } else {
-            // Annex 5 / phone note : contexte "se situe entre A et B".
-            const currentStops = typeof svc.getCurrentStops === 'function' ? svc.getCurrentStops() : [];
-            const curIdx = svc.currentStopIndex || 0;
-            const prevIdx = curIdx > 0 ? curIdx - 1 : 0;
-            const nextIdx = curIdx > 0 ? curIdx : Math.min(1, currentStops.length - 1);
-            const prevS = currentStops[prevIdx];
-            const nextS = currentStops[nextIdx];
-            const prevName = prevS?.stationName || this.game.world?.getStationById(prevS?.stationId)?.name || '';
-            const nextName = nextS?.stationName || this.game.world?.getStationById(nextS?.stationId)?.name || '';
-            if (prevName && nextName && prevName !== nextName) {
-              contextLabel = `Se situe entre ${prevName} et ${nextName}`;
-              contextClass = 'ctx-between';
-              nextDistKm = distKm;
-            } else if (nextName) {
-              contextLabel = `Au départ de ${nextName}`;
-              contextClass = 'ctx-between';
-              nextDistKm = distKm;
-            }
+          } else if (prevArretName && nextArretName && prevArretName !== nextArretName) {
+            contextLabel = `Se situe entre ${prevArretName} et ${nextArretName}`;
+            contextClass = 'ctx-between';
+          } else if (nextArretName) {
+            contextLabel = `En route vers ${nextArretName}`;
+            contextClass = 'ctx-between';
           }
         }
       }
@@ -7704,9 +7738,8 @@ export class UI {
         }
       }
 
-      // Next stop info — Annex 4: "Prochain arrêt : X - Arrivée prévue à XhX"
+      // Next stop info — Annex 4: "Prochain arrêt : X - Arrivée prévue à XhX" (skip waypoints/passages)
       const nextStop = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
-      const targetStation = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
       let nextInfo;
       if (svc._atTerminus && svc._nextDepartureTime != null) {
         const pt = this.game?.engine?.getParisTime?.();
@@ -7717,10 +7750,10 @@ export class UI {
         nextInfo = 'Service supprimé';
       } else if (svc.completed) {
         nextInfo = 'Service terminé';
-      } else if (nextStop && targetStation) {
+      } else if (nextArret && nextArretStation) {
         const fmtTime = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
-        const voie = (nextStop.platform && nextStop.stationId) ? ` Voie ${nextStop.platform}` : '';
-        const plannedArr = nextStop.arrivalTime ?? 0;
+        const voie = (nextArret.platform && nextArret.stationId) ? ` Voie ${nextArret.platform}` : '';
+        const plannedArr = nextArret.arrivalTime ?? 0;
         const actualArr = plannedArr + delayVal;
         const plannedStr = fmtTime(plannedArr);
         const actualStr = fmtTime(actualArr);
@@ -7728,7 +7761,7 @@ export class UI {
         const arrStr = delayVal !== 0
           ? `<span style="text-decoration:line-through;color:#888">${plannedStr}</span> <span style="color:#facc15;font-weight:600">${actualStr}</span>`
           : actualStr;
-        nextInfo = `Prochain arrêt : ${targetStation.name}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
+        nextInfo = `Prochain arrêt : ${nextArretStation.name}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
       } else if (nextStop) {
         nextInfo = `→ ...`;
       } else {
