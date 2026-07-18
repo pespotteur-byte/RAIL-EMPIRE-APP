@@ -3306,24 +3306,25 @@ export class UI {
     this._updateManualUI();
   }
 
-  _startManualRetrace(leg, controlIndex) {
+  _startManualRetrace(leg, routeIndex) {
     const route = this._manualRoutes[leg];
     if (!route || route.length < 3) return;
-    const clicked = route[controlIndex];
-    if (!clicked) return;
-    if (!clicked.control) clicked.control = true;
-    const controls = this._extractRouteControls(route);
-    const ci = controls.indexOf(clicked);
-    if (ci <= 0 || ci >= controls.length - 1) return;
-    const startControl = controls[ci - 1];
-    const endControl = controls[ci + 1];
-    const startIdx = route.indexOf(startControl);
-    const endIdx = route.indexOf(endControl);
-    if (startIdx < 0 || endIdx < 0 || startIdx >= endIdx) return;
+    let startIdx = routeIndex;
+    let endIdx = routeIndex;
+    // Find the previous control point (or start of route)
+    while (startIdx >= 0 && !route[startIdx]?.control) startIdx--;
+    if (startIdx < 0) startIdx = 0;
+    if (!route[startIdx].control) route[startIdx].control = true;
+    // Find the next control point (or end of route)
+    endIdx = startIdx + 1;
+    while (endIdx < route.length && !route[endIdx]?.control) endIdx++;
+    if (endIdx >= route.length) endIdx = route.length - 1;
+    if (!route[endIdx].control) route[endIdx].control = true;
+    if (startIdx >= endIdx) return;
     this._manualMode = true;
     this._manualRetraceLeg = leg;
-    this._manualStartCoords = startControl;
-    this._manualEndCoords = endControl;
+    this._manualStartCoords = route[startIdx];
+    this._manualEndCoords = route[endIdx];
     this._manualControlPoints = [];
     // Strip the old segment between the fixed controls; it will be redrawn by hand.
     this._manualRoutes[leg] = [...route.slice(0, startIdx + 1), ...route.slice(endIdx)];
