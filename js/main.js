@@ -35,7 +35,7 @@ import { ITEModules } from './ite-modules.js?v=1784250038';
 import { IndustrialClients } from './industrial-clients.js?v=1784250038';
 import { ShuntingManager } from './shunting.js?v=1784250038';
 import { haversineDistance } from './simulation.js?v=1784250038';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1786961000';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1786965000';
 import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784250038';
 import { adminSync } from './admin-sync.js?v=1784250038';
 
