@@ -2870,6 +2870,9 @@ export class UI {
           // End of a trace-point drag: recompute travel times from this leg onward.
           await this._recalcAfterTraceEdit(dw.leg);
           this.game.saveState();
+        } else if (this._manualEndCoords && dw.control === this._manualEndCoords) {
+          // In a manual retrace, clicking (not dragging) the target anchor finishes the segment.
+          await this._finishManualRetrace();
         }
         schedDrag = false; schedDragStart = null; totalDragDist = 0;
         return;
