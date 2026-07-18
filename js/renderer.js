@@ -89,10 +89,12 @@ export class Renderer {
         voie: document.getElementById('toggle-voie-points'),
         orm: document.getElementById('toggle-orm'),
         basic: document.getElementById('toggle-basic'),
+        satellite: document.getElementById('toggle-satellite'),
         weather: document.getElementById('toggle-weather'),
       };
       // Sync toggle inputs with the initial TileMap state
       if (this._toggleEls.weather) this._toggleEls.weather.checked = this.tileMap.weatherEnabled;
+      if (this._toggleEls.satellite) this._toggleEls.satellite.checked = this.tileMap.satelliteEnabled;
       if (this._toggleEls.basic) this._toggleEls.basic.checked = this.tileMap.basicMode;
       if (this._toggleEls.orm) this._toggleEls.orm.checked = this.tileMap.railEnabled;
 
@@ -118,6 +120,11 @@ export class Renderer {
       if (this._toggleEls.weather) {
         this._toggleEls.weather.addEventListener('change', () => {
           this.tileMap.setWeatherEnabled(this._toggleEls.weather.checked);
+        });
+      }
+      if (this._toggleEls.satellite) {
+        this._toggleEls.satellite.addEventListener('change', () => {
+          this.tileMap.setSatelliteEnabled(this._toggleEls.satellite.checked);
         });
       }
     }

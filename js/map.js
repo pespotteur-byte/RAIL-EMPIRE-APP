@@ -526,13 +526,19 @@ export class TileMap {
     return this.satelliteEnabled;
   }
 
-  // Single météo switch: satellite base + radar + clouds on/off together
+  // Météo = radar + nuages (satellite reste indépendant)
   setWeatherEnabled(enabled) {
     if (this.weatherEnabled === enabled) return;
     this.weatherEnabled = enabled;
-    this.satelliteEnabled = enabled;
     this.radarEnabled = enabled;
     this.cloudEnabled = enabled;
+    this._tileBufferValid = false;
+    this._dirty = true;
+  }
+
+  setSatelliteEnabled(enabled) {
+    if (this.satelliteEnabled === enabled) return;
+    this.satelliteEnabled = enabled;
     for (const [k] of this.tileCache) {
       if (k.endsWith('/b') || k.endsWith('/s') || k.endsWith('/l')) this.tileCache.delete(k);
     }

@@ -890,23 +890,33 @@ export class UI {
       return `<div class="lvp-stop${cur}"><div class="lvp-stop-left"><div class="lvp-stop-time">${actual}</div>${plannedHtml}</div><div class="lvp-stop-info"><div class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${voie ? ` <span class="lvp-stop-voie">${voie}</span>` : ''}</div>${dwell > 0 ? `<div class="lvp-stop-dwell">${dwell} min d'arrêt</div>` : ''}</div></div>`;
     }).join('');
 
+    const isArret = (s) => s && s.type === 'arret' && s.stationId;
     const upcoming = stops.slice(curIdx)
-      .filter(s => s.stationId)
+      .filter(isArret)
       .map(s => world.getStationById(s.stationId)?.name)
       .filter(Boolean);
     const bandeau = upcoming.length ? `Prochains arrêts : ${upcoming.join('  •  ')}` : 'Service terminé';
+
+    const stopName = (s) => s?.stationId ? (world.getStationById(s.stationId)?.name || '—') : (s ? 'Waypoint' : '—');
+    const nextArretFrom = (fromIndex) => {
+      for (let i = fromIndex; i < stops.length; i++) if (isArret(stops[i])) return stops[i];
+      return null;
+    };
 
     // Annex 5 — detailed situational info
     const prevStop = stops[prevIdx];
     const curStop = stops[curStationIdx];
     const nextStop = stops[nextIdx];
-    const prevName = prevStop?.stationId ? (world.getStationById(prevStop.stationId)?.name || '—') : (prevStop ? 'Waypoint' : '—');
-    const curName = curStop?.stationId ? (world.getStationById(curStop.stationId)?.name || '—') : (curStop ? 'Waypoint' : '—');
-    let nextName = nextStop?.stationId ? (world.getStationById(nextStop.stationId)?.name || '—') : (nextStop ? 'Waypoint' : '—');
+    const prevName = stopName(prevStop);
+    const curName = stopName(curStop);
+    let nextName = stopName(nextStop);
     if (svc.state === 'moving') {
       nextName = curName;
     }
-    const destName = stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—';
+    const nextArret = nextArretFrom(svc.state === 'moving' ? curIdx : (nextIdx >= 0 ? nextIdx : curIdx));
+    if (nextName === 'Waypoint' && nextArret) nextName = world.getStationById(nextArret.stationId)?.name || '—';
+    const lastArret = stops.filter(isArret).pop();
+    const destName = lastArret ? (world.getStationById(lastArret.stationId)?.name || '—') : (stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—');
     const displayNext = svc.state === 'moving' ? curStop : nextStop;
     const nextArrTime = displayNext ? (displayNext.arrivalTime ?? displayNext.departureTime) : null;
     const nextArrLabel = nextArrTime != null
@@ -2369,6 +2379,7 @@ export class UI {
     this._traceEditMode = false;
     this._traceSelectedPoint = null;
     this._traceDragging = null;
+    this._manualControlDrag = null;
     this._updateManualUI();
 
     document.getElementById('modal-schedule')?.classList.remove('hidden');
@@ -2615,11 +2626,16 @@ export class UI {
             const isSelected = this._traceSelectedPoint && this._traceSelectedPoint.leg === leg && this._traceSelectedPoint.control === pt;
             const isControl = pt && pt.control;
             ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : 'rgba(255,255,255,0.7)'));
+            const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 2.5));
             ctx.beginPath();
-            ctx.arc(p.x, p.y, isSelected ? 7 : (isEnd ? 5 : (isControl ? 4 : 2.5)), 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
             ctx.fill();
             if (isSelected || isControl) {
-              ctx.strokeStyle = isSelected ? '#fff' : '#38bdf8'; ctx.lineWidth = 1.5; ctx.stroke();
+              ctx.strokeStyle = isSelected ? '#fff' : '#38bdf8'; ctx.lineWidth = 1.5;
+              ctx.stroke();
+              // halo for grab visibility
+              ctx.beginPath(); ctx.arc(p.x, p.y, radius + 3, 0, Math.PI * 2);
+              ctx.strokeStyle = 'rgba(56,189,248,0.35)'; ctx.lineWidth = 2; ctx.stroke();
             }
           }
         }
@@ -2641,8 +2657,10 @@ export class UI {
         ctx.setLineDash([]);
         for (const pt of [this._manualStartCoords, ...this._manualControlPoints]) {
           const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
-          ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
-          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(56,189,248,0.4)'; ctx.lineWidth = 2; ctx.stroke();
         }
         if (this._manualEndCoords) {
           const p = tileMap.worldToScreen(this._manualEndCoords.lat, this._manualEndCoords.lon, canvas.width, canvas.height);
@@ -2688,33 +2706,65 @@ export class UI {
 
     canvas.onmousedown = (e) => {
       const x = e.offsetX, y = e.offsetY;
-      // 1) Trace point drag: grab a 50 m vertex to reshape the route.
-      const traceHit = this._findNearestTracePoint(x, y, tileMap, canvas);
-      if (traceHit && this._traceEditMode) {
-        const route = this._manualRoutes[traceHit.leg];
-        let control = traceHit.pt && traceHit.pt.control ? traceHit.pt : null;
-        if (e.ctrlKey || e.button === 2) {
-          this._removeTracePoint(traceHit.leg, traceHit.index);
-          this._traceSelectedPoint = null;
-        } else {
-          if (!control) {
-            // Dragging a densified point creates a new control point at that location.
-            control = this._insertControlAt(traceHit.leg, traceHit.index, traceHit.pt.lat, traceHit.pt.lon);
-          }
-          this._traceSelectedPoint = { leg: traceHit.leg, control };
-          this._traceDragging = { leg: traceHit.leg, control, startX: x, startY: y };
-          requestDraw();
-        }
-        schedDrag = false; schedDragStart = null; totalDragDist = 0;
-        return;
-      }
       schedDrag = true;
       schedDragStart = { x, y };
       totalDragDist = 0;
+
+      // 1) Manual-trace in-progress control point drag.
+      if (this._manualMode && this._manualStartCoords) {
+        const mp = this._findNearestManualControlPoint(x, y, tileMap, canvas);
+        if (mp) {
+          if (e.ctrlKey || e.button === 2) {
+            this._manualControlPoints.splice(mp.index, 1);
+            requestDraw();
+          } else {
+            this._manualControlDrag = { index: mp.index, startX: x, startY: y, moved: false };
+          }
+          schedDrag = false; schedDragStart = null; totalDragDist = 0;
+          return;
+        }
+      }
+
+      // 2) Existing route control-point drag (no edit-mode toggle needed).
+      const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
+      if (controlHit && !this._manualMode) {
+        // Don't grab a route node if a station marker is right under the cursor.
+        let nearStation = false;
+        for (const st of world.stations) {
+          const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+          if (Math.hypot(p.x - x, p.y - y) < 14) { nearStation = true; break; }
+        }
+        if (!nearStation) {
+          if (e.ctrlKey || e.button === 2) {
+            this._removeTraceControl(controlHit.leg, controlHit.control);
+            this._traceSelectedPoint = null;
+          } else {
+            this._traceSelectedPoint = { leg: controlHit.leg, control: controlHit.control };
+            this._traceDragging = { leg: controlHit.leg, control: controlHit.control, startX: x, startY: y, moved: false };
+            requestDraw();
+          }
+          schedDrag = false; schedDragStart = null; totalDragDist = 0;
+          return;
+        }
+      }
     };
 
     canvas.onmousemove = (e) => {
+      if (this._manualControlDrag) {
+        const dx = e.offsetX - this._manualControlDrag.startX;
+        const dy = e.offsetY - this._manualControlDrag.startY;
+        if (!this._manualControlDrag.moved && Math.hypot(dx, dy) < 4) return;
+        this._manualControlDrag.moved = true;
+        const w = tileMap.screenToWorld(e.offsetX, e.offsetY, canvas.width, canvas.height);
+        this._moveManualControlPoint(this._manualControlDrag.index, w.lat, w.lon);
+        requestDraw();
+        return;
+      }
       if (this._traceDragging) {
+        const dx = e.offsetX - this._traceDragging.startX;
+        const dy = e.offsetY - this._traceDragging.startY;
+        if (!this._traceDragging.moved && Math.hypot(dx, dy) < 4) return;
+        this._traceDragging.moved = true;
         const w = tileMap.screenToWorld(e.offsetX, e.offsetY, canvas.width, canvas.height);
         this._moveTracePoint(this._traceDragging.leg, this._traceDragging.control, w.lat, w.lon);
         requestDraw();
@@ -2732,8 +2782,9 @@ export class UI {
       // Hover feedback
       const x = e.offsetX, y = e.offsetY;
       let cursor = 'default';
-      const traceHit = this._findNearestTracePoint(x, y, tileMap, canvas);
-      if (traceHit) cursor = 'grab';
+      const manualPt = (this._manualMode && this._manualStartCoords) ? this._findNearestManualControlPoint(x, y, tileMap, canvas) : null;
+      const controlHit = (this._manualMode) ? null : this._findNearestControlPoint(x, y, tileMap, canvas);
+      if (manualPt || controlHit) cursor = 'grab';
       else {
         if (this.game.voiePointManager) {
           for (const vp of this.game.voiePointManager.getAll()) {
@@ -2782,11 +2833,25 @@ export class UI {
         return;
       }
 
+      if (this._manualControlDrag) {
+        const wasMoved = this._manualControlDrag.moved;
+        this._manualControlDrag = null;
+        if (wasMoved) {
+          schedDrag = false; schedDragStart = null; totalDragDist = 0;
+          return;
+        }
+        // A simple click on an in-progress control point does nothing.
+        schedDrag = false; schedDragStart = null; totalDragDist = 0;
+        return;
+      }
+
       if (this._traceDragging) {
         const dw = this._traceDragging; this._traceDragging = null;
-        // End of a trace-point drag: recompute travel times from this leg onward.
-        await this._recalcAfterTraceEdit(dw.leg);
-        this.game.saveState();
+        if (dw.moved) {
+          // End of a trace-point drag: recompute travel times from this leg onward.
+          await this._recalcAfterTraceEdit(dw.leg);
+          this.game.saveState();
+        }
         schedDrag = false; schedDragStart = null; totalDragDist = 0;
         return;
       }
@@ -2805,16 +2870,6 @@ export class UI {
               await this._finishManualRetrace();
             } else {
               this._addManualPoint(worldPos.lat, worldPos.lon);
-            }
-            schedDrag = false; schedDragStart = null;
-            return;
-          }
-
-          // If the user clicks an existing internal control point, delete it and enter retrace.
-          const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
-          if (controlHit) {
-            if (confirm('Supprimer ce point de contrôle et retracer manuellement le segment entre les points fixes ?')) {
-              this._startManualRetrace(controlHit.leg, controlHit.index);
             }
             schedDrag = false; schedDragStart = null;
             return;
@@ -2852,6 +2907,9 @@ export class UI {
             }
             const lastStop = this.schedStops[this.schedStops.length - 1];
             this._manualStartCoords = this._getStopCoords(lastStop);
+            const rameId2 = document.getElementById('sched-rame')?.value;
+            const rame2 = this.game.rameManager.getById(rameId2);
+            this._manualStartCoords.maxSpeed = rame2 ? rame2.maxSpeed : 30;
             this._manualControlPoints = [];
             this._updateManualUI();
             if (this._drawSchedMap) this._drawSchedMap();
@@ -2983,6 +3041,7 @@ export class UI {
     this._manualStartCoords = null;
     this._manualEndCoords = null;
     this._manualRetraceLeg = null;
+    this._manualControlDrag = null;
     this._updateManualUI();
     this._recalcPreviewRoutes();
   }
@@ -3067,6 +3126,7 @@ export class UI {
     }
     this._traceSelectedPoint = null;
     this._traceDragging = null;
+    this._manualControlDrag = null;
     this._manualMode = false;
     this._manualControlPoints = [];
     this._manualStartCoords = null;
@@ -4061,6 +4121,28 @@ export class UI {
     this._manualRoutes[leg] = this._densifyRoute(controls);
   }
 
+  // Find the nearest in-progress manual control point (during manual trace drawing).
+  _findNearestManualControlPoint(x, y, tileMap, canvas) {
+    if (!this._manualControlPoints || this._manualControlPoints.length === 0) return null;
+    let best = null, bestDist = Infinity;
+    for (let i = 0; i < this._manualControlPoints.length; i++) {
+      const pt = this._manualControlPoints[i];
+      const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestDist) { bestDist = d; best = { index: i, pt }; }
+    }
+    return bestDist <= 14 ? best : null;
+  }
+
+  // Move an in-progress manual trace control point.
+  _moveManualControlPoint(index, lat, lon) {
+    const pt = this._manualControlPoints[index];
+    if (!pt) return;
+    const snapped = this._snapToTrack(lat, lon);
+    pt.lat = snapped ? snapped.lat : lat;
+    pt.lon = snapped ? snapped.lon : lon;
+  }
+
   async _recalcAfterTraceEdit(leg) {
     // Recompute travel time for the affected leg and all subsequent stops.
     await this.recalcStopsFrom(leg + 1);
@@ -4250,6 +4332,7 @@ export class UI {
     this._insertAfterIndex = index;
     this._traceSelectedPoint = null;
     this._traceDragging = null;
+    this._manualControlDrag = null;
     this._updateManualUI();
   }
 
