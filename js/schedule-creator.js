@@ -412,7 +412,7 @@ export class ActiveService {
     const traction = this.rame?.traction || 'none';
     const parts = traction.split('+').map(s => s.trim().toLowerCase()).filter(Boolean);
     if (parts.length === 0 || parts.includes('none')) return false;
-    const electric = new Set(['1.5kv', '3kv', '15kv', '25kv', '3e rail', '3e_rail']);
+    const electric = new Set(['1.5kv', '3kv', '15kv', '25kv', '3e rail', '3e_rail', 'electrique', 'electric']);
     const self = new Set(['diesel', 'vapeur', 'steam']);
     if (parts.some(p => self.has(p))) return false;
     if (parts.some(p => electric.has(p))) return true;
@@ -3041,6 +3041,21 @@ export class ScheduleCreator {
 
   isRameInUse(rameId, excludeId, timeOfDay) {
     if (!rameId) return false;
+
+    // Determine the excluded service's own first departure so we can order
+    // multiple waiting services instead of mutually blocking each other.
+    const excludedSvc = this.getActiveServices().find(s => s.id === excludeId);
+    const excludedFirst = excludedSvc?._getCurrentFirstStop();
+    const myDep = excludedFirst?.departureTime ?? excludedFirst?.time;
+    const blocks = (otherId, otherDep) => {
+      if (otherId === excludeId) return false;
+      if (myDep == null || otherDep == null) return true;
+      const d = timeDiff(otherDep, myDep);
+      if (d < 0) return true;               // other departs earlier
+      if (d === 0 && otherId < excludeId) return true; // same time, lower id first
+      return false;
+    };
+
     // Fallback if beginTick was not called (e.g. unit tests calling directly).
     if (!this._rameUsage || this._indexTime !== timeOfDay) {
       for (const svc of this.getActiveServices()) {
@@ -3053,7 +3068,7 @@ export class ScheduleCreator {
           const firstDep = currentFirst?.departureTime ?? currentFirst?.time;
           if (firstDep != null) {
             const diff = timeDiff(timeOfDay, firstDep);
-            if (diff >= -2 && diff <= 5) return true;
+            if (diff >= -2 && diff <= 5 && blocks(svc.id, firstDep)) return true;
           }
         }
       }
@@ -3065,7 +3080,7 @@ export class ScheduleCreator {
     for (const [id, dep] of entry.waiting) {
       if (id === excludeId) continue;
       const diff = timeDiff(timeOfDay, dep);
-      if (diff >= -2 && diff <= 5) return true;
+      if (diff >= -2 && diff <= 5 && blocks(id, dep)) return true;
     }
     return false;
   }

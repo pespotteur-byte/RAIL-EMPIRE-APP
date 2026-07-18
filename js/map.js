@@ -78,7 +78,7 @@ export class TileMap {
     this._radarMaxZoom = 7; // RainViewer max zoom officiel
 
     // Cloud overlay — NASA GIBS true-color satellite (XIV)
-    this.cloudEnabled = false;
+    this.cloudEnabled = true;
     this._cloudTileUrl = null;
     this._cloudMaxZoom = 9; // GIBS VIIRS/NOAA-20 True Color max zoom
   }

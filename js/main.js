@@ -808,6 +808,9 @@ class RailEmpire {
     this.incidentManager.update(timeOfDay, activeSchedules, this.depotManager, this.world, dateStr, this.weather?.season);
     this.worksManager.update(dateStr, timeOfDay, this.world);
 
+    // Auto-assign conductors BEFORE scheduleTick so a waiting service can depart immediately
+    try { this.staffManager.tickConductors(activeSchedules, timeOfDay, dateStr); } catch(e) { /* graceful */ }
+
     // scheduleTick: moving trains already have their state managed by moveUpdate,
     // so only call scheduleTick on non-moving trains (waiting, stopped_at_station, etc.)
     for (let i = 0; i < activeSchedules.length; i++) {
@@ -858,8 +861,6 @@ class RailEmpire {
       this.cantonManager.cleanup();
     }
 
-    // Auto-assign conductors to services (3×8 shifts, 24h weekly rest)
-    try { this.staffManager.tickConductors(activeSchedules, timeOfDay, dateStr); } catch(e) { /* graceful */ }
     // Contrôleurs: random ticket inspections on passenger trains
     try { this.staffManager.tickControleurs(this.economy, activeSchedules, timeOfDay); } catch(e) { /* graceful */ }
 
@@ -908,7 +909,7 @@ class RailEmpire {
       }
       // XIV — satellite true color mis à jour chaque minute
       if (this.renderer?.tileMap) {
-        this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl());
+        this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl(this.weather.getLatestCloudPath()));
       }
     } catch(e) { /* graceful */ }
 
@@ -978,7 +979,7 @@ class RailEmpire {
               const rp = this.weather.getLatestRadarPath();
               if (rp) this.renderer.tileMap.setRadarTileUrl(this.weather.getRadarTileUrl(rp));
               // XIV — satellite true color mis à jour toutes les 2 s
-              this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl());
+              this.renderer.tileMap.setCloudTileUrl(this.weather.getCloudTileUrl(this.weather.getLatestCloudPath()));
             } catch(e) { /* graceful */ }
           }
           this.renderer.render(this.world, allVisibleServices, this.engine, this.depotManager, this.lineManager, this.platformManager, this.voiePointManager);

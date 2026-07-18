@@ -1814,6 +1814,7 @@ export class UI {
     if (q) items = items.filter(i =>
       (i.name || '').toLowerCase().includes(q) ||
       (i.seriesName || '').toLowerCase().includes(q) ||
+      (i.notes || '').toLowerCase().includes(q) ||
       (i.category || '').toLowerCase().includes(q) ||
       (i.traction || '').toLowerCase().includes(q) ||
       (i.wagonSubCategory || '').toLowerCase().includes(q));
@@ -1845,6 +1846,7 @@ export class UI {
           <div class="stock-line"><span class="stock-label">Charge :</span> ${item.passengerCapacity} places · ${item.freightCapacity}t fret${cargoTxt}</div>
           ${item.purchasePrice ? `<div class="stock-line"><span class="stock-label">Prix :</span> ${item.purchasePrice.toLocaleString('fr-FR')} €</div>` : ''}
           ${item.seriesName ? `<div class="stock-line"><span class="stock-label">Série :</span> ${item.seriesName}</div>` : ''}
+          ${item.notes ? `<div class="stock-line" style="color:var(--text2)"><span class="stock-label">Note :</span> ${item.notes}</div>` : ''}
         </div>
         <div class="card-actions">
           <button class="btn-sm" onclick="game.ui.editStock('${item.id}')">Modifier</button>
@@ -1962,6 +1964,7 @@ export class UI {
     if (query) items = items.filter(i =>
       (i.name || '').toLowerCase().includes(query) ||
       (i.seriesName || '').toLowerCase().includes(query) ||
+      (i.notes || '').toLowerCase().includes(query) ||
       (i.category || '').toLowerCase().includes(query) ||
       (i.traction || '').toLowerCase().includes(query) ||
       (i.wagonSubCategory || '').toLowerCase().includes(query));
@@ -1979,7 +1982,7 @@ export class UI {
       return;
     }
     container.innerHTML = view.map(item => `
-        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')" title="${item.name} — ${item.category}, ${item.maxSpeed} km/h, ${item.length}m">
+        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')" title="${item.name} — ${item.category}${item.notes ? ' — ' + item.notes : ''}, ${item.maxSpeed} km/h, ${item.length}m">
           ${item.imageData ? `<img src="${item.imageData}" loading="lazy" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
           <span>${item.name}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
         </div>
@@ -2234,6 +2237,7 @@ export class UI {
   setupSchedulePage() {
     document.getElementById('btn-new-schedule')?.addEventListener('click', () => this.openScheduleModal());
     document.getElementById('btn-save-schedule')?.addEventListener('click', () => this.saveSchedule());
+    document.getElementById('btn-auto-ar')?.addEventListener('click', () => this._calcAutoAR());
     document.getElementById('sched-sort')?.addEventListener('change', () => this.renderSchedulesList());
     document.getElementById('btn-sched-manual')?.addEventListener('click', () => this._toggleManualMode());
     document.getElementById('btn-sched-clear-manual')?.addEventListener('click', () => this._clearManualTrace());
@@ -2375,9 +2379,6 @@ export class UI {
     if (editService) rameSelect.value = editService.rameId;
     rameSelect.onchange = () => { this.recalcStopsFrom(1); this._renderContractPicker(); };
 
-    // Auto 24h button
-    document.getElementById('btn-auto-ar')?.addEventListener('click', () => this._calcAutoAR());
-
     this._renderContractPicker(editService?.assignedContractId || '');
     this.renderSchedStops();
     this.setupSchedMap();
@@ -2427,6 +2428,7 @@ export class UI {
   setupSchedMap() {
     const canvas = document.getElementById('sched-map-canvas');
     if (!canvas) return;
+    if (this._schedMapInterval) clearInterval(this._schedMapInterval);
     const container = canvas.parentElement;
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight || 500;
@@ -2862,10 +2864,8 @@ export class UI {
           } else if (closest) {
             await this.addSchedStop(closest);
           } else {
-            // SC-XX — éviter les points de contrôle ajoutés par accident en mode manuel.
-            if (confirm('Ajouter un point de contrôle manuel (50 m) à cet endroit ?')) {
-              this._addManualPoint(worldPos.lat, worldPos.lon);
-            }
+            // SC-XX — ajout direct d'un point de contrôle manuel pour un tracé libre "My Maps".
+            this._addManualPoint(worldPos.lat, worldPos.lon);
           }
           schedDrag = false; schedDragStart = null;
           return;
@@ -2963,6 +2963,11 @@ export class UI {
     } else {
       this._manualMode = true;
       this._manualStartCoords = this.schedStops.length > 0 ? this._getStopCoords(this.schedStops[this.schedStops.length - 1]) : null;
+      if (this._manualStartCoords) {
+        const rameId = document.getElementById('sched-rame')?.value;
+        const rame = this.game.rameManager.getById(rameId);
+        this._manualStartCoords.maxSpeed = rame ? rame.maxSpeed : 30;
+      }
       this._manualEndCoords = null;
       this._manualRetraceLeg = null;
       this._manualControlPoints = [];
@@ -3195,12 +3200,13 @@ export class UI {
     if (!this._manualMode || !this._manualStartCoords) return;
     const endCoords = this._getStopCoords(endStop);
     if (!endCoords) return;
+    endCoords.maxSpeed = maxSpeed;
     const route = this._buildManualRoute(this._manualStartCoords, this._manualControlPoints, endCoords, maxSpeed);
     const legIdx = Math.max(0, this.schedStops.length - 1); // leg between last existing stop and endStop
     this._manualRoutes[legIdx] = route;
-    this._manualMode = false;
+    // Stay in manual mode and continue from the new stop (My Maps style)
     this._manualControlPoints = [];
-    this._manualStartCoords = null;
+    this._manualStartCoords = endCoords;
     this._manualEndCoords = null;
     this._manualRetraceLeg = null;
     this._updateManualUI();
@@ -5548,6 +5554,7 @@ export class UI {
   }
 
   setupSillonMap() {
+    if (this._sillonMapInterval) { clearInterval(this._sillonMapInterval); this._sillonMapInterval = null; }
     const canvas = document.getElementById('sillon-map-canvas');
     if (!canvas) return;
     const container = canvas.parentElement;
@@ -5811,6 +5818,7 @@ export class UI {
   }
 
   setupITEMap() {
+    if (this._iteMapInterval) { clearInterval(this._iteMapInterval); this._iteMapInterval = null; }
     const canvas = document.getElementById('ite-map-canvas');
     if (!canvas) return;
     const container = canvas.parentElement;
@@ -6681,6 +6689,7 @@ export class UI {
   }
 
   setupWorksMap() {
+    if (this._worksMapInterval) { clearInterval(this._worksMapInterval); this._worksMapInterval = null; }
     const canvas = document.getElementById('works-map-canvas');
     if (!canvas) return;
     const container = canvas.parentElement;

@@ -177,11 +177,11 @@ header {
 .tc-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; font-size: 11px; }
 .tc-status { color: #22c55e; font-weight: 600; font-size: 10px; margin-right: auto; }
 .tc-delay { font-weight: 600; font-size: 10px; }
-.tc-scroll { overflow: hidden; white-space: nowrap; max-width: 100%; }
-.tc-scroll-text { display: inline-block; animation: tc-marquee 10s linear infinite; padding-left: 100%; }
-@keyframes tc-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-/* pause on hover so the user can read */
-.tc-scroll:hover .tc-scroll-text { animation-play-state: paused; }
+.tc-scroll { overflow-x: auto; overflow-y: hidden; white-space: nowrap; max-width: 100%; scrollbar-width: thin; }
+.tc-scroll::-webkit-scrollbar { height: 4px; }
+.tc-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+.tc-scroll-text { display: inline-block; }
+.tc-scroll .tc-name { max-width: none; }
 .tc-speed { color: var(--green); font-weight: 700; white-space: nowrap; }
 .tc-next { color: var(--text3); font-size: 9px; }
 /* S2: Scrollable train image zone */
@@ -810,7 +810,7 @@ select option { background: var(--input-bg); color: var(--text); }
 
 /* LVM-03/04/06 — panneau détail du train sélectionné (annexes 4-5) */
 .livemap-panel {
-  position:absolute; top:10px; left:10px; z-index:7;
+  position:absolute; top:10px; left:10px; z-index:11;
   width:300px; max-height:72vh; overflow:hidden;
   display:flex; flex-direction:column;
   background:#000; border:1px solid #333;
@@ -832,10 +832,11 @@ select option { background: var(--input-bg); color: var(--text); }
 .lvp-delay-reason { padding:4px 10px; font-size:10px; background:#7f1d1d; color:#fff; border-bottom:1px solid #333; }
 .lvp-next { padding:4px 10px; font-size:10px; background:#0a0a0a; border-bottom:1px solid #333; color:#fff; }
 .lvp-payload { padding:4px 10px; font-size:10px; background:#0a0a0a; border-bottom:1px solid #333; color:#ccc; }
-/* LVM-03 — bandeau défilant d'indications */
-.lvp-bandeau { overflow:hidden; white-space:nowrap; background:#0b1220; border-bottom:1px solid #333; }
-.lvp-bandeau-track { display:inline-block; padding:4px 0; font-size:11px; color:#fbbf24; animation:lvpMarquee 14s linear infinite; }
-@keyframes lvpMarquee { from { transform:translateX(100%); } to { transform:translateX(-100%); } }
+/* LVM-03 — bandeau défilant d'indications (scroll natif si le texte dépasse) */
+.lvp-bandeau { overflow-x:auto; overflow-y:hidden; white-space:nowrap; background:#0b1220; border-bottom:1px solid #333; scrollbar-width:thin; }
+.lvp-bandeau::-webkit-scrollbar { height:4px; }
+.lvp-bandeau::-webkit-scrollbar-thumb { background:#475569; border-radius:2px; }
+.lvp-bandeau-track { display:inline-block; padding:4px 10px; font-size:11px; color:#fbbf24; }
 .lvp-stops { overflow-y:auto; padding:4px 0; background:#000; }
 .lvp-stop { display:flex; align-items:stretch; gap:8px; padding:5px 10px; font-size:11px; color:#fff; position:relative; }
 .lvp-stop.cur { background:rgba(250,204,21,.14); }

@@ -7,18 +7,28 @@ export class RollingStockItem {
     this.category = data.category || 'locomotive';
     this.traction = data.traction || 'none';
     this.maxSpeed = data.maxSpeed || 160;
-    this.mass = data.mass != null ? data.mass : (data.tonnage || 80); // tonnes (empty mass)
-    this.power = data.power || 0; // kW (only for locomotives/automotrices)
+    // Robust defaults: a zero/null mass or tonnage breaks train physics.
+    const defaultMass = this.category === 'wagon' ? 20 : (this.category === 'voiture' ? 30 : 80);
+    this.mass = data.mass || data.tonnage || defaultMass; // tonnes (empty mass)
+    this.power = data.power || ((this.category === 'locomotive' || this.category === 'automotrice') ? 1000 : 0); // kW
     this.passengerCapacity = data.passengerCapacity || 0;
     this.freightCapacity = data.freightCapacity || 0;
     // Annexe 7 : tonnage = masse à vide + capacité fret (wagons), sinon masse à vide.
-    this.tonnage = data.tonnage != null ? data.tonnage : (this.category === 'wagon' ? this.mass + this.freightCapacity : this.mass);
+    this.tonnage = data.tonnage || (this.category === 'wagon' ? this.mass + this.freightCapacity : this.mass);
     this.length = data.length || 20;
     this.imageData = data.imageData || null;
     // S12: Train identification
     this.seriesName = data.seriesName || ''; // e.g. 'BB 26000'
     this.numberStart = data.numberStart || 1;  // e.g. 26001
-    this.purchasePrice = data.purchasePrice || 0; // euros
+    this.notes = data.notes || ''; // description from MLG / source
+    // Price rule: power × 1000 for locomotives/automotrices, capacity × 100 for wagons/coaches.
+    if (data.purchasePrice) {
+      this.purchasePrice = data.purchasePrice;
+    } else if (this.category === 'locomotive' || this.category === 'automotrice') {
+      this.purchasePrice = this.power * 1000;
+    } else {
+      this.purchasePrice = (this.passengerCapacity + this.freightCapacity) * 100;
+    }
     this.cargoTypes = data.cargoTypes || []; // allowed cargo type keys (wagon only)
     this.wagonSubCategory = data.wagonSubCategory || ''; // Annexe 7
     this.isDrivingTrailer = data.isDrivingTrailer || false; // voiture-pilote: flip image in rame formation
@@ -69,7 +79,7 @@ export class RollingStockManager {
     if (!item) return null;
     const editable = ['name', 'category', 'traction', 'maxSpeed', 'tonnage', 'mass',
       'power', 'passengerCapacity', 'freightCapacity', 'length', 'imageData',
-      'seriesName', 'numberStart', 'purchasePrice', 'cargoTypes', 'wagonSubCategory', 'isDrivingTrailer'];
+      'seriesName', 'numberStart', 'notes', 'purchasePrice', 'cargoTypes', 'wagonSubCategory', 'isDrivingTrailer'];
     for (const k of editable) {
       if (k in data && data[k] !== undefined) item[k] = data[k];
     }
@@ -103,6 +113,7 @@ export class RollingStockManager {
         imageData: i.imageData,
         seriesName: i.seriesName || '',
         numberStart: i.numberStart || 1,
+        notes: i.notes || '',
         purchasePrice: i.purchasePrice || 0,
         cargoTypes: i.cargoTypes || [],
         wagonSubCategory: i.wagonSubCategory || '',

@@ -742,6 +742,34 @@ export class ORMClient {
     return { lat: ax + t * dx, lon: ay + t * dy };
   }
 
+  // Snap to the nearest existing node OR project onto the nearest way segment
+  // and split that segment so the projected point becomes a real graph node.
+  _snapAndSplitLocalWay(ways, lat, lon, maxDistKm = 5) {
+    let bestNode = null, bestNodeDist = Infinity;
+    for (const way of ways) {
+      for (const p of way.geometry) {
+        const d = haversine(lat, lon, p.lat, p.lon);
+        if (d < bestNodeDist) { bestNodeDist = d; bestNode = p; }
+      }
+    }
+    let bestSeg = null, bestSegDist = Infinity;
+    for (const way of ways) {
+      const geom = way.geometry;
+      for (let i = 0; i < geom.length - 1; i++) {
+        const proj = this._projectOnSegment(lat, lon, geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
+        const d = haversine(lat, lon, proj.lat, proj.lon);
+        if (d < bestSegDist) { bestSegDist = d; bestSeg = { way, idx: i, proj }; }
+      }
+    }
+    const bestDist = Math.min(bestNodeDist, bestSegDist);
+    if (bestDist > maxDistKm) return null;
+    if (bestNodeDist <= bestSegDist && bestNode) {
+      return { lat: bestNode.lat, lon: bestNode.lon, key: `${bestNode.lat.toFixed(6)},${bestNode.lon.toFixed(6)}`, split: false };
+    }
+    bestSeg.way.geometry.splice(bestSeg.idx + 1, 0, bestSeg.proj);
+    return { lat: bestSeg.proj.lat, lon: bestSeg.proj.lon, key: `${bestSeg.proj.lat.toFixed(6)},${bestSeg.proj.lon.toFixed(6)}`, split: true };
+  }
+
   // ============================================================
   // IMPORT INFRASTRUCTURE — "Tracer ligne" mode
   // Now imports ALL ways in the zone, no filtering.
@@ -750,7 +778,7 @@ export class ORMClient {
 
   async importInfrastructure(fromLat, fromLon, toLat, toLon) {
     const distKm = haversine(fromLat, fromLon, toLat, toLon);
-    const padding = Math.max(0.01, distKm * 0.003 + 0.005);
+    const padding = Math.max(0.02, Math.min(distKm * 0.005 + 0.015, 0.35));
     const south = Math.min(fromLat, toLat) - padding;
     const north = Math.max(fromLat, toLat) + padding;
     const west = Math.min(fromLon, toLon) - padding;
@@ -759,6 +787,12 @@ export class ORMClient {
     const allWays = await this.fetchArea(south, west, north, east);
     const wayById = new Map(allWays.map(w => [w.id, w]));
     if (allWays.length === 0) return { voiePoints: [], troncons: [] };
+
+    // Snap A/B to existing node or project onto nearest way segment (and split it)
+    // so clicks/stations do not need to land exactly on an OSM node.
+    const startSnap = this._snapAndSplitLocalWay(allWays, fromLat, fromLon, 5);
+    const endSnap = this._snapAndSplitLocalWay(allWays, toLat, toLon, 5);
+    if (!startSnap || !endSnap) return { voiePoints: [], troncons: [] };
 
     // Build node-level adjacency graph from ALL ways (no filtering!)
     const nodes = new Map();
@@ -789,11 +823,13 @@ export class ORMClient {
       }
     }
 
-    // Find nearest nodes to A and B
+    // Use the snapped A/B nodes (existing or projected-and-split)
     const graph = this.buildGraph(allWays);
-    const startResult = this.findNearestNode(graph, fromLat, fromLon, 5);
-    const endResult = this.findNearestNode(graph, toLat, toLon, 5);
-    if (!startResult || !endResult) return { voiePoints: [], troncons: [] };
+    const startNode = nodes.get(startSnap.key);
+    const endNode = nodes.get(endSnap.key);
+    if (!startNode || !endNode) return { voiePoints: [], troncons: [] };
+    const startResult = { node: startNode, dist: 0 };
+    const endResult = { node: endNode, dist: 0 };
 
     // Identify junction nodes: degree != 2 (real branching/dead-end) + start/end
     const junctionNodes = new Set();

@@ -136,6 +136,7 @@ export class StaffManager {
     const s = this.staff.find(s => s.id === staffId);
     if (!s || !s.available) return false;
     s.assignedTo = targetId;
+    s.available = false;
     this._syncLegacy();
     return true;
   }
@@ -144,6 +145,7 @@ export class StaffManager {
     for (const s of this.staff) {
       if (s.assignedTo === targetId) {
         s.assignedTo = null;
+        s.available = true;
         if (s.role === 'conducteur') s.totalTrips++;
       }
     }
@@ -226,6 +228,7 @@ export class StaffManager {
         // Service completed => release conductor and start mandatory rest
         if (svc && svc.completed) {
           c.assignedTo = null;
+          c.available = true;
           c.totalTrips++;
           c.shiftOverdue = false;
           this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
@@ -237,6 +240,7 @@ export class StaffManager {
         if (shiftOverdue || weeklyOverdue) {
           if (!svc || svc.state !== 'moving') {
             c.assignedTo = null;
+            c.available = true;
             c.totalTrips++;
             c.shiftOverdue = false;
             this._startRest(c, dateStr, DAILY_REST, WEEKLY_REST, WEEKLY_WORK_LIMIT);
@@ -260,6 +264,7 @@ export class StaffManager {
           const rng = getGlobalRng();
           const pick = needsConductor[Math.floor(rng.random() * needsConductor.length)];
           c.assignedTo = pick.id;
+          c.available = false;
           if (c.shiftStartMin < 0) c.shiftStartMin = timeOfDay;
         }
       }

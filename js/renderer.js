@@ -93,6 +93,13 @@ export class Renderer {
         satellite: document.getElementById('toggle-satellite'),
         clouds: document.getElementById('toggle-clouds'),
       };
+      // Sync toggle inputs with the initial TileMap state
+      if (this._toggleEls.clouds) this._toggleEls.clouds.checked = this.tileMap.cloudEnabled;
+      if (this._toggleEls.radar) this._toggleEls.radar.checked = this.tileMap.radarEnabled;
+      if (this._toggleEls.satellite) this._toggleEls.satellite.checked = this.tileMap.satelliteEnabled;
+      if (this._toggleEls.basic) this._toggleEls.basic.checked = this.tileMap.basicMode;
+      if (this._toggleEls.orm) this._toggleEls.orm.checked = this.tileMap.railEnabled;
+
       if (this._toggleEls.orm) {
         this._toggleEls.orm.addEventListener('change', () => {
           // If basic mode is active and the user re-enables ORM, turn basic off.
@@ -164,9 +171,9 @@ export class Renderer {
       this.drawIndustries(ctx);
     }
 
-    // Cloud overlay (canvas-based fallback when tile data is unavailable)
-    if (this.tileMap.cloudEnabled && !this.tileMap._cloudTileUrl) {
-      this._drawCloudOverlay(ctx, w, h);
+    // Cloud overlay: canvas fallback drawn in addition to/instead of tile layer
+    if (this.tileMap.cloudEnabled) {
+      this._drawCloudOverlay(ctx, w, h, this.tileMap._cloudTileUrl ? 0.4 : 1.0);
     }
 
     // Dynamic layers always drawn
@@ -178,7 +185,7 @@ export class Renderer {
     this.drawSignals(ctx, services);
   }
 
-  _drawCloudOverlay(ctx, w, h) {
+  _drawCloudOverlay(ctx, w, h, alphaScale = 1.0) {
     const weather = window.game?.weather;
     if (!weather) return;
     const low = weather.cloudLow || 0;
@@ -188,17 +195,17 @@ export class Renderer {
 
     // Low clouds: dense, gray-white
     if (low > 0) {
-      ctx.fillStyle = `rgba(200,210,220,${low * 0.002})`;
+      ctx.fillStyle = `rgba(200,210,220,${low * 0.002 * alphaScale})`;
       ctx.fillRect(0, 0, w, h);
     }
     // Mid clouds: lighter, blue-gray
     if (mid > 0) {
-      ctx.fillStyle = `rgba(180,195,215,${mid * 0.0015})`;
+      ctx.fillStyle = `rgba(180,195,215,${mid * 0.0015 * alphaScale})`;
       ctx.fillRect(0, 0, w, h);
     }
     // High clouds: wispy, very transparent
     if (high > 0) {
-      ctx.fillStyle = `rgba(220,225,235,${high * 0.001})`;
+      ctx.fillStyle = `rgba(220,225,235,${high * 0.001 * alphaScale})`;
       ctx.fillRect(0, 0, w, h);
     }
   }

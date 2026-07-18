@@ -933,31 +933,110 @@ def get_wagon_cargos(sub):
 # Categorisation
 # ---------------------------------------------------------------------------
 
-def infer_category_traction(page_url, nom, niv1, niv2):
+def _contains(text, words):
+    for w in words:
+        if re.search(r'(?<!\w)' + re.escape(w) + r'(?!\w)', text, re.I):
+            return True
+    return False
+
+def infer_category_traction(page_url, page_title, nom, niv1, niv2, notes):
     path = page_url.split('/')[-1].lower()
-    name_l = nom.lower()
-    niv1_l = niv1.lower()
-    niv2_l = niv2.lower()
-    if 'le_' in path or 'locomotive' in niv1_l + niv2_l or path.startswith('sncf_f_le_'):
-        return 'locomotive', 'electrique'
-    if 'ld_' in path or 'diesel' in niv1_l + niv2_l or path.startswith('sncf_f_ld_'):
-        return 'locomotive', 'diesel'
-    if 'lv_' in path or 'vapeur' in niv1_l + niv2_l or 'steam' in niv1_l:
+    name_l = (nom or '').lower()
+    niv1_l = (niv1 or '').lower()
+    niv2_l = (niv2 or '').lower()
+    notes_l = (notes or '').lower()
+    page_l = (page_title or '').lower()
+    combined = f'{page_l} {niv1_l} {niv2_l} {name_l} {notes_l} {path}'
+
+    elec_kw = ['électrique', 'electrique', 'panto', 'caténaire', 'sncf_f_le_', '_le_', 'le_',
+               'bb ', 'cc ', '1abba1', '1cc1', '2cc2', '2bb2', 'ee ', 're ', 'ae ', 'cable']
+    diesel_kw = ['diesel', 'sncf_f_ld_', '_ld_', 'ld_', 'autorail', 'railcar', 'schienenbus',
+                 'diesellok']
+    steam_kw = ['vapeur', 'steam', 'sncf_f_lv_', '_lv_', 'lv_', 'à vapeur']
+    has_elec = _contains(combined, elec_kw) or 'panto' in combined
+    has_diesel = _contains(combined, diesel_kw)
+    has_steam = _contains(combined, steam_kw)
+
+    if _contains(combined, ['vapeur', 'locomotive à vapeur', 'locomotives à vapeur', 'steam']):
         return 'locomotive', 'vapeur'
-    if any(p in path for p in ['ae_','ael','a_ter','ad_','turbo','tgv','xr','sncf_f_idf_a','ratp','sncf_f_reg_','sncf_f_priv','france_f_trv','hexafret']):
-        return 'automotrice', 'electrique'
-    if any(p in path for p in ['sncf_f_v_','france_f_poste','sncf_f_s_']):
-        if 'draisine' in name_l or 'automotrice' in name_l:
+
+    if _contains(combined, ['locomotive', 'locomotives']):
+        if has_diesel and not has_elec:
+            return 'locomotive', 'diesel'
+        if has_steam:
+            return 'locomotive', 'vapeur'
+        if 'ld_' in path or path.startswith('sncf_f_ld_') or '_ld_' in path:
+            return 'locomotive', 'diesel'
+        if 'lv_' in path or path.startswith('sncf_f_lv_') or '_lv_' in path:
+            return 'locomotive', 'vapeur'
+        return 'locomotive', 'electrique'
+
+    emu_kw = ['tgv', 'tvg', 'talis', 'eurostar', 'thalys', 'sncf_f_idf_a', 'ratp',
+              'agc', 'regiolis', 'transilien', 'rer', 'métro', 'metro', 'flirt', 'nina',
+              'gtw', 'desiro', 'talent', 'a-ter', 'a_ter', 'a ter', 'xr ', 'sncf_f_reg_',
+              'sncf_f_priv', 'france_f_trv', 'hexafret']
+    if _contains(combined, emu_kw):
+        trailer_kw = ['remorque', 'beiwagen', 'sans cabine', 'sans poste de conduite',
+                      'ohne führerstand', 'wagen ohne', 'remorques intermédiaires',
+                      'remorque intermédiaire']
+        pilot_kw = ['pilote', 'pilot', 'voiture pilote', 'cabine de conduite',
+                    'poste de conduite', 'driving trailer']
+        if _contains(combined, pilot_kw) or ('remorque' in combined and 'pilote' in combined):
+            return 'voiture', 'none'
+        if _contains(combined, trailer_kw):
+            return 'voiture', 'none'
+        if has_diesel and not has_elec:
             return 'automotrice', 'diesel'
-        if 'fourgon' in name_l or 'poste' in name_l or 's_' in path:
+        return 'automotrice', 'electrique'
+
+    auto_kw = ['automotrice', 'automotrices', 'autorail', 'autorails', 'draisine',
+               'train léger', 'schienenbus']
+    if _contains(combined, auto_kw):
+        trailer_kw = ['remorque', 'beiwagen', 'sans cabine', 'sans poste de conduite',
+                      'ohne führerstand', 'wagen ohne']
+        pilot_kw = ['pilote', 'pilot', 'voiture pilote', 'poste de conduite',
+                    'cabine de conduite', 'driving trailer']
+        if _contains(combined, pilot_kw) or ('remorque' in combined and 'pilote' in combined):
+            return 'voiture', 'none'
+        if _contains(combined, trailer_kw):
+            return 'voiture', 'none'
+        if has_diesel and not has_elec:
+            return 'automotrice', 'diesel'
+        if has_steam:
+            return 'automotrice', 'vapeur'
+        return 'automotrice', 'electrique'
+
+    if _contains(combined, ['voiture', 'voitures', 'coach', 'coaches', 'carriage', 'carriages',
+                            'wagen', 'reisezugwagen', 'rijtuig', 'vettura', 'coche', 'coches']):
+        if _contains(combined, ['draisine', 'automotrice', 'autorail']) and not _contains(combined, ['voiture']):
+            return 'automotrice', 'diesel'
+        if _contains(combined, ['fourgon', 'poste', 'bagages']) and not _contains(combined, ['voiture']):
             return 'wagon', 'none'
         return 'voiture', 'none'
-    if any(p in path for p in ['sncf_f_w','france_f_w','affret']):
+
+    if _contains(combined, ['wagon', 'wagons', 'citerne', 'citernes', 'silos', 'trémie', 'trémies',
+                            'tombereau', 'tombereaux', 'plateau', 'plats', 'couvert', 'couverts',
+                            'bâché', 'bache', 'frigorifique', 'minéralier', 'céréalier', 'ciment',
+                            'charbon', 'sablière', 'sable', 'ballast', 'traverses', 'affrètement',
+                            'affret', 'sncf_f_w', 'france_f_w']):
         return 'wagon', 'none'
-    # fallback by name prefix
-    loco_prefixes = ['bb','cc','2d2','1abba1','1cc1','2bb2','2cc2','c ','c 20150','bbb','a1a']
-    auto_prefixes = ['x ','z ','tvg','tgv','r','agc','regiolis','ter ','transilien','rer','metro']
-    coach_prefixes = ['voiture','a ','b ','c ','dev','uic','usi','vse','corail','teoz','rib','rio','rrr','2n']
+
+    if any(p in path for p in ['sncf_f_le_', '_le_']):
+        return 'locomotive', 'electrique'
+    if any(p in path for p in ['sncf_f_ld_', '_ld_']):
+        return 'locomotive', 'diesel'
+    if any(p in path for p in ['sncf_f_lv_', '_lv_']):
+        return 'locomotive', 'vapeur'
+    if any(p in path for p in ['sncf_f_a_', 'sncf_f_idf_a', 'ratp', 'sncf_f_reg_', 'sncf_f_priv']):
+        return 'automotrice', 'electrique'
+    if any(p in path for p in ['sncf_f_v_', 'sncf_f_s_']):
+        return 'voiture', 'none'
+    if any(p in path for p in ['sncf_f_w_', 'france_f_w_', 'affret']):
+        return 'wagon', 'none'
+
+    loco_prefixes = ['bb', 'cc', '2d2', '1abba1', '1cc1', '2bb2', '2cc2', 'c ', 'c 20150', 'bbb', 'a1a']
+    auto_prefixes = ['x ', 'z ', 'tvg', 'tgv', 'r', 'agc', 'regiolis', 'ter ', 'transilien', 'rer', 'metro']
+    coach_prefixes = ['voiture', 'a ', 'b ', 'c ', 'dev', 'uic', 'usi', 'vse', 'corail', 'teoz', 'rib', 'rio', 'rrr', '2n']
     for pr in loco_prefixes:
         if name_l.startswith(pr):
             return 'locomotive', 'electrique'
@@ -1007,7 +1086,7 @@ def status_color(category, max_speed, mass, power, passenger_capacity, freight_c
 
 def make_entry(row_id, raw, side, image_path, image_width, specs, is_composite=False):
     nom = raw['nom'] or raw['niv1']
-    category, traction = infer_category_traction(raw['url'], raw['nom'], raw['niv1'], raw['niv2'])
+    category, traction = infer_category_traction(raw['url'], raw.get('page_title'), raw['nom'], raw['niv1'], raw['niv2'], raw.get('notes'))
     # TGV / TVG pages are EMU/automotrice
     if 'tgv' in raw['url'].lower() or 'tvg' in nom.lower():
         category = 'automotrice'
@@ -1115,7 +1194,7 @@ def main():
     for raw in raw_entries:
         if not raw.get('images'):
             continue
-        category, traction = infer_category_traction(raw['url'], raw['nom'], raw['niv1'], raw['niv2'])
+        category, traction = infer_category_traction(raw['url'], raw.get('page_title'), raw['nom'], raw['niv1'], raw['niv2'], raw.get('notes'))
         if 'tgv' in raw['url'].lower() or 'tvg' in (raw['nom'] or '').lower():
             category = 'automotrice'
         car_count = len(raw['images']) if category == 'automotrice' else None
