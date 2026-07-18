@@ -5678,6 +5678,7 @@ export class UI {
     this._sillonManualEnd = null;
     this._sillonManualPoints = [];
     this._sillonManualRoute = null;
+    this._sillonManualDrag = null;
   }
 
   _syncSillonManualEndpoints() {
@@ -5763,7 +5764,7 @@ export class UI {
     if (clear) clear.classList.toggle('hidden', !this._sillonManualMode);
     if (finish) finish.classList.toggle('hidden', !this._sillonManualMode);
     if (hint) {
-      if (this._sillonManualMode) hint.textContent = 'Cliquez pour ajouter un point (50 m). Shift+clic sur un point pour le supprimer. Cliquez "Terminer" quand le tracé est complet.';
+      if (this._sillonManualMode) hint.textContent = 'Cliquez pour ajouter un point (50 m). Glissez un point pour le déplacer. Ctrl / clic droit / double-clic sur un point pour le supprimer. Cliquez "Terminer" quand le tracé est complet.';
       else if (!fromId || !toId) hint.textContent = 'Sélectionnez les gares A et B, puis cliquez sur "Tracer manuellement" pour dessiner le sillon sur la carte.';
       else if (this._sillonManualRoute) hint.textContent = 'Tracé manuel enregistré. Vous pouvez le refaire avec "Tracer manuellement".';
       else hint.textContent = 'Cliquez sur "Tracer manuellement" pour dessiner le sillon, ou laissez l\'ORM calculer automatiquement.';
@@ -5890,9 +5891,13 @@ export class UI {
           if (!pt.control && i !== 0 && i !== trace.length - 1) continue;
           const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
           const isEnd = (i === 0 || i === trace.length - 1);
-          ctx.fillStyle = isEnd ? '#f59e0b' : '#a5f3fc';
-          ctx.beginPath(); ctx.arc(p.x, p.y, isEnd ? 5 : 3, 0, Math.PI * 2); ctx.fill();
-          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+          ctx.fillStyle = isEnd ? '#f59e0b' : '#38bdf8';
+          ctx.beginPath(); ctx.arc(p.x, p.y, isEnd ? 6 : 5, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+          if (!isEnd) {
+            ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(56,189,248,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+          }
         }
       } else if (this._sillonManualStart && this._sillonManualEnd) {
         ctx.strokeStyle = 'rgba(250,204,21,0.4)';
@@ -5915,8 +5920,47 @@ export class UI {
     canvas._sillonBound = true;
 
     let drag = false, dragStart = null, totalDragDist = 0;
-    canvas.onmousedown = (e) => { drag = true; dragStart = { x: e.offsetX, y: e.offsetY }; totalDragDist = 0; };
+    const findNearestManualPoint = (x, y) => {
+      let bestIdx = -1, bestD = Infinity;
+      for (let i = 0; i < this._sillonManualPoints.length; i++) {
+        const p = tileMap.worldToScreen(this._sillonManualPoints[i].lat, this._sillonManualPoints[i].lon, canvas.width, canvas.height);
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestD) { bestD = d; bestIdx = i; }
+      }
+      return bestD <= 12 ? bestIdx : -1;
+    };
+    canvas.onmousedown = (e) => {
+      const x = e.offsetX, y = e.offsetY;
+      drag = true; dragStart = { x, y }; totalDragDist = 0;
+      if (this._sillonManualMode && this._sillonManualPoints.length) {
+        const idx = findNearestManualPoint(x, y);
+        if (idx >= 0) {
+          if (e.ctrlKey || e.button === 2) {
+            this._sillonManualPoints.splice(idx, 1);
+            this._rebuildSillonManualRoute();
+            requestDraw();
+          } else {
+            this._sillonManualDrag = { index: idx, startX: x, startY: y, moved: false };
+          }
+          drag = false; dragStart = null; totalDragDist = 0;
+          return;
+        }
+      }
+    };
     canvas.onmousemove = (e) => {
+      if (this._sillonManualDrag) {
+        const dx = e.offsetX - this._sillonManualDrag.startX;
+        const dy = e.offsetY - this._sillonManualDrag.startY;
+        if (!this._sillonManualDrag.moved && Math.hypot(dx, dy) < 4) return;
+        this._sillonManualDrag.moved = true;
+        const w = tileMap.screenToWorld(e.offsetX, e.offsetY, canvas.width, canvas.height);
+        const snapped = this._snapToTrack(w.lat, w.lon);
+        const pt = this._sillonManualPoints[this._sillonManualDrag.index];
+        if (pt) { pt.lat = snapped ? snapped.lat : w.lat; pt.lon = snapped ? snapped.lon : w.lon; }
+        this._rebuildSillonManualRoute();
+        requestDraw();
+        return;
+      }
       if (drag && dragStart) {
         const dx = e.offsetX - dragStart.x;
         const dy = e.offsetY - dragStart.y;
@@ -5924,21 +5968,33 @@ export class UI {
         tileMap.pan(dx, dy);
         dragStart = { x: e.offsetX, y: e.offsetY };
         requestDraw();
+        return;
       }
+      // Hover feedback
+      const x = e.offsetX, y = e.offsetY;
+      let cursor = 'default';
+      if (this._sillonManualMode && findNearestManualPoint(x, y) >= 0) cursor = 'grab';
+      else {
+        for (const st of world.stations) {
+          const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+          if (Math.hypot(p.x - x, p.y - y) < 16) { cursor = 'pointer'; break; }
+        }
+      }
+      canvas.style.cursor = cursor;
     };
     canvas.onmouseup = (e) => {
+      if (this._sillonManualDrag) {
+        const wasMoved = this._sillonManualDrag.moved;
+        this._sillonManualDrag = null;
+        if (wasMoved) { drag = false; dragStart = null; totalDragDist = 0; return; }
+      }
       if (totalDragDist < 5) {
         const x = e.offsetX, y = e.offsetY;
         if (this._sillonManualMode) {
           if (e.shiftKey) {
-            let bestIdx = -1, bestD = Infinity;
-            for (let i = 0; i < this._sillonManualPoints.length; i++) {
-              const p = tileMap.worldToScreen(this._sillonManualPoints[i].lat, this._sillonManualPoints[i].lon, canvas.width, canvas.height);
-              const d = Math.hypot(p.x - x, p.y - y);
-              if (d < bestD) { bestD = d; bestIdx = i; }
-            }
-            if (bestIdx >= 0 && bestD < 12) {
-              this._sillonManualPoints.splice(bestIdx, 1);
+            const idx = findNearestManualPoint(x, y);
+            if (idx >= 0) {
+              this._sillonManualPoints.splice(idx, 1);
               this._rebuildSillonManualRoute();
               requestDraw();
             }
@@ -5975,6 +6031,16 @@ export class UI {
         }
       }
       drag = false; dragStart = null; totalDragDist = 0;
+    };
+    // Double-click a manual point to delete it (same as schedule-creator node delete gesture)
+    canvas.ondblclick = (e) => {
+      if (!this._sillonManualMode) return;
+      const idx = findNearestManualPoint(e.offsetX, e.offsetY);
+      if (idx >= 0) {
+        this._sillonManualPoints.splice(idx, 1);
+        this._rebuildSillonManualRoute();
+        requestDraw();
+      }
     };
     canvas.onwheel = (e) => { e.preventDefault(); tileMap.applyZoom(e.deltaY < 0 ? 1 : -1, e.offsetX, e.offsetY); requestDraw(); };
     canvas.oncontextmenu = (e) => { e.preventDefault(); };
