@@ -475511,5 +475511,43 @@ export const CATALOG = [
     "cargoTypes": [],
     "_source": "MLG Traffic (CC BY-NC-SA 3.0); specs Wikipedia FR, Steamlocomotive.com; puissance estimée",
     "tonnage": 95.0
+  },
+  {
+    "id": "cat-1_130B_R",
+    "name": "1-130 B",
+    "category": "locomotive",
+    "traction": "vapeur",
+    "maxSpeed": 80,
+    "mass": 63.0,
+    "power": 772,
+    "passengerCapacity": 0,
+    "freightCapacity": 0,
+    "length": 15.5,
+    "imageData": "img/catalog/SNCF/LV/SNCF_1_130B_Anim_R.gif",
+    "seriesName": "Tender 13A",
+    "numberStart": "1",
+    "purchasePrice": 772000,
+    "cargoTypes": [],
+    "_source": "MLG Traffic (CC BY-NC-SA 3.0); specs Wikipedia FR",
+    "tonnage": 63.0
+  },
+  {
+    "id": "cat-1_130B_L",
+    "name": "1-130 B",
+    "category": "locomotive",
+    "traction": "vapeur",
+    "maxSpeed": 80,
+    "mass": 63.0,
+    "power": 772,
+    "passengerCapacity": 0,
+    "freightCapacity": 0,
+    "length": 15.5,
+    "imageData": "img/catalog/SNCF/LV/SNCF_1_130B_Anim_L.gif",
+    "seriesName": "Tender 13A",
+    "numberStart": "1",
+    "purchasePrice": 772000,
+    "cargoTypes": [],
+    "_source": "MLG Traffic (CC BY-NC-SA 3.0); specs Wikipedia FR",
+    "tonnage": 63.0
   }
 ];;;;;;;;;
