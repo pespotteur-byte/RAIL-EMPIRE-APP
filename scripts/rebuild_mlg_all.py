@@ -684,7 +684,19 @@ def parse_mlg_xml(url, text):
                 notes_el = ligne.find('Notes')
                 nom = (nom_el.text or '').strip() if nom_el is not None and nom_el.text else ''
                 notes = (notes_el.text or '').strip() if notes_el is not None and notes_el.text else ''
-                images = [i.text.strip() for i in ligne.findall('Image') if i.text and i.text.strip()]
+                # Prefer right-facing image list; MLG uses <Image_R>/<Image_L> on some pages
+                image_tags = []
+                if ligne.find('Image_R') is not None:
+                    image_tags = ['Image_R']
+                elif ligne.find('Image') is not None:
+                    image_tags = ['Image']
+                elif ligne.find('Image_L') is not None:
+                    image_tags = ['Image_L']
+                images = []
+                for tag in image_tags:
+                    for i in ligne.findall(tag):
+                        if i.text and i.text.strip():
+                            images.append(i.text.strip())
                 if not images:
                     continue
                 entries.append({
@@ -751,21 +763,32 @@ def parse_mlg_htm(url, text):
 # ---------------------------------------------------------------------------
 
 def resolve_image(base_rel):
-    """Download the right-facing image variant and return a single (side, local_relative_path, width)."""
+    """Download the image and return (side, local_relative_path, width)."""
     base_name = Path(base_rel).name
     sub_dir = Path(base_rel).parent.relative_to('images') if base_rel.startswith('images/') else Path('.')
     local_dir = IMG_ROOT / sub_dir
     local_dir.mkdir(parents=True, exist_ok=True)
-    # Priority: right-facing variants, then non-sided, then left-facing as last resort.
-    priority = [
-        ('R', f'{base_name}_R.gif'),
-        ('R', f'{base_name}_Anim_R.gif'),
-        ('', f'{base_name}.gif'),
-        ('', f'{base_name}_Anim.gif'),
-        ('L', f'{base_name}_L.gif'),
-        ('L', f'{base_name}_Anim_L.gif'),
-    ]
     encoded_base = urllib.parse.quote(base_rel, safe='/')
+
+    # If the base itself already ends with a side suffix (e.g. ..._R, ..._Anim_R),
+    # treat it as an exact filename base; try .gif and _Anim.gif first.
+    has_side_suffix = bool(re.search(r'_(R|L|Anim_R|Anim_L)$', base_name))
+    if has_side_suffix:
+        priority = [
+            ('R', f'{base_name}.gif'),
+            ('R', f'{base_name}_Anim.gif'),
+        ]
+    else:
+        # Generic base: right-facing variants first, then non-sided, then left as fallback.
+        priority = [
+            ('R', f'{base_name}_R.gif'),
+            ('R', f'{base_name}_Anim_R.gif'),
+            ('', f'{base_name}.gif'),
+            ('', f'{base_name}_Anim.gif'),
+            ('L', f'{base_name}_L.gif'),
+            ('L', f'{base_name}_Anim_L.gif'),
+        ]
+
     for side, filename in priority:
         local = local_dir / filename
         if local.exists() and local.stat().st_size > 0:
@@ -778,12 +801,12 @@ def resolve_image(base_rel):
         url = f'{MLG_BASE}/{encoded_base}{urllib.parse.quote(suffix, safe="/")}'
         data = fetch_bytes(url, timeout=8)
         if data:
-            local.write_bytes(data)
             try:
                 im = Image.open(BytesIO(data))
-                return [(side or 'R', str(local.relative_to(REPO)), im.width)]
             except Exception:
                 continue
+            local.write_bytes(data)
+            return [(side or 'R', str(local.relative_to(REPO)), im.width)]
     return []
 
 def build_composite(raw, image_results):
