@@ -1633,22 +1633,20 @@ export class UI {
 
   _calculateStockPrice() {
     const category = document.getElementById('stock-category')?.value || 'locomotive';
-    const mass = parseFloat(document.getElementById('stock-mass')?.value) || 0;
-    const maxSpeed = parseFloat(document.getElementById('stock-speed')?.value) || 0;
     const power = parseFloat(document.getElementById('stock-power')?.value) || 0;
     const capacity = parseFloat(document.getElementById('stock-capacity')?.value) || 0;
     const freightCap = parseFloat(document.getElementById('stock-freight-cap')?.value) || 0;
-    const traction = this._getStockTraction();
-    // MAT-04 : calcul automatique du prix selon caractéristiques physiques.
-    // coefficients choisis pour rester cohérents à l'échelle du jeu (€).
-    let price = mass * 800 + maxSpeed * 100 + power * 150 + capacity * 1200 + freightCap * 80;
-    // légère surcote multi-courant
-    const nbTraction = Math.max(1, traction.length);
-    price *= (1 + (nbTraction - 1) * 0.08);
-    // les locomotives/automotrices coûtent plus cher que les wagons passifs
-    if (category === 'locomotive') price *= 1.3;
-    if (category === 'automotrice') price *= 1.15;
-    return Math.max(0, Math.round(price));
+    // MAT-04 : prix calculé selon le type d'engin.
+    if (category === 'locomotive' || category === 'automotrice') {
+      return Math.max(0, Math.round(power * 1000));
+    }
+    if (category === 'voiture') {
+      return Math.max(0, Math.round(capacity * 100));
+    }
+    if (category === 'wagon') {
+      return Math.max(0, Math.round(freightCap * 100));
+    }
+    return 0;
   }
 
   _updateStockComputedFields() {
