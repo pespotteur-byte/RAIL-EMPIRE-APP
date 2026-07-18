@@ -2642,8 +2642,8 @@ export class UI {
             const isEnd = (i === 0 || i === route.length - 1);
             const isSelected = this._traceSelectedPoint && this._traceSelectedPoint.leg === leg && this._traceSelectedPoint.control === pt;
             const isControl = pt && pt.control;
-            ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : 'rgba(255,255,255,0.7)'));
-            const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 2.5));
+            ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : 'rgba(255,255,255,0.85)'));
+            const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 3.5));
             ctx.beginPath();
             ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
             ctx.fill();
@@ -2742,9 +2742,9 @@ export class UI {
         }
       }
 
-      // 2) Existing route control-point drag (no edit-mode toggle needed).
+      // 2) Existing route control-point drag (works in manual mode too, so nodes can be edited at any time).
       const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
-      if (controlHit && !this._manualMode) {
+      if (controlHit) {
         // Don't grab a route node if a station marker is right under the cursor.
         let nearStation = false;
         for (const st of world.stations) {
@@ -2752,6 +2752,8 @@ export class UI {
           if (Math.hypot(p.x - x, p.y - y) < 14) { nearStation = true; break; }
         }
         if (!nearStation) {
+          // Promote any grabbed trace point to a control so it can be edited.
+          if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
           if (e.ctrlKey || e.button === 2) {
             this._removeTraceControl(controlHit.leg, controlHit.control);
             this._traceSelectedPoint = null;
@@ -2800,7 +2802,7 @@ export class UI {
       const x = e.offsetX, y = e.offsetY;
       let cursor = 'default';
       const manualPt = (this._manualMode && this._manualStartCoords) ? this._findNearestManualControlPoint(x, y, tileMap, canvas) : null;
-      const controlHit = (this._manualMode) ? null : this._findNearestControlPoint(x, y, tileMap, canvas);
+      const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
       if (manualPt || controlHit) cursor = 'grab';
       else {
         if (this.game.voiePointManager) {
@@ -3268,7 +3270,8 @@ export class UI {
   _addManualPoint(lat, lon) {
     if (this._manualStartCoords) {
       const maxSpeed = this._manualStartCoords.maxSpeed || 30;
-      this._manualControlPoints.push({ lat, lon, maxSpeed });
+      const snapped = this._snapToTrack(lat, lon);
+      this._manualControlPoints.push({ lat: snapped ? snapped.lat : lat, lon: snapped ? snapped.lon : lon, maxSpeed });
       if (this._drawSchedMap) this._drawSchedMap();
     }
   }
@@ -4032,19 +4035,22 @@ export class UI {
     return bestDist <= 10 ? best : null;
   }
 
+  // Find any editable point on the current trace (not just flagged controls).
+  // On drag start the point is promoted to a control so it becomes persistent.
   _findNearestControlPoint(x, y, tileMap, canvas) {
     if (!this._manualRoutes || this._manualRoutes.length === 0) return null;
+    let best = null, bestDist = Infinity, bestLeg = -1, bestIdx = -1;
     for (let leg = 0; leg < this._manualRoutes.length; leg++) {
       const route = this._manualRoutes[leg];
       if (!route || route.length < 3) continue;
-      const controls = this._extractRouteControls(route);
-      for (let i = 1; i < controls.length - 1; i++) {
-        const pt = controls[i];
+      for (let i = 1; i < route.length - 1; i++) {
+        const pt = route[i];
         const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
-        if (Math.hypot(p.x - x, p.y - y) <= 14) return { leg, control: pt, index: route.indexOf(pt) };
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestDist) { bestDist = d; best = pt; bestLeg = leg; bestIdx = i; }
       }
     }
-    return null;
+    return (best && bestDist <= 14) ? { leg: bestLeg, control: best, index: bestIdx } : null;
   }
 
   _findNearestSegmentPoint(x, y, tileMap, canvas) {
