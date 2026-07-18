@@ -8,3 +8,5 @@ scripts/.dbcargo_page_cache.json
 scripts/.wagon_specs_cache.json
 scripts/__pycache__/
 *.pyc
+dist/
+dist2/
