@@ -10,3 +10,4 @@ scripts/__pycache__/
 *.pyc
 dist/
 dist2/
+rail-empire/
