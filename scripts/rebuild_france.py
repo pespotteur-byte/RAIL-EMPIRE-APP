@@ -507,73 +507,40 @@ def parse_mlg_htm(url, text):
 # ---------------------------------------------------------------------------
 
 def resolve_image(base_rel):
-    """Download image variants and return list of (side, local_relative_path, width)."""
+    """Download the right-facing image variant and return a single (side, local_relative_path, width)."""
     base_name = Path(base_rel).name
     sub_dir = Path(base_rel).parent.relative_to('images') if base_rel.startswith('images/') else Path('.')
     local_dir = IMG_ROOT / sub_dir
     local_dir.mkdir(parents=True, exist_ok=True)
-    found = []
-    # 1) Use any local files matching base_name prefix
-    for local in local_dir.glob(f'{base_name}*.gif'):
-        fname = local.name
-        if fname == f'{base_name}.gif':
-            side = ''
-        elif '_Anim_R' in fname or fname.endswith('_R.gif'):
-            side = 'R'
-        elif '_Anim_L' in fname or fname.endswith('_L.gif'):
-            side = 'L'
-        elif '_Anim' in fname:
-            side = ''
-        else:
-            side = ''
-        try:
-            im = Image.open(local)
-            found.append((side or 'R', str(local.relative_to(REPO)), im.width))
-        except Exception:
-            pass
-    if found:
-        # dedupe just in case
-        seen = set()
-        unique = []
-        for side, path, width in found:
-            if path not in seen:
-                seen.add(path)
-                unique.append((side, path, width))
-        return unique
-    # 2) Fallback: try network variants
-    candidates = [
-        ('', f'{base_name}.gif'),
+    # Priority: right-facing variants, then non-sided, then left-facing as last resort.
+    priority = [
         ('R', f'{base_name}_R.gif'),
-        ('L', f'{base_name}_L.gif'),
-        ('', f'{base_name}_Anim.gif'),
         ('R', f'{base_name}_Anim_R.gif'),
+        ('', f'{base_name}.gif'),
+        ('', f'{base_name}_Anim.gif'),
+        ('L', f'{base_name}_L.gif'),
         ('L', f'{base_name}_Anim_L.gif'),
     ]
     encoded_base = urllib.parse.quote(base_rel, safe='/')
-    seen = set()
-    for side, filename in candidates:
-        if filename in seen:
-            continue
-        seen.add(filename)
-        suffix = filename[len(base_name):] if filename.startswith(base_name) else filename
-        url = f'{MLG_BASE}/{encoded_base}{urllib.parse.quote(suffix, safe="/")}'
+    for side, filename in priority:
         local = local_dir / filename
         if local.exists() and local.stat().st_size > 0:
             try:
                 im = Image.open(local)
-                found.append((side or 'R', str(local.relative_to(REPO)), im.width))
+                return [(side or 'R', str(local.relative_to(REPO)), im.width)]
             except Exception:
-                pass
-            continue
+                continue
+        suffix = filename[len(base_name):] if filename.startswith(base_name) else filename
+        url = f'{MLG_BASE}/{encoded_base}{urllib.parse.quote(suffix, safe="/")}'
         data = fetch_bytes(url, timeout=8)
         if data:
             local.write_bytes(data)
             try:
                 im = Image.open(BytesIO(data))
-                found.append((side or 'R', str(local.relative_to(REPO)), im.width))
+                return [(side or 'R', str(local.relative_to(REPO)), im.width)]
             except Exception:
-                pass
-    return found
+                continue
+    return []
 
 # ---------------------------------------------------------------------------
 # Categorisation
