@@ -89,14 +89,10 @@ export class Renderer {
         voie: document.getElementById('toggle-voie-points'),
         orm: document.getElementById('toggle-orm'),
         basic: document.getElementById('toggle-basic'),
-        radar: document.getElementById('toggle-radar'),
-        satellite: document.getElementById('toggle-satellite'),
-        clouds: document.getElementById('toggle-clouds'),
+        weather: document.getElementById('toggle-weather'),
       };
       // Sync toggle inputs with the initial TileMap state
-      if (this._toggleEls.clouds) this._toggleEls.clouds.checked = this.tileMap.cloudEnabled;
-      if (this._toggleEls.radar) this._toggleEls.radar.checked = this.tileMap.radarEnabled;
-      if (this._toggleEls.satellite) this._toggleEls.satellite.checked = this.tileMap.satelliteEnabled;
+      if (this._toggleEls.weather) this._toggleEls.weather.checked = this.tileMap.weatherEnabled;
       if (this._toggleEls.basic) this._toggleEls.basic.checked = this.tileMap.basicMode;
       if (this._toggleEls.orm) this._toggleEls.orm.checked = this.tileMap.railEnabled;
 
@@ -119,22 +115,9 @@ export class Renderer {
           this._toggleEls.orm.disabled = isBasic;
         });
       }
-      if (this._toggleEls.radar) {
-        this._toggleEls.radar.addEventListener('change', () => {
-          this.tileMap.radarEnabled = this._toggleEls.radar.checked;
-          this.tileMap.markDirty();
-        });
-      }
-      if (this._toggleEls.satellite) {
-        this._toggleEls.satellite.addEventListener('change', () => {
-          this.tileMap.toggleSatellite();
-          this._toggleEls.satellite.checked = this.tileMap.satelliteEnabled;
-        });
-      }
-      if (this._toggleEls.clouds) {
-        this._toggleEls.clouds.addEventListener('change', () => {
-          this.tileMap.cloudEnabled = this._toggleEls.clouds.checked;
-          this.tileMap.markDirty();
+      if (this._toggleEls.weather) {
+        this._toggleEls.weather.addEventListener('change', () => {
+          this.tileMap.setWeatherEnabled(this._toggleEls.weather.checked);
         });
       }
     }

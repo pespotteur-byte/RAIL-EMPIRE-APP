@@ -60,6 +60,8 @@ export class TileMap {
       'https://b.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
       'https://c.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png',
     ];
+    // Single météo toggle drives satellite + radar + clouds
+    this.weatherEnabled = false;
     this.satelliteEnabled = false;
     this._satelliteMaxZoom = 18;
     this.railTileUrls = [
@@ -78,7 +80,7 @@ export class TileMap {
     this._radarMaxZoom = 7; // RainViewer max zoom officiel
 
     // Cloud overlay — NASA GIBS true-color satellite (XIV)
-    this.cloudEnabled = true;
+    this.cloudEnabled = false;
     this._cloudTileUrl = null;
     this._cloudMaxZoom = 9; // GIBS VIIRS/NOAA-20 True Color max zoom
   }
@@ -522,5 +524,21 @@ export class TileMap {
     this._tileBufferValid = false;
     this._dirty = true;
     return this.satelliteEnabled;
+  }
+
+  // Single météo switch: satellite base + radar + clouds on/off together
+  setWeatherEnabled(enabled) {
+    if (this.weatherEnabled === enabled) return;
+    this.weatherEnabled = enabled;
+    this.satelliteEnabled = enabled;
+    this.radarEnabled = enabled;
+    this.cloudEnabled = enabled;
+    for (const [k] of this.tileCache) {
+      if (k.endsWith('/b') || k.endsWith('/s') || k.endsWith('/l')) this.tileCache.delete(k);
+    }
+    this._baseQueue = [];
+    this._baseLoading = 0;
+    this._tileBufferValid = false;
+    this._dirty = true;
   }
 }
