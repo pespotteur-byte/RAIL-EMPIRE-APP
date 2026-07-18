@@ -15,6 +15,15 @@ const DB_STORE = 'areas';
 const DB_VERSION = 1;
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
+// Built-in safety margin on top of the physics travel time so auto schedules
+// never give a train a chance to be early (3 % + at least 1 minute).
+const TRAVEL_TIME_SAFETY_PCT = 0.03;
+function applyTravelTimeSafety(baseMin) {
+  if (baseMin <= 1) return baseMin;
+  const extra = Math.max(1, Math.round(baseMin * TRAVEL_TIME_SAFETY_PCT));
+  return baseMin + extra;
+}
+
 class ORMIndexedCache {
   constructor() {
     this._db = null;
@@ -1223,7 +1232,7 @@ export class ORMClient {
       startMs: opts?.startMs ?? 0,
       endMs: opts?.endMs ?? 0,
     });
-    return Math.round(res.timeSec / 60) || 1;
+    return applyTravelTimeSafety(Math.round(res.timeSec / 60) || 1);
   }
 
   // Realistic travel time (minutes) using traction physics. Returns null when
@@ -1249,7 +1258,7 @@ export class ORMClient {
       startMs: opts?.startMs ?? 0,
       endMs: opts?.endMs ?? 0,
     });
-    return Math.round(res.timeSec / 60) || 1;
+    return applyTravelTimeSafety(Math.round(res.timeSec / 60) || 1);
   }
 
   generateSignalBlocks(route) {

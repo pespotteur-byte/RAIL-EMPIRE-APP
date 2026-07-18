@@ -1717,7 +1717,7 @@ export class ActiveService {
 
     // Expected time at current position = depA + scheduledTravelTime * progress
     const expectedTime = depA + scheduledTravelTime * progress;
-    this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
+    this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
     this.train.delay = this.delay;
 
     // DEP-05 : mise à jour continue de la localisation permanente de la rame
@@ -2322,7 +2322,7 @@ export class ActiveService {
     if (stop?.type === 'arret') {
       const expectedTime = stop.arrivalTime;
       if (expectedTime != null) {
-        this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
+        this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
       }
       this.train.delay = this.delay;
     }

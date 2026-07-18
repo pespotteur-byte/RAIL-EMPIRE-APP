@@ -2067,7 +2067,7 @@ export class UI {
       return;
     }
     container.innerHTML = view.map(item => `
-        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}')" title="${item.name} — ${item.category}${item.notes ? ' — ' + item.notes : ''}, ${item.maxSpeed} km/h, ${item.length}m">
+        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}', event)" title="${item.name} — ${item.category}${item.notes ? ' — ' + item.notes : ''}, ${item.maxSpeed} km/h, ${item.length}m">
           ${item.imageData ? `<img src="${item.imageData}" loading="lazy" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
           <span>${item.name}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
         </div>
@@ -2086,9 +2086,10 @@ export class UI {
     document.getElementById('rame-stock-picker')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  addToRame(stockId) {
+  addToRame(stockId, evOrFlipped) {
     const item = this.game.rollingStock.getById(stockId);
     if (!item) return;
+    const flipped = (evOrFlipped && (typeof evOrFlipped === 'boolean' ? evOrFlipped : evOrFlipped.ctrlKey)) || false;
     let qty = parseInt(document.getElementById('rame-qty')?.value || '1', 10);
     if (!isFinite(qty) || qty < 1) qty = 1;
     let currentLength = this.currentRameElements.reduce((s, e) => s + e.length, 0);
@@ -2103,7 +2104,7 @@ export class UI {
         ? this.game.rollingStock.nextSeriesNumber(item.seriesName)
         : null;
       const instanceName = instanceNumber || item.name;
-      this.currentRameElements.push({ ...item, stockId: item.id, instanceName, instanceNumber });
+      this.currentRameElements.push({ ...item, stockId: item.id, instanceName, instanceNumber, flipped });
       // Annexe 8 : le nom/n° de série de la rame reprend le premier engin numéroté.
       if (firstInRame && n === 0) {
         if (nameInput && !nameInput.value.trim()) nameInput.value = instanceName;
@@ -2117,6 +2118,21 @@ export class UI {
         ? 'Longueur maximale de 750m atteinte !'
         : `Longueur max 750m atteinte : ${added}/${qty} engin(s) ajouté(s).`);
     }
+    this.renderRameAssembly();
+  }
+
+  onRameElementClick(index, ev) {
+    if (ev?.ctrlKey) {
+      this.flipRameElement(index);
+    } else {
+      this.removeFromRame(index);
+    }
+  }
+
+  flipRameElement(index) {
+    const el = this.currentRameElements[index];
+    if (!el) return;
+    el.flipped = !el.flipped;
     this.renderRameAssembly();
   }
 
@@ -2137,7 +2153,7 @@ export class UI {
         const label = el.instanceName || el.name;
         let imgHtml = '';
         if (el.imageData) {
-          let style = '';
+          const transforms = [];
           if (el.isDrivingTrailer && this.currentRameElements.length > 1) {
             const isLeft = i === 0;
             const isRight = i === last;
@@ -2145,10 +2161,12 @@ export class UI {
             // Cab must face outward. Right-facing image (/_R.gif or .gif) at left end => flip.
             // Left-facing image (/_L.gif) at right end => flip.
             if ((isLeft && !isLeftImage) || (isRight && isLeftImage)) {
-              style = 'transform: scaleX(-1);';
+              transforms.push('scaleX(-1)');
             }
           }
-          imgHtml = `<img src="${el.imageData}" alt="${label}" title="${label} (clic = retirer)" onclick="game.ui.removeFromRame(${i})" class="rame-element-img"${style ? ` style="${style}"` : ''}>`;
+          if (el.flipped) transforms.push('scaleX(-1)');
+          const style = transforms.length ? `transform: ${transforms.join(' ')};` : '';
+          imgHtml = `<img src="${el.imageData}" alt="${label}" title="${label} (clic = retirer, Ctrl+clic = retourner)" onclick="game.ui.onRameElementClick(${i}, event)" class="rame-element-img"${style ? ` style="${style}"` : ''}>`;
         } else {
           imgHtml = `<div class="rame-element-placeholder" title="${label}" onclick="game.ui.removeFromRame(${i})">${label}</div>`;
         }
@@ -2209,6 +2227,7 @@ export class UI {
         length: e.length, imageData: e.imageData,
         purchasePrice: e.purchasePrice || 0,
         wagonSubCategory: e.wagonSubCategory || '',
+        flipped: e.flipped || false,
       })),
     });
     document.getElementById('modal-rame')?.classList.add('hidden');
@@ -2258,8 +2277,9 @@ export class UI {
         <div class="rame-card-images">
           ${r.elementDetails.map(e => {
             const label = e.instanceName || e.name;
+            const style = e.flipped ? 'transform: scaleX(-1);' : '';
             return e.imageData
-              ? `<img src="${e.imageData}" alt="${label}" title="${label}">`
+              ? `<img src="${e.imageData}" alt="${label}" title="${label}"${style ? ` style="${style}"` : ''}>`
               : `<span class="rame-text-el">${label}</span>`;
           }).join('')}
         </div>
@@ -7874,7 +7894,7 @@ export class UI {
       if (!svc.isWorkTrain && svc.serviceType !== 'work' && svc.rame && svc.rame.elementDetails) {
         const imgs = svc.rame.elementDetails
           .filter(e => e.imageData)
-          .map(e => `<img src="${e.imageData}" class="tc-train-img">`)
+          .map(e => `<img src="${e.imageData}" class="tc-train-img"${e.flipped ? ' style="transform: scaleX(-1);"' : ''}>`)
           .join('');
         if (imgs) {
           imageHtml = `<div class="tc-images-scroll">${imgs}</div>`;
