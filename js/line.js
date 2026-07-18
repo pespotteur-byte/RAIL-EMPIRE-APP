@@ -114,13 +114,14 @@ export class LineManager {
 
         const routeLabel = route.find(p => p.trackRef || p.ref || p.name);
         const trackName = routeLabel ? (routeLabel.trackRef || routeLabel.ref || routeLabel.name) : `${stA.name} - ${stB.name}`;
+        const electrified = route.some(r => r.electrified === false) ? false : true;
 
         const track = world.addTrack({
           stationA: stA.id,
           stationB: stB.id,
           distance: Math.round(distance),
           maxSpeed: avgSpeed,
-          electrified: true,
+          electrified,
           name: trackName,
           route,
         });

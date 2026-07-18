@@ -415,8 +415,8 @@ export class ORMClient {
             if (!nodes.has(bKey)) nodes.set(bKey, { key: bKey, lat: b.lat, lon: b.lon, edges: [] });
             const dist = haversine(a.lat, a.lon, b.lat, b.lon);
             const maxSpeed = a.maxSpeed || b.maxSpeed || 30;
-            const edge = { from: aKey, to: bKey, dist, maxSpeed, electrified: false, tracks: 1, usage: 'main', service: '', wayId: trc.id || 'user-trc' };
-            const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed, electrified: false, tracks: 1, usage: 'main', service: '', wayId: trc.id || 'user-trc' };
+            const edge = { from: aKey, to: bKey, dist, maxSpeed, electrified: null, tracks: 1, usage: 'main', service: '', wayId: trc.id || 'user-trc' };
+            const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed, electrified: null, tracks: 1, usage: 'main', service: '', wayId: trc.id || 'user-trc' };
             nodes.get(aKey).edges.push(edge);
             nodes.get(bKey).edges.push(reverseEdge);
           }

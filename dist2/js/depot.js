@@ -1,0 +1,623 @@
+let nextDepotId = 1;
+let nextRescueId = 1;
+
+export class Depot {
+  constructor(data) {
+    this.id = data.id || `depot-${nextDepotId++}`;
+    this.type = data.type || 'depot'; // depot, ite-fret, ite-industrie, ite-logistique
+    this.name = data.name || 'Depot';
+    this.stationId = data.stationId || '';
+    this.tracks = data.tracks || 4;
+    this.cost = data.cost || 50000;
+    this.built = data.built || false;
+    // DEP-01 : infrastructures dépôt (remisage, rotonde, technicentre)
+    this.infrastructure = Array.isArray(data.infrastructure) ? data.infrastructure : [];
+    this.ramesStored = data.ramesStored || [];
+    // ITE track footprints: array of { name, length, cargoType }
+    this.iteTracks = Array.isArray(data.iteTracks) ? data.iteTracks : [];
+    this.iteCargoTypes = data.iteCargoTypes || [];
+    // Rescue locomotives: array of { stockId, stockName, deployed }
+    this.rescueLocos = (data.rescueLocos || []).map(r => ({
+      stockId: r.stockId,
+      stockName: r.stockName || '',
+      traction: r.traction || '',
+      deployed: r.deployed || false,
+    }));
+    // Section VI — stocks de pièces détachées pour la maintenance
+    this.spareParts = data.spareParts || {
+      moteur: 0, climatisation: 0, fanaux: 0, freins: 0, portes: 0
+    };
+  }
+
+  // Add spare parts to the depot (purchase action)
+  addSpareParts(type, qty) {
+    if (!this.spareParts.hasOwnProperty(type)) return false;
+    this.spareParts[type] = (this.spareParts[type] || 0) + qty;
+    return true;
+  }
+
+  // Consume spare parts (returns true if enough stock)
+  consumeSpareParts(parts) {
+    for (const [type, qty] of Object.entries(parts || {})) {
+      if ((this.spareParts[type] || 0) < qty) return false;
+    }
+    for (const [type, qty] of Object.entries(parts || {})) {
+      this.spareParts[type] -= qty;
+    }
+    return true;
+  }
+
+  getTypeLabel() {
+    const labels = {
+      'depot': 'Depot maintenance',
+      'ite-fret': 'ITE Fret',
+      'ite-industrie': 'ITE Industrie',
+      'ite-logistique': 'ITE Logistique',
+    };
+    return labels[this.type] || this.type;
+  }
+
+  getMaintenanceCost() {
+    return this.tracks * 200;
+  }
+
+  hasInfrastructure(type) {
+    return Array.isArray(this.infrastructure) && this.infrastructure.includes(type);
+  }
+
+  // DEP-01 : technicentre nécessaire pour maintenance lourde ; rotonde réduit le temps
+  getMaintenanceDuration(baseMinutes) {
+    if (!this.hasInfrastructure('technicentre')) return baseMinutes * 2;
+    if (this.hasInfrastructure('rotonde')) return Math.max(5, Math.round(baseMinutes * 0.8));
+    return baseMinutes;
+  }
+
+  // Can dispatch rescue locomotive (has available non-deployed locos)
+  canRescue() {
+    return this.type === 'depot' && this.built && this.rescueLocos.some(r => !r.deployed);
+  }
+
+  // Get first available rescue loco
+  getAvailableRescueLoco(preferredTraction) {
+    if (preferredTraction) {
+      const match = this.rescueLocos.find(r => !r.deployed && r.traction && r.traction.toLowerCase().includes(preferredTraction.toLowerCase()));
+      if (match) return match;
+    }
+    return this.rescueLocos.find(r => !r.deployed);
+  }
+
+  // Mark a rescue loco as deployed
+  deployRescue(stockId) {
+    const loco = this.rescueLocos.find(r => r.stockId === stockId && !r.deployed);
+    if (loco) {
+      loco.deployed = true;
+      return loco;
+    }
+    return null;
+  }
+
+  // Return a rescue loco to depot
+  returnRescue(stockId) {
+    const loco = this.rescueLocos.find(r => r.stockId === stockId && r.deployed);
+    if (loco) loco.deployed = false;
+  }
+}
+
+export class DepotManager {
+  constructor() {
+    this.depots = [];
+    this.activeRescues = []; // { id, depotId, stockId, stockName, targetServiceId, state, position }
+    this.repairQueue = []; // { serviceId, depotId, remainingMin, totalMin, serviceName }
+    this.maintenanceQueue = []; // { rameId, depotId, remainingMin, totalMin, rameName }
+  }
+
+  add(data, economy) {
+    const depot = new Depot(data);
+    if (economy && economy.balance >= depot.cost) {
+      economy.addExpense(depot.cost, 'construction', `Construction ${depot.name}`);
+      depot.built = true;
+    } else {
+      depot.built = false;
+    }
+    this.depots.push(depot);
+    return depot;
+  }
+
+  remove(id) {
+    this.depots = this.depots.filter(d => d.id !== id);
+  }
+
+  getAll() {
+    return this.depots;
+  }
+
+  getDepots() {
+    return this.depots.filter(d => d.type === 'depot');
+  }
+
+  getDepotById(id) {
+    return this.depots.find(d => d.id === id) || null;
+  }
+
+  getITEs() {
+    return this.depots.filter(d => d.type.startsWith('ite'));
+  }
+
+  getByStation(stationId) {
+    return this.depots.filter(d => d.stationId === stationId);
+  }
+
+  addITETrack(depotId, track) {
+    const depot = this.depots.find(d => d.id === depotId);
+    if (depot && depot.type.startsWith('ite')) {
+      depot.iteTracks.push({ name: track.name, length: track.length, cargoType: track.cargoType });
+      return true;
+    }
+    return false;
+  }
+
+  removeITETrack(depotId, index) {
+    const depot = this.depots.find(d => d.id === depotId);
+    if (depot && depot.type.startsWith('ite')) {
+      depot.iteTracks.splice(index, 1);
+    }
+  }
+
+  getTotalITELength(depotId) {
+    const depot = this.depots.find(d => d.id === depotId);
+    return depot ? depot.iteTracks.reduce((s, t) => s + (Number(t.length) || 0), 0) : 0;
+  }
+
+  // Section VI — ITE : récupère le dépôt ITE lié à une gare (s'il existe)
+  getITEByStation(stationId) {
+    return this.depots.find(d => d.type.startsWith('ite') && d.stationId === stationId) || null;
+  }
+
+  // Section VI — longueur utile totale d'un ITE, et nombre de tranches nécessaires
+  getITEInfo(stationId, trainLengthM, cargoType) {
+    const ite = this.getITEByStation(stationId);
+    if (!ite) return { isITE: false, totalLength: Infinity, trancheCount: 1 };
+    const totalLength = ite.iteTracks.reduce((s, t) => s + (Number(t.length) || 0), 0);
+    // Vérification du type de fret accepté par l'ITE
+    let cargoMatch = true;
+    if (cargoType && ite.iteCargoTypes && ite.iteCargoTypes.length > 0) {
+      cargoMatch = ite.iteCargoTypes.some(ct => ct && (ct === cargoType || cargoType.startsWith(ct) || ct.startsWith(cargoType)));
+    }
+    if (totalLength <= 0) return { isITE: true, totalLength: 0, trancheCount: 1, cargoMatch };
+    const trancheCount = Math.ceil((trainLengthM || 0) / totalLength);
+    return { isITE: true, totalLength, canFit: (trainLengthM || 0) <= totalLength, trancheCount, cargoMatch };
+  }
+
+  // Add a rescue loco to a depot — max 2 per depot (Annexe 9)
+  addRescueLoco(depotId, stockId, stockName, traction) {
+    const depot = this.depots.find(d => d.id === depotId);
+    if (depot) {
+      if (depot.rescueLocos.length >= 2) return false;
+      depot.rescueLocos.push({ stockId, stockName, traction: traction || '', deployed: false });
+      return true;
+    }
+    return false;
+  }
+
+  // Remove a rescue loco from a depot
+  removeRescueLoco(depotId, stockId) {
+    const depot = this.depots.find(d => d.id === depotId);
+    if (depot) {
+      depot.rescueLocos = depot.rescueLocos.filter(r => r.stockId !== stockId);
+    }
+  }
+
+  // Find nearest depot that can rescue
+  findNearestRescueDepot(world, lat, lon) {
+    let best = null, bestDist = Infinity;
+    for (const depot of this.depots) {
+      if (!depot.canRescue()) continue;
+      const station = world.getStationById(depot.stationId);
+      if (!station) continue;
+      const dLat = (station.lat - lat) * 111;
+      const dLon = (station.lon - lon) * 111 * Math.cos(lat * Math.PI / 180);
+      const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+      if (dist < bestDist) { bestDist = dist; best = depot; }
+    }
+    return best;
+  }
+
+  // Dispatch rescue for a broken-down train
+  // DDS-02 : choisir un secours diesel si le tronçon est non électrifié, électrique sinon
+  dispatchRescue(world, brokenService) {
+    if (!brokenService?.position) return null;
+    const depot = this.findNearestRescueDepot(world, brokenService.position.lat, brokenService.position.lon);
+    if (!depot) return null;
+
+    let preferred = '';
+    const route = (typeof brokenService.getCurrentRoute === 'function' && brokenService.getCurrentRoute()) ||
+                  brokenService._state?.cachedRoute;
+    if (route?.length > 1) {
+      const electCount = route.filter(p => p.electrified !== false).length;
+      const nonElectCount = route.filter(p => p.electrified === false).length;
+      if (nonElectCount > electCount) preferred = 'diesel';
+      else if (electCount > 0) preferred = 'kv';
+    }
+
+    const loco = depot.getAvailableRescueLoco(preferred);
+    if (!loco) return null;
+
+    depot.deployRescue(loco.stockId);
+
+    const station = world.getStationById(depot.stationId);
+    const repairType = brokenService?.train?.breakdown?.type || 'moteur';
+    const rescue = {
+      id: `rescue-${nextRescueId++}`,
+      depotId: depot.id,
+      stockId: loco.stockId,
+      stockName: loco.stockName,
+      targetServiceId: brokenService.id,
+      repairType,
+      state: 'en_route', // en_route -> recovering -> returning
+      position: station ? { lat: station.lat, lon: station.lon } : null,
+      targetPosition: { lat: brokenService.position.lat, lon: brokenService.position.lon },
+      depotPosition: station ? { lat: station.lat, lon: station.lon } : null,
+      speed: 0,
+      progress: 0,
+      route: null,
+      routeIndex: 0,
+    };
+    // Try to find a route via ORM instead of going straight line
+    if (station && window.game?.orm) {
+      window.game.orm.findRoute(station.lat, station.lon, brokenService.position.lat, brokenService.position.lon)
+        .then(route => { if (route && route.length >= 2) rescue.route = route; })
+        .catch(() => {});
+    }
+    this.activeRescues.push(rescue);
+    return rescue;
+  }
+
+  // Update active rescues (called each move tick)
+  updateRescues(dt) {
+    for (const rescue of this.activeRescues) {
+      if (!rescue.position || !rescue.targetPosition) continue;
+
+      // Section VI/DDS — max 30 km/h à l'approche du train en panne, 10 km/h très proche
+      let maxSpeed = 100; // km/h for rescue loco
+      const cosLat = Math.cos(rescue.position.lat * Math.PI / 180);
+      const dLat = (rescue.targetPosition.lat - rescue.position.lat) * 111;
+      const dLon = (rescue.targetPosition.lon - rescue.position.lon) * 111 * cosLat;
+      const distToTarget = Math.sqrt(dLat * dLat + dLon * dLon);
+      if (distToTarget < 0.5) maxSpeed = 10;
+      else if (distToTarget < 2.0) maxSpeed = 30;
+
+      const accel = 2.0; // km/h/s
+
+      if (rescue.state === 'en_route') {
+        // Follow route if available, else go straight
+        rescue.speed = Math.min(maxSpeed, rescue.speed + accel * dt);
+        const stepKm = rescue.speed * dt / 3600;
+
+        if (rescue.route && rescue.route.length >= 2) {
+          let remaining = stepKm;
+          while (remaining > 0 && rescue.routeIndex < rescue.route.length - 1) {
+            const to = rescue.route[rescue.routeIndex + 1];
+            const dLat = (to.lat - rescue.position.lat) * 111;
+            const dLon = (to.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+            const distToNext = Math.sqrt(dLat * dLat + dLon * dLon);
+            if (distToNext <= 0.001) { rescue.routeIndex++; continue; }
+            if (remaining >= distToNext) {
+              rescue.position.lat = to.lat;
+              rescue.position.lon = to.lon;
+              remaining -= distToNext;
+              rescue.routeIndex++;
+            } else {
+              const ratio = remaining / distToNext;
+              rescue.position.lat += (to.lat - rescue.position.lat) * ratio;
+              rescue.position.lon += (to.lon - rescue.position.lon) * ratio;
+              remaining = 0;
+            }
+          }
+          if (rescue.routeIndex >= rescue.route.length - 1) {
+            rescue.state = 'recovering';
+            rescue.speed = 0;
+            rescue._recoverTimer = 5;
+          }
+        } else {
+          const dLat = (rescue.targetPosition.lat - rescue.position.lat) * 111;
+          const dLon = (rescue.targetPosition.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+          if (dist < 0.5) {
+            rescue.state = 'recovering';
+            rescue.speed = 0;
+            rescue._recoverTimer = 5;
+            continue;
+          }
+          if (dist > 0) {
+            const ratio = Math.min(1, stepKm / dist);
+            rescue.position.lat += (rescue.targetPosition.lat - rescue.position.lat) * ratio;
+            rescue.position.lon += (rescue.targetPosition.lon - rescue.position.lon) * ratio;
+          }
+        }
+      } else if (rescue.state === 'recovering') {
+        // dt is in seconds; _recoverTimer is in minutes
+        rescue._recoverTimer = (rescue._recoverTimer || 0) - dt / 60;
+        if (rescue._recoverTimer <= 0) {
+          rescue.state = 'returning';
+          rescue.targetPosition = rescue.depotPosition;
+          rescue.speed = 0;
+          // Build return route (reverse of outbound route)
+          if (rescue.route) {
+            rescue.returnRoute = [...rescue.route].reverse();
+            rescue.routeIndex = 0;
+          }
+        }
+      } else if (rescue.state === 'returning') {
+        if (!rescue.depotPosition) { rescue.state = 'done'; continue; }
+
+        rescue.speed = Math.min(60, rescue.speed + accel * dt); // slower on return (towing)
+        const stepKm = rescue.speed * dt / 3600;
+
+        if (rescue.returnRoute && rescue.returnRoute.length >= 2) {
+          let remaining = stepKm;
+          while (remaining > 0 && rescue.routeIndex < rescue.returnRoute.length - 1) {
+            const to = rescue.returnRoute[rescue.routeIndex + 1];
+            const dLat2 = (to.lat - rescue.position.lat) * 111;
+            const dLon2 = (to.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+            const distToNext = Math.sqrt(dLat2 * dLat2 + dLon2 * dLon2);
+            if (distToNext <= 0.001) { rescue.routeIndex++; continue; }
+            if (remaining >= distToNext) {
+              rescue.position.lat = to.lat;
+              rescue.position.lon = to.lon;
+              remaining -= distToNext;
+              rescue.routeIndex++;
+            } else {
+              const ratio = remaining / distToNext;
+              rescue.position.lat += (to.lat - rescue.position.lat) * ratio;
+              rescue.position.lon += (to.lon - rescue.position.lon) * ratio;
+              remaining = 0;
+            }
+          }
+          if (rescue.routeIndex >= rescue.returnRoute.length - 1) {
+            rescue.state = 'done';
+            const depot = this.depots.find(d => d.id === rescue.depotId);
+            if (depot) depot.returnRescue(rescue.stockId);
+            if (rescue.targetServiceId) {
+              this.repairQueue.push({
+                serviceId: rescue.targetServiceId,
+                depotId: rescue.depotId,
+                remainingMin: 30,
+                totalMin: 30,
+                serviceName: rescue.targetServiceId,
+                repairType: rescue.repairType || 'moteur',
+              });
+            }
+          }
+        } else {
+          const dLat = (rescue.depotPosition.lat - rescue.position.lat) * 111;
+          const dLon = (rescue.depotPosition.lon - rescue.position.lon) * 111 * Math.cos(rescue.position.lat * Math.PI / 180);
+          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+          if (dist < 0.5) {
+            rescue.state = 'done';
+            const depot = this.depots.find(d => d.id === rescue.depotId);
+            if (depot) depot.returnRescue(rescue.stockId);
+            if (rescue.targetServiceId) {
+              this.repairQueue.push({
+                serviceId: rescue.targetServiceId,
+                depotId: rescue.depotId,
+                remainingMin: 30,
+                totalMin: 30,
+                serviceName: rescue.targetServiceId,
+                repairType: rescue.repairType || 'moteur',
+              });
+            }
+            continue;
+          }
+          if (dist > 0) {
+            const ratio = Math.min(1, stepKm / dist);
+            rescue.position.lat += (rescue.depotPosition.lat - rescue.position.lat) * ratio;
+            rescue.position.lon += (rescue.depotPosition.lon - rescue.position.lon) * ratio;
+          }
+        }
+      }
+    }
+
+    // Remove completed rescues
+    this.activeRescues = this.activeRescues.filter(r => r.state !== 'done');
+  }
+
+  // Update repair & maintenance timers (called each minute tick)
+  updateRepairs(dt) {
+    const step = dt || 1; // 1 minute per tick
+    const finished = [];
+    for (const r of this.repairQueue) {
+      r.remainingMin -= step;
+      if (r.remainingMin <= 0) finished.push(r);
+    }
+    for (const r of finished) {
+      // Section VI — consommation de pièces détachées pour la réparation
+      const depot = this.depots.find(d => d.id === r.depotId);
+      const type = r.repairType || 'moteur';
+      const needed = { moteur: 1, freins: 1, climatisation: 1, portes: 1, fanaux: 1 };
+      if (depot && needed[type]) {
+        depot.consumeSpareParts({ [type]: needed[type] }) || (r.remainingMin = 60); // attendre pièces
+      }
+      if (r.remainingMin <= 0) {
+        this.repairQueue = this.repairQueue.filter(q => q.serviceId !== r.serviceId);
+      }
+    }
+    const finishedM = [];
+    for (const m of this.maintenanceQueue) {
+      m.remainingMin -= step;
+      if (m.remainingMin <= 0) finishedM.push(m);
+    }
+    for (const m of finishedM) {
+      this.maintenanceQueue = this.maintenanceQueue.filter(q => q.rameId !== m.rameId);
+    }
+    return {
+      repaired: finished.filter(r => r.remainingMin <= 0).map(r => ({ serviceId: r.serviceId, depotId: r.depotId, repairType: r.repairType })),
+      maintainedIds: finishedM.map(m => m.rameId),
+    };
+  }
+
+  // MNT-06 : vérification mensuelle de la maintenance préventive recommandée
+  checkPreventiveMaintenance(dateStr, rameManager) {
+    if (!dateStr || !rameManager) return;
+    const month = dateStr.slice(0, 7); // YYYY-MM
+    for (const rame of rameManager.getAll()) {
+      if (rame.inMaintenance || this.isRameInMaintenance(rame.id)) {
+        rame.recommendedMaintenance = false;
+        continue;
+      }
+      const noMaint = !rame.lastMaintenanceMonth;
+      const monthChanged = rame.lastMaintenanceMonth !== month;
+      const used = rame.kmSinceLastMaint > 2000 || rame.wearLevel > 20;
+      const needs = noMaint || (monthChanged && used);
+      rame.recommendedMaintenance = needs;
+    }
+  }
+
+  // MNT-05 : liste des dépôts avec pièces détachées en sous-stock
+  getLowStockDepots(threshold = 2) {
+    const result = [];
+    for (const depot of this.depots) {
+      if (depot.type !== 'depot' || !depot.built) continue;
+      const low = Object.entries(depot.spareParts || {})
+        .filter(([, qty]) => qty < threshold)
+        .map(([type]) => type);
+      if (low.length > 0) result.push({ depot, low });
+    }
+    return result;
+  }
+
+  // MNT-05 : livraison groupée de pièces détachées vers plusieurs dépôts
+  buyBulkSpareParts(type, qty, economy) {
+    const prices = { moteur: 5000, freins: 3000, climatisation: 2000, portes: 1500, fanaux: 1000 };
+    const price = prices[type] || 1000;
+    const targets = this.depots.filter(d => d.type === 'depot' && d.built);
+    const totalCost = price * qty * targets.length;
+    if (economy.balance < totalCost) return { ok: false, totalCost };
+    economy.addExpense(totalCost, 'maintenance', `Livraison groupée pièces : ${type} x${qty} (${targets.length} dépôts)`);
+    for (const depot of targets) depot.addSpareParts(type, qty);
+    return { ok: true, totalCost, count: targets.length };
+  }
+
+  // Send a RAME for preventive maintenance
+  sendRameToMaintenance(rameId, rameName, depotId) {
+    if (this.maintenanceQueue.some(m => m.rameId === rameId)) return false;
+    const depot = this.depots.find(d => d.id === depotId);
+    const duration = depot ? depot.getMaintenanceDuration(20) : 20;
+    this.maintenanceQueue.push({
+      rameId,
+      depotId,
+      remainingMin: duration,
+      totalMin: duration,
+      rameName: rameName || rameId,
+    });
+    return true;
+  }
+
+  isRameInMaintenance(rameId) {
+    return this.maintenanceQueue.some(m => m.rameId === rameId);
+  }
+
+  getRameMaintenanceInfo(rameId) {
+    return this.maintenanceQueue.find(m => m.rameId === rameId) || null;
+  }
+
+  isInRepairOrMaintenance(serviceId) {
+    return this.repairQueue.some(r => r.serviceId === serviceId);
+  }
+
+  getRepairInfo(serviceId) {
+    return this.repairQueue.find(r => r.serviceId === serviceId) || null;
+  }
+
+  // Get active rescues as pseudo-services for rendering on map
+  getRescueServices() {
+    return this.activeRescues.filter(r => r.position).map(r => ({
+      id: r.id,
+      name: r.stockName || 'Secours',
+      position: r.position,
+      state: 'moving',
+      isRescue: true,
+      rescueState: r.state,
+      train: {
+        speed: Math.round(r.speed),
+        color: '#ef4444', // red for rescue
+        stoppedAt: null,
+        incident: null,
+        delay: 0,
+        seriesName: '',
+        number: '',
+        platform: null,
+      },
+    }));
+  }
+
+  toSave() {
+    return {
+      depots: this.depots.map(d => ({
+        id: d.id,
+        type: d.type,
+        name: d.name,
+        stationId: d.stationId,
+        tracks: d.tracks,
+        cost: d.cost,
+        built: d.built,
+        infrastructure: d.infrastructure,
+        ramesStored: d.ramesStored,
+        iteTracks: d.iteTracks,
+        iteCargoTypes: d.iteCargoTypes,
+        rescueLocos: d.rescueLocos,
+        spareParts: d.spareParts,
+      })),
+      activeRescues: this.activeRescues,
+      repairQueue: this.repairQueue,
+      maintenanceQueue: this.maintenanceQueue,
+    };
+  }
+
+  loadFromSave(data) {
+    this.depots = [];
+    this.activeRescues = [];
+
+    // Support both old format (array) and new format (object with depots + activeRescues)
+    const arr = Array.isArray(data) ? data : (data.depots || []);
+    for (const d of arr) {
+      this.depots.push(new Depot(d));
+      const num = parseInt(d.id?.split('-')[1] || '0');
+      if (num >= nextDepotId) nextDepotId = num + 1;
+    }
+
+    if (!Array.isArray(data) && data.activeRescues) {
+      this.activeRescues = data.activeRescues;
+      for (const r of this.activeRescues) {
+        const num = parseInt(r.id?.split('-')[1] || '0');
+        if (num >= nextRescueId) nextRescueId = num + 1;
+      }
+    }
+    if (!Array.isArray(data) && data.maintenanceQueue) {
+      // Migrate old format (serviceId) to new format (rameId)
+      this.maintenanceQueue = data.maintenanceQueue
+        .filter(m => (m.remainingMin || 0) > 0) // skip finished entries
+        .map(m => ({
+          rameId: m.rameId || m.serviceId || '',
+          depotId: m.depotId,
+          remainingMin: Math.max(0, m.remainingMin || 0),
+          totalMin: m.totalMin || 20,
+          rameName: m.rameName || m.serviceName || '',
+        }));
+    } else {
+      this.maintenanceQueue = [];
+    }
+    if (!Array.isArray(data) && data.repairQueue) {
+      this.repairQueue = data.repairQueue
+        .filter(r => (r.remainingMin || 0) > 0)
+        .map(r => ({
+          serviceId: r.serviceId || '',
+          depotId: r.depotId,
+          remainingMin: Math.max(0, r.remainingMin || 0),
+          totalMin: r.totalMin || 30,
+          serviceName: r.serviceName || '',
+        }));
+    } else {
+      this.repairQueue = [];
+    }
+  }
+}

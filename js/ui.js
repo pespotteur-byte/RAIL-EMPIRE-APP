@@ -5029,10 +5029,11 @@ export class UI {
         const distance = orm.getRouteDistance(route);
         const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
         const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+        const electrified = route.some(r => r.electrified === false) ? false : true;
         this.game.world.addTrack({
           stationA: connectTo.id, stationB: station.id,
           distance: Math.round(distance), maxSpeed: avgSpeed,
-          electrified: true, name: `${connectTo.name} - ${name}`,
+          electrified, name: `${connectTo.name} - ${name}`,
           route,
         });
       } catch (e) {
@@ -5364,10 +5365,11 @@ export class UI {
               const distance = this.game.orm.getRouteDistance(route);
               const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
               const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+              const electrified = route.some(r => r.electrified === false) ? false : true;
               const track = this.game.world.addTrack({
                 stationA: stA.id, stationB: stB.id,
                 distance: Math.round(distance), maxSpeed: avgSpeed,
-                electrified: true, name: `${stA.name} - ${stB.name}`, route,
+                electrified, name: `${stA.name} - ${stB.name}`, route,
               });
               trackIds.push(track.id);
             } catch (e) {
