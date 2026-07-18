@@ -4906,10 +4906,19 @@ export class UI {
   setupLinePage() {
     document.getElementById('btn-new-line')?.addEventListener('click', () => this.openLineModal());
     document.getElementById('btn-save-line')?.addEventListener('click', () => this.saveLine());
+    document.getElementById('btn-line-manual')?.addEventListener('click', () => this._toggleLineManual());
+    document.getElementById('btn-line-clear-manual')?.addEventListener('click', () => this._clearLineManual());
+    document.getElementById('btn-line-finish-manual')?.addEventListener('click', () => this._finishLineManual());
     this.lineStops = [];
     this.lineMapCenter = null;
     this.lineMapScale = null;
     this._editingLineId = null;
+    this._lineManualMode = false;
+    this._lineManualSegmentIndex = -1;
+    this._lineManualPoints = [];
+    this._lineManualRoute = null;
+    this._lineManualDrag = null;
+    this._lineManualRoutes = [];
 
     // Station creator in Lines page
     document.getElementById('btn-new-station-lines')?.addEventListener('click', () => {
@@ -5058,6 +5067,12 @@ export class UI {
     this._editingLineId = null;
     this.lineMapCenter = null;
     this.lineMapScale = null;
+    this._lineManualMode = false;
+    this._lineManualSegmentIndex = -1;
+    this._lineManualPoints = [];
+    this._lineManualRoute = null;
+    this._lineManualDrag = null;
+    this._lineManualRoutes = [];
 
     if (editLine) {
       this._editingLineId = editLine.id;
@@ -5147,9 +5162,24 @@ export class UI {
       };
     };
 
-    const lineColor = document.getElementById('line-color')?.value || '#3b82f6';
+    const unproject = (x, y) => {
+      const cx = this.lineMapCenter.lon;
+      const cy = this.lineMapCenter.lat;
+      const scale = this.lineMapScale;
+      return {
+        lon: cx + (x - canvas.width / 2) * scale,
+        lat: cy - (y - canvas.height / 2) * scale,
+      };
+    };
+
+    const getSegmentStations = (i) => {
+      const sa = world.getStationById(this.lineStops[i]?.stationId);
+      const sb = world.getStationById(this.lineStops[i + 1]?.stationId);
+      return { sa, sb };
+    };
 
     const drawMap = () => {
+      const lineColor = document.getElementById('line-color')?.value || '#3b82f6';
       ctx.fillStyle = '#0a0a1a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -5185,7 +5215,9 @@ export class UI {
         const p = project(st.lat, st.lon);
         if (p.x < -20 || p.x > canvas.width + 20 || p.y < -20 || p.y > canvas.height + 20) continue;
         const isSelected = this.lineStops.some(s => s.stationId === st.id);
-        ctx.fillStyle = isSelected ? lineColor : '#3b82f6';
+        const isSegStart = this._lineManualMode && this.lineStops[this._lineManualSegmentIndex]?.stationId === st.id;
+        const isSegEnd = this._lineManualMode && this.lineStops[this._lineManualSegmentIndex + 1]?.stationId === st.id;
+        ctx.fillStyle = isSegStart || isSegEnd ? '#f59e0b' : (isSelected ? lineColor : '#3b82f6');
         ctx.beginPath();
         ctx.arc(p.x, p.y, isSelected ? 6 : 4, 0, Math.PI * 2);
         ctx.fill();
@@ -5195,18 +5227,41 @@ export class UI {
       }
 
       // Draw current line route
-      const lc = document.getElementById('line-color')?.value || '#3b82f6';
+      const lc = lineColor;
       for (let i = 0; i < this.lineStops.length - 1; i++) {
-        const sa = world.getStationById(this.lineStops[i].stationId);
-        const sb = world.getStationById(this.lineStops[i + 1].stationId);
+        const { sa, sb } = getSegmentStations(i);
         if (!sa || !sb) continue;
 
-        // Check if there's a shared track
-        const track = world.getTrackBetween(sa.id, sb.id);
-        if (track) {
+        const isManualSegment = this._lineManualMode && i === this._lineManualSegmentIndex;
+        const storedRoute = this._lineManualRoutes[i];
+
+        if (storedRoute && storedRoute.length >= 2) {
           ctx.strokeStyle = lc;
           ctx.lineWidth = 3;
-          if (track.route && track.route.length > 1) {
+          ctx.beginPath();
+          const p0 = project(storedRoute[0].lat, storedRoute[0].lon);
+          ctx.moveTo(p0.x, p0.y);
+          for (let j = 1; j < storedRoute.length; j++) {
+            const p = project(storedRoute[j].lat, storedRoute[j].lon);
+            ctx.lineTo(p.x, p.y);
+          }
+          ctx.stroke();
+        } else if (isManualSegment && this._lineManualRoute && this._lineManualRoute.length >= 2) {
+          ctx.strokeStyle = lc;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          const p0 = project(this._lineManualRoute[0].lat, this._lineManualRoute[0].lon);
+          ctx.moveTo(p0.x, p0.y);
+          for (let j = 1; j < this._lineManualRoute.length; j++) {
+            const p = project(this._lineManualRoute[j].lat, this._lineManualRoute[j].lon);
+            ctx.lineTo(p.x, p.y);
+          }
+          ctx.stroke();
+        } else {
+          const track = world.getTrackBetween(sa.id, sb.id);
+          if (track && track.route && track.route.length > 1) {
+            ctx.strokeStyle = lc;
+            ctx.lineWidth = 3;
             ctx.beginPath();
             const p0 = project(track.route[0].lat, track.route[0].lon);
             ctx.moveTo(p0.x, p0.y);
@@ -5218,16 +5273,29 @@ export class UI {
           } else {
             const pa = project(sa.lat, sa.lon);
             const pb = project(sb.lat, sb.lon);
+            ctx.strokeStyle = lc;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
             ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+            ctx.setLineDash([]);
           }
-        } else {
-          const pa = project(sa.lat, sa.lon);
-          const pb = project(sb.lat, sb.lon);
-          ctx.strokeStyle = lc;
-          ctx.lineWidth = 2;
-          ctx.setLineDash([6, 4]);
-          ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
-          ctx.setLineDash([]);
+        }
+      }
+
+      // Draw manual control points
+      if (this._lineManualMode && this._lineManualRoute && this._lineManualRoute.length >= 2) {
+        for (let i = 0; i < this._lineManualRoute.length; i++) {
+          const pt = this._lineManualRoute[i];
+          if (!pt.control) continue;
+          const p = project(pt.lat, pt.lon);
+          const isEnd = (i === 0 || i === this._lineManualRoute.length - 1);
+          ctx.fillStyle = isEnd ? '#f59e0b' : '#38bdf8';
+          ctx.beginPath(); ctx.arc(p.x, p.y, isEnd ? 6 : 5, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+          if (!isEnd) {
+            ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(56,189,248,0.4)'; ctx.lineWidth = 2; ctx.stroke();
+          }
         }
       }
 
@@ -5246,12 +5314,61 @@ export class UI {
 
     let drag = false, dragStart = null, totalDragDist = 0;
 
-    canvas.onmousedown = (e) => {
-      drag = true;
-      dragStart = { x: e.offsetX, y: e.offsetY };
-      totalDragDist = 0;
+    const findNearestManualPoint = (x, y) => {
+      if (!this._lineManualMode) return -1;
+      let bestIdx = -1, bestD = Infinity;
+      for (let i = 0; i < this._lineManualPoints.length; i++) {
+        const p = project(this._lineManualPoints[i].lat, this._lineManualPoints[i].lon);
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestD) { bestD = d; bestIdx = i; }
+      }
+      return bestD <= 12 ? bestIdx : -1;
     };
+
+    const isNearStation = (x, y, radius = 14) => {
+      for (const st of world.stations) {
+        const p = project(st.lat, st.lon);
+        if (Math.hypot(p.x - x, p.y - y) <= radius) return true;
+      }
+      return false;
+    };
+
+    canvas.onmousedown = (e) => {
+      const x = e.offsetX, y = e.offsetY;
+      drag = true;
+      dragStart = { x, y };
+      totalDragDist = 0;
+
+      if (this._lineManualMode) {
+        const idx = findNearestManualPoint(x, y);
+        if (idx >= 0) {
+          if (e.ctrlKey || e.button === 2) {
+            this._lineManualPoints.splice(idx, 1);
+            this._rebuildLineManualRoute();
+            drawMap();
+          } else {
+            this._lineManualDrag = { index: idx, startX: x, startY: y, moved: false };
+          }
+          drag = false; dragStart = null; totalDragDist = 0;
+          return;
+        }
+      }
+    };
+
     canvas.onmousemove = (e) => {
+      if (this._lineManualDrag) {
+        const dx = e.offsetX - this._lineManualDrag.startX;
+        const dy = e.offsetY - this._lineManualDrag.startY;
+        if (!this._lineManualDrag.moved && Math.hypot(dx, dy) < 4) return;
+        this._lineManualDrag.moved = true;
+        const w = unproject(e.offsetX, e.offsetY);
+        const snapped = this._snapToTrack(w.lat, w.lon);
+        const pt = this._lineManualPoints[this._lineManualDrag.index];
+        if (pt) { pt.lat = snapped ? snapped.lat : w.lat; pt.lon = snapped ? snapped.lon : w.lon; }
+        this._rebuildLineManualRoute();
+        drawMap();
+        return;
+      }
       if (drag && dragStart) {
         const dx = e.offsetX - dragStart.x;
         const dy = e.offsetY - dragStart.y;
@@ -5260,22 +5377,75 @@ export class UI {
         this.lineMapCenter.lat += dy * this.lineMapScale;
         dragStart = { x: e.offsetX, y: e.offsetY };
         drawMap();
+        return;
       }
-    };
-    canvas.onmouseup = (e) => {
-      if (totalDragDist < 5) {
-        const x = e.offsetX, y = e.offsetY;
-        let closest = null, minDist = Infinity;
+      // Hover feedback
+      const x = e.offsetX, y = e.offsetY;
+      let cursor = 'default';
+      if (this._lineManualMode && findNearestManualPoint(x, y) >= 0) cursor = 'grab';
+      else {
         for (const st of world.stations) {
           const p = project(st.lat, st.lon);
-          const d = Math.hypot(p.x - x, p.y - y);
-          if (d < minDist && d < 20) { minDist = d; closest = st; }
+          if (Math.hypot(p.x - x, p.y - y) < 16) { cursor = 'pointer'; break; }
         }
-        if (closest) this.addLineStop(closest);
+      }
+      canvas.style.cursor = cursor;
+    };
+
+    canvas.onmouseup = (e) => {
+      if (this._lineManualDrag) {
+        const wasMoved = this._lineManualDrag.moved;
+        this._lineManualDrag = null;
+        if (wasMoved) { drag = false; dragStart = null; totalDragDist = 0; return; }
+      }
+      if (totalDragDist < 5) {
+        const x = e.offsetX, y = e.offsetY;
+        if (this._lineManualMode) {
+          if (e.shiftKey) {
+            const idx = findNearestManualPoint(x, y);
+            if (idx >= 0) {
+              this._lineManualPoints.splice(idx, 1);
+              this._rebuildLineManualRoute();
+              drawMap();
+            }
+            drag = false; dragStart = null; totalDragDist = 0;
+            return;
+          }
+          if (isNearStation(x, y, 16)) {
+            drag = false; dragStart = null; totalDragDist = 0;
+            return;
+          }
+          const w = unproject(x, y);
+          const snapped = this._snapToTrack(w.lat, w.lon);
+          const pt = snapped || w;
+          this._lineManualPoints.push({ lat: pt.lat, lon: pt.lon });
+          this._rebuildLineManualRoute();
+          drawMap();
+        } else {
+          let closest = null, minDist = Infinity;
+          for (const st of world.stations) {
+            const p = project(st.lat, st.lon);
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < minDist && d < 20) { minDist = d; closest = st; }
+          }
+          if (closest) this.addLineStop(closest);
+        }
       }
       drag = false;
       dragStart = null;
+      totalDragDist = 0;
     };
+
+    canvas.ondblclick = (e) => {
+      if (!this._lineManualMode) return;
+      const idx = findNearestManualPoint(e.offsetX, e.offsetY);
+      if (idx >= 0) {
+        this._lineManualPoints.splice(idx, 1);
+        this._rebuildLineManualRoute();
+        drawMap();
+      }
+    };
+
     canvas.onwheel = (e) => {
       e.preventDefault();
       const factor = e.deltaY > 0 ? 1.2 : 0.83;
@@ -5284,9 +5454,14 @@ export class UI {
     };
 
     this._drawLineMap = drawMap;
+    this._updateLineManualUI();
   }
 
   addLineStop(station) {
+    if (this._lineManualMode) {
+      alert('Terminez le tracé manuel du segment avant d\'ajouter une gare.');
+      return;
+    }
     // Don't add duplicate consecutive stops
     if (this.lineStops.length > 0 && this.lineStops[this.lineStops.length - 1].stationId === station.id) return;
 
@@ -5300,8 +5475,96 @@ export class UI {
 
   removeLineStop(index) {
     this.lineStops.splice(index, 1);
+    this._lineManualMode = false;
+    this._lineManualSegmentIndex = -1;
+    this._lineManualPoints = [];
+    this._lineManualRoute = null;
+    this._lineManualDrag = null;
+    this._lineManualRoutes = this._lineManualRoutes.slice(0, Math.max(0, this.lineStops.length - 1));
     this.renderLineStops();
+    this._updateLineManualUI();
     if (this._drawLineMap) this._drawLineMap();
+  }
+
+  _rebuildLineManualRoute() {
+    const idx = this._lineManualSegmentIndex;
+    if (idx < 0 || idx >= this.lineStops.length - 1) return;
+    const sa = this.game.world.getStationById(this.lineStops[idx].stationId);
+    const sb = this.game.world.getStationById(this.lineStops[idx + 1].stationId);
+    if (!sa || !sb) return;
+    const start = { lat: sa.lat, lon: sa.lon, maxSpeed: 160, control: true };
+    const end = { lat: sb.lat, lon: sb.lon, maxSpeed: 160, control: true };
+    const controls = this._lineManualPoints.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: 160, control: true }));
+    this._lineManualRoute = this._buildManualRoute(start, controls, end, 160);
+  }
+
+  _toggleLineManual() {
+    if (this._lineManualMode) {
+      this._lineManualMode = false;
+      this._lineManualSegmentIndex = -1;
+      this._lineManualPoints = [];
+      this._lineManualRoute = null;
+      this._lineManualDrag = null;
+    } else {
+      if (this.lineStops.length < 2) return alert('Il faut au moins 2 gares pour tracer un segment.');
+      const idx = this.lineStops.length - 2;
+      this._lineManualSegmentIndex = idx;
+      const route = this._lineManualRoutes[idx];
+      if (route && route.length >= 2) {
+        this._lineManualPoints = route.filter((p, i) => p.control && i !== 0 && i !== route.length - 1).map(p => ({ lat: p.lat, lon: p.lon }));
+      } else {
+        this._lineManualPoints = [];
+      }
+      this._lineManualMode = true;
+      this._rebuildLineManualRoute();
+    }
+    this._updateLineManualUI();
+    if (this._drawLineMap) this._drawLineMap();
+  }
+
+  _clearLineManual() {
+    if (this._lineManualSegmentIndex >= 0) this._lineManualRoutes[this._lineManualSegmentIndex] = null;
+    this._lineManualPoints = [];
+    this._lineManualRoute = null;
+    if (this._drawLineMap) this._drawLineMap();
+  }
+
+  _finishLineManual() {
+    if (!this._lineManualMode) return;
+    this._rebuildLineManualRoute();
+    if (!this._lineManualRoute || this._lineManualRoute.length < 2) {
+      alert('Tracé invalide. Ajoutez au moins un point intermédiaire.');
+      return;
+    }
+    this._lineManualRoutes[this._lineManualSegmentIndex] = this._lineManualRoute;
+    this._lineManualMode = false;
+    this._lineManualSegmentIndex = -1;
+    this._lineManualPoints = [];
+    this._lineManualRoute = null;
+    this._lineManualDrag = null;
+    this._updateLineManualUI();
+    if (this._drawLineMap) this._drawLineMap();
+  }
+
+  _updateLineManualUI() {
+    const manual = document.getElementById('btn-line-manual');
+    const clear = document.getElementById('btn-line-clear-manual');
+    const finish = document.getElementById('btn-line-finish-manual');
+    const hint = document.getElementById('line-manual-hint');
+    if (manual) {
+      manual.textContent = this._lineManualMode ? 'Quitter le tracé manuel' : 'Tracer manuellement le segment';
+      manual.classList.toggle('active', this._lineManualMode);
+      manual.disabled = this.lineStops.length < 2 && !this._lineManualMode;
+    }
+    if (clear) clear.classList.toggle('hidden', !this._lineManualMode);
+    if (finish) finish.classList.toggle('hidden', !this._lineManualMode);
+    if (hint) {
+      if (this._lineManualMode) {
+        hint.textContent = 'Cliquez pour ajouter des points entre les deux gares. Glissez pour déplacer. Ctrl / clic droit / double-clic pour supprimer.';
+      } else {
+        hint.textContent = this.lineStops.length >= 2 ? 'Vous pouvez tracer manuellement le dernier segment pour remplacer le calcul ORM.' : 'Ajoutez au moins 2 gares pour tracer un segment.';
+      }
+    }
   }
 
   renderLineStops() {
@@ -5313,11 +5576,13 @@ export class UI {
     }
     container.innerHTML = this.lineStops.map((stop, i) => {
       const isShared = i > 0 ? !!this.game.world.getTrackBetween(this.lineStops[i - 1].stationId, stop.stationId) : false;
+      const hasManual = i > 0 && this._lineManualRoutes[i - 1];
+      const manualLabel = hasManual ? '<span style="color:#38bdf8;font-size:9px"> (tracé manuel)</span>' : '';
       const sharedInfo = (i > 0 && isShared) ? '<span style="color:#16a34a;font-size:9px"> (troncon existant)</span>' : (i > 0 ? '<span style="color:#f59e0b;font-size:9px"> (nouveau troncon)</span>' : '');
       return `
         <div class="sched-stop-row">
           <span style="color:var(--text3);font-size:10px;width:16px">${i + 1}</span>
-          <span class="stop-name">${stop.stationName}${sharedInfo}</span>
+          <span class="stop-name">${stop.stationName}${sharedInfo}${manualLabel}</span>
           <button class="btn-remove-stop" onclick="game.ui.removeLineStop(${i})">x</button>
         </div>
       `;
@@ -5328,6 +5593,8 @@ export class UI {
     const name = document.getElementById('line-name').value.trim();
     if (!name) return alert('Nom requis');
     if (this.lineStops.length < 2) return alert('Il faut au moins 2 gares');
+    if (this._lineManualMode) this._finishLineManual();
+    if (this._lineManualMode) return;
 
     const color = document.getElementById('line-color').value || '#3b82f6';
     const code = document.getElementById('line-code').value.trim();
@@ -5356,26 +5623,40 @@ export class UI {
           const stA = this.game.world.getStationById(stops[i]);
           const stB = this.game.world.getStationById(stops[i + 1]);
           if (!stA || !stB) { trackIds.push(null); continue; }
-          let existing = this.game.world.getTrackBetween(stA.id, stB.id);
-          if (existing) {
-            trackIds.push(existing.id);
+          const manualRoute = this._lineManualRoutes[i];
+          if (manualRoute && manualRoute.length >= 2) {
+            const distance = this.game.orm.getRouteDistance(manualRoute);
+            const speeds = manualRoute.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+            const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+            const electrified = manualRoute.some(r => r.electrified === false) ? false : true;
+            const track = this.game.world.addTrack({
+              stationA: stA.id, stationB: stB.id,
+              distance: Math.round(distance), maxSpeed: avgSpeed,
+              electrified, name: `${stA.name} - ${stB.name}`, route: manualRoute,
+            });
+            trackIds.push(track.id);
           } else {
-            try {
-              const route = await this.game.orm.findRoute(stA.lat, stA.lon, stB.lat, stB.lon);
-              const distance = this.game.orm.getRouteDistance(route);
-              const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
-              const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
-              const electrified = route.some(r => r.electrified === false) ? false : true;
-              const track = this.game.world.addTrack({
-                stationA: stA.id, stationB: stB.id,
-                distance: Math.round(distance), maxSpeed: avgSpeed,
-                electrified, name: `${stA.name} - ${stB.name}`, route,
-              });
-              trackIds.push(track.id);
-            } catch (e) {
-              const dist = Math.round(Math.sqrt(Math.pow((stB.lat - stA.lat) * 111, 2) + Math.pow((stB.lon - stA.lon) * 111 * Math.cos(stA.lat * Math.PI / 180), 2)));
-              const track = this.game.world.addTrack({ stationA: stA.id, stationB: stB.id, distance: dist, maxSpeed: 160, name: `${stA.name} - ${stB.name}` });
-              trackIds.push(track.id);
+            let existing = this.game.world.getTrackBetween(stA.id, stB.id);
+            if (existing) {
+              trackIds.push(existing.id);
+            } else {
+              try {
+                const route = await this.game.orm.findRoute(stA.lat, stA.lon, stB.lat, stB.lon);
+                const distance = this.game.orm.getRouteDistance(route);
+                const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+                const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+                const electrified = route.some(r => r.electrified === false) ? false : true;
+                const track = this.game.world.addTrack({
+                  stationA: stA.id, stationB: stB.id,
+                  distance: Math.round(distance), maxSpeed: avgSpeed,
+                  electrified, name: `${stA.name} - ${stB.name}`, route,
+                });
+                trackIds.push(track.id);
+              } catch (e) {
+                const dist = Math.round(Math.sqrt(Math.pow((stB.lat - stA.lat) * 111, 2) + Math.pow((stB.lon - stA.lon) * 111 * Math.cos(stA.lat * Math.PI / 180), 2)));
+                const track = this.game.world.addTrack({ stationA: stA.id, stationB: stB.id, distance: dist, maxSpeed: 160, name: `${stA.name} - ${stB.name}` });
+                trackIds.push(track.id);
+              }
             }
           }
         }
@@ -5393,7 +5674,7 @@ export class UI {
     } else {
       // Create new line
       const line = await this.game.lineManager.buildLine(
-        { name, color, code, stops },
+        { name, color, code, stops, manualRoutes: this._lineManualRoutes },
         this.game.world,
         this.game.orm
       );

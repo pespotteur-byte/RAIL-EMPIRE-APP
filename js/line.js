@@ -92,6 +92,7 @@ export class LineManager {
     if (stops.length < 2) return null;
 
     const trackIds = [];
+    const manualRoutes = lineData.manualRoutes || [];
 
     for (let i = 0; i < stops.length - 1; i++) {
       const stA = world.getStationById(stops[i]);
@@ -102,6 +103,24 @@ export class LineManager {
       let existing = world.getTrackBetween(stA.id, stB.id);
       if (existing) {
         trackIds.push(existing.id);
+        continue;
+      }
+
+      // Manual trace for this segment
+      const manualRoute = manualRoutes[i];
+      if (manualRoute && manualRoute.length >= 2) {
+        const distance = orm.getRouteDistance(manualRoute);
+        const speeds = manualRoute.filter(r => r.maxSpeed).map(r => r.maxSpeed);
+        const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
+        const electrified = manualRoute.some(r => r.electrified === false) ? false : true;
+        const routeLabel = manualRoute.find(p => p.trackRef || p.ref || p.name);
+        const trackName = routeLabel ? (routeLabel.trackRef || routeLabel.ref || routeLabel.name) : `${stA.name} - ${stB.name}`;
+        const track = world.addTrack({
+          stationA: stA.id, stationB: stB.id,
+          distance: Math.round(distance), maxSpeed: avgSpeed,
+          electrified, name: trackName, route: manualRoute,
+        });
+        trackIds.push(track.id);
         continue;
       }
 

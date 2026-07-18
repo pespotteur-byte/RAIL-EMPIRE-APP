@@ -1079,6 +1079,12 @@
           <div class="sched-map-container">
             <canvas id="line-map-canvas"></canvas>
           </div>
+          <div id="line-manual-hint" class="sched-hint" style="margin-top:6px">Cliquez sur les gares pour definir les arrets de la ligne. Le tracé ORM sera utilisé par defaut.</div>
+          <div class="form-row" style="margin-top:6px;gap:6px">
+            <button id="btn-line-manual" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Tracer manuellement le segment</button>
+            <button id="btn-line-clear-manual" class="btn-sm hidden" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Effacer le tracé</button>
+            <button id="btn-line-finish-manual" class="btn-sm hidden" type="button" style="background:var(--blue);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:#fff">Terminer le tracé</button>
+          </div>
           <div id="line-stops-list" class="sched-stops"></div>
           <div id="line-loading" class="hidden" style="color:var(--blue);font-size:11px;padding:4px">Calcul du trace ORM en cours...</div>
           <button id="btn-save-line" class="btn-primary btn-full">Enregistrer la ligne</button>
@@ -1366,6 +1372,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784410517"></script>
+  <script type="module" src="js/main.js?v=1786980000"></script>
 </body>
 </html>
