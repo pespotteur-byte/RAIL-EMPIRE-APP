@@ -2990,6 +2990,20 @@ export class UI {
       schedDragStart = null;
     };
 
+    // Double-click a trace point to re-draw the segment around it.
+    canvas.ondblclick = (e) => {
+      const x = e.offsetX, y = e.offsetY;
+      this._manualControlPoints = [];
+      this._manualControlDrag = null;
+      this._traceDragging = null;
+      const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
+      if (controlHit && controlHit.control) {
+        if (!controlHit.control.control) controlHit.control.control = true;
+        this._manualMode = true;
+        this._startManualRetrace(controlHit.leg, controlHit.index);
+      }
+    };
+
     canvas.onwheel = (e) => {
       e.preventDefault();
       tileMap.applyZoom(e.deltaY < 0 ? 1 : -1, e.offsetX, e.offsetY);
@@ -3295,8 +3309,10 @@ export class UI {
   _startManualRetrace(leg, controlIndex) {
     const route = this._manualRoutes[leg];
     if (!route || route.length < 3) return;
-    const controls = this._extractRouteControls(route);
     const clicked = route[controlIndex];
+    if (!clicked) return;
+    if (!clicked.control) clicked.control = true;
+    const controls = this._extractRouteControls(route);
     const ci = controls.indexOf(clicked);
     if (ci <= 0 || ci >= controls.length - 1) return;
     const startControl = controls[ci - 1];
@@ -3304,6 +3320,7 @@ export class UI {
     const startIdx = route.indexOf(startControl);
     const endIdx = route.indexOf(endControl);
     if (startIdx < 0 || endIdx < 0 || startIdx >= endIdx) return;
+    this._manualMode = true;
     this._manualRetraceLeg = leg;
     this._manualStartCoords = startControl;
     this._manualEndCoords = endControl;
