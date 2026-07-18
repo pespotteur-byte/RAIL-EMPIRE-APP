@@ -632,19 +632,19 @@ def compute_price(category, power, passenger_capacity, freight_capacity):
         return int(freight_capacity * 100) if freight_capacity else 0
     return 0
 
-def status_color(category, max_speed, mass, power, passenger_capacity, freight_capacity, source):
+def status_color(category, max_speed, mass, power, passenger_capacity, freight_capacity):
     if category in ('locomotive', 'automotrice'):
-        has_all = max_speed and mass and power and source
-        has_some = max_speed or mass or power or source
+        has_all = max_speed and mass and power
+        has_some = max_speed or mass or power
     elif category == 'wagon':
-        has_all = max_speed and mass and freight_capacity and source
-        has_some = max_speed or mass or freight_capacity or source
+        has_all = max_speed and mass and freight_capacity
+        has_some = max_speed or mass or freight_capacity
     elif category == 'voiture':
-        has_all = max_speed and mass and passenger_capacity and source
-        has_some = max_speed or mass or passenger_capacity or source
+        has_all = max_speed and mass and passenger_capacity
+        has_some = max_speed or mass or passenger_capacity
     else:
-        has_all = max_speed and mass and source
-        has_some = max_speed or mass or source
+        has_all = max_speed and mass
+        has_some = max_speed or mass
     if has_all:
         return 'Vert'
     if has_some:
@@ -833,7 +833,7 @@ def main():
                 'Tonnage': entry['freightCapacity'],
                 'Prix': entry['purchasePrice'],
                 'Source': entry['_source'],
-                'Statut': status_color(entry['category'], entry['maxSpeed'], entry['mass'], entry['power'], entry['passengerCapacity'], entry['freightCapacity'], entry['_source']),
+                'Statut': status_color(entry['category'], entry['maxSpeed'], entry['mass'], entry['power'], entry['passengerCapacity'], entry['freightCapacity']),
                 'Notes': raw['notes'],
             })
         if i % 100 == 0:
