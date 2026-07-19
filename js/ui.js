@@ -871,7 +871,10 @@ export class UI {
       else { prevIdx = curIdx - 2; curStationIdx = curIdx - 1; nextIdx = curIdx; }
     }
 
-    // Annex 5 — planned (grey crossed-out below) vs recalculated (purple circle) times.
+    const cat = svc.category || t.category || 'voyageur';
+    const catColor = LVM_CAT_COLORS[cat] || t.color || '#22d3ee';
+
+    // Annex 5 — planned (grey crossed-out) vs recalculated times.
     const buildTimes = (s, i) => {
       const isFirst = i === 0;
       const isLast = i === stops.length - 1;
@@ -881,16 +884,14 @@ export class UI {
       const actualArr = arr + d;
       const actualDep = dep + d;
       const dwell = (!isFirst && !isLast && !isWp && dep > arr) ? Math.max(0, Math.round(dep - arr)) : 0;
-      const baseLabel = isFirst ? `dép ${fmt(dep)}`
-        : isLast ? `arr ${fmt(arr)}`
-        : isWp ? `pass ${fmt(arr)}`
-        : `${fmt(arr)}–${fmt(dep)}`;
-      const actLabel = isFirst ? `dép ${fmt(actualDep)}`
-        : isLast ? `arr ${fmt(actualArr)}`
-        : isWp ? `pass ${fmt(actualArr)}`
-        : `${fmt(actualArr)}–${fmt(actualDep)}`;
       const showRecalc = d !== 0 && i >= curIdx;
-      return { base: baseLabel, actual: actLabel, showRecalc, dwell };
+      return {
+        arr: isFirst ? null : fmt(actualArr),
+        dep: isLast ? null : fmt(actualDep),
+        plannedArr: (showRecalc && !isFirst) ? fmt(arr) : null,
+        plannedDep: (showRecalc && !isLast) ? fmt(dep) : null,
+        isFirst, isLast, isWp, dwell
+      };
     };
 
     const rows = stops.map((s, i) => {
@@ -898,9 +899,33 @@ export class UI {
       const name = isWp ? 'Waypoint' : (world.getStationById(s.stationId)?.name || '—');
       const cur = i === curIdx ? ' cur' : '';
       const voie = s.platform ? `Voie ${s.platform}` : '';
-      const { base, actual, showRecalc, dwell } = buildTimes(s, i);
-      const plannedHtml = showRecalc ? `<div class="lvp-stop-planned">${base}</div>` : '';
-      return `<div class="lvp-stop${cur}"><div class="lvp-stop-left"><div class="lvp-stop-time">${actual}</div>${plannedHtml}</div><div class="lvp-stop-info"><div class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${voie ? ` <span class="lvp-stop-voie">${voie}</span>` : ''}</div>${dwell > 0 ? `<div class="lvp-stop-dwell">${dwell} min d'arrêt</div>` : ''}</div></div>`;
+      const { arr, dep, plannedArr, plannedDep, dwell, isFirst, isLast } = buildTimes(s, i);
+      const arrLabel = isFirst ? 'Heure départ' : (isWp ? 'Heure passage' : 'Heure arrivée');
+      const depLabel = isLast ? 'Heure arrivée' : (isWp ? 'Heure passage' : 'Heure départ');
+      const plannedArrHtml = plannedArr ? `<span class="lvp-time-planned">${plannedArr}</span>` : '';
+      const plannedDepHtml = plannedDep ? `<span class="lvp-time-planned">${plannedDep}</span>` : '';
+      return `<div class="lvp-stop${cur}">
+        <div class="lvp-stop-times">
+          <div class="lvp-time-row">
+            <span class="lvp-time-label">${arrLabel}</span>
+            <span class="lvp-time-value">${arr || '—'}</span>
+            ${plannedArrHtml}
+          </div>
+          <div class="lvp-time-row">
+            <span class="lvp-time-label">${depLabel}</span>
+            <span class="lvp-time-value">${dep || '—'}</span>
+            ${plannedDepHtml}
+          </div>
+        </div>
+        <div class="lvp-stop-track" style="--track-color:${catColor}">
+          <div class="lvp-stop-line"></div>
+          <div class="lvp-stop-dot"></div>
+        </div>
+        <div class="lvp-stop-info">
+          <div class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${voie ? ` <span class="lvp-stop-voie">${voie}</span>` : ''}</div>
+          ${dwell > 0 ? `<div class="lvp-stop-dwell">${dwell} min d'arrêt</div>` : ''}
+        </div>
+      </div>`;
     }).join('');
 
     const isArret = (s) => s && s.type === 'arret' && s.stationId;
