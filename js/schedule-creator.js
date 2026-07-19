@@ -711,7 +711,11 @@ export class ActiveService {
           const myDep = currentStops[0]?.departureTime;
           if (depStationId && myDep != null && this.serviceType === 'passager' && window.game?.scheduleCreator) {
             const earliest = window.game.scheduleCreator.getEarliestDueServiceAtStation(depStationId, timeOfDay);
-            if (earliest && earliest.id !== this.id && timeDiff(myDep, earliest.dep) > 0) return;
+            if (earliest && earliest.id !== this.id && timeDiff(myDep, earliest.dep) > 0) {
+              const earliestSvc = window.game.scheduleCreator.services.find(s => s.id === earliest.id);
+              const earliestBlockedByRame = earliestSvc && window.game.scheduleCreator.isRameInUse(earliestSvc.rameId, earliestSvc.id, timeOfDay);
+              if (!earliestBlockedByRame) return;
+            }
           }
 
           // Ensure position is set (may not have been set by pre-departure positioning)
@@ -3104,6 +3108,8 @@ export class ScheduleCreator {
     let minDep = null;
     for (const [id, dep] of sEntry.map) {
       if (!timeGte(timeOfDay, dep)) continue;
+      // OCC-03 : un train bloqué depuis plus de 5 min ne doit plus bloquer les départs suivants à jamais
+      if (timeDiff(timeOfDay, dep) > 5) continue;
       if (minId === null || timeDiff(dep, minDep) < 0) {
         minId = id;
         minDep = dep;
