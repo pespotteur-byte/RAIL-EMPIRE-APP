@@ -921,7 +921,7 @@ export class UI {
       const plannedDepHtml = plannedDep ? `<span class="lvp-time-planned">${plannedDep}</span>` : '';
       const arrContent = showArr ? `<span class="lvp-time-label">${arrLabel}</span><span class="lvp-time-value">${arr}</span>${plannedArrHtml}` : '';
       const depContent = showDep ? `<span class="lvp-time-label">${depLabel}</span><span class="lvp-time-value">${dep}</span>${plannedDepHtml}` : '';
-      const arrow = idx === arrowIdx ? `<div class="lvp-arrow" style="top:${arrowTop}">&#9654;</div>` : '';
+      const arrow = idx === arrowIdx ? `<div class="lvp-arrow" style="top:${arrowTop}">&#9660;</div>` : '';
       return `<div class="lvp-stop${cur}">
         <div class="lvp-stop-times">
           <div class="lvp-time-row">${arrContent}</div>
