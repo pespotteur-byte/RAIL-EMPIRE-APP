@@ -15,13 +15,11 @@ const DB_STORE = 'areas';
 const DB_VERSION = 1;
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
-// Built-in safety margin on top of the physics travel time so auto schedules
-// never give a train a chance to be early (3 % + at least 1 minute).
-const TRAVEL_TIME_SAFETY_PCT = 0.03;
+// SC-05 : no safety margin on auto-scheduled travel times so the schedule
+// matches the physics exactly (0 %, 0 extra minute). Advance only appears if
+// the player manually tightens the timetable.
 function applyTravelTimeSafety(baseMin) {
-  if (baseMin <= 1) return baseMin;
-  const extra = Math.max(1, Math.round(baseMin * TRAVEL_TIME_SAFETY_PCT));
-  return baseMin + extra;
+  return baseMin;
 }
 
 class ORMIndexedCache {

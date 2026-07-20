@@ -62,7 +62,7 @@ export class Connections {
         const nextStop = fromSvc.stops[fromSvc.currentStopIndex];
         if (nextStop?.stationId === stationId) {
           // The connecting train is approaching this station
-          const eta = fromSvc.delay || 0;
+          const eta = fromSvc.delay ?? 0;
           if (eta <= transfer.waitTime) {
             return true; // Wait for it
           }

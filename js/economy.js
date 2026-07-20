@@ -199,7 +199,7 @@ export class Economy {
         service._contractFreight = 0;
         service._contractDelivered = (service._contractDelivered || 0) + contractUnload;
         if (g?.freightManager?.fulfillAtStation) {
-          const delay = service.train?.delay || 0;
+          const delay = service.train?.delay ?? 0;
           const isDelayed = delay >= delayTolerance;
           const isEarly = delay <= -10;
           const res = g.freightManager.fulfillAtStation(service, stationId, contractUnload, isDelayed, isEarly);
@@ -241,7 +241,7 @@ export class Economy {
       if (freightUnload > 0) {
         this.totalFreightTonnes += freightUnload;
         let genericRevenue = Math.round(freightUnload * distFromPrev * this.freightPricePerTKm);
-        const isDelayed = (service.train?.delay || 0) >= delayTolerance;
+        const isDelayed = (service.train?.delay ?? 0) >= delayTolerance;
         if (isDelayed && genericRevenue > 0) genericRevenue = Math.round(genericRevenue * 0.75); // pénalité retard 25%
         if (genericRevenue > 0) {
           this.addRevenue(genericRevenue, 'fret', `${stationName}: fret générique ${freightUnload}t (${Math.round(distFromPrev)} km) — ${service.name}`);

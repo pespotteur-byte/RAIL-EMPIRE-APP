@@ -35,7 +35,7 @@ export class Dashboard {
     let onTime = 0;
     let total = movingServices.length;
     for (const svc of movingServices) {
-      if (svc.train && Math.abs(svc.train.delay || 0) <= 5) onTime++;
+      if (svc.train && Math.abs(svc.train.delay ?? 0) <= 5) onTime++;
     }
     const punctuality = total > 0 ? Math.round((onTime / total) * 100) : 100;
     this._push(this.punctualityHistory, { time: label, value: punctuality });
@@ -74,7 +74,7 @@ export class Dashboard {
     // Current stats
     let onTime = 0, delayed = 0, totalDelay = 0;
     for (const svc of movingServices) {
-      const d = svc.train?.delay || 0;
+      const d = svc.train?.delay ?? 0;
       if (Math.abs(d) <= 5) onTime++;
       else delayed++;
       totalDelay += d;
@@ -178,7 +178,7 @@ export class Dashboard {
           <summary style="cursor:pointer;color:var(--text);font-weight:600">Details rapide</summary>
           <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
             ${activeServices.slice(0, 8).map(svc => {
-              const d = svc.train?.delay || 0;
+              const d = svc.train?.delay ?? 0;
               return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
                 <span>${svc.name}</span>
                 <span style="color:${Math.abs(d) <= 5 ? 'var(--green)' : '#ef4444'}">${d > 0 ? '+' + fmt(d) + ' min' : 'A l\'heure'}</span>
@@ -381,7 +381,7 @@ export class Dashboard {
           </div>
           ${activeServices.map(svc => {
             const state = svc.state === 'moving' ? `${icon('dot_green', 10)} En route` : svc.state === 'waiting' ? `${icon('dot_yellow', 10)} Attente` : `${icon('dot_gray', 10)} Termin\u00e9`;
-            const delay = svc.train?.delay || 0;
+            const delay = svc.train?.delay ?? 0;
             const delayStr = delay > 0 ? '+' + fmt(delay) + ' min' : '\u00c0 l\'heure';
             const delayColor = Math.abs(delay) <= 5 ? 'var(--green)' : '#ef4444';
             const speed = svc.train?.speed ? `${fmt(svc.train.speed)} km/h` : '-';

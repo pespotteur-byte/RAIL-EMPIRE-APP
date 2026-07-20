@@ -786,17 +786,13 @@ export class UI {
     if (sp) sp.textContent = `${Math.round(t.speed)} km/h`;
     const dl = document.getElementById('lvp-delay');
     if (dl) {
-      const d = Math.round(t.delay || 0);
+      const d = Math.round(Number.isFinite(t.delay) ? t.delay : 0);
       dl.className = d > 0 ? 'late' : d < 0 ? 'early' : 'ok';
       dl.textContent = d > 0 ? `+${d} min` : d < 0 ? `- ${Math.abs(d)} min` : `à l'heure`;
     }
+    // Quand l'arrêt courant ou le retard change, on reconstruit situation, bandeau et étapes.
     const curIdx = svc.currentStopIndex || 0;
-    panel.querySelectorAll('.lvp-stop').forEach((el, i) => {
-      el.classList.toggle('cur', i === curIdx);
-    });
-
-    // Quand l'arrêt courant ou le retard change, on reconstruit situation, prochain arrêt, bandeau et étapes.
-    const stateKey = `${curIdx}|${Math.round(t.delay || 0)}`;
+    const stateKey = `${curIdx}|${Math.round(Number.isFinite(t.delay) ? t.delay : 0)}`;
     if (stateKey !== this._lvpStateKey) {
       this._lvpStateKey = stateKey;
       const { d, rows, bandeau, situation, nextHtml, curIdx: newIdx } = this._buildLivemapPanelContent(svc);
@@ -852,7 +848,7 @@ export class UI {
   // Recompute the dynamic parts of the livemap train panel.
   _buildLivemapPanelContent(svc) {
     const t = svc.train;
-    const d = Math.round(t.delay || 0);
+    const d = Math.round(Number.isFinite(t.delay) ? t.delay : 0);
     const stops = typeof svc.getCurrentStops === 'function'
       ? svc.getCurrentStops()
       : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
@@ -875,65 +871,81 @@ export class UI {
     const catColor = LVM_CAT_COLORS[cat] || t.color || '#22d3ee';
 
     // Annex 5 — planned (grey crossed-out) vs recalculated times.
-    const buildTimes = (s, i) => {
-      const isFirst = i === 0;
-      const isLast = i === stops.length - 1;
-      const isWp = s.type === 'waypoint' || !s.stationId;
-      const arr = s.arrivalTime ?? s.departureTime ?? 0;
-      const dep = s.departureTime ?? s.arrivalTime ?? 0;
-      const actualArr = arr + d;
-      const actualDep = dep + d;
-      const dwell = (!isFirst && !isLast && !isWp && dep > arr) ? Math.max(0, Math.round(dep - arr)) : 0;
-      const showRecalc = d !== 0 && i >= curIdx;
+    const isArret = (s) => s && s.type === 'arret' && s.stationId;
+    const buildTimes = (s, isFirst, isLast, origIdx) => {
+      const arrMins = s.arrivalTime ?? s.departureTime ?? 0;
+      const depMins = s.departureTime ?? s.arrivalTime ?? 0;
+      const actualArr = arrMins + d;
+      const actualDep = depMins + d;
+      const dwell = (!isFirst && !isLast && depMins > arrMins) ? Math.max(0, Math.round(depMins - arrMins)) : 0;
+      const showRecalc = d !== 0 && origIdx >= curIdx;
       return {
         arr: isFirst ? null : fmt(actualArr),
         dep: isLast ? null : fmt(actualDep),
-        plannedArr: (showRecalc && !isFirst) ? fmt(arr) : null,
-        plannedDep: (showRecalc && !isLast) ? fmt(dep) : null,
-        isFirst, isLast, isWp, dwell
+        plannedArr: (showRecalc && !isFirst) ? fmt(arrMins) : null,
+        plannedDep: (showRecalc && !isLast) ? fmt(depMins) : null,
+        dwell
       };
     };
 
-    const rows = stops.map((s, i) => {
-      const isWp = s.type === 'waypoint' || !s.stationId;
-      const name = isWp ? 'Waypoint' : (world.getStationById(s.stationId)?.name || '—');
-      const cur = i === curIdx ? ' cur' : '';
+    const displayStops = stops.map((s, i) => ({ s, origIdx: i })).filter(({ s }) => isArret(s));
+
+    let displayCurIdx = -1;
+    for (let idx = 0; idx < displayStops.length; idx++) {
+      if (displayStops[idx].origIdx === curStationIdx) { displayCurIdx = idx; break; }
+      if (displayStops[idx].origIdx < curStationIdx) displayCurIdx = idx;
+    }
+    if (displayCurIdx < 0) displayCurIdx = 0;
+
+    // GPS arrow: on the current station dot when stopped; halfway between stops when moving.
+    let arrowIdx = -1, arrowTop = '50%';
+    if (svc.state === 'moving' && displayCurIdx > 0) {
+      arrowIdx = displayCurIdx;
+      arrowTop = '0%';
+    } else if (svc.state !== 'completed' && displayCurIdx >= 0) {
+      arrowIdx = displayCurIdx;
+    }
+
+    const rows = displayStops.map(({ s, origIdx }, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === displayStops.length - 1;
+      const name = world.getStationById(s.stationId)?.name || '—';
+      const cur = idx === displayCurIdx ? ' cur' : '';
       const voie = s.platform ? `Voie ${s.platform}` : '';
-      const { arr, dep, plannedArr, plannedDep, dwell, isFirst, isLast } = buildTimes(s, i);
-      const arrLabel = isFirst ? 'Heure départ' : (isWp ? 'Heure passage' : 'Heure arrivée');
-      const depLabel = isLast ? 'Heure arrivée' : (isWp ? 'Heure passage' : 'Heure départ');
+      const { arr, dep, plannedArr, plannedDep, dwell } = buildTimes(s, isFirst, isLast, origIdx);
+      const showArr = arr !== null;
+      const showDep = dep !== null;
+      const arrLabel = showArr ? 'Heure arrivée' : '';
+      const depLabel = showDep ? 'Heure départ' : '';
       const plannedArrHtml = plannedArr ? `<span class="lvp-time-planned">${plannedArr}</span>` : '';
       const plannedDepHtml = plannedDep ? `<span class="lvp-time-planned">${plannedDep}</span>` : '';
+      const arrContent = showArr ? `<span class="lvp-time-label">${arrLabel}</span><span class="lvp-time-value">${arr}</span>${plannedArrHtml}` : '';
+      const depContent = showDep ? `<span class="lvp-time-label">${depLabel}</span><span class="lvp-time-value">${dep}</span>${plannedDepHtml}` : '';
+      const arrow = idx === arrowIdx ? `<div class="lvp-arrow" style="top:${arrowTop}">&#9654;</div>` : '';
       return `<div class="lvp-stop${cur}">
         <div class="lvp-stop-times">
-          <div class="lvp-time-row">
-            <span class="lvp-time-label">${arrLabel}</span>
-            <span class="lvp-time-value">${arr || '—'}</span>
-            ${plannedArrHtml}
-          </div>
-          <div class="lvp-time-row">
-            <span class="lvp-time-label">${depLabel}</span>
-            <span class="lvp-time-value">${dep || '—'}</span>
-            ${plannedDepHtml}
-          </div>
+          <div class="lvp-time-row">${arrContent}</div>
+          <div class="lvp-time-row">${depContent}</div>
         </div>
         <div class="lvp-stop-track" style="--track-color:${catColor}">
           <div class="lvp-stop-line"></div>
           <div class="lvp-stop-dot"></div>
+          ${arrow}
         </div>
         <div class="lvp-stop-info">
-          <div class="lvp-stop-name${isWp ? ' wp' : ''}">${name}${voie ? ` <span class="lvp-stop-voie">${voie}</span>` : ''}</div>
+          <div class="lvp-stop-name">${name}</div>
+          ${voie ? `<div class="lvp-stop-voie">${voie}</div>` : ''}
           ${dwell > 0 ? `<div class="lvp-stop-dwell">${dwell} min d'arrêt</div>` : ''}
         </div>
       </div>`;
     }).join('');
 
-    const isArret = (s) => s && s.type === 'arret' && s.stationId;
-    const upcoming = stops.slice(curIdx)
-      .filter(isArret)
-      .map(s => world.getStationById(s.stationId)?.name)
-      .filter(Boolean);
-    const bandeau = upcoming.length ? `Prochains arrêts : ${upcoming.join('  •  ')}` : 'Service terminé';
+    // Single continuous vertical line behind the stops, scrolls with the list.
+    rows = `<div class="lvp-stops-inner" style="--lvp-line-color:${catColor}"><div class="lvp-stops-line"></div>${rows}</div>`;
+
+    const bandeauStartIdx = displayStops.findIndex(({ origIdx }) => origIdx >= curIdx);
+    const bandeauStops = displayStops.slice(bandeauStartIdx >= 0 ? bandeauStartIdx : 0);
+    const bandeau = bandeauStops.length ? `Prochains arrêts : ${bandeauStops.map(({ s }) => world.getStationById(s.stationId)?.name).filter(Boolean).join('  •  ')}` : 'Service terminé';
 
     const stopName = (s) => s?.stationId ? (world.getStationById(s.stationId)?.name || '—') : (s ? 'Waypoint' : '—');
     const nextArretFrom = (fromIndex) => {
@@ -964,20 +976,43 @@ export class UI {
     };
     const arretStationName = (s) => s?.stationId ? (world.getStationById(s.stationId)?.name || '—') : '—';
 
+    // Nearest stations in both directions, including unserved ones, for "Se situe entre".
+    let ctxPrevStation = null, ctxNextStation = null;
+    if (svc.position && world?.stations?.length) {
+      const heading = svc.train?.geoHeading ?? 0;
+      const pos = svc.position;
+      const cosLat = Math.cos(pos.lat * Math.PI / 180);
+      let prevBestDist = Infinity, nextBestDist = Infinity;
+      for (const st of world.stations) {
+        if (st == null || !Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+        const dLat = (st.lat - pos.lat) * 111;
+        const dLon = (st.lon - pos.lon) * 111 * cosLat;
+        const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+        if (dist < 0.1) continue;
+        const bearing = Math.atan2(dLon, dLat);
+        let diff = bearing - heading;
+        while (diff <= -Math.PI) diff += 2 * Math.PI;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        if (Math.abs(diff) <= Math.PI / 2) {
+          if (dist < nextBestDist) { nextBestDist = dist; ctxNextStation = st; }
+        } else if (dist < prevBestDist) {
+          prevBestDist = dist; ctxPrevStation = st;
+        }
+      }
+    }
+    const ctxPrevName = ctxPrevStation?.name || arretStationName(findArretStop(curIdx - 1, -1)) || prevName;
+    const ctxNextName = ctxNextStation?.name || arretStationName(findArretStop(curIdx, 1)) || curName;
+
     let situation;
     if (svc.cancelled) {
       situation = '<span style="color:#ef4444;font-weight:600">Service supprimé</span>';
     } else if (t.speed === 0 && (svc.state === 'stopped_at_station' || svc.train?.stoppedAt)) {
       situation = `Arrêt en gare de <b>${curName}</b>`;
     } else if (curIdx > 0 && curIdx < stops.length) {
-      const prevArretS = findArretStop(curIdx - 1, -1);
-      const nextArretS = findArretStop(curIdx, 1);
-      const pName = arretStationName(prevArretS) || prevName;
-      const nName = arretStationName(nextArretS) || curName;
-      if (pName && nName && pName !== nName) {
-        situation = `Se situe entre <b>${pName}</b> et <b>${nName}</b>`;
-      } else if (nName) {
-        situation = `En route vers <b>${nName}</b>`;
+      if (ctxPrevName && ctxNextName && ctxPrevName !== ctxNextName) {
+        situation = `Se situe entre <b>${ctxPrevName}</b> et <b>${ctxNextName}</b>`;
+      } else if (ctxNextName) {
+        situation = `En route vers <b>${ctxNextName}</b>`;
       } else {
         situation = 'Service terminé';
       }
@@ -995,15 +1030,30 @@ export class UI {
     const track = document.getElementById('lvp-bandeau-track');
     const wrapper = track?.parentElement;
     if (!track || !wrapper) return;
+    const text = track.textContent;
+    if (this._lvpMarqueeText === text && track.classList.contains('marquee')) return;
+    if (this._lvpMarqueeRaf) cancelAnimationFrame(this._lvpMarqueeRaf);
+    this._lvpMarqueeRaf = null;
+    this._lvpMarqueeText = text;
     track.classList.remove('marquee');
-    void track.offsetWidth; // force reflow so animation restarts cleanly when needed
-    if (track.scrollWidth > wrapper.clientWidth) {
-      const dur = Math.max(8, track.scrollWidth / 30);
-      track.style.setProperty('--dur', `${dur}s`);
-      track.classList.add('marquee');
-    } else {
-      track.style.removeProperty('--dur');
-    }
+    track.style.transform = '';
+    void track.offsetWidth;
+    if (track.scrollWidth <= wrapper.clientWidth) return;
+    track.classList.add('marquee');
+    const speed = 18; // pixels per second (défilement lent)
+    let x = wrapper.clientWidth;
+    let last = performance.now();
+    const step = (now) => {
+      if (!track.parentElement) return;
+      if (track.scrollWidth <= wrapper.clientWidth) return;
+      const dt = (now - last) / 1000;
+      last = now;
+      x -= dt * speed;
+      if (x + track.scrollWidth <= 0) x = wrapper.clientWidth;
+      track.style.transform = `translateX(${x}px)`;
+      this._lvpMarqueeRaf = requestAnimationFrame(step);
+    };
+    this._lvpMarqueeRaf = requestAnimationFrame(step);
   }
 
   // LVM-03/04/06 — panneau détail du train sélectionné (annexes 4-5).
@@ -1060,7 +1110,6 @@ export class UI {
       <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
       <div class="lvp-situation" id="lvp-situation">${situation}</div>
       ${t.delayReason ? `<div class="lvp-delay-reason">${t.delayReason}</div>` : ''}
-      <div class="lvp-next" id="lvp-next">${nextHtml}</div>
       ${composition}
       ${payloadInfo ? `<div class="lvp-payload">${payloadInfo}</div>` : ''}
       <div class="lvp-bandeau"><span class="lvp-bandeau-track" id="lvp-bandeau-track">${bandeau}</span></div>
@@ -8060,10 +8109,7 @@ export class UI {
 
     // Show only active trains (moving or stopped at station) + rescue services + breakdowns.
     // DEP-06 : trains en maintenance absents du bandeau train.
-    // At massive scale we cap the list to keep the DOM small.
-    const MAX_TRAINS_LIST = 100;
     const activeTrains = [];
-    let overflow = false;
     for (const svc of services) {
       if (!svc || !svc.train || svc.train.inMaintenance || (svc.rame && svc.rame.inMaintenance)) continue;
       const t = svc.train;
@@ -8076,10 +8122,6 @@ export class UI {
         t.breakdown
       ) {
         activeTrains.push(svc);
-        if (activeTrains.length >= MAX_TRAINS_LIST) {
-          overflow = true;
-          break;
-        }
       }
     }
 
@@ -8093,8 +8135,8 @@ export class UI {
       if (!t) return '';
 
       // S1.1: Delay status with ±0.5 min neutral zone to avoid flickering
-      const rawDelay = t.delay || 0;
-      const delayVal = rawDelay === 0 ? 0 : Math.round(rawDelay);
+      const rawDelay = Number.isFinite(t.delay) ? t.delay : 0;
+      const delayVal = Math.abs(rawDelay) < 0.5 ? 0 : Math.round(rawDelay);
       let delayDisplay, delayClass;
       if (delayVal > 0) {
         delayDisplay = `Retard: +${delayVal} min`;
@@ -8126,7 +8168,7 @@ export class UI {
         `;
       }
 
-      // Helper: find previous/next real arret (station) for display, skipping waypoints/passages.
+      // Helper: previous/next scheduled arret for "Prochain arrêt" / approach distance.
       const currentStops = typeof svc.getCurrentStops === 'function' ? svc.getCurrentStops() : [];
       const curIdx = svc.currentStopIndex || 0;
       const isArretStop = (s) => s && s.type === 'arret' && s.stationId;
@@ -8141,10 +8183,35 @@ export class UI {
       }
       const prevArretStation = prevArret ? this.game.world?.getStationById(prevArret.stationId) : null;
       const nextArretStation = nextArret ? this.game.world?.getStationById(nextArret.stationId) : null;
-      const prevArretName = prevArret?.stationName || prevArretStation?.name || '';
-      const nextArretName = nextArret?.stationName || nextArretStation?.name || '';
 
-      // Distance to next real arret (not a waypoint)
+      // Helper: nearest stations in both directions, including unserved ones, for "Se situe entre".
+      let ctxPrevStation = null, ctxNextStation = null;
+      if (svc.position && this.game.world?.stations?.length) {
+        const heading = svc.train?.geoHeading ?? 0;
+        const pos = svc.position;
+        const cosLat = Math.cos(pos.lat * Math.PI / 180);
+        let prevBestDist = Infinity, nextBestDist = Infinity;
+        for (const st of this.game.world.stations) {
+          if (st == null || !Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
+          const dLat = (st.lat - pos.lat) * 111;
+          const dLon = (st.lon - pos.lon) * 111 * cosLat;
+          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+          if (dist < 0.1) continue; // ignore the station we are standing on
+          const bearing = Math.atan2(dLon, dLat);
+          let diff = bearing - heading;
+          while (diff <= -Math.PI) diff += 2 * Math.PI;
+          while (diff > Math.PI) diff -= 2 * Math.PI;
+          if (Math.abs(diff) <= Math.PI / 2) {
+            if (dist < nextBestDist) { nextBestDist = dist; ctxNextStation = st; }
+          } else if (dist < prevBestDist) {
+            prevBestDist = dist; ctxPrevStation = st;
+          }
+        }
+      }
+      const ctxPrevName = ctxPrevStation?.name || prevArretStation?.name || '';
+      const ctxNextName = ctxNextStation?.name || nextArretStation?.name || '';
+
+      // Distance to next scheduled arret for the approach label
       let nextDistKm = null;
       if (svc.state === 'moving' && nextArretStation && svc.position) {
         let tgtLat = nextArretStation.lat, tgtLon = nextArretStation.lon;
@@ -8191,11 +8258,11 @@ export class UI {
           if (nextDistKm < 0.3) {
             contextLabel = 'À l\'approche';
             contextClass = 'ctx-approach';
-          } else if (prevArretName && nextArretName && prevArretName !== nextArretName) {
-            contextLabel = `Se situe entre ${prevArretName} et ${nextArretName}`;
+          } else if (ctxPrevName && ctxNextName && ctxPrevName !== ctxNextName) {
+            contextLabel = `Se situe entre ${ctxPrevName} et ${ctxNextName}`;
             contextClass = 'ctx-between';
-          } else if (nextArretName) {
-            contextLabel = `En route vers ${nextArretName}`;
+          } else if (ctxNextName) {
+            contextLabel = `En route vers ${ctxNextName}`;
             contextClass = 'ctx-between';
           }
         }
@@ -8359,9 +8426,6 @@ export class UI {
         </div>
       `;
     }).join('');
-    if (overflow) {
-      html += `<div style="color:var(--text3);font-size:10px;text-align:center;padding:6px">+ de nombreux autres trains actifs</div>`;
-    }
     // S10: Only update DOM if content actually changed to avoid flicker
     if (container.innerHTML !== html) container.innerHTML = html;
 
@@ -9155,7 +9219,7 @@ export class UI {
         const line = lineIds.length > 0 ? this.game.lineManager.getLine(lineIds[0]) : null;
 
         // Delay (integer minutes)
-        const delay = Math.round(svc.delay || 0);
+        const delay = Math.round(Number.isFinite(svc.delay) ? svc.delay : 0);
 
         // Annexes 20/23 — TRAIN COMPLET / supprimé
         const isCancelled = svc.cancelled || svc.state === 'cancelled';

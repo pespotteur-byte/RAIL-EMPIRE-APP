@@ -678,7 +678,7 @@ export class ActiveService {
 
       if (this.currentStopIndex === 0 && timeGte(timeOfDay, firstDep)) {
         // Mise à jour du retard avant les décisions de régulation/priorité
-        this.delay = Math.round(Math.max(0, timeDiff(timeOfDay, firstDep)));
+        this.delay = Math.round(timeDiff(timeOfDay, firstDep));
         this.train.delay = this.delay;
 
         // Cancel only if the whole service window is missed (end + 31 min grace).
@@ -749,7 +749,7 @@ export class ActiveService {
           this.currentStopIndex = 1;
           this.speed = 0;
           this.revenueCollected = false;
-          this.delay = Math.round(Math.max(0, timeDiff(timeOfDay, firstDep)));
+          this.delay = Math.round(timeDiff(timeOfDay, firstDep));
           this.train.delay = this.delay;
           this.train.blockedBy = false;
           this.train.stoppedAt = null;
@@ -866,7 +866,7 @@ export class ActiveService {
       // Mise à jour du retard pendant l'arrêt (retard à l'arrivée qui s'aggrave si le départ est dépassé)
       if (depTime != null && timeGte(timeOfDay, depTime)) {
         const depDelay = timeDiff(timeOfDay, depTime);
-        if (depDelay > (this.delay || 0)) {
+        if (depDelay > (this.delay ?? 0)) {
           this.delay = Math.round(depDelay);
           this.train.delay = this.delay;
         }
@@ -1085,6 +1085,13 @@ export class ActiveService {
 
   _updateHeading(a, b) {
     if (!a || !b || !this.train) return;
+    // Geographic heading (radians, 0 = north) used for "Se situe entre" context.
+    const dLat = (b.lat - a.lat) * Math.PI / 180;
+    const dLon = (b.lon - a.lon) * Math.PI / 180;
+    const y = Math.sin(dLon) * Math.cos(b.lat * Math.PI / 180);
+    const x = Math.cos(a.lat * Math.PI / 180) * Math.sin(b.lat * Math.PI / 180) - Math.sin(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.cos(dLon);
+    this.train.geoHeading = Math.atan2(y, x);
+    // Screen-space heading used for livemap icon rotation.
     const renderer = window.game?.renderer;
     if (!renderer?.latLonToScreen) { this.train.heading = 0; return; }
     try {
@@ -1723,7 +1730,7 @@ export class ActiveService {
 
     // Expected time at current position = depA + scheduledTravelTime * progress
     const expectedTime = depA + scheduledTravelTime * progress;
-    this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
+    this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
     this.train.delay = this.delay;
 
     // DEP-05 : mise à jour continue de la localisation permanente de la rame
@@ -2335,7 +2342,7 @@ export class ActiveService {
     if (stop?.type === 'arret') {
       const expectedTime = stop.arrivalTime;
       if (expectedTime != null) {
-        this.delay = Math.max(0, Math.round(timeDiff(timeOfDay, expectedTime)));
+        this.delay = Math.round(timeDiff(timeOfDay, expectedTime));
       }
       this.train.delay = this.delay;
     }
@@ -2465,7 +2472,7 @@ export class ActiveService {
       }
       // MNT-03 : pannes bénignes réparables en gare sans technicentre
       if (this.train.breakdown && ['climatisation', 'portes'].includes(this.train.breakdown.type)) {
-        this.delay = (this.delay || 0) + 5;
+        this.delay = (this.delay ?? 0) + 5;
         this.train.delay = this.delay;
         this.train.breakdown = null;
       }
@@ -2567,7 +2574,7 @@ export class ActiveService {
     if (this.roundTrip && !this.isReturnLeg) {
       // Section OCC — retard au terminus : 1/3 de supprimer le retour, 2/3 de le faire rouler en retard
       // RET-03 : si supprimé, la rame reste à la gare et repart au prochain trajet prévu depuis cette gare
-      if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
+      if ((this.delay ?? 0) > 0 && rng.random() < 1 / 3) {
         this.state = 'cancelled';
         this.cancelled = true;
         this.speed = 0; this.train.speed = 0;
@@ -2613,7 +2620,7 @@ export class ActiveService {
     if (this.roundTrip && this.isReturnLeg && this.multiDepartures && this._tripCount < this.multiDepartures) {
       // Section OCC — retard au terminus : 1/3 de supprimer le trajet suivant, 2/3 de le faire rouler en retard
       // RET-03 : si supprimé, la rame reste à la gare et repart au prochain trajet prévu depuis cette gare
-      if ((this.delay || 0) > 0 && rng.random() < 1 / 3) {
+      if ((this.delay ?? 0) > 0 && rng.random() < 1 / 3) {
         this.state = 'cancelled';
         this.cancelled = true;
         this.speed = 0; this.train.speed = 0;
@@ -3247,7 +3254,7 @@ export class ScheduleCreator {
           tc: s._tripCount || 0,
           st: s.state || 'waiting',
           sp: Math.round((s.speed || 0) * 10) / 10,
-          dl: Math.round(s.delay || 0),
+          dl: Math.round(s.delay ?? 0),
           cf: s._contractFreight || 0,
           cd: s._contractDelivered || 0,
           cm: s.completed || false,
@@ -3394,7 +3401,7 @@ export class ScheduleCreator {
       const savedState = d._runtime?.state || 'waiting';
       const savedPos = d._runtime?.position || null;
       const savedSpeed = d._runtime?.speed || 0;
-      const savedDelay = d._runtime?.delay || 0;
+      const savedDelay = d._runtime?.delay ?? 0;
       const savedStopIdx = d._runtime?.currentStopIndex || 0;
       const savedCompleted = d._runtime?.cm || false;
       const savedCancelled = d._runtime?.cn || false;
