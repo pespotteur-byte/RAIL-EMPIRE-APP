@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1784731002';
+import { TileMap } from './map.js?v=1784731004';
 
 // LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
 export const LIVEMAP_CATEGORY_COLORS = {

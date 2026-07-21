@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784731002';
-import { cantonManager } from './canton-manager.js?v=1784731002';
-import { ServiceStop } from './service-stop.js?v=1784731002';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731002';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731002';
-import { getGlobalRng } from './rng.js?v=1784731002';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784731002';
+} from './service-utils.js?v=1784731004';
+import { cantonManager } from './canton-manager.js?v=1784731004';
+import { ServiceStop } from './service-stop.js?v=1784731004';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731004';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731004';
+import { getGlobalRng } from './rng.js?v=1784731004';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784731004';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784731002';
+} from './schedule-logic.js?v=1784731004';
 
 export const CantonController = {
   _yieldToRescue() {
@@ -275,6 +275,14 @@ export const CantonController = {
         if (!otherRoute || otherRoute.length < 2) continue;
         const oi = other._state?.index || 0;
         if (oi >= otherRoute.length - 1) continue;
+        // Sur des voies OSM distinctes, on considère qu'il s'agit de voies parallèles => pas de conflit nez-à-nez.
+        const myWayId = route[myIdx]?.wayId;
+        const otherWayId = otherRoute[oi]?.wayId;
+        if (myWayId && otherWayId && myWayId !== otherWayId) continue;
+        // Sur voie multiple (≥2 voies), deux trains en sens inverse ne se gênent pas.
+        const myTracks = route[myIdx]?.tracks || 1;
+        const otherTracks = otherRoute[oi]?.tracks || 1;
+        if (myTracks >= 2 && otherTracks >= 2) continue;
         const oH = Math.atan2(otherRoute[oi + 1].lon - otherRoute[oi].lon, otherRoute[oi + 1].lat - otherRoute[oi].lat);
         let hDiff = Math.abs(myH - oH);
         if (hDiff > Math.PI) hDiff = 2 * Math.PI - hDiff;
