@@ -3,7 +3,7 @@
  * Pure read-only module: observes game state, never modifies it.
  */
 import { icon } from './icons.js';
-import { escapeHtml } from './html-utils.js?v=1784730000';
+import { escapeHtml } from './html-utils.js?v=1784731000';
 export class Dashboard {
   constructor() {
     // Rolling history buffers (max 288 entries = 24h at 5-min intervals)
