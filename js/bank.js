@@ -1,3 +1,4 @@
+import { alertToast } from './html-utils.js?v=1784730000';
 /**
  * Bank — Loan system for Rail Empire.
  * Additive module: adds borrowing/repayment mechanics to economy.
@@ -165,7 +166,7 @@ export class Bank {
         const type = btn.dataset.type;
         const cfg = this.interestRates[type];
         if (this.getTotalDebt() + cfg.amount > this.getCreditLimit()) {
-          alert('Plafond de crédit atteint.');
+          alertToast('Plafond de crédit atteint.');
           return;
         }
         if (confirm(`Emprunter ${cfg.label} à ${fmt(cfg.rate*100)}% sur ${cfg.duration} jours ?\nRemboursement quotidien: ~${fmtE(Math.ceil(cfg.amount * (1 + cfg.rate) / cfg.duration))}`)) {

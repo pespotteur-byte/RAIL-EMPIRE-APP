@@ -212,7 +212,6 @@ export class ORMClient {
         this._loadedBboxes.push({ south, west, north, east, key, fromCache: true });
       }
       this.areaCache.set(key, cached.ways);
-      console.log('ORM: served area from persistent cache', key);
       return cached.ways;
     }
 

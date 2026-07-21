@@ -1,3 +1,4 @@
+import { alertToast } from './html-utils.js?v=1784730000';
 const SAVE_KEY = 'rail-empire-save';
 const COMPRESSED_PREFIX = 'RELZ:';
 
@@ -57,7 +58,7 @@ export class GameStorage {
         try {
           localStorage.setItem(SAVE_KEY, JSON.stringify(state));
         } catch (e2) {
-          alert('Sauvegarde échouée : espace de stockage plein. Exportez votre sauvegarde JSON.');
+          alertToast('Sauvegarde échouée : espace de stockage plein. Exportez votre sauvegarde JSON.');
         }
       }
     }

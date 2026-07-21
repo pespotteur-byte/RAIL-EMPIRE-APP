@@ -5,7 +5,8 @@
  * Real GPS coordinates from industrial sites.
  */
 import { icon } from './icons.js';
-import { getGlobalRng } from './rng.js?v=1784643000';
+import { getGlobalRng } from './rng.js?v=1784730000';
+import { alertToast } from './html-utils.js?v=1784730000';
 
 let nextClientId = 1;
 
@@ -4801,13 +4802,13 @@ export class IndustrialClients {
         const select = container.querySelector('#industrial-station-select');
         const stationId = select?.value;
         const depotId = select?.selectedOptions?.[0]?.dataset?.depot;
-        if (!stationId) { alert('Sélectionnez une gare avec ITE d\'abord'); return; }
+        if (!stationId) { alertToast('Sélectionnez une gare avec ITE d\'abord'); return; }
         const type = btn.dataset.type;
         const client = this.attractClient(type, stationId, depotId, game.economy);
         if (client) {
           this.render(container, game);
         } else {
-          alert('Fonds insuffisants');
+          alertToast('Fonds insuffisants');
         }
       });
     });
@@ -4847,7 +4848,7 @@ export class IndustrialClients {
         const client = this.clients.find(c => c.id === btn.dataset.id);
         if (!client) return;
         const ites = (game.depotManager?.getITEs?.() || []);
-        if (ites.length === 0) { alert('Aucune ITE disponible'); return; }
+        if (ites.length === 0) { alertToast('Aucune ITE disponible'); return; }
         const opts = ites.map(ite => {
           const st = game.world?.stations.find(s => s.id === ite.stationId);
           return `${ite.stationId}|${ite.id} — ${st?.name || '?'} — ${ite.name}`;
@@ -4893,7 +4894,7 @@ export class IndustrialClients {
       const lon = parseFloat(container.querySelector('#new-site-lon')?.value);
       const country = (container.querySelector('#new-site-country')?.value || 'FR').trim();
       if (!type || !name || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-        alert('Remplissez type, nom, latitude et longitude.'); return;
+        alertToast('Remplissez type, nom, latitude et longitude.'); return;
       }
       this.addCustomSite(type, name, lat, lon, country);
       this.render(container, game);

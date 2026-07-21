@@ -2,8 +2,9 @@
  * Staff Management — Multi-role personnel for Rail Empire.
  */
 import { icon } from './icons.js';
-import { haversineDistance, timeDiff } from './simulation.js?v=1784643000';
-import { getGlobalRng } from './rng.js?v=1784643000';
+import { haversineDistance, timeDiff } from './simulation.js?v=1784730000';
+import { getGlobalRng } from './rng.js?v=1784730000';
+import { alertToast } from './html-utils.js?v=1784730000';
 
 let nextStaffId = 1;
 
@@ -741,7 +742,7 @@ export class StaffManager {
         this.render(container, game);
         game.saveState();
       } else {
-        alert('Fonds insuffisants.');
+        alertToast('Fonds insuffisants.');
       }
     });
 
@@ -801,7 +802,7 @@ export class StaffManager {
       const name = document.getElementById('sb-name-input')?.value.trim() || '';
       const radius = parseFloat(document.getElementById('sb-radius-input')?.value) || 10;
       game._pendingSignalBox = { name, radiusKm: radius };
-      alert('Cliquez sur la carte pour placer le poste d\'aiguillage.');
+      alertToast('Cliquez sur la carte pour placer le poste d\'aiguillage.');
     });
 
     // Delete signal box

@@ -3,6 +3,7 @@
  * Manages turnouts, sidings, and junction routing in stations.
  */
 import { icon } from './icons.js';
+import { alertToast } from './html-utils.js?v=1784730000';
 export class JunctionManager {
   constructor() {
     this.junctions = [];     // { id, stationId, name, type, tracks, state }
@@ -233,14 +234,14 @@ export class JunctionManager {
     });
 
     container.querySelector('.jct-add-junction')?.addEventListener('click', () => {
-      if (game.economy.balance < 5000) return alert('Solde insuffisant (5 000 € requis)');
+      if (game.economy.balance < 5000) return alertToast('Solde insuffisant (5 000 € requis)');
       game.economy.addExpense(5000, 'infrastructure', `Aiguillage — ${station.name}`);
       this.addJunction(stationId);
       this._renderStationDetail(container, stationId, game);
     });
 
     container.querySelector('.jct-add-siding')?.addEventListener('click', () => {
-      if (game.economy.balance < 10000) return alert('Solde insuffisant (10 000 € requis)');
+      if (game.economy.balance < 10000) return alertToast('Solde insuffisant (10 000 € requis)');
       game.economy.addExpense(10000, 'infrastructure', `Voie de garage — ${station.name}`);
       this.addSiding(stationId);
       this._renderStationDetail(container, stationId, game);

@@ -3,7 +3,7 @@
 // Applies catalog modifications, deletions, imports
 // Manages admin-defined custom incidents with time-based random triggering
 // Respects player opt-in/opt-out preference
-import { getGlobalRng } from './rng.js?v=1784643000';
+import { getGlobalRng } from './rng.js?v=1784730000';
 
 const OVERRIDE_URL = 'https://raw.githubusercontent.com/pespotteur-byte/RAIL-EMPIRE-APP/devin/1780231310-catalog-bb7200/data/admin-overrides.json';
 
@@ -79,6 +79,7 @@ export class AdminSync {
 
   startIncidentLoop(gameTimeGetter) {
     this.gameTimeGetter = gameTimeGetter;
+    this.stopIncidentLoop();
     this.checkInterval = setInterval(() => this._tick(), 60000);
     setTimeout(() => this._tick(), 10000);
   }

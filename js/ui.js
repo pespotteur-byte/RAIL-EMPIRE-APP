@@ -1,6 +1,6 @@
-import { haversineDistance } from './simulation.js?v=1784643000';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784643000';
-import { escapeHtml, jsString } from './html-utils.js?v=1784643000';
+import { haversineDistance } from './simulation.js?v=1784730000';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784730000';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784730000';
 
 // LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
 const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b', machine: '#a855f7' };
@@ -137,6 +137,17 @@ export class UI {
         el.style.opacity = this._approachVisible ? '1' : '0';
       });
     }, 800);
+  }
+
+  destroy() {
+    if (this._approachInterval) { clearInterval(this._approachInterval); this._approachInterval = null; }
+    if (this._schedMapInterval) { clearInterval(this._schedMapInterval); this._schedMapInterval = null; }
+    if (this._sillonMapInterval) { clearInterval(this._sillonMapInterval); this._sillonMapInterval = null; }
+    if (this._iteMapInterval) { clearInterval(this._iteMapInterval); this._iteMapInterval = null; }
+    if (this._worksMapInterval) { clearInterval(this._worksMapInterval); this._worksMapInterval = null; }
+    if (this._infogareInterval) { clearInterval(this._infogareInterval); this._infogareInterval = null; }
+    this._stopInfogareClock();
+    if (this._dashboardInterval) { clearInterval(this._dashboardInterval); this._dashboardInterval = null; }
   }
 
   setupAll() {
@@ -1379,7 +1390,7 @@ export class UI {
 
   async saveStation() {
     const name = document.getElementById('station-name').value.trim();
-    if (!name) return alert('Nom requis');
+    if (!name) return alertToast('Nom requis');
     let lat = parseFloat(document.getElementById('station-lat').value);
     let lon = parseFloat(document.getElementById('station-lon').value);
     const type = document.getElementById('station-type').value;
@@ -1442,7 +1453,6 @@ export class UI {
       if (snapped) {
         lat = snapped.lat;
         lon = snapped.lon;
-        console.log(`Station snapped to railway: ${snapped.dist.toFixed(3)} km offset`);
       } else {
         console.warn(`No railway node within 2km for station "${name}"`);
       }
@@ -1504,7 +1514,6 @@ export class UI {
           electrified: true, name: `${connectTo.name} - ${name}`,
           route,
         });
-        console.log(`Track created: ${connectTo.name} -> ${name}, ${Math.round(distance)} km, ${route.length} points, avg ${avgSpeed} km/h`);
       } catch (e) {
         console.warn('ORM route failed:', e);
         const dist = Math.round(Math.sqrt(Math.pow((lat - connectTo.lat) * 111, 2) + Math.pow((lon - connectTo.lon) * 111 * Math.cos(lat * Math.PI / 180), 2)));
@@ -1512,7 +1521,6 @@ export class UI {
           stationA: connectTo.id, stationB: station.id,
           distance: dist, maxSpeed: 160, name: `${connectTo.name} - ${name}`,
         });
-        console.log(`Fallback track: ${connectTo.name} -> ${name}, ${dist} km (no ORM data)`);
       }
       if (loadingEl) loadingEl.classList.add('hidden');
     }
@@ -1534,7 +1542,6 @@ export class UI {
         });
         station.lineIds = station.lineIds || [];
         if (!station.lineIds.includes(newLine.id)) station.lineIds.push(newLine.id);
-        console.log(`New line created: ${lineName} starting at ${name}`);
       } else if (terminusLineChoice) {
         // Finish an existing line with this station as terminus
         const line = this.game.lineManager.getLine(terminusLineChoice);
@@ -1557,7 +1564,6 @@ export class UI {
               }
             }
           }
-          console.log(`Line "${line.name}" completed at ${name} (${line.stops.length} stops)`);
         }
       }
     }
@@ -1938,7 +1944,7 @@ export class UI {
 
   saveStock() {
     const name = document.getElementById('stock-name').value.trim();
-    if (!name) return alert('Nom requis');
+    if (!name) return alertToast('Nom requis');
     const category = document.getElementById('stock-category').value;
     const mass = parseFloat(document.getElementById('stock-mass')?.value) || 80;
     const freightCapacity = parseFloat(document.getElementById('stock-freight-cap').value) || 0;
@@ -2215,7 +2221,7 @@ export class UI {
       added++;
     }
     if (added < qty) {
-      alert(added === 0
+      alertToast(added === 0
         ? 'Longueur maximale de 750m atteinte !'
         : `Longueur max 750m atteinte : ${added}/${qty} engin(s) ajouté(s).`);
     }
@@ -2301,13 +2307,13 @@ export class UI {
 
   saveRame() {
     const name = document.getElementById('rame-name').value.trim();
-    if (!name) return alert('Nom requis');
-    if (this.currentRameElements.length === 0) return alert('Ajoutez au moins un element');
+    if (!name) return alertToast('Nom requis');
+    if (this.currentRameElements.length === 0) return alertToast('Ajoutez au moins un element');
 
     const totalPrice = this.currentRameElements.reduce((s, e) => s + (e.purchasePrice || 0), 0);
     if (totalPrice > 0) {
       if (this.game.economy.balance < totalPrice) {
-        return alert(`Solde insuffisant ! Coût: ${totalPrice.toLocaleString('fr-FR')} € — Solde: ${Math.round(this.game.economy.balance).toLocaleString('fr-FR')} €`);
+        return alertToast(`Solde insuffisant ! Coût: ${totalPrice.toLocaleString('fr-FR')} € — Solde: ${Math.round(this.game.economy.balance).toLocaleString('fr-FR')} €`);
       }
       this.game.economy.addExpense(totalPrice, 'achat', `Achat rame ${name}`);
     }
@@ -3322,7 +3328,7 @@ export class UI {
   async _toggleReturnEditMode() {
     const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
     if (!roundTrip) return;
-    if (this._forwardStops.length < 2) return alert('Definissez d\'abord un aller avec au moins 2 arrets.');
+    if (this._forwardStops.length < 2) return alertToast('Definissez d\'abord un aller avec au moins 2 arrets.');
 
     if (this._isReturnEditMode) {
       // Switch back to forward mode: capture return edits first.
@@ -3601,7 +3607,7 @@ export class UI {
 
   async addSchedStop(station) {
     if (station.closed) {
-      alert('Cette gare est fermee — aucun train ne peut la desservir.');
+      alertToast('Cette gare est fermee — aucun train ne peut la desservir.');
       return;
     }
     const rameId = document.getElementById('sched-rame').value;
@@ -4606,7 +4612,7 @@ export class UI {
       };
     } else {
       // station
-      if (item.closed) { alert('Cette gare est fermée — aucun train ne peut la desservir.'); return; }
+      if (item.closed) { alertToast('Cette gare est fermée — aucun train ne peut la desservir.'); return; }
       newStop = {
         stationId: item.id, stationName: item.name, type: 'arret', stopCode: '',
         arrTimeMin: 0, depTimeMin: 0, arrTimeStr: '00:00', depTimeStr: '00:00', platform: '',
@@ -4652,11 +4658,11 @@ export class UI {
   async saveSchedule() {
     const name = document.getElementById('sched-name').value.trim();
     const rameId = document.getElementById('sched-rame').value;
-    if (!name) return alert('Nom requis');
+    if (!name) return alertToast('Nom requis');
 
     const rame = this.game.rameManager.getById(rameId);
-    if (!rame) return alert('Veuillez choisir une rame.');
-    if ((rame.totalPower || 0) <= 0) return alert('La rame selectionnée n\'a pas de motrice (locomotive / automotrice) et ne peut pas rouler.');
+    if (!rame) return alertToast('Veuillez choisir une rame.');
+    if ((rame.totalPower || 0) <= 0) return alertToast('La rame selectionnée n\'a pas de motrice (locomotive / automotrice) et ne peut pas rouler.');
     const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
     const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
     const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
@@ -4670,14 +4676,14 @@ export class UI {
       this._forwardManualRoutes = this._manualRoutes;
     }
 
-    if (this._forwardStops.length < 2) return alert('Il faut au moins 2 arrets');
+    if (this._forwardStops.length < 2) return alertToast('Il faut au moins 2 arrets');
 
     // Build forward routes.
     const forwardStops = this._forwardStops;
     const forwardRoutes = await this._buildSaveRoutes(forwardStops, this._forwardManualRoutes);
     const invalidForward = forwardRoutes.findIndex(r => !r || r.length < 2);
     if (invalidForward >= 0) {
-      return alert(`Impossible de calculer un itineraire ferroviaire entre les arrets aller #${invalidForward + 1} et #${invalidForward + 2}. Verifiez les points de voie / le reseau ORM.`);
+      return alertToast(`Impossible de calculer un itineraire ferroviaire entre les arrets aller #${invalidForward + 1} et #${invalidForward + 2}. Verifiez les points de voie / le reseau ORM.`);
     }
 
     // Build return routes/stops if a return leg has been defined; otherwise fall back to the reversed forward leg.
@@ -4688,7 +4694,7 @@ export class UI {
       returnRoutes = await this._buildSaveRoutes(returnStops, this._returnManualRoutes);
       const invalidReturn = returnRoutes.findIndex(r => !r || r.length < 2);
       if (invalidReturn >= 0) {
-        return alert(`Impossible de calculer un itineraire ferroviaire entre les arrets retour #${invalidReturn + 1} et #${invalidReturn + 2}. Verifiez les points de voie / le reseau ORM.`);
+        return alertToast(`Impossible de calculer un itineraire ferroviaire entre les arrets retour #${invalidReturn + 1} et #${invalidReturn + 2}. Verifiez les points de voie / le reseau ORM.`);
       }
     }
 
@@ -4711,23 +4717,23 @@ export class UI {
     if (serviceType === 'hlp') {
       const locoCount = rame.elementDetails.filter(e => e.category === 'locomotive' || e.category === 'automotrice').length;
       if (locoCount > 2 || rame.elementDetails.length !== locoCount) {
-        return alert('Un HLP (Haut le pied) est un convoi de locomotives seules, maximum 2.');
+        return alertToast('Un HLP (Haut le pied) est un convoi de locomotives seules, maximum 2.');
       }
     }
     if (serviceType === 'tm') {
       const locoCount = rame.elementDetails.filter(e => e.category === 'locomotive' || e.category === 'automotrice').length;
       if (locoCount < 3 || locoCount > 12 || rame.elementDetails.length !== locoCount) {
-        return alert('Un TM (Train de machines) compte 3 à 12 locomotives, rien d’autre.');
+        return alertToast('Un TM (Train de machines) compte 3 à 12 locomotives, rien d’autre.');
       }
     }
     if (serviceType === 'm-') {
       // CVO-05 : machine de manœuvre = une seule locomotive rattachée à un dépôt
       const locoCount = rame.elementDetails.filter(e => e.category === 'locomotive' || e.category === 'automotrice').length;
       if (locoCount !== 1 || rame.elementDetails.length !== 1) {
-        return alert('Une machine de manœuvre (M-) est constituée d\'une seule locomotive.');
+        return alertToast('Une machine de manœuvre (M-) est constituée d\'une seule locomotive.');
       }
       if (!rame.depotId) {
-        return alert('Une machine de manœuvre (M-) doit être rattachée à un dépôt.');
+        return alertToast('Une machine de manœuvre (M-) doit être rattachée à un dépôt.');
       }
     }
 
@@ -5102,8 +5108,8 @@ export class UI {
     const type = document.getElementById('lsc-type')?.value || 'voyageur';
     const platforms = parseInt(document.getElementById('lsc-platforms')?.value) || 4;
 
-    if (!name) return alert('Nom de gare requis');
-    if (isNaN(lat) || isNaN(lon)) return alert('Latitude et longitude requises');
+    if (!name) return alertToast('Nom de gare requis');
+    if (isNaN(lat) || isNaN(lon)) return alertToast('Latitude et longitude requises');
 
     const orm = this.game.orm;
     const loadingEl = document.getElementById('lsc-loading');
@@ -5572,7 +5578,7 @@ export class UI {
 
   addLineStop(station) {
     if (this._lineManualMode) {
-      alert('Terminez le tracé manuel du segment avant d\'ajouter une gare.');
+      alertToast('Terminez le tracé manuel du segment avant d\'ajouter une gare.');
       return;
     }
     // Don't add duplicate consecutive stops
@@ -5619,7 +5625,7 @@ export class UI {
       this._lineManualRoute = null;
       this._lineManualDrag = null;
     } else {
-      if (this.lineStops.length < 2) return alert('Il faut au moins 2 gares pour tracer un segment.');
+      if (this.lineStops.length < 2) return alertToast('Il faut au moins 2 gares pour tracer un segment.');
       const idx = this.lineStops.length - 2;
       this._lineManualSegmentIndex = idx;
       const route = this._lineManualRoutes[idx];
@@ -5646,7 +5652,7 @@ export class UI {
     if (!this._lineManualMode) return;
     this._rebuildLineManualRoute();
     if (!this._lineManualRoute || this._lineManualRoute.length < 2) {
-      alert('Tracé invalide. Ajoutez au moins un point intermédiaire.');
+      alertToast('Tracé invalide. Ajoutez au moins un point intermédiaire.');
       return;
     }
     this._lineManualRoutes[this._lineManualSegmentIndex] = this._lineManualRoute;
@@ -5704,8 +5710,8 @@ export class UI {
 
   async saveLine() {
     const name = document.getElementById('line-name').value.trim();
-    if (!name) return alert('Nom requis');
-    if (this.lineStops.length < 2) return alert('Il faut au moins 2 gares');
+    if (!name) return alertToast('Nom requis');
+    if (this.lineStops.length < 2) return alertToast('Il faut au moins 2 gares');
     if (this._lineManualMode) this._finishLineManual();
     if (this._lineManualMode) return;
 
@@ -5964,13 +5970,13 @@ export class UI {
     const name = document.getElementById('sillon-name')?.value.trim();
     const fromId = document.getElementById('sillon-from')?.value;
     const toId = document.getElementById('sillon-to')?.value;
-    if (!name) return alert('Nom requis');
-    if (!fromId || !toId) return alert('Sélectionnez les gares A et B');
-    if (fromId === toId) return alert('Les gares doivent être différentes');
+    if (!name) return alertToast('Nom requis');
+    if (!fromId || !toId) return alertToast('Sélectionnez les gares A et B');
+    if (fromId === toId) return alertToast('Les gares doivent être différentes');
 
     const stA = this.game.world.getStationById(fromId);
     const stB = this.game.world.getStationById(toId);
-    if (!stA || !stB) return alert('Gares invalides');
+    if (!stA || !stB) return alertToast('Gares invalides');
 
     // If the player traced points but did not click "Finish", auto-finalize on save.
     if (this._sillonManualPoints && this._sillonManualPoints.length > 0 && this._sillonManualStart && this._sillonManualEnd) {
@@ -5995,7 +6001,7 @@ export class UI {
       }
       if (!route || route.length < 2) {
         if (loadingEl) loadingEl.classList.add('hidden');
-        return alert('Impossible de calculer un itineraire ferroviaire entre ces gares. Vérifiez le réseau ORM ou utilisez le tracé manuel.');
+        return alertToast('Impossible de calculer un itineraire ferroviaire entre ces gares. Vérifiez le réseau ORM ou utilisez le tracé manuel.');
       }
       distance = this.game.orm.getRouteDistance(route);
       const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
@@ -6120,7 +6126,7 @@ export class UI {
     const fromId = document.getElementById('sillon-from')?.value;
     const toId = document.getElementById('sillon-to')?.value;
     if (!this._sillonManualMode) {
-      if (!fromId || !toId) return alert('Sélectionnez d\'abord les gares A et B.');
+      if (!fromId || !toId) return alertToast('Sélectionnez d\'abord les gares A et B.');
       this._sillonManualMode = true;
       this._syncSillonManualEndpoints();
     } else {
@@ -6134,7 +6140,7 @@ export class UI {
   _finishSillonManual() {
     if (!this._sillonManualMode) return;
     this._rebuildSillonManualRoute();
-    if (!this._sillonManualRoute || this._sillonManualRoute.length < 2) return alert('Tracé invalide.');
+    if (!this._sillonManualRoute || this._sillonManualRoute.length < 2) return alertToast('Tracé invalide.');
     this._sillonManualMode = false;
     this._updateSillonManualUI();
     if (this._drawSillonMap) this._drawSillonMap();
@@ -6687,7 +6693,7 @@ export class UI {
     const tracks = parseInt(document.getElementById('ite-tracks')?.value) || 2;
     const cost = parseInt(document.getElementById('ite-cost')?.value) || 50000;
     const cargoTypes = [...document.querySelectorAll('.ite-cargo:checked')].map(cb => cb.value);
-    if (isNaN(lat) || isNaN(lon)) return alert('Localisation invalide.');
+    if (isNaN(lat) || isNaN(lon)) return alertToast('Localisation invalide.');
 
     const station = this.game.world.addStation({ name, lat, lon, type: 'ite', platforms: tracks, platformNames: [] });
     station.country = this.game.orm.getCountryAtPoint(lat, lon);
@@ -6757,7 +6763,7 @@ export class UI {
     const name = document.getElementById('depot-ite-track-name')?.value.trim();
     const length = parseInt(document.getElementById('depot-ite-track-length')?.value) || 0;
     const cargoType = document.getElementById('depot-ite-track-cargo')?.value || '';
-    if (!name || length <= 0) return alert('Nom et longueur requis');
+    if (!name || length <= 0) return alertToast('Nom et longueur requis');
     if (!this._pendingITETracks) this._pendingITETracks = [];
     this._pendingITETracks.push({ name, length, cargoType });
     this._renderITETrackList();
@@ -6768,7 +6774,7 @@ export class UI {
   saveDepot() {
     const type = document.getElementById('depot-type')?.value || 'depot';
     const stationId = document.getElementById('depot-station')?.value;
-    if (!stationId) return alert('Sélectionnez une gare');
+    if (!stationId) return alertToast('Sélectionnez une gare');
     const infra = [...document.querySelectorAll('.depot-infra:checked')].map(cb => cb.value);
     const data = {
       type,
@@ -6927,7 +6933,7 @@ export class UI {
     if (!stock) return;
     const displayName = stock.seriesName ? `${stock.seriesName} ${stock.numberStart || ''}`.trim() : stock.name;
     const ok = this.game.depotManager.addRescueLoco(depotId, stock.id, displayName, stock.traction);
-    if (!ok) return alert('Maximum 2 machines de secours par dépôt.');
+    if (!ok) return alertToast('Maximum 2 machines de secours par dépôt.');
     this.game.saveState();
     this.renderDepotsList();
   }
@@ -6943,7 +6949,7 @@ export class UI {
     if (!depot) return;
     const prices = { moteur: 5000, freins: 3000, climatisation: 2000, portes: 1500, fanaux: 1000 };
     const cost = (prices[type] || 1000) * qty;
-    if (this.game.economy.balance < cost) return alert('Fonds insuffisants.');
+    if (this.game.economy.balance < cost) return alertToast('Fonds insuffisants.');
     if (depot.addSpareParts(type, qty)) {
       this.game.economy.addExpense(cost, 'maintenance', `Achat pièce détachée : ${type} x${qty}`);
       this.game.saveState();
@@ -6959,7 +6965,7 @@ export class UI {
     const type = typeSelect.value;
     const qty = parseInt(qtyInput.value) || 1;
     const res = this.game.depotManager.buyBulkSpareParts(type, qty, this.game.economy);
-    if (!res.ok) return alert(`Fonds insuffisants. Coût total : ${res.totalCost.toLocaleString('fr-FR')} €`);
+    if (!res.ok) return alertToast(`Fonds insuffisants. Coût total : ${res.totalCost.toLocaleString('fr-FR')} €`);
     this.game.saveState();
     this.renderDepotsList();
   }
@@ -7110,11 +7116,11 @@ export class UI {
   async saveWorks() {
     const aId = document.getElementById('works-station-a')?.value;
     const bId = document.getElementById('works-station-b')?.value;
-    if (!aId || !bId) return alert('Sélectionnez les gares A et B.');
-    if (aId === bId) return alert('Les gares doivent être différentes.');
+    if (!aId || !bId) return alertToast('Sélectionnez les gares A et B.');
+    if (aId === bId) return alertToast('Les gares doivent être différentes.');
     const stA = this.game.world.getStationById(aId);
     const stB = this.game.world.getStationById(bId);
-    if (!stA || !stB) return alert('Gares invalides.');
+    if (!stA || !stB) return alertToast('Gares invalides.');
 
     if (this._worksManualPoints && this._worksManualPoints.length > 0 && this._worksManualStart && this._worksManualEnd) {
       this._rebuildWorksManualRoute();
@@ -7131,7 +7137,7 @@ export class UI {
       } catch (e) {
         console.warn('ORM route failed for works', e);
       }
-      if (!route || route.length < 2) return alert('Impossible de calculer un itinéraire ferroviaire entre ces gares. Vérifiez le réseau ORM ou utilisez le tracé manuel.');
+      if (!route || route.length < 2) return alertToast('Impossible de calculer un itinéraire ferroviaire entre ces gares. Vérifiez le réseau ORM ou utilisez le tracé manuel.');
       route = this.game.orm.getRouteSegments(route).map(s => ({ lat: s.from.lat, lon: s.from.lon, maxSpeed: s.maxSpeed })).concat([{ lat: route[route.length - 1].lat, lon: route[route.length - 1].lon, maxSpeed: route[route.length - 1].maxSpeed || 160 }]);
     }
 
@@ -7320,7 +7326,7 @@ export class UI {
     const aId = document.getElementById('works-station-a')?.value;
     const bId = document.getElementById('works-station-b')?.value;
     if (!this._worksManualMode) {
-      if (!aId || !bId) return alert('Sélectionnez d\'abord les gares A et B.');
+      if (!aId || !bId) return alertToast('Sélectionnez d\'abord les gares A et B.');
       this._worksManualMode = true;
       this._syncWorksManualEndpoints();
     } else {
@@ -7334,7 +7340,7 @@ export class UI {
   _finishWorksManual() {
     if (!this._worksManualMode) return;
     this._rebuildWorksManualRoute();
-    if (!this._worksManualRoute || this._worksManualRoute.length < 2) return alert('Tracé invalide.');
+    if (!this._worksManualRoute || this._worksManualRoute.length < 2) return alertToast('Tracé invalide.');
     this._worksManualMode = false;
     this._updateWorksManualUI();
     if (this._drawWorksMap) this._drawWorksMap();
@@ -7628,7 +7634,7 @@ export class UI {
 
   _generateBulletin() {
     const { jsPDF } = window.jspdf || {};
-    if (!jsPDF) return alert('jsPDF non charge — verifiez votre connexion internet');
+    if (!jsPDF) return alertToast('jsPDF non charge — verifiez votre connexion internet');
     try {
     const doc = new jsPDF();
     // Helper: strip accents for jsPDF default font compatibility
@@ -7827,7 +7833,7 @@ export class UI {
 
     eco._lastBulletinDate = now;
     doc.save(`bulletin_${company.replace(/\s/g, '_')}_${now.replace(/\//g, '-')}.pdf`);
-    } catch (err) { console.error('Bulletin PDF error:', err); alert('Erreur generation PDF: ' + err.message); }
+    } catch (err) { console.error('Bulletin PDF error:', err); alertToast('Erreur generation PDF: ' + err.message); }
   }
 
   _openFicheHoraireModal() {
@@ -7857,13 +7863,13 @@ export class UI {
 
   _generateFicheHoraire(stationId) {
     const { jsPDF } = window.jspdf || {};
-    if (!jsPDF) return alert('jsPDF non charge');
+    if (!jsPDF) return alertToast('jsPDF non charge');
     try {
     const noAcc = (s) => typeof s === 'string' ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : String(s);
     const minToStr = (m) => { const h = Math.floor(m / 60) % 24; const mi = Math.round(m % 60); return `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`; };
 
     const station = this.game.world.getStationById(stationId);
-    if (!station) return alert('Gare introuvable');
+    if (!station) return alertToast('Gare introuvable');
     const stationName = noAcc(station.name);
     const company = noAcc(this.game.account.companyName || 'Rail Empire');
     const now = new Date().toLocaleDateString('fr-FR');
@@ -7970,7 +7976,7 @@ export class UI {
     entries.sort((a, b) => a.depTime - b.depTime);
 
     if (entries.length === 0) {
-      return alert(`Aucun service ne dessert ${station.name}`);
+      return alertToast(`Aucun service ne dessert ${station.name}`);
     }
 
     // Generate PDF
@@ -8072,7 +8078,7 @@ export class UI {
     doc.setTextColor(0);
 
     doc.save(`fiche_horaire_${stationName.replace(/\s/g, '_')}_${now.replace(/\//g, '-')}.pdf`);
-    } catch (err) { console.error('Fiche horaire PDF error:', err); alert('Erreur generation PDF: ' + err.message); }
+    } catch (err) { console.error('Fiche horaire PDF error:', err); alertToast('Erreur generation PDF: ' + err.message); }
   }
 
   renderEconomyPage() {
@@ -10250,7 +10256,7 @@ export class UI {
       pricePerUnit: document.getElementById('cargo-type-price')?.value,
       hazard: document.getElementById('cargo-type-hazard')?.checked,
     });
-    if (!res.ok) { alert(res.error || 'Erreur'); return; }
+    if (!res.ok) { alertToast(res.error || 'Erreur'); return; }
     this.game.saveState();
     document.getElementById('modal-cargo-type')?.classList.add('hidden');
     this.renderCargoTypesPage();

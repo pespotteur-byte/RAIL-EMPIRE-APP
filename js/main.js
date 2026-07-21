@@ -1,43 +1,44 @@
-import { SimulationEngine } from './engine.js?v=1784643000';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784643000';
-import { World, createDefaultWorld } from './world.js?v=1784643000';
-import { Renderer } from './renderer.js?v=1784643000';
-import { UI } from './ui.js?v=1784643000';
-import { Economy } from './economy.js?v=1784643000';
-import { IncidentManager } from './incidents.js?v=1784643000';
-import { FreightManager } from './freight.js?v=1784643000';
-import { ScheduleManager } from './schedule.js?v=1784643000';
-import { GameStorage } from './storage.js?v=1784643000';
-import { AccountManager } from './account.js?v=1784643000';
-import { RollingStockManager } from './rolling-stock.js?v=1784643000';
-import { RameManager } from './rame.js?v=1784643000';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784643000';
-import { DepotManager } from './depot.js?v=1784643000';
-import { WorksManager } from './works.js?v=1784643000';
-import { ORMClient } from './orm.js?v=1784643000';
-import { LineManager, PlatformManager } from './line.js?v=1784643000';
-import { SillonManager } from './sillon.js?v=1784643000';
-import { VoiePointManager } from './voie-points.js?v=1784643000';
-import { Dashboard } from './dashboard.js?v=1784643000';
-import { GraphMarche } from './graph-marche.js?v=1784643000';
-import { StaffManager } from './staff.js?v=1784643000';
-import { Tutorial } from './tutorial.js?v=1784643000';
-import { Bank } from './bank.js?v=1784643000';
-import { Weather } from './weather.js?v=1784643000';
-import { Unions } from './unions.js?v=1784643000';
-import { SeasonalSchedule } from './seasonal.js?v=1784643000';
-import { Connections } from './connections.js?v=1784643000';
-import { StationUpgrades } from './station-upgrades.js?v=1784643000';
-import { A12Model } from './a12-model.js?v=1784643000';
-import { JunctionManager } from './junctions.js?v=1784643000';
-import { CargoTypeManager } from './cargo-types.js?v=1784643000';
-import { ITEModules } from './ite-modules.js?v=1784643000';
-import { IndustrialClients } from './industrial-clients.js?v=1784643000';
-import { ShuntingManager } from './shunting.js?v=1784643000';
-import { haversineDistance } from './simulation.js?v=1784643000';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784643000';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784643000';
-import { adminSync } from './admin-sync.js?v=1784643000';
+import { SimulationEngine } from './engine.js?v=1784730000';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784730000';
+import { World, createDefaultWorld } from './world.js?v=1784730000';
+import { Renderer } from './renderer.js?v=1784730000';
+import { UI } from './ui.js?v=1784730000';
+import { Economy } from './economy.js?v=1784730000';
+import { IncidentManager } from './incidents.js?v=1784730000';
+import { FreightManager } from './freight.js?v=1784730000';
+import { ScheduleManager } from './schedule.js?v=1784730000';
+import { GameStorage } from './storage.js?v=1784730000';
+import { AccountManager } from './account.js?v=1784730000';
+import { RollingStockManager } from './rolling-stock.js?v=1784730000';
+import { RameManager } from './rame.js?v=1784730000';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784730000';
+import { DepotManager } from './depot.js?v=1784730000';
+import { WorksManager } from './works.js?v=1784730000';
+import { ORMClient } from './orm.js?v=1784730000';
+import { LineManager, PlatformManager } from './line.js?v=1784730000';
+import { SillonManager } from './sillon.js?v=1784730000';
+import { VoiePointManager } from './voie-points.js?v=1784730000';
+import { Dashboard } from './dashboard.js?v=1784730000';
+import { GraphMarche } from './graph-marche.js?v=1784730000';
+import { StaffManager } from './staff.js?v=1784730000';
+import { Tutorial } from './tutorial.js?v=1784730000';
+import { Bank } from './bank.js?v=1784730000';
+import { Weather } from './weather.js?v=1784730000';
+import { Unions } from './unions.js?v=1784730000';
+import { SeasonalSchedule } from './seasonal.js?v=1784730000';
+import { Connections } from './connections.js?v=1784730000';
+import { StationUpgrades } from './station-upgrades.js?v=1784730000';
+import { A12Model } from './a12-model.js?v=1784730000';
+import { JunctionManager } from './junctions.js?v=1784730000';
+import { CargoTypeManager } from './cargo-types.js?v=1784730000';
+import { ITEModules } from './ite-modules.js?v=1784730000';
+import { IndustrialClients } from './industrial-clients.js?v=1784730000';
+import { ShuntingManager } from './shunting.js?v=1784730000';
+import { haversineDistance } from './simulation.js?v=1784730000';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784730000';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784730000';
+import { adminSync } from './admin-sync.js?v=1784730000';
+import { alertToast } from './html-utils.js?v=1784730000';
 
 class RailEmpire {
   constructor() {
@@ -113,7 +114,7 @@ class RailEmpire {
 
     btnNew.addEventListener('click', () => {
       const name = nameInput.value.trim();
-      if (!name) return alert('Entrez un nom de compagnie');
+      if (!name) return alertToast('Entrez un nom de compagnie');
       this.account.companyName = name;
       this.startGame(null);
     });
@@ -150,7 +151,7 @@ class RailEmpire {
         this.storage.saveGame(saved);
         this.startGame(saved);
       } catch (err) {
-        alert('Erreur: fichier de sauvegarde invalide.\n' + err.message);
+        alertToast('Erreur: fichier de sauvegarde invalide.\n' + err.message);
       }
     });
   }
@@ -166,6 +167,7 @@ class RailEmpire {
     document.getElementById('screen-game').classList.add('active');
     document.getElementById('company-name').textContent = this.account.companyName;
 
+    this.ui?.destroy();
     const canvas = document.getElementById('game-canvas');
     this.renderer = new Renderer(canvas);
     this.ui = new UI(this);
@@ -213,9 +215,9 @@ class RailEmpire {
         this.account.companyName = saved.companyName;
         document.getElementById('company-name').textContent = saved.companyName;
         if (this.ui) this.ui.refreshAll();
-        alert('Partie chargee avec succes !');
+        alertToast('Partie chargee avec succes !');
       } catch (err) {
-        alert('Erreur: fichier de sauvegarde invalide.\n' + err.message);
+        alertToast('Erreur: fichier de sauvegarde invalide.\n' + err.message);
       }
       e.target.value = '';
     });
@@ -484,7 +486,7 @@ class RailEmpire {
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (e) {
       console.error('Export save error:', e);
-      alert('Erreur lors de la sauvegarde: ' + e.message);
+      alertToast('Erreur lors de la sauvegarde: ' + e.message);
     }
   }
 
