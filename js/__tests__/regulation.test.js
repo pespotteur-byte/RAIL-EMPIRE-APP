@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { ScheduleCreator, ActiveService } from '../schedule-creator.js';
 import { StaffManager } from '../staff.js';
 import { CantonManager } from '../simulation.js';
-import { getGlobalRng, setGlobalRng, SeededRng } from '../rng.js?v=1784250033';
+import { getGlobalRng, setGlobalRng, SeededRng } from '../rng.js?v=1784643000';
 
 const economy = {
   processStopRevenue() {},
@@ -196,7 +196,7 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     assert.equal(svc.state, 'moving', 'le train repart une fois l incident levé');
   });
 
-  it('OCC-05 — écart de 2 min après libération du canton', () => {
+  it('OCC-05 — pas de délai fixe après libération (signalisation gère l espacement)', () => {
     const mgr = new CantonManager();
     const route = [{ lat: 0, lon: 0, maxSpeed: 30 }, { lat: 0, lon: 0.005, maxSpeed: 30 }];
     const assignments = mgr.createRouteCantons(route);
@@ -207,10 +207,7 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     mgr.release(c0, 'A');
 
     mgr.setTime(1);
-    assert.equal(mgr.reserve(c0, 'B'), false, '1 min après libération, canton non disponible');
-
-    mgr.setTime(2);
-    assert.equal(mgr.reserve(c0, 'B'), true, '2 min après libération, canton disponible');
+    assert.equal(mgr.reserve(c0, 'B'), true, 'le canton est disponible immédiatement après libération');
     assert.equal(mgr.occupy(c0, 'B'), true);
   });
 

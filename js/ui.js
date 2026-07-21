@@ -1,5 +1,6 @@
-import { haversineDistance } from './simulation.js';
-import { incrementTrailingNumber } from './schedule-logic.js';
+import { haversineDistance } from './simulation.js?v=1784643000';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784643000';
+import { escapeHtml, jsString } from './html-utils.js?v=1784643000';
 
 // LVM-01 — couleurs des catégories de train (miroir de renderer.js, annexe 2a).
 const LVM_CAT_COLORS = { voyageur: '#3b82f6', fret: '#22c55e', travaux: '#f59e0b', machine: '#a855f7' };
@@ -699,8 +700,8 @@ export class UI {
     const station = renderer.getStationAt(x, y, this.game.world.stations);
     if (station) {
       const typeLabels = { voyageur: 'Voyageurs', marchandise: 'Marchandises', ite: 'ITE', depot: 'Depot', mixed: 'Mixte' };
-      const platformNames = station.platformNames?.length > 0 ? station.platformNames.join(', ') : '';
-      tooltip.innerHTML = `<div class="tt-name">${station.name}</div><div class="tt-info">${station.platforms} voies${platformNames ? ' (' + platformNames + ')' : ''} | ${typeLabels[station.type] || station.type}</div><div style="font-size:9px;color:#fbbf24;margin-top:2px">Double-clic pour modifier</div>`;
+      const platformNames = station.platformNames?.length > 0 ? station.platformNames.map(escapeHtml).join(', ') : '';
+      tooltip.innerHTML = `<div class="tt-name">${escapeHtml(station.name)}</div><div class="tt-info">${station.platforms} voies${platformNames ? ' (' + platformNames + ')' : ''} | ${escapeHtml(typeLabels[station.type] || station.type)}</div><div style="font-size:9px;color:#fbbf24;margin-top:2px">Double-clic pour modifier</div>`;
       tooltip.style.left = (x + 15) + 'px';
       tooltip.style.top = (y - 10) + 'px';
       tooltip.classList.remove('hidden');
@@ -716,10 +717,10 @@ export class UI {
       const vp = renderer.getVoiePointAt(x, y, vpm.getAll());
       if (vp) {
         const tronconsCount = vpm.getTronconsForPoint(vp.id).length;
-        const stName = vp.stationId ? (this.game.world.getStationById(vp.stationId)?.name || '') : '';
+        const stName = vp.stationId ? escapeHtml(this.game.world.getStationById(vp.stationId)?.name || '') : '';
         const stLabel = stName ? ` (${stName})` : ' (en ligne)';
         const occLabel = vp.occupiedBy ? ' — OCCUPEE' : '';
-        tooltip.innerHTML = `<div class="tt-name">Voie ${vp.voie}${stLabel}${occLabel}</div><div class="tt-info">${tronconsCount} troncon(s)</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Double-clic pour modifier | Shift+drag pour deplacer</div>`;
+        tooltip.innerHTML = `<div class="tt-name">Voie ${escapeHtml(vp.voie)}${stLabel}${occLabel}</div><div class="tt-info">${tronconsCount} troncon(s)</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Double-clic pour modifier | Shift+drag pour deplacer</div>`;
         tooltip.style.left = (x + 15) + 'px';
         tooltip.style.top = (y - 10) + 'px';
         tooltip.classList.remove('hidden');
@@ -733,7 +734,7 @@ export class UI {
     if (document.getElementById('toggle-industries')?.checked) {
       const ind = renderer.getIndustryAt(x, y);
       if (ind) {
-        tooltip.innerHTML = `<div class="tt-name">${ind.name}</div><div class="tt-info">${ind.industryName}</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Shift+drag pour déplacer | Ctrl+clic pour supprimer</div>`;
+        tooltip.innerHTML = `<div class="tt-name">${escapeHtml(ind.name)}</div><div class="tt-info">${escapeHtml(ind.industryName)}</div><div style="font-size:9px;color:#94a3b8;margin-top:2px">Shift+drag pour déplacer | Ctrl+clic pour supprimer</div>`;
         tooltip.style.left = (x + 15) + 'px';
         tooltip.style.top = (y - 10) + 'px';
         tooltip.classList.remove('hidden');
@@ -924,12 +925,12 @@ export class UI {
       arrowIdx = displayCurIdx;
     }
 
-    const rows = displayStops.map(({ s, origIdx }, idx) => {
+    let rows = displayStops.map(({ s, origIdx }, idx) => {
       const isFirst = idx === 0;
       const isLast = idx === displayStops.length - 1;
-      const name = world.getStationById(s.stationId)?.name || '—';
+      const name = escapeHtml(world.getStationById(s.stationId)?.name || '—');
       const cur = idx === displayCurIdx ? ' cur' : '';
-      const voie = s.platform ? `Voie ${s.platform}` : '';
+      const voie = s.platform ? `Voie ${escapeHtml(s.platform)}` : '';
       const { arr, dep, plannedArr, plannedDep, dwell } = buildTimes(s, isFirst, isLast, origIdx);
       const showArr = arr !== null;
       const showDep = dep !== null;
@@ -963,9 +964,9 @@ export class UI {
 
     const bandeauStartIdx = displayStops.findIndex(({ origIdx }) => origIdx >= curIdx);
     const bandeauStops = displayStops.slice(bandeauStartIdx >= 0 ? bandeauStartIdx : 0);
-    const bandeau = bandeauStops.length ? `Prochains arrêts : ${bandeauStops.map(({ s }) => world.getStationById(s.stationId)?.name).filter(Boolean).join('  •  ')}` : 'Service terminé';
+    const bandeau = bandeauStops.length ? `Prochains arrêts : ${bandeauStops.map(({ s }) => escapeHtml(world.getStationById(s.stationId)?.name)).filter(Boolean).join('  •  ')}` : 'Service terminé';
 
-    const stopName = (s) => s?.stationId ? (world.getStationById(s.stationId)?.name || '—') : (s ? 'Waypoint' : '—');
+    const stopName = (s) => s?.stationId ? escapeHtml(world.getStationById(s.stationId)?.name || '—') : (s ? 'Waypoint' : '—');
     const nextArretFrom = (fromIndex) => {
       for (let i = fromIndex; i < stops.length; i++) if (isArret(stops[i])) return stops[i];
       return null;
@@ -978,9 +979,9 @@ export class UI {
     const prevName = stopName(prevStop);
     const curName = stopName(curStop);
     const nextArret = nextArretFrom(svc.state === 'moving' ? curIdx : (nextIdx >= 0 ? nextIdx : curIdx));
-    const nextName = nextArret ? (world.getStationById(nextArret.stationId)?.name || '—') : '—';
+    const nextName = nextArret ? escapeHtml(world.getStationById(nextArret.stationId)?.name || '—') : '—';
     const lastArret = stops.filter(isArret).pop();
-    const destName = lastArret ? (world.getStationById(lastArret.stationId)?.name || '—') : (stops.length > 1 ? (world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—');
+    const destName = lastArret ? escapeHtml(world.getStationById(lastArret.stationId)?.name || '—') : (stops.length > 1 ? escapeHtml(world.getStationById(stops[stops.length - 1].stationId)?.name || '—') : '—');
     const displayNext = nextArret;
     const nextArrTime = displayNext ? (displayNext.arrivalTime ?? displayNext.departureTime) : null;
     const nextArrLabel = nextArrTime != null
@@ -992,7 +993,7 @@ export class UI {
       for (let i = start; dir > 0 ? i < stops.length : i >= 0; i += dir) if (isArret(stops[i])) return stops[i];
       return null;
     };
-    const arretStationName = (s) => s?.stationId ? (world.getStationById(s.stationId)?.name || '—') : '—';
+    const arretStationName = (s) => s?.stationId ? escapeHtml(world.getStationById(s.stationId)?.name || '—') : '—';
 
     // Nearest stations in both directions, including unserved ones, for "Se situe entre".
     let ctxPrevStation = null, ctxNextStation = null;
@@ -1018,8 +1019,8 @@ export class UI {
         }
       }
     }
-    const ctxPrevName = ctxPrevStation?.name || arretStationName(findArretStop(curIdx - 1, -1)) || prevName;
-    const ctxNextName = ctxNextStation?.name || arretStationName(findArretStop(curIdx, 1)) || curName;
+    const ctxPrevName = escapeHtml(ctxPrevStation?.name || arretStationName(findArretStop(curIdx - 1, -1)) || prevName);
+    const ctxNextName = escapeHtml(ctxNextStation?.name || arretStationName(findArretStop(curIdx, 1)) || curName);
 
     let situation;
     if (svc.cancelled) {
@@ -1100,8 +1101,8 @@ export class UI {
     const rame = svc.rame;
     const composition = rame
       ? `<div style="padding:6px 10px;font-size:10px;color:var(--text2);border-bottom:1px solid #333;background:#0d0d0d">
-           <b>Composition :</b> ${rame.name}<br>
-           Long: ${rame.totalLength.toFixed(1)}m · Tonnage: ${rame.totalTonnage}t · Vmax: ${rame.maxSpeed} km/h · Traction: ${rame.traction}
+           <b>Composition :</b> ${escapeHtml(rame.name)}<br>
+           Long: ${rame.totalLength.toFixed(1)}m · Tonnage: ${rame.totalTonnage}t · Vmax: ${rame.maxSpeed} km/h · Traction: ${escapeHtml(rame.traction)}
          </div>`
       : '';
 
@@ -1119,15 +1120,15 @@ export class UI {
 
     const panelIcon = LVM_CAT_ICONS[cat] || LVM_CAT_ICONS.generic;
     panel.innerHTML = `
-      <div class="lvp-header" style="background:${catColor}">
-        <img src="${panelIcon}" class="lvp-cat" alt="">
-        <span class="lvp-title">${displayName}</span>
+      <div class="lvp-header" style="background:${escapeHtml(catColor)}">
+        <img src="${escapeHtml(panelIcon)}" class="lvp-cat" alt="">
+        <span class="lvp-title">${escapeHtml(displayName)}</span>
         ${numLabel}
         <button class="lvp-close" onclick="game.ui.deselectService()" title="Fermer">×</button>
       </div>
-      <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${LVM_CAT_LABELS[cat] || cat}</span></div>
+      <div class="lvp-sub"><span id="lvp-speed">${Math.round(t.speed)} km/h</span><span id="lvp-delay" class="${d > 0 ? 'late' : d < 0 ? 'early' : 'ok'}">${d > 0 ? '+' + d + ' min' : d < 0 ? '- ' + Math.abs(d) + ' min' : "à l'heure"}</span><span>${escapeHtml(LVM_CAT_LABELS[cat] || cat)}</span></div>
       <div class="lvp-situation" id="lvp-situation">${situation}</div>
-      ${t.delayReason ? `<div class="lvp-delay-reason">${t.delayReason}</div>` : ''}
+      ${t.delayReason ? `<div class="lvp-delay-reason">${escapeHtml(t.delayReason)}</div>` : ''}
       ${composition}
       ${payloadInfo ? `<div class="lvp-payload">${payloadInfo}</div>` : ''}
       <div class="lvp-bandeau"><span class="lvp-bandeau-track" id="lvp-bandeau-track">${bandeau}</span></div>
@@ -2010,25 +2011,27 @@ export class UI {
       return;
     }
     container.innerHTML = view.map(item => {
-      const subLabel = item.wagonSubCategory ? ` — ${item.wagonSubCategory}` : '';
+      const subLabel = item.wagonSubCategory ? ` — ${escapeHtml(item.wagonSubCategory)}` : '';
       const powerTxt = item.power ? ` · ${item.power} kW` : '';
-      const cargoTxt = item.cargoTypes?.length ? ` · ${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return info?.name || ct; }).join(', ')}` : '';
+      const cargoTxt = item.cargoTypes?.length ? ` · ${item.cargoTypes.map(ct => { const info = this.game.cargoTypes?.getTypeInfo?.(ct); return escapeHtml(info?.name || ct); }).join(', ')}` : '';
+      const safeName = escapeHtml(item.name);
+      const safeImageData = escapeHtml(item.imageData);
       return `
       <div class="card stock-card">
-        ${item.imageData ? `<img src="${item.imageData}" loading="lazy" class="card-img" alt="${item.name}">` : ''}
-        <div class="card-title" title="${item.name}">${item.name}</div>
+        ${item.imageData ? `<img src="${safeImageData}" loading="lazy" class="card-img" alt="${safeName}">` : ''}
+        <div class="card-title" title="${safeName}">${safeName}</div>
         <div class="card-info">
-          <div class="stock-line"><span class="stock-label">Cat :</span> ${item.category}${subLabel}</div>
-          <div class="stock-line"><span class="stock-label">Tract :</span> ${item.traction || '—'}${powerTxt}</div>
+          <div class="stock-line"><span class="stock-label">Cat :</span> ${escapeHtml(item.category)}${subLabel}</div>
+          <div class="stock-line"><span class="stock-label">Tract :</span> ${escapeHtml(item.traction || '—')}${powerTxt}</div>
           <div class="stock-line"><span class="stock-label">Perf :</span> ${item.maxSpeed} km/h · ${item.length}m · ${item.tonnage}t</div>
           <div class="stock-line"><span class="stock-label">Charge :</span> ${item.passengerCapacity} places · ${item.freightCapacity}t fret${cargoTxt}</div>
           ${item.purchasePrice ? `<div class="stock-line"><span class="stock-label">Prix :</span> ${item.purchasePrice.toLocaleString('fr-FR')} €</div>` : ''}
-          ${item.seriesName ? `<div class="stock-line"><span class="stock-label">Série :</span> ${item.seriesName}</div>` : ''}
-          ${item.notes ? `<div class="stock-line" style="color:var(--text2)"><span class="stock-label">Note :</span> ${item.notes}</div>` : ''}
+          ${item.seriesName ? `<div class="stock-line"><span class="stock-label">Série :</span> ${escapeHtml(item.seriesName)}</div>` : ''}
+          ${item.notes ? `<div class="stock-line" style="color:var(--text2)"><span class="stock-label">Note :</span> ${escapeHtml(item.notes)}</div>` : ''}
         </div>
         <div class="card-actions">
-          <button class="btn-sm" onclick="game.ui.editStock('${item.id}')">Modifier</button>
-          <button class="btn-sm danger" onclick="game.ui.deleteStock('${item.id}')">Supprimer</button>
+          <button class="btn-sm" onclick="game.ui.editStock('${jsString(item.id)}')">Modifier</button>
+          <button class="btn-sm danger" onclick="game.ui.deleteStock('${jsString(item.id)}')">Supprimer</button>
         </div>
       </div>
     `;}).join('');
@@ -2113,7 +2116,7 @@ export class UI {
     const depotSel = document.getElementById('rame-depot');
     if (depotSel) {
       const depots = this.game.depotManager.getDepots();
-      depotSel.innerHTML = '<option value="">— Aucun —</option>' + depots.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+      depotSel.innerHTML = '<option value="">— Aucun —</option>' + depots.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}</option>`).join('');
     }
     document.getElementById('modal-rame')?.classList.remove('hidden');
     this.renderRamePicker();
@@ -2159,12 +2162,17 @@ export class UI {
       if (pager) pager.innerHTML = '';
       return;
     }
-    container.innerHTML = view.map(item => `
-        <div class="stock-picker-item" onclick="game.ui.addToRame('${item.id}', event)" title="${item.name} — ${item.category}${item.notes ? ' — ' + item.notes : ''}, ${item.maxSpeed} km/h, ${item.length}m">
-          ${item.imageData ? `<img src="${item.imageData}" loading="lazy" alt="${item.name}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
-          <span>${item.name}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
+    container.innerHTML = view.map(item => {
+      const safeName = escapeHtml(item.name);
+      const safeCategory = escapeHtml(item.category);
+      const safeNotes = item.notes ? ` — ${escapeHtml(item.notes)}` : '';
+      return `
+        <div class="stock-picker-item" onclick="game.ui.addToRame('${jsString(item.id)}', event)" title="${safeName} — ${safeCategory}${safeNotes}, ${item.maxSpeed} km/h, ${item.length}m">
+          ${item.imageData ? `<img src="${escapeHtml(item.imageData)}" loading="lazy" alt="${safeName}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
+          <span>${safeName}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
         </div>
-      `).join('');
+      `;
+    }).join('');
     if (pager) {
       pager.innerHTML = pages <= 1 ? '' : `
         <button class="btn-sm" ${this._ramePickerPage === 0 ? 'disabled' : ''} onclick="game.ui.ramePickerPageGo(${this._ramePickerPage - 1})">‹ Préc.</button>
@@ -2243,7 +2251,7 @@ export class UI {
     } else {
       const last = this.currentRameElements.length - 1;
       container.innerHTML = '<div class="rame-assembly-images">' + this.currentRameElements.map((el, i) => {
-        const label = el.instanceName || el.name;
+        const label = escapeHtml(el.instanceName || el.name);
         let imgHtml = '';
         if (el.imageData) {
           const transforms = [];
@@ -2259,7 +2267,7 @@ export class UI {
           }
           if (el.flipped) transforms.push('scaleX(-1)');
           const style = transforms.length ? `transform: ${transforms.join(' ')};` : '';
-          imgHtml = `<img src="${el.imageData}" alt="${label}" title="${label} (clic = retirer, Ctrl+clic = retourner)" onclick="game.ui.onRameElementClick(${i}, event)" class="rame-element-img"${style ? ` style="${style}"` : ''}>`;
+          imgHtml = `<img src="${escapeHtml(el.imageData)}" alt="${label}" title="${label} (clic = retirer, Ctrl+clic = retourner)" onclick="game.ui.onRameElementClick(${i}, event)" class="rame-element-img"${style ? ` style="${style}"` : ''}>`;
         } else {
           imgHtml = `<div class="rame-element-placeholder" title="${label}" onclick="game.ui.removeFromRame(${i})">${label}</div>`;
         }
@@ -2361,33 +2369,39 @@ export class UI {
       return;
     }
 
-    container.innerHTML = view.map(r => `
+    container.innerHTML = view.map(r => {
+      const rameName = escapeHtml(r.name);
+      const rameSerial = r.serialNumber ? ` <span style="font-size:11px;color:var(--text3);font-weight:400">(${escapeHtml(r.serialNumber)})</span>` : '';
+      const images = r.elementDetails.map(e => {
+        const label = escapeHtml(e.instanceName || e.name);
+        const style = e.flipped ? 'transform: scaleX(-1);' : '';
+        return e.imageData
+          ? `<img src="${escapeHtml(e.imageData)}" alt="${label}" title="${label}"${style ? ` style="${style}"` : ''}>`
+          : `<span class="rame-text-el">${label}</span>`;
+      }).join('');
+      const depotName = r.depotId ? escapeHtml(this.game.depotManager.getAll().find(d => d.id === r.depotId)?.name || r.depotId) : '';
+      const locationLabel = r.currentLocation ? escapeHtml(this._rameLocationLabel(r)) : '';
+      return `
       <div class="rame-card">
         <div class="rame-card-header">
-          <span class="card-title">${r.name}${r.serialNumber ? ` <span style="font-size:11px;color:var(--text3);font-weight:400">(${r.serialNumber})</span>` : ''}</span>
-          <button class="btn-sm danger" onclick="game.ui.deleteRame('${r.id}')">Supprimer</button>
+          <span class="card-title">${rameName}${rameSerial}</span>
+          <button class="btn-sm danger" onclick="game.ui.deleteRame('${jsString(r.id)}')">Supprimer</button>
         </div>
         <div class="rame-card-images">
-          ${r.elementDetails.map(e => {
-            const label = e.instanceName || e.name;
-            const style = e.flipped ? 'transform: scaleX(-1);' : '';
-            return e.imageData
-              ? `<img src="${e.imageData}" alt="${label}" title="${label}"${style ? ` style="${style}"` : ''}>`
-              : `<span class="rame-text-el">${label}</span>`;
-          }).join('')}
+          ${images}
         </div>
         <div class="card-info">
           <b>Long:</b> ${r.totalLength.toFixed(1)}m | <b>Tonnage:</b> ${r.totalTonnage}t |
           <b>Places:</b> ${r.totalCapacity} | <b>Fret:</b> ${r.totalFreightCapacity}t | <b>Vmax:</b> ${r.maxSpeed} km/h |
-          <b>Traction:</b> ${r.traction}
+          <b>Traction:</b> ${escapeHtml(r.traction)}
         </div>
         <div class="card-info" style="font-size:10px;color:var(--text3)">
           <b>Mise en service:</b> ${r.createdDate} | <b>Km parcourus:</b> ${Math.round(r.totalKmRun || 0).toLocaleString('fr-FR')} km${r.elementDetails.some(e => e.purchasePrice) ? ` | <b>Valeur:</b> ${r.elementDetails.reduce((s,e) => s + (e.purchasePrice || 0), 0).toLocaleString('fr-FR')} €` : ''}
-          ${r.depotId ? `| <b>Dépôt:</b> ${(this.game.depotManager.getAll().find(d => d.id === r.depotId)?.name || r.depotId)}` : ''}
-          ${r.currentLocation ? `| <b>Position:</b> ${this._rameLocationLabel(r)}` : ''}
+          ${r.depotId ? `| <b>Dépôt:</b> ${depotName}` : ''}
+          ${r.currentLocation ? `| <b>Position:</b> ${locationLabel}` : ''}
         </div>
       </div>
-    `).join('');
+    `}).join('');
 
     if (pager) {
       if (pages <= 1) { pager.innerHTML = ''; }
@@ -2574,7 +2588,7 @@ export class UI {
 
     const rameSelect = document.getElementById('sched-rame');
     const rames = this.game.rameManager.getAll();
-    rameSelect.innerHTML = rames.map(r => `<option value="${r.id}">${r.name} (${r.maxSpeed} km/h)</option>`).join('');
+    rameSelect.innerHTML = rames.map(r => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)} (${r.maxSpeed} km/h)</option>`).join('');
     if (editService) rameSelect.value = editService.rameId;
     rameSelect.onchange = () => { this.recalcStopsFrom(1); this._renderContractPicker(); };
 
@@ -4803,11 +4817,11 @@ export class UI {
     const getGroupKey = (svc) => {
       if (sortMode === 'rame') {
         const r = this.game.rameManager.getById(svc.rameId);
-        return r ? r.name : 'Sans rame';
+        return r ? escapeHtml(r.name) : 'Sans rame';
       }
       if (sortMode === 'route') {
-        const fst = this.game.world.getStationById(svc.stops[0]?.stationId)?.name || '?';
-        const lst = this.game.world.getStationById(svc.stops[svc.stops.length - 1]?.stationId)?.name || '?';
+        const fst = escapeHtml(this.game.world.getStationById(svc.stops[0]?.stationId)?.name || '?');
+        const lst = escapeHtml(this.game.world.getStationById(svc.stops[svc.stops.length - 1]?.stationId)?.name || '?');
         return `${fst} → ${lst}`;
       }
       return null;
@@ -4840,7 +4854,7 @@ export class UI {
       // Detail content
       const stopsPreview = svc.stops.map(s => {
         const st = this.game.world.getStationById(s.stationId);
-        const name = st ? st.name : s.stationId;
+        const name = escapeHtml(st ? st.name : s.stationId);
         const arr = this.minToTimeStr(s.arrivalTime);
         const dep = this.minToTimeStr(s.departureTime);
         if (s.type === 'waypoint') return `<span class="sched-stop-tag waypoint" style="opacity:0.5;font-style:italic">(via ${name})</span>`;
@@ -4848,7 +4862,7 @@ export class UI {
       }).join('<span style="color:var(--text3)"> → </span>');
 
       const passagePreview = (svc._passageStops?.length)
-        ? `<div class="sched-stops-preview" style="margin-top:4px"><span style="color:#22c55e;font-size:9px;margin-right:4px">Passages :</span>${svc._passageStops.map(p => `<span class="sched-stop-tag passage">${this.minToTimeStr(p.time)} ${p.name}</span>`).join('<span style="color:var(--text3)"> → </span>')}</div>`
+        ? `<div class="sched-stops-preview" style="margin-top:4px"><span style="color:#22c55e;font-size:9px;margin-right:4px">Passages :</span>${svc._passageStops.map(p => `<span class="sched-stop-tag passage">${this.minToTimeStr(p.time)} ${escapeHtml(p.name)}</span>`).join('<span style="color:var(--text3)"> → </span>')}</div>`
         : '';
 
       let returnPreview = '';
@@ -4856,7 +4870,7 @@ export class UI {
         const retStops = svc.buildReturnStops();
         const retStr = retStops.map(s => {
           const st = this.game.world.getStationById(s.stationId);
-          const name = st ? st.name : s.stationId;
+          const name = escapeHtml(st ? st.name : s.stationId);
           const arr = this.minToTimeStr(s.arrivalTime);
           const dep = this.minToTimeStr(s.departureTime);
           if (s.type === 'waypoint') return `<span class="sched-stop-tag waypoint" style="opacity:0.5;font-style:italic">(via ${name})</span>`;
@@ -4869,10 +4883,10 @@ export class UI {
       const breakdown = svc.train?.breakdown;
       const incident = svc.train?.incident;
       const bilanRows = [];
-      if (svc.completed) bilanRows.push(`<span style="color:#22c55e">Terminé${svc.completedDate ? ' le ' + svc.completedDate : ''}</span>`);
-      if (delayReason) bilanRows.push(`<span style="color:#f59e0b">Retard : ${delayReason}</span>`);
-      if (breakdown?.type) bilanRows.push(`<span style="color:#ef4444">Panne : ${breakdown.type}</span>`);
-      if (incident?.name || incident?.effect) bilanRows.push(`<span style="color:#ef4444">Incident : ${incident.name || incident.effect}</span>`);
+      if (svc.completed) bilanRows.push(`<span style="color:#22c55e">Terminé${svc.completedDate ? ' le ' + escapeHtml(svc.completedDate) : ''}</span>`);
+      if (delayReason) bilanRows.push(`<span style="color:#f59e0b">Retard : ${escapeHtml(delayReason)}</span>`);
+      if (breakdown?.type) bilanRows.push(`<span style="color:#ef4444">Panne : ${escapeHtml(breakdown.type)}</span>`);
+      if (incident?.name || incident?.effect) bilanRows.push(`<span style="color:#ef4444">Incident : ${escapeHtml(incident.name || incident.effect)}</span>`);
       const bilanHtml = bilanRows.length
         ? `<div class="sched-bilan" style="margin-top:6px;padding:6px 8px;background:var(--bg3);border-radius:4px;font-size:10px;display:flex;flex-wrap:wrap;gap:8px">${bilanRows.join('')}</div>`
         : '';
@@ -4889,28 +4903,34 @@ export class UI {
         groupHeader = `<tr><td colspan="8" class="sched-group-header">${gk}</td></tr>`;
       }
 
+      const safeSvcIdHtml = escapeHtml(svc.id);
+      const safeSvcIdJs = jsString(svc.id);
+      const safeSvcName = escapeHtml(svc.name);
+      const safeRameName = escapeHtml(rame ? rame.name : 'N/A');
+      const safeFirstSt = escapeHtml(firstSt ? firstSt.name : '?');
+      const safeLastSt = escapeHtml(lastSt ? lastSt.name : '?');
       return `${groupHeader}
-        <tr class="sched-row" onclick="game.ui.toggleSchedDetail('${svc.id}')">
+        <tr class="sched-row" onclick="game.ui.toggleSchedDetail('${safeSvcIdJs}')">
           <td>${numLabel}</td>
-          <td><strong>${svc.name}</strong>${typeBadge}</td>
-          <td>${rame ? rame.name : 'N/A'}</td>
-          <td>${firstSt ? firstSt.name : '?'}<br><span style="color:var(--text3)">${depTime}</span></td>
-          <td>${lastSt ? lastSt.name : '?'}<br><span style="color:var(--text3)">${arrTime}</span></td>
+          <td><strong>${safeSvcName}</strong>${typeBadge}</td>
+          <td>${safeRameName}</td>
+          <td>${safeFirstSt}<br><span style="color:var(--text3)">${depTime}</span></td>
+          <td>${safeLastSt}<br><span style="color:var(--text3)">${arrTime}</span></td>
           <td><span style="color:var(--text3)">${Math.round(svc.plannedDistance || svc.totalDistance || 0)} km${tripInfo}</span></td>
           <td><span style="color:#60a5fa">${daysLabel}</span></td>
           <td class="sched-row-actions">
-            <button class="btn-sm" onclick="event.stopPropagation();game.ui.editSchedule('${svc.id}')">Modifier</button>
-            <button class="btn-sm" onclick="event.stopPropagation();game.ui.duplicateSchedulePrompt('${svc.id}')">Dupliquer</button>
-            <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedule('${svc.id}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
-            <button class="btn-sm danger" onclick="event.stopPropagation();game.ui.deleteSchedule('${svc.id}')">Supprimer</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.editSchedule('${safeSvcIdJs}')">Modifier</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.duplicateSchedulePrompt('${safeSvcIdJs}')">Dupliquer</button>
+            <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedule('${safeSvcIdJs}')">${svc.active ? 'Desactiver' : 'Activer'}</button>
+            <button class="btn-sm danger" onclick="event.stopPropagation();game.ui.deleteSchedule('${safeSvcIdJs}')">Supprimer</button>
           </td>
         </tr>
-        <tr id="sched-detail-${svc.id}" class="hidden">
+        <tr id="sched-detail-${safeSvcIdHtml}" class="hidden">
           <td colspan="8" class="sched-detail-cell">
             <div class="sched-detail-inner">
               <div class="close-row">
                 <span style="font-size:10px;color:var(--text2)">Détail du trajet</span>
-                <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedDetail('${svc.id}')">X</button>
+                <button class="btn-sm" onclick="event.stopPropagation();game.ui.toggleSchedDetail('${safeSvcIdJs}')">X</button>
               </div>
               <div class="sched-stops-preview">${stopsPreview}</div>
               ${passagePreview}
@@ -5201,7 +5221,7 @@ export class UI {
         return name.includes(term);
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-    select.innerHTML = stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+    select.innerHTML = stations.map(st => `<option value="${escapeHtml(st.id)}">${escapeHtml(st.name)}</option>`).join('');
     select.dataset.stations = JSON.stringify(stations.map(s => ({ id: s.id, name: s.name })));
   }
 
@@ -5801,7 +5821,9 @@ export class UI {
             ${stations.map(st => {
               const typeLabel = { voyageur: 'Voy', marchandise: 'Fret', mixed: 'Mix', depot: 'Dep', ite: 'ITE' }[st.type] || '';
               const closedTag = st.closed ? ' <span style="color:#ef4444;font-size:9px">Fermee</span>' : '';
-              return `<span class="line-stop-tag" style="font-size:10px;cursor:pointer;${st.closed ? 'opacity:0.6;' : ''}" title="${st.lat.toFixed(4)}, ${st.lon.toFixed(4)} | ${st.platforms || '?'} voies${st.closed ? ' | FERMEE' : ''}" onclick="game.ui.editStationFromLines('${st.id}')">${st.name} <span style="color:var(--text3);font-size:9px">${typeLabel}</span>${closedTag}</span>`;
+              const safeName = escapeHtml(st.name);
+              const title = `${st.lat.toFixed(4)}, ${st.lon.toFixed(4)} | ${st.platforms || '?'} voies${st.closed ? ' | FERMEE' : ''}`;
+              return `<span class="line-stop-tag" style="font-size:10px;cursor:pointer;${st.closed ? 'opacity:0.6;' : ''}" title="${escapeHtml(title)}" onclick="game.ui.editStationFromLines('${jsString(st.id)}')">${safeName} <span style="color:var(--text3);font-size:9px">${typeLabel}</span>${closedTag}</span>`;
             }).join('')}
           </div>
         `;
@@ -5820,12 +5842,12 @@ export class UI {
       const lineRows = this.game.lineManager.getAll().map(line => {
         const stA = this.game.world.getStationById(line.stops[0]);
         const stB = this.game.world.getStationById(line.stops[line.stops.length - 1]);
-        const label = (stA?.name || '?') + ' ↔ ' + (stB?.name || '?');
+        const label = escapeHtml((stA?.name || '?') + ' ↔ ' + (stB?.name || '?'));
         const tracks = line.trackIds.map(id => this.game.world.tracks.find(t => t.id === id) || this.game.voiePointManager?.getTronconById(id)).filter(Boolean);
         const wear = tracks.length ? (tracks.reduce((s, t) => s + (t.wear || 0), 0) / tracks.length).toFixed(1) : '-';
         const incidents = this.game.incidentManager?.getActiveIncidentsOnLine(line.stops) || [];
         const status = incidents.length ? '<span style="color:#ef4444">Perturbé</span>' : '<span style="color:#22c55e">Ouvert</span>';
-        return `<div class="dash-train-row" style="grid-template-columns:2fr 2fr 1fr 1fr"><span>${line.name}</span><span style="color:var(--text3);font-size:10px">${label}</span><span>${wear}%</span><span>${status}</span></div>`;
+        return `<div class="dash-train-row" style="grid-template-columns:2fr 2fr 1fr 1fr"><span>${escapeHtml(line.name)}</span><span style="color:var(--text3);font-size:10px">${label}</span><span>${wear}%</span><span>${status}</span></div>`;
       }).join('') || '<div style="padding:8px;color:var(--text3)">Aucune ligne</div>';
       networkContainer.innerHTML = `
         <h3 style="margin:0 0 8px;font-size:13px">Etat du reseau</h3>
@@ -5853,7 +5875,7 @@ export class UI {
     container.innerHTML = lines.map(line => {
       const stopsPreview = line.stops.map(stId => {
         const st = this.game.world.getStationById(stId);
-        return st ? st.name : stId;
+        return escapeHtml(st ? st.name : stId);
       });
       const firstStop = stopsPreview[0] || '?';
       const lastStop = stopsPreview[stopsPreview.length - 1] || '?';
@@ -5872,13 +5894,16 @@ export class UI {
         return sum + (track ? track.distance : 0);
       }, 0);
 
+      const safeLineIdJs = jsString(line.id);
+      const safeLineName = escapeHtml(line.name);
+      const safeLineCode = line.code ? `[${escapeHtml(line.code)}] ` : '';
       return `
-        <div class="line-item" style="border-left:4px solid ${line.color}">
+        <div class="line-item" style="border-left:4px solid ${escapeHtml(line.color)}">
           <div class="line-item-header">
-            <span class="line-item-name" style="color:${line.color}">${line.code ? '[' + line.code + '] ' : ''}${line.name}</span>
+            <span class="line-item-name" style="color:${escapeHtml(line.color)}">${safeLineCode}${safeLineName}</span>
             <span style="color:var(--text3);font-size:10px">${Math.round(totalDist)} km | ${line.stops.length} gares${sharedCount > 0 ? ' | ' + sharedCount + ' troncon(s) partage(s)' : ''}</span>
-            <button class="btn-sm" onclick="game.ui.editLine('${line.id}')">Modifier</button>
-            <button class="btn-sm danger" onclick="game.ui.deleteLine('${line.id}')">Supprimer</button>
+            <button class="btn-sm" onclick="game.ui.editLine('${safeLineIdJs}')">Modifier</button>
+            <button class="btn-sm danger" onclick="game.ui.deleteLine('${safeLineIdJs}')">Supprimer</button>
           </div>
           <div class="line-route-preview">
             ${stopsPreview.map((name, i) =>
@@ -5923,7 +5948,7 @@ export class UI {
     if (!creator) return;
     const fromSel = document.getElementById('sillon-from');
     const toSel = document.getElementById('sillon-to');
-    const opts = this.game.world.stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+    const opts = this.game.world.stations.map(st => `<option value="${escapeHtml(st.id)}">${escapeHtml(st.name)}</option>`).join('');
     if (fromSel) fromSel.innerHTML = '<option value="">—</option>' + opts;
     if (toSel) toSel.innerHTML = '<option value="">—</option>' + opts;
     this._resetSillonManual();
@@ -6700,7 +6725,7 @@ export class UI {
     const typeSel = document.getElementById('depot-type');
     if (typeSel) typeSel.value = 'depot';
     const select = document.getElementById('depot-station');
-    if (select) select.innerHTML = '<option value="">—</option>' + this.game.world.stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    if (select) select.innerHTML = '<option value="">—</option>' + this.game.world.stations.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
     this._toggleITEEditor();
     this._renderITETrackList();
   }
@@ -7071,7 +7096,7 @@ export class UI {
     document.getElementById('works-days-group')?.style.setProperty('display', 'none');
     document.querySelectorAll('.works-day').forEach(cb => cb.checked = true);
 
-    const opts = this.game.world.stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+    const opts = this.game.world.stations.map(st => `<option value="${escapeHtml(st.id)}">${escapeHtml(st.name)}</option>`).join('');
     const aSel = document.getElementById('works-station-a');
     const bSel = document.getElementById('works-station-b');
     if (aSel) aSel.innerHTML = '<option value="">—</option>' + opts;
@@ -7598,7 +7623,7 @@ export class UI {
     const img = document.getElementById('company-logo');
     if (img) { img.src = dataUrl; img.style.display = 'inline-block'; }
     const drop = document.getElementById('logo-drop');
-    if (drop) drop.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain">`;
+    if (drop) drop.innerHTML = `<img src="${escapeHtml(dataUrl)}" style="width:100%;height:100%;object-fit:contain">`;
   }
 
   _generateBulletin() {
@@ -7812,7 +7837,7 @@ export class UI {
 
     // Populate station list sorted alphabetically
     const stations = [...(this.game.world.stations || [])].sort((a, b) => a.name.localeCompare(b.name));
-    select.innerHTML = stations.map(st => `<option value="${st.id}">${st.name}</option>`).join('');
+    select.innerHTML = stations.map(st => `<option value="${escapeHtml(st.id)}">${escapeHtml(st.name)}</option>`).join('');
 
     modal.classList.remove('hidden');
 
@@ -8226,8 +8251,8 @@ export class UI {
           }
         }
       }
-      const ctxPrevName = ctxPrevStation?.name || prevArretStation?.name || '';
-      const ctxNextName = ctxNextStation?.name || nextArretStation?.name || '';
+      const ctxPrevName = escapeHtml(ctxPrevStation?.name || prevArretStation?.name || '');
+      const ctxNextName = escapeHtml(ctxNextStation?.name || nextArretStation?.name || '');
 
       // Distance to next scheduled arret for the approach label
       let nextDistKm = null;
@@ -8252,8 +8277,8 @@ export class UI {
         : (curIdx > 0 ? currentStops[curIdx - 1] : currentStops[0]);
       const currentIsWaypoint = currentStop?.type === 'waypoint' || currentStop?.type === 'passage';
       if ((svc.state === 'stopped_at_station' || (svc.state === 'waiting' && t.stoppedAt)) && !currentIsWaypoint) {
-        const stName = t.stoppedAt?.name || '';
-        const voie = t.platform ? ` Voie ${t.platform}` : '';
+        const stName = escapeHtml(t.stoppedAt?.name || '');
+        const voie = t.platform ? ` Voie ${escapeHtml(t.platform)}` : '';
         if (svc._atTerminus) {
           contextLabel = stName ? `Terminus — ${stName}${voie}` : 'Terminus';
           contextClass = 'ctx-quai';
@@ -8316,7 +8341,7 @@ export class UI {
         nextInfo = 'Service terminé';
       } else if (nextArret && nextArretStation) {
         const fmtTime = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
-        const voie = (nextArret.platform && nextArret.stationId) ? ` Voie ${nextArret.platform}` : '';
+        const voie = (nextArret.platform && nextArret.stationId) ? ` Voie ${escapeHtml(nextArret.platform)}` : '';
         const plannedArr = nextArret.arrivalTime ?? 0;
         const actualArr = plannedArr + delayVal;
         const plannedStr = fmtTime(plannedArr);
@@ -8325,7 +8350,7 @@ export class UI {
         const arrStr = delayVal !== 0
           ? `<span style="text-decoration:line-through;color:#888">${plannedStr}</span> <span style="color:#facc15;font-weight:600">${actualStr}</span>`
           : actualStr;
-        nextInfo = `Prochain arrêt : ${nextArretStation.name}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
+        nextInfo = `Prochain arrêt : ${escapeHtml(nextArretStation.name)}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
       } else if (nextStop) {
         nextInfo = `→ ...`;
       } else {
@@ -8342,19 +8367,20 @@ export class UI {
         } else {
           voieName = String(t.platform);
         }
-        const stName = stoppedStation?.name || '';
-        platformLabel = stName ? `${stName} Voie ${voieName}` : `Voie ${voieName}`;
+        const stName = escapeHtml(stoppedStation?.name || '');
+        const safeVoieName = escapeHtml(voieName);
+        platformLabel = stName ? `${stName} Voie ${safeVoieName}` : `Voie ${safeVoieName}`;
       }
 
       // S12: Train identification (series + number)
-      const displayName = t.seriesName ? `${t.seriesName} ${t.number || ''}`.trim() : svc.name;
+      const displayName = t.seriesName ? escapeHtml(`${t.seriesName} ${t.number || ''}`.trim()) : escapeHtml(svc.name);
 
       // S2: Train images (scrollable zone) — absent pour les trains de travaux.
       let imageHtml = '';
       if (!svc.isWorkTrain && svc.serviceType !== 'work' && svc.rame && svc.rame.elementDetails) {
         const imgs = svc.rame.elementDetails
           .filter(e => e.imageData)
-          .map(e => `<img src="${e.imageData}" class="tc-train-img"${e.flipped ? ' style="transform: scaleX(-1);"' : ''}>`)
+          .map(e => `<img src="${escapeHtml(e.imageData)}" class="tc-train-img"${e.flipped ? ' style="transform: scaleX(-1);"' : ''}>`)
           .join('');
         if (imgs) {
           imageHtml = `<div class="tc-images-scroll">${imgs}</div>`;
@@ -8380,7 +8406,7 @@ export class UI {
         const incColor = t.incident.effect === 'stop' ? '#f87171' : '#facc15';
         const incLabel = t.incident.effect === 'stop' ? 'Interruption' : `Ralentissement (${t.incident.speedLimit} km/h)`;
         const incIcon = t.incident.effect === 'stop' ? '<img src="img/interruption.png" style="height:12px;vertical-align:middle;margin-right:3px">' : '<img src="img/ralentissement.png" style="height:12px;vertical-align:middle;margin-right:3px">';
-        incidentHtml = `<div class="tc-line"><span style="color:${incColor};font-weight:600;font-size:10px">${incIcon}${incLabel}${t.incident.name ? ' — ' + t.incident.name : ''}</span></div>`;
+        incidentHtml = `<div class="tc-line"><span style="color:${incColor};font-weight:600;font-size:10px">${incIcon}${incLabel}${t.incident.name ? ' — ' + escapeHtml(t.incident.name) : ''}</span></div>`;
       }
 
       // Breakdown status
@@ -8406,7 +8432,7 @@ export class UI {
       const wearHtml = rameKm > 0 ? `<div class="tc-line"><span style="color:var(--text3);font-size:9px">Usure: ${Math.round(rameWear)}% · Total: ${Math.round(rameKm)} km</span></div>` : '';
 
       const cat = svc.category || t.category || 'voyageur';
-      const catColor = LVM_CAT_COLORS[cat] || t.color;
+      const catColor = escapeHtml(LVM_CAT_COLORS[cat] || t.color);
       const selCls = this.selectedService?.id === svc.id ? ' tc-selected' : '';
 
       // LVM-04 — statut ligne / situation
@@ -8422,7 +8448,7 @@ export class UI {
         : (svc.completed ? `<span style="color:#16a34a;font-weight:700;font-size:10px;margin-left:auto">Terminé</span>` : '');
 
       return `
-        <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${svc.id}')">
+        <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${jsString(svc.id)}')">
           <div class="tc-line tc-header">
             <span class="tc-status-dot" style="background:${catColor}"></span>
             <div class="tc-scroll"><span class="tc-scroll-text tc-name">${displayName}</span></div>
@@ -8533,13 +8559,14 @@ export class UI {
       if (el._lastContent === contentKey) return;
       el._lastContent = contentKey;
       const icon = `<img class="alert-icon" src="${iconSrc}">`;
+      const safeJoined = escapeHtml(joined);
       if (items.length > 1) {
         el.classList.add('scrolling');
-        const dur = Math.max(10, joined.length * 0.3);
-        el.innerHTML = `${icon}<span class="alert-text" style="animation-duration:${dur}s">${joined}</span>`;
+        const dur = Math.max(10, safeJoined.length * 0.3);
+        el.innerHTML = `${icon}<span class="alert-text" style="animation-duration:${dur}s">${safeJoined}</span>`;
       } else {
         el.classList.remove('scrolling');
-        el.innerHTML = `${icon}<span class="alert-text">${joined}</span>`;
+        el.innerHTML = `${icon}<span class="alert-text">${safeJoined}</span>`;
       }
     };
 
@@ -9160,7 +9187,7 @@ export class UI {
     const sel = document.getElementById('infogare-station');
     if (!sel) return;
     const stations = this.game.world.stations.filter(s => !s.closed);
-    sel.innerHTML = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    sel.innerHTML = stations.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('');
     this._infogarePage = 0;
     const btn = document.getElementById('btn-infogare-show');
     if (btn) btn.onclick = () => { this._infogarePage = 0; this._showInfogareBoard(); };

@@ -1,7 +1,7 @@
-import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1784250033';
+import { haversineDistance, analyzeRoute, CantonManager } from './simulation.js?v=1784643000';
 import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js';
-import { getGlobalRng } from './rng.js?v=1784250033';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784250033';
+import { getGlobalRng } from './rng.js?v=1784643000';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784643000';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
@@ -1300,8 +1300,8 @@ export class ActiveService {
     this.train.signalAlert = null;
     if (this.speed > 0) this._blockedSinceGameTime = null;
 
-    // --- TRONCON CISAILLEMENT CHECK (runs first, overrides proximity if on troncon) ---
-    let onTroncon = false;
+    // --- TRONCON OCCUPANCY + CISAILLEMENT CHECK (first, physical block) ---
+    let tronconBlocked = false;
     if (window.game?.voiePointManager && this.position) {
       const vpm = window.game.voiePointManager;
       // Cache troncon lookup: re-scan every ~300ms or when position changes
@@ -1316,23 +1316,21 @@ export class ActiveService {
         this._cachedTronconTime = performance.now();
       }
       if (currentTrc) {
-        onTroncon = true;
         if (currentTrc.occupiedBy !== this.id) {
           if (vpm.isTronconOccupied(currentTrc.id, this.id)) {
             effectiveMaxSpeed = 0;
+            tronconBlocked = true;
             this.train.blockedBy = true;
           } else {
             const blocking = vpm.checkCisaillement(currentTrc.id, this.id);
             if (blocking) {
               effectiveMaxSpeed = 0;
+              tronconBlocked = true;
               this.train.blockedBy = true;
             } else {
               vpm.occupyTroncon(currentTrc.id, this.id);
-              this.train.blockedBy = false;
             }
           }
-        } else {
-          this.train.blockedBy = false;
         }
         if (this._lastTronconId && this._lastTronconId !== currentTrc.id) {
           vpm.releaseTroncon(this._lastTronconId, this.id);
@@ -1343,53 +1341,49 @@ export class ActiveService {
       }
     }
 
-    // --- CANTONNEMENT + PROXIMITY SAFETY (only if NOT on a troncon) ---
-    if (!onTroncon) {
-      if (this._cantonAssignments && this._cantonAssignments.length > 0) {
-        const signalAspect = cantonManager.getSignalAspect(
-          this._cantonAssignments, segIdx, this.id
-        );
-        if (signalAspect === 0) {
-          // Carré ahead: apply VISA steps (30/20/10) toward the blocked canton
-          // boundary and stop ~30 m upstream (SIG-05/SIG-06).
-          this.train.signalAlert = 'closed';
-          const nextCanton = cantonManager.getNextCanton(this._cantonAssignments, segIdx);
-          let distM = 0;
-          if (nextCanton && this._state.segDists && this._state.cumDist) {
-            const distKm = (1 - this._state.progress) * (this._state.segDists[segIdx] || 0)
-              + ((this._state.cumDist[segIdx + 1] || 0) - (this._state.cumDist[nextCanton.startIndex] || 0));
-            distM = Math.max(0, distKm * 1000);
-          }
-          const cap = visaSpeedCapKmh(distM, this._carreMarginM);
-          const visaCap = (cap === null) ? RESTART_SPEED_KMH : cap;
-          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, visaCap);
-          this.train.blockedBy = visaCap === 0;
-        } else if (signalAspect !== null) {
-          // Avertissement: be ready to stop at the next signal (SIG-04/SIG-07).
-          this.train.signalAlert = 'caution';
-          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, RESTART_SPEED_KMH);
-          this.train.blockedBy = false;
-        } else {
-          this.train.signalAlert = null;
-          this.train.blockedBy = false;
+    // --- CANTONNEMENT + PROXIMITY SAFETY (runs even on a troncon) ---
+    if (this._cantonAssignments && this._cantonAssignments.length > 0) {
+      const signalAspect = cantonManager.getSignalAspect(
+        this._cantonAssignments, segIdx, this.id
+      );
+      if (signalAspect === 0) {
+        // Carré ahead: apply VISA steps (30/20/10) toward the blocked canton
+        // boundary and stop ~30 m upstream (SIG-05/SIG-06).
+        this.train.signalAlert = 'closed';
+        const nextCanton = cantonManager.getNextCanton(this._cantonAssignments, segIdx);
+        let distM = 0;
+        if (nextCanton && this._state.segDists && this._state.cumDist) {
+          const distKm = (1 - this._state.progress) * (this._state.segDists[segIdx] || 0)
+            + ((this._state.cumDist[segIdx + 1] || 0) - (this._state.cumDist[nextCanton.startIndex] || 0));
+          distM = Math.max(0, distKm * 1000);
         }
+        const cap = visaSpeedCapKmh(distM, this._carreMarginM);
+        const visaCap = (cap === null) ? RESTART_SPEED_KMH : cap;
+        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, visaCap);
+        if (!tronconBlocked) this.train.blockedBy = visaCap === 0;
+      } else if (signalAspect !== null) {
+        // Avertissement: be ready to stop at the next signal (SIG-04/SIG-07).
+        this.train.signalAlert = 'caution';
+        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, RESTART_SPEED_KMH);
+      } else {
+        this.train.signalAlert = null;
       }
-      // ALWAYS run proximity check as a safety net (catches cases where
-      // canton geo-keys don't match between trains with different routes)
-      const blockLimit = this._proximityBlockCheck(allServices);
-      if (blockLimit !== null) {
-        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, blockLimit);
-        if (blockLimit === 0) this.train.blockedBy = true;
-      }
+    }
+    // ALWAYS run proximity check as a safety net (catches cases where
+    // canton geo-keys don't match between trains with different routes)
+    const blockLimit = this._proximityBlockCheck(allServices);
+    if (blockLimit !== null) {
+      effectiveMaxSpeed = Math.min(effectiveMaxSpeed, blockLimit);
+      if (blockLimit === 0) this.train.blockedBy = true;
+    }
 
-      // IPCS runtime: stop opposite-direction trains on the same track (Section IV / Annexe 10d)
-      const ipcsLimit = this._ipcsBlockCheck(allServices);
-      if (ipcsLimit !== null) {
-        effectiveMaxSpeed = Math.min(effectiveMaxSpeed, ipcsLimit);
-        if (ipcsLimit === 0) {
-          this.train.blockedBy = true;
-          this.train.delayReason = this.train.delayReason || 'attente IPCS / sens inverse';
-        }
+    // IPCS runtime: stop opposite-direction trains on the same track (Section IV / Annexe 10d)
+    const ipcsLimit = this._ipcsBlockCheck(allServices);
+    if (ipcsLimit !== null) {
+      effectiveMaxSpeed = Math.min(effectiveMaxSpeed, ipcsLimit);
+      if (ipcsLimit === 0) {
+        this.train.blockedBy = true;
+        this.train.delayReason = this.train.delayReason || 'attente IPCS / sens inverse';
       }
     }
 
@@ -1881,18 +1875,8 @@ export class ActiveService {
         }
       }
 
-      // Nez-à-nez detection: other train coming toward us on same track
-      // (heading check above already filtered opposite-direction trains on parallel tracks,
-      //  but if they're stopped or have no heading data, check raw distance)
-      if (!ahead && rawDist < 1.5 && other.state === 'stopped_at_station') {
-        // A stopped train close behind us is not a head-on concern
-      } else if (!ahead && rawDist < 1.5 && other.speed > 0) {
-        const dist = Math.abs(otherProgress - myProgress);
-        if (dist < nearestAheadDist && dist < 0.8) {
-          nearestAheadDist = dist;
-          nearestAheadSpeed = 0;
-        }
-      }
+      // Nez-à-nez: on ne garde que les trains réellement devant nous. Les trains
+      // derrière (même sens) ne doivent pas faire freiner le train de tête.
     }
 
     if (nearestAheadDist === Infinity) return null;
@@ -1988,11 +1972,16 @@ export class ActiveService {
     const myH = Math.atan2(route[myIdx + 1].lon - route[myIdx].lon, route[myIdx + 1].lat - route[myIdx].lat);
     const list = this._getIpcsCandidates(candidates);
     const myTrackKey = this._trackKey;
+    const vpm = window.game?.voiePointManager;
+    const myVoie = this.train.platform || (vpm ? vpm.getVoieAtPosition(this.position, 0.3) : null);
     for (const other of list) {
       if (other.id === this.id) continue;
       if (!other.position) continue;
       if (other.state === 'waiting' || other.state === 'completed') continue;
       if (myTrackKey && other._trackKey && other._trackKey !== myTrackKey) continue;
+      // Sur double voie, deux trains sur des voies différentes ne se gênent pas
+      const otherVoie = other.train?.platform || (vpm && other.position ? vpm.getVoieAtPosition(other.position, 0.3) : null);
+      if (myVoie && otherVoie && myVoie !== otherVoie) continue;
       const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
       if (rawDist > 5) continue;
       if (!myTrackKey && !this._isNearRoute(other.position, route, myIdx)) continue;
@@ -2015,9 +2004,9 @@ export class ActiveService {
 
   /**
    * Lightweight macro movement for distant/low-LOD trains.
-   * No canton/proximity checks, just advance along the route using current speed.
+   * Respects canton signaling and proximity, but uses coarse physics.
    */
-  moveMacro(dt, timeOfDay, economy) {
+  moveMacro(dt, timeOfDay, economy, allServices) {
     if (!this.active || this.state !== 'moving' || !this.position) return;
     // Ensure route state is initialized (departing trains start with no cachedRoute)
     const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
@@ -2027,23 +2016,37 @@ export class ActiveService {
       else return;
     }
     if (!this._state?.cachedRoute) return;
+    cantonManager.setTime(timeOfDay);
+
     // Macro speed: line/rame limit. Preserve full-physics speed, but ramp from a
     // standstill so trains do not teleport to max speed when they enter the viewport.
-    const macroSpeed = Math.min(
+    let macroSpeed = Math.min(
       this.rame?.maxSpeed || 300,
       this.getLineSpeedAtPosition()
     );
     const macroAccel = this.train.accel || 3.0;
     const macroDecel = this.train.decel || 4.0;
-    if (this.speed < macroSpeed) {
-      this.speed = Math.min(macroSpeed, this.speed + macroAccel * dt);
-    } else if (this.speed > macroSpeed) {
-      this.speed = Math.max(macroSpeed, this.speed - macroDecel * dt);
+
+    // Canton signal aspect for current segment
+    if (this._cantonAssignments) {
+      const signalAspect = cantonManager.getSignalAspect(this._cantonAssignments, this._state.index, this.id);
+      if (signalAspect === 0) {
+        macroSpeed = 0;
+        this.train.blockedBy = true;
+      } else if (signalAspect !== null) {
+        macroSpeed = Math.min(macroSpeed, RESTART_SPEED_KMH);
+      }
     }
-    this.train.speed = Math.round(this.speed);
+
+    // Proximity safety net (uses _nearbyServices if available, else allServices)
+    const blockLimit = this._proximityBlockCheck(allServices);
+    if (blockLimit !== null) {
+      macroSpeed = Math.min(macroSpeed, blockLimit);
+      if (blockLimit === 0) this.train.blockedBy = true;
+    }
 
     // IPCS runtime for low-LOD trains: stop before a head-on collision on single track
-    const ipcsLimit = this._ipcsBlockCheck();
+    const ipcsLimit = this._ipcsBlockCheck(allServices);
     if (ipcsLimit === 0) {
       this.speed = 0;
       this.train.speed = 0;
@@ -2051,9 +2054,16 @@ export class ActiveService {
       this.train.delayReason = this.train.delayReason || 'attente IPCS / sens inverse';
       return;
     }
-    if (ipcsLimit) this.speed = Math.min(this.speed, ipcsLimit);
+    if (ipcsLimit) macroSpeed = Math.min(macroSpeed, ipcsLimit);
 
+    if (this.speed < macroSpeed) {
+      this.speed = Math.min(macroSpeed, this.speed + macroAccel * dt);
+    } else if (this.speed > macroSpeed) {
+      this.speed = Math.max(macroSpeed, this.speed - macroDecel * dt);
+    }
+    this.train.speed = Math.round(this.speed);
     if (this.speed <= 0) return;
+
     const route = this._state.cachedRoute;
     const stepKm = this.speed * dt / 3600;
     let remaining = stepKm;
@@ -2070,6 +2080,33 @@ export class ActiveService {
       this._state.progress += frac;
       remaining -= segDist * frac;
       if (this._state.progress >= 1 - 1e-9) {
+        // Canton transition on segment switch
+        if (this._cantonAssignments) {
+          const prevCanton = cantonManager.getCantonForSegment(this._cantonAssignments, idx);
+          const nextCanton = cantonManager.getCantonForSegment(this._cantonAssignments, idx + 1);
+          if (nextCanton && (!prevCanton || nextCanton.cantonId !== prevCanton.cantonId)) {
+            if (!cantonManager.isAvailable(nextCanton.cantonId, this.id)) {
+              this._state.progress = 1.0;
+              this.position.lat = to.lat;
+              this.position.lon = to.lon;
+              this.train.blockedBy = true;
+              remaining = 0;
+              break;
+            }
+            const occ = cantonManager.occupy(nextCanton.cantonId, this.id);
+            if (!occ) {
+              this._state.progress = 1.0;
+              this.position.lat = to.lat;
+              this.position.lon = to.lon;
+              this.train.blockedBy = true;
+              remaining = 0;
+              break;
+            }
+            if (prevCanton) {
+              cantonManager.release(prevCanton.cantonId, this.id);
+            }
+          }
+        }
         this._state.progress = 0;
         this._state.index++;
       }

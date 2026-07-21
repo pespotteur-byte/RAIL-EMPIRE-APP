@@ -3,6 +3,7 @@
  * Pure read-only module: observes game state, never modifies it.
  */
 import { icon } from './icons.js';
+import { escapeHtml } from './html-utils.js?v=1784643000';
 export class Dashboard {
   constructor() {
     // Rolling history buffers (max 288 entries = 24h at 5-min intervals)
@@ -137,8 +138,8 @@ export class Dashboard {
     const worksBulletins = (game.worksManager?.getActive(dateStr, timeOfDay) || []).map(w => {
       const impact = (w.impact === 'stop' || w.speedLimit === 0) ? 'stop' : 'slow';
       return {
-        name: w.name || 'Travaux',
-        location: `${w.stationA || '?'} → ${w.stationB || '?'}`,
+        name: escapeHtml(w.name || 'Travaux'),
+        location: `${escapeHtml(w.stationA || '?')} → ${escapeHtml(w.stationB || '?')}`,
         effect: impact,
         speedLimit: Number.isFinite(w.speedLimit) ? w.speedLimit : 40,
         remaining: 'en cours',
@@ -153,8 +154,8 @@ export class Dashboard {
             <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:6px;border-left:3px solid ${b.effect === 'stop' ? '#ef4444' : '#f59e0b'}">
               <span style="font-size:16px">${b.effect === 'stop' ? '⛔' : '⚠️'}</span>
               <div style="flex:1">
-                <div style="font-size:12px;font-weight:600;color:var(--text)">${b.name}</div>
-                <div style="font-size:10px;color:var(--text3)">${b.location} — ${b.remaining} min restantes</div>
+                <div style="font-size:12px;font-weight:600;color:var(--text)">${escapeHtml(b.name)}</div>
+                <div style="font-size:10px;color:var(--text3)">${escapeHtml(b.location)} — ${b.remaining} min restantes</div>
               </div>
               <span style="font-size:10px;font-weight:700;color:${b.effect === 'stop' ? '#ef4444' : '#f59e0b'}">${b.effect === 'stop' ? 'Interruption' : 'Ralenti ' + b.speedLimit + ' km/h'}</span>
             </div>
@@ -180,7 +181,7 @@ export class Dashboard {
             ${activeServices.slice(0, 8).map(svc => {
               const d = svc.train?.delay ?? 0;
               return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">
-                <span>${svc.name}</span>
+                <span>${escapeHtml(svc.name)}</span>
                 <span style="color:${Math.abs(d) <= 5 ? 'var(--green)' : '#ef4444'}">${d > 0 ? '+' + fmt(d) + ' min' : 'A l\'heure'}</span>
               </div>`;
             }).join('') || '<span>Aucun service actif</span>'}
@@ -344,7 +345,7 @@ export class Dashboard {
             <span>Ligne</span><span>Revenus</span><span>D\u00e9penses</span><span>Profit</span><span>Marge</span>
           </div>
           ${lineProfit.map(l => `<div class="dash-train-row" style="grid-template-columns:2fr 1fr 1fr 1fr 1fr">
-            <span style="font-weight:600">${l.name}${l.code ? ' (' + l.code + ')' : ''}</span>
+            <span style="font-weight:600">${escapeHtml(l.name)}${l.code ? ' (' + escapeHtml(l.code) + ')' : ''}</span>
             <span style="color:#22c55e">${fmtE(l.revenue)}</span>
             <span style="color:#ef4444">${fmtE(l.expense)}</span>
             <span style="color:${l.profit >= 0 ? 'var(--green)' : '#ef4444'}">${l.profit >= 0 ? '+' : ''}${fmtE(l.profit)}</span>
@@ -385,10 +386,10 @@ export class Dashboard {
             const delayStr = delay > 0 ? '+' + fmt(delay) + ' min' : '\u00c0 l\'heure';
             const delayColor = Math.abs(delay) <= 5 ? 'var(--green)' : '#ef4444';
             const speed = svc.train?.speed ? `${fmt(svc.train.speed)} km/h` : '-';
-            const nextStop = svc.stops?.[svc.currentStopIndex]?.name || '-';
-            const rameName = svc.rame?.name || '-';
+            const nextStop = escapeHtml(svc.stops?.[svc.currentStopIndex]?.name || '-');
+            const rameName = escapeHtml(svc.rame?.name || '-');
             return `<div class="dash-train-row">
-              <span style="font-weight:600">${svc.name}</span>
+              <span style="font-weight:600">${escapeHtml(svc.name)}</span>
               <span style="color:var(--text3)">${rameName}</span>
               <span>${state}</span>
               <span style="color:${delayColor}">${delayStr}</span>
@@ -406,8 +407,8 @@ export class Dashboard {
             <span>Cat\u00e9gorie</span><span>Description</span><span>Montant</span><span>Type</span>
           </div>
           ${eco.history.slice(-20).reverse().map(h => `<div class="dash-train-row" style="grid-template-columns:1fr 2fr 1fr 1fr">
-            <span style="text-transform:capitalize;font-size:10px">${h.category || '-'}</span>
-            <span style="font-size:10px;color:var(--text3)">${h.description || ''}</span>
+            <span style="text-transform:capitalize;font-size:10px">${escapeHtml(h.category || '-')}</span>
+            <span style="font-size:10px;color:var(--text3)">${escapeHtml(h.description || '')}</span>
             <span style="color:${h.type === 'revenue' ? '#22c55e' : '#ef4444'};font-weight:600">${h.type === 'revenue' ? '+' : '-'}${fmtE(h.amount)}</span>
             <span style="font-size:10px">${h.type === 'revenue' ? '\u25b2 Revenu' : '\u25bc D\u00e9pense'}</span>
           </div>`).join('') || '<div style="padding:8px;color:var(--text3)">Aucun mouvement</div>'}
