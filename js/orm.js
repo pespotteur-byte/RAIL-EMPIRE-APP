@@ -175,6 +175,10 @@ export class ORMClient {
     this._stationsOSM = []; // detected OSM stations
     this._graphDirty = true;
 
+    // R-08 / R-XX — routage directionnel : chaque voie OSM a un sens préféré
+    // (railway:preferred_direction) ou hérite du premier itinéraire calculé.
+    this._wayDir = new Map(); // wayId -> bearing (degrés) du sens autorisé
+
     // R-08 : aiguillages branchés au routage — tronçons utilisateur injectés dans le graphe
     this._userTronconProvider = null;
 
@@ -298,6 +302,10 @@ export class ORMClient {
           name: el.tags?.name || '',
           ref: el.tags?.ref || '',
           trackRef: el.tags?.['railway:track_ref'] || el.tags?.track_ref || '',
+          preferredDirection: (() => {
+            const pd = (el.tags?.['railway:preferred_direction'] || '').toLowerCase();
+            return pd === 'forward' || pd === 'backward' ? pd : 'both';
+          })(),
           geometry: el.geometry.map(p => ({ lat: p.lat, lon: p.lon })),
           nodeIds: el.nodes || [],
         };
@@ -359,16 +367,158 @@ export class ORMClient {
   markGraphDirty() {
     this._graphDirty = true;
     this.routeCache.clear();
+    this._wayDir.clear();
   }
 
   _ensureGraph() {
     if (!this._graphDirty && this._graph) return this._graph;
+    this._inferPreferredDirections();
     this._graph = this._buildUnifiedGraph();
     this._graphDirty = false;
     return this._graph;
   }
 
+  // R-XX — sens de circulation ferroviaire au point demandé.
+  // La liste suit la règle métier demandée : France, Italie, Espagne,
+  // Grande-Bretagne roulent à gauche sur rail ; les autres à droite.
+  getTrafficSide(lat, lon) {
+    const LEFT_HAND_BBOXES = [
+      { code: 'FR', minLat: 41.0, maxLat: 51.5, minLon: -5.5, maxLon: 9.5 },
+      { code: 'IT', minLat: 36.5, maxLat: 47.5, minLon: 6.5, maxLon: 19.0 },
+      { code: 'ES', minLat: 35.0, maxLat: 44.0, minLon: -10.0, maxLon: 4.5 },
+      { code: 'GB', minLat: 49.5, maxLat: 61.0, minLon: -11.0, maxLon: 2.0 },
+    ];
+    for (const b of LEFT_HAND_BBOXES) {
+      if (lat >= b.minLat && lat <= b.maxLat && lon >= b.minLon && lon <= b.maxLon) return 'left';
+    }
+    return 'right';
+  }
+
+  _wayBearing(way) {
+    let x = 0, y = 0;
+    const g = way.geometry;
+    for (let i = 0; i < g.length - 1; i++) {
+      const b = bearing(g[i].lat, g[i].lon, g[i + 1].lat, g[i + 1].lon);
+      const rad = b * Math.PI / 180;
+      x += Math.cos(rad); y += Math.sin(rad);
+    }
+    const len = Math.hypot(x, y);
+    if (len === 0) return 0;
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  }
+
+  _wayMidpoint(way) {
+    const g = way.geometry;
+    let lat = 0, lon = 0;
+    for (const p of g) { lat += p.lat; lon += p.lon; }
+    return { lat: lat / g.length, lon: lon / g.length };
+  }
+
+  _wayLength(way) {
+    let len = 0;
+    const g = way.geometry;
+    for (let i = 0; i < g.length - 1; i++) {
+      len += haversine(g[i].lat, g[i].lon, g[i + 1].lat, g[i + 1].lon);
+    }
+    return len;
+  }
+
+  _assignPairDirections(a, b) {
+    const bA = a.b, bB = b.b;
+    const midA = a.mid, midB = b.mid;
+    const bearingAB = bearing(midA.lat, midA.lon, midB.lat, midB.lon);
+    const delta = ((bearingAB - bA) + 360) % 360;
+    const isRight = (delta >= 45 && delta <= 135);
+    const isLeft = (delta >= 225 && delta <= 315);
+    if (!isRight && !isLeft) return;
+    const rightHand = this.getTrafficSide(midA.lat, midA.lon) === 'right';
+    let dirA, dirB;
+    if (rightHand) {
+      if (isRight) { dirA = bA + 180; dirB = bA; }
+      else { dirA = bA; dirB = bA + 180; }
+    } else {
+      if (isRight) { dirA = bA; dirB = bA + 180; }
+      else { dirA = bA + 180; dirB = bA; }
+    }
+    dirA = (dirA + 360) % 360;
+    dirB = (dirB + 360) % 360;
+    a.way.preferredDirection = angleBetween(bA, dirA) <= 90 ? 'forward' : 'backward';
+    b.way.preferredDirection = angleBetween(bB, dirB) <= 90 ? 'forward' : 'backward';
+  }
+
+  _inferPreferredDirections() {
+    if (!this._ways || this._ways.size === 0) return;
+    // Normalise les voies issues du cache qui ne contiennent pas encore les nouveaux champs.
+    for (const w of this._ways.values()) {
+      if (!w.preferredDirection) w.preferredDirection = 'both';
+      if (w.tracks == null) w.tracks = 1;
+      if (!w.usage) w.usage = 'main';
+      if (w.service == null) w.service = '';
+    }
+    const candidates = [...this._ways.values()].filter(w =>
+      w.preferredDirection === 'both' &&
+      w.tracks === 1 &&
+      w.usage === 'main' &&
+      !w.service &&
+      (w.ref || w.name)
+    );
+    const byRef = new Map();
+    for (const w of candidates) {
+      const key = w.ref || w.name;
+      if (!byRef.has(key)) byRef.set(key, []);
+      byRef.get(key).push(w);
+    }
+    for (const [ref, list] of byRef) {
+      if (list.length < 2) continue;
+      const meta = list.map(way => ({
+        way,
+        b: this._wayBearing(way),
+        mid: this._wayMidpoint(way),
+        len: this._wayLength(way),
+      }));
+      for (const a of meta) {
+        if (a.way.preferredDirection !== 'both') continue;
+        let best = null, bestDist = Infinity;
+        for (const b of meta) {
+          if (a === b || b.way.preferredDirection !== 'both') continue;
+          const d = haversine(a.mid.lat, a.mid.lon, b.mid.lat, b.mid.lon);
+          if (d < 0.003 || d > 0.08) continue;
+          const lenRatio = a.len / b.len;
+          if (lenRatio > 2 || lenRatio < 0.5) continue;
+          const bDiff = angleBetween(a.b, b.b);
+          if (bDiff > 15 && bDiff < 165) continue;
+          if (d < bestDist) { bestDist = d; best = b; }
+        }
+        if (best) this._assignPairDirections(a, best);
+      }
+    }
+  }
+
+  _addDirectedWayEdges(nodes, aKey, bKey, way, segmentIdx, dist, seedDir = true) {
+    const pd = way.preferredDirection || 'both';
+    const base = {
+      dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks,
+      usage: way.usage, service: way.service, wayId: way.id, name: way.name || '',
+      ref: way.ref || '', trackRef: way.trackRef || '', preferredDirection: pd,
+    };
+    if (pd === 'forward' || pd === 'both') {
+      nodes.get(aKey).edges.push({ from: aKey, to: bKey, ...base });
+    }
+    if (pd === 'backward' || pd === 'both') {
+      nodes.get(bKey).edges.push({ from: bKey, to: aKey, ...base });
+    }
+    if (seedDir && !this._wayDir.has(way.id)) {
+      const g = way.geometry;
+      if (pd === 'forward' && g.length >= 2) {
+        this._wayDir.set(way.id, bearing(g[0].lat, g[0].lon, g[1].lat, g[1].lon));
+      } else if (pd === 'backward' && g.length >= 2) {
+        this._wayDir.set(way.id, bearing(g[g.length - 1].lat, g[g.length - 1].lon, g[g.length - 2].lat, g[g.length - 2].lon));
+      }
+    }
+  }
+
   _buildUnifiedGraph() {
+    this._wayDir.clear();
     const nodes = new Map(); // nodeKey -> { key, lat, lon, edges: [] }
 
     for (const [, way] of this._ways) {
@@ -384,12 +534,7 @@ export class ORMClient {
         if (!nodes.has(bKey)) nodes.set(bKey, { key: bKey, lat: geom[i + 1].lat, lon: geom[i + 1].lon, edges: [] });
 
         const dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
-
-        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
-        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
-
-        nodes.get(aKey).edges.push(edge);
-        nodes.get(bKey).edges.push(reverseEdge);
+        this._addDirectedWayEdges(nodes, aKey, bKey, way, i, dist, true);
       }
     }
 
@@ -438,10 +583,7 @@ export class ORMClient {
         if (!nodes.has(aKey)) nodes.set(aKey, { key: aKey, lat: geom[i].lat, lon: geom[i].lon, edges: [] });
         if (!nodes.has(bKey)) nodes.set(bKey, { key: bKey, lat: geom[i + 1].lat, lon: geom[i + 1].lon, edges: [] });
         const dist = haversine(geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
-        const edge = { from: aKey, to: bKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
-        const reverseEdge = { from: bKey, to: aKey, dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks, usage: way.usage, service: way.service, wayId: way.id, name: way.name || '', ref: way.ref || '', trackRef: way.trackRef || '' };
-        nodes.get(aKey).edges.push(edge);
-        nodes.get(bKey).edges.push(reverseEdge);
+        this._addDirectedWayEdges(nodes, aKey, bKey, way, i, dist, false);
       }
     }
     const graph = { nodes };
