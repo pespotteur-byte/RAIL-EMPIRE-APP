@@ -1,44 +1,45 @@
-import { SimulationEngine } from './engine.js?v=1784731010';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784731010';
-import { World, createDefaultWorld } from './world.js?v=1784731010';
-import { Renderer } from './renderer.js?v=1784731010';
-import { UI } from './ui.js?v=1784731010';
-import { Economy } from './economy.js?v=1784731010';
-import { IncidentManager } from './incidents.js?v=1784731010';
-import { FreightManager } from './freight.js?v=1784731010';
-import { ScheduleManager } from './schedule.js?v=1784731010';
-import { GameStorage } from './storage.js?v=1784731010';
-import { AccountManager } from './account.js?v=1784731010';
-import { RollingStockManager } from './rolling-stock.js?v=1784731010';
-import { RameManager } from './rame.js?v=1784731010';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784731010';
-import { DepotManager } from './depot.js?v=1784731010';
-import { WorksManager } from './works.js?v=1784731010';
-import { ORMClient } from './orm.js?v=1784731010';
-import { LineManager, PlatformManager } from './line.js?v=1784731010';
-import { SillonManager } from './sillon.js?v=1784731010';
-import { VoiePointManager } from './voie-points.js?v=1784731010';
-import { Dashboard } from './dashboard.js?v=1784731010';
-import { GraphMarche } from './graph-marche.js?v=1784731010';
-import { StaffManager } from './staff.js?v=1784731010';
-import { Tutorial } from './tutorial.js?v=1784731010';
-import { Bank } from './bank.js?v=1784731010';
-import { Weather } from './weather.js?v=1784731010';
-import { Unions } from './unions.js?v=1784731010';
-import { SeasonalSchedule } from './seasonal.js?v=1784731010';
-import { Connections } from './connections.js?v=1784731010';
-import { StationUpgrades } from './station-upgrades.js?v=1784731010';
-import { A12Model } from './a12-model.js?v=1784731010';
-import { JunctionManager } from './junctions.js?v=1784731010';
-import { CargoTypeManager } from './cargo-types.js?v=1784731010';
-import { ITEModules } from './ite-modules.js?v=1784731010';
-import { IndustrialClients } from './industrial-clients.js?v=1784731010';
-import { ShuntingManager } from './shunting.js?v=1784731010';
-import { haversineDistance } from './simulation.js?v=1784731010';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784731010';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784731010';
-import { adminSync } from './admin-sync.js?v=1784731010';
-import { alertToast } from './html-utils.js?v=1784731010';
+import { SimulationEngine } from './engine.js?v=1784731011';
+import { startDedensenBenchmark } from './benchmark.js?v=1784731011';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784731011';
+import { World, createDefaultWorld } from './world.js?v=1784731011';
+import { Renderer } from './renderer.js?v=1784731011';
+import { UI } from './ui.js?v=1784731011';
+import { Economy } from './economy.js?v=1784731011';
+import { IncidentManager } from './incidents.js?v=1784731011';
+import { FreightManager } from './freight.js?v=1784731011';
+import { ScheduleManager } from './schedule.js?v=1784731011';
+import { GameStorage } from './storage.js?v=1784731011';
+import { AccountManager } from './account.js?v=1784731011';
+import { RollingStockManager } from './rolling-stock.js?v=1784731011';
+import { RameManager } from './rame.js?v=1784731011';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784731011';
+import { DepotManager } from './depot.js?v=1784731011';
+import { WorksManager } from './works.js?v=1784731011';
+import { ORMClient } from './orm.js?v=1784731011';
+import { LineManager, PlatformManager } from './line.js?v=1784731011';
+import { SillonManager } from './sillon.js?v=1784731011';
+import { VoiePointManager } from './voie-points.js?v=1784731011';
+import { Dashboard } from './dashboard.js?v=1784731011';
+import { GraphMarche } from './graph-marche.js?v=1784731011';
+import { StaffManager } from './staff.js?v=1784731011';
+import { Tutorial } from './tutorial.js?v=1784731011';
+import { Bank } from './bank.js?v=1784731011';
+import { Weather } from './weather.js?v=1784731011';
+import { Unions } from './unions.js?v=1784731011';
+import { SeasonalSchedule } from './seasonal.js?v=1784731011';
+import { Connections } from './connections.js?v=1784731011';
+import { StationUpgrades } from './station-upgrades.js?v=1784731011';
+import { A12Model } from './a12-model.js?v=1784731011';
+import { JunctionManager } from './junctions.js?v=1784731011';
+import { CargoTypeManager } from './cargo-types.js?v=1784731011';
+import { ITEModules } from './ite-modules.js?v=1784731011';
+import { IndustrialClients } from './industrial-clients.js?v=1784731011';
+import { ShuntingManager } from './shunting.js?v=1784731011';
+import { haversineDistance } from './simulation.js?v=1784731011';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784731011';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784731011';
+import { adminSync } from './admin-sync.js?v=1784731011';
+import { alertToast } from './html-utils.js?v=1784731011';
 
 class RailEmpire {
   constructor() {
@@ -118,6 +119,14 @@ class RailEmpire {
       this.account.companyName = name;
       this.startGame(null);
     });
+
+    // Auto-start a new game for the internal benchmark mode
+    const benchmarkParams = new URLSearchParams(location.search);
+    if (benchmarkParams.get('benchmark') === 'dedensen') {
+      this.account.companyName = 'Dedensen Benchmark';
+      this.startGame(null);
+      return;
+    }
 
     btnLoad.addEventListener('click', async () => {
       const saved = await this.storage.loadGame();
@@ -253,6 +262,14 @@ class RailEmpire {
     this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
     this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
     this.gameLoop();
+
+    // Internal Dedensen benchmark mode (no external CDP driver needed)
+    const benchmarkParams = new URLSearchParams(location.search);
+    if (benchmarkParams.get('benchmark') === 'dedensen') {
+      const bTotal = Number(benchmarkParams.get('benchmark_total')) || 80;
+      startDedensenBenchmark(this, { total: bTotal });
+    }
+
     // Reload previously loaded OSM areas after save restore (async, non-blocking)
     this.orm.reloadAreas().catch(() => {});
     // Clear previous autoSave interval to prevent double-save on re-login
