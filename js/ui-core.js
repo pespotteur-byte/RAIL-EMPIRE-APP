@@ -1,12 +1,12 @@
-import { haversineDistance } from './simulation.js?v=1784731012';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784731012';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784731012';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784731012';
-import { UIMap } from './ui-map.js?v=1784731012';
-import { UIEntity } from './ui-entity.js?v=1784731012';
-import { UISchedule } from './ui-schedule.js?v=1784731012';
-import { UIEconomy } from './ui-economy.js?v=1784731012';
-import { UIInfogare } from './ui-infogare.js?v=1784731012';
+import { haversineDistance } from './simulation.js?v=1784731013';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784731013';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784731013';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784731013';
+import { UIMap } from './ui-map.js?v=1784731013';
+import { UIEntity } from './ui-entity.js?v=1784731013';
+import { UISchedule } from './ui-schedule.js?v=1784731013';
+import { UIEconomy } from './ui-economy.js?v=1784731013';
+import { UIInfogare } from './ui-infogare.js?v=1784731013';
 
 export class UI {
   constructor(game) {

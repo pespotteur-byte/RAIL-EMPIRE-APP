@@ -1,5 +1,5 @@
-import { haversineDistance } from './simulation.js?v=1784731012';
-import { adminSync } from './admin-sync.js?v=1784731012';
+import { haversineDistance } from './simulation.js?v=1784731013';
+import { adminSync } from './admin-sync.js?v=1784731013';
 
 const STORAGE_KEY = '__dedensenBenchmark';
 
@@ -604,12 +604,20 @@ export async function startDedensenBenchmark(g, config = {}) {
   function finish() {
     const report = getReport();
     const html = generateHtml(report, snapshots);
-    downloadFile(`dedensen-report-${TOTAL}-${Date.now()}.json`, JSON.stringify(report, null, 2), 'application/json');
-    downloadFile(`dedensen-report-${TOTAL}-${Date.now()}.html`, html, 'text/html');
+    const json = JSON.stringify(report, null, 2);
+    const base = `dedensen-report-${TOTAL}-${Date.now()}`;
+    downloadFile(`${base}.json`, json, 'application/json');
+    downloadFile(`${base}.html`, html, 'text/html');
+
+    const files = { jsonName: `${base}.json`, htmlName: `${base}.html`, json, html };
+    api.reportFiles = files;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ done: true, timestamp: Date.now(), summary: report.summary }));
-      localStorage.setItem(STORAGE_KEY + ':report', JSON.stringify(report));
+      localStorage.setItem(STORAGE_KEY + ':report', json);
+      localStorage.setItem(STORAGE_KEY + ':html', html);
+      localStorage.setItem(STORAGE_KEY + ':files', JSON.stringify({ jsonName: files.jsonName, htmlName: files.htmlName }));
     } catch (e) {}
+
     if (window.__dedensenBenchmark) window.__dedensenBenchmark.done = true;
     console.error = origErr;
     console.warn = origWarn;
@@ -653,6 +661,8 @@ export async function startDedensenBenchmark(g, config = {}) {
     getState,
     isDone,
     getReport,
+    generateHtml: (r, snaps) => generateHtml(r, snaps || snapshots),
+    reportFiles: null,
     startTime: Date.now(),
     done: false
   };

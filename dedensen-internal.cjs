@@ -4,7 +4,7 @@ const path = require('path');
 
 const TOTAL = Number(process.env.TOTAL) || 80;
 const OUT_DIR = '/home/ubuntu/dedensen-test';
-const URL = `http://localhost:8080/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784731012`;
+const URL = `http://localhost:8080/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784731013`;
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const LOG_FILE = path.join(OUT_DIR, 'internal-driver.log');
@@ -23,35 +23,17 @@ async function evaluate(Runtime, expr, opts = {}) {
   return res.result.value;
 }
 
-async function setDownloadPath(client, dir) {
-  for (const domain of ['Browser', 'Page']) {
-    try {
-      if (!client[domain] || !client[domain].setDownloadBehavior) continue;
-      await client[domain].setDownloadBehavior({ behavior: 'allow', downloadPath: dir, eventsEnabled: true });
-      log('Download path set via', domain);
-      return;
-    } catch (e) {
-      log(domain + '.setDownloadBehavior failed', e.message);
-    }
-  }
-}
-
 async function run(client) {
   const { Page, Runtime, Log } = client;
   await Page.enable();
   await Runtime.enable();
   await Log.enable();
 
-  Page.downloadWillBegin(e => log('Download started', e.url || '', e.suggestedFilename || ''));
-  Page.downloadProgress(e => { if (e.state === 'completed') log('Download completed', e.guid); });
-
   Log.entryAdded(entry => {
     if (entry.entry.level === 'error' || entry.entry.level === 'warning') {
       log('[browser]', entry.entry.level, entry.entry.text);
     }
   });
-
-  await setDownloadPath(client, OUT_DIR);
 
   // Clean previous internal benchmark downloads
   try {
@@ -77,7 +59,7 @@ async function run(client) {
   log('Benchmark started');
 
   const startTime = Date.now();
-  const maxMs = (TOTAL * 240 + 600) * 1000;
+  const maxMs = (Number(process.env.TIMEOUT_MIN) || (TOTAL * 300 + 1200)) * 1000;
 
   while (Date.now() - startTime < maxMs) {
     await sleep(60000);
@@ -94,14 +76,19 @@ async function run(client) {
       log('All finished');
       await sleep(3000);
       try {
-        const report = JSON.parse(await evaluate(Runtime, 'JSON.stringify(window.__dedensenBenchmark.getReport())'));
-        fs.writeFileSync(path.join(OUT_DIR, 'report-internal.json'), JSON.stringify(report, null, 2));
-        log('Report JSON saved');
+        const files = JSON.parse(await evaluate(Runtime, 'JSON.stringify(window.__dedensenBenchmark.reportFiles)'));
+        if (files && files.json && files.html) {
+          fs.writeFileSync(path.join(OUT_DIR, files.jsonName), files.json);
+          fs.writeFileSync(path.join(OUT_DIR, files.htmlName), files.html);
+          log('Report files saved:', files.jsonName, files.htmlName);
+        } else {
+          log('No reportFiles found, falling back to report JSON');
+          const report = JSON.parse(await evaluate(Runtime, 'JSON.stringify(window.__dedensenBenchmark.getReport())'));
+          fs.writeFileSync(path.join(OUT_DIR, 'report-internal.json'), JSON.stringify(report, null, 2));
+        }
       } catch (e) {
-        log('Error saving report JSON', e.message);
+        log('Error saving report files', e.message);
       }
-      await sleep(10000);
-      log('Downloads in', OUT_DIR, fs.readdirSync(OUT_DIR).filter(f => f.startsWith('dedensen-report-')));
       return;
     }
   }
@@ -113,7 +100,7 @@ async function main() {
   while (attempts < 3) {
     try {
       const client = await new Promise((resolve, reject) => {
-        CDP({ host: 'localhost', port: 29229 }, (c) => resolve(c)).on('error', reject);
+        CDP({ host: 'localhost', port: 29229 }, c => resolve(c)).on('error', reject);
       });
       await run(client);
       client.close();

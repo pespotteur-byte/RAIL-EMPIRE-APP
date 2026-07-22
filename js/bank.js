@@ -1,4 +1,4 @@
-import { alertToast } from './html-utils.js?v=1784731012';
+import { alertToast } from './html-utils.js?v=1784731013';
 /**
  * Bank — Loan system for Rail Empire.
  * Additive module: adds borrowing/repayment mechanics to economy.
