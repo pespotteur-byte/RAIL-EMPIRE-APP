@@ -1,4 +1,4 @@
-import { alertToast } from './html-utils.js?v=1784731011';
+import { alertToast } from './html-utils.js?v=1784731012';
 const SAVE_KEY = 'rail-empire-save';
 const COMPRESSED_PREFIX = 'RELZ:';
 

@@ -1,4 +1,5 @@
-import { haversineDistance } from './simulation.js?v=1784731011';
+import { haversineDistance } from './simulation.js?v=1784731012';
+import { adminSync } from './admin-sync.js?v=1784731012';
 
 const STORAGE_KEY = '__dedensenBenchmark';
 
@@ -196,6 +197,15 @@ pre { background: #f1f5f9; padding: 8px; overflow-x: auto; font-size: 9px; }
 
 export async function startDedensenBenchmark(g, config = {}) {
   if (!g) throw new Error('Aucune instance de jeu fournie à startDedensenBenchmark');
+
+  // Désactiver les incidents aléatoires du jeu pour ne garder que
+  // les événements forcés par le scénario (DDS, panne de portes, travaux).
+  if (g.incidentManager) {
+    g.incidentManager.setEnabledTypes([]);
+    g.incidentManager.activeIncidents = [];
+  }
+  adminSync.setOptIn(false);
+  adminSync.stopIncidentLoop();
 
   const TOTAL = config.total || 80;
   const PILOT = TOTAL <= 8;

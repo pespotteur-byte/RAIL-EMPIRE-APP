@@ -5,8 +5,8 @@
  * Real GPS coordinates from industrial sites.
  */
 import { icon } from './icons.js';
-import { getGlobalRng } from './rng.js?v=1784731011';
-import { alertToast } from './html-utils.js?v=1784731011';
+import { getGlobalRng } from './rng.js?v=1784731012';
+import { alertToast } from './html-utils.js?v=1784731012';
 
 let nextClientId = 1;
 
