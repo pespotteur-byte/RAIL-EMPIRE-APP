@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784731004';
-import { cantonManager } from './canton-manager.js?v=1784731004';
-import { ServiceStop } from './service-stop.js?v=1784731004';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731004';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731004';
-import { getGlobalRng } from './rng.js?v=1784731004';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784731004';
+} from './service-utils.js?v=1784731010';
+import { cantonManager } from './canton-manager.js?v=1784731010';
+import { ServiceStop } from './service-stop.js?v=1784731010';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731010';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731010';
+import { getGlobalRng } from './rng.js?v=1784731010';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784731010';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784731004';
+} from './schedule-logic.js?v=1784731010';
 
 export const SchedulePlanner = {
   _computePassageStops() {
@@ -234,30 +234,7 @@ export const SchedulePlanner = {
           return;
         }
 
-        // Show train on map 1 minute before departure (position at first station)
-        if (this.currentStopIndex === 0 && isInServiceWindow(timeOfDay, firstDep - 1, firstDep) && !timeGte(timeOfDay, firstDep)) {
-          const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
-          if (firstStation) {
-            // Use voie point coords if available
-            let posLat = firstStation.lat, posLon = firstStation.lon;
-            if (window.game?.voiePointManager) {
-              const s0 = currentStops[0];
-              if (s0?.voiePointId) {
-                const vp = window.game.voiePointManager.getVoiePointById(s0.voiePointId);
-                if (vp) { posLat = vp.lat; posLon = vp.lon; }
-              } else if (s0?.platform) {
-                const svp = window.game.voiePointManager.getStationVoiePoint(firstStation.id, s0.platform);
-                if (svp) { posLat = svp.lat; posLon = svp.lon; }
-              }
-            }
-            this.position = { lat: posLat, lon: posLon };
-            this.train.stoppedAt = firstStation;
-            this.train.platform = currentStops[0]?.platform || '';
-            this.train.speed = 0;
-            this.speed = 0;
-          }
-          return;
-        }
+        // Train stays hidden at origin until the departure route is clear.
 
         if (this.currentStopIndex === 0 && timeGte(timeOfDay, firstDep)) {
           // Mise à jour du retard avant les décisions de régulation/priorité
@@ -265,7 +242,6 @@ export const SchedulePlanner = {
           this.train.delay = this.delay;
 
           // Cancel only if the whole service window is missed (end + 31 min grace).
-          // Within the window the train departs late so delay is reported, not cancelled.
           if (!isInServiceWindow(timeOfDay, firstDep, windowEnd)) {
             this.completed = true;
             this.cancelled = true;
@@ -275,90 +251,96 @@ export const SchedulePlanner = {
             this.train.stoppedAt = null;
             return;
           }
-          if (isInServiceWindow(timeOfDay, firstDep, windowEnd)) {
-            // Section VI — une rame ne peut pas effectuer 2 trajets en même temps
-            if (this.rameId && window.game?.scheduleCreator?.isRameInUse(this.rameId, this.id, timeOfDay)) {
-              // Rame already used by another active service; stay waiting and retry next tick
-              return;
-            }
 
-            // REG-03 : décision régulation — train en garage temporaire
-            if (this._garageUntil != null && timeOfDay < this._garageUntil) {
-              this.train.state = 'garage';
-              this.train.delayReason = 'regulation : garage temporaire';
-              return;
-            }
+          // Section VI — une rame ne peut pas effectuer 2 trajets en même temps
+          if (this.rameId && window.game?.scheduleCreator?.isRameInUse(this.rameId, this.id, timeOfDay)) {
+            return;
+          }
 
-            // OCC-03 : priorité au départ au voyageur dont le départ est le plus tôt
-            const depStationId = currentStops[0]?.stationId;
-            const myDep = currentStops[0]?.departureTime;
-            if (depStationId && myDep != null && this.serviceType === 'passager' && window.game?.scheduleCreator) {
-              const earliest = window.game.scheduleCreator.getEarliestDueServiceAtStation(depStationId, timeOfDay);
-              if (earliest && earliest.id !== this.id && timeDiff(myDep, earliest.dep) > 0) {
-                const earliestSvc = window.game.scheduleCreator.services.find(s => s.id === earliest.id);
-                const earliestBlockedByRame = earliestSvc && window.game.scheduleCreator.isRameInUse(earliestSvc.rameId, earliestSvc.id, timeOfDay);
-                if (!earliestBlockedByRame) return;
-              }
-            }
+          // REG-03 : décision régulation — train en garage temporaire
+          if (this._garageUntil != null && timeOfDay < this._garageUntil) {
+            this.train.state = 'garage';
+            this.train.delayReason = 'regulation : garage temporaire';
+            return;
+          }
 
-            // Ensure position is set (may not have been set by pre-departure positioning)
-            if (!this.position) {
-              const depStation = this.world?.getStationById(currentStops[0]?.stationId);
-              if (depStation) {
-                let posLat = depStation.lat, posLon = depStation.lon;
-                if (window.game?.voiePointManager) {
-                  const s0 = currentStops[0];
-                  if (s0?.voiePointId) {
-                    const vp = window.game.voiePointManager.getVoiePointById(s0.voiePointId);
-                    if (vp) { posLat = vp.lat; posLon = vp.lon; }
-                  } else if (s0?.platform) {
-                    const svp = window.game.voiePointManager.getStationVoiePoint(depStation.id, s0.platform);
-                    if (svp) { posLat = svp.lat; posLon = svp.lon; }
-                  }
+          // OCC-03 : priorité au départ au voyageur dont le départ est le plus tôt
+          const depStationId = currentStops[0]?.stationId;
+          const myDep = currentStops[0]?.departureTime;
+          if (depStationId && myDep != null && this.serviceType === 'passager' && window.game?.scheduleCreator) {
+            const earliest = window.game.scheduleCreator.getEarliestDueServiceAtStation(depStationId, timeOfDay);
+            if (earliest && earliest.id !== this.id && timeDiff(myDep, earliest.dep) > 0) {
+              const earliestSvc = window.game.scheduleCreator.services.find(s => s.id === earliest.id);
+              const earliestBlockedByRame = earliestSvc && window.game.scheduleCreator.isRameInUse(earliestSvc.rameId, earliestSvc.id, timeOfDay);
+              if (!earliestBlockedByRame) return;
+            }
+          }
+
+          // Release stale infrastructure occupations before checking the route
+          if (window.game?.voiePointManager) window.game.voiePointManager.releaseAllVoiePointsForTrain(this.id);
+          if (window.game?.platformManager) window.game.platformManager.releasePlatform(currentStops[0]?.stationId, this.id);
+          cantonManager.releaseAll(this.id);
+
+          // ETCS/MA departure gate : first block must be free before the train is shown
+          if (!this._canDepart()) {
+            this.train.delayReason = 'attente voie libre en gare';
+            return;
+          }
+
+          // Position train at platform only once route is clear
+          if (!this.position) {
+            const depStation = this.world?.getStationById(currentStops[0]?.stationId);
+            if (depStation) {
+              let posLat = depStation.lat, posLon = depStation.lon;
+              if (window.game?.voiePointManager) {
+                const s0 = currentStops[0];
+                if (s0?.voiePointId) {
+                  const vp = window.game.voiePointManager.getVoiePointById(s0.voiePointId);
+                  if (vp) { posLat = vp.lat; posLon = vp.lon; }
+                } else if (s0?.platform) {
+                  const svp = window.game.voiePointManager.getStationVoiePoint(depStation.id, s0.platform);
+                  if (svp) { posLat = svp.lat; posLon = svp.lon; }
                 }
-                this.position = { lat: posLat, lon: posLon };
               }
+              this.position = { lat: posLat, lon: posLon };
             }
-            // Board passengers at departure station before moving
-            if (economy) {
-              const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
-              if (firstStation) {
-                economy.processStopRevenue(this, firstStation.name, 0, true, false);
-              }
+          }
+
+          // Board passengers at departure station before moving
+          if (economy) {
+            const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
+            if (firstStation) {
+              economy.processStopRevenue(this, firstStation.name, 0, true, false);
             }
-            this._adjustedStops = this._buildAdjustedStops();
-            this._adjustedReturnStops = null;
-            this.state = 'moving';
-            this.currentStopIndex = 1;
-            this.speed = 0;
-            this.revenueCollected = false;
-            this.delay = Math.round(timeDiff(timeOfDay, firstDep));
-            this.train.delay = this.delay;
-            this.train.blockedBy = false;
-            this.train.stoppedAt = null;
-            this._lastTronconId = null;
-            // DEP-05 : mise à jour de la localisation permanente de la rame
-            if (this.rame) {
-              this.rame.currentLocation = {
-                stationId: currentStops[0]?.stationId || '',
-                depotId: this.rame.depotId || '',
-                serviceId: this.id,
-                lat: this.position?.lat ?? null,
-                lon: this.position?.lon ?? null,
-              };
-            }
-            // Release all occupations on departure
-            if (window.game?.voiePointManager) window.game.voiePointManager.releaseAllVoiePointsForTrain(this.id);
-            if (window.game?.platformManager) window.game.platformManager.releasePlatform(currentStops[0]?.stationId, this.id);
-            // Release any stale cantons and reset simulation state
-            cantonManager.releaseAll(this.id);
-            this._resetState();
-            // Pre-initialize route state so the first move tick doesn't pay the cost.
-            {
-              const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
-              const route = this.getCurrentRoute();
-              if (route && route.length >= 2) this._initializeState(route, legKey);
-            }
+          }
+
+          this._adjustedStops = this._buildAdjustedStops();
+          this._adjustedReturnStops = null;
+          this.state = 'moving';
+          this.currentStopIndex = 1;
+          this.speed = 0;
+          this.revenueCollected = false;
+          this.delay = Math.round(timeDiff(timeOfDay, firstDep));
+          this.train.delay = this.delay;
+          this.train.blockedBy = false;
+          this.train.stoppedAt = null;
+          this._lastTronconId = null;
+          // DEP-05 : mise à jour de la localisation permanente de la rame
+          if (this.rame) {
+            this.rame.currentLocation = {
+              stationId: currentStops[0]?.stationId || '',
+              depotId: this.rame.depotId || '',
+              serviceId: this.id,
+              lat: this.position?.lat ?? null,
+              lon: this.position?.lon ?? null,
+            };
+          }
+          this._resetState();
+          // Pre-initialize route state so the first move tick doesn't pay the cost.
+          {
+            const legKey = `${this.currentStopIndex}-${this.isReturnLeg ? 1 : 0}`;
+            const route = this.getCurrentRoute();
+            if (route && route.length >= 2) this._initializeState(route, legKey);
           }
         }
         return;

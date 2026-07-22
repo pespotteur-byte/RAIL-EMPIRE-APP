@@ -1,5 +1,5 @@
 // simulation.js - High-fidelity railway physics and infrastructure simulation layer
-import { cantonLengthKm } from './signaling.js';
+import { cantonLengthKm, blockLengthKm } from './signaling.js';
 
 /**
  * Precise geodesic distance using Haversine formula.
@@ -88,7 +88,7 @@ class Canton {
  * Higher speeds require longer blocks for safe braking distance.
  */
 function getBlockLength(speed) {
-  return cantonLengthKm(speed);
+  return blockLengthKm(speed);
 }
 
 /**
@@ -220,6 +220,10 @@ export class CantonManager {
     // Prevent overwriting occupation by another active train
     if (c.occupiedBy && c.occupiedBy !== trainId) {
       if (!this._isTrainGone(c.occupiedBy)) return false;
+    }
+    // Respect an existing reservation from another train
+    if (c.reservedBy && c.reservedBy !== trainId) {
+      if (!this._isTrainGone(c.reservedBy)) return false;
     }
     c.occupiedBy = trainId;
     c.reservedBy = null;

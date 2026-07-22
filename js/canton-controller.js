@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784731004';
-import { cantonManager } from './canton-manager.js?v=1784731004';
-import { ServiceStop } from './service-stop.js?v=1784731004';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731004';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731004';
-import { getGlobalRng } from './rng.js?v=1784731004';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784731004';
+} from './service-utils.js?v=1784731010';
+import { cantonManager } from './canton-manager.js?v=1784731010';
+import { ServiceStop } from './service-stop.js?v=1784731010';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731010';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731010';
+import { getGlobalRng } from './rng.js?v=1784731010';
+import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1784731010';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784731004';
+} from './schedule-logic.js?v=1784731010';
 
 export const CantonController = {
   _yieldToRescue() {
@@ -327,5 +327,112 @@ export const CantonController = {
         }
       }
       return blocking;
+    },
+
+  _kmhToMs(v) { return v / 3.6; },
+
+  _brakingDistanceKmh(vKmh, targetKmh = 0, decelMps2 = 0.9) {
+    const v0 = this._kmhToMs(vKmh);
+    const vt = this._kmhToMs(targetKmh);
+    if (v0 <= vt) return 0;
+    return brakingDistanceM(v0, vt, decelMps2);
+  },
+
+  _maSpeedCap(eoaM, targetSpeedKmh = 0, decelMps2 = 0.9, marginM = 100) {
+    if (!Number.isFinite(eoaM) || eoaM >= 1e9) return Infinity;
+    const usableM = Math.max(0, eoaM - marginM);
+    const vt = this._kmhToMs(targetSpeedKmh);
+    const vMaxMs = Math.sqrt(vt * vt + 2 * decelMps2 * usableM);
+    return vMaxMs * 3.6;
+  },
+
+  _canDepart() {
+    const route = this.getCurrentRoute();
+    if (!route || route.length < 2) return true;
+    // The departure gate is enforced for ORM routes (which carry wayIds).
+    // Synthetic / test routes without way data fall back to the legacy behaviour.
+    if (!route.some(p => p.wayId)) return true;
+    this._cantonAssignments = cantonManager.createRouteCantons(route);
+    const first = cantonManager.getCantonForSegment(this._cantonAssignments, 0);
+    if (!first) return true;
+    return cantonManager.isAvailable(first.cantonId, this.id);
+  },
+
+  _movementAuthority(allServices, decelMps2 = 0.9) {
+    const route = this._state?.cachedRoute || this.getCurrentRoute();
+    if (!route || route.length < 2 || !this.position) {
+      return { eoaM: Infinity, targetSpeedKmh: 0, reason: 'clear', aspect: 'clear' };
     }
+    const idx = this._state?.index || 0;
+    if (idx >= route.length - 1) {
+      return { eoaM: 0, targetSpeedKmh: 0, reason: 'station', aspect: 'closed' };
+    }
+
+    const segDists = this._state?.segDists;
+    const cumDist = this._state?.cumDist;
+    let myProgressToEndKm = 0;
+    if (segDists && cumDist) {
+      myProgressToEndKm = (1 - (this._state.progress || 0)) * (segDists[idx] || 0) + (cumDist[idx + 1] || 0);
+    } else {
+      myProgressToEndKm = this._getRouteProgressKm(this.position, route, idx);
+    }
+
+    let eoaM = Infinity;
+    let targetSpeedKmh = 0;
+    let reason = 'clear';
+    let aspect = 'clear';
+
+    // 1. Block-based MA: first unavailable canton ahead
+    const assignments = this._cantonAssignments;
+    if (assignments?.length && cumDist) {
+      const current = cantonManager.getCantonForSegment(assignments, idx);
+      const startFrom = current ? assignments.indexOf(current) : -1;
+      if (startFrom >= 0) {
+        for (let i = startFrom + 1; i < assignments.length; i++) {
+          const a = assignments[i];
+          const distToStartM = Math.max(0, (myProgressToEndKm - cumDist[a.startIndex]) * 1000);
+          if (distToStartM <= 0) continue;
+          if (!cantonManager.isAvailable(a.cantonId, this.id)) {
+            eoaM = distToStartM;
+            targetSpeedKmh = 0;
+            reason = 'signal';
+            const blocksAhead = i - startFrom;
+            aspect = blocksAhead === 1 ? 'closed' : 'caution';
+            break;
+          }
+        }
+      }
+    }
+
+    // 2. Moving-block refinement: same-route train ahead
+    const mySpeed = this.speed || 0;
+    const rame = this.rame || this.train || {};
+    const trainLengthM = rame.totalLength || rame.length || 20;
+    const candidates = this._nearbyServices || allServices;
+    if (candidates && this._routeKey) {
+      for (const other of candidates) {
+        if (other.id === this.id) continue;
+        if (!other.position || !other._state?.cachedRoute) continue;
+        if (other.state === 'waiting' || other.state === 'completed' || other.state === 'cancelled') continue;
+        if (other._routeKey !== this._routeKey) continue;
+        const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
+        if (rawDist > 5) continue;
+        const otherProgressToEnd = this._getRouteProgressKm(other.position, route, idx);
+        if (otherProgressToEnd >= myProgressToEndKm - 0.001) continue; // behind or same
+        const gapM = (myProgressToEndKm - otherProgressToEnd) * 1000;
+        const otherLengthM = (other.rame?.totalLength || other.train?.length || 20);
+        const safeM = this._brakingDistanceKmh(mySpeed, 0, decelMps2) + 100 + otherLengthM;
+        const eoa = gapM - safeM;
+        if (eoa < eoaM) {
+          eoaM = eoa;
+          targetSpeedKmh = other.speed || 0;
+          reason = 'train';
+          aspect = targetSpeedKmh > 0 ? 'caution' : 'closed';
+        }
+      }
+    }
+
+    if (eoaM < 0) eoaM = 0;
+    return { eoaM, targetSpeedKmh, reason, aspect };
+  },
 };

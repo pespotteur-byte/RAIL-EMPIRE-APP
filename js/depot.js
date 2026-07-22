@@ -262,10 +262,36 @@ export class DepotManager {
       route: null,
       routeIndex: 0,
     };
-    // Try to find a route via ORM instead of going straight line
+    // Try to find a route via ORM instead of going straight line; if it is
+    // significantly longer than the straight-line distance, fall back to a
+    // short direct path so the rescue does not tour the whole network.
     if (station && window.game?.orm) {
       window.game.orm.findRoute(station.lat, station.lon, brokenService.position.lat, brokenService.position.lon)
-        .then(route => { if (route && route.length >= 2) rescue.route = route; })
+        .then(route => {
+          if (route && route.length >= 2) {
+            const routeDist = window.game.orm.getRouteDistance(route);
+            const dLat = (brokenService.position.lat - station.lat) * 111;
+            const dLon = (brokenService.position.lon - station.lon) * 111 * Math.cos(station.lat * Math.PI / 180);
+            const straight = Math.sqrt(dLat * dLat + dLon * dLon);
+            if (routeDist > straight * 1.5 + 1.0) {
+              const direct = [];
+              const steps = 20;
+              for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                direct.push({
+                  lat: station.lat + (brokenService.position.lat - station.lat) * t,
+                  lon: station.lon + (brokenService.position.lon - station.lon) * t,
+                  maxSpeed: 120,
+                  electrified: true,
+                  tracks: 2,
+                  fallback: true
+                });
+              }
+              route = direct;
+            }
+            rescue.route = route;
+          }
+        })
         .catch(() => {});
     }
     this.activeRescues.push(rescue);

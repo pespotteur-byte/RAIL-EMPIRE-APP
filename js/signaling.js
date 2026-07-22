@@ -48,6 +48,35 @@ export function cantonLengthKm(lineSpeedKmh) {
   return 2.0;
 }
 
+// New ETCS-style block spacing. Constraints:
+//   - never below 300 m
+//   - never above 2 500 m
+//   - below 160 km/h, never above 1 400 m
+export function blockLengthKm(lineSpeedKmh) {
+  const v = lineSpeedKmh || 0;
+  if (v <= 10) return 0.30;
+  if (v <= 20) return 0.30;
+  if (v <= 30) return 0.30;
+  if (v <= 40) return 0.35;
+  if (v <= 50) return 0.40;
+  if (v <= 60) return 0.45;
+  if (v <= 70) return 0.55;
+  if (v <= 80) return 0.65;
+  if (v <= 90) return 0.75;
+  if (v <= 100) return 0.85;
+  if (v <= 110) return 0.95;
+  if (v <= 120) return 1.05;
+  if (v <= 130) return 1.15;
+  if (v <= 140) return 1.25;
+  if (v <= 150) return 1.35;
+  if (v <= 160) return 1.40;
+  if (v <= 200) return 1.75;
+  if (v <= 220) return 2.00;
+  if (v <= 230) return 2.20;
+  if (v <= 250) return 2.45;
+  return 2.50;
+}
+
 // SIG-06 / SIG-05 — VISA speed cap (km/h) as a function of the distance (m)
 // remaining to a CLOSED signal. Returns 0 inside the stop margin, the matching
 // VISA step within 300 m, or null when the signal is far enough to ignore.

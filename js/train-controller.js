@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784731004';
-import { cantonManager } from './canton-manager.js?v=1784731004';
-import { ServiceStop } from './service-stop.js?v=1784731004';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731004';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731004';
-import { getGlobalRng } from './rng.js?v=1784731004';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784731004';
+} from './service-utils.js?v=1784731010';
+import { cantonManager } from './canton-manager.js?v=1784731010';
+import { ServiceStop } from './service-stop.js?v=1784731010';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784731010';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784731010';
+import { getGlobalRng } from './rng.js?v=1784731010';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784731010';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784731004';
+} from './schedule-logic.js?v=1784731010';
 
 export const TrainController = {
   _getWeatherEffects() {
@@ -457,32 +457,16 @@ export const TrainController = {
         }
       }
 
-      // --- CANTONNEMENT + PROXIMITY SAFETY (runs even on a troncon) ---
-      if (this._cantonAssignments && this._cantonAssignments.length > 0) {
-        const signalAspect = cantonManager.getSignalAspect(
-          this._cantonAssignments, segIdx, this.id
-        );
-        if (signalAspect === 0) {
-          // Carré ahead: apply VISA steps (30/20/10) toward the blocked canton
-          // boundary and stop ~30 m upstream (SIG-05/SIG-06).
-          this.train.signalAlert = 'closed';
-          const nextCanton = cantonManager.getNextCanton(this._cantonAssignments, segIdx);
-          let distM = 0;
-          if (nextCanton && this._state.segDists && this._state.cumDist) {
-            const distKm = (1 - this._state.progress) * (this._state.segDists[segIdx] || 0)
-              + ((this._state.cumDist[segIdx + 1] || 0) - (this._state.cumDist[nextCanton.startIndex] || 0));
-            distM = Math.max(0, distKm * 1000);
-          }
-          const cap = visaSpeedCapKmh(distM, this._carreMarginM);
-          const visaCap = (cap === null) ? RESTART_SPEED_KMH : cap;
-          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, visaCap);
-          if (!tronconBlocked) this.train.blockedBy = visaCap === 0;
-        } else if (signalAspect !== null) {
-          // Avertissement: be ready to stop at the next signal (SIG-04/SIG-07).
-          this.train.signalAlert = 'caution';
-          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, RESTART_SPEED_KMH);
-        } else {
-          this.train.signalAlert = null;
+      // --- MOVEMENT AUTHORITY (ETCS/MA) ---
+      const physics = this._computePhysicsAccel(weather);
+      const decelMps2 = (physics.decel / 3.6) * weather.brakeFactor;
+      const ma = this._movementAuthority(allServices, decelMps2);
+      if (ma && Number.isFinite(ma.eoaM)) {
+        this.train.signalAlert = ma.aspect === 'clear' ? null : (ma.aspect || null);
+        const maCap = this._maSpeedCap(ma.eoaM, ma.targetSpeedKmh, decelMps2, this._carreMarginM);
+        if (Number.isFinite(maCap)) {
+          effectiveMaxSpeed = Math.min(effectiveMaxSpeed, maCap);
+          if (maCap <= 1 && ma.reason !== 'clear') this.train.blockedBy = true;
         }
       }
       // ALWAYS run proximity check as a safety net (catches cases where
@@ -534,7 +518,6 @@ export const TrainController = {
 
       // --- ACCELERATION / DECELERATION PHYSICS (PH-01/PH-03/PH-04) ---
       // MET-03/04/05/06 — météo locale : freinage plus tôt sous pluie/orage/neige
-      const physics = this._computePhysicsAccel(weather);
       const decel = physics.decel * weather.brakeFactor;
       const accelDelta = physics.accel * dt;
       const decelDelta = decel * dt;
@@ -824,14 +807,14 @@ export const TrainController = {
       const macroAccel = this.train.accel || 3.0;
       const macroDecel = this.train.decel || 4.0;
 
-      // Canton signal aspect for current segment
+      // Movement Authority for low-LOD trains (replaces fixed signal aspect)
       if (this._cantonAssignments) {
-        const signalAspect = cantonManager.getSignalAspect(this._cantonAssignments, this._state.index, this.id);
-        if (signalAspect === 0) {
-          macroSpeed = 0;
-          this.train.blockedBy = true;
-        } else if (signalAspect !== null) {
-          macroSpeed = Math.min(macroSpeed, RESTART_SPEED_KMH);
+        const weather = this._getWeatherEffects ? this._getWeatherEffects() : { brakeFactor: 1.0 };
+        const decelMps2 = ((this.train.decel || 4.0) / 3.6) * (weather.brakeFactor || 1.0);
+        const ma = this._movementAuthority(allServices, decelMps2);
+        if (ma && Number.isFinite(ma.eoaM)) {
+          const maCap = this._maSpeedCap(ma.eoaM, ma.targetSpeedKmh, decelMps2, this._carreMarginM);
+          if (Number.isFinite(maCap)) macroSpeed = Math.min(macroSpeed, maCap);
         }
       }
 
