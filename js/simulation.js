@@ -79,7 +79,6 @@ class Canton {
     this.startIndex = startIndex;
     this.endIndex = endIndex;
     this.occupiedBy = null;
-    this.reservedBy = null;
   }
 }
 
@@ -108,8 +107,8 @@ export class CantonManager {
   }
 
   setTrainSeparation(trainId, minutes) {
-    // No-op : l'écart temporel fixe est supprimé, c'est la signalisation (canton
-    // occupé/réservé) qui gère l'espacement entre trains.
+    // No-op : l'écart temporel fixe est supprimé, c'est l'occupation des cantons
+    // ETCS/MA qui gère l'espacement entre trains.
   }
 
   /**
@@ -194,26 +193,6 @@ export class CantonManager {
     return null;
   }
 
-  /**
-   * Get the next canton after the one containing the given segment index.
-   */
-  getNextCanton(assignments, segmentIndex) {
-    const current = this.getCantonForSegment(assignments, segmentIndex);
-    if (!current) return null;
-    const idx = assignments.indexOf(current);
-    return (idx >= 0 && idx < assignments.length - 1) ? assignments[idx + 1] : null;
-  }
-
-  reserve(cantonId, trainId) {
-    const c = this.cantons.get(cantonId);
-    if (!c) return true;
-    if (c.occupiedBy && c.occupiedBy !== trainId) return false;
-    if (c.reservedBy && c.reservedBy !== trainId) return false;
-    c.reservedBy = trainId;
-    this._trackCanton(trainId, cantonId);
-    return true;
-  }
-
   occupy(cantonId, trainId) {
     const c = this.cantons.get(cantonId);
     if (!c) return true;
@@ -221,12 +200,7 @@ export class CantonManager {
     if (c.occupiedBy && c.occupiedBy !== trainId) {
       if (!this._isTrainGone(c.occupiedBy)) return false;
     }
-    // Respect an existing reservation from another train
-    if (c.reservedBy && c.reservedBy !== trainId) {
-      if (!this._isTrainGone(c.reservedBy)) return false;
-    }
     c.occupiedBy = trainId;
-    c.reservedBy = null;
     this._trackCanton(trainId, cantonId);
     return true;
   }
@@ -235,7 +209,6 @@ export class CantonManager {
     const c = this.cantons.get(cantonId);
     if (!c) return;
     if (c.occupiedBy === trainId) { c.occupiedBy = null; }
-    if (c.reservedBy === trainId) { c.reservedBy = null; }
     const tc = this.trainCantons.get(trainId);
     if (tc) tc.delete(cantonId);
   }
@@ -243,13 +216,9 @@ export class CantonManager {
   isAvailable(cantonId, trainId) {
     const c = this.cantons.get(cantonId);
     if (!c) return true;
-    // Verify occupying/reserving train still exists and is active
+    // Verify occupying train still exists and is active
     if (c.occupiedBy !== null && c.occupiedBy !== trainId) {
       if (this._isTrainGone(c.occupiedBy)) { c.occupiedBy = null; }
-      else return false;
-    }
-    if (c.reservedBy !== null && c.reservedBy !== trainId) {
-      if (this._isTrainGone(c.reservedBy)) { c.reservedBy = null; }
       else return false;
     }
     return true;
@@ -272,10 +241,7 @@ export class CantonManager {
     if (!ids) return;
     for (const cid of ids) {
       const c = this.cantons.get(cid);
-      if (c) {
-        if (c.occupiedBy === trainId) { c.occupiedBy = null; }
-        if (c.reservedBy === trainId) { c.reservedBy = null; }
-      }
+      if (c && c.occupiedBy === trainId) { c.occupiedBy = null; }
     }
     ids.clear();
     this.trainCantons.delete(trainId);
@@ -293,42 +259,16 @@ export class CantonManager {
         this.routeCantons.delete(keys[i]);
       }
     }
-    // Remove idle cantons (not occupied, not reserved, not tracked by any train)
+    // Remove idle cantons (not occupied, not tracked by any train)
     const activeCantonIds = new Set();
     for (const [, ids] of this.trainCantons) {
       for (const cid of ids) activeCantonIds.add(cid);
     }
     for (const [cid, c] of this.cantons) {
-      if (!c.occupiedBy && !c.reservedBy && !activeCantonIds.has(cid)) {
+      if (!c.occupiedBy && !activeCantonIds.has(cid)) {
         this.cantons.delete(cid);
       }
     }
-  }
-
-  /**
-   * Get signal aspect for a train at a given position.
-   * Returns: null (green/clear), 30 (yellow/caution), or 0 (red/stop).
-   */
-  getSignalAspect(assignments, segmentIndex, trainId) {
-    const nextCanton = this.getNextCanton(assignments, segmentIndex);
-    if (!nextCanton) return null;
-
-    if (!this.isAvailable(nextCanton.cantonId, trainId)) {
-      return 0;
-    }
-
-    // Two-block look-ahead for approach signaling
-    const nextIdx = assignments.indexOf(
-      assignments.find(a => a.startIndex === nextCanton.endIndex)
-    );
-    if (nextIdx >= 0 && nextIdx < assignments.length) {
-      const twoAhead = assignments[nextIdx];
-      if (!this.isAvailable(twoAhead.cantonId, trainId)) {
-        return 30;
-      }
-    }
-
-    return null;
   }
 
   _trackCanton(trainId, cantonId) {

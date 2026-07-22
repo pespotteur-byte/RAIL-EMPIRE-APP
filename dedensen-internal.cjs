@@ -4,7 +4,7 @@ const path = require('path');
 
 const TOTAL = Number(process.env.TOTAL) || 80;
 const OUT_DIR = '/home/ubuntu/dedensen-test';
-const URL = `http://localhost:8080/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784731013`;
+const URL = `http://localhost:8080/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784731013v=1784731014`;
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const LOG_FILE = path.join(OUT_DIR, 'internal-driver.log');

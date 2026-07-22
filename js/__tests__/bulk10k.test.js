@@ -20,7 +20,6 @@ import { ServiceStop } from '../schedule-creator.js';
 import { formatTime } from '../schedule.js';
 import { haversineDistance } from '../simulation.js';
 import {
-  cantonLengthKm,
   visaSpeedCapKmh,
   aspectFromOccupancy,
   aspectSpeedCapKmh,
@@ -325,29 +324,6 @@ itCases('haversineDistance', (() => {
         assert.ok(Math.abs(d1 - d2) < 1e-9, 'symmetric');
         const dSame = haversineDistance(lat1, lon1, lat1, lon1);
         assert.equal(dSame, 0);
-      },
-    });
-  }
-  return cases;
-})());
-
-// ---------------- cantonLengthKm ----------------
-itCases('cantonLengthKm', (() => {
-  const cases = [];
-  const expected = [
-    [0, 0.5], [30, 0.5], [59, 0.5], [60, 0.5], [100, 0.9],
-    [101, 1.2], [160, 1.2], [161, 1.5], [200, 1.5], [201, 2.0], [300, 2.0],
-  ];
-  for (const [v, e] of expected) {
-    cases.push({ name: `v=${v}`, fn: () => assert.equal(cantonLengthKm(v), e) });
-  }
-  for (let v = 0; v <= 400; v += 5) {
-    cases.push({
-      name: `monotonic v=${v}`,
-      fn: () => {
-        const c = cantonLengthKm(v);
-        assert.ok(c >= 0.5 && c <= 2.0);
-        if (v > 200) assert.equal(c, 2.0);
       },
     });
   }

@@ -4,27 +4,10 @@ import {
   ASPECT,
   CARRE_STOP_MARGIN_M,
   RESTART_SPEED_KMH,
-  cantonLengthKm,
   visaSpeedCapKmh,
   aspectFromOccupancy,
   aspectSpeedCapKmh,
 } from '../signaling.js';
-
-describe('SIG-01 — canton length scales with line speed', () => {
-  it('is monotonically non-decreasing with speed', () => {
-    const speeds = [30, 40, 60, 100, 120, 160, 200, 250, 320];
-    let prev = 0;
-    for (const v of speeds) {
-      const len = cantonLengthKm(v);
-      assert.ok(len >= prev, `len(${v})=${len} should be >= ${prev}`);
-      prev = len;
-    }
-  });
-
-  it('gives longer blocks at high speed than at low speed', () => {
-    assert.ok(cantonLengthKm(300) > cantonLengthKm(60));
-  });
-});
 
 describe('SIG-05 / SIG-06 — VISA speed steps toward a closed signal', () => {
   it('stops inside the carré margin', () => {

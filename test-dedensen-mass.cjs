@@ -57,7 +57,7 @@ CDP({ host: 'localhost', port: 29229 }, async (client) => {
 
     if (!RESUME) {
       log('Navigating to local build with cache-bust...');
-      await Page.navigate({ url: 'http://localhost:8080/?v=1784731013' });
+      await Page.navigate({ url: 'http://localhost:8080/?v=1784731014' });
       await Page.loadEventFired();
       await Page.bringToFront();
       await sleep(2000);

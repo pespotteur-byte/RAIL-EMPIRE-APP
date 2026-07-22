@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1784731013';
+import { TileMap } from './map.js?v=1784731014';
 
 // LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
 export const LIVEMAP_CATEGORY_COLORS = {
@@ -1213,12 +1213,8 @@ export class Renderer {
         const canton = cantonMgr.cantons.get(assignment.cantonId);
         let color = '#22c55e'; // green (clear)
 
-        if (canton) {
-          if (canton.occupiedBy) {
-            color = '#ef4444'; // red (occupied)
-          } else if (canton.reservedBy) {
-            color = '#eab308'; // yellow (reserved/approach)
-          }
+        if (canton && canton.occupiedBy) {
+          color = '#ef4444'; // red (occupied)
         }
 
         const screenPos = this.latLonToScreen(pt.lat, pt.lon);

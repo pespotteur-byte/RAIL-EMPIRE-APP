@@ -1,7 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  cantonLengthKm,
   visaSpeedCapKmh,
   aspectFromOccupancy,
   aspectSpeedCapKmh,
@@ -35,21 +34,6 @@ function stubWindow(trainIds = []) {
 function restoreWindow(prev) {
   globalThis.window = prev;
 }
-
-itCases('cantonLengthKm monotonic', (() => {
-  const cases = [];
-  for (let v = 0; v <= 400; v++) {
-    cases.push({
-      name: `v=${v}`,
-      fn: () => {
-        const c = cantonLengthKm(v);
-        assert.ok(c >= 0.5 && c <= 2.0);
-        if (v > 0) assert.ok(cantonLengthKm(v) >= cantonLengthKm(v - 1));
-      },
-    });
-  }
-  return cases;
-})());
 
 itCases('visaSpeedCapKmh steps', (() => {
   const cases = [];
@@ -150,7 +134,7 @@ itCases('CantonManager basic lifecycle', (() => {
   return cases;
 })());
 
-itCases('CantonManager reserve / release', (() => {
+itCases('CantonManager occupy / release', (() => {
   const cases = [];
   for (let i = 0; i < 1500; i++) {
     const route = [
@@ -159,7 +143,7 @@ itCases('CantonManager reserve / release', (() => {
       { lat: 45.2, lon: 2.2, maxSpeed: 160 },
     ];
     cases.push({
-      name: `reserve-${i}`,
+      name: `occupy-${i}`,
       fn: () => {
         const prev = stubWindow(['trainA']);
         try {
@@ -167,43 +151,12 @@ itCases('CantonManager reserve / release', (() => {
           cm.setTime(0);
           const assignments = cm.createRouteCantons(route);
           const id = assignments[0].cantonId;
-          assert.equal(cm.reserve(id, 'trainA'), true);
-          assert.equal(cm.reserve(id, 'trainB'), false);
+          assert.equal(cm.occupy(id, 'trainA'), true);
           assert.equal(cm.isAvailable(id, 'trainA'), true);
           assert.equal(cm.isAvailable(id, 'trainB'), false);
           cm.release(id, 'trainA');
           cm.setTime(1);
           assert.equal(cm.isAvailable(id, 'trainB'), true, 'le canton est disponible immédiatement après libération');
-          cm.setTime(2);
-          assert.equal(cm.isAvailable(id, 'trainB'), true, 'le canton reste disponible');
-        } finally {
-          restoreWindow(prev);
-        }
-      },
-    });
-  }
-  return cases;
-})());
-
-itCases('CantonManager getSignalAspect', (() => {
-  const cases = [];
-  const route = [
-    { lat: 45, lon: 2, maxSpeed: 160 },
-    { lat: 45.1, lon: 2.1, maxSpeed: 160 },
-    { lat: 45.2, lon: 2.2, maxSpeed: 160 },
-    { lat: 45.3, lon: 2.3, maxSpeed: 160 },
-  ];
-  for (let i = 0; i < 1000; i++) {
-    cases.push({
-      name: `aspect-${i}`,
-      fn: () => {
-        const prev = stubWindow();
-        try {
-          const cm = new CantonManager();
-          cm.setTime(0);
-          const assignments = cm.createRouteCantons(route);
-          const aspect0 = cm.getSignalAspect(assignments, 0, 'trainA');
-          assert.ok([null, 0, 30].includes(aspect0));
         } finally {
           restoreWindow(prev);
         }

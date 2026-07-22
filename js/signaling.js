@@ -1,9 +1,9 @@
 // Railway signaling & block sections (Remaster P0 — SIG).
-// Pure, dependency-free module: block-length scale, signal aspects, VISA speed
-// steps and restart rule. Distances in metres, speeds in km/h unless noted.
+// Pure, dependency-free module: ETCS/MA block spacing, signal aspects, VISA
+// speed steps and restart rule. Distances in metres, speeds in km/h unless noted.
 //
 // Checklist coverage:
-//   SIG-01 canton (block) length scales with line speed
+//   SIG-01 ETCS/MA block spacing scales with line speed
 //   SIG-03 "voie libre" (clear)        → line speed limit
 //   SIG-04 "avertissement" (caution)   → be able to stop at next signal
 //   SIG-05 "carré/fermé" (closed)      → mandatory stop 25-50 m upstream
@@ -32,25 +32,8 @@ const VISA_STEPS = [
   [300, 30],
 ];
 
-// SIG-01 — target block (canton) length in km as a function of line speed.
-// Doc barème (Annexe 3A):
-//   < 60 km/h      → 500 m
-//   60-100 km/h    → 900 m
-//   100-160 km/h   → 1200 m
-//   160-200 km/h   → 1500 m
-//   > 200 km/h     → 2000 m
-// Legacy fixed-block length scale (kept for backward compatibility in tests).
-// Active code uses blockLengthKm / ETCS-style spacing below.
-export function cantonLengthKm(lineSpeedKmh) {
-  const v = lineSpeedKmh || 0;
-  if (v <= 60) return 0.5;
-  if (v <= 100) return 0.9;
-  if (v <= 160) return 1.2;
-  if (v <= 200) return 1.5;
-  return 2.0;
-}
-
-// New ETCS-style block spacing. Constraints:
+// SIG-01 — ETCS/MA target block length in km as a function of line speed.
+// Constraints:
 //   - never below 300 m
 //   - never above 2 500 m
 //   - below 160 km/h, never above 1 400 m

@@ -1,4 +1,4 @@
-import { getGlobalRng } from './rng.js?v=1784731013';
+import { getGlobalRng } from './rng.js?v=1784731014';
 
 let nextContractId = 1;
 
