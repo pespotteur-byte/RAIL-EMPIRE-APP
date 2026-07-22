@@ -59,7 +59,7 @@ async function run(client) {
   log('Benchmark started');
 
   const startTime = Date.now();
-  const maxMs = (Number(process.env.TIMEOUT_MIN) || (TOTAL * 300 + 1200)) * 1000;
+  const maxMs = (Number(process.env.TIMEOUT_MIN) || (TOTAL * 300 + 2400)) * 1000;
 
   while (Date.now() - startTime < maxMs) {
     await sleep(60000);
