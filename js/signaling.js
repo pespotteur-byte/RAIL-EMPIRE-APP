@@ -39,6 +39,8 @@ const VISA_STEPS = [
 //   100-160 km/h   → 1200 m
 //   160-200 km/h   → 1500 m
 //   > 200 km/h     → 2000 m
+// Legacy fixed-block length scale (kept for backward compatibility in tests).
+// Active code uses blockLengthKm / ETCS-style spacing below.
 export function cantonLengthKm(lineSpeedKmh) {
   const v = lineSpeedKmh || 0;
   if (v <= 60) return 0.5;

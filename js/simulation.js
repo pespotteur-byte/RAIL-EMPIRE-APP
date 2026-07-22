@@ -1,5 +1,5 @@
 // simulation.js - High-fidelity railway physics and infrastructure simulation layer
-import { cantonLengthKm, blockLengthKm } from './signaling.js';
+import { blockLengthKm } from './signaling.js';
 
 /**
  * Precise geodesic distance using Haversine formula.
