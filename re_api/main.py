@@ -1,4 +1,5 @@
 import asyncio
+import gzip
 import json
 import mimetypes
 import os
@@ -11,8 +12,9 @@ import asyncpg
 import boto3
 import httpx
 import jwt
-from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from botocore.exceptions import ClientError
@@ -205,6 +207,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6)
 
 
 @app.get("/healthz")
@@ -265,27 +268,40 @@ async def auth_me(user: Optional[dict] = Depends(get_current_user)):
 
 
 @app.post("/save/{key}")
-async def save_state(key: str, payload: dict, user: Optional[dict] = Depends(get_current_user)):
+async def save_state(request: Request, key: str, user: Optional[dict] = Depends(get_current_user)):
     if _db_pool is None:
         raise HTTPException(status_code=503, detail="Database not available")
 
     uid = user_id(user)
+    body = await request.body()
+    if request.headers.get("content-encoding") == "gzip":
+        try:
+            body = gzip.decompress(body)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid gzip body: {e}") from e
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON body: {e}") from e
+
     data = json.dumps(payload, ensure_ascii=False)
-    size = len(data.encode("utf-8"))
+    raw_bytes = data.encode("utf-8")
+    size = len(raw_bytes)
     s3_key = None
+    payload_db = data
 
     if size > S3_OFFLOAD_BYTES:
-        s3_key = f"saves/{uid}/{key}.json"
+        s3_key = f"saves/{uid}/{key}.json.gz"
+        gz = gzip.compress(raw_bytes, compresslevel=6)
         await asyncio.to_thread(
             _s3.put_object,
             Bucket=S3_BUCKET,
             Key=s3_key,
-            Body=data.encode("utf-8"),
+            Body=gz,
             ContentType="application/json",
+            ContentEncoding="gzip",
         )
         payload_db = None
-    else:
-        payload_db = json.dumps(payload, ensure_ascii=False)
 
     async with _db_pool.acquire() as conn:
         await conn.execute(
@@ -325,6 +341,8 @@ async def load_state(key: str, user: Optional[dict] = Depends(get_current_user))
     if row["s3_key"]:
         obj = await asyncio.to_thread(_s3.get_object, Bucket=S3_BUCKET, Key=row["s3_key"])
         body = obj["Body"].read()
+        if obj.get("ContentEncoding") == "gzip" or row["s3_key"].endswith(".json.gz"):
+            body = gzip.decompress(body)
         return json.loads(body.decode("utf-8"))
     payload = row["payload"]
     if isinstance(payload, str):

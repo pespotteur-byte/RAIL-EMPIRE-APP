@@ -23,6 +23,21 @@ async function compressData(jsonStr) {
   return jsonStr;
 }
 
+async function compressBytes(jsonStr) {
+  if (typeof CompressionStream !== 'undefined') {
+    try {
+      const encoder = new TextEncoder();
+      const stream = new Blob([encoder.encode(jsonStr)])
+        .stream()
+        .pipeThrough(new CompressionStream('gzip'));
+      return await new Response(stream).blob();
+    } catch (e) {
+      console.warn('CompressionStream binary failed, sending raw:', e);
+    }
+  }
+  return new Blob([jsonStr]);
+}
+
 async function decompressData(stored) {
   if (!stored) return null;
   if (stored.startsWith(COMPRESSED_PREFIX)) {
@@ -156,9 +171,11 @@ export class GameStorage {
       console.warn('Local save failed:', e);
     }
     try {
+      const blob = await compressBytes(json);
       const res = await this._api(`/save/${this.remoteKey}`, {
         method: 'POST',
-        body: json,
+        body: blob,
+        headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
       });
       if (res.ok) {
         this._remoteAvailable = true;
