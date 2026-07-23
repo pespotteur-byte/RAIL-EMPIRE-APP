@@ -6,7 +6,7 @@ const TOTAL = Number(process.env.TOTAL) || 80;
 const NO_INCIDENTS = process.env.NO_INCIDENTS === '1';
 const OUT_DIR = '/home/ubuntu/dedensen-test';
 const BASE_URL = process.env.URL || 'http://localhost:8080';
-const URL = `${BASE_URL}/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784772840${NO_INCIDENTS ? '&no_incidents=1' : ''}`;
+const URL = `${BASE_URL}/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784772841${NO_INCIDENTS ? '&no_incidents=1' : ''}`;
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const LOG_FILE = path.join(OUT_DIR, 'internal-driver.log');

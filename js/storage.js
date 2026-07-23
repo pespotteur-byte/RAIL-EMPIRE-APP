@@ -1,4 +1,4 @@
-import { alertToast } from './html-utils.js?v=1784731014';
+import { alertToast } from './html-utils.js?v=1784772841';
 const SAVE_KEY = 'rail-empire-save';
 const COMPRESSED_PREFIX = 'RELZ:';
 
@@ -43,46 +43,90 @@ async function decompressData(stored) {
 }
 
 export class GameStorage {
-  hasSave() {
-    return !!localStorage.getItem(SAVE_KEY);
+  constructor() {
+    this.remoteKey = 'rail-empire-save';
+    this._remoteAvailable = false;
+    this._checked = false;
+  }
+
+  async _checkRemote() {
+    if (this._checked) return;
+    this._checked = true;
+    try {
+      const res = await fetch('/saves', { method: 'GET' });
+      if (!res.ok) return;
+      const list = await res.json();
+      this._remoteAvailable = Array.isArray(list) && list.some(s => s.key === this.remoteKey);
+    } catch (e) {
+      this._remoteAvailable = false;
+    }
+  }
+
+  async hasSave() {
+    if (!!localStorage.getItem(SAVE_KEY)) return true;
+    await this._checkRemote();
+    return this._remoteAvailable;
   }
 
   async saveGame(state) {
+    const json = JSON.stringify(state);
     try {
-      const json = JSON.stringify(state);
       const compressed = await compressData(json);
       localStorage.setItem(SAVE_KEY, compressed);
     } catch (e) {
-      console.warn('Save failed:', e);
-      if (e?.name === 'QuotaExceededError') {
-        try {
-          localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-        } catch (e2) {
-          alertToast('Sauvegarde échouée : espace de stockage plein. Exportez votre sauvegarde JSON.');
-        }
+      console.warn('Local save failed:', e);
+    }
+    try {
+      const res = await fetch(`/save/${this.remoteKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: json,
+      });
+      if (res.ok) {
+        this._remoteAvailable = true;
+      } else {
+        console.warn('Remote save failed:', res.status);
       }
+    } catch (e) {
+      console.warn('Remote save failed:', e);
     }
   }
 
   async loadGame() {
+    try {
+      const res = await fetch(`/load/${this.remoteKey}`);
+      if (res.ok) {
+        const data = await res.json();
+        try {
+          const compressed = await compressData(JSON.stringify(data));
+          localStorage.setItem(SAVE_KEY, compressed);
+        } catch (e) {}
+        this._remoteAvailable = true;
+        return data;
+      }
+    } catch (e) {
+      console.warn('Remote load failed:', e);
+    }
+    // Fallback localStorage
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return null;
       const json = await decompressData(raw);
       return json ? JSON.parse(json) : null;
     } catch (e) {
-      console.warn('Load failed:', e);
-      try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch (e2) {
-        return null;
-      }
+      console.warn('Local load failed:', e);
+      return null;
     }
   }
 
-  deleteSave() {
+  async deleteSave() {
     localStorage.removeItem(SAVE_KEY);
+    try {
+      await fetch(`/delete/${this.remoteKey}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn('Remote delete failed:', e);
+    }
+    this._remoteAvailable = false;
   }
 
   getSaveInfo() {

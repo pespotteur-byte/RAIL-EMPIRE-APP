@@ -1,5 +1,5 @@
-import { haversineDistance } from './simulation.js?v=1784772840';
-import { adminSync } from './admin-sync.js?v=1784772840';
+import { haversineDistance } from './simulation.js?v=1784772841';
+import { adminSync } from './admin-sync.js?v=1784772841';
 
 const STORAGE_KEY = '__dedensenBenchmark';
 
