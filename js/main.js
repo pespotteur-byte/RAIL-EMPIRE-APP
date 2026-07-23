@@ -177,11 +177,11 @@ class RailEmpire {
       showAuth('');
     });
 
-    btnNew.addEventListener('click', () => {
+    btnNew.addEventListener('click', async () => {
       const name = nameInput.value.trim();
       if (!name) return alertToast('Entrez un nom de compagnie');
       this.account.companyName = name;
-      this.startGame(null);
+      await this.startGame(null);
     });
 
     btnLoad.addEventListener('click', async () => {
@@ -189,7 +189,7 @@ class RailEmpire {
       if (saved) {
         this.account.companyName = saved.companyName;
         this.loadState(saved);
-        this.startGame(saved);
+        await this.startGame(saved);
       }
     });
 
@@ -238,7 +238,78 @@ class RailEmpire {
     }
   }
 
-  startGame(savedState) {
+  _addMinutes(timeOfDay, dateStr, minutes) {
+    const total = timeOfDay + minutes;
+    const days = Math.floor(total / 1440);
+    const newTime = ((total % 1440) + 1440) % 1440;
+    const d = new Date(dateStr + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + days);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return { timeOfDay: newTime, dateStr: `${y}-${m}-${day}` };
+  }
+
+  async catchUpToRealTime(savedState) {
+    if (!savedState || !savedState.saveTime || typeof savedState.gameTime !== 'number' || !savedState.gameDate) return;
+    const elapsedMs = Date.now() - savedState.saveTime;
+    const elapsedMin = Math.floor(elapsedMs / 60000);
+    if (elapsedMin <= 0) return;
+
+    const MAX_CATCHUP_MIN = 24 * 60; // 24 h max
+    const catchUpMin = Math.min(elapsedMin, MAX_CATCHUP_MIN);
+    if (catchUpMin < elapsedMin) {
+      console.warn(`Catch-up capped: ${elapsedMin} min elapsed, simulating ${catchUpMin} min`);
+    }
+
+    const wasPaused = this.engine.paused;
+    this.engine.paused = true;
+
+    // Stub expensive/network calls during catch-up
+    const origWeatherUpdate = this.weather ? this.weather.update : null;
+    const origWeatherEffects = this.weather ? this.weather.getSpeedEffectsAt : null;
+    if (this.weather) {
+      this.weather.update = () => {};
+      this.weather.getSpeedEffectsAt = () => ({ speedCap: Infinity, brakeFactor: 1, speedMult: 1, type: 'clear' });
+    }
+
+    const MOVES_PER_MIN = 10; // dt = 6 s
+    let currentTime = savedState.gameTime;
+    let currentDate = savedState.gameDate;
+    const startTs = performance.now();
+
+    for (let i = 0; i < catchUpMin; i++) {
+      const next = this._addMinutes(currentTime, currentDate, 1);
+      currentTime = next.timeOfDay;
+      currentDate = next.dateStr;
+
+      this.tick(currentTime, currentDate, null);
+      for (let j = 0; j < MOVES_PER_MIN; j++) {
+        this.moveTick(6, currentTime);
+      }
+
+      // Yield every minute to keep UI responsive and allow abort on tab close
+      if (i % 1 === 0) {
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
+    // Restore
+    if (this.weather) {
+      this.weather.update = origWeatherUpdate;
+      this.weather.getSpeedEffectsAt = origWeatherEffects;
+    }
+
+    // Set engine to the exact game time corresponding to current real time
+    const target = this._addMinutes(savedState.gameTime, savedState.gameDate, elapsedMin);
+    this.engine.setGameTime(target.timeOfDay, target.dateStr);
+    this._gameTime = target.timeOfDay;
+    this._currentDate = target.dateStr;
+    this.engine.paused = wasPaused;
+    console.log(`Catch-up done: ${catchUpMin} min simulated in ${Math.round(performance.now() - startTs)} ms`);
+  }
+
+  async startGame(savedState) {
     // SAV : nouvelle partie = heure réelle ; chargement = temps de la sauvegarde
     if (savedState?.gameTime != null && savedState?.gameDate) {
       this.engine.setGameTime(savedState.gameTime, savedState.gameDate);
@@ -298,6 +369,7 @@ class RailEmpire {
         document.getElementById('company-name').textContent = saved.companyName;
         if (this.ui) this.ui.refreshAll();
         alertToast('Partie chargee avec succes !');
+        await this.startGame(saved);
       } catch (err) {
         alertToast('Erreur: fichier de sauvegarde invalide.\n' + err.message);
       }
@@ -330,10 +402,21 @@ class RailEmpire {
       setTimeout(() => { toast.style.display = 'none'; }, 8000);
     });
 
-    this.engine.paused = false;
-    this.running = true;
     this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
     this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
+
+    // Catch up elapsed real time before starting the live loop
+    // (handles tab switch and next-day relaunch without fast-forward teleport)
+    if (savedState) {
+      try {
+        await this.catchUpToRealTime(savedState);
+      } catch (e) {
+        console.error('Catch-up failed:', e);
+      }
+    }
+
+    this.engine.paused = false;
+    this.running = true;
     this.gameLoop();
 
     // Internal Dedensen benchmark mode (no external CDP driver needed)
@@ -350,10 +433,27 @@ class RailEmpire {
     if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
     this.autoSaveInterval = setInterval(() => this.saveState(), 10000);
 
-    // Save on tab hide
-    document.addEventListener('visibilitychange', () => {
+    // Save on tab hide, catch up on tab show
+    document.addEventListener('visibilitychange', async () => {
       if (document.hidden) {
+        this._lastHiddenAt = Date.now();
+        this._lastHiddenGameTime = this._gameTime;
+        this._lastHiddenGameDate = this._currentDate;
         this.saveState();
+      } else if (this._lastHiddenAt && this._lastHiddenGameTime != null) {
+        const hiddenState = {
+          saveTime: this._lastHiddenAt,
+          gameTime: this._lastHiddenGameTime,
+          gameDate: this._lastHiddenGameDate,
+        };
+        this._lastHiddenAt = null;
+        this._lastHiddenGameTime = null;
+        this._lastHiddenGameDate = null;
+        try {
+          await this.catchUpToRealTime(hiddenState);
+        } catch (e) {
+          console.error('Catch-up on visibility change failed:', e);
+        }
       }
     });
   }
