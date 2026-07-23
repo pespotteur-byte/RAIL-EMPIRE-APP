@@ -2,8 +2,8 @@
  * Unions — Strike risk system based on company conditions.
  * Reads game state to compute risk. Strikes disable random % of services.
  */
-import { getGlobalRng } from './rng.js?v=1784772844';
-import { escapeHtml, alertToast } from './html-utils.js?v=1784772844';
+import { getGlobalRng } from './rng.js?v=1784772845';
+import { escapeHtml, alertToast } from './html-utils.js?v=1784772845';
 
 function _daysBetween(a, b) {
   const parse = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
