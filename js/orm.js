@@ -194,6 +194,24 @@ export class ORMClient {
     this._routingSpeedCapKmh = 160;
   }
 
+  // Reduce point density while keeping the rail line shape.
+  // Tolerance is the minimum distance (m) between kept points.
+  simplifyGeometry(points, toleranceM = 5) {
+    if (!points || points.length < 3) return points;
+    const out = [points[0]];
+    let last = points[0];
+    for (let i = 1; i < points.length - 1; i++) {
+      const p = points[i];
+      const d = haversine(last.lat, last.lon, p.lat, p.lon) * 1000;
+      if (d >= toleranceM) {
+        out.push(p);
+        last = p;
+      }
+    }
+    out.push(points[points.length - 1]);
+    return out;
+  }
+
   // ============================================================
   // AREA FETCHING — loads all railway data for a bounding box
   // Also fetches railway stations/halts
@@ -306,7 +324,7 @@ export class ORMClient {
             const pd = (el.tags?.['railway:preferred_direction'] || '').toLowerCase();
             return pd === 'forward' || pd === 'backward' ? pd : 'both';
           })(),
-          geometry: el.geometry.map(p => ({ lat: p.lat, lon: p.lon })),
+          geometry: this.simplifyGeometry(el.geometry.map(p => ({ lat: p.lat, lon: p.lon })), 5),
           nodeIds: el.nodes || [],
         };
       });
