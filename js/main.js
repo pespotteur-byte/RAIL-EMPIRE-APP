@@ -101,17 +101,81 @@ class RailEmpire {
   }
 
   async init() {
+    const authSection = document.getElementById('auth-section');
+    const gameSection = document.getElementById('game-section');
+    const userInput = document.getElementById('login-username');
+    const passInput = document.getElementById('login-password');
+    const authMsg = document.getElementById('auth-message');
+    const btnLogin = document.getElementById('btn-login');
+    const btnRegister = document.getElementById('btn-register');
+    const btnLogout = document.getElementById('btn-logout');
     const btnNew = document.getElementById('btn-new-game');
     const btnLoad = document.getElementById('btn-load-game');
     const nameInput = document.getElementById('login-name');
 
-    if (await this.storage.hasSave()) {
-      btnLoad.style.display = 'block';
-      const saved = await this.storage.loadGame();
-      if (saved?.companyName) {
-        nameInput.value = saved.companyName;
+    const showAuth = (msg) => {
+      authSection.style.display = 'block';
+      gameSection.style.display = 'none';
+      if (msg) authMsg.textContent = msg;
+    };
+    const showGame = () => {
+      authSection.style.display = 'none';
+      gameSection.style.display = 'block';
+      authMsg.textContent = '';
+    };
+
+    const updateLoadButton = async () => {
+      if (await this.storage.hasSave()) {
+        btnLoad.style.display = 'block';
+        const saved = await this.storage.loadGame();
+        if (saved?.companyName) {
+          nameInput.value = saved.companyName;
+        }
+      } else {
+        btnLoad.style.display = 'none';
       }
-    }
+    };
+
+    const setAuth = () => {
+      if (this.storage.isLoggedIn()) {
+        showGame();
+        updateLoadButton();
+      } else {
+        showAuth('');
+      }
+    };
+
+    btnLogin.addEventListener('click', async () => {
+      const u = userInput.value.trim();
+      const p = passInput.value;
+      if (!u || !p) return (authMsg.textContent = 'Remplissez nom et mot de passe');
+      try {
+        await this.storage.authLogin(u, p);
+        setAuth();
+      } catch (e) {
+        authMsg.textContent = 'Connexion échouée : ' + (e.message || e);
+      }
+    });
+
+    btnRegister.addEventListener('click', async () => {
+      const u = userInput.value.trim();
+      const p = passInput.value;
+      if (!u || !p) return (authMsg.textContent = 'Remplissez nom et mot de passe');
+      try {
+        await this.storage.authRegister(u, p);
+        setAuth();
+      } catch (e) {
+        authMsg.textContent = 'Inscription échouée : ' + (e.message || e);
+      }
+    });
+
+    btnLogout.addEventListener('click', () => {
+      this.storage.logout();
+      userInput.value = '';
+      passInput.value = '';
+      nameInput.value = '';
+      showAuth('');
+    });
 
     btnNew.addEventListener('click', () => {
       const name = nameInput.value.trim();
@@ -119,14 +183,6 @@ class RailEmpire {
       this.account.companyName = name;
       this.startGame(null);
     });
-
-    // Auto-start a new game for the internal benchmark mode
-    const benchmarkParams = new URLSearchParams(location.search);
-    if (benchmarkParams.get('benchmark') === 'dedensen') {
-      this.account.companyName = 'Dedensen Benchmark';
-      this.startGame(null);
-      return;
-    }
 
     btnLoad.addEventListener('click', async () => {
       const saved = await this.storage.loadGame();
@@ -163,6 +219,23 @@ class RailEmpire {
         alertToast('Erreur: fichier de sauvegarde invalide.\n' + err.message);
       }
     });
+
+    // Auto-start a new game for the internal benchmark mode
+    const benchmarkParams = new URLSearchParams(location.search);
+    if (benchmarkParams.get('benchmark') === 'dedensen') {
+      this.account.companyName = 'Dedensen Benchmark';
+      this.startGame(null);
+      return;
+    }
+
+    // If a token exists, validate it; otherwise stay on auth screen
+    if (this.storage.getToken()) {
+      const me = await this.storage.authMe();
+      if (me) setAuth();
+      else showAuth('Session expirée, reconnectez-vous');
+    } else {
+      showAuth('');
+    }
   }
 
   startGame(savedState) {

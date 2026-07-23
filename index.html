@@ -35,11 +35,21 @@
       </div>
       <p class="login-subtitle">Simulateur de Gestion de compagnie ferroviaire</p>
       <div class="login-form">
-        <input type="text" id="login-name" placeholder="Nom de compagnie" maxlength="30">
-        <button id="btn-new-game" class="btn-primary">Nouvelle Partie</button>
-        <button id="btn-load-game" class="btn-secondary" style="display:none">Reprendre la partie</button>
-        <button id="btn-import-file" class="btn-secondary">Charger un fichier de sauvegarde</button>
-        <input type="file" id="import-file-input" accept=".json,.json.gz,.gz" style="display:none">
+        <div id="auth-section">
+          <input type="text" id="login-username" placeholder="Nom d'utilisateur" maxlength="30">
+          <input type="password" id="login-password" placeholder="Mot de passe" maxlength="50">
+          <button id="btn-login" class="btn-primary">Se connecter</button>
+          <button id="btn-register" class="btn-secondary">Créer un compte</button>
+          <div id="auth-message" style="color:#f87171;font-size:.85em;margin-top:6px;min-height:1.2em"></div>
+        </div>
+        <div id="game-section" style="display:none">
+          <input type="text" id="login-name" placeholder="Nom de compagnie" maxlength="30">
+          <button id="btn-new-game" class="btn-primary">Nouvelle Partie</button>
+          <button id="btn-load-game" class="btn-secondary" style="display:none">Reprendre la partie</button>
+          <button id="btn-import-file" class="btn-secondary">Charger un fichier de sauvegarde</button>
+          <input type="file" id="import-file-input" accept=".json,.json.gz,.gz" style="display:none">
+          <button id="btn-logout" class="btn-secondary" style="margin-top:8px">Déconnexion</button>
+        </div>
       </div>
     </div>
   </div>

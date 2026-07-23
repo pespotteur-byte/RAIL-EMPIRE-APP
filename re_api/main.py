@@ -2,13 +2,17 @@ import asyncio
 import json
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 import asyncpg
 import boto3
-from fastapi import FastAPI, HTTPException
+import jwt
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from botocore.exceptions import ClientError
+from passlib.context import CryptContext
 
 DB_DSN = os.environ.get(
     "DATABASE_URL", "postgresql://rail:railpass@localhost:5432/rail_empire"
@@ -18,10 +22,55 @@ S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY", "minioadmin")
 S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "minioadmin")
 S3_BUCKET = os.environ.get("S3_BUCKET", "rail-empire")
 S3_OFFLOAD_BYTES = int(os.environ.get("S3_OFFLOAD_BYTES", "1048576"))
+JWT_SECRET = os.environ.get("JWT_SECRET", "change-me-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_DAYS = int(os.environ.get("JWT_EXPIRE_DAYS", "30"))
 
+pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 _state = {}
 _db_pool = None
 _s3 = None
+
+
+def hash_password(password: str) -> str:
+    return pwd_ctx.hash(password)
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_ctx.verify(plain, hashed)
+
+
+def create_token(user_id: int, username: str) -> str:
+    exp = datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRE_DAYS)
+    return jwt.encode(
+        {"sub": str(user_id), "username": username, "exp": exp},
+        JWT_SECRET,
+        algorithm=JWT_ALGORITHM,
+    )
+
+
+def decode_token(token: str) -> Optional[dict]:
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except Exception:
+        return None
+
+
+async def get_current_user(x_api_token: Optional[str] = Header(None)) -> Optional[dict]:
+    if not x_api_token:
+        return None
+    payload = decode_token(x_api_token)
+    if not payload:
+        return None
+    try:
+        user_id = int(payload.get("sub"))
+    except (TypeError, ValueError):
+        return None
+    return {"id": user_id, "username": payload.get("username")}
+
+
+def user_id(user: Optional[dict]) -> int:
+    return user["id"] if user else 0
 
 
 async def init_db_pool():
@@ -30,15 +79,56 @@ async def init_db_pool():
     async with _db_pool.acquire() as conn:
         await conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='saves' AND column_name='user_id'
+                ) THEN
+                    ALTER TABLE saves ADD COLUMN user_id INTEGER NOT NULL DEFAULT 0;
+                END IF;
+            END $$;
+
+            -- Replace previous single-column unique with per-user unique
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE indexname = 'saves_key_key'
+                ) THEN
+                    ALTER TABLE saves DROP CONSTRAINT saves_key_key;
+                END IF;
+            END $$;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_indexes
+                    WHERE indexname = 'saves_user_key_unique'
+                ) THEN
+                    ALTER TABLE saves ADD CONSTRAINT saves_user_key_unique UNIQUE (user_id, key);
+                END IF;
+            END $$;
+
             CREATE TABLE IF NOT EXISTS saves (
                 id SERIAL PRIMARY KEY,
-                key TEXT UNIQUE NOT NULL,
+                user_id INTEGER NOT NULL DEFAULT 0,
+                key TEXT NOT NULL,
                 payload JSONB,
                 s3_key TEXT,
                 size_bytes BIGINT DEFAULT 0,
-                updated_at TIMESTAMPTZ DEFAULT now()
+                updated_at TIMESTAMPTZ DEFAULT now(),
+                CONSTRAINT saves_user_key_unique UNIQUE (user_id, key)
             );
-            CREATE INDEX IF NOT EXISTS idx_saves_key ON saves(key);
+            CREATE INDEX IF NOT EXISTS idx_saves_lookup ON saves(user_id, key);
             CREATE TABLE IF NOT EXISTS tracks (
                 id BIGSERIAL PRIMARY KEY,
                 way_id BIGINT,
@@ -75,8 +165,9 @@ def init_s3():
     try:
         _s3.create_bucket(Bucket=S3_BUCKET)
     except ClientError as e:
-        if e.response["Error"]["Code"] not in ("BucketAlreadyExists", "BucketAlreadyOwnedByYou"):
-            pass
+        code = e.response.get("Error", {}).get("Code", "")
+        if code not in ("BucketAlreadyExists", "BucketAlreadyOwnedByYou"):
+            raise
 
 
 @asynccontextmanager
@@ -111,19 +202,68 @@ async def healthz():
     return {"status": "ok", "db": db_ok, "trains": len(_state)}
 
 
+@app.post("/auth/register")
+async def register(credentials: dict):
+    username = credentials.get("username", "").strip()
+    password = credentials.get("password", "")
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="Username and password required")
+    pw_hash = hash_password(password)
+    async with _db_pool.acquire() as conn:
+        try:
+            row = await conn.fetchrow(
+                "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username",
+                username,
+                pw_hash,
+            )
+        except asyncpg.UniqueViolationError:
+            raise HTTPException(status_code=409, detail="Username already taken")
+    token = create_token(row["id"], row["username"])
+    return {"token": token, "username": row["username"]}
+
+
+@app.post("/auth/login")
+async def login(credentials: dict):
+    username = credentials.get("username", "").strip()
+    password = credentials.get("password", "")
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="Username and password required")
+    async with _db_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT id, username, password_hash FROM users WHERE username = $1",
+            username,
+        )
+    if not row or not verify_password(password, row["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_token(row["id"], row["username"])
+    return {"token": token, "username": row["username"]}
+
+
+@app.get("/auth/me")
+async def auth_me(user: Optional[dict] = Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
+
+
 @app.post("/save/{key}")
-async def save_state(key: str, payload: dict):
+async def save_state(key: str, payload: dict, user: Optional[dict] = Depends(get_current_user)):
     if _db_pool is None:
         raise HTTPException(status_code=503, detail="Database not available")
 
+    uid = user_id(user)
     data = json.dumps(payload, ensure_ascii=False)
     size = len(data.encode("utf-8"))
     s3_key = None
 
     if size > S3_OFFLOAD_BYTES:
-        s3_key = f"saves/{key}.json"
+        s3_key = f"saves/{uid}/{key}.json"
         await asyncio.to_thread(
-            _s3.put_object, Bucket=S3_BUCKET, Key=s3_key, Body=data.encode("utf-8"), ContentType="application/json"
+            _s3.put_object,
+            Bucket=S3_BUCKET,
+            Key=s3_key,
+            Body=data.encode("utf-8"),
+            ContentType="application/json",
         )
         payload_db = None
     else:
@@ -132,30 +272,34 @@ async def save_state(key: str, payload: dict):
     async with _db_pool.acquire() as conn:
         await conn.execute(
             """
-            INSERT INTO saves (key, payload, s3_key, size_bytes, updated_at)
-            VALUES ($1, $2, $3, $4, now())
-            ON CONFLICT (key) DO UPDATE
+            INSERT INTO saves (user_id, key, payload, s3_key, size_bytes, updated_at)
+            VALUES ($1, $2, $3, $4, $5, now())
+            ON CONFLICT (user_id, key) DO UPDATE
             SET payload = EXCLUDED.payload,
                 s3_key = EXCLUDED.s3_key,
                 size_bytes = EXCLUDED.size_bytes,
                 updated_at = EXCLUDED.updated_at
             """,
+            uid,
             key,
             payload_db,
             s3_key,
             size,
         )
-    return {"saved": True, "key": key, "size": size, "s3": s3_key is not None}
+    return {"saved": True, "key": key, "user": user["username"] if user else None, "size": size, "s3": s3_key is not None}
 
 
 @app.get("/load/{key}")
-async def load_state(key: str):
+async def load_state(key: str, user: Optional[dict] = Depends(get_current_user)):
     if _db_pool is None:
         raise HTTPException(status_code=503, detail="Database not available")
 
+    uid = user_id(user)
     async with _db_pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT payload, s3_key FROM saves WHERE key = $1", key
+            "SELECT payload, s3_key FROM saves WHERE user_id = $1 AND key = $2",
+            uid,
+            key,
         )
     if not row:
         raise HTTPException(status_code=404, detail="Save not found")
@@ -171,30 +315,39 @@ async def load_state(key: str):
 
 
 @app.get("/saves")
-async def list_saves():
+async def list_saves(user: Optional[dict] = Depends(get_current_user)):
     if _db_pool is None:
         return []
+    uid = user_id(user)
     async with _db_pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT key, size_bytes, updated_at, s3_key IS NOT NULL AS s3 FROM saves ORDER BY updated_at DESC"
+            "SELECT key, size_bytes, updated_at, s3_key IS NOT NULL AS s3 FROM saves WHERE user_id = $1 ORDER BY updated_at DESC",
+            uid,
         )
     return [dict(r) for r in rows]
 
 
 @app.delete("/delete/{key}")
-async def delete_state(key: str):
+async def delete_state(key: str, user: Optional[dict] = Depends(get_current_user)):
     if _db_pool is None:
         raise HTTPException(status_code=503, detail="Database not available")
+    uid = user_id(user)
     async with _db_pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT s3_key FROM saves WHERE key = $1", key
+            "SELECT s3_key FROM saves WHERE user_id = $1 AND key = $2",
+            uid,
+            key,
         )
         if row and row["s3_key"]:
             try:
                 await asyncio.to_thread(_s3.delete_object, Bucket=S3_BUCKET, Key=row["s3_key"])
             except ClientError:
                 pass
-        await conn.execute("DELETE FROM saves WHERE key = $1", key)
+        await conn.execute(
+            "DELETE FROM saves WHERE user_id = $1 AND key = $2",
+            uid,
+            key,
+        )
     return {"deleted": True, "key": key}
 
 
@@ -224,7 +377,6 @@ async def ingest_tracks(tracks: list):
             coords = t.get("coords", [])
             if len(coords) < 2:
                 continue
-            # PostGIS ST_SetSRID(ST_MakeLine(array[ST_MakePoint...]), 4326)
             point_array = ", ".join(f"ST_MakePoint({c[0]}, {c[1]})" for c in coords)
             await conn.execute(
                 f"""

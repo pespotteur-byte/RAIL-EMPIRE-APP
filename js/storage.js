@@ -1,5 +1,6 @@
 import { alertToast } from './html-utils.js?v=1784772841';
 const SAVE_KEY = 'rail-empire-save';
+const TOKEN_KEY = 're_api_token';
 const COMPRESSED_PREFIX = 'RELZ:';
 
 async function compressData(jsonStr) {
@@ -47,13 +48,91 @@ export class GameStorage {
     this.remoteKey = 'rail-empire-save';
     this._remoteAvailable = false;
     this._checked = false;
+    this.user = null;
+  }
+
+  getToken() {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  setToken(token, username) {
+    if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
+      this.user = { username };
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+      this.user = null;
+    }
+  }
+
+  isLoggedIn() {
+    return !!this.getToken();
+  }
+
+  _headers() {
+    const h = { 'Content-Type': 'application/json' };
+    const token = this.getToken();
+    if (token) h['X-API-Token'] = token;
+    return h;
+  }
+
+  async _api(path, opts = {}) {
+    const res = await fetch(path, {
+      ...opts,
+      headers: { ...this._headers(), ...(opts.headers || {}) },
+    });
+    return res;
+  }
+
+  async authRegister(username, password) {
+    const res = await this._api('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || `Erreur ${res.status}`);
+    }
+    const data = await res.json();
+    this.setToken(data.token, data.username);
+    return data;
+  }
+
+  async authLogin(username, password) {
+    const res = await this._api('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || `Erreur ${res.status}`);
+    }
+    const data = await res.json();
+    this.setToken(data.token, data.username);
+    return data;
+  }
+
+  async authMe() {
+    const res = await this._api('/auth/me');
+    if (!res.ok) {
+      this.setToken(null);
+      return null;
+    }
+    this.user = await res.json();
+    return this.user;
+  }
+
+  logout() {
+    this.setToken(null);
+    this._remoteAvailable = false;
+    this._checked = false;
   }
 
   async _checkRemote() {
     if (this._checked) return;
     this._checked = true;
     try {
-      const res = await fetch('/saves', { method: 'GET' });
+      const res = await this._api('/saves', { method: 'GET' });
       if (!res.ok) return;
       const list = await res.json();
       this._remoteAvailable = Array.isArray(list) && list.some(s => s.key === this.remoteKey);
@@ -77,9 +156,8 @@ export class GameStorage {
       console.warn('Local save failed:', e);
     }
     try {
-      const res = await fetch(`/save/${this.remoteKey}`, {
+      const res = await this._api(`/save/${this.remoteKey}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: json,
       });
       if (res.ok) {
@@ -94,7 +172,7 @@ export class GameStorage {
 
   async loadGame() {
     try {
-      const res = await fetch(`/load/${this.remoteKey}`);
+      const res = await this._api(`/load/${this.remoteKey}`);
       if (res.ok) {
         const data = await res.json();
         try {
@@ -122,7 +200,7 @@ export class GameStorage {
   async deleteSave() {
     localStorage.removeItem(SAVE_KEY);
     try {
-      await fetch(`/delete/${this.remoteKey}`, { method: 'DELETE' });
+      await this._api(`/delete/${this.remoteKey}`, { method: 'DELETE' });
     } catch (e) {
       console.warn('Remote delete failed:', e);
     }
