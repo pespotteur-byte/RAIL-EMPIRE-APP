@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784772848';
-import { cantonManager } from './canton-manager.js?v=1784772848';
-import { ServiceStop } from './service-stop.js?v=1784772848';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772848';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772848';
-import { getGlobalRng } from './rng.js?v=1784772848';
-import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1784772848';
+} from './service-utils.js?v=1784772851';
+import { cantonManager } from './canton-manager.js?v=1784772851';
+import { ServiceStop } from './service-stop.js?v=1784772851';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772851';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772851';
+import { getGlobalRng } from './rng.js?v=1784772851';
+import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1784772851';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784772848';
+} from './schedule-logic.js?v=1784772851';
 
 export const CantonController = {
   _yieldToRescue() {
@@ -140,7 +140,8 @@ export const CantonController = {
       const route = this._state.cachedRoute || this.getCurrentRoute();
       if (!route || route.length < 2) return null;
 
-      const myProgress = this._getRouteProgressKm(this.position, route, this._state.index);
+      const myState = this._state;
+      const myProgress = this._getRouteProgressKm(this.position, route, myState.index);
       let nearestAheadDist = Infinity;
       let nearestAheadSpeed = 0;
       const vpm = window.game?.voiePointManager;
@@ -148,45 +149,69 @@ export const CantonController = {
 
       // Use spatial hash if available (O(k) where k = nearby trains), else fallback to all
       const candidates = this._nearbyServices || allServices;
+      const sameRouteKey = this._routeKey;
+      const myLat = this.position.lat;
+      const myLon = this.position.lon;
+      const myHdg = this._state.heading != null ? this._state.heading : Math.atan2(route[myState.index + 1].lon - route[myState.index].lon, route[myState.index + 1].lat - route[myState.index].lat);
+      // Following distance beyond ~2 km has no effect on braking; skip far candidates
+      const maxDLat = 0.018;
+      const maxDLon = 0.025;
+      const cosLat = Math.cos(myLat * Math.PI / 180);
 
       for (const other of candidates) {
         if (other.id === this.id) continue;
         if (!other.position || other.state === 'waiting' || other.state === 'completed') continue;
+        const oLat = other.position.lat;
+        const oLon = other.position.lon;
+        const dLat = Math.abs(myLat - oLat);
+        const dLon = Math.abs(myLon - oLon);
+        if (dLat > maxDLat || dLon > maxDLon) continue;
 
         // Voie check: if both trains have voie info and they differ → different tracks, skip
         const otherVoie = other.train?.platform || (vpm && other.position ? vpm.getVoieAtPosition(other.position) : null);
         if (myVoie && otherVoie && myVoie !== otherVoie) continue;
 
-        const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
-        // Only check trains within canton range (max ~5km, not 30km)
-        if (rawDist > 5) continue;
+        const dLatKm = dLat * 111;
+        const dLonKm = dLon * 111 * cosLat;
+        const rawDist = Math.sqrt(dLatKm * dLatKm + dLonKm * dLonKm);
+        // Only check trains within canton range (~2 km)
+        if (rawDist > 2) continue;
 
-        // Check if other train is actually on our route (within 0.2km of a route point)
-        const rLen = route.length;
-        const step = Math.max(1, Math.floor(rLen / 15));
-        let nearRoute = false;
-        for (let ri = 0; ri < rLen; ri += step) {
-          if (haversineDistance(other.position.lat, other.position.lon, route[ri].lat, route[ri].lon) < 0.2) {
-            nearRoute = true; break;
+        // Fast path: same route -> use other service state instead of scanning geometry
+        let otherProgress;
+        if (sameRouteKey && other._routeKey === sameRouteKey && other._state?.index != null) {
+          const os = other._state;
+          const segDists = myState.segDists;
+          const cumDist = myState.cumDist;
+          otherProgress = (cumDist ? cumDist[os.index] : 0) + (segDists ? os.progress * segDists[os.index] : 0);
+        } else {
+          // Check if other train is actually on our route (within 0.2km of a route point)
+          const rLen = route.length;
+          const step = Math.max(1, Math.floor(rLen / 15));
+          let nearRoute = false;
+          for (let ri = 0; ri < rLen; ri += step) {
+            if (haversineDistance(other.position.lat, other.position.lon, route[ri].lat, route[ri].lon) < 0.2) {
+              nearRoute = true; break;
+            }
           }
-        }
-        if (!nearRoute) continue;
+          if (!nearRoute) continue;
 
-        // Heading check: skip trains going in opposite direction (likely on other track)
-        if (other.state === 'moving' && other._state?.cachedRoute && other._state.index < other._state.cachedRoute.length - 1) {
-          const oRoute = other._state.cachedRoute;
-          const oi = other._state.index;
-          const segIdx = this._state.index;
-          if (segIdx < route.length - 1) {
-            const myHdg = Math.atan2(route[segIdx + 1].lon - route[segIdx].lon, route[segIdx + 1].lat - route[segIdx].lat);
-            const otHdg = Math.atan2(oRoute[oi + 1].lon - oRoute[oi].lon, oRoute[oi + 1].lat - oRoute[oi].lat);
-            let hdiff = Math.abs(myHdg - otHdg);
-            if (hdiff > Math.PI) hdiff = 2 * Math.PI - hdiff;
-            if (hdiff > Math.PI / 2) continue; // Opposite direction → different tracks
+          // Heading check: skip trains going in opposite direction (likely on other track)
+          if (other.state === 'moving' && other._state?.cachedRoute && other._state.index < other._state.cachedRoute.length - 1) {
+            const oRoute = other._state.cachedRoute;
+            const oi = other._state.index;
+            const segIdx = myState.index;
+            if (segIdx < route.length - 1) {
+              const otHdg = other._state.heading != null ? other._state.heading : Math.atan2(oRoute[oi + 1].lon - oRoute[oi].lon, oRoute[oi + 1].lat - oRoute[oi].lat);
+              let hdiff = Math.abs(myHdg - otHdg);
+              if (hdiff > Math.PI) hdiff = 2 * Math.PI - hdiff;
+              if (hdiff > Math.PI / 2) continue; // Opposite direction → different tracks
+            }
           }
+
+          otherProgress = this._getRouteProgressKm(other.position, route, myState.index);
         }
 
-        const otherProgress = this._getRouteProgressKm(other.position, route, this._state.index);
         const ahead = otherProgress > myProgress;
 
         if (ahead) {
@@ -217,9 +242,11 @@ export const CantonController = {
     },
 
   _getIpcsCandidates(candidates) {
+      // Prefer a small nearby list (LOD grouping) when available
+      if (candidates && candidates.length <= 50) return candidates;
       if (typeof window !== 'undefined' && window.game?._serviceGrid) {
         const grid = window.game._serviceGrid;
-        const cellSize = window.game._serviceGridCell || 0.02;
+        const cellSize = window.game._serviceGridCell || 0.01;
         const latKey = Math.floor(this.position.lat / cellSize);
         const lonKey = Math.floor(this.position.lon / cellSize);
         const list = [];
@@ -255,21 +282,35 @@ export const CantonController = {
       if (myIdx >= route.length - 1) return null;
       const mySpeed = this.speed || 0;
       const decel = this.train?.decel || 4;
-      const myH = Math.atan2(route[myIdx + 1].lon - route[myIdx].lon, route[myIdx + 1].lat - route[myIdx].lat);
+      const myH = this._state.heading != null ? this._state.heading : Math.atan2(route[myIdx + 1].lon - route[myIdx].lon, route[myIdx + 1].lat - route[myIdx].lat);
       const list = this._getIpcsCandidates(candidates);
       const myTrackKey = this._trackKey;
       const vpm = window.game?.voiePointManager;
       const myVoie = this.train.platform || (vpm ? vpm.getVoieAtPosition(this.position, 0.3) : null);
+      const myLat = this.position.lat;
+      const myLon = this.position.lon;
+      // Head-on IPCS safe distance is < 1 km; beyond 2 km no action is required
+      const maxDLat = 0.018;
+      const maxDLon = 0.025;
+      const IPCS_RANGE_KM = 2;
+      const cosLat = Math.cos(myLat * Math.PI / 180);
       for (const other of list) {
         if (other.id === this.id) continue;
         if (!other.position) continue;
         if (other.state === 'waiting' || other.state === 'completed') continue;
         if (myTrackKey && other._trackKey && other._trackKey !== myTrackKey) continue;
+        const oLat = other.position.lat;
+        const oLon = other.position.lon;
+        const dLat = Math.abs(myLat - oLat);
+        const dLon = Math.abs(myLon - oLon);
+        if (dLat > maxDLat || dLon > maxDLon) continue;
         // Sur double voie, deux trains sur des voies différentes ne se gênent pas
         const otherVoie = other.train?.platform || (vpm && other.position ? vpm.getVoieAtPosition(other.position, 0.3) : null);
         if (myVoie && otherVoie && myVoie !== otherVoie) continue;
-        const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
-        if (rawDist > 5) continue;
+        const dLatKm = dLat * 111;
+        const dLonKm = dLon * 111 * cosLat;
+        const rawDist = Math.sqrt(dLatKm * dLatKm + dLonKm * dLonKm);
+        if (rawDist > IPCS_RANGE_KM) continue;
         if (!myTrackKey && !this._isNearRoute(other.position, route, myIdx)) continue;
         const otherRoute = other._state?.cachedRoute || (typeof other.getCurrentRoute === 'function' ? other.getCurrentRoute() : null);
         if (!otherRoute || otherRoute.length < 2) continue;
@@ -283,7 +324,7 @@ export const CantonController = {
         const myTracks = route[myIdx]?.tracks || 1;
         const otherTracks = otherRoute[oi]?.tracks || 1;
         if (myTracks >= 2 && otherTracks >= 2) continue;
-        const oH = Math.atan2(otherRoute[oi + 1].lon - otherRoute[oi].lon, otherRoute[oi + 1].lat - otherRoute[oi].lat);
+        const oH = other._state?.heading != null ? other._state.heading : Math.atan2(otherRoute[oi + 1].lon - otherRoute[oi].lon, otherRoute[oi + 1].lat - otherRoute[oi].lat);
         let hDiff = Math.abs(myH - oH);
         if (hDiff > Math.PI) hDiff = 2 * Math.PI - hDiff;
         if (hDiff <= Math.PI / 2) continue; // not opposite direction

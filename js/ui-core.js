@@ -1,12 +1,12 @@
-import { haversineDistance } from './simulation.js?v=1784772848';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784772848';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772848';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772848';
-import { UIMap } from './ui-map.js?v=1784772848';
-import { UIEntity } from './ui-entity.js?v=1784772848';
-import { UISchedule } from './ui-schedule.js?v=1784772848';
-import { UIEconomy } from './ui-economy.js?v=1784772848';
-import { UIInfogare } from './ui-infogare.js?v=1784772848';
+import { haversineDistance } from './simulation.js?v=1784772851';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784772851';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772851';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772851';
+import { UIMap } from './ui-map.js?v=1784772851';
+import { UIEntity } from './ui-entity.js?v=1784772851';
+import { UISchedule } from './ui-schedule.js?v=1784772851';
+import { UIEconomy } from './ui-economy.js?v=1784772851';
+import { UIInfogare } from './ui-infogare.js?v=1784772851';
 
 export class UI {
   constructor(game) {
@@ -34,6 +34,7 @@ export class UI {
       this._iteMapTileMap = null;
       this._iteMapInterval = null;
       this._iteTrackPoints = [];
+      this._lastTrainsListUpdate = 0;
       // Global blink timer for "À l'approche" (survives DOM re-renders)
       this._approachVisible = true;
       this._approachInterval = setInterval(() => {
@@ -211,7 +212,11 @@ export class UI {
       } catch(e) { /* graceful */ }
 
       if (this.activePage === 'map') {
-        this.updateTrainsList(activeServices);
+        const now = Date.now();
+        if (now - this._lastTrainsListUpdate > 500) {
+          this._lastTrainsListUpdate = now;
+          this.updateTrainsList(activeServices);
+        }
         this.updateFreightTab();
       }
       if (this.activePage === 'economy') this.renderEconomyPage();

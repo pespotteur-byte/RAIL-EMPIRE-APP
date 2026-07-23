@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784772848';
-import { cantonManager } from './canton-manager.js?v=1784772848';
-import { ServiceStop } from './service-stop.js?v=1784772848';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772848';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772848';
-import { getGlobalRng } from './rng.js?v=1784772848';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784772848';
+} from './service-utils.js?v=1784772851';
+import { cantonManager } from './canton-manager.js?v=1784772851';
+import { ServiceStop } from './service-stop.js?v=1784772851';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772851';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772851';
+import { getGlobalRng } from './rng.js?v=1784772851';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784772851';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784772848';
+} from './schedule-logic.js?v=1784772851';
 
 export const TrainController = {
   _getWeatherEffects() {
@@ -217,7 +217,9 @@ export const TrainController = {
       const dLon = (b.lon - a.lon) * Math.PI / 180;
       const y = Math.sin(dLon) * Math.cos(b.lat * Math.PI / 180);
       const x = Math.cos(a.lat * Math.PI / 180) * Math.sin(b.lat * Math.PI / 180) - Math.sin(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.cos(dLon);
-      this.train.geoHeading = Math.atan2(y, x);
+      const h = Math.atan2(y, x);
+      this.train.geoHeading = h;
+      if (this._state) this._state.heading = h;
       // Screen-space heading used for livemap icon rotation.
       const renderer = window.game?.renderer;
       if (!renderer?.latLonToScreen) { this.train.heading = 0; return; }
@@ -478,7 +480,7 @@ export const TrainController = {
       }
 
       // IPCS runtime: stop opposite-direction trains on the same track (Section IV / Annexe 10d)
-      const ipcsLimit = this._ipcsBlockCheck(allServices);
+      const ipcsLimit = this._ipcsBlockCheck(this._nearbyServices || allServices);
       if (ipcsLimit !== null) {
         effectiveMaxSpeed = Math.min(effectiveMaxSpeed, ipcsLimit);
         if (ipcsLimit === 0) {
