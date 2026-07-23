@@ -1,6 +1,8 @@
 import asyncio
 import json
+import mimetypes
 import os
+import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -8,8 +10,9 @@ from typing import Optional
 import asyncpg
 import boto3
 import jwt
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from botocore.exceptions import ClientError
 from passlib.context import CryptContext
@@ -149,6 +152,19 @@ async def init_db_pool():
                 updated_at TIMESTAMPTZ DEFAULT now()
             );
             CREATE INDEX IF NOT EXISTS idx_track_nodes_geom ON track_nodes USING GIST(geom);
+
+            CREATE TABLE IF NOT EXISTS liveries (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                file_key TEXT NOT NULL,
+                target_category TEXT DEFAULT 'all',
+                content_type TEXT,
+                size_bytes BIGINT DEFAULT 0,
+                created_at TIMESTAMPTZ DEFAULT now(),
+                updated_at TIMESTAMPTZ DEFAULT now()
+            );
+            CREATE INDEX IF NOT EXISTS idx_liveries_user ON liveries(user_id);
             """
         )
 
@@ -394,6 +410,117 @@ async def ingest_tracks(tracks: list):
             )
             inserted += 1
     return {"inserted": inserted}
+
+
+@app.post("/liveries")
+async def upload_livery(
+    name: str = Form(...),
+    target_category: str = Form(""),
+    file: UploadFile = File(...),
+    user: Optional[dict] = Depends(get_current_user),
+):
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not name.strip():
+        raise HTTPException(status_code=400, detail="Name required")
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    ext = (file.filename or "").split(".")[-1].lower()
+    if ext not in ("png", "jpg", "jpeg", "webp", "gif"):
+        ext = "png"
+    file_key = f"liveries/{user['id']}/{uuid.uuid4()}.{ext}"
+    content_type = file.content_type or mimetypes.guess_type(f"x.{ext}")[0] or "image/png"
+
+    await asyncio.to_thread(
+        _s3.put_object,
+        Bucket=S3_BUCKET,
+        Key=file_key,
+        Body=content,
+        ContentType=content_type,
+    )
+
+    async with _db_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            INSERT INTO liveries (user_id, name, file_key, target_category, content_type, size_bytes)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+            """,
+            user["id"],
+            name.strip(),
+            file_key,
+            target_category.strip() or "all",
+            content_type,
+            len(content),
+        )
+    return {
+        "id": row["id"],
+        "name": name.strip(),
+        "target_category": target_category.strip() or "all",
+        "url": f"/liveries/{row['id']}",
+        "size": len(content),
+    }
+
+
+@app.get("/liveries")
+async def list_liveries(user: Optional[dict] = Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    async with _db_pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, name, target_category, size_bytes, updated_at FROM liveries WHERE user_id = $1 ORDER BY updated_at DESC",
+            user["id"],
+        )
+    return [
+        {
+            "id": r["id"],
+            "name": r["name"],
+            "target_category": r["target_category"],
+            "size": r["size_bytes"],
+            "url": f"/liveries/{r['id']}",
+            "updated_at": r["updated_at"].isoformat() if r["updated_at"] else None,
+        }
+        for r in rows
+    ]
+
+
+@app.get("/liveries/{livery_id}")
+async def get_livery(livery_id: int, user: Optional[dict] = Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    async with _db_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT file_key, content_type FROM liveries WHERE id = $1 AND user_id = $2",
+            livery_id,
+            user["id"],
+        )
+    if not row:
+        raise HTTPException(status_code=404, detail="Livery not found")
+    obj = await asyncio.to_thread(_s3.get_object, Bucket=S3_BUCKET, Key=row["file_key"])
+    body = obj["Body"].read()
+    return Response(content=body, media_type=row["content_type"] or "image/png")
+
+
+@app.delete("/liveries/{livery_id}")
+async def delete_livery(livery_id: int, user: Optional[dict] = Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    async with _db_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT file_key FROM liveries WHERE id = $1 AND user_id = $2 RETURNING file_key",
+            livery_id,
+            user["id"],
+        )
+        if not row:
+            raise HTTPException(status_code=404, detail="Livery not found")
+        await conn.execute("DELETE FROM liveries WHERE id = $1", livery_id)
+    try:
+        await asyncio.to_thread(_s3.delete_object, Bucket=S3_BUCKET, Key=row["file_key"])
+    except ClientError:
+        pass
+    return {"deleted": True, "id": livery_id}
 
 
 app.mount("/", StaticFiles(directory="/home/ubuntu/rail-empire-deploy", html=True), name="static")

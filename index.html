@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784772842">
+  <link rel="stylesheet" href="style.css?v=1784772843">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -633,6 +633,18 @@
               <label>Dépôt d'affectation</label>
               <select id="rame-depot"><option value="">—</option></select>
             </div>
+          </div>
+          <div class="form-group" style="border:1px dashed var(--border);padding:10px;border-radius:8px;background:rgba(255,255,255,0.03)">
+            <label>Livrée personnalisée</label>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+              <input type="file" id="rame-livery-file" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;min-width:160px;font-size:12px">
+              <input type="text" id="rame-livery-name" placeholder="Nom de la livrée" style="flex:1;min-width:120px">
+              <button id="btn-upload-livery" class="btn-sm" type="button">Uploader</button>
+            </div>
+            <label>Livrée appliquée</label>
+            <select id="rame-livery" style="width:100%;padding:6px 8px">
+              <option value="">— Livrée d'origine —</option>
+            </select>
           </div>
           <div class="rame-stats">
             <span>Longueur: <b id="rame-length">0</b> / 750 m</span>
@@ -1382,6 +1394,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784772842"></script>
+  <script type="module" src="js/main.js?v=1784772843"></script>
 </body>
 </html>

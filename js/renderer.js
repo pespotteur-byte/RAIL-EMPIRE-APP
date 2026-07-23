@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1784731014';
+import { TileMap } from './map.js?v=1784772843';
 
 // LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
 export const LIVEMAP_CATEGORY_COLORS = {
@@ -36,6 +36,9 @@ export class Renderer {
     this._minimapCache = null;
     this._lastMinimapDraw = 0;
     this._minimapInterval = 50; // ~20 FPS throttle
+    this._liveryCache = new Map(); // liveryId -> Image
+    this._liveryLoading = new Set();
+    this._liveryObjectURLs = new Set();
     // Static layer offscreen canvas (tracks, stations, depots)
     this._staticCanvas = null;
     this._staticCtx = null;
@@ -685,7 +688,7 @@ export class Renderer {
         }
       }
       if (heading == null) heading = 0;
-      this._drawTrainIcon(ctx, p, cat, color, bs, svc.state, heading);
+      this._drawTrainIcon(ctx, p, cat, color, bs, svc.state, heading, svc.rame);
 
       if (svc.train.breakdown) {
         ctx.fillStyle = '#ef4444';
@@ -792,10 +795,61 @@ export class Renderer {
     }
   }
 
+  async _loadLivery(liveryId) {
+    if (this._liveryCache.has(liveryId) || this._liveryLoading.has(liveryId)) return;
+    this._liveryLoading.add(liveryId);
+    const token = window.game?.storage?.getToken?.();
+    try {
+      const res = await fetch(`/liveries/${liveryId}`, {
+        headers: token ? { 'X-API-Token': token } : {},
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      this._liveryObjectURLs.add(url);
+      const img = new Image();
+      img.onload = () => {
+        this._liveryCache.set(liveryId, img);
+        URL.revokeObjectURL(url);
+        this._liveryObjectURLs.delete(url);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        this._liveryObjectURLs.delete(url);
+      };
+      img.src = url;
+    } catch (e) {
+      // ignore
+    } finally {
+      this._liveryLoading.delete(liveryId);
+    }
+  }
+
   // LVM-01 — icônes de train directionnelles (annexes 2a images 2-5).
   // Utilise les PNG colorés par catégorie ; la pointe de la flèche est orientée
   // dans le sens du mouvement (heading). Fallback polygon si l'image n'est pas chargée.
-  _drawTrainIcon(ctx, p, cat, color, bs, state, heading = 0) {
+  _drawTrainIcon(ctx, p, cat, color, bs, state, heading = 0, rame = null) {
+    // Try custom livery image first, loading it in background if needed.
+    if (rame?.liveryId) {
+      this._loadLivery(rame.liveryId);
+      const livImg = this._liveryCache.get(rame.liveryId);
+      if (livImg && livImg.complete && livImg.naturalWidth) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(heading - Math.PI / 2);
+        if (state === 'waiting') {
+          ctx.filter = 'grayscale(100%) brightness(0.55)';
+        }
+        const scale = (bs * 5) / livImg.naturalHeight;
+        const w = livImg.naturalWidth * scale;
+        const h = livImg.naturalHeight * scale;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(livImg, -w / 2, -h / 2, w, h);
+        ctx.restore();
+        return;
+      }
+    }
+
     const key = (TRAIN_ICON_IMAGES[cat] ? cat : 'generic');
     const img = TRAIN_ICON_IMAGES[key];
     if (img && img.complete && img.naturalWidth) {

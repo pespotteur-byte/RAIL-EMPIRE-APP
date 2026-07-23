@@ -5,6 +5,8 @@ export class Rame {
     this.id = data.id || `rame-${nextRameId++}`;
     this.serialNumber = data.serialNumber || ''; // DEP-03 : n° de série (optionnel, distinct de l'ID interne)
     this.name = data.name || 'Sans nom';
+    this.liveryId = data.liveryId || '';
+    this.liveryName = data.liveryName || '';
     this.elements = data.elements || []; // array of RollingStockItem ids
     this.elementDetails = data.elementDetails || []; // cached details
     this.createdDate = data.createdDate || new Date().toISOString().split('T')[0];
@@ -113,6 +115,8 @@ export class RameManager {
       id: r.id,
       serialNumber: r.serialNumber,
       name: r.name,
+      liveryId: r.liveryId,
+      liveryName: r.liveryName,
       elements: r.elements,
       elementDetails: r.elementDetails,
       createdDate: r.createdDate,

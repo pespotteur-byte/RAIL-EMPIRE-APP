@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1784731014';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784731014';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784731014';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784731014';
+import { haversineDistance } from './simulation.js?v=1784772843';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784772843';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772843';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772843';
 
 export const UIEntity = {
   toggleStationCreation() {
@@ -895,12 +895,62 @@ export const UIEntity = {
         this.currentRameElements = [];
         this.renderRameAssembly();
       });
+      document.getElementById('btn-upload-livery')?.addEventListener('click', () => this.uploadLiveryFromRame());
+      const liverySel = document.getElementById('rame-livery');
+      if (liverySel) liverySel.addEventListener('change', () => this._applySelectedLiveryName());
       // Section III — recherche et pagination de la liste des rames.
       this._ramesPage = 0;
       const ramesSearch = document.getElementById('rames-search');
       if (ramesSearch) ramesSearch.addEventListener('input', () => { this._ramesPage = 0; this.renderRamesList(); });
       const ramesPerPage = document.getElementById('rames-per-page');
       if (ramesPerPage) ramesPerPage.addEventListener('change', () => { this._ramesPage = 0; this.renderRamesList(); });
+    },
+
+  async _populateLiverySelect(selectedId = '') {
+      const sel = document.getElementById('rame-livery');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">— Livrée d\'origine —</option>';
+      try {
+        const liveries = await this.game.liveryManager.list();
+        for (const l of liveries) {
+          const opt = document.createElement('option');
+          opt.value = l.id;
+          opt.textContent = l.name;
+          if (String(l.id) === String(selectedId)) opt.selected = true;
+          sel.appendChild(opt);
+        }
+      } catch (e) {
+        console.warn('Failed to load liveries:', e);
+      }
+    },
+
+  async uploadLiveryFromRame() {
+      const fileInput = document.getElementById('rame-livery-file');
+      const nameInput = document.getElementById('rame-livery-name');
+      const file = fileInput?.files?.[0];
+      const name = (nameInput?.value || '').trim();
+      if (!file) return alertToast('Choisissez une image');
+      if (!name) return alertToast('Nommez la livrée');
+      try {
+        const l = await this.game.liveryManager.upload(file, name);
+        await this._populateLiverySelect(l.id);
+        document.getElementById('rame-name').value = l.name;
+        fileInput.value = '';
+        nameInput.value = '';
+        alertToast('Livrée uploadée');
+      } catch (e) {
+        alertToast('Erreur upload livrée: ' + e.message);
+      }
+    },
+
+  _applySelectedLiveryName() {
+      const sel = document.getElementById('rame-livery');
+      if (!sel || !sel.value) return;
+      const opt = sel.options[sel.selectedIndex];
+      const nameInput = document.getElementById('rame-name');
+      if (opt && nameInput && !nameInput.value.trim()) {
+        nameInput.value = opt.textContent;
+      }
     },
 
   _populateRameSubcatFilter() {
@@ -936,7 +986,10 @@ export const UIEntity = {
       const c = document.getElementById('rame-cat-filter'); if (c) c.value = '';
       const sc = document.getElementById('rame-subcat-filter'); if (sc) sc.value = '';
       const q = document.getElementById('rame-qty'); if (q) q.value = '1';
+      const lf = document.getElementById('rame-livery-file'); if (lf) lf.value = '';
+      const ln = document.getElementById('rame-livery-name'); if (ln) ln.value = '';
       this._populateRameSubcatFilter();
+      this._populateLiverySelect();
       const depotSel = document.getElementById('rame-depot');
       if (depotSel) {
         const depots = this.game.depotManager.getDepots();
@@ -1124,7 +1177,11 @@ export const UIEntity = {
     },
 
   saveRame() {
-      const name = document.getElementById('rame-name').value.trim();
+      const nameInput = document.getElementById('rame-name');
+      const liverySel = document.getElementById('rame-livery');
+      const liveryId = liverySel?.value || '';
+      const liveryName = liveryId ? (liverySel.options[liverySel.selectedIndex]?.textContent || '') : '';
+      const name = (nameInput?.value || liveryName).trim();
       if (!name) return alertToast('Nom requis');
       if (this.currentRameElements.length === 0) return alertToast('Ajoutez au moins un element');
 
@@ -1138,10 +1195,13 @@ export const UIEntity = {
 
       const depotId = document.getElementById('rame-depot')?.value || '';
       const serialNumber = document.getElementById('rame-serial')?.value.trim() || '';
+      const finalName = liveryId ? liveryName : name;
       this.game.rameManager.add({
-        name,
+        name: finalName,
         serialNumber,
         depotId,
+        liveryId,
+        liveryName,
         elements: this.currentRameElements.map(e => e.stockId),
         elementDetails: this.currentRameElements.map(e => ({
           name: e.name, instanceName: e.instanceName, seriesName: e.seriesName,
