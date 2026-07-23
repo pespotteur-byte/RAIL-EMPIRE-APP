@@ -1,12 +1,12 @@
-import { haversineDistance } from './simulation.js?v=1784772843';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784772843';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772843';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772843';
-import { UIMap } from './ui-map.js?v=1784772843';
-import { UIEntity } from './ui-entity.js?v=1784772843';
-import { UISchedule } from './ui-schedule.js?v=1784772843';
-import { UIEconomy } from './ui-economy.js?v=1784772843';
-import { UIInfogare } from './ui-infogare.js?v=1784772843';
+import { haversineDistance } from './simulation.js?v=1784772844';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784772844';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772844';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772844';
+import { UIMap } from './ui-map.js?v=1784772844';
+import { UIEntity } from './ui-entity.js?v=1784772844';
+import { UISchedule } from './ui-schedule.js?v=1784772844';
+import { UIEconomy } from './ui-economy.js?v=1784772844';
+import { UIInfogare } from './ui-infogare.js?v=1784772844';
 
 export class UI {
   constructor(game) {
@@ -63,6 +63,7 @@ export class UI {
       this.setupTabs();
       this.setupRollingStockPage();
       this.setupRamePage();
+      this.setupLiveryPage();
       this.setupSchedulePage();
       this.setupLinePage();
       this.setupDepotPage();
@@ -79,6 +80,7 @@ export class UI {
   refreshAll() {
       if (this.activePage === 'rolling-stock') this.renderStockList();
       else if (this.activePage === 'rames') this.renderRamesList();
+      else if (this.activePage === 'liveries') this.renderLiveriesPage();
       else if (this.activePage === 'schedules') this.renderSchedulesList();
       else if (this.activePage === 'lines') this.renderLinesList();
       else if (this.activePage === 'depots') this.renderDepotsList();
@@ -154,6 +156,7 @@ export class UI {
 
       if (page === 'rolling-stock') this.renderStockList();
       if (page === 'rames') this.renderRamesList();
+      if (page === 'liveries') this.renderLiveriesPage();
       if (page === 'schedules') this.renderSchedulesList();
       if (page === 'lines') this.renderLinesList();
       if (page === 'depots') this.renderDepotsList();

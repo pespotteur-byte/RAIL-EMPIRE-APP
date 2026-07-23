@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1784772843';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784772843';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772843';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772843';
+import { haversineDistance } from './simulation.js?v=1784772844';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784772844';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772844';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772844';
 
 export const UIEntity = {
   toggleStationCreation() {
@@ -1269,7 +1269,10 @@ export const UIEntity = {
         <div class="rame-card">
           <div class="rame-card-header">
             <span class="card-title">${rameName}${rameSerial}</span>
-            <button class="btn-sm danger" onclick="game.ui.deleteRame('${jsString(r.id)}')">Supprimer</button>
+            <span style="display:flex;gap:6px">
+              <button class="btn-sm" onclick="game.ui.renameRame('${jsString(r.id)}')">Renommer</button>
+              <button class="btn-sm danger" onclick="game.ui.deleteRame('${jsString(r.id)}')">Supprimer</button>
+            </span>
           </div>
           <div class="rame-card-images">
             ${images}
@@ -1327,6 +1330,95 @@ export const UIEntity = {
       this.game.rameManager.remove(id);
       this.game.saveState();
       this.renderRamesList();
+    },
+
+  renameRame(id) {
+      const r = this.game.rameManager.getById(id);
+      if (!r) return;
+      const name = prompt('Nouveau nom de la rame :', r.name);
+      if (name && name.trim()) {
+        r.name = name.trim();
+        this.game.saveState();
+        this.renderRamesList();
+      }
+    },
+
+  setupLiveryPage() {
+      document.getElementById('btn-upload-page-livery')?.addEventListener('click', () => this.uploadLiveryPage());
+      document.getElementById('livery-page-file')?.addEventListener('change', () => this.uploadLiveryPage());
+    },
+
+  async uploadLiveryPage() {
+      const fileInput = document.getElementById('livery-page-file');
+      const nameInput = document.getElementById('livery-page-name');
+      const file = fileInput?.files?.[0];
+      const name = (nameInput?.value || file?.name || '').trim();
+      if (!file) return alertToast('Choisissez une image');
+      if (!name) return alertToast('Nommez la livrée');
+      try {
+        await this.game.liveryManager.upload(file, name);
+        fileInput.value = '';
+        nameInput.value = '';
+        alertToast('Livrée uploadée');
+        this.renderLiveriesPage();
+      } catch (e) {
+        alertToast('Erreur upload : ' + e.message);
+      }
+    },
+
+  async renderLiveriesPage() {
+      const container = document.getElementById('liveries-list');
+      if (!container) return;
+      try {
+        const liveries = await this.game.liveryManager.list();
+        if (liveries.length === 0) {
+          container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:40px">Aucune livrée. Uploadez une image ci-dessus.</p>';
+          return;
+        }
+        const rames = this.game.rameManager.getAll();
+        const cards = [];
+        for (const l of liveries) {
+          const imgUrl = await this.game.liveryManager.loadImage(l.id);
+          const usedBy = rames.filter(r => String(r.liveryId) === String(l.id));
+          const rameList = usedBy.length
+            ? `<div style="margin-top:6px;font-size:11px;color:var(--text2)">Utilisée par : ${usedBy.map(r => escapeHtml(r.name)).join(', ')}</div>`
+            : '<div style="margin-top:6px;font-size:11px;color:var(--text3)">Non utilisée</div>';
+          cards.push(`
+            <div class="livery-card" style="border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg2);display:flex;flex-direction:column;gap:6px">
+              <div style="height:100px;background:var(--bg1);border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+                ${imgUrl ? `<img src="${escapeHtml(imgUrl)}" style="max-width:100%;max-height:100%;object-fit:contain">` : '<span style="color:var(--text3);font-size:12px">Chargement...</span>'}
+              </div>
+              <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(l.name)}</div>
+              <div style="font-size:10px;color:var(--text3)">${(l.size / 1024).toFixed(1)} kB</div>
+              ${rameList}
+              <button class="btn-sm danger" onclick="game.ui.deleteLiveryPage(${Number(l.id)})">Supprimer</button>
+            </div>
+          `);
+        }
+        container.innerHTML = cards.join('');
+      } catch (e) {
+        console.warn('renderLiveriesPage error:', e);
+        container.innerHTML = '<p style="color:var(--red);text-align:center;padding:40px">Erreur de chargement des livrées.</p>';
+      }
+    },
+
+  async deleteLiveryPage(id) {
+      if (!confirm('Supprimer cette livrée ?')) return;
+      try {
+        await this.game.liveryManager.delete(id);
+        // Dissociate from rames
+        for (const r of this.game.rameManager.getAll()) {
+          if (String(r.liveryId) === String(id)) {
+            r.liveryId = '';
+            r.liveryName = '';
+          }
+        }
+        this.game.saveState();
+        this.renderLiveriesPage();
+        this.renderRamesList();
+      } catch (e) {
+        alertToast('Erreur suppression : ' + e.message);
+      }
     },
 
   setupLinePage() {
