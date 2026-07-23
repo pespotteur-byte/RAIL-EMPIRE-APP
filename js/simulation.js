@@ -177,6 +177,14 @@ export class CantonManager {
       }
     }
 
+    // Build an O(1) segment -> assignment lookup so getCantonForSegment never scans
+    const segmentToCanton = new Array(Math.max(0, route.length - 1));
+    for (const a of assignments) {
+      for (let i = a.startIndex; i < a.endIndex; i++) {
+        segmentToCanton[i] = a;
+      }
+    }
+    assignments._segmentToCanton = segmentToCanton;
     this.routeCantons.set(routeKey, assignments);
     return assignments;
   }
@@ -185,12 +193,8 @@ export class CantonManager {
    * Find which canton assignment a segment index falls into.
    */
   getCantonForSegment(assignments, segmentIndex) {
-    for (const a of assignments) {
-      if (segmentIndex >= a.startIndex && segmentIndex < a.endIndex) {
-        return a;
-      }
-    }
-    return null;
+    const map = assignments?._segmentToCanton;
+    return map && segmentIndex >= 0 && segmentIndex < map.length ? map[segmentIndex] : null;
   }
 
   occupy(cantonId, trainId) {

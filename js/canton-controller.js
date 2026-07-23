@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784772851';
-import { cantonManager } from './canton-manager.js?v=1784772851';
-import { ServiceStop } from './service-stop.js?v=1784772851';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772851';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772851';
-import { getGlobalRng } from './rng.js?v=1784772851';
-import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1784772851';
+} from './service-utils.js?v=1784772853';
+import { cantonManager } from './canton-manager.js?v=1784772853';
+import { ServiceStop } from './service-stop.js?v=1784772853';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772853';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772853';
+import { getGlobalRng } from './rng.js?v=1784772853';
+import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1784772853';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784772851';
+} from './schedule-logic.js?v=1784772853';
 
 export const CantonController = {
   _yieldToRescue() {
@@ -141,7 +141,10 @@ export const CantonController = {
       if (!route || route.length < 2) return null;
 
       const myState = this._state;
-      const myProgress = this._getRouteProgressKm(this.position, route, myState.index);
+      // O(1) progress from route start using cached cumulative distances
+      const myProgress = (myState.cumDist && myState.segDists)
+        ? myState.cumDist[0] - myState.cumDist[myState.index] + myState.progress * myState.segDists[myState.index]
+        : this._getRouteProgressKm(this.position, route, myState.index);
       let nearestAheadDist = Infinity;
       let nearestAheadSpeed = 0;
       const vpm = window.game?.voiePointManager;
@@ -179,11 +182,9 @@ export const CantonController = {
 
         // Fast path: same route -> use other service state instead of scanning geometry
         let otherProgress;
-        if (sameRouteKey && other._routeKey === sameRouteKey && other._state?.index != null) {
+        if (sameRouteKey && other._routeKey === sameRouteKey && other._state?.index != null && other._state.segDists && other._state.cumDist) {
           const os = other._state;
-          const segDists = myState.segDists;
-          const cumDist = myState.cumDist;
-          otherProgress = (cumDist ? cumDist[os.index] : 0) + (segDists ? os.progress * segDists[os.index] : 0);
+          otherProgress = os.cumDist[0] - os.cumDist[os.index] + os.progress * os.segDists[os.index];
         } else {
           // Check if other train is actually on our route (within 0.2km of a route point)
           const rLen = route.length;
@@ -458,7 +459,10 @@ export const CantonController = {
         if (other._routeKey !== this._routeKey) continue;
         const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
         if (rawDist > 5) continue;
-        const otherProgressToEnd = this._getRouteProgressKm(other.position, route, idx);
+        // O(1) same-route distance-to-end using cached state; fallback to geometric scan
+        const otherProgressToEnd = (other._state?.cumDist && other._state?.segDists && other._state.cachedRoute === route)
+          ? other._state.cumDist[other._state.index] - other._state.progress * other._state.segDists[other._state.index]
+          : this._getRouteProgressKm(other.position, route, idx);
         if (otherProgressToEnd >= myProgressToEndKm - 0.001) continue; // behind or same
         const gapM = (myProgressToEndKm - otherProgressToEnd) * 1000;
         const otherLengthM = (other.rame?.totalLength || other.train?.length || 20);

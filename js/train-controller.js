@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784772851';
-import { cantonManager } from './canton-manager.js?v=1784772851';
-import { ServiceStop } from './service-stop.js?v=1784772851';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772851';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772851';
-import { getGlobalRng } from './rng.js?v=1784772851';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784772851';
+} from './service-utils.js?v=1784772853';
+import { cantonManager } from './canton-manager.js?v=1784772853';
+import { ServiceStop } from './service-stop.js?v=1784772853';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784772853';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784772853';
+import { getGlobalRng } from './rng.js?v=1784772853';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1784772853';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784772851';
+} from './schedule-logic.js?v=1784772853';
 
 export const TrainController = {
   _getWeatherEffects() {
@@ -656,7 +656,10 @@ export const TrainController = {
 
       // --- ANTI-OVERTAKE: clamp position behind nearest train ahead on same route ---
       if (allServices && allServices.length > 1) {
-        const myProgressKm = this._getRouteProgressKm(this.position, route, this._state.index);
+        // O(1) progress from route start using cached cumulative distances
+        const myProgressKm = (this._state.cumDist && this._state.segDists)
+          ? this._state.cumDist[0] - this._state.cumDist[this._state.index] + this._state.progress * this._state.segDists[this._state.index]
+          : this._getRouteProgressKm(this.position, route, this._state.index);
         // OCC-04 : espacement de sécurité fonction de la vitesse (freinage + marge)
         const mySpeed = this.speed || 0;
         const decel = this.train.decel || 2;
@@ -678,7 +681,9 @@ export const TrainController = {
             const si = this._state.index;
             if (si < route.length - 1) {
               const myH = Math.atan2(route[si+1].lon - route[si].lon, route[si+1].lat - route[si].lat);
-              const oH = Math.atan2(oRoute[oi+1].lon - oRoute[oi].lon, oRoute[oi+1].lat - oRoute[oi].lat);
+              const oH = other._state.heading != null
+                ? other._state.heading
+                : Math.atan2(oRoute[oi+1].lon - oRoute[oi].lon, oRoute[oi+1].lat - oRoute[oi].lat);
               let hd = Math.abs(myH - oH);
               if (hd > Math.PI) hd = 2 * Math.PI - hd;
               if (hd > Math.PI / 2) continue;
@@ -686,7 +691,10 @@ export const TrainController = {
           }
           const rawDist = haversineDistance(this.position.lat, this.position.lon, other.position.lat, other.position.lon);
           if (rawDist > 3) continue;
-          const otherProgress = this._getRouteProgressKm(other.position, route, this._state.index);
+          // O(1) same-route progress, fallback to geometric scan
+          const otherProgress = (other._state?.cumDist && other._state?.segDists && other._state.cachedRoute === route)
+            ? other._state.cumDist[0] - other._state.cumDist[other._state.index] + other._state.progress * other._state.segDists[other._state.index]
+            : this._getRouteProgressKm(other.position, route, this._state.index);
           if (otherProgress <= myProgressKm) continue; // behind us
           const gap = otherProgress - myProgressKm;
           if (gap < MIN_SPACING) {
