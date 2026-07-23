@@ -20,15 +20,22 @@ export class SimulationEngine {
   }
 
   _getRealParisTime() {
+    // Use the player's local computer time instead of a fixed timezone
     const now = new Date();
-    const parisStr = now.toLocaleString('en-US', { timeZone: 'Europe/Paris' });
-    const paris = new Date(parisStr);
+    const y = now.getFullYear();
+    const mo = now.getMonth();
+    const d = now.getDate();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const s = now.getSeconds();
+    // Build a UTC timestamp whose wall-clock components equal the local time,
+    // so getUTC*/getUTCDay return the local date/time.
     return {
-      hours: paris.getHours(),
-      minutes: paris.getMinutes(),
-      seconds: paris.getSeconds(),
-      dayOfWeek: paris.getDay(),
-      date: paris,
+      hours: h,
+      minutes: m,
+      seconds: s,
+      dayOfWeek: now.getDay(),
+      date: new Date(Date.UTC(y, mo, d, h, m, s)),
     };
   }
 
