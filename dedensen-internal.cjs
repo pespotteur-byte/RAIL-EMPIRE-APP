@@ -3,8 +3,10 @@ const fs = require('fs');
 const path = require('path');
 
 const TOTAL = Number(process.env.TOTAL) || 80;
+const NO_INCIDENTS = process.env.NO_INCIDENTS === '1';
 const OUT_DIR = '/home/ubuntu/dedensen-test';
-const URL = `http://localhost:8080/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784731013v=1784731014`;
+const BASE_URL = process.env.URL || 'http://localhost:8080';
+const URL = `${BASE_URL}/?benchmark=dedensen&benchmark_total=${TOTAL}&v=1784772840${NO_INCIDENTS ? '&no_incidents=1' : ''}`;
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 const LOG_FILE = path.join(OUT_DIR, 'internal-driver.log');
@@ -24,14 +26,21 @@ async function evaluate(Runtime, expr, opts = {}) {
 }
 
 async function run(client) {
-  const { Page, Runtime, Log } = client;
+  const { Page, Runtime, Log, Network } = client;
   await Page.enable();
   await Runtime.enable();
   await Log.enable();
+  try {
+    await Network.enable();
+    await Network.setBlockedURLs({ urls: ['*://api.open-meteo.com/*', '*://*.basemaps.cartocdn.com/*', '*://*.tile.openstreetmap.org/*', '*://*.tiles.openrailwaymap.org/*'] });
+    log('Blocked external tile/weather URLs');
+  } catch (e) { log('Network block failed', e.message); }
 
   Log.entryAdded(entry => {
     if (entry.entry.level === 'error' || entry.entry.level === 'warning') {
-      log('[browser]', entry.entry.level, entry.entry.text);
+      const text = entry.entry.text || '';
+      if (text.includes('429') || text.includes('ERR_INSUFFICIENT_RESOURCES') || text.includes('Open-Meteo') || text.includes('Failed to load resource')) return;
+      log('[browser]', entry.entry.level, text);
     }
   });
 

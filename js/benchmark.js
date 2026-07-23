@@ -1,5 +1,5 @@
-import { haversineDistance } from './simulation.js?v=1784731014';
-import { adminSync } from './admin-sync.js?v=1784731014';
+import { haversineDistance } from './simulation.js?v=1784772840';
+import { adminSync } from './admin-sync.js?v=1784772840';
 
 const STORAGE_KEY = '__dedensenBenchmark';
 
@@ -208,6 +208,7 @@ export async function startDedensenBenchmark(g, config = {}) {
   adminSync.stopIncidentLoop();
 
   const TOTAL = config.total || 80;
+  const noIncidents = config.noIncidents || false;
   const PILOT = TOTAL <= 8;
 
   const hLat = 52.376761, hLon = 9.741021;
@@ -221,12 +222,21 @@ export async function startDedensenBenchmark(g, config = {}) {
     g.ui.refreshAll = () => {};
   }
 
-  // Center map so all trains stay in high-LOD
+  // Stop tile loading and weather API calls in benchmark mode to avoid 429/ERR_INSUFFICIENT_RESOURCES
   if (g.renderer && g.renderer.tileMap) {
+    g.renderer.tileMap._processQueue = () => {};
+    g.renderer.tileMap._baseQueue = [];
+    g.renderer.tileMap._railQueue = [];
     g.renderer.tileMap.centerLat = hLat;
     g.renderer.tileMap.centerLon = hLon;
     g.renderer.tileMap.zoomLevel = 11;
     g.renderer.tileMap.markDirty();
+  }
+  if (g.weather) {
+    g.weather.update = () => {};
+    g.weather._queuePointFetch = () => {};
+    g.weather._processPointFetchQueue = () => {};
+    g.weather.getSpeedEffectsAt = () => ({ speedCap: Infinity, brakeFactor: 1, speedMult: 1, type: 'clear' });
   }
 
   const stationH = g.world.addStation({
@@ -301,12 +311,14 @@ export async function startDedensenBenchmark(g, config = {}) {
 
   const dateStr = g.engine.getParisDate();
 
-  const works = [
-    { name: 'Ralentissement Haste Dedensen', manualRoute: hasteRouteAuto.slice(Math.max(0, dedHasteIdx - 10), dedHasteIdx + 10), impact: 'slow', speedLimit: 60, startDate: dateStr, endDate: dateStr, startTime: '00:00', endTime: '23:59' },
-    { name: 'Ralentissement Haste Wunstorf', manualRoute: hasteRouteAuto.slice(-30), impact: 'slow', speedLimit: 80, startDate: dateStr, endDate: dateStr, startTime: '00:00', endTime: '23:59' },
-    { name: 'Ralentissement Bremen Dedensen', manualRoute: bremenRouteAuto.slice(Math.max(0, dedBremenIdx - 10), dedBremenIdx + 10), impact: 'slow', speedLimit: 60, startDate: dateStr, endDate: dateStr, startTime: '00:00', endTime: '23:59' }
-  ];
-  for (const w of works) g.worksManager.add(w);
+  if (!noIncidents) {
+    const works = [
+      { name: 'Ralentissement Haste Dedensen', manualRoute: hasteRouteAuto.slice(Math.max(0, dedHasteIdx - 10), dedHasteIdx + 10), impact: 'slow', speedLimit: 60, startDate: dateStr, endDate: dateStr, startTime: '00:00', endTime: '23:59' },
+      { name: 'Ralentissement Haste Wunstorf', manualRoute: hasteRouteAuto.slice(-30), impact: 'slow', speedLimit: 80, startDate: dateStr, endDate: dateStr, startTime: '00:00', endTime: '23:59' },
+      { name: 'Ralentissement Bremen Dedensen', manualRoute: bremenRouteAuto.slice(Math.max(0, dedBremenIdx - 10), dedBremenIdx + 10), impact: 'slow', speedLimit: 60, startDate: dateStr, endDate: dateStr, startTime: '00:00', endTime: '23:59' }
+    ];
+    for (const w of works) g.worksManager.add(w);
+  }
 
   function makePassengerRame(i) {
     const ed = [{ category: 'locomotive', maxSpeed: 160, power: 6000, mass: 80, traction: 'electrique', length: 20, tonnage: 80 }];
@@ -423,6 +435,7 @@ export async function startDedensenBenchmark(g, config = {}) {
   let doorRecord = null;
 
   function maybeForce(timeOfDay) {
+    if (noIncidents) return;
     const svcs = g.scheduleCreator.services;
     if (!forcedDDS && timeOfDay >= startMinute + 8) {
       const movingFreight = svcs.find(s => s._dedensen && s._dedensen.type === 'fret' && s.state === 'moving');
