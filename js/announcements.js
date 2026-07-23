@@ -1,37 +1,46 @@
-// DB-style train announcements using browser Text-to-Speech.
+// DB-style train announcements using a local/nice German TTS voice.
 
-let _voices = [];
-let _voicesReady = false;
+let _currentAudio = null;
 
-function _loadVoices() {
-  if (typeof speechSynthesis === 'undefined') return;
-  _voices = speechSynthesis.getVoices() || [];
-  _voicesReady = true;
-}
-
-if (typeof speechSynthesis !== 'undefined') {
-  _loadVoices();
-  if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = _loadVoices;
+function _stopCurrent() {
+  if (_currentAudio) {
+    _currentAudio.pause();
+    _currentAudio.currentTime = 0;
+    _currentAudio = null;
   }
 }
 
-function _pickDbMaleVoice() {
-  if (!_voicesReady) _loadVoices();
-  const german = _voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('de'));
-  if (!german.length) return null;
-  const male = german.find(v => /male|männlich|hans|stefan|maxim|yannick|konrad|killian/i.test(v.name + ' ' + v.voiceURI));
-  return male || german[0];
+async function _speakTts(text, speed = 1.0) {
+  _stopCurrent();
+  try {
+    const form = new FormData();
+    form.append("text", text);
+    form.append("speed", String(speed));
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    _currentAudio = audio;
+    audio.onended = () => URL.revokeObjectURL(url);
+    await audio.play();
+    return true;
+  } catch (e) {
+    console.warn("TTS serveur indisponible, fallback navigateur", e);
+    return false;
+  }
 }
 
 function _nextStopName(svc, world) {
-  const stops = typeof svc.getCurrentStops === 'function'
+  const stops = typeof svc.getCurrentStops === "function"
     ? svc.getCurrentStops()
     : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
-  if (!stops || !stops.length) return '';
+  if (!stops || !stops.length) return "";
   let idx = Math.max(0, svc.currentStopIndex || 0);
-  // If the train is currently stopped at idx, the next stop is idx+1.
-  if (svc.state === 'stopped_at_station' && idx < stops.length - 1) idx += 1;
+  if (svc.state === "stopped_at_station" && idx < stops.length - 1) idx += 1;
   for (let i = idx; i < stops.length; i++) {
     const s = stops[i];
     if (s && s.stationId) {
@@ -39,14 +48,14 @@ function _nextStopName(svc, world) {
       if (st?.name) return st.name;
     }
   }
-  return '';
+  return "";
 }
 
 function _destinationName(svc, world) {
-  const stops = typeof svc.getCurrentStops === 'function'
+  const stops = typeof svc.getCurrentStops === "function"
     ? svc.getCurrentStops()
     : (svc.isReturnLeg ? svc.returnStops : svc.stops) || [];
-  if (!stops || !stops.length) return '';
+  if (!stops || !stops.length) return "";
   for (let i = stops.length - 1; i >= 0; i--) {
     const s = stops[i];
     if (s && s.stationId) {
@@ -54,31 +63,22 @@ function _destinationName(svc, world) {
       if (st?.name) return st.name;
     }
   }
-  return '';
+  return "";
 }
 
-export function announceTrain(svc, world) {
-  if (typeof speechSynthesis === 'undefined' || !svc || !svc.train) return;
-  const name = svc.train.name || svc.name || 'Zug';
-  const nextStop = _nextStopName(svc, world);
-  const destination = _destinationName(svc, world);
+function _pickDbMaleVoice() {
+  if (typeof speechSynthesis === "undefined") return null;
+  const voices = speechSynthesis.getVoices() || [];
+  const german = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("de"));
+  if (!german.length) return null;
+  const male = german.find(v => /male|männlich|thorsten|hans|stefan|maxim|yannick|konrad|killian/i.test(`${v.name} ${v.voiceURI}`));
+  return male || german[0];
+}
 
-  let text = '';
-  if (svc.cancelled) {
-    text = `Zug ${name} fällt heute aus.`;
-  } else if (svc.state === 'waiting') {
-    const here = svc.train.stoppedAt?.name || nextStop || 'am Bahnsteig';
-    text = `Zug ${name} nach ${destination || 'Endbahnhof'} wartet in ${here}.`;
-  } else {
-    const dest = destination || nextStop || 'Endbahnhof';
-    text = `Zug ${name} nach ${dest}.`;
-    if (nextStop && nextStop !== dest) {
-      text += ` Nächster Halt: ${nextStop}.`;
-    }
-  }
-
+function _browserSpeak(text) {
+  if (typeof speechSynthesis === "undefined") return;
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'de-DE';
+  u.lang = "de-DE";
   const voice = _pickDbMaleVoice();
   if (voice) u.voice = voice;
   u.pitch = 0.9;
@@ -87,6 +87,38 @@ export function announceTrain(svc, world) {
   speechSynthesis.speak(u);
 }
 
+function _buildAnnouncement(svc, world) {
+  if (!svc || !svc.train) return "";
+  const name = svc.train.name || svc.name || "Zug";
+  const nextStop = _nextStopName(svc, world);
+  const destination = _destinationName(svc, world);
+  if (svc.cancelled) return `Zug ${name} fällt heute aus.`;
+  if (svc.state === "waiting") {
+    const here = svc.train.stoppedAt?.name || nextStop || "am Bahnsteig";
+    const dest = destination || nextStop || "Endbahnhof";
+    return `Zug ${name} nach ${dest} wartet in ${here}.`;
+  }
+  const dest = destination || nextStop || "Endbahnhof";
+  let text = `Zug ${name} nach ${dest}.`;
+  if (nextStop && nextStop !== dest) {
+    text += ` Nächster Halt: ${nextStop}.`;
+  }
+  return text;
+}
+
+export async function announceTrain(svc, world) {
+  const text = _buildAnnouncement(svc, world);
+  if (!text) return;
+  const ok = await _speakTts(text, 1.0);
+  if (!ok) _browserSpeak(text);
+}
+
+export async function playAnnouncement(text, speed = 1.0) {
+  const ok = await _speakTts(text, speed);
+  if (!ok) _browserSpeak(text);
+}
+
 export function stopAnnouncements() {
-  if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+  _stopCurrent();
+  if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
 }

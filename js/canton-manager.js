@@ -1,4 +1,4 @@
-import { CantonManager } from './simulation.js?v=1784772845';
+import { CantonManager } from './simulation.js?v=1784772846';
 
 const cantonManager = new CantonManager();
 export { cantonManager };

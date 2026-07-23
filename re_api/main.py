@@ -9,10 +9,11 @@ from typing import Optional
 
 import asyncpg
 import boto3
+import httpx
 import jwt
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from botocore.exceptions import ClientError
 from passlib.context import CryptContext
@@ -25,6 +26,7 @@ S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY", "minioadmin")
 S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "minioadmin")
 S3_BUCKET = os.environ.get("S3_BUCKET", "rail-empire")
 S3_OFFLOAD_BYTES = int(os.environ.get("S3_OFFLOAD_BYTES", "1048576"))
+TTS_BASE = os.environ.get("TTS_BASE", "http://127.0.0.1:8137")
 JWT_SECRET = os.environ.get("JWT_SECRET", "change-me-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = int(os.environ.get("JWT_EXPIRE_DAYS", "30"))
@@ -521,6 +523,47 @@ async def delete_livery(livery_id: int, user: Optional[dict] = Depends(get_curre
     except ClientError:
         pass
     return {"deleted": True, "id": livery_id}
+
+
+@app.get("/api/tts/health")
+async def tts_health():
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            r = await client.get(f"{TTS_BASE}/health")
+            return r.json()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/tts/voices")
+async def tts_voices():
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.get(f"{TTS_BASE}/voices")
+            return r.json()
+    except Exception as e:
+        return {"voices": []}
+
+
+@app.post("/api/tts")
+async def tts(text: str = Form(...), speed: float = Form(1.0)):
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            r = await client.post(
+                f"{TTS_BASE}/tts",
+                params={"text": text, "speed": str(speed)},
+                timeout=60.0,
+            )
+            r.raise_for_status()
+            return StreamingResponse(
+                r.aiter_bytes(),
+                media_type="audio/wav",
+                headers={"Content-Disposition": "inline; filename=announcement.wav"},
+            )
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text) from e
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
 
 app.mount("/", StaticFiles(directory="/home/ubuntu/rail-empire-deploy", html=True), name="static")
