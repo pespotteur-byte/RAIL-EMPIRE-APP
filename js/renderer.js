@@ -1,4 +1,4 @@
-import { TileMap } from './map.js?v=1784772853';
+import { TileMap } from './map.js?v=1784931679';
 
 // LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
 export const LIVEMAP_CATEGORY_COLORS = {
@@ -830,9 +830,10 @@ export class Renderer {
   // dans le sens du mouvement (heading). Fallback polygon si l'image n'est pas chargée.
   _drawTrainIcon(ctx, p, cat, color, bs, state, heading = 0, rame = null) {
     // Try custom livery image first, loading it in background if needed.
-    if (rame?.liveryId) {
-      this._loadLivery(rame.liveryId);
-      const livImg = this._liveryCache.get(rame.liveryId);
+    const rameLivery = rame?.liveryId || rame?.elementDetails?.find(e => e.liveryId)?.liveryId || '';
+    if (rameLivery) {
+      this._loadLivery(rameLivery);
+      const livImg = this._liveryCache.get(rameLivery);
       if (livImg && livImg.complete && livImg.naturalWidth) {
         ctx.save();
         ctx.translate(p.x, p.y);

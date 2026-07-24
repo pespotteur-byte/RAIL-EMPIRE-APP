@@ -169,6 +169,26 @@ async def init_db_pool():
                 updated_at TIMESTAMPTZ DEFAULT now()
             );
             CREATE INDEX IF NOT EXISTS idx_liveries_user ON liveries(user_id);
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='liveries' AND column_name='base_stock_id'
+                ) THEN
+                    ALTER TABLE liveries ADD COLUMN base_stock_id TEXT;
+                END IF;
+            END $$;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name='liveries' AND column_name='base_stock_name'
+                ) THEN
+                    ALTER TABLE liveries ADD COLUMN base_stock_name TEXT;
+                END IF;
+            END $$;
             """
         )
 
@@ -436,6 +456,8 @@ async def ingest_tracks(tracks: list):
 async def upload_livery(
     name: str = Form(...),
     target_category: str = Form(""),
+    base_stock_id: str = Form(""),
+    base_stock_name: str = Form(""),
     file: UploadFile = File(...),
     user: Optional[dict] = Depends(get_current_user),
 ):
@@ -443,6 +465,8 @@ async def upload_livery(
         raise HTTPException(status_code=401, detail="Authentication required")
     if not name.strip():
         raise HTTPException(status_code=400, detail="Name required")
+    if not base_stock_id.strip():
+        raise HTTPException(status_code=400, detail="Base stock material required")
     content = await file.read()
     if not content:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -464,14 +488,16 @@ async def upload_livery(
     async with _db_pool.acquire() as conn:
         row = await conn.fetchrow(
             """
-            INSERT INTO liveries (user_id, name, file_key, target_category, content_type, size_bytes)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO liveries (user_id, name, file_key, target_category, base_stock_id, base_stock_name, content_type, size_bytes)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id
             """,
             user["id"],
             name.strip(),
             file_key,
             target_category.strip() or "all",
+            base_stock_id.strip(),
+            base_stock_name.strip() or None,
             content_type,
             len(content),
         )
@@ -479,6 +505,8 @@ async def upload_livery(
         "id": row["id"],
         "name": name.strip(),
         "target_category": target_category.strip() or "all",
+        "base_stock_id": base_stock_id.strip(),
+        "base_stock_name": base_stock_name.strip() or None,
         "url": f"/liveries/{row['id']}",
         "size": len(content),
     }
@@ -490,7 +518,7 @@ async def list_liveries(user: Optional[dict] = Depends(get_current_user)):
         raise HTTPException(status_code=401, detail="Authentication required")
     async with _db_pool.acquire() as conn:
         rows = await conn.fetch(
-            "SELECT id, name, target_category, size_bytes, updated_at FROM liveries WHERE user_id = $1 ORDER BY updated_at DESC",
+            "SELECT id, name, target_category, base_stock_id, base_stock_name, size_bytes, updated_at FROM liveries WHERE user_id = $1 ORDER BY updated_at DESC",
             user["id"],
         )
     return [
@@ -498,6 +526,8 @@ async def list_liveries(user: Optional[dict] = Depends(get_current_user)):
             "id": r["id"],
             "name": r["name"],
             "target_category": r["target_category"],
+            "base_stock_id": r["base_stock_id"],
+            "base_stock_name": r["base_stock_name"],
             "size": r["size_bytes"],
             "url": f"/liveries/{r['id']}",
             "updated_at": r["updated_at"].isoformat() if r["updated_at"] else None,

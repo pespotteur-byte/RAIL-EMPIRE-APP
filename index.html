@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784772853">
+  <link rel="stylesheet" href="style.css?v=1784931679">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -221,6 +221,9 @@
           <div class="livery-upload" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding:12px;border:1px dashed var(--border);border-radius:8px;background:rgba(255,255,255,0.03)">
             <input type="file" id="livery-page-file" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;min-width:160px;font-size:12px">
             <input type="text" id="livery-page-name" placeholder="Nom de la livrée" style="flex:1;min-width:140px">
+            <select id="livery-page-base-stock" required style="flex:1;min-width:180px;padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
+              <option value="">— Matériel d'origine —</option>
+            </select>
             <button id="btn-upload-page-livery" class="btn-primary">Uploader</button>
           </div>
           <div id="liveries-list" class="liveries-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
@@ -1410,6 +1413,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784772853"></script>
+  <script type="module" src="js/main.js?v=1784931679"></script>
 </body>
 </html>

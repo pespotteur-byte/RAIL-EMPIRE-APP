@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1784772853';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784772853';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784772853';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784772853';
+import { haversineDistance } from './simulation.js?v=1784931679';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784931679';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931679';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931679';
 
 export const UIEntity = {
   toggleStationCreation() {
@@ -929,10 +929,13 @@ export const UIEntity = {
       const nameInput = document.getElementById('rame-livery-name');
       const file = fileInput?.files?.[0];
       const name = (nameInput?.value || '').trim();
+      const base = this.currentRameElements[0];
+      if (!base) return alertToast('Ajoutez d\'abord un engin dans la rame pour en faire le matériel d\'origine');
       if (!file) return alertToast('Choisissez une image');
       if (!name) return alertToast('Nommez la livrée');
+      const baseStockId = base.stockId || base.id;
       try {
-        const l = await this.game.liveryManager.upload(file, name);
+        const l = await this.game.liveryManager.upload(file, name, baseStockId, base.name);
         await this._populateLiverySelect(l.id);
         document.getElementById('rame-name').value = l.name;
         fileInput.value = '';
@@ -976,7 +979,7 @@ export const UIEntity = {
       if (Array.from(sel.options).some(o => o.value === current)) sel.value = current;
     },
 
-  openRameModal() {
+  async openRameModal() {
       this.currentRameElements = [];
       this.editingRameId = null;
       this._ramePickerPage = 0;
@@ -996,8 +999,32 @@ export const UIEntity = {
         depotSel.innerHTML = '<option value="">— Aucun —</option>' + depots.map(d => `<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}</option>`).join('');
       }
       document.getElementById('modal-rame')?.classList.remove('hidden');
+      await this._loadLiveryStockItems();
       this.renderRamePicker();
       this.renderRameAssembly();
+    },
+
+  async _loadLiveryStockItems() {
+      this._liveryStockItems = {};
+      try {
+        const liveries = await this.game.liveryManager.list();
+        for (const l of liveries) {
+          const base = this.game.rollingStock.getById(l.base_stock_id);
+          if (!base) continue;
+          const id = `livery:${l.id}`;
+          this._liveryStockItems[id] = {
+            ...base,
+            id,
+            name: l.name,
+            liveryId: l.id,
+            liveryName: l.name,
+            baseStockId: base.id,
+            imageData: base.imageData || null,
+          };
+        }
+      } catch (e) {
+        console.warn('Failed to load livery stock items:', e);
+      }
     },
 
   renderRamePicker() {
@@ -1005,7 +1032,9 @@ export const UIEntity = {
       if (!container) return;
       const pager = document.getElementById('rame-picker-pager');
       const countEl = document.getElementById('rame-picker-count');
-      const all = this.game.rollingStock.getAll();
+      const stock = this.game.rollingStock.getAll();
+      const liveries = Object.values(this._liveryStockItems || {});
+      const all = [...stock, ...liveries];
       if (all.length === 0) {
         container.innerHTML = '<p style="color:var(--text3);font-size:11px">Aucun materiel. Ajoutez-en d\'abord dans la page Materiel.</p>';
         if (pager) pager.innerHTML = '';
@@ -1025,7 +1054,8 @@ export const UIEntity = {
         (i.notes || '').toLowerCase().includes(query) ||
         (i.category || '').toLowerCase().includes(query) ||
         (i.traction || '').toLowerCase().includes(query) ||
-        (i.wagonSubCategory || '').toLowerCase().includes(query));
+        (i.wagonSubCategory || '').toLowerCase().includes(query) ||
+        (i.liveryName || '').toLowerCase().includes(query));
       const PAGE = 60;
       const total = items.length;
       const pages = Math.max(1, Math.ceil(total / PAGE));
@@ -1043,13 +1073,24 @@ export const UIEntity = {
         const safeName = escapeHtml(item.name);
         const safeCategory = escapeHtml(item.category);
         const safeNotes = item.notes ? ` — ${escapeHtml(item.notes)}` : '';
+        const baseLabel = item.liveryName ? `Livrée sur ${escapeHtml(item.category)}` : `${safeCategory}${safeNotes}`;
+        const price = item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : '';
+        let imgHtml;
+        if (item.liveryId) {
+          imgHtml = `<img data-livery-id="${Number(item.liveryId)}" src="" loading="lazy" alt="${safeName}" style="height:30px;width:60px;object-fit:contain">`;
+        } else if (item.imageData) {
+          imgHtml = `<img src="${escapeHtml(item.imageData)}" loading="lazy" alt="${safeName}">`;
+        } else {
+          imgHtml = `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`;
+        }
         return `
-          <div class="stock-picker-item" onclick="game.ui.addToRame('${jsString(item.id)}', event)" title="${safeName} — ${safeCategory}${safeNotes}, ${item.maxSpeed} km/h, ${item.length}m">
-            ${item.imageData ? `<img src="${escapeHtml(item.imageData)}" loading="lazy" alt="${safeName}">` : `<div style="height:30px;width:60px;background:var(--bg);border-radius:2px"></div>`}
-            <span>${safeName}${item.purchasePrice ? ` <span style="color:var(--orange);font-size:9px">${(item.purchasePrice/1000).toFixed(0)}k€</span>` : ''}</span>
+          <div class="stock-picker-item" onclick="game.ui.addToRame('${jsString(item.id)}', event)" title="${safeName} — ${baseLabel}, ${item.maxSpeed} km/h, ${item.length}m">
+            ${imgHtml}
+            <span>${safeName}${price}</span>
           </div>
         `;
       }).join('');
+      this._applyLiveryImages(container);
       if (pager) {
         pager.innerHTML = pages <= 1 ? '' : `
           <button class="btn-sm" ${this._ramePickerPage === 0 ? 'disabled' : ''} onclick="game.ui.ramePickerPageGo(${this._ramePickerPage - 1})">‹ Préc.</button>
@@ -1065,7 +1106,19 @@ export const UIEntity = {
     },
 
   addToRame(stockId, evOrFlipped) {
-      const item = this.game.rollingStock.getById(stockId);
+      let item = this.game.rollingStock.getById(stockId);
+      let liveryId = '';
+      let liveryName = '';
+      let baseStockId = stockId;
+      if (!item && stockId.startsWith('livery:')) {
+        const virtual = this._liveryStockItems?.[stockId];
+        if (!virtual) return;
+        item = this.game.rollingStock.getById(virtual.baseStockId);
+        if (!item) return;
+        liveryId = virtual.liveryId;
+        liveryName = virtual.liveryName;
+        baseStockId = virtual.baseStockId;
+      }
       if (!item) return;
       const flipped = (evOrFlipped && (typeof evOrFlipped === 'boolean' ? evOrFlipped : evOrFlipped.ctrlKey)) || false;
       let qty = parseInt(document.getElementById('rame-qty')?.value || '1', 10);
@@ -1081,8 +1134,17 @@ export const UIEntity = {
         const instanceNumber = item.seriesName
           ? this.game.rollingStock.nextSeriesNumber(item.seriesName)
           : null;
-        const instanceName = instanceNumber || item.name;
-        this.currentRameElements.push({ ...item, stockId: item.id, instanceName, instanceNumber, flipped });
+        const instanceName = liveryName || instanceNumber || item.name;
+        this.currentRameElements.push({
+          ...item,
+          stockId: baseStockId,
+          name: liveryName || item.name,
+          instanceName,
+          instanceNumber,
+          liveryId,
+          liveryName,
+          flipped,
+        });
         // Annexe 8 : le nom/n° de série de la rame reprend le premier engin numéroté.
         if (firstInRame && n === 0) {
           if (nameInput && !nameInput.value.trim()) nameInput.value = instanceName;
@@ -1130,8 +1192,10 @@ export const UIEntity = {
         container.innerHTML = '<div class="rame-assembly-images">' + this.currentRameElements.map((el, i) => {
           const label = escapeHtml(el.instanceName || el.name);
           let imgHtml = '';
-          if (el.imageData) {
-            const transforms = [];
+          const transforms = [];
+          if (el.liveryId) {
+            imgHtml = `<img data-livery-id="${Number(el.liveryId)}" src="" alt="${label}" title="${label} (clic = retirer, Ctrl+clic = retourner)" onclick="game.ui.onRameElementClick(${i}, event)" class="rame-element-img">`;
+          } else if (el.imageData) {
             if (el.isDrivingTrailer && this.currentRameElements.length > 1) {
               const isLeft = i === 0;
               const isRight = i === last;
@@ -1148,8 +1212,12 @@ export const UIEntity = {
           } else {
             imgHtml = `<div class="rame-element-placeholder" title="${label}" onclick="game.ui.removeFromRame(${i})">${label}</div>`;
           }
+          if (el.flipped && el.liveryId) transforms.push('scaleX(-1)');
+          const style = transforms.length ? ` style="transform: ${transforms.join(' ')};"` : '';
+          if (style) imgHtml = imgHtml.replace(/class="rame-element-img"/, `class="rame-element-img"${style}`);
           return `<div class="rame-element-wrap">${imgHtml}<span class="rame-element-label">${label}</span></div>`;
         }).join('') + '</div>';
+        this._applyLiveryImages(container);
       }
 
       const totalLen = this.currentRameElements.reduce((s, e) => s + e.length, 0);
@@ -1179,9 +1247,15 @@ export const UIEntity = {
   saveRame() {
       const nameInput = document.getElementById('rame-name');
       const liverySel = document.getElementById('rame-livery');
-      const liveryId = liverySel?.value || '';
-      const liveryName = liveryId ? (liverySel.options[liverySel.selectedIndex]?.textContent || '') : '';
-      const name = (nameInput?.value || liveryName).trim();
+      let liveryId = liverySel?.value || '';
+      let liveryName = liveryId ? (liverySel.options[liverySel.selectedIndex]?.textContent || '') : '';
+      // Si aucune livrée n'est sélectionnée, la rame peut hériter de la livrée du premier élément.
+      const firstElement = this.currentRameElements[0] || null;
+      if (!liveryId && firstElement?.liveryId) {
+        liveryId = firstElement.liveryId;
+        liveryName = firstElement.liveryName;
+      }
+      const name = (nameInput?.value || liveryName || firstElement?.instanceName || '').trim();
       if (!name) return alertToast('Nom requis');
       if (this.currentRameElements.length === 0) return alertToast('Ajoutez au moins un element');
 
@@ -1195,9 +1269,8 @@ export const UIEntity = {
 
       const depotId = document.getElementById('rame-depot')?.value || '';
       const serialNumber = document.getElementById('rame-serial')?.value.trim() || '';
-      const finalName = liveryId ? liveryName : name;
       this.game.rameManager.add({
-        name: finalName,
+        name,
         serialNumber,
         depotId,
         liveryId,
@@ -1209,10 +1282,12 @@ export const UIEntity = {
           maxSpeed: e.maxSpeed, tonnage: e.tonnage,
           mass: e.mass || e.tonnage, power: e.power || 0,
           passengerCapacity: e.passengerCapacity, freightCapacity: e.freightCapacity,
-          length: e.length, imageData: e.imageData,
+          length: e.length, imageData: e.imageData || '',
           purchasePrice: e.purchasePrice || 0,
           wagonSubCategory: e.wagonSubCategory || '',
           flipped: e.flipped || false,
+          liveryId: e.liveryId || '',
+          liveryName: e.liveryName || '',
         })),
       });
       document.getElementById('modal-rame')?.classList.add('hidden');
@@ -1259,6 +1334,9 @@ export const UIEntity = {
         const images = r.elementDetails.map(e => {
           const label = escapeHtml(e.instanceName || e.name);
           const style = e.flipped ? 'transform: scaleX(-1);' : '';
+          if (e.liveryId) {
+            return `<img data-livery-id="${Number(e.liveryId)}" src="" alt="${label}" title="${label}"${style ? ` style="${style}"` : ''}>`;
+          }
           return e.imageData
             ? `<img src="${escapeHtml(e.imageData)}" alt="${label}" title="${label}"${style ? ` style="${style}"` : ''}>`
             : `<span class="rame-text-el">${label}</span>`;
@@ -1289,6 +1367,7 @@ export const UIEntity = {
           </div>
         </div>
       `}).join('');
+      this._applyLiveryImages(container);
 
       if (pager) {
         if (pages <= 1) { pager.innerHTML = ''; }
@@ -1346,19 +1425,38 @@ export const UIEntity = {
   setupLiveryPage() {
       document.getElementById('btn-upload-page-livery')?.addEventListener('click', () => this.uploadLiveryPage());
       document.getElementById('livery-page-file')?.addEventListener('change', () => this.uploadLiveryPage());
+      this._populateLiveryBaseStockSelect();
+    },
+
+  _populateLiveryBaseStockSelect() {
+      const sel = document.getElementById('livery-page-base-stock');
+      if (!sel) return;
+      const current = sel.value;
+      const stock = this.game.rollingStock.getAll();
+      let html = '<option value="">— Matériel d\'origine —</option>';
+      for (const item of stock) {
+        html += `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} (${escapeHtml(item.category)})</option>`;
+      }
+      sel.innerHTML = html;
+      if (stock.some(i => i.id === current)) sel.value = current;
     },
 
   async uploadLiveryPage() {
       const fileInput = document.getElementById('livery-page-file');
       const nameInput = document.getElementById('livery-page-name');
+      const baseSel = document.getElementById('livery-page-base-stock');
       const file = fileInput?.files?.[0];
       const name = (nameInput?.value || file?.name || '').trim();
+      const baseStockId = baseSel?.value || '';
       if (!file) return alertToast('Choisissez une image');
       if (!name) return alertToast('Nommez la livrée');
+      if (!baseStockId) return alertToast('Sélectionnez le matériel d\'origine');
+      const baseItem = this.game.rollingStock.getById(baseStockId);
       try {
-        await this.game.liveryManager.upload(file, name);
+        await this.game.liveryManager.upload(file, name, baseStockId, baseItem?.name || '');
         fileInput.value = '';
         nameInput.value = '';
+        baseSel.value = '';
         alertToast('Livrée uploadée');
         this.renderLiveriesPage();
       } catch (e) {
@@ -1369,6 +1467,7 @@ export const UIEntity = {
   async renderLiveriesPage() {
       const container = document.getElementById('liveries-list');
       if (!container) return;
+      this._populateLiveryBaseStockSelect();
       try {
         const liveries = await this.game.liveryManager.list();
         if (liveries.length === 0) {
@@ -1378,17 +1477,18 @@ export const UIEntity = {
         const rames = this.game.rameManager.getAll();
         const cards = [];
         for (const l of liveries) {
-          const imgUrl = await this.game.liveryManager.loadImage(l.id);
           const usedBy = rames.filter(r => String(r.liveryId) === String(l.id));
           const rameList = usedBy.length
             ? `<div style="margin-top:6px;font-size:11px;color:var(--text2)">Utilisée par : ${usedBy.map(r => escapeHtml(r.name)).join(', ')}</div>`
             : '<div style="margin-top:6px;font-size:11px;color:var(--text3)">Non utilisée</div>';
+          const baseName = escapeHtml(l.base_stock_name || this.game.rollingStock.getById(l.base_stock_id)?.name || l.base_stock_id || 'Inconnu');
           cards.push(`
             <div class="livery-card" style="border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg2);display:flex;flex-direction:column;gap:6px">
               <div style="height:100px;background:var(--bg1);border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden">
-                ${imgUrl ? `<img src="${escapeHtml(imgUrl)}" style="max-width:100%;max-height:100%;object-fit:contain">` : '<span style="color:var(--text3);font-size:12px">Chargement...</span>'}
+                <img data-livery-id="${Number(l.id)}" src="" style="max-width:100%;max-height:100%;object-fit:contain" alt="${escapeHtml(l.name)}">
               </div>
               <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(l.name)}</div>
+              <div style="font-size:11px;color:var(--text2)">Sur : ${baseName}</div>
               <div style="font-size:10px;color:var(--text3)">${(l.size / 1024).toFixed(1)} kB</div>
               ${rameList}
               <button class="btn-sm danger" onclick="game.ui.deleteLiveryPage(${Number(l.id)})">Supprimer</button>
@@ -1396,9 +1496,25 @@ export const UIEntity = {
           `);
         }
         container.innerHTML = cards.join('');
+        this._applyLiveryImages(container);
       } catch (e) {
         console.warn('renderLiveriesPage error:', e);
         container.innerHTML = '<p style="color:var(--red);text-align:center;padding:40px">Erreur de chargement des livrées.</p>';
+      }
+    },
+
+  async _applyLiveryImages(container) {
+      if (!container) return;
+      const imgs = container.querySelectorAll('img[data-livery-id]');
+      for (const img of imgs) {
+        const id = img.getAttribute('data-livery-id');
+        if (!id) continue;
+        try {
+          const url = await this.game.liveryManager.loadImage(id);
+          if (url) img.src = url;
+        } catch (e) {
+          console.warn('Livery image load failed:', e);
+        }
       }
     },
 

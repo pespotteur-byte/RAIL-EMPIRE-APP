@@ -12,11 +12,13 @@ export class LiveryManager {
     return h;
   }
 
-  async upload(file, name, targetCategory = 'all') {
+  async upload(file, name, baseStockId = '', baseStockName = '', targetCategory = 'all') {
     const form = new FormData();
     form.append('file', file);
     form.append('name', name || file.name);
     form.append('target_category', targetCategory);
+    form.append('base_stock_id', baseStockId);
+    form.append('base_stock_name', baseStockName);
     const res = await fetch('/liveries', {
       method: 'POST',
       headers: this._headers(),

@@ -1,7 +1,7 @@
 const CDP = require('chrome-remote-interface');
 
 const BASE = 'http://localhost:8001';
-const URL_HOME = `${BASE}/?v=1784772846`;
+const URL_HOME = `${BASE}/?v=1784931679`;
 const PNG_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -40,7 +40,8 @@ async function main() {
   const l = await evaluate(Runtime, `
     const blob = await fetch('${PNG_DATA}').then(r => r.blob());
     const file = new File([blob], 'red.png', { type: 'image/png' });
-    await game.liveryManager.upload(file, 'RougeVif')
+    const base = game.rollingStock.getAll()[0];
+    await game.liveryManager.upload(file, 'RougeVif', base?.id || 'stock-1', base?.name || 'Base')
   `);
   console.log('upload result:', l);
 
