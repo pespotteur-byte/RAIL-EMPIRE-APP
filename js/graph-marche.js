@@ -18,6 +18,14 @@ export class GraphMarche {
     this.stationAId = null;
     this.stationBId = null;
     this.mode = 'theoretical'; // 'theoretical' or 'live'
+    this.view = { timeStart: 0, timeEnd: 1440, distStart: 0, distEnd: null };
+    this._lastTotalDist = null;
+    this._isPanning = false;
+    this._panStart = null;
+  }
+
+  resetView(totalDist) {
+    this.view = { timeStart: 0, timeEnd: 1440, distStart: 0, distEnd: totalDist || this.view.distEnd || 1 };
   }
 
   /** Record live train positions each minute */
@@ -141,7 +149,14 @@ export class GraphMarche {
             <button id="gm-mode-theo" class="btn-sm" style="font-size:10px;padding:4px 10px;border-radius:4px">Théorique</button>
             <button id="gm-mode-live" class="btn-sm" style="font-size:10px;padding:4px 10px;border-radius:4px">Live</button>
           </div>
-          <button id="gm-clear" class="btn-sm" style="font-size:9px;background:#334155;margin-left:auto;color:#fff">Effacer live</button>
+          <button id="gm-clear" class="btn-sm" style="font-size:9px;background:#334155;color:#fff">Effacer live</button>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--text3)">Zoom</span>
+            <button id="gm-zoom-out" class="btn-sm" style="font-size:12px;width:28px">−</button>
+            <button id="gm-zoom-in" class="btn-sm" style="font-size:12px;width:28px">+</button>
+            <button id="gm-zoom-reset" class="btn-sm" style="font-size:9px">Reset</button>
+            <span id="gm-zoom-value" style="font-size:11px;color:var(--text3);min-width:42px">100%</span>
+          </div>
         </div>
         <canvas id="gm-canvas" width="900" height="600" style="width:100%;max-width:100%;height:auto;border-radius:6px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></canvas>
       </div>
@@ -169,8 +184,8 @@ export class GraphMarche {
     btnTheo.addEventListener('click', () => { this.mode = 'theoretical'; updateModeUI(); this._draw(game); });
     btnLive.addEventListener('click', () => { this.mode = 'live'; updateModeUI(); this._draw(game); });
 
-    selA.addEventListener('change', () => { this.stationAId = selA.value || null; this._draw(game); });
-    selB.addEventListener('change', () => { this.stationBId = selB.value || null; this._draw(game); });
+    selA.addEventListener('change', () => { this.stationAId = selA.value || null; this.view.distEnd = null; this._draw(game); });
+    selB.addEventListener('change', () => { this.stationBId = selB.value || null; this.view.distEnd = null; this._draw(game); });
 
     document.getElementById('gm-clear')?.addEventListener('click', () => {
       this.records = [];
@@ -178,6 +193,43 @@ export class GraphMarche {
       this._colorIdx = 0;
       this._draw(game);
     });
+
+    const updateZoomUI = () => {
+      const zoomPct = Math.round((1440 / Math.max(1, this.view.timeEnd - this.view.timeStart)) * 100);
+      const el = document.getElementById('gm-zoom-value');
+      if (el) el.textContent = zoomPct + '%';
+    };
+    updateZoomUI();
+
+    document.getElementById('gm-zoom-in')?.addEventListener('click', () => { this.zoom(1.25, game); updateZoomUI(); });
+    document.getElementById('gm-zoom-out')?.addEventListener('click', () => { this.zoom(0.8, game); updateZoomUI(); });
+    document.getElementById('gm-zoom-reset')?.addEventListener('click', () => { this.resetView(this._lastTotalDist || 1); this._draw(game); updateZoomUI(); });
+
+    const gmCanvas = document.getElementById('gm-canvas');
+    if (gmCanvas) {
+      gmCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = gmCanvas.getBoundingClientRect();
+        const factor = e.deltaY < 0 ? 1.2 : 0.833;
+        this.zoom(factor, game, e.clientX - rect.left, e.clientY - rect.top);
+        updateZoomUI();
+      }, { passive: false });
+      gmCanvas.addEventListener('mousedown', (e) => {
+        this._isPanning = true;
+        this._panStart = { x: e.clientX, y: e.clientY, view: { ...this.view } };
+        gmCanvas.style.cursor = 'grabbing';
+      });
+      const onMove = (e) => {
+        if (!this._isPanning || !this._panStart) return;
+        const dx = e.clientX - this._panStart.x;
+        const dy = e.clientY - this._panStart.y;
+        this.pan(dx, dy, game);
+      };
+      const onUp = () => { this._isPanning = false; this._panStart = null; gmCanvas.style.cursor = ''; };
+      gmCanvas.addEventListener('mousemove', onMove);
+      gmCanvas.addEventListener('mouseup', onUp);
+      gmCanvas.addEventListener('mouseleave', onUp);
+    }
 
     this._draw(game);
   }
@@ -198,13 +250,57 @@ export class GraphMarche {
     return { ctx, W: styleW, H: styleH, dpr };
   }
 
+  _chartMetrics(canvas) {
+    const pad = { top: 72, right: 24, bottom: 40, left: 58 };
+    const W = canvas.clientWidth || canvas.width;
+    const H = canvas.clientHeight || Math.round(W * (canvas.height / canvas.width)) || canvas.height;
+    return { W, H, pad, chartW: W - pad.left - pad.right, chartH: H - pad.top - pad.bottom };
+  }
+
+  zoom(factor, game, cx, cy) {
+    const canvas = document.getElementById('gm-canvas');
+    if (!canvas || !this._lastTotalDist) return;
+    const { W, H, pad, chartW, chartH } = this._chartMetrics(canvas);
+    if (cx == null) cx = W / 2;
+    if (cy == null) cy = H / 2;
+    const totalDist = this._lastTotalDist;
+    const dCenter = this.view.distStart + ((cx - pad.left) / chartW) * (this.view.distEnd - this.view.distStart);
+    const tCenter = this.view.timeStart + ((cy - pad.top) / chartH) * (this.view.timeEnd - this.view.timeStart);
+    const newDistRange = Math.max(0.5, Math.min(totalDist, (this.view.distEnd - this.view.distStart) / factor));
+    const newTimeRange = Math.max(30, Math.min(1440, (this.view.timeEnd - this.view.timeStart) / factor));
+    const dStart = dCenter - ((cx - pad.left) / chartW) * newDistRange;
+    const tStart = tCenter - ((cy - pad.top) / chartH) * newTimeRange;
+    this.view.distStart = Math.max(0, Math.min(totalDist - newDistRange, dStart));
+    this.view.distEnd = this.view.distStart + newDistRange;
+    this.view.timeStart = Math.max(0, Math.min(1440 - newTimeRange, tStart));
+    this.view.timeEnd = this.view.timeStart + newTimeRange;
+    this._draw(game);
+  }
+
+  pan(dx, dy, game) {
+    if (!this._panStart || !this._lastTotalDist) return;
+    const canvas = document.getElementById('gm-canvas');
+    if (!canvas) return;
+    const { pad, chartW, chartH } = this._chartMetrics(canvas);
+    const start = this._panStart.view;
+    const distRange = start.distEnd - start.distStart;
+    const timeRange = start.timeEnd - start.timeStart;
+    const totalDist = this._lastTotalDist;
+    const dDelta = -dx / chartW * distRange;
+    const tDelta = -dy / chartH * timeRange;
+    this.view.distStart = Math.max(0, Math.min(totalDist - distRange, start.distStart + dDelta));
+    this.view.distEnd = this.view.distStart + distRange;
+    this.view.timeStart = Math.max(0, Math.min(1440 - timeRange, start.timeStart + tDelta));
+    this.view.timeEnd = this.view.timeStart + timeRange;
+    this._draw(game);
+  }
+
   _draw(game) {
     const canvas = document.getElementById('gm-canvas');
     if (!canvas) return;
     const { ctx, W, H, dpr } = this._fitCanvas(canvas);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // JT TRAN GRAPH white background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, H);
 
@@ -231,20 +327,38 @@ export class GraphMarche {
       return;
     }
 
-    // Reference station list = longest path between A and B
     const ref = matches.reduce((best, m) => Math.abs(m.idxB - m.idxA) > Math.abs(best.idxB - best.idxA) ? m : best, matches[0]);
     const refStops = this._getStationsBetween(ref.svc, ref.idxA, ref.idxB);
     const refDists = this._calcDistances(refStops, game, ref.svc);
     const totalDist = refDists[refDists.length - 1] || 1;
 
-    // Precompute station x positions
-    const stationXs = refDists.map(d => pad.left + (d / totalDist) * chartW);
+    const prevTotalDist = this._lastTotalDist;
+    this._lastTotalDist = totalDist;
+    if (this.view.distEnd == null || Math.abs(totalDist - (prevTotalDist || 0)) > 0.001) {
+      this.resetView(totalDist);
+    }
+    const dRange = Math.max(0.001, this.view.distEnd - this.view.distStart);
+    const tRange = Math.max(1, this.view.timeEnd - this.view.timeStart);
+    const dToX = (d) => pad.left + ((d - this.view.distStart) / dRange) * chartW;
+    const tToY = (t) => pad.top + ((t - this.view.timeStart) / tRange) * chartH;
 
-    // Grid: vertical yellow station lines
-    ctx.strokeStyle = '#facc15'; // yellow-400
+    const stationNames = refStops.map(s => {
+      const st = game.world.getStationById(s.stationId);
+      return st ? st.name : '?';
+    });
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pad.left, pad.top, chartW, chartH);
+    ctx.clip();
+
+    // Grid: vertical station lines
+    ctx.strokeStyle = '#facc15';
     ctx.lineWidth = 0.8;
     for (let i = 0; i < refStops.length; i++) {
-      const x = stationXs[i];
+      const d = refDists[i];
+      if (d < this.view.distStart || d > this.view.distEnd) continue;
+      const x = dToX(d);
       ctx.beginPath();
       ctx.moveTo(x, pad.top);
       ctx.lineTo(x, H - pad.bottom);
@@ -252,8 +366,11 @@ export class GraphMarche {
     }
 
     // Grid: horizontal time lines every 10 min, stronger every 30 min
-    for (let t = 0; t <= 1440; t += 10) {
-      const y = pad.top + (t / 1440) * chartH;
+    const tStartGrid = Math.floor(this.view.timeStart / 10) * 10;
+    const tEndGrid = Math.ceil(this.view.timeEnd / 10) * 10;
+    for (let t = tStartGrid; t <= tEndGrid; t += 10) {
+      if (t < this.view.timeStart || t > this.view.timeEnd) continue;
+      const y = tToY(t);
       const is30 = t % 30 === 0;
       const isHour = t % 60 === 0;
       ctx.strokeStyle = is30 ? '#facc15' : 'rgba(250, 204, 21, 0.45)';
@@ -267,64 +384,6 @@ export class GraphMarche {
     }
     ctx.setLineDash([]);
 
-    // Time labels on left (orange/yellow)
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#b45309'; // amber-700 for readability on white
-    for (let t = 0; t <= 1440; t += 30) {
-      const y = pad.top + (t / 1440) * chartH;
-      const label = t === 1440 ? '00:00' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
-      ctx.fillText(label, pad.left - 6, y);
-    }
-
-    // Station labels on top (black, staggered to avoid overlap)
-    ctx.fillStyle = '#000000';
-    ctx.font = '9px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    const stationNames = refStops.map(s => {
-      const st = game.world.getStationById(s.stationId);
-      return st ? st.name : '?';
-    });
-    const maxNameWidth = Math.max(40, chartW / refStops.length - 8);
-    for (let i = 0; i < refStops.length; i++) {
-      const x = stationXs[i];
-      const baseY = i % 2 === 0 ? pad.top - 10 : pad.top - 26;
-      const words = stationNames[i].split(/\s+/);
-      // Wrap to fit max width
-      const lines = [];
-      let line = '';
-      ctx.font = '9px sans-serif';
-      for (const w of words) {
-        const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxNameWidth && line) {
-          lines.push(line);
-          line = w;
-        } else {
-          line = test;
-        }
-      }
-      if (line) lines.push(line);
-      if (lines.length === 0) lines.push(stationNames[i]);
-      // If still too wide, truncate with ellipsis
-      if (ctx.measureText(lines[lines.length - 1]).width > maxNameWidth) {
-        let s = lines[lines.length - 1];
-        while (ctx.measureText(s + '…').width > maxNameWidth && s.length > 1) s = s.slice(0, -1);
-        lines[lines.length - 1] = s + '…';
-      }
-      const lineHeight = 10;
-      const startY = baseY - (lines.length - 1) * lineHeight;
-      for (let l = 0; l < lines.length; l++) {
-        ctx.fillText(lines[l], x, startY + l * lineHeight);
-      }
-    }
-
-    // Border around chart area
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(pad.left, pad.top, chartW, chartH);
-
     const legendItems = [];
 
     if (this.mode === 'theoretical') {
@@ -335,17 +394,17 @@ export class GraphMarche {
         this._styleForService(m.svc, ctx);
         ctx.beginPath();
 
-        let labelPoints = []; // collect points to pick the longest leg for the label
+        let labelPoints = [];
 
         for (let i = start; i <= end; i++) {
           const stop = m.svc.stops[i];
           const refIdx = refStops.findIndex(rs => rs.stationId === stop.stationId);
           if (refIdx < 0) continue;
-          const x = stationXs[refIdx];
+          const x = dToX(refDists[refIdx]);
           const arr = stop.arrivalTime ?? stop.departureTime ?? 0;
           const dep = stop.departureTime ?? arr;
-          const yArr = pad.top + (arr / 1440) * chartH;
-          const yDep = pad.top + (dep / 1440) * chartH;
+          const yArr = tToY(arr);
+          const yDep = tToY(dep);
 
           if (i === start) {
             ctx.moveTo(x, yDep);
@@ -363,7 +422,7 @@ export class GraphMarche {
               const prevDep = prevStop.departureTime ?? prevStop.arrivalTime ?? 0;
               const duration = ((arr - prevDep) % 1440 + 1440) % 1440;
               labelPoints.push({
-                x1: stationXs[prevRef], y1: pad.top + (prevDep / 1440) * chartH,
+                x1: dToX(refDists[prevRef]), y1: tToY(prevDep),
                 x2: x, y2: yArr, duration,
                 arr, dep: prevDep, name: m.svc.name,
               });
@@ -372,16 +431,16 @@ export class GraphMarche {
         }
         ctx.stroke();
 
-        // Draw service label on the longest leg, avoiding overflow
         if (labelPoints.length > 0) {
           const lp = labelPoints.reduce((best, p) => p.duration > best.duration ? p : best, labelPoints[0]);
-          this._drawTrainLabel(ctx, lp.x1, lp.y1, lp.x2, lp.y2, m.svc.name);
+          if (lp.x1 >= pad.left - 10 && lp.x2 <= W - pad.right + 10 && lp.y1 >= pad.top - 10 && lp.y2 <= H - pad.bottom + 10) {
+            this._drawTrainLabel(ctx, lp.x1, lp.y1, lp.x2, lp.y2, m.svc.name);
+          }
         }
 
         legendItems.push({ name: m.svc.name, color: '#000000' });
       }
     } else {
-      // Live mode
       const serviceIds = new Set(matches.map(m => m.svc.id));
       const byService = {};
       for (const r of this.records) {
@@ -413,18 +472,27 @@ export class GraphMarche {
           if (r.lat == null || r.lon == null) continue;
           const dist = this._interpolateDist(r.lat, r.lon, routeCoords);
           if (dist === null) continue;
-          const x = pad.left + (dist / totalDist) * chartW;
-          const y = pad.top + (r.time / 1440) * chartH;
+          const x = dToX(dist);
+          const y = tToY(r.time);
+          const inView = r.time >= this.view.timeStart && r.time <= this.view.timeEnd;
+
+          if (!inView) {
+            prev = { x, y, time: r.time };
+            continue;
+          }
 
           if (prev && r.time < prev.time) {
-            // Wrap around midnight: interpolate to 24:00 then restart at 00:00
-            const duration = (1440 - prev.time) + r.time;
-            const frac = (1440 - prev.time) / duration;
-            const xMid = prev.x + frac * (x - prev.x);
-            ctx.lineTo(xMid, H - pad.bottom);
-            ctx.moveTo(xMid, pad.top);
-            ctx.lineTo(x, y);
-          } else if (!started) {
+            if (this.view.timeStart === 0 && this.view.timeEnd === 1440) {
+              const duration = (1440 - prev.time) + r.time;
+              const frac = (1440 - prev.time) / duration;
+              const xMid = prev.x + frac * (x - prev.x);
+              ctx.lineTo(xMid, H - pad.bottom);
+              ctx.moveTo(xMid, pad.top);
+              ctx.lineTo(x, y);
+            } else {
+              ctx.moveTo(x, y);
+            }
+          } else if (!started || !prev) {
             ctx.moveTo(x, y);
             started = true;
           } else {
@@ -443,7 +511,67 @@ export class GraphMarche {
       }
     }
 
-    // Watermarks, matching the JTrainGraph schema
+    ctx.restore();
+
+    // Time labels on left (orange/yellow)
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#b45309';
+    const tStartLabel = Math.floor(this.view.timeStart / 30) * 30;
+    const tEndLabel = Math.ceil(this.view.timeEnd / 30) * 30;
+    for (let t = tStartLabel; t <= tEndLabel; t += 30) {
+      if (t < this.view.timeStart || t > this.view.timeEnd) continue;
+      const y = tToY(t);
+      const label = t === 1440 ? '00:00' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+      ctx.fillText(label, pad.left - 6, y);
+    }
+
+    // Station labels on top (black, staggered to avoid overlap)
+    ctx.fillStyle = '#000000';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const maxNameWidth = Math.max(40, chartW / refStops.length - 8);
+    for (let i = 0; i < refStops.length; i++) {
+      const d = refDists[i];
+      if (d < this.view.distStart || d > this.view.distEnd) continue;
+      const x = dToX(d);
+      if (x < pad.left - 10 || x > W - pad.right + 10) continue;
+      const baseY = i % 2 === 0 ? pad.top - 10 : pad.top - 26;
+      const words = stationNames[i].split(/\s+/);
+      const lines = [];
+      let line = '';
+      ctx.font = '9px sans-serif';
+      for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > maxNameWidth && line) {
+          lines.push(line);
+          line = w;
+        } else {
+          line = test;
+        }
+      }
+      if (line) lines.push(line);
+      if (lines.length === 0) lines.push(stationNames[i]);
+      if (ctx.measureText(lines[lines.length - 1]).width > maxNameWidth) {
+        let s = lines[lines.length - 1];
+        while (ctx.measureText(s + '…').width > maxNameWidth && s.length > 1) s = s.slice(0, -1);
+        lines[lines.length - 1] = s + '…';
+      }
+      const lineHeight = 10;
+      const startY = baseY - (lines.length - 1) * lineHeight;
+      for (let l = 0; l < lines.length; l++) {
+        ctx.fillText(lines[l], x, startY + l * lineHeight);
+      }
+    }
+
+    // Border around chart area
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pad.left, pad.top, chartW, chartH);
+
+    // Watermarks
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.font = '8px sans-serif';
     ctx.textAlign = 'center';
@@ -552,6 +680,7 @@ export class GraphMarche {
       stationAId: this.stationAId,
       stationBId: this.stationBId,
       mode: this.mode,
+      view: { ...this.view },
     };
   }
 
@@ -563,5 +692,6 @@ export class GraphMarche {
     this.stationAId = s.stationAId || null;
     this.stationBId = s.stationBId || null;
     this.mode = s.mode || 'theoretical';
+    if (s.view) this.view = { ...s.view };
   }
 }
