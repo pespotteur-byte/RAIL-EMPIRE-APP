@@ -7,7 +7,7 @@ const PNG_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAf
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function evaluate(Runtime, expr) {
-  const wrapped = `(async () => { return ${expr}; })()`;
+  const wrapped = `(async () => { window.__lastEvalResult = undefined; window.__lastEvalError = undefined; try { ${expr}; return window.__lastEvalResult; } catch (e) { window.__lastEvalError = e.message; throw e; } })()`;
   const res = await Runtime.evaluate({ expression: wrapped, returnByValue: true, awaitPromise: true });
   if (res.exceptionDetails) throw new Error(res.exceptionDetails.exception?.description || res.exceptionDetails.text);
   return res.result.value;
@@ -41,7 +41,7 @@ async function main() {
     const blob = await fetch('${PNG_DATA}').then(r => r.blob());
     const file = new File([blob], 'red.png', { type: 'image/png' });
     const base = game.rollingStock.getAll()[0];
-    await game.liveryManager.upload(file, 'RougeVif', base?.id || 'stock-1', base?.name || 'Base')
+    window.__lastEvalResult = await game.liveryManager.upload(file, 'RougeVif', base?.id || 'stock-1', base?.name || 'Base')
   `);
   console.log('upload result:', l);
 
@@ -65,7 +65,7 @@ async function main() {
         flipped: false,
       }],
     });
-    ({ id: r.id, name: r.name, liveryId: r.liveryId })
+    window.__lastEvalResult = { id: r.id, name: r.name, liveryId: r.liveryId }
   `);
   console.log('rame:', rame);
 
@@ -84,7 +84,7 @@ async function main() {
     s.position = { lat: 48.85, lon: 2.35 };
     s.train = { speed: 0, delay: 0, blockedBy: false, breakdown: null, category: 'voyageur', color: '#3b82f6' };
     s.category = 'voyageur';
-    ({ id: s.id, rameId: s.rameId })
+    window.__lastEvalResult = { id: s.id, rameId: s.rameId }
   `);
   console.log('service:', svc);
 
@@ -102,12 +102,12 @@ async function main() {
     await new Promise(r => setTimeout(r, 500));
     game.renderer._drawTrainIcon(ctx, {x:100, y:100}, 'voyageur', '#3b82f6', 6, 'moving', Math.PI/2, svc.rame);
     await new Promise(r => setTimeout(r, 500));
-    ({ liveryCacheSize: game.renderer._liveryCache.size, imgLoaded: game.renderer._liveryCache.has(${l.id}) && game.renderer._liveryCache.get(${l.id}).complete })
+    window.__lastEvalResult = { liveryCacheSize: game.renderer._liveryCache.size, imgLoaded: game.renderer._liveryCache.has(${l.id}) && game.renderer._liveryCache.get(${l.id}).complete }
   `);
   console.log('draw result:', 'see console');
 
   await sleep(1000);
-  const final = await evaluate(Runtime, `({ cacheSize: game.renderer._liveryCache.size, loaded: game.renderer._liveryCache.has(${l.id}) && game.renderer._liveryCache.get(${l.id}).complete })`);
+  const final = await evaluate(Runtime, `window.__lastEvalResult = { cacheSize: game.renderer._liveryCache.size, loaded: game.renderer._liveryCache.has(${l.id}) && game.renderer._liveryCache.get(${l.id}).complete }`);
   console.log('final:', final);
 
   if (final.cacheSize >= 1 && final.loaded) {
