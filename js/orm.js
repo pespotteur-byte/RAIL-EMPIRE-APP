@@ -1,7 +1,7 @@
 // OpenRailwayMap data integration via Overpass API — ORM Direct architecture
 // Uses OSM way graph directly as the game's routing infrastructure.
 // No conversion to intermediate tronçons — the OSM graph IS the network.
-import { segmentsFromRoute, simulateProfile, simulateProfileCumulative } from './train-physics.js';
+import { segmentsFromRoute, simulateProfile, simulateProfileCumulative } from './train-physics.js?v=1785012022';
 
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
@@ -15,11 +15,10 @@ const DB_STORE = 'areas';
 const DB_VERSION = 1;
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
-// SC-05 : the base schedule now includes a small safety margin so it is no
-// longer proposed at 0 %. 10 % is added to the pure physics travel time.
-const SCHEDULE_SAFETY_PCT = 10;
+// SC-05 : the base schedule is proposed at 0 % safety margin (pure physics
+// travel time). The player can tighten it manually if they want.
 function applyTravelTimeSafety(baseMin) {
-  return Math.max(1, Math.round(baseMin * (1 + SCHEDULE_SAFETY_PCT / 100)));
+  return baseMin;
 }
 
 class ORMIndexedCache {

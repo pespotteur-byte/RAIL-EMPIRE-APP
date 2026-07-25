@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1785011436';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1785011436';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785011436';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS } from './ui-constants.js?v=1785011436';
+import { haversineDistance } from './simulation.js?v=1785012022';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1785012022';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785012022';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS } from './ui-constants.js?v=1785012022';
 
 /* Infogare v2 — clean, modern departure/arrival boards rebuilt from scratch. */
 
