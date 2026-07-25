@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { ScheduleCreator, ActiveService } from '../schedule-creator.js';
 import { StaffManager } from '../staff.js';
 import { CantonManager } from '../simulation.js';
-import { getGlobalRng, setGlobalRng, SeededRng } from '../rng.js?v=1784931680';
+import { getGlobalRng, setGlobalRng, SeededRng } from '../rng.js?v=1784931684';
 
 const economy = {
   processStopRevenue() {},

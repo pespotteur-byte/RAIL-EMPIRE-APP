@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1784931680';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784931680';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931680';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931680';
+import { haversineDistance } from './simulation.js?v=1784931684';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784931684';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931684';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931684';
 
 export const UIEntity = {
   toggleStationCreation() {
@@ -1425,26 +1425,43 @@ export const UIEntity = {
   setupLiveryPage() {
       document.getElementById('btn-upload-page-livery')?.addEventListener('click', () => this.uploadLiveryPage());
       document.getElementById('livery-page-file')?.addEventListener('change', () => this.uploadLiveryPage());
-      this._populateLiveryBaseStockSelect();
+      this._setupLiveryBaseStockSearch();
     },
 
-  _populateLiveryBaseStockSelect() {
-      const sel = document.getElementById('livery-page-base-stock');
-      if (!sel) return;
-      const current = sel.value;
-      const stock = this.game.rollingStock.getAll();
-      let html = '<option value="">— Matériel d\'origine —</option>';
-      for (const item of stock) {
-        html += `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} (${escapeHtml(item.category)})</option>`;
-      }
-      sel.innerHTML = html;
-      if (stock.some(i => i.id === current)) sel.value = current;
+  _setupLiveryBaseStockSearch() {
+      if (this._liverySearchAttached) return;
+      const input = document.getElementById('livery-page-base-stock-input');
+      const hidden = document.getElementById('livery-page-base-stock');
+      const results = document.getElementById('livery-base-stock-results');
+      if (!input || !hidden || !results) return;
+      this._liverySearchAttached = true;
+      const show = (filter = '') => {
+        const q = filter.toLowerCase().trim();
+        const stock = this.game.rollingStock.getAll() || [];
+        const filtered = stock.filter(i => `${i.name || ''} ${i.category || ''} ${i.id || ''}`.toLowerCase().includes(q)).slice(0, 50);
+        if (filtered.length === 0) { results.style.display = 'none'; return; }
+        results.innerHTML = filtered.map(i => `<div class="livery-base-stock-item" data-id="${escapeHtml(String(i.id))}" data-name="${escapeHtml(i.name)}" style="padding:6px 10px;cursor:pointer;color:#fff;border-bottom:1px solid #222;font-size:12px">${escapeHtml(i.name)} <span style="color:#888">(${escapeHtml(i.category || '')})</span></div>`).join('');
+        results.style.display = 'block';
+        results.querySelectorAll('.livery-base-stock-item').forEach(el => {
+          el.addEventListener('mousedown', e => {
+            e.preventDefault();
+            hidden.value = el.getAttribute('data-id');
+            input.value = el.getAttribute('data-name');
+            results.style.display = 'none';
+          });
+        });
+      };
+      input.addEventListener('focus', () => show(input.value));
+      input.addEventListener('input', () => show(input.value));
+      input.addEventListener('keydown', e => { if (e.key === 'Escape') results.style.display = 'none'; });
+      input.addEventListener('blur', () => setTimeout(() => results.style.display = 'none', 150));
     },
 
   async uploadLiveryPage() {
       const fileInput = document.getElementById('livery-page-file');
       const nameInput = document.getElementById('livery-page-name');
       const baseSel = document.getElementById('livery-page-base-stock');
+      const baseInput = document.getElementById('livery-page-base-stock-input');
       const file = fileInput?.files?.[0];
       const name = (nameInput?.value || file?.name || '').trim();
       const baseStockId = baseSel?.value || '';
@@ -1457,6 +1474,7 @@ export const UIEntity = {
         fileInput.value = '';
         nameInput.value = '';
         baseSel.value = '';
+        if (baseInput) baseInput.value = '';
         alertToast('Livrée uploadée');
         this.renderLiveriesPage();
       } catch (e) {
@@ -1467,7 +1485,7 @@ export const UIEntity = {
   async renderLiveriesPage() {
       const container = document.getElementById('liveries-list');
       if (!container) return;
-      this._populateLiveryBaseStockSelect();
+      this._setupLiveryBaseStockSearch();
       try {
         const liveries = await this.game.liveryManager.list();
         if (liveries.length === 0) {

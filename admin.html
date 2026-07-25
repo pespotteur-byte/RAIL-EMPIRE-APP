@@ -11,7 +11,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 header{background:var(--surface);padding:10px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);flex-shrink:0}
 header h1{font-size:1.2em;white-space:nowrap;display:flex;align-items:center;gap:10px}
 header h1 svg{flex-shrink:0}
-header .stats{font-size:.85em;color:var(--text2)}
+header .stats{font-size:.85em;color:var(--text2);max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 header .stats b{color:var(--blue)}
 .toolbar{background:var(--surface);padding:8px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
 input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.85em}
@@ -84,13 +84,14 @@ th:nth-child(12),td:nth-child(12){width:90px}
 
 <header>
   <h1><svg viewBox="0 0 32 32" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M4 24h24" stroke="#64748b" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M4 26h24" stroke="#64748b" stroke-width="1.5" fill="none" stroke-linecap="round"/><g stroke="#475569" stroke-width="1" opacity="0.5"><line x1="8" y1="23" x2="8" y2="27"/><line x1="13" y1="23" x2="13" y2="27"/><line x1="18" y1="23" x2="18" y2="27"/><line x1="23" y1="23" x2="23" y2="27"/></g><path d="M6 22 L6 16 Q6 14 8 14 L16 14 Q18 13 19 11 Q20 10 21 10 L23 10 Q24 10 24 12 L24 14 L27 14 Q28 14 28 16 L28 22" stroke="#3b82f6" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="23" r="2" stroke="#3b82f6" stroke-width="1" fill="none"/><circle cx="17" cy="23" r="2" stroke="#3b82f6" stroke-width="1" fill="none"/><circle cx="25" cy="23" r="2" stroke="#3b82f6" stroke-width="1" fill="none"/></svg>Admin Catalogue</h1>
-  <div class="stats">
+  <div class="stats" style="max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
     <span>Total : <b id="stat-total">0</b></span> &middot;
     <span>Locos : <b id="stat-locos">0</b></span> &middot;
     <span>Wagons : <b id="stat-wagons">0</b></span> &middot;
-    <span>Sources : <b id="stat-sources">-</b></span> &middot;
+    <span>Sources : <b id="stat-sources" title="">-</b></span> &middot;
     <span>Affichés : <b id="stat-filtered">0</b></span>
   </div>
+  <button id="btn-back" class="btn btn-ghost" style="margin-left:auto">← Livemap</button>
 </header>
 
 <div class="toolbar">
@@ -119,7 +120,6 @@ th:nth-child(12),td:nth-child(12){width:90px}
   <button class="btn btn-red" id="btn-delete-selected">Supprimer sélection</button>
   <button class="btn btn-blue" id="btn-incidents" style="margin-left:8px">Incidents</button>
   <button class="btn btn-green" id="btn-publish" style="font-weight:700">Publier pour tous</button>
-  <a href="index.html" class="btn btn-ghost">Retour au jeu</a>
 </div>
 
 <div class="main">
@@ -326,8 +326,8 @@ th:nth-child(12),td:nth-child(12){width:90px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script type="module">
 // ============ LOAD ALL CATALOGS ============
-import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931680';
-import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931680';
+import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931684';
+import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931684';
 
 let allItems = [];
 let filteredItems = [];
@@ -373,7 +373,9 @@ function updateStats() {
   document.getElementById('stat-total').textContent = allItems.length.toLocaleString();
   document.getElementById('stat-locos').textContent = allItems.filter(i=>i.category==='locomotive'||i.category==='automotrice').length.toLocaleString();
   document.getElementById('stat-wagons').textContent = allItems.filter(i=>i.category==='wagon'||i.category==='voiture').length.toLocaleString();
-  document.getElementById('stat-sources').textContent = [...sources].join(', ');
+  const statSources = document.getElementById('stat-sources');
+  statSources.textContent = sources.size.toLocaleString();
+  statSources.title = [...sources].slice(0, 20).join('\n');
   // Populate source filter
   const sel = document.getElementById('filter-source');
   const cur = sel.value;
@@ -1013,6 +1015,13 @@ document.getElementById('publish-confirm').addEventListener('click', async () =>
 });
 
 // ============ INIT ============
+document.getElementById('btn-back')?.addEventListener('click', () => {
+  if (window.history.length > 1) window.history.back();
+  else {
+    const v = new URLSearchParams(window.location.search).get('v') || '1784931684';
+    window.location.href = 'index.html?v=' + v;
+  }
+});
 loadCatalogs();
 </script>
 </body>
