@@ -72,18 +72,32 @@ export class RollingStockManager {
     this.items = this.items.filter(i => i.id !== id);
   }
 
-  // Update an existing item in place (used by the "Modifier" feature).
+  // Update an existing item in place (used by the "Modifier" feature and admin overrides).
   // Only overwrites provided fields; keeps id and any untouched fields.
+  // Marks catalog items as edited only when a field actually changes.
   update(id, data) {
     const item = this.items.find(i => i.id === id);
     if (!item) return null;
     const editable = ['name', 'category', 'traction', 'maxSpeed', 'tonnage', 'mass',
       'power', 'passengerCapacity', 'freightCapacity', 'length', 'imageData',
       'seriesName', 'numberStart', 'notes', 'purchasePrice', 'cargoTypes', 'wagonSubCategory', 'isDrivingTrailer'];
+    let changed = false;
     for (const k of editable) {
-      if (k in data && data[k] !== undefined) item[k] = data[k];
+      if (k in data && data[k] !== undefined) {
+        const newVal = data[k];
+        const oldVal = item[k];
+        if (Array.isArray(newVal) && Array.isArray(oldVal)) {
+          if (newVal.length !== oldVal.length || newVal.some((v, i) => v !== oldVal[i])) {
+            item[k] = newVal;
+            changed = true;
+          }
+        } else if (newVal !== oldVal) {
+          item[k] = newVal;
+          changed = true;
+        }
+      }
     }
-    if (item._catalog) item._edited = true;
+    if (item._catalog && changed) item._edited = true;
     return item;
   }
 

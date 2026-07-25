@@ -1,46 +1,46 @@
-import { SimulationEngine } from './engine.js?v=1784931691';
-import { startDedensenBenchmark } from './benchmark.js?v=1784931691';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784931691';
-import { World, createDefaultWorld } from './world.js?v=1784931691';
-import { Renderer } from './renderer.js?v=1784931691';
-import { UI } from './ui.js?v=1784931691';
-import { Economy } from './economy.js?v=1784931691';
-import { IncidentManager } from './incidents.js?v=1784931691';
-import { FreightManager } from './freight.js?v=1784931691';
-import { ScheduleManager } from './schedule.js?v=1784931691';
-import { GameStorage } from './storage.js?v=1784931691';
-import { LiveryManager } from './livery-manager.js?v=1784931691';
-import { AccountManager } from './account.js?v=1784931691';
-import { RollingStockManager } from './rolling-stock.js?v=1784931691';
-import { RameManager } from './rame.js?v=1784931691';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784931691';
-import { DepotManager } from './depot.js?v=1784931691';
-import { WorksManager } from './works.js?v=1784931691';
-import { ORMClient } from './orm.js?v=1784931691';
-import { LineManager, PlatformManager } from './line.js?v=1784931691';
-import { SillonManager } from './sillon.js?v=1784931691';
-import { VoiePointManager } from './voie-points.js?v=1784931691';
-import { Dashboard } from './dashboard.js?v=1784931691';
-import { GraphMarche } from './graph-marche.js?v=1784931691';
-import { StaffManager } from './staff.js?v=1784931691';
-import { Tutorial } from './tutorial.js?v=1784931691';
-import { Bank } from './bank.js?v=1784931691';
-import { Weather } from './weather.js?v=1784931691';
-import { Unions } from './unions.js?v=1784931691';
-import { SeasonalSchedule } from './seasonal.js?v=1784931691';
-import { Connections } from './connections.js?v=1784931691';
-import { StationUpgrades } from './station-upgrades.js?v=1784931691';
-import { A12Model } from './a12-model.js?v=1784931691';
-import { JunctionManager } from './junctions.js?v=1784931691';
-import { CargoTypeManager } from './cargo-types.js?v=1784931691';
-import { ITEModules } from './ite-modules.js?v=1784931691';
-import { IndustrialClients } from './industrial-clients.js?v=1784931691';
-import { ShuntingManager } from './shunting.js?v=1784931691';
-import { haversineDistance } from './simulation.js?v=1784931691';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784931691';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784931691';
-import { adminSync } from './admin-sync.js?v=1784931691';
-import { alertToast } from './html-utils.js?v=1784931691';
+import { SimulationEngine } from './engine.js?v=1784931693';
+import { startDedensenBenchmark } from './benchmark.js?v=1784931693';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784931693';
+import { World, createDefaultWorld } from './world.js?v=1784931693';
+import { Renderer } from './renderer.js?v=1784931693';
+import { UI } from './ui.js?v=1784931693';
+import { Economy } from './economy.js?v=1784931693';
+import { IncidentManager } from './incidents.js?v=1784931693';
+import { FreightManager } from './freight.js?v=1784931693';
+import { ScheduleManager } from './schedule.js?v=1784931693';
+import { GameStorage } from './storage.js?v=1784931693';
+import { LiveryManager } from './livery-manager.js?v=1784931693';
+import { AccountManager } from './account.js?v=1784931693';
+import { RollingStockManager } from './rolling-stock.js?v=1784931693';
+import { RameManager } from './rame.js?v=1784931693';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784931693';
+import { DepotManager } from './depot.js?v=1784931693';
+import { WorksManager } from './works.js?v=1784931693';
+import { ORMClient } from './orm.js?v=1784931693';
+import { LineManager, PlatformManager } from './line.js?v=1784931693';
+import { SillonManager } from './sillon.js?v=1784931693';
+import { VoiePointManager } from './voie-points.js?v=1784931693';
+import { Dashboard } from './dashboard.js?v=1784931693';
+import { GraphMarche } from './graph-marche.js?v=1784931693';
+import { StaffManager } from './staff.js?v=1784931693';
+import { Tutorial } from './tutorial.js?v=1784931693';
+import { Bank } from './bank.js?v=1784931693';
+import { Weather } from './weather.js?v=1784931693';
+import { Unions } from './unions.js?v=1784931693';
+import { SeasonalSchedule } from './seasonal.js?v=1784931693';
+import { Connections } from './connections.js?v=1784931693';
+import { StationUpgrades } from './station-upgrades.js?v=1784931693';
+import { A12Model } from './a12-model.js?v=1784931693';
+import { JunctionManager } from './junctions.js?v=1784931693';
+import { CargoTypeManager } from './cargo-types.js?v=1784931693';
+import { ITEModules } from './ite-modules.js?v=1784931693';
+import { IndustrialClients } from './industrial-clients.js?v=1784931693';
+import { ShuntingManager } from './shunting.js?v=1784931693';
+import { haversineDistance } from './simulation.js?v=1784931693';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784931693';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784931693';
+import { adminSync } from './admin-sync.js?v=1784931693';
+import { alertToast } from './html-utils.js?v=1784931693';
 
 class RailEmpire {
   constructor() {
@@ -481,6 +481,7 @@ class RailEmpire {
   }
 
   // Seed the built-in rolling-stock catalog (idempotent: only adds missing entries by id).
+  // Also applies admin overrides (modifications/deletions/imports published by admin).
   // Also auto-adds any cargo type referenced by the catalog that the game doesn't know yet.
   seedCatalog() {
     // 1) Ensure cargo types declared by the catalog exist (add the missing ones).
@@ -493,13 +494,31 @@ class RailEmpire {
     // 3) Apply admin overrides (modifications, deletions, imports published by admin)
     allCatalog = adminSync.applyCatalogOverrides(allCatalog);
     const existing = new Set(this.rollingStock.getAll().map(i => i.id));
+    const overrideIds = new Set([
+      ...(adminSync.overrides?.modifications || []).map(m => m.id),
+      ...(adminSync.overrides?.imports || []).map(i => i.id),
+    ]);
+    const deletedIds = new Set(adminSync.overrides?.deletions || []);
     let added = 0;
+    let updated = 0;
+    // Remove catalog entries deleted by the admin.
+    for (const id of deletedIds) {
+      if (existing.has(id)) { this.rollingStock.remove(id); existing.delete(id); }
+    }
     for (const entry of allCatalog) {
-      if (existing.has(entry.id)) continue;
+      if (existing.has(entry.id)) {
+        // Only update entries actually touched by admin overrides, to avoid
+        // overwriting user/local modifications with the base catalog.
+        if (overrideIds.has(entry.id)) {
+          this.rollingStock.update(entry.id, entry);
+          updated++;
+        }
+        continue;
+      }
       this.rollingStock.add({ ...entry, _catalog: true });
       added++;
     }
-    if (added && this.ui) this.ui.renderStockList();
+    if ((added || updated) && this.ui) this.ui.renderStockList();
   }
 
   _setupSettings() {
