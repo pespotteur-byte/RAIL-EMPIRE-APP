@@ -1063,6 +1063,7 @@ select option { background: var(--input-bg); color: var(--text); }
 /* Long text scroll inside a masked container */
 .ig-anim-scroll { display:inline-block; white-space:nowrap; animation: igScrollText 9s linear infinite; min-width:100%; }
 @keyframes igScrollText { 0% { transform:translateX(0); } 100% { transform:translateX(-50%); } }
+@keyframes ig2Marquee { from { transform:translateX(0); } to { transform:translateX(-100%); } }
 
 /* Board / row entrance with stagger will be set by JS via style */
 .ig-board-entrance { animation: igFadeIn 0.35s ease-out both; }

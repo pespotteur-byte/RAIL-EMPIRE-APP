@@ -42,7 +42,7 @@ export class Track {
 }
 
 // Re-export from simulation.js to avoid duplication
-export { haversineDistance as haversine } from './simulation.js?v=1784931688';
+export { haversineDistance as haversine } from './simulation.js?v=1784931689';
 
 export class World {
   constructor() {
