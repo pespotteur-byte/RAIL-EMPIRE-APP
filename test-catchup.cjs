@@ -1,7 +1,7 @@
 const CDP = require('chrome-remote-interface');
 
 const BASE = 'http://localhost:8001';
-const URL_HOME = `${BASE}/?v=1784931684`;
+const URL_HOME = `${BASE}/?v=1784931685`;
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 

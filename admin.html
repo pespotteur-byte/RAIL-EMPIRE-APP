@@ -296,25 +296,13 @@ th:nth-child(12),td:nth-child(12){width:90px}
   </div>
 </div>
 
-<!-- Publish / GitHub Token Modal -->
+<!-- Publish Modal -->
 <div class="modal-overlay" id="modal-publish">
   <div class="modal" style="width:500px">
-    <h2>Publier les modifications</h2>
+    <h2>Publier pour tous</h2>
     <p style="color:var(--text2);font-size:.85em;margin-bottom:12px">
-      Ceci va enregistrer tes modifications (catalogue + incidents) pour <b>tous les joueurs</b>.
-      Les joueurs verront les changements au prochain chargement du jeu.
+      Publier les modifications du catalogue et les incidents sur le serveur. Les joueurs verront les changements au prochain rafraîchissement.
     </p>
-    <div id="publish-token-section">
-      <div class="form-row">
-        <label>Token GitHub (Personal Access Token)
-          <input type="password" id="gh-token" placeholder="ghp_xxxxx...">
-        </label>
-      </div>
-      <p style="color:var(--text2);font-size:.75em;margin-bottom:8px">
-        Le token est stocké uniquement dans TON navigateur. Les joueurs ne le verront jamais.
-        <a href="https://github.com/settings/tokens/new?scopes=repo&description=Rail+Empire+Admin" target="_blank" style="color:var(--blue)">Créer un token ici</a>
-      </p>
-    </div>
     <div id="publish-status" style="display:none;padding:12px;border-radius:8px;margin-top:8px"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="publish-cancel">Annuler</button>
@@ -326,8 +314,8 @@ th:nth-child(12),td:nth-child(12){width:90px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script type="module">
 // ============ LOAD ALL CATALOGS ============
-import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931684';
-import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931684';
+import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931685';
+import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931685';
 
 let allItems = [];
 let filteredItems = [];
@@ -924,35 +912,20 @@ document.getElementById('incident-edit-save').addEventListener('click', () => {
 });
 
 // ============ PUBLISH FOR ALL PLAYERS ============
-const REPO_OWNER = 'pespotteur-byte';
-const REPO_NAME = 'RAIL-EMPIRE-APP';
-const BRANCH = 'devin/1780231310-catalog-bb7200';
-const OVERRIDE_PATH = 'data/admin-overrides.json';
+async function publishToServer() {
+  const token = localStorage.getItem('re_api_token') || '';
+  if (!token) return alert('Connectez-vous d’abord au jeu pour publier.');
 
-document.getElementById('btn-publish').addEventListener('click', () => {
-  const savedToken = localStorage.getItem('admin_gh_token') || '';
-  document.getElementById('gh-token').value = savedToken;
-  document.getElementById('publish-status').style.display = 'none';
-  document.getElementById('modal-publish').classList.add('active');
-});
-document.getElementById('publish-cancel').addEventListener('click', () => document.getElementById('modal-publish').classList.remove('active'));
-
-document.getElementById('publish-confirm').addEventListener('click', async () => {
-  const token = document.getElementById('gh-token').value.trim();
-  if (!token) return alert('Token GitHub requis');
-  localStorage.setItem('admin_gh_token', token);
-  
   const statusEl = document.getElementById('publish-status');
   statusEl.style.display = 'block';
   statusEl.style.background = 'rgba(59,130,246,.15)';
   statusEl.style.color = 'var(--blue)';
-  statusEl.textContent = 'Préparation des données...';
-  
-  // Build override data
+  statusEl.textContent = 'Publication vers le serveur...';
+
   const mods = JSON.parse(localStorage.getItem('admin_catalog_mods') || '[]');
   const deletedIds = JSON.parse(localStorage.getItem('admin_catalog_deleted') || '[]');
   const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
-  
+
   const overrideData = {
     version: Date.now(),
     publishedAt: new Date().toISOString(),
@@ -961,64 +934,42 @@ document.getElementById('publish-confirm').addEventListener('click', async () =>
     imports: imported.map(i => ({...i, imageData: undefined, _importBlob: undefined})),
     incidents: incidents,
   };
-  
-  const content = JSON.stringify(overrideData, null, 2);
-  const contentBase64 = btoa(unescape(encodeURIComponent(content)));
-  
+
   try {
-    statusEl.textContent = 'Vérification du fichier existant...';
-    
-    // Check if file already exists to get its SHA
-    let sha = null;
-    try {
-      const check = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDE_PATH}?ref=${BRANCH}`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (check.ok) {
-        const data = await check.json();
-        sha = data.sha;
-      }
-    } catch(e) {}
-    
-    statusEl.textContent = 'Publication en cours...';
-    
-    const body = {
-      message: `[Admin] Mise à jour catalogue + incidents (${new Date().toLocaleString('fr-FR')})`,
-      content: contentBase64,
-      branch: BRANCH,
-    };
-    if (sha) body.sha = sha;
-    
-    const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${OVERRIDE_PATH}`, {
-      method: 'PUT',
+    const res = await fetch('/admin/publish', {
+      method: 'POST',
       headers: {
-        'Authorization': `token ${token}`,
         'Content-Type': 'application/json',
+        'X-API-Token': token,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(overrideData),
     });
-    
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.message || 'Erreur GitHub API');
+      throw new Error(err.detail || 'Erreur serveur');
     }
-    
     statusEl.style.background = 'rgba(34,197,94,.15)';
     statusEl.style.color = 'var(--green)';
-    statusEl.textContent = '✓ Publié avec succès ! Les joueurs verront les changements au prochain chargement.';
-    
+    statusEl.textContent = '✓ Publié sur le serveur ! Les joueurs verront les changements en rafraîchissant.';
   } catch(e) {
     statusEl.style.background = 'rgba(239,68,68,.15)';
     statusEl.style.color = 'var(--red)';
-    statusEl.textContent = `Erreur : ${e.message}`;
+    statusEl.textContent = 'Erreur : ' + e.message;
   }
+}
+
+document.getElementById('btn-publish').addEventListener('click', () => {
+  document.getElementById('publish-status').style.display = 'none';
+  document.getElementById('modal-publish').classList.add('active');
 });
+document.getElementById('publish-cancel').addEventListener('click', () => document.getElementById('modal-publish').classList.remove('active'));
+document.getElementById('publish-confirm').addEventListener('click', publishToServer);
 
 // ============ INIT ============
 document.getElementById('btn-back')?.addEventListener('click', () => {
   if (window.history.length > 1) window.history.back();
   else {
-    const v = new URLSearchParams(window.location.search).get('v') || '1784931684';
+    const v = new URLSearchParams(window.location.search).get('v') || '1784931685';
     window.location.href = 'index.html?v=' + v;
   }
 });

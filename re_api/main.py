@@ -287,6 +287,26 @@ async def auth_me(user: Optional[dict] = Depends(get_current_user)):
     return user
 
 
+ADMIN_OVERRIDE_PATHS = [
+    '/home/ubuntu/rail-empire-deploy/data/admin-overrides.json',
+    '/home/ubuntu/repos/RAIL-EMPIRE-APP/data/admin-overrides.json',
+]
+
+
+@app.post("/admin/publish")
+async def admin_publish(data: dict, user: Optional[dict] = Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        for path in ADMIN_OVERRIDE_PATHS:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"ok": True, "version": data.get("version"), "publishedAt": data.get("publishedAt")}
+
+
 @app.post("/save/{key}")
 async def save_state(request: Request, key: str, user: Optional[dict] = Depends(get_current_user)):
     if _db_pool is None:

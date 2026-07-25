@@ -3,9 +3,9 @@
 // Applies catalog modifications, deletions, imports
 // Manages admin-defined custom incidents with time-based random triggering
 // Respects player opt-in/opt-out preference
-import { getGlobalRng } from './rng.js?v=1784931684';
+import { getGlobalRng } from './rng.js?v=1784931685';
 
-const OVERRIDE_URL = 'https://raw.githubusercontent.com/pespotteur-byte/RAIL-EMPIRE-APP/devin/1780231310-catalog-bb7200/data/admin-overrides.json';
+const GITHUB_OVERRIDE_URL = 'https://raw.githubusercontent.com/pespotteur-byte/RAIL-EMPIRE-APP/devin/1780231310-catalog-bb7200/data/admin-overrides.json';
 
 export class AdminSync {
   constructor() {
@@ -35,18 +35,17 @@ export class AdminSync {
   }
 
   async loadOverrides() {
+    // Try server first (fastest, direct)
     try {
-      const res = await fetch(OVERRIDE_URL + '?t=' + Date.now());
+      const res = await fetch('/data/admin-overrides.json?t=' + Date.now());
       if (res.ok) {
         this.overrides = await res.json();
         this.incidents = this.overrides.incidents || [];
         this.loaded = true;
         return this.overrides;
       }
-    } catch (e) {
-      console.warn('[AdminSync] GitHub fetch failed:', e.message);
-    }
-    // Fallback: local file
+    } catch (e) {}
+    // Fallback: local file (dev / file://)
     try {
       const res = await fetch('./data/admin-overrides.json?t=' + Date.now());
       if (res.ok) {
@@ -56,6 +55,18 @@ export class AdminSync {
         return this.overrides;
       }
     } catch (e) {}
+    // Last resort: GitHub raw
+    try {
+      const res = await fetch(GITHUB_OVERRIDE_URL + '?t=' + Date.now());
+      if (res.ok) {
+        this.overrides = await res.json();
+        this.incidents = this.overrides.incidents || [];
+        this.loaded = true;
+        return this.overrides;
+      }
+    } catch (e) {
+      console.warn('[AdminSync] GitHub fetch failed:', e.message);
+    }
     return null;
   }
 

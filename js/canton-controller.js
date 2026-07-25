@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1784931684';
-import { cantonManager } from './canton-manager.js?v=1784931684';
-import { ServiceStop } from './service-stop.js?v=1784931684';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1784931684';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784931684';
-import { getGlobalRng } from './rng.js?v=1784931684';
-import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1784931684';
+} from './service-utils.js?v=1784931685';
+import { cantonManager } from './canton-manager.js?v=1784931685';
+import { ServiceStop } from './service-stop.js?v=1784931685';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1784931685';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1784931685';
+import { getGlobalRng } from './rng.js?v=1784931685';
+import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1784931685';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1784931684';
+} from './schedule-logic.js?v=1784931685';
 
 export const CantonController = {
   _yieldToRescue() {
