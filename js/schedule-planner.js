@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1785016545';
-import { cantonManager } from './canton-manager.js?v=1785016545';
-import { ServiceStop } from './service-stop.js?v=1785016545';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1785016545';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1785016545';
-import { getGlobalRng } from './rng.js?v=1785016545';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1785016545';
+} from './service-utils.js?v=1785017600';
+import { cantonManager } from './canton-manager.js?v=1785017600';
+import { ServiceStop } from './service-stop.js?v=1785017600';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1785017600';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1785017600';
+import { getGlobalRng } from './rng.js?v=1785017600';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1785017600';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1785016545';
+} from './schedule-logic.js?v=1785017600';
 
 export const SchedulePlanner = {
   _computePassageStops() {
@@ -57,6 +57,25 @@ export const SchedulePlanner = {
 
   getPassageStops() {
       return this._passageStops;
+    },
+
+  _getStopCoords(stop) {
+      if (!stop) return null;
+      const vpm = window.game?.voiePointManager;
+      if (stop.voiePointId && vpm) {
+        const vp = vpm.getVoiePointById(stop.voiePointId);
+        if (vp) return { lat: vp.lat, lon: vp.lon };
+      }
+      if (stop.stationId && this.world) {
+        const st = this.world.getStationById(stop.stationId);
+        if (!st) return null;
+        if (stop.platform && vpm) {
+          const svp = vpm.getStationVoiePoint(st.id, stop.platform);
+          if (svp) return { lat: svp.lat, lon: svp.lon };
+        }
+        return { lat: st.lat, lon: st.lon };
+      }
+      return null;
     },
 
   getNextStop() {
@@ -519,24 +538,26 @@ export const SchedulePlanner = {
       if (scheduledTravelTime <= 0) scheduledTravelTime = 1;
 
       // Route-based progress using actual distance along the ORM route
+      // PV-01 : normaliser le début du tracé sur la position réelle (point de voie)
+      // pour éviter un "avance" constant dû au décalage gare centre ↔ voie.
       let progress = 0;
       if (this._state?.cachedRoute && this._state.cumDist && this._state.segDists) {
         const totalRouteDist = this._state.cumDist[0] || 0;
-        if (totalRouteDist > 0.001) {
-          const idx = this._state.index || 0;
-          const segProg = this._state.progress || 0;
-          const distRemaining = (1 - segProg) * (this._state.segDists[idx] || 0)
-            + (this._state.cumDist[idx + 1] || 0);
-          progress = Math.max(0, Math.min(1, 1 - distRemaining / totalRouteDist));
+        const startRouteKm = this._legStartRouteKm || 0;
+        if (totalRouteDist > startRouteKm + 0.001) {
+          const currentRouteKm = this._getRouteProgressKm(this.position, this._state.cachedRoute, this._state.index || 0);
+          const legDist = totalRouteDist - startRouteKm;
+          const covered = Math.max(0, currentRouteKm - startRouteKm);
+          progress = Math.max(0, Math.min(1, covered / legDist));
         }
       } else if (this.position) {
-        // Fallback if no cached route: use haversine between stations
-        const stA = prevStop.stationId ? this.world?.getStationById(prevStop.stationId) : null;
-        const stB = nextStop.stationId ? this.world?.getStationById(nextStop.stationId) : null;
-        const latA = stA ? stA.lat : this.position.lat;
-        const lonA = stA ? stA.lon : this.position.lon;
-        const latB = stB ? stB.lat : this.position.lat;
-        const lonB = stB ? stB.lon : this.position.lon;
+        // Fallback if no cached route: use haversine between actual stop coords (voie point if known)
+        const coordsA = this._getStopCoords(prevStop);
+        const coordsB = this._getStopCoords(nextStop);
+        const latA = coordsA ? coordsA.lat : this.position.lat;
+        const lonA = coordsA ? coordsA.lon : this.position.lon;
+        const latB = coordsB ? coordsB.lat : this.position.lat;
+        const lonB = coordsB ? coordsB.lon : this.position.lon;
         const totalDist = haversineDistance(latA, lonA, latB, lonB);
         if (totalDist > 0.01) {
           const distFromA = haversineDistance(latA, lonA, this.position.lat, this.position.lon);

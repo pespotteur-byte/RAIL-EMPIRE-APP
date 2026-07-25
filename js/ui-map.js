@@ -1,8 +1,8 @@
-import { haversineDistance } from './simulation.js?v=1785016545';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1785016545';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785016545';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785016545';
-import { announceTrain } from './announcements.js?v=1785016545';
+import { haversineDistance } from './simulation.js?v=1785017600';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1785017600';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785017600';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785017600';
+import { announceTrain } from './announcements.js?v=1785017600';
 
 export const UIMap = {
   setupMapEvents() {
@@ -744,32 +744,12 @@ export const UIMap = {
       };
       const arretStationName = (s) => s?.stationId ? escapeHtml(world.getStationById(s.stationId)?.name || '—') : '—';
 
-      // Nearest stations in both directions, including unserved ones, for "Se situe entre".
-      let ctxPrevStation = null, ctxNextStation = null;
-      if (svc.position && world?.stations?.length) {
-        const heading = svc.train?.geoHeading ?? 0;
-        const pos = svc.position;
-        const cosLat = Math.cos(pos.lat * Math.PI / 180);
-        let prevBestDist = Infinity, nextBestDist = Infinity;
-        for (const st of world.stations) {
-          if (st == null || !Number.isFinite(st.lat) || !Number.isFinite(st.lon)) continue;
-          const dLat = (st.lat - pos.lat) * 111;
-          const dLon = (st.lon - pos.lon) * 111 * cosLat;
-          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
-          if (dist < 0.1) continue;
-          const bearing = Math.atan2(dLon, dLat);
-          let diff = bearing - heading;
-          while (diff <= -Math.PI) diff += 2 * Math.PI;
-          while (diff > Math.PI) diff -= 2 * Math.PI;
-          if (Math.abs(diff) <= Math.PI / 2) {
-            if (dist < nextBestDist) { nextBestDist = dist; ctxNextStation = st; }
-          } else if (dist < prevBestDist) {
-            prevBestDist = dist; ctxPrevStation = st;
-          }
-        }
-      }
-      const ctxPrevName = escapeHtml(ctxPrevStation?.name || arretStationName(findArretStop(curIdx - 1, -1)) || prevName);
-      const ctxNextName = escapeHtml(ctxNextStation?.name || arretStationName(findArretStop(curIdx, 1)) || curName);
+      // "Se situe entre" : utiliser les arrêts programmés (pas les points de voie)
+      // pour éviter l'erreur due aux décalages voie/gare centre.
+      const prevArret = findArretStop(curStationIdx - 1, -1);
+      const nextArret = findArretStop(curStationIdx, 1);
+      const ctxPrevName = escapeHtml(arretStationName(prevArret) || prevName);
+      const ctxNextName = escapeHtml(arretStationName(nextArret) || curName);
 
       let situation;
       if (svc.cancelled) {

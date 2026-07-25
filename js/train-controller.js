@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1785016545';
-import { cantonManager } from './canton-manager.js?v=1785016545';
-import { ServiceStop } from './service-stop.js?v=1785016545';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1785016545';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1785016545';
-import { getGlobalRng } from './rng.js?v=1785016545';
-import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1785016545';
+} from './service-utils.js?v=1785017600';
+import { cantonManager } from './canton-manager.js?v=1785017600';
+import { ServiceStop } from './service-stop.js?v=1785017600';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1785017600';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1785017600';
+import { getGlobalRng } from './rng.js?v=1785017600';
+import { accelerationMs2, brakingDecelMs2, _units } from './train-physics.js?v=1785017600';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1785016545';
+} from './schedule-logic.js?v=1785017600';
 
 export const TrainController = {
   _getWeatherEffects() {
@@ -137,13 +137,14 @@ export const TrainController = {
       return Number.isFinite(minSpeed) ? minSpeed : (route[segIdx]?.maxSpeed || 30);
     },
 
-  _getNegativeTransitionCap(route, segIdx, progress, currentSpeed) {
+  _getNegativeTransitionCap(route, segIdx, progress, currentSpeed, decel) {
       const segDists = this._state?.segDists;
       const cumDist = this._state?.cumDist;
       if (!segDists || !cumDist || currentSpeed <= 0) return null;
       const totalDist = cumDist[0];
       const frontDist = totalDist - cumDist[segIdx] + progress * segDists[segIdx];
       const bufferKm = this._negativeBufferKm != null ? this._negativeBufferKm : 0.10;
+      const effectiveDecel = decel > 0 ? decel : (this.train.decel || 4);
       let cap = Infinity;
       for (let i = segIdx + 1; i < route.length; i++) {
         const nextSpeed = route[i].maxSpeed || 30;
@@ -154,13 +155,11 @@ export const TrainController = {
           cap = Math.min(cap, nextSpeed);
           continue;
         }
-        const weather = this._getWeatherEffects();
-        const decel = this.train.decel * weather.brakeFactor;
-        const brakingNeeded = Math.max(0, (currentSpeed * currentSpeed - nextSpeed * nextSpeed) / (2 * decel * 3600));
+        const brakingNeeded = Math.max(0, (currentSpeed * currentSpeed - nextSpeed * nextSpeed) / (2 * effectiveDecel * 3600));
         if (distToPoint <= brakingNeeded + bufferKm) {
           // speed required to be exactly at nextSpeed at (pointDist - bufferKm)
           const targetDist = Math.max(0, distToPoint - bufferKm);
-          const reqSpeed = Math.sqrt(Math.max(0, nextSpeed * nextSpeed + 2 * decel * 3600 * targetDist));
+          const reqSpeed = Math.sqrt(Math.max(0, nextSpeed * nextSpeed + 2 * effectiveDecel * 3600 * targetDist));
           cap = Math.min(cap, reqSpeed);
         }
       }
@@ -332,9 +331,12 @@ export const TrainController = {
 
       // Infrastructure speed limit from ORM data
       // Annexe 3A — limite sur la portion de voie occupée + transitions +/-.
+      const weather = this._getWeatherEffects();
+      const physics = this._computePhysicsAccel(weather);
       const trainLength = this.rame ? this.rame.totalLength : (this.train.length || 20);
       const infraLimit = this._getInfraSpeedLimit(route, segIdx, this._state.progress, trainLength);
-      const negativeCap = this._getNegativeTransitionCap(route, segIdx, this._state.progress, this.speed);
+      const decel = physics.decel * weather.brakeFactor;
+      const negativeCap = this._getNegativeTransitionCap(route, segIdx, this._state.progress, this.speed, decel);
       let segMaxSpeed = negativeCap != null ? Math.min(infraLimit, negativeCap) : infraLimit;
       // Train physical speed limit
       const rameMaxSpeed = this.rame ? this.rame.maxSpeed : this.train.maxSpeed;
@@ -408,7 +410,6 @@ export const TrainController = {
       }
 
       // MET-01/06 — météo locale : neige −20 km/h si V ≥ 140
-      const weather = this._getWeatherEffects();
       if (Number.isFinite(weather.speedCap) && weather.speedCap < effectiveMaxSpeed) {
         effectiveMaxSpeed = weather.speedCap;
       }
@@ -460,7 +461,6 @@ export const TrainController = {
       }
 
       // --- MOVEMENT AUTHORITY (ETCS/MA) ---
-      const physics = this._computePhysicsAccel(weather);
       const decelMps2 = (physics.decel / 3.6) * weather.brakeFactor;
       const ma = this._movementAuthority(allServices, decelMps2);
       if (ma && Number.isFinite(ma.eoaM)) {
@@ -520,7 +520,6 @@ export const TrainController = {
 
       // --- ACCELERATION / DECELERATION PHYSICS (PH-01/PH-03/PH-04) ---
       // MET-03/04/05/06 — météo locale : freinage plus tôt sous pluie/orage/neige
-      const decel = physics.decel * weather.brakeFactor;
       const accelDelta = physics.accel * dt;
       const decelDelta = decel * dt;
 

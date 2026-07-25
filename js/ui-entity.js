@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1785016545';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1785016545';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785016545';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785016545';
+import { haversineDistance } from './simulation.js?v=1785017600';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1785017600';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785017600';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785017600';
 
 export const UIEntity = {
   toggleStationCreation() {
@@ -4475,13 +4475,15 @@ export const UIEntity = {
           route = await this.game.orm.findRoute(ptA.lat, ptA.lon, ptB.lat, ptB.lon);
           distance = this.game.orm.getRouteDistance(route);
         } catch (e) {
-          // Fallback: straight line
+          // Fallback: straight line using nearest ORM speed
           const dLat = (ptB.lat - ptA.lat) * 111;
           const dLon = (ptB.lon - ptA.lon) * 111 * Math.cos(ptA.lat * Math.PI / 180);
           distance = Math.sqrt(dLat * dLat + dLon * dLon);
+          const msA = this._getNearestOrmSpeed(ptA.lat, ptA.lon);
+          const msB = this._getNearestOrmSpeed(ptB.lat, ptB.lon);
           route = [
-            { lat: ptA.lat, lon: ptA.lon, maxSpeed: 160 },
-            { lat: ptB.lat, lon: ptB.lon, maxSpeed: 160 },
+            { lat: ptA.lat, lon: ptA.lon, maxSpeed: msA },
+            { lat: ptB.lat, lon: ptB.lon, maxSpeed: msB },
           ];
         }
 
@@ -4528,7 +4530,14 @@ export const UIEntity = {
       }
     },
 
-  _handleManualTronconClick(x, y) {
+  _getNearestOrmSpeed(lat, lon, maxDistKm = 1.0) {
+      const orm = this.game?.orm;
+      if (!orm || !orm.snapToWay) return 30;
+      const snap = orm.snapToWay(lat, lon, maxDistKm);
+      return snap?.maxSpeed ?? 30;
+    },
+
+  async _handleManualTronconClick(x, y) {
       const renderer = this.game.renderer;
       const vpm = this.game.voiePointManager;
       const world = this.game.world;
@@ -4553,29 +4562,55 @@ export const UIEntity = {
           return;
         }
         this._manualTronconPointA = { id: closest.id, type: closestType, lat: closest.lat, lon: closest.lon };
-        this._manualTronconWaypoints = [{ lat: closest.lat, lon: closest.lon }];
+        this._manualTronconWaypoints = [{ lat: closest.lat, lon: closest.lon, control: true }];
         this._showPickHint(`Départ: ${closestType === 'station' ? closest.name : 'Voie ' + closest.voie} — Cliquer pour tracer, cliquer un point pour terminer`);
       } else if (closest && closest.id !== this._manualTronconPointA.id) {
         // Clicked on a target point — finalize the tronçon
-        this._manualTronconWaypoints.push({ lat: closest.lat, lon: closest.lon });
-        this._finalizeManualTroncon(closest);
+        this._manualTronconWaypoints.push({ lat: closest.lat, lon: closest.lon, control: true });
+        await this._finalizeManualTroncon(closest);
       } else {
-        // Clicked on empty space — add waypoint
+        // Clicked on empty space — snap to nearest ORM way if possible
         const worldPos = renderer.tileMap.screenToWorld(x, y, renderer.logicalWidth, renderer.logicalHeight);
-        this._manualTronconWaypoints.push({ lat: worldPos.lat, lon: worldPos.lon, maxSpeed: 160 });
+        const snap = this.game?.orm?.snapToWay(worldPos.lat, worldPos.lon, 1.0);
+        if (snap) {
+          this._manualTronconWaypoints.push({ lat: snap.lat, lon: snap.lon, maxSpeed: snap.maxSpeed, control: true });
+        } else {
+          this._manualTronconWaypoints.push({ lat: worldPos.lat, lon: worldPos.lon, maxSpeed: 30, control: true });
+        }
         this._showPickHint(`${this._manualTronconWaypoints.length} points tracés — Cliquer un point existant pour terminer`);
       }
     },
 
-  _finalizeManualTroncon(endPoint) {
+  async _finalizeManualTroncon(endPoint) {
       const vpm = this.game.voiePointManager;
+      const orm = this.game.orm;
       const ptA = this._manualTronconPointA;
-      const coarseRoute = this._manualTronconWaypoints.map(wp => ({
-        lat: wp.lat, lon: wp.lon, maxSpeed: wp.maxSpeed || 30,
-      }));
+      const waypoints = this._manualTronconWaypoints;
+      if (!ptA || waypoints.length < 2) return;
 
-      // Player note / Annex 6 — livemap manual tronçon must keep one point every 50 m.
-      const route = this._densifyRoute(coarseRoute, 0.05);
+      let route = null;
+      // TRV-02/03 : tracé manuel le long de l'ORM entre les points de contrôle
+      if (orm && orm.findConstrainedRoute) {
+        const controls = waypoints.slice(1, -1);
+        try {
+          const ormRoute = await orm.findConstrainedRoute(waypoints[0].lat, waypoints[0].lon, waypoints[waypoints.length - 1].lat, waypoints[waypoints.length - 1].lon, controls);
+          if (ormRoute && ormRoute.length >= 2 && !orm.isFallbackRoute(ormRoute)) {
+            route = ormRoute.map(p => ({ ...p }));
+          }
+        } catch (e) { /* fallback below */ }
+      }
+
+      // Fallback: straight line with nearest ORM speed at each control point
+      if (!route) {
+        const coarseRoute = waypoints.map((wp) => ({
+          lat: wp.lat, lon: wp.lon,
+          maxSpeed: wp.maxSpeed || this._getNearestOrmSpeed(wp.lat, wp.lon),
+        }));
+        route = this._densifyRoute(coarseRoute, 0.05);
+      } else {
+        // Densify the ORM route to keep a point every ~50 m (Annex 6)
+        route = this._densifyRoute(route, 0.05);
+      }
 
       // Recalculate distance from the densified route.
       let distance = 0;

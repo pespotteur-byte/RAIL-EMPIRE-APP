@@ -1,16 +1,16 @@
 import {
   timeDiff, timeGte, isInServiceWindow, wrapTime, _seeded01, serviceCounters
-} from './service-utils.js?v=1785016545';
-import { cantonManager } from './canton-manager.js?v=1785016545';
-import { ServiceStop } from './service-stop.js?v=1785016545';
-import { haversineDistance, analyzeRoute } from './simulation.js?v=1785016545';
-import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1785016545';
-import { getGlobalRng } from './rng.js?v=1785016545';
-import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1785016545';
+} from './service-utils.js?v=1785017600';
+import { cantonManager } from './canton-manager.js?v=1785017600';
+import { ServiceStop } from './service-stop.js?v=1785017600';
+import { haversineDistance, analyzeRoute } from './simulation.js?v=1785017600';
+import { visaSpeedCapKmh, RESTART_SPEED_KMH } from './signaling.js?v=1785017600';
+import { getGlobalRng } from './rng.js?v=1785017600';
+import { accelerationMs2, brakingDecelMs2, brakingDistanceM, _units } from './train-physics.js?v=1785017600';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
-} from './schedule-logic.js?v=1785016545';
+} from './schedule-logic.js?v=1785017600';
 
 export const CantonController = {
   _yieldToRescue() {
@@ -76,8 +76,11 @@ export const CantonController = {
           if (d < minDist) { minDist = d; bestIdx = i; }
         }
         this._state.index = Math.min(bestIdx, route.length - 2);
+        // PV-01 : distance réelle depuis le début du tracé pour le point de départ courant
+        this._legStartRouteKm = this._getRouteProgressKm(this.position, route, this._state.index);
       } else {
         this._state.index = 0;
+        this._legStartRouteKm = 0;
       }
 
       // Pre-analyze route for precise distance and time calculations

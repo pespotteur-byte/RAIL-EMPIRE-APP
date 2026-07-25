@@ -57,22 +57,28 @@ export class GraphMarche {
     while (this.records.length > this.maxRecords) this.records.splice(0, 500);
   }
 
-  /** Get all stations referenced by any service */
+  _isWaypoint(stop) {
+    return stop && stop.type === 'waypoint';
+  }
+
+  /** Get all stations referenced by any service (waypoints excluded) */
   _getServiceStations(game) {
     const stationSet = new Set();
     for (const svc of game.scheduleCreator.getActiveServices()) {
-      for (const stop of svc.stops) stationSet.add(stop.stationId);
+      for (const stop of svc.stops) {
+        if (!this._isWaypoint(stop)) stationSet.add(stop.stationId);
+      }
     }
     return [...stationSet].map(id => game.world.getStationById(id)).filter(Boolean);
   }
 
-  /** Find services that pass through both station A and B */
+  /** Find services that pass through both station A and B (ignoring waypoints) */
   _findServicesThrough(game, stAId, stBId) {
     const results = [];
     for (const svc of game.scheduleCreator.getActiveServices()) {
       const stops = svc.stops;
-      const idxA = stops.findIndex(s => s.stationId === stAId);
-      const idxB = stops.findIndex(s => s.stationId === stBId);
+      const idxA = stops.findIndex(s => !this._isWaypoint(s) && s.stationId === stAId);
+      const idxB = stops.findIndex(s => !this._isWaypoint(s) && s.stationId === stBId);
       if (idxA >= 0 && idxB >= 0) {
         results.push({ svc, idxA, idxB, direction: idxA < idxB ? 1 : -1 });
       }
@@ -80,33 +86,37 @@ export class GraphMarche {
     return results;
   }
 
-  /** Build ordered station list between A and B from a service's stops */
-  _getStationsBetween(svc, idxA, idxB) {
+  /** Build ordered station list (waypoints excluded) between A and B and
+   * calculate cumulative distances using the real ORM route. */
+  _getArretStopsAndDists(svc, idxA, idxB, game) {
     const start = Math.min(idxA, idxB);
     const end = Math.max(idxA, idxB);
-    return svc.stops.slice(start, end + 1);
-  }
-
-  /** Calculate cumulative distances between stations using the real ORM route.
-   * Falls back to straight-line haversine only if no route is available. */
-  _calcDistances(stationStops, game, refSvc) {
-    const dists = [0];
-    for (let i = 1; i < stationStops.length; i++) {
-      const route = refSvc && refSvc.routes ? refSvc.routes[i - 1] : null;
-      let d = 0;
-      if (route && route.length >= 2) {
-        for (let k = 0; k < route.length - 1; k++) {
-          d += this._haversine(route[k].lat, route[k].lon, route[k + 1].lat, route[k + 1].lon);
+    const stops = [];
+    const dists = [];
+    let cumDist = 0;
+    for (let i = start; i <= end; i++) {
+      if (i > start) {
+        const route = svc?.routes?.[i - 1];
+        if (route && route.length >= 2) {
+          for (let k = 0; k < route.length - 1; k++) {
+            cumDist += this._haversine(route[k].lat, route[k].lon, route[k + 1].lat, route[k + 1].lon);
+          }
+        } else {
+          const prevStop = svc.stops[i - 1];
+          const curStop = svc.stops[i];
+          const prevSt = prevStop?.stationId ? game.world.getStationById(prevStop.stationId) : null;
+          const curSt = curStop?.stationId ? game.world.getStationById(curStop.stationId) : null;
+          if (prevSt && curSt) {
+            cumDist += this._haversine(prevSt.lat, prevSt.lon, curSt.lat, curSt.lon);
+          }
         }
-      } else {
-        const prev = game.world.getStationById(stationStops[i - 1].stationId);
-        const curr = game.world.getStationById(stationStops[i].stationId);
-        if (!prev || !curr) { dists.push(dists[i - 1]); continue; }
-        d = this._haversine(prev.lat, prev.lon, curr.lat, curr.lon);
       }
-      dists.push(dists[i - 1] + d);
+      if (!this._isWaypoint(svc.stops[i])) {
+        stops.push(svc.stops[i]);
+        dists.push(cumDist);
+      }
     }
-    return dists;
+    return { stops, dists };
   }
 
   _haversine(lat1, lon1, lat2, lon2) {
@@ -328,8 +338,7 @@ export class GraphMarche {
     }
 
     const ref = matches.reduce((best, m) => Math.abs(m.idxB - m.idxA) > Math.abs(best.idxB - best.idxA) ? m : best, matches[0]);
-    const refStops = this._getStationsBetween(ref.svc, ref.idxA, ref.idxB);
-    const refDists = this._calcDistances(refStops, game, ref.svc);
+    const { stops: refStops, dists: refDists } = this._getArretStopsAndDists(ref.svc, ref.idxA, ref.idxB, game);
     const totalDist = refDists[refDists.length - 1] || 1;
 
     const prevTotalDist = this._lastTotalDist;
@@ -352,10 +361,11 @@ export class GraphMarche {
     ctx.rect(pad.left, pad.top, chartW, chartH);
     ctx.clip();
 
-    // Grid: vertical station lines
+    // Grid: vertical station lines (waypoints excluded from the axis)
     ctx.strokeStyle = '#facc15';
     ctx.lineWidth = 0.8;
     for (let i = 0; i < refStops.length; i++) {
+      if (this._isWaypoint(refStops[i])) continue;
       const d = refDists[i];
       if (d < this.view.distStart || d > this.view.distEnd) continue;
       const x = dToX(d);
@@ -432,10 +442,10 @@ export class GraphMarche {
         ctx.stroke();
 
         if (labelPoints.length > 0) {
-          const lp = labelPoints.reduce((best, p) => p.duration > best.duration ? p : best, labelPoints[0]);
-          if (lp.x1 >= pad.left - 10 && lp.x2 <= W - pad.right + 10 && lp.y1 >= pad.top - 10 && lp.y2 <= H - pad.bottom + 10) {
-            this._drawTrainLabel(ctx, lp.x1, lp.y1, lp.x2, lp.y2, m.svc.name);
-          }
+          const inView = labelPoints.filter(lp => lp.x1 >= pad.left - 10 && lp.x2 <= W - pad.right + 10 && lp.y1 >= pad.top - 10 && lp.y2 <= H - pad.bottom + 10);
+          const candidates = inView.length > 0 ? inView : labelPoints;
+          const lp = candidates.reduce((best, p) => p.duration > best.duration ? p : best, candidates[0]);
+          this._drawTrainLabel(ctx, lp.x1, lp.y1, lp.x2, lp.y2, m.svc.name);
         }
 
         legendItems.push({ name: m.svc.name, color: '#000000' });
@@ -513,17 +523,24 @@ export class GraphMarche {
 
     ctx.restore();
 
-    // Time labels on left (orange/yellow)
+    // Time labels on left (orange/yellow), with adaptive interval on zoom
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#b45309';
-    const tStartLabel = Math.floor(this.view.timeStart / 30) * 30;
-    const tEndLabel = Math.ceil(this.view.timeEnd / 30) * 30;
-    for (let t = tStartLabel; t <= tEndLabel; t += 30) {
+    const tRange = Math.max(1, this.view.timeEnd - this.view.timeStart);
+    let step = 30;
+    if (tRange <= 60) step = 5;
+    else if (tRange <= 180) step = 10;
+    else if (tRange <= 360) step = 15;
+    else if (tRange <= 720) step = 30;
+    else step = 60;
+    const tStartLabel = Math.floor(this.view.timeStart / step) * step;
+    const tEndLabel = Math.ceil(this.view.timeEnd / step) * step;
+    for (let t = tStartLabel; t <= tEndLabel; t += step) {
       if (t < this.view.timeStart || t > this.view.timeEnd) continue;
       const y = tToY(t);
-      const label = t === 1440 ? '00:00' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+      const label = t >= 1440 ? '00:00' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
       ctx.fillText(label, pad.left - 6, y);
     }
 
@@ -532,8 +549,10 @@ export class GraphMarche {
     ctx.font = '9px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    const maxNameWidth = Math.max(40, chartW / refStops.length - 8);
+    const nonWaypointCount = refStops.filter(s => !this._isWaypoint(s)).length || 1;
+    const maxNameWidth = Math.max(40, chartW / nonWaypointCount - 8);
     for (let i = 0; i < refStops.length; i++) {
+      if (this._isWaypoint(refStops[i])) continue;
       const d = refDists[i];
       if (d < this.view.distStart || d > this.view.distEnd) continue;
       const x = dToX(d);
