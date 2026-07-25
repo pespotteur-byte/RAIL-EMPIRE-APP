@@ -115,6 +115,7 @@ th:nth-child(12),td:nth-child(12){width:90px}
   </select>
   <div style="flex:1"></div>
   <button class="btn btn-purple" id="btn-import">Importer</button>
+  <button class="btn btn-blue" id="btn-add">+ Ajouter</button>
   <button class="btn btn-green" id="btn-export">Exporter JSON</button>
   <button class="btn btn-orange" id="btn-export-csv">Exporter CSV</button>
   <button class="btn btn-red" id="btn-delete-selected">Supprimer sélection</button>
@@ -166,7 +167,11 @@ th:nth-child(12),td:nth-child(12){width:90px}
 <div class="modal-overlay" id="modal-edit">
   <div class="modal">
     <h2 id="edit-title">Modifier l'engin</h2>
+    <input type="hidden" id="edit-id">
     <div id="edit-image-preview" style="text-align:center;margin-bottom:12px"></div>
+    <div class="form-row">
+      <label style="flex:1">Image <input type="file" id="edit-image" accept="image/*"></label>
+    </div>
     <div class="form-row">
       <label>Nom <input type="text" id="edit-name"></label>
       <label>Série <input type="text" id="edit-series"></label>
@@ -314,8 +319,8 @@ th:nth-child(12),td:nth-child(12){width:90px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script type="module">
 // ============ LOAD ALL CATALOGS ============
-import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931685';
-import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931685';
+import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931686';
+import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931686';
 
 let allItems = [];
 let filteredItems = [];
@@ -325,6 +330,7 @@ let sortCol = 'name';
 let sortAsc = true;
 let selectedIds = new Set();
 let editingItem = null;
+let editImageData = '';
 
 // Load everything
 function loadCatalogs() {
@@ -499,7 +505,7 @@ window._editItem = function(id) {
   editingItem = allItems.find(i => i.id === id);
   if (!editingItem) return;
   document.getElementById('edit-title').textContent = `Modifier : ${editingItem.name}`;
-  document.getElementById('edit-image-preview').innerHTML = editingItem.imageData ? `<img src="${editingItem.imageData}" style="max-height:60px;max-width:200px;border-radius:4px" onerror="this.style.display='none'">` : '';
+  document.getElementById('edit-id').value = editingItem.id;
   document.getElementById('edit-name').value = editingItem.name || '';
   document.getElementById('edit-series').value = editingItem.seriesName || '';
   document.getElementById('edit-category').value = editingItem.category || 'wagon';
@@ -512,33 +518,93 @@ window._editItem = function(id) {
   document.getElementById('edit-freight').value = editingItem.freightCapacity || 0;
   document.getElementById('edit-price').value = editingItem.purchasePrice || 0;
   document.getElementById('edit-cargo').value = (editingItem.cargoTypes || []).join(', ');
+  editImageData = editingItem.imageData || '';
+  document.getElementById('edit-image-preview').innerHTML = editImageData ? `<img src="${editImageData}" style="max-height:80px;max-width:200px;border-radius:4px" onerror="this.style.display='none'">` : '<span style="color:var(--text2);font-size:.85em">Aucune image</span>';
+  document.getElementById('edit-image').value = '';
+  document.getElementById('modal-edit').classList.add('active');
+};
+window._addItem = function() {
+  editingItem = null;
+  document.getElementById('edit-title').textContent = 'Ajouter un engin';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('edit-name').value = '';
+  document.getElementById('edit-series').value = '';
+  document.getElementById('edit-category').value = 'wagon';
+  document.getElementById('edit-traction').value = 'none';
+  document.getElementById('edit-vmax').value = 0;
+  document.getElementById('edit-power').value = 0;
+  document.getElementById('edit-mass').value = 0;
+  document.getElementById('edit-length').value = 0;
+  document.getElementById('edit-pax').value = 0;
+  document.getElementById('edit-freight').value = 0;
+  document.getElementById('edit-price').value = 0;
+  document.getElementById('edit-cargo').value = '';
+  editImageData = '';
+  document.getElementById('edit-image-preview').innerHTML = '<span style="color:var(--text2);font-size:.85em">Aucune image</span>';
+  document.getElementById('edit-image').value = '';
   document.getElementById('modal-edit').classList.add('active');
 };
 
+document.getElementById('btn-add')?.addEventListener('click', window._addItem);
+
+document.getElementById('edit-image')?.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    editImageData = ev.target.result;
+    document.getElementById('edit-image-preview').innerHTML = `<img src="${editImageData}" style="max-height:80px;max-width:200px;border-radius:4px" onerror="this.style.display='none'">`;
+  };
+  reader.readAsDataURL(file);
+});
+
 document.getElementById('edit-cancel').addEventListener('click', () => document.getElementById('modal-edit').classList.remove('active'));
 document.getElementById('edit-save').addEventListener('click', () => {
-  if (!editingItem) return;
-  editingItem.name = document.getElementById('edit-name').value;
-  editingItem.seriesName = document.getElementById('edit-series').value;
-  editingItem.category = document.getElementById('edit-category').value;
-  editingItem.traction = document.getElementById('edit-traction').value;
-  editingItem.maxSpeed = +document.getElementById('edit-vmax').value;
-  editingItem.power = +document.getElementById('edit-power').value;
-  editingItem.mass = +document.getElementById('edit-mass').value;
-  editingItem.length = +document.getElementById('edit-length').value;
-  editingItem.passengerCapacity = +document.getElementById('edit-pax').value;
-  editingItem.freightCapacity = +document.getElementById('edit-freight').value;
-  editingItem.purchasePrice = +document.getElementById('edit-price').value;
-  editingItem.cargoTypes = document.getElementById('edit-cargo').value.split(',').map(s=>s.trim()).filter(Boolean);
-  editingItem.tonnage = editingItem.mass;
-  // Save modification
-  const mods = JSON.parse(localStorage.getItem('admin_catalog_mods') || '[]');
-  const idx = mods.findIndex(m => m.id === editingItem.id);
-  if (idx >= 0) mods[idx] = editingItem; else mods.push({...editingItem});
-  localStorage.setItem('admin_catalog_mods', JSON.stringify(mods));
-  
+  const id = document.getElementById('edit-id').value;
+  const name = document.getElementById('edit-name').value.trim() || 'Nouvel engin';
+  const itemData = {
+    name,
+    seriesName: document.getElementById('edit-series').value.trim(),
+    category: document.getElementById('edit-category').value,
+    traction: document.getElementById('edit-traction').value,
+    maxSpeed: +document.getElementById('edit-vmax').value || 0,
+    power: +document.getElementById('edit-power').value || 0,
+    mass: +document.getElementById('edit-mass').value || 0,
+    length: +document.getElementById('edit-length').value || 0,
+    passengerCapacity: +document.getElementById('edit-pax').value || 0,
+    freightCapacity: +document.getElementById('edit-freight').value || 0,
+    purchasePrice: +document.getElementById('edit-price').value || 0,
+    cargoTypes: document.getElementById('edit-cargo').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tonnage: +document.getElementById('edit-mass').value || 0,
+    imageData: editImageData,
+  };
+
+  if (id) {
+    const item = allItems.find(i => i.id === id);
+    if (!item) return;
+    Object.assign(item, itemData);
+    const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+    const idx = imported.findIndex(i => i.id === id);
+    if (idx >= 0) {
+      imported[idx] = {...imported[idx], ...itemData};
+      localStorage.setItem('admin_catalog_imported', JSON.stringify(imported));
+    } else {
+      const mods = JSON.parse(localStorage.getItem('admin_catalog_mods') || '[]');
+      const mIdx = mods.findIndex(m => m.id === id);
+      if (mIdx >= 0) mods[mIdx] = {...item}; else mods.push({...item});
+      localStorage.setItem('admin_catalog_mods', JSON.stringify(mods));
+    }
+  } else {
+    const newItem = { ...itemData, id: 'admin_' + Date.now(), _source: 'ADMIN', _catalog: true };
+    const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+    imported.push(newItem);
+    localStorage.setItem('admin_catalog_imported', JSON.stringify(imported));
+    allItems.push(newItem);
+  }
+
   document.getElementById('modal-edit').classList.remove('active');
-  renderPage();
+  updateStats();
+  applyFilters();
 });
 
 // ============ EXPORT JSON ============
@@ -931,7 +997,13 @@ async function publishToServer() {
     publishedAt: new Date().toISOString(),
     modifications: mods,
     deletions: deletedIds,
-    imports: imported.map(i => ({...i, imageData: undefined, _importBlob: undefined})),
+    imports: imported.map(i => {
+      const clean = {...i};
+      delete clean._importBlob;
+      delete clean._importPath;
+      if (clean.imageData && !clean.imageData.startsWith('data:')) clean.imageData = undefined;
+      return clean;
+    }),
     incidents: incidents,
   };
 
@@ -969,7 +1041,7 @@ document.getElementById('publish-confirm').addEventListener('click', publishToSe
 document.getElementById('btn-back')?.addEventListener('click', () => {
   if (window.history.length > 1) window.history.back();
   else {
-    const v = new URLSearchParams(window.location.search).get('v') || '1784931685';
+    const v = new URLSearchParams(window.location.search).get('v') || '1784931686';
     window.location.href = 'index.html?v=' + v;
   }
 });
