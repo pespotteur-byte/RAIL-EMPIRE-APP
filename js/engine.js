@@ -130,12 +130,13 @@ export class SimulationEngine {
   }
 
   getFormattedTime() {
-    const pt = this.getParisTime();
-    return `${String(pt.hours).padStart(2, '0')}:${String(pt.minutes).padStart(2, '0')}`;
+    // Bypass the per-frame cache so the clock always reflects the exact machine time.
+    const pt = this._computeGameTime();
+    return `${String(pt.hours).padStart(2, '0')}:${String(pt.minutes).padStart(2, '0')}:${String(pt.seconds).padStart(2, '0')}`;
   }
 
   getFormattedDate() {
-    const pt = this.getParisTime();
+    const pt = this._computeGameTime();
     const d = pt.date;
     const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
     const days = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
