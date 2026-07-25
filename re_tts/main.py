@@ -9,8 +9,8 @@ from fastapi.responses import StreamingResponse
 import soundfile as sf
 import sherpa_onnx
 
-MODEL_DIR = os.environ.get("RE_TTS_MODEL_DIR", "/home/ubuntu/re_tts/models/vits-piper-de_DE-thorsten-medium")
-MODEL_PATH = os.path.join(MODEL_DIR, "de_DE-thorsten-medium.onnx")
+MODEL_DIR = os.environ.get("RE_TTS_MODEL_DIR", "/home/ubuntu/re_tts/models/vits-piper-fr_FR-tom-medium")
+MODEL_PATH = os.path.join(MODEL_DIR, "fr_FR-tom-medium.onnx")
 TOKENS_PATH = os.path.join(MODEL_DIR, "tokens.txt")
 DATA_DIR = os.path.join(MODEL_DIR, "espeak-ng-data")
 
@@ -63,7 +63,7 @@ async def health():
 
 @app.get("/voices")
 async def voices():
-    return {"voices": [{"id": "thorsten-medium", "name": "Thorsten (de_DE, male)", "lang": "de-DE"}]}
+    return {"voices": [{"id": "tom-medium", "name": "Tom (fr_FR, male)", "lang": "fr-FR"}]}
 
 
 @app.post("/tts")
