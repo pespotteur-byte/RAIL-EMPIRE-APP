@@ -3,7 +3,7 @@
  * Manages turnouts, sidings, and junction routing in stations.
  */
 import { icon } from './icons.js';
-import { alertToast } from './html-utils.js?v=1785019294';
+import { alertToast } from './html-utils.js?v=1784931691';
 export class JunctionManager {
   constructor() {
     this.junctions = [];     // { id, stationId, name, type, tracks, state }

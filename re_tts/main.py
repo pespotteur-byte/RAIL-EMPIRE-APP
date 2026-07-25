@@ -9,8 +9,13 @@ from fastapi.responses import StreamingResponse
 import soundfile as sf
 import sherpa_onnx
 
-MODEL_DIR = os.environ.get("RE_TTS_MODEL_DIR", "/home/ubuntu/re_tts/models/vits-piper-fr_FR-tom-medium")
-MODEL_PATH = os.path.join(MODEL_DIR, "fr_FR-tom-medium.onnx")
+MODEL_DIR = os.environ.get("RE_TTS_MODEL_DIR", "/home/ubuntu/re_tts/models/vits-piper-fr_FR-mls-medium")
+
+# Auto-detect the ONNX model file in the model directory.
+MODEL_FILES = [f for f in os.listdir(MODEL_DIR) if f.endswith(".onnx")]
+if not MODEL_FILES:
+    raise RuntimeError(f"No .onnx model found in {MODEL_DIR}")
+MODEL_PATH = os.path.join(MODEL_DIR, MODEL_FILES[0])
 TOKENS_PATH = os.path.join(MODEL_DIR, "tokens.txt")
 DATA_DIR = os.path.join(MODEL_DIR, "espeak-ng-data")
 
@@ -63,7 +68,7 @@ async def health():
 
 @app.get("/voices")
 async def voices():
-    return {"voices": [{"id": "tom-medium", "name": "Tom (fr_FR, male)", "lang": "fr-FR"}]}
+    return {"voices": [{"id": "mls-medium", "name": "mls (fr_FR, male)", "lang": "fr-FR"}]}
 
 
 @app.post("/tts")

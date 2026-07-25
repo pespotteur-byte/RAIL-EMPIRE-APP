@@ -528,12 +528,12 @@ export class GraphMarche {
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#b45309';
-    const tRange = Math.max(1, this.view.timeEnd - this.view.timeStart);
+    const tRange2 = Math.max(1, this.view.timeEnd - this.view.timeStart);
     let step = 30;
-    if (tRange <= 60) step = 5;
-    else if (tRange <= 180) step = 10;
-    else if (tRange <= 360) step = 15;
-    else if (tRange <= 720) step = 30;
+    if (tRange2 <= 60) step = 5;
+    else if (tRange2 <= 180) step = 10;
+    else if (tRange2 <= 360) step = 15;
+    else if (tRange2 <= 720) step = 30;
     else step = 60;
     const tStartLabel = Math.floor(this.view.timeStart / step) * step;
     const tEndLabel = Math.ceil(this.view.timeEnd / step) * step;

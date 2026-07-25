@@ -1,7 +1,7 @@
 // OpenRailwayMap data integration via Overpass API — ORM Direct architecture
 // Uses OSM way graph directly as the game's routing infrastructure.
 // No conversion to intermediate tronçons — the OSM graph IS the network.
-import { segmentsFromRoute, simulateProfile, simulateProfileCumulative } from './train-physics.js?v=1785019294';
+import { segmentsFromRoute, simulateProfile, simulateProfileCumulative } from './train-physics.js?v=1784931691';
 
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',

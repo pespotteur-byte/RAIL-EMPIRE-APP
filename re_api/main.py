@@ -17,7 +17,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import Response as StarletteResponse
 from botocore.exceptions import ClientError
+
+
+class NoCacheStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if isinstance(response, StarletteResponse):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            for h in ("last-modified", "expires"):
+                if h in response.headers:
+                    del response.headers[h]
+        return response
+
 from passlib.context import CryptContext
 
 DB_DSN = os.environ.get(
@@ -634,4 +647,4 @@ async def tts(text: str = Form(...), speed: float = Form(1.0)):
         raise HTTPException(status_code=503, detail=str(e)) from e
 
 
-app.mount("/", StaticFiles(directory="/home/ubuntu/rail-empire-deploy", html=True), name="static")
+app.mount("/", NoCacheStaticFiles(directory="/home/ubuntu/rail-empire-deploy", html=True), name="static")

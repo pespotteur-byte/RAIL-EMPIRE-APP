@@ -1,8 +1,8 @@
-import { haversineDistance } from './simulation.js?v=1785019294';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1785019294';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785019294';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785019294';
-import { announceTrain } from './announcements.js?v=1785019294';
+import { haversineDistance } from './simulation.js?v=1784931691';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784931691';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931691';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931691';
+import { announceTrain } from './announcements.js?v=1784931691';
 
 export const UIMap = {
   setupMapEvents() {
@@ -746,10 +746,10 @@ export const UIMap = {
 
       // "Se situe entre" : utiliser les arrêts programmés (pas les points de voie)
       // pour éviter l'erreur due aux décalages voie/gare centre.
-      const prevArret = findArretStop(curStationIdx - 1, -1);
-      const nextArret = findArretStop(curStationIdx, 1);
-      const ctxPrevName = escapeHtml(arretStationName(prevArret) || prevName);
-      const ctxNextName = escapeHtml(arretStationName(nextArret) || curName);
+      const ctxPrevArret = findArretStop(curStationIdx - 1, -1);
+      const ctxNextArret = findArretStop(curStationIdx, 1);
+      const ctxPrevName = escapeHtml(arretStationName(ctxPrevArret) || prevName);
+      const ctxNextName = escapeHtml(arretStationName(ctxNextArret) || curName);
 
       let situation;
       if (svc.cancelled) {
