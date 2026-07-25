@@ -49,13 +49,14 @@ export class SimulationEngine {
       this._timeOffset = null;
       this._baseDate = null;
       this._baseTimeOfDay = 0;
-      return;
+    } else {
+      this._timeOffset = timeOfDay - this._realMinute();
+      this._baseDate = new Date(dateStr + 'T00:00:00Z');
+      this._baseTimeOfDay = ((timeOfDay % 1440) + 1440) % 1440;
     }
-    this._timeOffset = timeOfDay - this._realMinute();
-    this._baseDate = new Date(dateStr + 'T00:00:00Z');
-    this._baseTimeOfDay = ((timeOfDay % 1440) + 1440) % 1440;
     // Force a fresh time read on next update
     this._ptCache = null;
+    this._ptCacheTime = 0;
   }
 
   _computeGameTime() {

@@ -1,46 +1,46 @@
-import { SimulationEngine } from './engine.js?v=1784931689';
-import { startDedensenBenchmark } from './benchmark.js?v=1784931689';
-import { SeededRng, setGlobalRng } from './rng.js?v=1784931689';
-import { World, createDefaultWorld } from './world.js?v=1784931689';
-import { Renderer } from './renderer.js?v=1784931689';
-import { UI } from './ui.js?v=1784931689';
-import { Economy } from './economy.js?v=1784931689';
-import { IncidentManager } from './incidents.js?v=1784931689';
-import { FreightManager } from './freight.js?v=1784931689';
-import { ScheduleManager } from './schedule.js?v=1784931689';
-import { GameStorage } from './storage.js?v=1784931689';
-import { LiveryManager } from './livery-manager.js?v=1784931689';
-import { AccountManager } from './account.js?v=1784931689';
-import { RollingStockManager } from './rolling-stock.js?v=1784931689';
-import { RameManager } from './rame.js?v=1784931689';
-import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784931689';
-import { DepotManager } from './depot.js?v=1784931689';
-import { WorksManager } from './works.js?v=1784931689';
-import { ORMClient } from './orm.js?v=1784931689';
-import { LineManager, PlatformManager } from './line.js?v=1784931689';
-import { SillonManager } from './sillon.js?v=1784931689';
-import { VoiePointManager } from './voie-points.js?v=1784931689';
-import { Dashboard } from './dashboard.js?v=1784931689';
-import { GraphMarche } from './graph-marche.js?v=1784931689';
-import { StaffManager } from './staff.js?v=1784931689';
-import { Tutorial } from './tutorial.js?v=1784931689';
-import { Bank } from './bank.js?v=1784931689';
-import { Weather } from './weather.js?v=1784931689';
-import { Unions } from './unions.js?v=1784931689';
-import { SeasonalSchedule } from './seasonal.js?v=1784931689';
-import { Connections } from './connections.js?v=1784931689';
-import { StationUpgrades } from './station-upgrades.js?v=1784931689';
-import { A12Model } from './a12-model.js?v=1784931689';
-import { JunctionManager } from './junctions.js?v=1784931689';
-import { CargoTypeManager } from './cargo-types.js?v=1784931689';
-import { ITEModules } from './ite-modules.js?v=1784931689';
-import { IndustrialClients } from './industrial-clients.js?v=1784931689';
-import { ShuntingManager } from './shunting.js?v=1784931689';
-import { haversineDistance } from './simulation.js?v=1784931689';
-import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784931689';
-import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784931689';
-import { adminSync } from './admin-sync.js?v=1784931689';
-import { alertToast } from './html-utils.js?v=1784931689';
+import { SimulationEngine } from './engine.js?v=1784931690';
+import { startDedensenBenchmark } from './benchmark.js?v=1784931690';
+import { SeededRng, setGlobalRng } from './rng.js?v=1784931690';
+import { World, createDefaultWorld } from './world.js?v=1784931690';
+import { Renderer } from './renderer.js?v=1784931690';
+import { UI } from './ui.js?v=1784931690';
+import { Economy } from './economy.js?v=1784931690';
+import { IncidentManager } from './incidents.js?v=1784931690';
+import { FreightManager } from './freight.js?v=1784931690';
+import { ScheduleManager } from './schedule.js?v=1784931690';
+import { GameStorage } from './storage.js?v=1784931690';
+import { LiveryManager } from './livery-manager.js?v=1784931690';
+import { AccountManager } from './account.js?v=1784931690';
+import { RollingStockManager } from './rolling-stock.js?v=1784931690';
+import { RameManager } from './rame.js?v=1784931690';
+import { ScheduleCreator, cantonManager } from './schedule-creator.js?v=1784931690';
+import { DepotManager } from './depot.js?v=1784931690';
+import { WorksManager } from './works.js?v=1784931690';
+import { ORMClient } from './orm.js?v=1784931690';
+import { LineManager, PlatformManager } from './line.js?v=1784931690';
+import { SillonManager } from './sillon.js?v=1784931690';
+import { VoiePointManager } from './voie-points.js?v=1784931690';
+import { Dashboard } from './dashboard.js?v=1784931690';
+import { GraphMarche } from './graph-marche.js?v=1784931690';
+import { StaffManager } from './staff.js?v=1784931690';
+import { Tutorial } from './tutorial.js?v=1784931690';
+import { Bank } from './bank.js?v=1784931690';
+import { Weather } from './weather.js?v=1784931690';
+import { Unions } from './unions.js?v=1784931690';
+import { SeasonalSchedule } from './seasonal.js?v=1784931690';
+import { Connections } from './connections.js?v=1784931690';
+import { StationUpgrades } from './station-upgrades.js?v=1784931690';
+import { A12Model } from './a12-model.js?v=1784931690';
+import { JunctionManager } from './junctions.js?v=1784931690';
+import { CargoTypeManager } from './cargo-types.js?v=1784931690';
+import { ITEModules } from './ite-modules.js?v=1784931690';
+import { IndustrialClients } from './industrial-clients.js?v=1784931690';
+import { ShuntingManager } from './shunting.js?v=1784931690';
+import { haversineDistance } from './simulation.js?v=1784931690';
+import { CATALOG, CATALOG_CARGO_TYPES } from './catalog-data.js?v=1784931690';
+import { CATALOG_PACK_RE } from './catalog-data-pack-re.js?v=1784931690';
+import { adminSync } from './admin-sync.js?v=1784931690';
+import { alertToast } from './html-utils.js?v=1784931690';
 
 class RailEmpire {
   constructor() {
@@ -253,16 +253,10 @@ class RailEmpire {
   }
 
   async catchUpToRealTime(savedState) {
-    if (!savedState || !savedState.saveTime || typeof savedState.gameTime !== 'number' || !savedState.gameDate) return;
-    const elapsedMs = Date.now() - savedState.saveTime;
+    if (!savedState || typeof savedState.gameTime !== 'number' || !savedState.gameDate) return;
+    const saveTime = typeof savedState.saveTime === 'number' ? savedState.saveTime : Date.now();
+    const elapsedMs = Date.now() - saveTime;
     const elapsedMin = Math.floor(elapsedMs / 60000);
-    if (elapsedMin <= 0) return;
-
-    const MAX_CATCHUP_MIN = 24 * 60; // 24 h max
-    const catchUpMin = Math.min(elapsedMin, MAX_CATCHUP_MIN);
-    if (catchUpMin < elapsedMin) {
-      console.warn(`Catch-up capped: ${elapsedMin} min elapsed, simulating ${catchUpMin} min`);
-    }
 
     const wasPaused = this.engine.paused;
     this.engine.paused = true;
@@ -275,40 +269,66 @@ class RailEmpire {
       this.weather.getSpeedEffectsAt = () => ({ speedCap: Infinity, brakeFactor: 1, speedMult: 1, type: 'clear' });
     }
 
-    const MOVES_PER_MIN = 10; // dt = 6 s
-    let currentTime = savedState.gameTime;
-    let currentDate = savedState.gameDate;
-    const startTs = performance.now();
+    const resyncToReal = () => {
+      this.engine.setGameTime(null, null);
+      const pt = this.engine.getParisTime();
+      this._gameTime = pt.hours * 60 + pt.minutes;
+      this._currentDate = this.engine.getParisDate();
+    };
 
-    for (let i = 0; i < catchUpMin; i++) {
-      const next = this._addMinutes(currentTime, currentDate, 1);
-      currentTime = next.timeOfDay;
-      currentDate = next.dateStr;
-
-      this.tick(currentTime, currentDate, null);
-      for (let j = 0; j < MOVES_PER_MIN; j++) {
-        this.moveTick(6, currentTime);
+    try {
+      // If saveTime is missing/future (clock skew) or no time passed, just resync to real time.
+      if (elapsedMin <= 0) {
+        resyncToReal();
+        console.warn(`Catch-up skipped: saveTime is ${elapsedMin} min in the future or missing; resynced to real time.`);
+        return;
       }
 
-      // Yield every minute to keep UI responsive and allow abort on tab close
-      if (i % 1 === 0) {
-        await new Promise(r => setTimeout(r, 0));
+      const MAX_CATCHUP_MIN = 24 * 60; // 24 h max
+      const catchUpMin = Math.min(elapsedMin, MAX_CATCHUP_MIN);
+      if (catchUpMin < elapsedMin) {
+        console.warn(`Catch-up capped: ${elapsedMin} min elapsed, simulating ${catchUpMin} min`);
       }
-    }
 
-    // Restore
-    if (this.weather) {
-      this.weather.update = origWeatherUpdate;
-      this.weather.getSpeedEffectsAt = origWeatherEffects;
-    }
+      const MOVES_PER_MIN = 10; // dt = 6 s
+      let currentTime = savedState.gameTime;
+      let currentDate = savedState.gameDate;
+      const startTs = performance.now();
 
-    // Set engine to the exact game time corresponding to current real time
-    const target = this._addMinutes(savedState.gameTime, savedState.gameDate, elapsedMin);
-    this.engine.setGameTime(target.timeOfDay, target.dateStr);
-    this._gameTime = target.timeOfDay;
-    this._currentDate = target.dateStr;
-    this.engine.paused = wasPaused;
-    console.log(`Catch-up done: ${catchUpMin} min simulated in ${Math.round(performance.now() - startTs)} ms`);
+      for (let i = 0; i < catchUpMin; i++) {
+        const next = this._addMinutes(currentTime, currentDate, 1);
+        currentTime = next.timeOfDay;
+        currentDate = next.dateStr;
+
+        this.tick(currentTime, currentDate, null);
+        for (let j = 0; j < MOVES_PER_MIN; j++) {
+          this.moveTick(6, currentTime);
+        }
+
+        // Yield every minute to keep UI responsive and allow abort on tab close
+        if (i % 1 === 0) {
+          await new Promise(r => setTimeout(r, 0));
+        }
+      }
+
+      // Set engine to the exact game time corresponding to current real time
+      const target = this._addMinutes(savedState.gameTime, savedState.gameDate, elapsedMin);
+      this.engine.setGameTime(target.timeOfDay, target.dateStr);
+      this._gameTime = target.timeOfDay;
+      this._currentDate = target.dateStr;
+      console.log(`Catch-up done: ${catchUpMin} min simulated in ${Math.round(performance.now() - startTs)} ms`);
+    } catch (e) {
+      console.error('Catch-up error, resyncing to real time:', e);
+      resyncToReal();
+      throw e;
+    } finally {
+      // Restore
+      if (this.weather) {
+        this.weather.update = origWeatherUpdate;
+        this.weather.getSpeedEffectsAt = origWeatherEffects;
+      }
+      this.engine.paused = wasPaused;
+    }
   }
 
   async startGame(savedState) {
