@@ -378,17 +378,30 @@ export const UISchedule = {
             }
             ctx.stroke();
 
+            // Draw nodes with an adaptive spacing so they stay visible as individual
+            // markers even on very long (50 km+) routes. The underlying route still
+            // keeps its 50 m resolution; we just thin the visual markers when they
+            // would overlap on screen.
+            const minNodeGapPx = 12;
+            let lastDrawn = null;
             for (let i = 0; i < route.length; i++) {
               const pt = route[i];
               const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
               const isEnd = (i === 0 || i === route.length - 1);
               const isSelected = this._traceSelectedPoint && this._traceSelectedPoint.leg === leg && this._traceSelectedPoint.control === pt;
               const isControl = pt && pt.control;
-              ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : 'rgba(255,255,255,0.85)'));
-              const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 3.5));
+              const drawAnyway = isEnd || isControl || isSelected;
+              if (!drawAnyway && lastDrawn) {
+                const dx = p.x - lastDrawn.x, dy = p.y - lastDrawn.y;
+                if (Math.sqrt(dx * dx + dy * dy) < minNodeGapPx) continue;
+              }
+              ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : '#ffffff'));
+              const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 3));
               ctx.beginPath();
               ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
               ctx.fill();
+              ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1;
+              ctx.stroke();
               if (isSelected || isControl) {
                 ctx.strokeStyle = isSelected ? '#fff' : '#38bdf8'; ctx.lineWidth = 1.5;
                 ctx.stroke();
@@ -396,6 +409,7 @@ export const UISchedule = {
                 ctx.beginPath(); ctx.arc(p.x, p.y, radius + 3, 0, Math.PI * 2);
                 ctx.strokeStyle = 'rgba(56,189,248,0.35)'; ctx.lineWidth = 2; ctx.stroke();
               }
+              if (!drawAnyway || isSelected) lastDrawn = p;
             }
           }
         }
@@ -414,6 +428,25 @@ export const UISchedule = {
           }
           ctx.stroke();
           ctx.setLineDash([]);
+
+          // Preview 50 m nodes along the in-progress manual trace, even for long legs.
+          if (this._manualEndCoords) {
+            const tempPoints = [this._manualStartCoords, ...this._manualControlPoints, this._manualEndCoords].filter(p => p && p.lat != null && p.lon != null);
+            const tempRoute = tempPoints.length >= 2 ? this._densifyRoute(tempPoints, 0.05) : [];
+            let lastTemp = null;
+            for (const pt of tempRoute) {
+              const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+              if (lastTemp) {
+                const dx = p.x - lastTemp.x, dy = p.y - lastTemp.y;
+                if (Math.sqrt(dx * dx + dy * dy) < 12) continue;
+              }
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+              ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1; ctx.stroke();
+              lastTemp = p;
+            }
+          }
+
           for (const pt of [this._manualStartCoords, ...this._manualControlPoints]) {
             const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
             ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
