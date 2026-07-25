@@ -1065,6 +1065,11 @@ export class ORMClient {
   }
 
   async findRoute(fromLat, fromLon, toLat, toLon, opts = null) {
+    const raw = await this._findRouteUnclamped(fromLat, fromLon, toLat, toLon, opts);
+    return this._clampRouteToEndpoints(raw, fromLat, fromLon, toLat, toLon);
+  }
+
+  async _findRouteUnclamped(fromLat, fromLon, toLat, toLon, opts = null) {
     const speedSuffix = opts?.maxSpeed ? `v${Math.round(opts.maxSpeed)}` : 'v160';
     const avoidSuffix = opts?.avoidStationPairs?.length
       ? `-a${opts.avoidStationPairs.length}`
@@ -1194,7 +1199,8 @@ export class ORMClient {
     }).filter(k => k !== null);
 
     const path = this.dijkstraConstrained(graph, startSnap.node.key, endSnap.node.key, waypointKeys, opts);
-    return path || this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
+    const clamped = this._clampRouteToEndpoints(path, fromLat, fromLon, toLat, toLon);
+    return clamped || this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
   }
 
   // R-03: no more straight-line diagonal masquerading as real track.
@@ -1222,6 +1228,35 @@ export class ORMClient {
   // Is this route a synthetic straight-line fallback (not real ORM track)?
   isFallbackRoute(route) {
     return Array.isArray(route) && route.length > 0 && route.some(p => p && p.fallback);
+  }
+
+  // Clamp an ORM route so it starts and ends at the exact requested coordinates
+  // and never overshoots the destination. This fixes the "aller après" / "aller
+  // derrière" artefacts when the snapped graph node lies beyond the target.
+  _clampRouteToEndpoints(route, fromLat, fromLon, toLat, toLon) {
+    if (!Array.isArray(route) || route.length < 2) return route;
+    const out = route.slice();
+    const maxSnap = 5; // km
+    // Snap start point to exact origin when within snapping range.
+    if (haversine(out[0].lat, out[0].lon, fromLat, fromLon) <= maxSnap) {
+      out[0] = { ...out[0], lat: fromLat, lon: fromLon };
+    }
+    // Find the closest point to the destination and truncate after it.
+    let bestIdx = out.length - 1;
+    let bestD = Infinity;
+    for (let i = out.length - 1; i >= 0; i--) {
+      const d = haversine(out[i].lat, out[i].lon, toLat, toLon);
+      if (d <= bestD) { bestD = d; bestIdx = i; }
+    }
+    if (bestIdx < out.length - 1) out.length = bestIdx + 1;
+    // Snap / append exact destination.
+    if (out.length === 0) return this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
+    if (haversine(out[out.length - 1].lat, out[out.length - 1].lon, toLat, toLon) <= maxSnap) {
+      out[out.length - 1] = { ...out[out.length - 1], lat: toLat, lon: toLon };
+    } else {
+      out.push({ lat: toLat, lon: toLon, maxSpeed: out[out.length - 1]?.maxSpeed || 30, fallback: true });
+    }
+    return out.length >= 2 ? out : this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
   }
 
   // ============================================================

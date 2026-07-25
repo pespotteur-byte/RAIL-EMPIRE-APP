@@ -741,22 +741,33 @@ export class Renderer {
       ctx.shadowBlur = 4;
       for (const route of routes) {
         if (!route || route.length < 2) continue;
-        const step = Math.max(1, Math.floor(route.length / 80));
+        // Draw the full densified curve (the route is already 50 m sampled).
         ctx.beginPath();
         const p0 = this.latLonToScreen(route[0].lat, route[0].lon);
         ctx.moveTo(p0.x, p0.y);
-        for (let i = step; i < route.length; i += step) {
+        for (let i = 1; i < route.length; i++) {
           const p = this.latLonToScreen(route[i].lat, route[i].lon);
           ctx.lineTo(p.x, p.y);
         }
         ctx.stroke();
-        // Player note / Annex 10c : visible dots along the traced route.
-        ctx.fillStyle = '#fff';
-        for (let i = step; i < route.length; i += step) {
+        // Annex 10c — visible, contrasted dots along the traced route.
+        // Adaptive on-screen spacing so the nodes stay distinct on very long routes.
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1;
+        let lastP = null;
+        for (let i = 0; i < route.length; i++) {
           const p = this.latLonToScreen(route[i].lat, route[i].lon);
+          const isEnd = i === 0 || i === route.length - 1;
+          if (!isEnd && lastP) {
+            const dx = p.x - lastP.x, dy = p.y - lastP.y;
+            if (Math.sqrt(dx * dx + dy * dy) < 12) continue;
+          }
+          ctx.fillStyle = isEnd ? '#f59e0b' : '#ffffff';
           ctx.beginPath();
-          ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, isEnd ? 5 : 3, 0, Math.PI * 2);
           ctx.fill();
+          ctx.stroke();
+          lastP = p;
         }
       }
       ctx.shadowBlur = 0;
@@ -1134,19 +1145,21 @@ export class Renderer {
       ctx.stroke();
     }
 
-    // Player note / Annex 6 — small circle on each traced point (50 m vertex) at high zoom.
+    // Player note / Annex 6 — visible nodes on each traced point (50 m vertex) at high zoom.
     if (zoom >= 12 && visibleTrcs.length > 0) {
-      ctx.fillStyle = zoom >= 14 ? '#cbd5e1' : '#64748b';
-      ctx.beginPath();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 0.5;
       for (const trc of visibleTrcs) {
         if (!trc.route || trc.route.length < 2) continue;
         for (let i = step; i < trc.route.length - 1; i += step) {
           const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
-          ctx.moveTo(p.x + 1.5, p.y);
-          ctx.arc(p.x, p.y, zoom >= 14 ? 1.5 : 1, 0, Math.PI * 2);
+          ctx.fillStyle = zoom >= 14 ? '#ffffff' : '#cbd5e1';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, zoom >= 14 ? 2.5 : 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
         }
       }
-      ctx.fill();
     }
 
     // Annex 6 — direction arrows + PA/PB markers on user tronçons at high zoom

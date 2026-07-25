@@ -1746,66 +1746,64 @@ export const UISchedule = {
 
   _densifyRoute(route, spacingKm = 0.05) {
       if (!route || route.length < 2) return route;
-      const hasControl = route.some(p => p && p.control);
-      if (!hasControl) {
-        const cum = [0];
-        for (let i = 1; i < route.length; i++) {
-          cum[i] = cum[i - 1] + haversineDistance(route[i - 1].lat, route[i - 1].lon, route[i].lat, route[i].lon);
-        }
-        const total = cum[cum.length - 1];
-        if (total <= 0) return [...route];
-        const out = [];
-        const steps = Math.max(1, Math.round(total / spacingKm));
-        for (let s = 0; s <= steps; s++) {
-          const target = Math.min(total, s * spacingKm);
-          let idx = 1;
-          while (idx < cum.length && cum[idx] < target) idx++;
-          const a = route[idx - 1], b = route[idx] || route[route.length - 1];
-          const segLen = (cum[idx] ?? total) - cum[idx - 1];
-          const t = segLen > 0 ? (target - cum[idx - 1]) / segLen : 0;
-          const maxSpeed = b?.maxSpeed ?? a?.maxSpeed ?? 30;
-          const props = {};
-          for (const k of Object.keys(b || a)) {
-            if (k !== 'lat' && k !== 'lon' && k !== 'control') props[k] = (b || a)[k];
-          }
-          out.push({ lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t, maxSpeed, ...props });
-        }
-        return out;
-      }
-      // Manual-trace / control-aware densification: keep control points and densify between them.
-      const controls = [];
-      for (let i = 0; i < route.length; i++) {
-        if (route[i].control || i === 0 || i === route.length - 1) {
-          // mutate input objects so downstream edits keep references
-          route[i].control = true;
-          controls.push(route[i]);
-        }
-      }
-      if (controls.length < 2) return [...route];
+      const markControls = route.some(p => p && p.control);
+      const minSpacing = 0.005; // 5 m, hard floor to avoid infinite sampling
       const out = [];
-      for (let i = 0; i < controls.length - 1; i++) {
-        const a = controls[i], b = controls[i + 1];
+      let prevBearing = null;
+      for (let i = 0; i < route.length - 1; i++) {
+        const a = route[i], b = route[i + 1];
         const dist = haversineDistance(a.lat, a.lon, b.lat, b.lon);
         if (dist <= 0) continue;
-        const steps = Math.max(1, Math.ceil(dist / spacingKm));
+        // Local bearing of this segment (radians, 0 = north)
+        const cosLat = Math.cos(((a.lat + b.lat) / 2) * Math.PI / 180);
+        const dx = (b.lon - a.lon) * 111.32 * cosLat;
+        const dy = (b.lat - a.lat) * 111.32;
+        const bearing = Math.atan2(dx, dy);
+        // Curvature-aware spacing: add more points in tight curves.
+        let segSpacing = spacingKm;
+        if (prevBearing !== null) {
+          let turn = Math.abs(bearing - prevBearing);
+          if (turn > Math.PI) turn = 2 * Math.PI - turn;
+          const turnDeg = turn * 180 / Math.PI;
+          if (turnDeg > 45) segSpacing = Math.max(minSpacing, spacingKm * 0.25);
+          else if (turnDeg > 15) segSpacing = Math.max(minSpacing, spacingKm * 0.5);
+        }
+        // Already-detailed polylines (short edges) also get finer sampling.
+        if (dist < spacingKm) segSpacing = Math.max(minSpacing, spacingKm * 0.25);
+        else if (dist < spacingKm * 2) segSpacing = Math.max(minSpacing, spacingKm * 0.5);
+        const steps = Math.max(1, Math.ceil(dist / segSpacing));
+        // The segment inherits the edge maxSpeed (stored on its end point b).
+        const maxSpeed = b?.maxSpeed ?? a?.maxSpeed ?? 30;
+        const edgeProps = {};
+        for (const k of Object.keys(b || a)) {
+          if (k !== 'lat' && k !== 'lon' && k !== 'control' && k !== 'maxSpeed') edgeProps[k] = (b || a)[k];
+        }
         for (let s = 0; s < steps; s++) {
           const t = s / steps;
-          const maxSpeed = b?.maxSpeed ?? a?.maxSpeed ?? 30;
-          if (s === 0) {
-            a.control = true;
-            a.maxSpeed = maxSpeed;
-            out.push(a);
-          } else {
-            const props = {};
-            for (const k of Object.keys(b || a)) {
-              if (k !== 'lat' && k !== 'lon' && k !== 'control') props[k] = (b || a)[k];
-            }
-            out.push({ lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t, maxSpeed, ...props });
+          const pt = { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t, maxSpeed, ...edgeProps };
+          if (markControls) {
+            if (s === 0 && a.control) pt.control = true;
+            if (s === steps - 1 && b.control) pt.control = true;
           }
+          if (out.length > 0) {
+            const last = out[out.length - 1];
+            if (haversineDistance(last.lat, last.lon, pt.lat, pt.lon) < 1e-6) continue;
+          }
+          out.push(pt);
+        }
+        prevBearing = bearing;
+      }
+      // Keep exact first/last input coordinates and control flags.
+      if (out.length > 0) {
+        out[0].lat = route[0].lat;
+        out[0].lon = route[0].lon;
+        out[out.length - 1].lat = route[route.length - 1].lat;
+        out[out.length - 1].lon = route[route.length - 1].lon;
+        if (markControls) {
+          out[0].control = route[0].control || true;
+          out[out.length - 1].control = route[route.length - 1].control || true;
         }
       }
-      const last = controls[controls.length - 1];
-      out.push({ ...last, control: true });
       return out;
     },
 

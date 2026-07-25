@@ -804,22 +804,41 @@ export const TrainController = {
         if (freshRoute && freshRoute.length >= 2) this._initializeState(freshRoute, legKey);
         else return;
       }
-      if (!this._state?.cachedRoute) return;
+      const route = this._state.cachedRoute;
+      if (!route) return;
       cantonManager.setTime(timeOfDay);
 
-      // Macro speed: line/rame limit. Preserve full-physics speed, but ramp from a
-      // standstill so trains do not teleport to max speed when they enter the viewport.
+      // Weather and physics (same acceleration/deceleration cap as high-LOD).
+      const weather = this._getWeatherEffects ? this._getWeatherEffects() : { brakeFactor: 1.0, speedCap: Infinity, speedMult: 1.0, type: 'clear' };
+      const physics = this._computePhysicsAccel(weather);
+      const macroDecel = physics.decel * (weather.brakeFactor || 1.0);
+      const macroAccel = physics.accel;
+
+      // Macro speed: rame, current line limit, weather.
       let macroSpeed = Math.min(
         this.rame?.maxSpeed || 300,
-        this.getLineSpeedAtPosition()
+        this.getLineSpeedAtPosition(),
+        (weather.speedCap || Infinity) * (weather.speedMult || 1.0)
       );
-      const macroAccel = this.train.accel || 3.0;
-      const macroDecel = this.train.decel || 4.0;
+
+      // Braking curve for upcoming lower speed limits (negative transition).
+      const negativeCap = this._getNegativeTransitionCap(route, this._state.index, this._state.progress, this.speed, macroDecel);
+      if (Number.isFinite(negativeCap)) macroSpeed = Math.min(macroSpeed, negativeCap);
+
+      // Station-stop braking: cap speed so the train can stop at the final point.
+      const totalDist = this._state.cumDist[0];
+      const frontDist = totalDist - this._state.cumDist[this._state.index] + this._state.progress * (this._state.segDists[this._state.index] || 0);
+      const remainingDist = Math.max(0, totalDist - frontDist);
+      const stopBufferKm = 0.3;
+      const brakeDist = (this.speed * this.speed) / (2 * macroDecel * 3600);
+      if (remainingDist <= brakeDist + stopBufferKm) {
+        const safe = Math.sqrt(Math.max(0, 2 * macroDecel * 3600 * Math.max(0, remainingDist - stopBufferKm)));
+        macroSpeed = Math.min(macroSpeed, safe);
+      }
 
       // Movement Authority for low-LOD trains (replaces fixed signal aspect)
       if (this._cantonAssignments) {
-        const weather = this._getWeatherEffects ? this._getWeatherEffects() : { brakeFactor: 1.0 };
-        const decelMps2 = ((this.train.decel || 4.0) / 3.6) * (weather.brakeFactor || 1.0);
+        const decelMps2 = (macroDecel / 3.6);
         const ma = this._movementAuthority(allServices, decelMps2);
         if (ma && Number.isFinite(ma.eoaM)) {
           const maCap = this._maSpeedCap(ma.eoaM, ma.targetSpeedKmh, decelMps2, this._carreMarginM);
@@ -853,7 +872,6 @@ export const TrainController = {
       this.train.speed = Math.round(this.speed);
       if (this.speed <= 0) return;
 
-      const route = this._state.cachedRoute;
       const stepKm = this.speed * dt / 3600;
       let remaining = stepKm;
       while (remaining > 1e-6 && this._state.index < route.length - 1) {
