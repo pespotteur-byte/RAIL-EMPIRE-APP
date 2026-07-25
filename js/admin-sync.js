@@ -3,7 +3,7 @@
 // Applies catalog modifications, deletions, imports
 // Manages admin-defined custom incidents with time-based random triggering
 // Respects player opt-in/opt-out preference
-import { getGlobalRng } from './rng.js?v=1785017600';
+import { getGlobalRng } from './rng.js?v=1785019294';
 
 const GITHUB_OVERRIDE_URL = 'https://raw.githubusercontent.com/pespotteur-byte/RAIL-EMPIRE-APP/devin/1780231310-catalog-bb7200/data/admin-overrides.json';
 

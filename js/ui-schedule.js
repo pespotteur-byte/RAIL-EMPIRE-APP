@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1785017600';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1785017600';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785017600';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785017600';
+import { haversineDistance } from './simulation.js?v=1785019294';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1785019294';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785019294';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785019294';
 
 export const UISchedule = {
   setupSchedulePage() {
@@ -463,6 +463,23 @@ export const UISchedule = {
 
       let schedDrag = false, schedDragStart = null, totalDragDist = 0;
 
+      const isNearStation = (x, y, threshold = 16) => {
+        for (const st of world.stations) {
+          const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
+          if (Math.hypot(p.x - x, p.y - y) < threshold) return true;
+        }
+        return false;
+      };
+      const isNearVoiePoint = (x, y, threshold = 14) => {
+        if (!this.game.voiePointManager) return false;
+        for (const vp of this.game.voiePointManager.getAll()) {
+          const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+          if (Math.hypot(p.x - x, p.y - y) < threshold) return true;
+        }
+        return false;
+      };
+      const isNearStationOrVoie = (x, y) => isNearStation(x, y) || isNearVoiePoint(x, y);
+
       canvas.onmousedown = (e) => {
         const x = e.offsetX, y = e.offsetY;
         schedDrag = true;
@@ -487,13 +504,8 @@ export const UISchedule = {
         // 2) Existing route control-point drag (works in manual mode too, so nodes can be edited at any time).
         const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
         if (controlHit) {
-          // Don't grab a route node if a station marker is right under the cursor.
-          let nearStation = false;
-          for (const st of world.stations) {
-            const p = tileMap.worldToScreen(st.lat, st.lon, canvas.width, canvas.height);
-            if (Math.hypot(p.x - x, p.y - y) < 14) { nearStation = true; break; }
-          }
-          if (!nearStation) {
+          // Don't grab a route node if a station or voie-point marker is right under the cursor.
+          if (!isNearStationOrVoie(x, y)) {
             // Promote any grabbed trace point to a control so it can be edited.
             if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
             if (e.ctrlKey || e.button === 2) {
@@ -1995,7 +2007,9 @@ export const UISchedule = {
         const objectif = await this._resolveRouteForLeg(this.schedStops[i], this.schedStops[i + 1]);
         const densifiedObj = (objectif && objectif.length >= 2) ? this._densifyRoute([...objectif]) : null;
         objectifRoutes.push(densifiedObj);
-        if (this._manualRoutes[i]) {
+        if (this._manualRoutes[i] && this._manualRoutes[i].length >= 2) {
+          // Re-densify any existing manual route so the 50 m preview nodes always appear.
+          this._manualRoutes[i] = this._densifyRoute([...this._manualRoutes[i]]);
           routes.push(this._manualRoutes[i]);
         } else if (densifiedObj) {
           this._manualRoutes[i] = densifiedObj;
