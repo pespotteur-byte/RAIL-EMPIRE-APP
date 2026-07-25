@@ -104,8 +104,17 @@ export function segmentsFromRoute(route, rameMaxSpeedKmh, haversineKm) {
 //               startMs=0, endMs=0, preBrakeMarginM=100, dsStep=20 }
 // Returns { timeSec, distM, vMaxReachedMs }.
 export function simulateProfile(segments, params = {}) {
+  const res = simulateProfileCumulative(segments, params, []);
+  return { timeSec: res.timeSec, distM: res.distM, vMaxReachedMs: res.vMaxReachedMs };
+}
+
+// Cumulative version: same physics as simulateProfile, but also returns the
+// time (in seconds) when the train reaches each distance in queryDistancesM.
+// queryDistancesM must be in metres and non-negative.
+// Returns { timeSec, distM, vMaxReachedMs, queryTimesSec }.
+export function simulateProfileCumulative(segments, params = {}, queryDistancesM = []) {
   if (!Array.isArray(segments) || segments.length === 0) {
-    return { timeSec: 0, distM: 0, vMaxReachedMs: 0 };
+    return { timeSec: 0, distM: 0, vMaxReachedMs: 0, queryTimesSec: [] };
   }
   const dsStep = params.dsStep || 20;
   const preBrakeMarginM = params.preBrakeMarginM ?? 100;
@@ -131,7 +140,6 @@ export function simulateProfile(segments, params = {}) {
   //    lower speed is reached before the slower zone, then run a backward
   //    braking pass so braking is always physically feasible.
   const limit = cells.map(c => c.limitMs);
-  // upstream shift of reductions
   for (let i = N - 1; i > 0; i--) {
     if (limit[i] < limit[i - 1] - 1e-6) {
       let acc = 0, j = i - 1;
@@ -150,7 +158,7 @@ export function simulateProfile(segments, params = {}) {
 
   // 3) VIT-02 — after a speed INCREASE, hold the old limit until the whole
   //    train length has cleared the transition point.
-  const holdUntilDist = new Array(N).fill(0); // absolute distance until which cap is the old limit
+  const holdUntilDist = new Array(N).fill(0); // old-limit speed cap per cell
   {
     let dist = 0;
     const L = params.lengthM || 200;
@@ -159,7 +167,7 @@ export function simulateProfile(segments, params = {}) {
         const oldLimit = cells[i - 1].limitMs;
         let d = dist;
         for (let j = i; j < N && d < dist + L; j++) {
-          holdUntilDist[j] = Math.max(holdUntilDist[j], oldLimit); // store old cap
+          holdUntilDist[j] = Math.max(holdUntilDist[j], oldLimit);
           d += cells[j].ds;
         }
       }
@@ -167,16 +175,53 @@ export function simulateProfile(segments, params = {}) {
     }
   }
 
-  // 4) Forward pass — accelerate under physics, respecting caps.
+  // Prepare query distances, sorted, while remembering original positions.
+  const queries = (Array.isArray(queryDistancesM) ? queryDistancesM : [])
+    .map((d, idx) => ({ d, idx }))
+    .filter(x => Number.isFinite(x.d) && x.d >= 0)
+    .sort((a, b) => a.d - b.d);
+  const queryTimesSec = new Array(queries.length).fill(0);
+
+  // 4) Forward pass — accelerate under physics, respecting caps, and record
+  //    the time at every requested distance.
   let v = Math.max(0, params.startMs ?? 0);
   let timeSec = 0;
+  let cumDist = 0;
   let vMaxReached = 0;
+  let qi = 0;
+
   for (let i = 0; i < N; i++) {
     const ds = cells[i].ds;
     let cap = vCap[i];
-    if (holdUntilDist[i] > 0) cap = Math.min(cap, holdUntilDist[i]); // VIT-02 hold
+    if (holdUntilDist[i] > 0) cap = Math.min(cap, holdUntilDist[i]);
+
+    // Answer queries that fall inside this cell.
+    while (qi < queries.length && queries[qi].d <= cumDist + ds + 1e-9) {
+      const target = queries[qi].d;
+      const dx = Math.max(0, Math.min(ds, target - cumDist));
+      let vPartial;
+      if (dx <= 0) {
+        vPartial = v;
+      } else if (v > cap) {
+        vPartial = cap;
+      } else if (v < cap) {
+        const a = accelerationMs2(params, v);
+        if (a > 0) {
+          const vNext = Math.sqrt(v * v + 2 * a * dx);
+          vPartial = Math.min(cap, vNext);
+        } else {
+          vPartial = Math.min(cap, v);
+        }
+      } else {
+        vPartial = v;
+      }
+      const vAvg = Math.max(0.5, (v + vPartial) / 2);
+      queryTimesSec[queries[qi].idx] = timeSec + dx / vAvg;
+      qi++;
+    }
+
     if (v > cap) {
-      v = cap; // enforce (braking pass guarantees this is reachable)
+      v = cap;
     } else if (v < cap) {
       const a = accelerationMs2(params, v);
       if (a > 0) {
@@ -187,8 +232,16 @@ export function simulateProfile(segments, params = {}) {
     const vSafe = Math.max(v, 0.5);
     timeSec += ds / vSafe;
     if (v > vMaxReached) vMaxReached = v;
+    cumDist += ds;
   }
-  return { timeSec, distM: totalDist, vMaxReachedMs: vMaxReached };
+
+  // Any remaining queries beyond the route end get the total time.
+  while (qi < queries.length) {
+    queryTimesSec[queries[qi].idx] = timeSec;
+    qi++;
+  }
+
+  return { timeSec, distM: totalDist, vMaxReachedMs: vMaxReached, queryTimesSec };
 }
 
 export const _units = { G, KMH_TO_MS, MS_TO_KMH };

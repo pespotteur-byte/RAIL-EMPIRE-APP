@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1784931694';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784931694';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931694';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931694';
+import { haversineDistance } from './simulation.js?v=1785011436';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1785011436';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785011436';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785011436';
 
 export const UISchedule = {
   setupSchedulePage() {
@@ -1188,19 +1188,20 @@ export const UISchedule = {
           // Section V : propose pre-defined sillons for this segment.
           await this._pickSillonForLeg(prevStop, newStop, legIdx);
         }
-        const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, legIdx);
-        arrTimeMin = prevStop.depTimeMin + travelTime;
-        depTimeMin = arrTimeMin + 2;
       }
 
-      newStop.arrTimeMin = arrTimeMin;
-      newStop.depTimeMin = depTimeMin;
-      newStop.arrTimeStr = this.minToTimeStr(arrTimeMin);
-      newStop.depTimeStr = this.minToTimeStr(depTimeMin);
       this.schedStops.push(newStop);
 
-      this.renderSchedStops();
-      this._recalcPreviewRoutes();
+      if (this.schedStops.length > 1) {
+        await this.recalcStopsFrom(this.schedStops.length - 1);
+      } else {
+        newStop.arrTimeMin = arrTimeMin;
+        newStop.depTimeMin = depTimeMin;
+        newStop.arrTimeStr = this.minToTimeStr(arrTimeMin);
+        newStop.depTimeStr = this.minToTimeStr(depTimeMin);
+        this.renderSchedStops();
+        this._recalcPreviewRoutes();
+      }
     },
 
   async addSchedVoiePointStop(voiePoint) {
@@ -1245,19 +1246,20 @@ export const UISchedule = {
           // Section V : propose pre-defined sillons between voie points / stations too.
           await this._pickSillonForLeg(prevStop, newStop, legIdx);
         }
-        const travelTime = await this._getSegmentTravelTime(prevStop, newStop, rameSpeed, rame, legIdx);
-        arrTimeMin = prevStop.depTimeMin + travelTime;
-        depTimeMin = arrTimeMin; // no stop time for waypoint
       }
 
-      newStop.arrTimeMin = arrTimeMin;
-      newStop.depTimeMin = depTimeMin;
-      newStop.arrTimeStr = this.minToTimeStr(arrTimeMin);
-      newStop.depTimeStr = this.minToTimeStr(depTimeMin);
       this.schedStops.push(newStop);
 
-      this.renderSchedStops();
-      this._recalcPreviewRoutes();
+      if (this.schedStops.length > 1) {
+        await this.recalcStopsFrom(this.schedStops.length - 1);
+      } else {
+        newStop.arrTimeMin = arrTimeMin;
+        newStop.depTimeMin = depTimeMin;
+        newStop.arrTimeStr = this.minToTimeStr(arrTimeMin);
+        newStop.depTimeStr = this.minToTimeStr(depTimeMin);
+        this.renderSchedStops();
+        this._recalcPreviewRoutes();
+      }
     },
 
   async _addMapWaypoint(lat, lon) {
@@ -2009,18 +2011,20 @@ export const UISchedule = {
       if (this._drawSchedMap) this._drawSchedMap();
     },
 
-  async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null, legIndex = null) {
-      let route = null;
+  async _resolveLegRoute(prevStop, curStop, legIndex) {
       if (legIndex != null && this._manualRoutes && this._manualRoutes[legIndex]) {
-        route = this._manualRoutes[legIndex];
-      } else {
-        route = await this._resolveRouteForLeg(prevStop, curStop);
-        if (route && route.length >= 2 && legIndex != null) {
-          if (!this._manualRoutes) this._manualRoutes = [];
-          this._manualRoutes[legIndex] = this._densifyRoute(route);
-          route = this._manualRoutes[legIndex];
-        }
+        return this._manualRoutes[legIndex];
       }
+      const route = await this._resolveRouteForLeg(prevStop, curStop);
+      if (route && route.length >= 2 && legIndex != null) {
+        if (!this._manualRoutes) this._manualRoutes = [];
+        this._manualRoutes[legIndex] = this._densifyRoute([...route]);
+      }
+      return this._manualRoutes?.[legIndex] || route || null;
+    },
+
+  async _getSegmentTravelTime(prevStop, curStop, rameSpeed, rame = null, legIndex = null) {
+      const route = await this._resolveLegRoute(prevStop, curStop, legIndex);
 
       // Waypoints/passages are not stops: the train keeps speed through them.
       // The first leg always starts from 0 (origin); subsequent pass-through legs
@@ -2055,27 +2059,13 @@ export const UISchedule = {
       return this.game.orm.calculateTravelTime(synthetic, rame || rameSpeed, travelOpts);
     },
 
-  async recalcStopsFrom(fromIndex) {
-      if (fromIndex >= this.schedStops.length || fromIndex < 1) return;
-
-      const rameId = document.getElementById('sched-rame')?.value;
-      const rame = this.game.rameManager.getById(rameId);
-      const rameSpeed = rame ? rame.maxSpeed : 160;
-
-      // Build merged arret-to-arret segments to avoid per-waypoint accel/decel overhead
-      // First pass: find the last arret before fromIndex to use as anchor
-      let anchorIdx = fromIndex - 1;
-      while (anchorIdx > 0 && this.schedStops[anchorIdx].type !== 'arret') anchorIdx--;
-
-      for (let i = Math.max(fromIndex, anchorIdx + 1); i < this.schedStops.length; i++) {
+  async _recalcPairwise(startIdx, endIdx, rameSpeed, rame) {
+      for (let i = startIdx + 1; i <= endIdx; i++) {
         const prevStop = this.schedStops[i - 1];
         const curStop = this.schedStops[i];
-
         const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame, i - 1);
-
         curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
         curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
-
         if (curStop.type === 'passage' || curStop.type === 'waypoint') {
           curStop.depTimeMin = curStop.arrTimeMin;
           curStop.depTimeStr = curStop.arrTimeStr;
@@ -2085,6 +2075,93 @@ export const UISchedule = {
           curStop.depTimeStr = this.minToTimeStr(curStop.depTimeMin);
         }
       }
+    },
+
+  async recalcStopsFrom(fromIndex) {
+      if (fromIndex >= this.schedStops.length || fromIndex < 1) return;
+
+      const rameId = document.getElementById('sched-rame')?.value;
+      const rame = this.game.rameManager.getById(rameId);
+      const rameSpeed = rame ? rame.maxSpeed : 160;
+
+      // Backtrack to the last arret before fromIndex so we can run one continuous
+      // physics simulation for the whole arret-to-arret block. Waypoints/voie
+      // points do not force accel/decel and no longer skew the total time.
+      let anchorIdx = fromIndex - 1;
+      while (anchorIdx > 0 && this.schedStops[anchorIdx].type !== 'arret') anchorIdx--;
+
+      const startIdx = Math.max(fromIndex, anchorIdx + 1);
+
+      // Resolve routes for all legs we will need.
+      for (let i = anchorIdx; i < this.schedStops.length - 1; i++) {
+        await this._resolveLegRoute(this.schedStops[i], this.schedStops[i + 1], i);
+      }
+
+      let groupStart = anchorIdx;
+      for (let i = startIdx; i < this.schedStops.length; i++) {
+        const cur = this.schedStops[i];
+        const isTerminal = i === this.schedStops.length - 1 || cur.type === 'arret';
+        if (!isTerminal) continue;
+
+        // Build the merged route for the whole group [groupStart, i].
+        const route = [];
+        let missing = false;
+        for (let j = groupStart; j < i; j++) {
+          const leg = this._manualRoutes?.[j];
+          if (!leg || leg.length < 2) { missing = true; break; }
+          if (route.length === 0) {
+            route.push(...leg);
+          } else {
+            const last = route[route.length - 1];
+            const first = leg[0];
+            if (Math.abs(last.lat - first.lat) < 1e-8 && Math.abs(last.lon - first.lon) < 1e-8) {
+              route.push(...leg.slice(1));
+            } else {
+              route.push(...leg);
+            }
+          }
+        }
+
+        // Cumulative distances at each intermediate stop / terminal.
+        const queryIndices = [];
+        const queryDistancesKm = [];
+        let cumDist = 0;
+        for (let j = groupStart; j < i; j++) {
+          const leg = this._manualRoutes?.[j];
+          if (leg) cumDist += this.game.orm.getRouteDistance(leg);
+          queryIndices.push(j + 1);
+          queryDistancesKm.push(cumDist);
+        }
+
+        if (!missing && route.length >= 2 && queryDistancesKm.length > 0) {
+          const profile = this.game.orm.calculateTravelTimeProfile(route, rame || rameSpeed, { startMs: 0, endMs: 0 }, queryDistancesKm);
+          if (profile && Array.isArray(profile.queryTimesMin)) {
+            const anchorDep = this.schedStops[groupStart].depTimeMin || 0;
+            for (let k = 0; k < queryIndices.length; k++) {
+              const idx = queryIndices[k];
+              const stop = this.schedStops[idx];
+              const tMin = profile.queryTimesMin[k];
+              stop.arrTimeMin = anchorDep + tMin;
+              stop.arrTimeStr = this.minToTimeStr(stop.arrTimeMin);
+              if (stop.type === 'waypoint' || stop.type === 'passage' || idx === this.schedStops.length - 1) {
+                stop.depTimeMin = stop.arrTimeMin;
+                stop.depTimeStr = stop.arrTimeStr;
+              } else {
+                const oldDur = Math.max(2, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0));
+                stop.depTimeMin = stop.arrTimeMin + (idx === this.schedStops.length - 1 ? 0 : Math.max(oldDur, 2));
+                stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
+              }
+            }
+          } else {
+            await this._recalcPairwise(groupStart, i, rameSpeed, rame);
+          }
+        } else {
+          await this._recalcPairwise(groupStart, i, rameSpeed, rame);
+        }
+
+        groupStart = i;
+      }
+
       this.renderSchedStops();
       this._recalcPreviewRoutes();
     },

@@ -1,7 +1,7 @@
 // OpenRailwayMap data integration via Overpass API — ORM Direct architecture
 // Uses OSM way graph directly as the game's routing infrastructure.
 // No conversion to intermediate tronçons — the OSM graph IS the network.
-import { segmentsFromRoute, simulateProfile } from './train-physics.js';
+import { segmentsFromRoute, simulateProfile, simulateProfileCumulative } from './train-physics.js';
 
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
@@ -15,11 +15,11 @@ const DB_STORE = 'areas';
 const DB_VERSION = 1;
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
-// SC-05 : no safety margin on auto-scheduled travel times so the schedule
-// matches the physics exactly (0 %, 0 extra minute). Advance only appears if
-// the player manually tightens the timetable.
+// SC-05 : the base schedule now includes a small safety margin so it is no
+// longer proposed at 0 %. 10 % is added to the pure physics travel time.
+const SCHEDULE_SAFETY_PCT = 10;
 function applyTravelTimeSafety(baseMin) {
-  return baseMin;
+  return Math.max(1, Math.round(baseMin * (1 + SCHEDULE_SAFETY_PCT / 100)));
 }
 
 class ORMIndexedCache {
@@ -1416,6 +1416,66 @@ export class ORMClient {
       endMs: opts?.endMs ?? 0,
     });
     return applyTravelTimeSafety(Math.round(res.timeSec / 60) || 1);
+  }
+
+  // Travel time profile (minutes) for a route, returning the time at requested
+  // cumulative distances. Useful for schedule creators with intermediate
+  // waypoints/voie points: one continuous physics run from arret to arret,
+  // then the time is sampled at each intermediate point.
+  // queryDistancesKm must be sorted non-decreasing; the last one is normally
+  // the terminal arret and gets the total travel time.
+  calculateTravelTimeProfile(route, rame, opts = null, queryDistancesKm = []) {
+    if (!Array.isArray(route) || route.length < 2) return null;
+
+    let rameMaxSpeed, massKg, powerW, lengthM;
+    if (rame && typeof rame === 'object') {
+      const payload = opts?.loadFactor ?? 0.7;
+      massKg = ((rame.getTotalMassWithPayload
+        ? rame.getTotalMassWithPayload(payload)
+        : (rame.totalMass || rame.totalTonnage)) || 0) * 1000;
+      powerW = (rame.totalPower || 0) * 1000;
+      if (massKg > 0 && powerW > 0) {
+        rameMaxSpeed = rame.maxSpeed || 160;
+        lengthM = rame.totalLength || 200;
+      }
+    }
+
+    // Generic conservative trainset fallback.
+    if (!massKg || !powerW) {
+      rameMaxSpeed = typeof rame === 'number' ? rame : (rame && rame.maxSpeed) || 160;
+      const massT = 500;
+      const powerPerTonne = 12;
+      massKg = massT * 1000;
+      powerW = massKg * powerPerTonne;
+      lengthM = 200;
+    }
+
+    const segs = segmentsFromRoute(route, rameMaxSpeed, haversine);
+    if (segs.length === 0) return null;
+
+    const queryDistancesM = (Array.isArray(queryDistancesKm) ? queryDistancesKm : [])
+      .map(d => d * 1000);
+
+    const res = simulateProfileCumulative(segs, {
+      massKg,
+      powerW,
+      lengthM,
+      weather: opts?.weather,
+      brakeServiceMs2: opts?.brakeServiceMs2,
+      startMs: opts?.startMs ?? 0,
+      endMs: opts?.endMs ?? 0,
+    }, queryDistancesM);
+
+    const baseTotalMin = Math.round(res.timeSec / 60) || 1;
+    const totalMin = applyTravelTimeSafety(baseTotalMin);
+    const safetyScale = baseTotalMin > 0 ? totalMin / baseTotalMin : 1;
+
+    const queryTimesMin = res.queryTimesSec.map(tSec => {
+      const baseMin = Math.round(tSec / 60);
+      return Math.max(0, Math.round(baseMin * safetyScale));
+    });
+
+    return { totalMin, queryTimesMin };
   }
 
   generateSignalBlocks(route) {
