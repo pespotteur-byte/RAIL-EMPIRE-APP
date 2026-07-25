@@ -460,8 +460,8 @@ th:nth-child(12),td:nth-child(12){width:90px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script type="module">
 // ============ LOAD ALL CATALOGS ============
-import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931687';
-import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931687';
+import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1785016545';
+import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1785016545';
 
 let allItems = [];
 let filteredItems = [];
@@ -1338,7 +1338,7 @@ document.getElementById('publish-confirm').addEventListener('click', publishToSe
 document.getElementById('btn-back')?.addEventListener('click', () => {
   if (window.history.length > 1) window.history.back();
   else {
-    const v = new URLSearchParams(window.location.search).get('v') || '1784931687';
+    const v = new URLSearchParams(window.location.search).get('v') || '1785016545';
     window.location.href = 'index.html?v=' + v;
   }
 });

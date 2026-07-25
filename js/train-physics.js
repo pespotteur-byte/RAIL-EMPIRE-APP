@@ -195,6 +195,19 @@ export function simulateProfileCumulative(segments, params = {}, queryDistancesM
     let cap = vCap[i];
     if (holdUntilDist[i] > 0) cap = Math.min(cap, holdUntilDist[i]);
 
+    // Compute the speed at the end of the cell first, then use the average
+    // speed for the cell travel time.  This avoids the old bug where the
+    // final stopping cell (v -> 0) was inflated by clamping v to 0.5 m/s.
+    let vNext = v;
+    if (v > cap) {
+      vNext = cap;
+    } else if (v < cap) {
+      const a = accelerationMs2(params, v);
+      if (a > 0) {
+        vNext = Math.min(cap, Math.sqrt(v * v + 2 * a * ds));
+      }
+    }
+
     // Answer queries that fall inside this cell.
     while (qi < queries.length && queries[qi].d <= cumDist + ds + 1e-9) {
       const target = queries[qi].d;
@@ -207,8 +220,11 @@ export function simulateProfileCumulative(segments, params = {}, queryDistancesM
       } else if (v < cap) {
         const a = accelerationMs2(params, v);
         if (a > 0) {
-          const vNext = Math.sqrt(v * v + 2 * a * dx);
-          vPartial = Math.min(cap, vNext);
+          if (dx >= ds - 1e-9) {
+            vPartial = vNext;
+          } else {
+            vPartial = Math.min(cap, Math.sqrt(v * v + 2 * a * dx));
+          }
         } else {
           vPartial = Math.min(cap, v);
         }
@@ -220,18 +236,10 @@ export function simulateProfileCumulative(segments, params = {}, queryDistancesM
       qi++;
     }
 
-    if (v > cap) {
-      v = cap;
-    } else if (v < cap) {
-      const a = accelerationMs2(params, v);
-      if (a > 0) {
-        const vNext = Math.sqrt(v * v + 2 * a * ds);
-        v = Math.min(cap, vNext);
-      }
-    }
-    const vSafe = Math.max(v, 0.5);
-    timeSec += ds / vSafe;
-    if (v > vMaxReached) vMaxReached = v;
+    const vAvg = Math.max(0.5, (v + vNext) / 2);
+    timeSec += ds / vAvg;
+    if (vNext > vMaxReached) vMaxReached = vNext;
+    v = vNext;
     cumDist += ds;
   }
 

@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1785012022';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1785012022';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785012022';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785012022';
+import { haversineDistance } from './simulation.js?v=1785016545';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1785016545';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785016545';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785016545';
 
 export const UISchedule = {
   setupSchedulePage() {
@@ -2063,15 +2063,16 @@ export const UISchedule = {
       for (let i = startIdx + 1; i <= endIdx; i++) {
         const prevStop = this.schedStops[i - 1];
         const curStop = this.schedStops[i];
+        // Capture dwell before overwriting arrival time so it is preserved.
+        const oldDwell = Math.max(2, (curStop.depTimeMin || 0) - (curStop.arrTimeMin || 0));
         const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame, i - 1);
         curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
         curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
-        if (curStop.type === 'passage' || curStop.type === 'waypoint') {
+        if (curStop.type === 'passage' || curStop.type === 'waypoint' || i === this.schedStops.length - 1) {
           curStop.depTimeMin = curStop.arrTimeMin;
           curStop.depTimeStr = curStop.arrTimeStr;
         } else {
-          const oldStopDuration = Math.max(2, (curStop.depTimeMin || 0) - (curStop.arrTimeMin || 0));
-          curStop.depTimeMin = curStop.arrTimeMin + (i === this.schedStops.length - 1 ? 0 : Math.max(oldStopDuration, 2));
+          curStop.depTimeMin = curStop.arrTimeMin + Math.max(oldDwell, 2);
           curStop.depTimeStr = this.minToTimeStr(curStop.depTimeMin);
         }
       }
@@ -2141,14 +2142,15 @@ export const UISchedule = {
               const idx = queryIndices[k];
               const stop = this.schedStops[idx];
               const tMin = profile.queryTimesMin[k];
+              // Preserve the dwell that existed before the recalc (at least 2 min).
+              const oldDwell = Math.max(2, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0));
               stop.arrTimeMin = anchorDep + tMin;
               stop.arrTimeStr = this.minToTimeStr(stop.arrTimeMin);
               if (stop.type === 'waypoint' || stop.type === 'passage' || idx === this.schedStops.length - 1) {
                 stop.depTimeMin = stop.arrTimeMin;
                 stop.depTimeStr = stop.arrTimeStr;
               } else {
-                const oldDur = Math.max(2, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0));
-                stop.depTimeMin = stop.arrTimeMin + (idx === this.schedStops.length - 1 ? 0 : Math.max(oldDur, 2));
+                stop.depTimeMin = stop.arrTimeMin + (idx === this.schedStops.length - 1 ? 0 : Math.max(oldDwell, 2));
                 stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
               }
             }
