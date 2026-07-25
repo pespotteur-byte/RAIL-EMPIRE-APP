@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rail Empire — Admin Catalogue</title>
 <style>
-:root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#475569;--text:#e2e8f0;--text2:#94a3b8;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#a855f7}
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#475569;--text:#e2e8f0;--text2:#94a3b8;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#a855f7;--bg2:var(--surface);--bg3:var(--surface2);--input-bg:var(--bg)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 header{background:var(--surface);padding:10px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -78,6 +78,40 @@ th:nth-child(12),td:nth-child(12){width:90px}
 .page-nav button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 10px;border-radius:4px;cursor:pointer;font-size:.85em}
 .page-nav button:disabled{opacity:.3;cursor:default}
 .page-nav button.active-page{background:var(--blue);border-color:var(--blue)}
+.modal{position:relative}
+.hidden{display:none!important}
+.admin-form-section{margin-bottom:16px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+.admin-form-section-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.admin-form-section-header .section-icon{width:18px;height:18px;flex-shrink:0;opacity:.85}
+.admin-form-section-header h4{margin:0;font-size:12px;font-weight:600;color:var(--text);letter-spacing:.3px;text-transform:uppercase}
+.admin-form-group{margin-bottom:8px}
+.admin-form-group:last-child{margin-bottom:0}
+.admin-form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.admin-form-group label .label-hint{font-size:9px;color:var(--text3);font-weight:400;margin-left:4px}
+.admin-form-group input,.admin-form-group select{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px}
+.admin-form-group input:focus,.admin-form-group select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.admin-form-row{display:flex;gap:10px;margin-bottom:8px}
+.admin-form-row:last-child{margin-bottom:0}
+.admin-form-row .admin-form-group{flex:1}
+.admin-image-drop{border:2px dashed var(--border);border-radius:6px;padding:20px;text-align:center;cursor:pointer;color:var(--text3);font-size:12px}
+.admin-image-drop.dragging{border-color:var(--blue);background:rgba(59,130,246,.1)}
+.admin-image-preview{max-width:100%;max-height:80px;margin-top:8px;object-fit:contain}
+.admin-computed-field{padding:8px 10px;background:var(--surface);border:1px dashed var(--border);border-radius:5px;color:var(--text2);font-size:12px}
+.stock-multi-check{display:flex;flex-wrap:wrap;gap:6px 12px;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px}
+.stock-multi-check label{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text);cursor:pointer}
+.stock-multi-check input[type="checkbox"]{width:14px;height:14px;accent-color:var(--blue);margin:0}
+.cargo-types-container{max-height:320px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px}
+.cargo-cat-header{font-size:11px;font-weight:600;color:var(--blue);padding:6px 8px 4px;margin-top:6px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px}
+.cargo-cat-header:first-child{margin-top:0}
+.cargo-cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;padding:4px 4px 4px 8px}
+.cargo-cb-label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);padding:4px 6px;border-radius:4px;cursor:pointer}
+.cargo-cb-label:hover{background:rgba(59,130,246,.08)}
+.cargo-cb-label input[type="checkbox"]{margin:0;width:14px;height:14px;accent-color:var(--blue);flex-shrink:0}
+.cargo-cb-unit{color:var(--text3);font-size:9px;margin-left:2px}
+#modal-edit h3{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+#modal-edit .modal{max-width:520px}
+.modal-close{position:absolute;top:8px;right:12px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer}
+.modal-close:hover{color:var(--text)}
 </style>
 </head>
 <body>
@@ -163,57 +197,164 @@ th:nth-child(12),td:nth-child(12){width:90px}
   <span id="footer-info"></span>
 </div>
 
-<!-- Edit Modal -->
+<!-- Edit Modal (same panel as inventory rolling stock) -->
 <div class="modal-overlay" id="modal-edit">
   <div class="modal">
-    <h2 id="edit-title">Modifier l'engin</h2>
+    <button class="modal-close">&times;</button>
+    <h3 id="edit-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="3"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><line x1="6" y1="6" x2="6" y2="12"/><line x1="12" y1="6" x2="12" y2="12"/></svg>
+      <span>Ajouter un engin</span>
+    </h3>
     <input type="hidden" id="edit-id">
-    <div id="edit-image-preview" style="text-align:center;margin-bottom:12px"></div>
-    <div class="form-row">
-      <label style="flex:1">Image <input type="file" id="edit-image" accept="image/*"></label>
-    </div>
-    <div class="form-row">
-      <label>Nom <input type="text" id="edit-name"></label>
-      <label>Série <input type="text" id="edit-series"></label>
-    </div>
-    <div class="form-row">
-      <label>Catégorie
-        <select id="edit-category">
-          <option value="locomotive">Locomotive</option>
-          <option value="wagon">Wagon</option>
-          <option value="automotrice">Automotrice</option>
-          <option value="voiture">Voiture</option>
-        </select>
-      </label>
-      <label>Traction
-        <select id="edit-traction">
-          <option value="electrique">Électrique</option>
-          <option value="diesel">Diesel</option>
-          <option value="bi">Bi-mode</option>
-          <option value="none">Aucune</option>
-          <option value="1500V">1500V DC</option>
-          <option value="25kV">25kV AC</option>
-          <option value="3kV">3kV DC</option>
-        </select>
-      </label>
-    </div>
-    <div class="form-row">
-      <label>VMax (km/h) <input type="number" id="edit-vmax"></label>
-      <label>Puissance (kW) <input type="number" id="edit-power"></label>
-      <label>Masse (t) <input type="number" id="edit-mass"></label>
-    </div>
-    <div class="form-row">
-      <label>Longueur (m) <input type="number" id="edit-length" step="0.1"></label>
-      <label>Places voyageurs <input type="number" id="edit-pax"></label>
-      <label>Capacité fret (t) <input type="number" id="edit-freight"></label>
-    </div>
-    <div class="form-row">
-      <label>Prix achat (€) <input type="number" id="edit-price"></label>
-      <label>Chargements (virgule) <input type="text" id="edit-cargo"></label>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="edit-cancel">Annuler</button>
-      <button class="btn btn-blue" id="edit-save">Sauvegarder</button>
+    <div class="modal-body">
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <h4>Visuel</h4>
+        </div>
+        <div class="admin-form-group">
+          <label>Image de l'engin</label>
+          <div id="admin-stock-image-drop" class="admin-image-drop">
+            <span>Cliquer ou glisser une image</span>
+            <input type="file" id="admin-stock-image-input" accept="image/*" hidden>
+          </div>
+          <img id="admin-stock-image-preview" class="admin-image-preview hidden" alt="">
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <h4>Identification</h4>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Nom de l'engin</label>
+            <input type="text" id="admin-stock-name" placeholder="ex: BB 22200">
+          </div>
+          <div class="admin-form-group">
+            <label>Catégorie</label>
+            <select id="admin-stock-category">
+              <option value="locomotive">Locomotive</option>
+              <option value="voiture">Voiture voyageurs</option>
+              <option value="wagon">Wagon fret</option>
+              <option value="automotrice">Automotrice</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group" style="flex:1">
+            <label>Série <span class="label-hint">(ex: BB 26000)</span></label>
+            <input type="text" id="admin-stock-series" placeholder="BB 26000">
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <h4>Caractéristiques techniques</h4>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group" style="flex:1">
+            <label>Traction <span class="label-hint">(plusieurs choix possibles)</span></label>
+            <div id="admin-stock-traction" class="stock-multi-check">
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="Diesel"> Diesel</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="Vapeur"> Vapeur</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="1.5kV"> 1,5 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="3kV"> 3 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="15kV"> 15 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="25kV"> 25 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="3e Rail"> 3e Rail</label>
+            </div>
+          </div>
+          <div class="admin-form-group">
+            <label>Vitesse max <span class="label-hint">(km/h)</span></label>
+            <input type="number" id="admin-stock-speed" value="160" min="10" max="400">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Puissance <span class="label-hint">(kW — locos)</span></label>
+            <input type="number" id="admin-stock-power" value="0" min="0" max="20000">
+          </div>
+          <div class="admin-form-group">
+            <label>Longueur <span class="label-hint">(m)</span></label>
+            <input type="number" id="admin-stock-length" value="20" min="1" max="200" step="0.1">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Masse à vide <span class="label-hint">(t — physique)</span></label>
+            <input type="number" id="admin-stock-mass" value="80" min="1" max="500">
+          </div>
+          <div class="admin-form-group">
+            <label>Tonnage calculé <span class="label-hint">(masse + fret / masse seule)</span></label>
+            <div id="admin-stock-tonnage" class="admin-computed-field">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <h4>Capacités</h4>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Places voyageurs</label>
+            <input type="number" id="admin-stock-capacity" value="0" min="0" max="1000">
+          </div>
+          <div class="admin-form-group">
+            <label>Capacité fret <span class="label-hint">(t)</span></label>
+            <input type="number" id="admin-stock-freight" value="0" min="0" max="99999">
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-section" id="admin-stock-wagon-subcat-group" style="display:none">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <h4>Type de wagon <span class="label-hint" style="text-transform:none">(un seul choix)</span></h4>
+        </div>
+        <div class="admin-form-group">
+          <select id="admin-stock-wagon-subcat">
+            <option value="">— Sélectionner —</option>
+            <option value="tombereau">Tombereau</option>
+            <option value="citerne">Citerne</option>
+            <option value="gaz">Gaz</option>
+            <option value="porte-auto">Porte-Auto</option>
+            <option value="tremie">Trémie</option>
+            <option value="cerealier">Céréalier</option>
+            <option value="ciment">Ciment</option>
+            <option value="silos">Silos</option>
+            <option value="plat">Plat</option>
+            <option value="ttx">TTX</option>
+            <option value="intermodal">Intermodal</option>
+            <option value="speciaux">Spéciaux</option>
+            <option value="couvert">Couvert</option>
+            <option value="bache">Bâché</option>
+            <option value="infra">Infra</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-form-section" id="admin-stock-cargo-group" style="display:none">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <h4>Chargements autorisés <span class="label-hint" style="text-transform:none">(choix multiple)</span></h4>
+        </div>
+        <div class="admin-form-group">
+          <div id="admin-stock-cargo-list" class="cargo-types-container"></div>
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <h4>Tarification</h4>
+        </div>
+        <div class="admin-form-group">
+          <label>Prix d'achat <span class="label-hint">(calcul automatique)</span></label>
+          <div id="admin-stock-price" class="admin-computed-field">0 €</div>
+        </div>
+      </div>
+      <button id="edit-save" class="btn btn-blue" style="width:100%;margin-top:16px;padding:10px;font-size:13px;font-weight:600;border-radius:6px;text-transform:uppercase;letter-spacing:.5px">Enregistrer l'engin</button>
+      <button id="edit-cancel" class="btn btn-ghost" style="width:100%;margin-top:8px">Annuler</button>
     </div>
   </div>
 </div>
@@ -319,8 +460,8 @@ th:nth-child(12),td:nth-child(12){width:90px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script type="module">
 // ============ LOAD ALL CATALOGS ============
-import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931686';
-import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931686';
+import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931687';
+import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931687';
 
 let allItems = [];
 let filteredItems = [];
@@ -390,7 +531,7 @@ function applyFilters() {
   filteredItems = allItems.filter(i => {
     if (cat && i.category !== cat) return false;
     if (src && (i._source || '') !== src) return false;
-    if (trac && (i.traction || '') !== trac) return false;
+    if (trac && !tractionMatchesAdmin(i.traction || '', trac)) return false;
     if (q) {
       const hay = `${i.name||''} ${i.seriesName||''} ${i._source||''} ${i.id||''}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -500,85 +641,231 @@ document.getElementById('btn-delete-selected').addEventListener('click', () => {
   applyFilters();
 });
 
-// ============ EDIT MODAL ============
+// ============ EDIT MODAL (same panel as inventory rolling stock) ============
+let adminStockImageData = null;
+
+const ADMIN_TRACTION_LEGACY = {
+  'electrique': ['25kV'],
+  'électrique': ['25kV'],
+  'diesel': ['Diesel'],
+  'bi': ['Diesel','25kV'],
+  'bi-mode': ['Diesel','25kV'],
+  'bimode': ['Diesel','25kV'],
+  'vapeur': ['Vapeur'],
+  'none': [],
+  'aucune': [],
+  '1500v': ['1.5kV'],
+  '1.5kv': ['1.5kV'],
+  '3kv': ['3kV'],
+  '15kv': ['15kV'],
+  '25kv': ['25kV'],
+  '3e rail': ['3e Rail'],
+  '3erail': ['3e Rail'],
+  '3e': ['3e Rail']
+};
+
+function escapeHtmlAdmin(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function parseAdminTraction(str) {
+  if (!str || str.toLowerCase() === 'none') return [];
+  const key = str.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (ADMIN_TRACTION_LEGACY[key]) return [...ADMIN_TRACTION_LEGACY[key]];
+  return str.split('+').map(s => s.trim()).filter(Boolean);
+}
+
+function getAdminTractionString() {
+  const vals = Array.from(document.querySelectorAll('.stock-traction-cb:checked')).map(cb => cb.value);
+  if (vals.length === 0) return 'none';
+  return vals.join('+');
+}
+
+function setAdminTraction(str) {
+  const vals = new Set(parseAdminTraction(str).map(v => v.toLowerCase()));
+  document.querySelectorAll('.stock-traction-cb').forEach(cb => {
+    cb.checked = vals.has(cb.value.toLowerCase());
+  });
+}
+
+function getAdminCargoTypes() {
+  return Array.from(document.querySelectorAll('.stock-cargo-cb:checked')).map(cb => cb.value);
+}
+
+function setAdminCargoTypes(types) {
+  const set = new Set((types || []).map(t => String(t).trim()));
+  document.querySelectorAll('.stock-cargo-cb').forEach(cb => {
+    cb.checked = set.has(cb.value);
+  });
+}
+
+function populateAdminCargoTypes() {
+  const list = document.getElementById('admin-stock-cargo-list');
+  if (!list || !CATALOG_CARGO_TYPES) return;
+  const byCat = {};
+  for (const t of CATALOG_CARGO_TYPES) {
+    (byCat[t.category] ||= []).push(t);
+  }
+  let html = '';
+  for (const [cat, types] of Object.entries(byCat)) {
+    html += `<div class="cargo-cat-header">${escapeHtmlAdmin(cat)}</div><div class="cargo-cat-grid">`;
+    for (const t of types) {
+      html += `<label class="cargo-cb-label"><input type="checkbox" class="stock-cargo-cb" value="${escapeHtmlAdmin(t.type)}"> ${escapeHtmlAdmin(t.name)} <span class="cargo-cb-unit">${escapeHtmlAdmin(t.unit)}</span></label>`;
+    }
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+function computeAdminTonnage() {
+  const category = document.getElementById('admin-stock-category')?.value || 'locomotive';
+  const mass = parseFloat(document.getElementById('admin-stock-mass')?.value) || 0;
+  const freightCap = parseFloat(document.getElementById('admin-stock-freight')?.value) || 0;
+  return category === 'wagon' ? Math.round(mass + freightCap) : Math.round(mass);
+}
+
+function computeAdminPrice() {
+  const category = document.getElementById('admin-stock-category')?.value || 'locomotive';
+  const power = parseFloat(document.getElementById('admin-stock-power')?.value) || 0;
+  const capacity = parseFloat(document.getElementById('admin-stock-capacity')?.value) || 0;
+  const freightCap = parseFloat(document.getElementById('admin-stock-freight')?.value) || 0;
+  if (category === 'locomotive' || category === 'automotrice') return Math.max(0, Math.round(power * 1000));
+  if (category === 'voiture') return Math.max(0, Math.round(capacity * 100));
+  if (category === 'wagon') return Math.max(0, Math.round(freightCap * 100));
+  return 0;
+}
+
+function updateAdminComputedFields() {
+  const tonnage = computeAdminTonnage();
+  const price = computeAdminPrice();
+  const tonEl = document.getElementById('admin-stock-tonnage');
+  if (tonEl) tonEl.textContent = tonnage + ' t';
+  const priceEl = document.getElementById('admin-stock-price');
+  if (priceEl) priceEl.textContent = price.toLocaleString('fr-FR') + ' €';
+}
+
+function wireAdminCategoryToggle() {
+  const catSel = document.getElementById('admin-stock-category');
+  const cargoGroup = document.getElementById('admin-stock-cargo-group');
+  const subcatGroup = document.getElementById('admin-stock-wagon-subcat-group');
+  if (!catSel) return;
+  const onChange = () => {
+    const isWagon = catSel.value === 'wagon';
+    if (cargoGroup) cargoGroup.style.display = isWagon ? 'block' : 'none';
+    if (subcatGroup) subcatGroup.style.display = isWagon ? 'block' : 'none';
+    updateAdminComputedFields();
+  };
+  catSel.onchange = onChange;
+  onChange();
+  ['admin-stock-mass','admin-stock-speed','admin-stock-power','admin-stock-capacity','admin-stock-freight'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateAdminComputedFields);
+  });
+  document.querySelectorAll('.stock-traction-cb').forEach(cb => {
+    cb.addEventListener('change', updateAdminComputedFields);
+  });
+}
+
+function loadAdminStockImage(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    adminStockImageData = e.target.result;
+    const preview = document.getElementById('admin-stock-image-preview');
+    if (preview) { preview.src = adminStockImageData; preview.classList.remove('hidden'); }
+    const img = new Image();
+    img.onload = () => {
+      const lengthInput = document.getElementById('admin-stock-length');
+      if (lengthInput) lengthInput.value = (img.naturalWidth * 0.1).toFixed(1);
+      updateAdminComputedFields();
+    };
+    img.src = adminStockImageData;
+  };
+  reader.readAsDataURL(file);
+}
+
+function openAdminStockEditor(item) {
+  editingItem = item || null;
+  adminStockImageData = item?.imageData || null;
+  const title = document.getElementById('edit-title');
+  if (title) {
+    const txt = title.querySelector('span');
+    if (txt) txt.textContent = item ? `Modifier : ${item.name}` : 'Ajouter un engin';
+  }
+  document.getElementById('edit-id').value = item?.id || '';
+  setAdminField('admin-stock-name', item?.name || '');
+  setAdminField('admin-stock-series', item?.seriesName || '');
+  setAdminField('admin-stock-category', item?.category || 'locomotive');
+  setAdminTraction(item?.traction || 'none');
+  setAdminField('admin-stock-speed', item?.maxSpeed ?? 160);
+  setAdminField('admin-stock-power', item?.power ?? 0);
+  setAdminField('admin-stock-length', item?.length ?? 20);
+  setAdminField('admin-stock-mass', item?.mass ?? 80);
+  setAdminField('admin-stock-capacity', item?.passengerCapacity ?? 0);
+  setAdminField('admin-stock-freight', item?.freightCapacity ?? 0);
+  setAdminField('admin-stock-wagon-subcat', item?.wagonSubCategory || '');
+  const preview = document.getElementById('admin-stock-image-preview');
+  if (preview) {
+    if (adminStockImageData) { preview.src = adminStockImageData; preview.classList.remove('hidden'); }
+    else preview.classList.add('hidden');
+  }
+  populateAdminCargoTypes();
+  setAdminCargoTypes(item?.cargoTypes || []);
+  wireAdminCategoryToggle();
+  updateAdminComputedFields();
+  document.getElementById('modal-edit')?.classList.add('active');
+}
+
+function setAdminField(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
 window._editItem = function(id) {
-  editingItem = allItems.find(i => i.id === id);
-  if (!editingItem) return;
-  document.getElementById('edit-title').textContent = `Modifier : ${editingItem.name}`;
-  document.getElementById('edit-id').value = editingItem.id;
-  document.getElementById('edit-name').value = editingItem.name || '';
-  document.getElementById('edit-series').value = editingItem.seriesName || '';
-  document.getElementById('edit-category').value = editingItem.category || 'wagon';
-  document.getElementById('edit-traction').value = editingItem.traction || 'none';
-  document.getElementById('edit-vmax').value = editingItem.maxSpeed || 0;
-  document.getElementById('edit-power').value = editingItem.power || 0;
-  document.getElementById('edit-mass').value = editingItem.mass || 0;
-  document.getElementById('edit-length').value = editingItem.length || 0;
-  document.getElementById('edit-pax').value = editingItem.passengerCapacity || 0;
-  document.getElementById('edit-freight').value = editingItem.freightCapacity || 0;
-  document.getElementById('edit-price').value = editingItem.purchasePrice || 0;
-  document.getElementById('edit-cargo').value = (editingItem.cargoTypes || []).join(', ');
-  editImageData = editingItem.imageData || '';
-  document.getElementById('edit-image-preview').innerHTML = editImageData ? `<img src="${editImageData}" style="max-height:80px;max-width:200px;border-radius:4px" onerror="this.style.display='none'">` : '<span style="color:var(--text2);font-size:.85em">Aucune image</span>';
-  document.getElementById('edit-image').value = '';
-  document.getElementById('modal-edit').classList.add('active');
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+  openAdminStockEditor(item);
 };
 window._addItem = function() {
-  editingItem = null;
-  document.getElementById('edit-title').textContent = 'Ajouter un engin';
-  document.getElementById('edit-id').value = '';
-  document.getElementById('edit-name').value = '';
-  document.getElementById('edit-series').value = '';
-  document.getElementById('edit-category').value = 'wagon';
-  document.getElementById('edit-traction').value = 'none';
-  document.getElementById('edit-vmax').value = 0;
-  document.getElementById('edit-power').value = 0;
-  document.getElementById('edit-mass').value = 0;
-  document.getElementById('edit-length').value = 0;
-  document.getElementById('edit-pax').value = 0;
-  document.getElementById('edit-freight').value = 0;
-  document.getElementById('edit-price').value = 0;
-  document.getElementById('edit-cargo').value = '';
-  editImageData = '';
-  document.getElementById('edit-image-preview').innerHTML = '<span style="color:var(--text2);font-size:.85em">Aucune image</span>';
-  document.getElementById('edit-image').value = '';
-  document.getElementById('modal-edit').classList.add('active');
+  openAdminStockEditor(null);
 };
 
 document.getElementById('btn-add')?.addEventListener('click', window._addItem);
 
-document.getElementById('edit-image')?.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    editImageData = ev.target.result;
-    document.getElementById('edit-image-preview').innerHTML = `<img src="${editImageData}" style="max-height:80px;max-width:200px;border-radius:4px" onerror="this.style.display='none'">`;
-  };
-  reader.readAsDataURL(file);
-});
+const adminStockImageDrop = document.getElementById('admin-stock-image-drop');
+const adminStockImageInput = document.getElementById('admin-stock-image-input');
+adminStockImageDrop?.addEventListener('click', () => adminStockImageInput?.click());
+adminStockImageDrop?.addEventListener('dragover', (e) => { e.preventDefault(); adminStockImageDrop.classList.add('dragging'); });
+adminStockImageDrop?.addEventListener('dragleave', () => adminStockImageDrop.classList.remove('dragging'));
+adminStockImageDrop?.addEventListener('drop', (e) => { e.preventDefault(); adminStockImageDrop.classList.remove('dragging'); if (e.dataTransfer.files[0]) loadAdminStockImage(e.dataTransfer.files[0]); });
+adminStockImageInput?.addEventListener('change', () => { if (adminStockImageInput.files[0]) loadAdminStockImage(adminStockImageInput.files[0]); });
 
-document.getElementById('edit-cancel').addEventListener('click', () => document.getElementById('modal-edit').classList.remove('active'));
-document.getElementById('edit-save').addEventListener('click', () => {
-  const id = document.getElementById('edit-id').value;
-  const name = document.getElementById('edit-name').value.trim() || 'Nouvel engin';
+document.getElementById('edit-cancel')?.addEventListener('click', () => document.getElementById('modal-edit')?.classList.remove('active'));
+document.querySelector('#modal-edit .modal-close')?.addEventListener('click', () => document.getElementById('modal-edit')?.classList.remove('active'));
+document.getElementById('edit-save')?.addEventListener('click', () => {
+  const name = document.getElementById('admin-stock-name')?.value.trim();
+  if (!name) return alert('Nom requis');
+  const category = document.getElementById('admin-stock-category')?.value || 'locomotive';
+  const mass = parseFloat(document.getElementById('admin-stock-mass')?.value) || 80;
+  const freightCapacity = parseFloat(document.getElementById('admin-stock-freight')?.value) || 0;
+  const tonnage = category === 'wagon' ? Math.round(mass + freightCapacity) : Math.round(mass);
   const itemData = {
     name,
-    seriesName: document.getElementById('edit-series').value.trim(),
-    category: document.getElementById('edit-category').value,
-    traction: document.getElementById('edit-traction').value,
-    maxSpeed: +document.getElementById('edit-vmax').value || 0,
-    power: +document.getElementById('edit-power').value || 0,
-    mass: +document.getElementById('edit-mass').value || 0,
-    length: +document.getElementById('edit-length').value || 0,
-    passengerCapacity: +document.getElementById('edit-pax').value || 0,
-    freightCapacity: +document.getElementById('edit-freight').value || 0,
-    purchasePrice: +document.getElementById('edit-price').value || 0,
-    cargoTypes: document.getElementById('edit-cargo').value.split(',').map(s=>s.trim()).filter(Boolean),
-    tonnage: +document.getElementById('edit-mass').value || 0,
-    imageData: editImageData,
+    seriesName: document.getElementById('admin-stock-series')?.value.trim() || '',
+    category,
+    traction: getAdminTractionString(),
+    maxSpeed: parseInt(document.getElementById('admin-stock-speed')?.value) || 0,
+    power: parseInt(document.getElementById('admin-stock-power')?.value) || 0,
+    mass,
+    length: parseFloat(document.getElementById('admin-stock-length')?.value) || 20,
+    passengerCapacity: parseInt(document.getElementById('admin-stock-capacity')?.value) || 0,
+    freightCapacity,
+    tonnage,
+    purchasePrice: computeAdminPrice(),
+    cargoTypes: getAdminCargoTypes(),
+    wagonSubCategory: document.getElementById('admin-stock-wagon-subcat')?.value || '',
+    imageData: adminStockImageData,
   };
-
+  const id = document.getElementById('edit-id')?.value;
   if (id) {
     const item = allItems.find(i => i.id === id);
     if (!item) return;
@@ -601,11 +888,21 @@ document.getElementById('edit-save').addEventListener('click', () => {
     localStorage.setItem('admin_catalog_imported', JSON.stringify(imported));
     allItems.push(newItem);
   }
-
-  document.getElementById('modal-edit').classList.remove('active');
+  document.getElementById('modal-edit')?.classList.remove('active');
   updateStats();
   applyFilters();
 });
+
+function tractionMatchesAdmin(itemTraction, filter) {
+  if (!filter) return true;
+  const it = (itemTraction || '').toLowerCase();
+  const f = filter.toLowerCase();
+  if (f === 'none' || f === 'aucune') return it === '' || it === 'none' || it === 'aucune';
+  if (f === 'diesel') return it.includes('diesel') || it.includes('vapeur');
+  if (f === 'electrique' || f === 'électrique') return it.includes('electrique') || it.includes('électrique') || ['25kv','15kv','3kv','1.5kv','1500v','3e rail','3erail','3e'].some(k => it.includes(k));
+  if (f === 'bi' || f === 'bi-mode' || f === 'bimode') return (it.includes('diesel') || it.includes('vapeur')) && ['25kv','15kv','3kv','1.5kv','1500v','3e rail','3erail','electrique','électrique'].some(k => it.includes(k));
+  return it.includes(f);
+}
 
 // ============ EXPORT JSON ============
 document.getElementById('btn-export').addEventListener('click', () => {
@@ -1041,7 +1338,7 @@ document.getElementById('publish-confirm').addEventListener('click', publishToSe
 document.getElementById('btn-back')?.addEventListener('click', () => {
   if (window.history.length > 1) window.history.back();
   else {
-    const v = new URLSearchParams(window.location.search).get('v') || '1784931686';
+    const v = new URLSearchParams(window.location.search).get('v') || '1784931687';
     window.location.href = 'index.html?v=' + v;
   }
 });
