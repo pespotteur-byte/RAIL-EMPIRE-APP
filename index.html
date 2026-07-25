@@ -18,7 +18,7 @@
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784931686">
+  <link rel="stylesheet" href="style.css?v=1784931688">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -351,7 +351,7 @@
                 <button id="btn-save-sillon" class="btn-primary" type="button" style="margin-left:auto">Creer</button>
                 <button id="btn-cancel-sillon" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 12px;cursor:pointer;color:var(--text)">Annuler</button>
               </div>
-              <div class="sched-map-container" style="height:240px;margin-top:8px">
+              <div class="sched-map-container" style="height:70vh;margin-top:8px">
                 <canvas id="sillon-map-canvas"></canvas>
               </div>
               <div id="sillon-creator-loading" class="hidden" style="color:var(--blue);font-size:11px;padding:4px">Calcul du tracé ferroviaire...</div>
@@ -1123,6 +1123,16 @@
             <canvas id="line-map-canvas"></canvas>
           </div>
           <div id="line-manual-hint" class="sched-hint" style="margin-top:6px">Cliquez sur les gares pour definir les arrets de la ligne. Le tracé ORM sera utilisé par defaut.</div>
+          <div id="line-voie-row" class="form-row hidden" style="margin-top:6px;gap:6px">
+            <div class="form-group" style="flex:1;min-width:120px">
+              <label>Point de voie départ</label>
+              <select id="line-manual-start-voie" style="width:100%;font-size:12px"><option value="">Gare (centre)</option></select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:120px">
+              <label>Point de voie arrivée</label>
+              <select id="line-manual-end-voie" style="width:100%;font-size:12px"><option value="">Gare (centre)</option></select>
+            </div>
+          </div>
           <div class="form-row" style="margin-top:6px;gap:6px">
             <button id="btn-line-manual" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Tracer manuellement le segment</button>
             <button id="btn-line-clear-manual" class="btn-sm hidden" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Effacer le tracé</button>
@@ -1415,6 +1425,6 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784931686"></script>
+  <script type="module" src="js/main.js?v=1784931688"></script>
 </body>
 </html>

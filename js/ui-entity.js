@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1784931686';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784931686';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931686';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931686';
+import { haversineDistance } from './simulation.js?v=1784931688';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784931688';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931688';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931688';
 
 export const UIEntity = {
   toggleStationCreation() {
@@ -1571,6 +1571,7 @@ export const UIEntity = {
       this._lineManualRoute = null;
       this._lineManualDrag = null;
       this._lineManualRoutes = [];
+      this._lineManualVoie = {};
 
       // Station creator in Lines page
       document.getElementById('btn-new-station-lines')?.addEventListener('click', () => {
@@ -1725,6 +1726,7 @@ export const UIEntity = {
       this._lineManualRoute = null;
       this._lineManualDrag = null;
       this._lineManualRoutes = [];
+      this._lineManualVoie = {};
 
       if (editLine) {
         this._editingLineId = editLine.id;
@@ -1878,6 +1880,30 @@ export const UIEntity = {
           ctx.fillText(st.name, p.x + 8, p.y + 4);
         }
 
+        // Draw voie points (platforms) when manual mode is active
+        if (this._lineManualMode && this.game.voiePointManager) {
+          const idx = this._lineManualSegmentIndex;
+          const segStartId = this.lineStops[idx]?.stationId;
+          const segEndId = this.lineStops[idx + 1]?.stationId;
+          for (const vp of this.game.voiePointManager.getAll()) {
+            const p = project(vp.lat, vp.lon);
+            if (p.x < -10 || p.x > canvas.width + 10 || p.y < -10 || p.y > canvas.height + 10) continue;
+            const isSeg = vp.stationId === segStartId || vp.stationId === segEndId;
+            if (!isSeg) continue;
+            const startSel = document.getElementById('line-manual-start-voie')?.value;
+            const endSel = document.getElementById('line-manual-end-voie')?.value;
+            const isActive = vp.id === startSel || vp.id === endSel;
+            ctx.fillStyle = isActive ? '#22c55e' : '#a855f7';
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(Math.PI / 4);
+            const sz = isActive ? 5 : 3;
+            ctx.fillRect(-sz, -sz, sz * 2, sz * 2);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.strokeRect(-sz, -sz, sz * 2, sz * 2);
+            ctx.restore();
+          }
+        }
+
         // Draw current line route
         const lc = lineColor;
         for (let i = 0; i < this.lineStops.length - 1; i++) {
@@ -1985,6 +2011,22 @@ export const UIEntity = {
         return false;
       };
 
+      const findNearestSegmentVoiePoint = (x, y, radius = 14) => {
+        if (!this._lineManualMode || !this.game.voiePointManager) return null;
+        const idx = this._lineManualSegmentIndex;
+        const segStartId = this.lineStops[idx]?.stationId;
+        const segEndId = this.lineStops[idx + 1]?.stationId;
+        if (!segStartId || !segEndId) return null;
+        let best = null, bestD = Infinity;
+        for (const vp of this.game.voiePointManager.getAll()) {
+          if (vp.stationId !== segStartId && vp.stationId !== segEndId) continue;
+          const p = project(vp.lat, vp.lon);
+          const d = Math.hypot(p.x - x, p.y - y);
+          if (d < bestD && d < radius) { bestD = d; best = vp; }
+        }
+        return best;
+      };
+
       canvas.onmousedown = (e) => {
         const x = e.offsetX, y = e.offsetY;
         drag = true;
@@ -2063,6 +2105,20 @@ export const UIEntity = {
               drag = false; dragStart = null; totalDragDist = 0;
               return;
             }
+            const nearVp = findNearestSegmentVoiePoint(x, y);
+            if (nearVp) {
+              const idx = this._lineManualSegmentIndex;
+              if (!this._lineManualVoie) this._lineManualVoie = {};
+              if (!this._lineManualVoie[idx]) this._lineManualVoie[idx] = {};
+              const segStartId = this.lineStops[idx]?.stationId;
+              if (nearVp.stationId === segStartId) this._lineManualVoie[idx].start = nearVp.id;
+              else this._lineManualVoie[idx].end = nearVp.id;
+              this._populateLineManualVoieSelects();
+              this._rebuildLineManualRoute();
+              drawMap();
+              drag = false; dragStart = null; totalDragDist = 0;
+              return;
+            }
             if (isNearStation(x, y, 16)) {
               drag = false; dragStart = null; totalDragDist = 0;
               return;
@@ -2138,16 +2194,54 @@ export const UIEntity = {
       if (this._drawLineMap) this._drawLineMap();
     },
 
+  _getLineManualVoiePoint(idx, which) {
+      const voieId = (this._lineManualVoie && this._lineManualVoie[idx] && this._lineManualVoie[idx][which]) || '';
+      if (!voieId || !this.game.voiePointManager) return null;
+      return this.game.voiePointManager.getVoiePointById(voieId);
+    },
+
   _rebuildLineManualRoute() {
       const idx = this._lineManualSegmentIndex;
       if (idx < 0 || idx >= this.lineStops.length - 1) return;
       const sa = this.game.world.getStationById(this.lineStops[idx].stationId);
       const sb = this.game.world.getStationById(this.lineStops[idx + 1].stationId);
       if (!sa || !sb) return;
-      const start = { lat: sa.lat, lon: sa.lon, maxSpeed: 160, control: true };
-      const end = { lat: sb.lat, lon: sb.lon, maxSpeed: 160, control: true };
+      const startVoie = this._getLineManualVoiePoint(idx, 'start');
+      const endVoie = this._getLineManualVoiePoint(idx, 'end');
+      const start = { lat: startVoie ? startVoie.lat : sa.lat, lon: startVoie ? startVoie.lon : sa.lon, maxSpeed: 160, control: true };
+      const end = { lat: endVoie ? endVoie.lat : sb.lat, lon: endVoie ? endVoie.lon : sb.lon, maxSpeed: 160, control: true };
       const controls = this._lineManualPoints.map(p => ({ lat: p.lat, lon: p.lon, maxSpeed: 160, control: true }));
       this._lineManualRoute = this._buildManualRoute(start, controls, end, 160);
+    },
+
+  _populateLineManualVoieSelects() {
+      const idx = this._lineManualSegmentIndex;
+      const startSel = document.getElementById('line-manual-start-voie');
+      const endSel = document.getElementById('line-manual-end-voie');
+      if (!startSel || !endSel || idx < 0 || idx >= this.lineStops.length - 1) return;
+      const sa = this.game.world.getStationById(this.lineStops[idx].stationId);
+      const sb = this.game.world.getStationById(this.lineStops[idx + 1].stationId);
+      const base = '<option value="">Gare (centre)</option>';
+      const vpm = this.game.voiePointManager;
+      const optsFor = (st) => {
+        if (!st || !vpm) return base;
+        const vps = vpm.getStationVoiePoints(st.id) || [];
+        if (!vps.length) return base;
+        return base + vps.map(vp => `<option value="${escapeHtml(vp.id)}">Voie ${escapeHtml(vp.voie)} ${vp.ref ? '(' + escapeHtml(vp.ref) + ')' : ''}</option>`).join('');
+      };
+      startSel.innerHTML = optsFor(sa);
+      endSel.innerHTML = optsFor(sb);
+      const cur = (this._lineManualVoie && this._lineManualVoie[idx]) || {};
+      startSel.value = cur.start || '';
+      endSel.value = cur.end || '';
+      const onChange = () => {
+        if (!this._lineManualVoie) this._lineManualVoie = {};
+        this._lineManualVoie[idx] = { start: startSel.value, end: endSel.value };
+        this._rebuildLineManualRoute();
+        if (this._drawLineMap) this._drawLineMap();
+      };
+      startSel.onchange = onChange;
+      endSel.onchange = onChange;
     },
 
   _toggleLineManual() {
@@ -2168,6 +2262,7 @@ export const UIEntity = {
           this._lineManualPoints = [];
         }
         this._lineManualMode = true;
+        this._populateLineManualVoieSelects();
         this._rebuildLineManualRoute();
       }
       this._updateLineManualUI();
@@ -2203,6 +2298,7 @@ export const UIEntity = {
       const clear = document.getElementById('btn-line-clear-manual');
       const finish = document.getElementById('btn-line-finish-manual');
       const hint = document.getElementById('line-manual-hint');
+      const voieRow = document.getElementById('line-voie-row');
       if (manual) {
         manual.textContent = this._lineManualMode ? 'Quitter le tracé manuel' : 'Tracer manuellement le segment';
         manual.classList.toggle('active', this._lineManualMode);
@@ -2210,9 +2306,11 @@ export const UIEntity = {
       }
       if (clear) clear.classList.toggle('hidden', !this._lineManualMode);
       if (finish) finish.classList.toggle('hidden', !this._lineManualMode);
+      if (voieRow) voieRow.classList.toggle('hidden', !this._lineManualMode);
+      if (this._lineManualMode) this._populateLineManualVoieSelects();
       if (hint) {
         if (this._lineManualMode) {
-          hint.textContent = 'Cliquez pour ajouter des points entre les deux gares. Glissez pour déplacer. Ctrl / clic droit / double-clic pour supprimer.';
+          hint.textContent = 'Cliquez pour ajouter des points entre les deux points de voie. Glissez pour déplacer. Ctrl / clic droit / double-clic pour supprimer.';
         } else {
           hint.textContent = this.lineStops.length >= 2 ? 'Vous pouvez tracer manuellement le dernier segment pour remplacer le calcul ORM.' : 'Ajoutez au moins 2 gares pour tracer un segment.';
         }
@@ -2633,7 +2731,7 @@ export const UIEntity = {
           const latSpan = Math.abs(fromSt.lat - toSt.lat) + 0.05;
           const lonSpan = Math.abs(fromSt.lon - toSt.lon) * cosLat + 0.05;
           const spanDeg = Math.max(latSpan, lonSpan);
-          this._sillonTileMap.zoomLevel = Math.min(18, Math.max(6, Math.log2(1000 / spanDeg)));
+          this._sillonTileMap.zoomLevel = Math.min(18, Math.max(6, Math.log2(1000 / spanDeg) + 1));
         } else if (fromSt) {
           this._sillonTileMap.centerLat = fromSt.lat;
           this._sillonTileMap.centerLon = fromSt.lon;
@@ -2736,7 +2834,7 @@ export const UIEntity = {
         const latSpan = Math.abs(fromSt.lat - toSt.lat) + 0.05;
         const lonSpan = Math.abs(fromSt.lon - toSt.lon) * cosLat + 0.05;
         const spanDeg = Math.max(latSpan, lonSpan);
-        tileMap.zoomLevel = Math.min(18, Math.max(6, Math.log2(1000 / spanDeg)));
+        tileMap.zoomLevel = Math.min(18, Math.max(6, Math.log2(1000 / spanDeg) + 1));
       } else if (fromSt) {
         tileMap.centerLat = fromSt.lat;
         tileMap.centerLon = fromSt.lon;

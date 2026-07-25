@@ -1,8 +1,8 @@
-import { haversineDistance } from './simulation.js?v=1784931686';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784931686';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931686';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931686';
-import { announceTrain } from './announcements.js?v=1784931686';
+import { haversineDistance } from './simulation.js?v=1784931688';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1784931688';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931688';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931688';
+import { announceTrain } from './announcements.js?v=1784931688';
 
 export const UIMap = {
   setupMapEvents() {
