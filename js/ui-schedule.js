@@ -95,7 +95,7 @@ export const UISchedule = {
         const rtCheck = document.getElementById('sched-round-trip');
         if (rtCheck) rtCheck.checked = editService.roundTrip;
         document.getElementById('sched-multi-departures').value = editService.multiDepartures || 1;
-        document.getElementById('sched-terminus-wait').value = editService.terminusWait || 5;
+        document.getElementById('sched-terminus-wait').value = Number.isFinite(editService.terminusWait) ? editService.terminusWait : 0;
         const typeSelect = document.getElementById('sched-service-type');
         if (typeSelect) typeSelect.value = editService.serviceType || (editService.isWorkTrain ? 'work' : 'passager');
         const workCheck = document.getElementById('sched-work-train');
@@ -117,7 +117,7 @@ export const UISchedule = {
         const rtCheck = document.getElementById('sched-round-trip');
         if (rtCheck) rtCheck.checked = false;
         document.getElementById('sched-multi-departures').value = '1';
-        document.getElementById('sched-terminus-wait').value = '5';
+        document.getElementById('sched-terminus-wait').value = '0';
         const typeSelectNew = document.getElementById('sched-service-type');
         if (typeSelectNew) typeSelectNew.value = 'passager';
         const workCheckNew = document.getElementById('sched-work-train');
@@ -176,7 +176,7 @@ export const UISchedule = {
       const lastArr = this.schedStops[this.schedStops.length - 1].arrTimeMin;
       const oneWayMin = lastArr - firstDep;
       if (oneWayMin <= 0) return;
-      const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+      const terminusWait = Number(document.getElementById('sched-terminus-wait')?.value) || 0;
       // One round trip = oneWay + terminusWait + oneWay + terminusWait
       const oneRoundTrip = (oneWayMin * 2) + (terminusWait * 2);
       const maxAR = Math.max(1, Math.floor((24 * 60) / oneRoundTrip));
@@ -977,7 +977,7 @@ export const UISchedule = {
     },
 
   _generateDefaultReturnStops() {
-      const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+      const terminusWait = Number(document.getElementById('sched-terminus-wait')?.value) || 0;
       const fwd = this._forwardStops;
       if (fwd.length < 2) return [];
       const rev = [...fwd].reverse();
@@ -996,7 +996,7 @@ export const UISchedule = {
         }
         const arrTime = currentTime + travelTime;
         const dwell = (s.type === 'arret' && i > 0 && i < rev.length - 1)
-          ? Math.max(2, (s.depTimeMin ?? 0) - (s.arrTimeMin ?? 0))
+          ? Math.max(0, (s.depTimeMin ?? 0) - (s.arrTimeMin ?? 0))
           : 0;
         const depTime = arrTime + dwell;
         currentTime = depTime;
@@ -1051,7 +1051,7 @@ export const UISchedule = {
         const travelTime = await this._getSegmentTravelTime(prev, cur, rameSpeed, rame, i - 1);
         const isIntermediate = i > 0 && i < this._returnStops.length - 1;
         const oldDwell = (isIntermediate && cur.type === 'arret')
-          ? Math.max(2, (cur.depTimeMin || 0) - (cur.arrTimeMin || 0))
+          ? Math.max(0, (cur.depTimeMin || 0) - (cur.arrTimeMin || 0))
           : 0;
         cur.arrTimeMin = prev.depTimeMin + travelTime;
         cur.depTimeMin = cur.arrTimeMin + oldDwell;
@@ -1581,7 +1581,7 @@ export const UISchedule = {
         // SC-14 — mirror the forward segment/dwell durations onto the return leg,
         // anchored at (terminus arrival + terminus wait), to show heures aller ET
         // retour (départ / passage / arrivée) per station.
-        const termWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+        const termWait = Number(document.getElementById('sched-terminus-wait')?.value) || 0;
         const lastArr = this.schedStops[n - 1].arrTimeMin ?? this.schedStops[n - 1].depTimeMin ?? 0;
         const fmt = (t) => this.minToTimeStr(((Math.round(t) % 1440) + 1440) % 1440);
         const retTimes = [];
@@ -1675,7 +1675,7 @@ export const UISchedule = {
       }
 
       const reversed = [...this.schedStops].reverse();
-      const termWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+      const termWait = Number(document.getElementById('sched-terminus-wait')?.value) || 0;
       const lastArr = this.schedStops[this.schedStops.length - 1].arrTimeMin ?? this.schedStops[this.schedStops.length - 1].depTimeMin ?? 0;
       const retTimes = [];
       for (let j = 0; j < reversed.length; j++) {
@@ -1712,8 +1712,8 @@ export const UISchedule = {
           stop.depTimeMin = stop.arrTimeMin;
           stop.depTimeStr = stop.arrTimeStr;
         } else if (stop.depTimeMin <= stop.arrTimeMin) {
-          stop.depTimeMin = stop.arrTimeMin + 2;
-          stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
+          stop.depTimeMin = stop.arrTimeMin;
+          stop.depTimeStr = stop.arrTimeStr;
         }
       }
       if (field === 'arrTime') {
@@ -2243,7 +2243,7 @@ export const UISchedule = {
         const prevStop = this.schedStops[i - 1];
         const curStop = this.schedStops[i];
         // Capture dwell before overwriting arrival time so it is preserved.
-        const oldDwell = Math.max(2, (curStop.depTimeMin || 0) - (curStop.arrTimeMin || 0));
+        const oldDwell = Math.max(0, (curStop.depTimeMin || 0) - (curStop.arrTimeMin || 0));
         const travelTime = await this._getSegmentTravelTime(prevStop, curStop, rameSpeed, rame, i - 1);
         curStop.arrTimeMin = prevStop.depTimeMin + travelTime;
         curStop.arrTimeStr = this.minToTimeStr(curStop.arrTimeMin);
@@ -2251,7 +2251,7 @@ export const UISchedule = {
           curStop.depTimeMin = curStop.arrTimeMin;
           curStop.depTimeStr = curStop.arrTimeStr;
         } else {
-          curStop.depTimeMin = curStop.arrTimeMin + Math.max(oldDwell, 2);
+          curStop.depTimeMin = curStop.arrTimeMin + Math.max(oldDwell, 0);
           curStop.depTimeStr = this.minToTimeStr(curStop.depTimeMin);
         }
       }
@@ -2323,14 +2323,14 @@ export const UISchedule = {
               const stop = this.schedStops[idx];
               const tMin = profile.queryTimesMin[k];
               // Preserve the dwell that existed before the recalc (at least 2 min).
-              const oldDwell = Math.max(2, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0));
+              const oldDwell = Math.max(0, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0));
               stop.arrTimeMin = anchorDep + tMin;
               stop.arrTimeStr = this.minToTimeStr(stop.arrTimeMin);
               if (stop.type === 'waypoint' || stop.type === 'passage' || idx === this.schedStops.length - 1) {
                 stop.depTimeMin = stop.arrTimeMin;
                 stop.depTimeStr = stop.arrTimeStr;
               } else {
-                stop.depTimeMin = stop.arrTimeMin + (idx === this.schedStops.length - 1 ? 0 : Math.max(oldDwell, 2));
+                stop.depTimeMin = stop.arrTimeMin + (idx === this.schedStops.length - 1 ? 0 : Math.max(oldDwell, 0));
                 stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
               }
             }
@@ -2449,7 +2449,7 @@ export const UISchedule = {
       if ((rame.totalPower || 0) <= 0) return alertToast('La rame selectionnée n\'a pas de motrice (locomotive / automotrice) et ne peut pas rouler.');
       const roundTrip = document.getElementById('sched-round-trip')?.checked || false;
       const multiDepartures = parseInt(document.getElementById('sched-multi-departures')?.value) || 1;
-      const terminusWait = parseInt(document.getElementById('sched-terminus-wait')?.value) || 5;
+      const terminusWait = Number(document.getElementById('sched-terminus-wait')?.value) || 0;
 
       // Flush any in-progress return-mode edits into their dedicated buffers.
       if (this._isReturnEditMode) {

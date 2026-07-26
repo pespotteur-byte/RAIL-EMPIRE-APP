@@ -565,7 +565,9 @@ export const UIMap = {
       }
       // Quand l'arrêt courant ou le retard change, on reconstruit situation, bandeau et étapes.
       const curIdx = svc.currentStopIndex || 0;
-      const stateKey = `${curIdx}|${Math.round(Number.isFinite(t.delay) ? t.delay : 0)}`;
+      const rawDelay = Number.isFinite(t.delay) ? t.delay : 0;
+      const delayKey = Math.abs(rawDelay) < 0.5 ? 0 : Math.round(rawDelay);
+      const stateKey = `${curIdx}|${delayKey}`;
       if (stateKey !== this._lvpStateKey) {
         this._lvpStateKey = stateKey;
         const { d, rows, bandeau, situation, nextHtml, curIdx: newIdx } = this._buildLivemapPanelContent(svc);

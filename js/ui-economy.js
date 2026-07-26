@@ -571,9 +571,11 @@ export const UIEconomy = {
 
       if (activeTrains.length === 0) {
         container.innerHTML = '<p style="color:var(--text3);font-size:11px;text-align:center;padding:10px">Aucun train en service. Creez un trajet dans "Horaires".</p>';
+        this._trainsListStableKey = null;
         return;
       }
 
+      const dynamicParts = [], stableKeys = [];
       const html = activeTrains.map(svc => {
         const t = svc.train;
         if (!t) return '';
@@ -597,19 +599,25 @@ export const UIEconomy = {
         if (svc.isRescue) {
           const stateLabels = { en_route: 'En route', recovering: 'Remorquage', returning: 'Retour depot' };
           const stateLabel = stateLabels[svc.rescueState] || '';
-          return `
-            <div class="train-card-fixed" style="border-color:#ef4444">
-              <div class="tc-row1">
-                <span class="train-color" style="background:#ef4444"></span>
-                <span class="tc-name">${svc.name}</span>
-                <span class="tc-speed">${Math.round(t.speed)} km/h</span>
+          const rescueStable = `
+            <div class="train-card-fixed" data-svc-id="${jsString(svc.id)}" style="cursor:pointer;border-color:#ef4444" onclick="game.ui.selectServiceById('${jsString(svc.id)}')">
+              <div class="tc-line tc-header">
+                <span class="tc-status-dot" style="background:#ef4444"></span>
+                <div class="tc-scroll"><span class="tc-scroll-text tc-name">${escapeHtml(svc.name)}</span></div>
+                <span class="tc-speed" style="margin-left:auto"></span>
               </div>
-              <div class="tc-row2">
-                <span style="color:#ef4444;font-weight:600;font-size:10px">SECOURS</span>
-                <span style="color:var(--text2);font-size:10px">${stateLabel}</span>
-              </div>
+              <div class="tc-dynamic"></div>
             </div>
           `;
+          const rescueDynamic = `
+            <div class="tc-line" style="display:flex;gap:8px;align-items:center">
+              <span class="tc-status" style="color:#ef4444;font-weight:600;font-size:10px">SECOURS</span>
+              <span style="color:var(--text2);font-size:10px">${escapeHtml(stateLabel)}</span>
+            </div>
+          `;
+          dynamicParts.push({ id: svc.id, html: rescueDynamic, speed: Math.round(t.speed), selected: this.selectedService?.id === svc.id });
+          stableKeys.push(`rescue:${svc.id}:${svc.name}:${svc.rescueState}:${this.selectedService?.id === svc.id}`);
+          return rescueStable;
         }
 
         // Helper: previous/next scheduled arret for "Prochain arrêt" / approach distance.
@@ -777,10 +785,11 @@ export const UIEconomy = {
         const displayName = t.seriesName ? escapeHtml(`${t.seriesName} ${t.number || ''}`.trim()) : escapeHtml(svc.name);
 
         // S2: Train images (scrollable zone) — absent pour les trains de travaux.
-        let imageHtml = '';
+        let imageHtml = '', imageKey = '';
         if (!svc.isWorkTrain && svc.serviceType !== 'work' && svc.rame && svc.rame.elementDetails) {
-          const imgs = svc.rame.elementDetails
-            .filter(e => e.imageData)
+          const withImg = svc.rame.elementDetails.filter(e => e.imageData);
+          imageKey = withImg.map(e => `${e.imageData.length}:${e.imageData.slice(-16)}:${e.flipped ? 1 : 0}`).join('|');
+          const imgs = withImg
             .map(e => `<img src="${escapeHtml(e.imageData)}" class="tc-train-img"${e.flipped ? ' style="transform: scaleX(-1);"' : ''}>`)
             .join('');
           if (imgs) {
@@ -848,31 +857,50 @@ export const UIEconomy = {
           ? `<span style="color:#ef4444;font-weight:700;font-size:10px;margin-left:auto">✕ Supprimé</span>`
           : (svc.completed ? `<span style="color:#16a34a;font-weight:700;font-size:10px;margin-left:auto">Terminé</span>` : '');
 
-        return `
-          <div class="train-card-fixed${selCls}" style="cursor:pointer" onclick="game.ui.selectServiceById('${jsString(svc.id)}')">
+        const stableHtml = `
+          <div class="train-card-fixed" data-svc-id="${jsString(svc.id)}" style="cursor:pointer" onclick="game.ui.selectServiceById('${jsString(svc.id)}')">
             <div class="tc-line tc-header">
               <span class="tc-status-dot" style="background:${catColor}"></span>
               <div class="tc-scroll"><span class="tc-scroll-text tc-name">${displayName}</span></div>
-              <span class="tc-speed" style="margin-left:auto">${Math.round(t.speed)} km/h</span>
+              <span class="tc-speed" style="margin-left:auto"></span>
             </div>
             ${imageHtml}
-            <div class="tc-line" style="display:flex;gap:8px;align-items:center">
-              <span class="tc-status" style="color:${statusColor}">${statusText}</span>
-              <span class="tc-delay ${delayClass}">${delayDisplay}</span>
-              ${statusBadge}
-            </div>
-            ${contextLabel ? `<div class="tc-line tc-scroll"><span class="tc-scroll-text ${contextClass}">${contextLabel}</span></div>` : ''}
-            <div class="tc-line tc-scroll"><span class="tc-scroll-text tc-next" style="color:#22c55e">${nextInfo}</span></div>
-            ${payloadHtml}
-            ${incidentHtml}
-            ${breakdownHtml}
-            ${maintenanceHtml}
-            ${wearHtml}
+            <div class="tc-dynamic"></div>
           </div>
         `;
+        const dynamicHtml = `
+          <div class="tc-line" style="display:flex;gap:8px;align-items:center">
+            <span class="tc-status" style="color:${statusColor}">${statusText}</span>
+            <span class="tc-delay ${delayClass}">${delayDisplay}</span>
+            ${statusBadge}
+          </div>
+          ${contextLabel ? `<div class="tc-line tc-scroll"><span class="tc-scroll-text ${contextClass}">${contextLabel}</span></div>` : ''}
+          <div class="tc-line tc-scroll"><span class="tc-scroll-text tc-next" style="color:#22c55e">${nextInfo}</span></div>
+          ${payloadHtml}
+          ${incidentHtml}
+          ${breakdownHtml}
+          ${maintenanceHtml}
+          ${wearHtml}
+        `;
+        dynamicParts.push({ id: svc.id, html: dynamicHtml, speed: Math.round(t.speed), selected: this.selectedService?.id === svc.id });
+        stableKeys.push(`${svc.id}:${cat}:${displayName}:${imageKey}:${this.selectedService?.id === svc.id}`);
+        return stableHtml;
       }).join('');
-      // S10: Only update DOM if content actually changed to avoid flicker
-      if (container.innerHTML !== html) container.innerHTML = html;
+
+      const fullStableKey = stableKeys.join('|');
+      if (this._trainsListStableKey !== fullStableKey) {
+        container.innerHTML = html;
+        this._trainsListStableKey = fullStableKey;
+      }
+      for (const d of dynamicParts) {
+        const card = Array.from(container.children).find(c => c.dataset.svcId === d.id);
+        if (!card) continue;
+        const speedEl = card.querySelector('.tc-speed');
+        if (speedEl) speedEl.textContent = `${d.speed} km/h`;
+        const dynEl = card.querySelector('.tc-dynamic');
+        if (dynEl) dynEl.innerHTML = d.html;
+        card.classList.toggle('tc-selected', d.selected);
+      }
 
       // LVM-06 — le train sélectionné reste visible en haut du bandeau.
       if (this.selectedService && this._lastSelectedForScroll !== this.selectedService.id) {
