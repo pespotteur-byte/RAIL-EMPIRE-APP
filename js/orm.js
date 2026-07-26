@@ -904,7 +904,15 @@ export class ORMClient {
   // ORM la plus proche (fallback 30 km/h pour les voies manuelles/inconnues).
   getNearestWayMaxSpeed(lat, lon, maxDistKm = 0.5) {
     const snap = this.snapToWay(lat, lon, maxDistKm);
-    if (snap?.maxSpeed > 0) return snap.maxSpeed;
+    if (snap?.wayId) {
+      const way = this._ways.get(snap.wayId);
+      if (way) {
+        // Use the routing-aware effective speed (160 for main/branch when missing).
+        const v = this._effectiveSpeed(way);
+        if (v > 0) return v;
+      }
+      if (snap.maxSpeed > 0) return snap.maxSpeed;
+    }
     const nodeSnap = this.snapToNearest(lat, lon, maxDistKm);
     if (nodeSnap?.node?.maxSpeed > 0) return nodeSnap.node.maxSpeed;
     return null;
