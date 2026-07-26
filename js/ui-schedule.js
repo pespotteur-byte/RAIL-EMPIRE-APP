@@ -534,24 +534,28 @@ export const UISchedule = {
           }
         }
 
+        // Never start a map pan when clicking on a station or voie-point marker.
+        // The mouseup handler will select the object instead.
+        if (isNearStationOrVoie(x, y)) {
+          schedDrag = false; schedDragStart = null; totalDragDist = 0;
+          return;
+        }
+
         // 2) Existing route control-point drag (works in manual mode too, so nodes can be edited at any time).
         const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
         if (controlHit) {
-          // Don't grab a route node if a station or voie-point marker is right under the cursor.
-          if (!isNearStationOrVoie(x, y)) {
-            // Promote any grabbed trace point to a control so it can be edited.
-            if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
-            if (e.ctrlKey || e.button === 2) {
-              this._removeTraceControl(controlHit.leg, controlHit.control);
-              this._traceSelectedPoint = null;
-            } else {
-              this._traceSelectedPoint = { leg: controlHit.leg, control: controlHit.control };
-              this._traceDragging = { leg: controlHit.leg, control: controlHit.control, startX: x, startY: y, moved: false };
-              requestDraw();
-            }
-            schedDrag = false; schedDragStart = null; totalDragDist = 0;
-            return;
+          // Promote any grabbed trace point to a control so it can be edited.
+          if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
+          if (e.ctrlKey || e.button === 2) {
+            this._removeTraceControl(controlHit.leg, controlHit.control);
+            this._traceSelectedPoint = null;
+          } else {
+            this._traceSelectedPoint = { leg: controlHit.leg, control: controlHit.control };
+            this._traceDragging = { leg: controlHit.leg, control: controlHit.control, startX: x, startY: y, moved: false };
+            requestDraw();
           }
+          schedDrag = false; schedDragStart = null; totalDragDist = 0;
+          return;
         }
       };
 
