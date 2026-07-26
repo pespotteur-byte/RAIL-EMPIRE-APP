@@ -796,7 +796,7 @@ export const UISchedule = {
         schedDragStart = null;
       };
 
-      // Double-click a trace point to re-draw the segment around it.
+      // Double-click any trace point to re-draw the segment from that point onward.
       canvas.ondblclick = (e) => {
         const x = e.offsetX, y = e.offsetY;
         this._manualControlPoints = [];
@@ -805,6 +805,8 @@ export const UISchedule = {
         const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
         if (controlHit) {
           this._manualMode = true;
+          // Promote the clicked point to a control so the retrace starts exactly there.
+          if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
           this._startManualRetrace(controlHit.leg, controlHit.index);
         }
       };
@@ -1085,10 +1087,17 @@ export const UISchedule = {
 
   _normalizeRouteSpeeds(route, fallbackMaxSpeed = 30) {
       if (!route || route.length < 2) return;
+      const orm = this.game?.orm;
       for (let i = 0; i < route.length; i++) {
-        if (route[i].maxSpeed == null || route[i].maxSpeed <= 0) {
-          route[i].maxSpeed = this._getNearestORMMaxSpeed(route[i].lat, route[i].lon, 0.5) ?? fallbackMaxSpeed;
+        const p = route[i];
+        let v = null;
+        if (p.wayId && orm?._ways?.has(p.wayId)) {
+          const way = orm._ways.get(p.wayId);
+          if (way) v = orm._effectiveSpeed(way);
         }
+        if (v == null) v = this._getNearestORMMaxSpeed(p.lat, p.lon, 0.5);
+        if (v == null || v <= 0) v = fallbackMaxSpeed;
+        route[i].maxSpeed = v;
       }
     },
 

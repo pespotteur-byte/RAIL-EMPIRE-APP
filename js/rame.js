@@ -101,9 +101,9 @@ export class RameManager {
 
   _rehydrateRame(rame, rollingStock) {
     if (!rollingStock || !rame.elements || rame.elements.length === 0) return;
-    if (rame.elementDetails && rame.elementDetails.length > 0) return;
     const ids = Array.isArray(rame.elements) ? rame.elements : [rame.elements];
-    rame.elementDetails = ids.map(id => rollingStock.getById(id)).filter(Boolean);
+    const savedById = new Map((rame.elementDetails || []).filter(Boolean).map(e => [e.id, e]));
+    rame.elementDetails = ids.map(id => rollingStock.getById(id) || savedById.get(id)).filter(Boolean);
   }
 
   rehydrateElementDetails(rollingStock) {
@@ -150,7 +150,11 @@ export class RameManager {
     for (const d of arr) {
       if (catalog && d.elements) {
         const ids = Array.isArray(d.elements) ? d.elements : [d.elements];
-        d.elementDetails = ids.map(id => catalog.getById(id)).filter(Boolean);
+        const live = ids.map(id => catalog.getById(id)).filter(Boolean);
+        const liveIds = new Set(live.map(e => e.id));
+        const saved = Array.isArray(d.elementDetails) ? d.elementDetails : [];
+        const fallback = saved.filter(e => e && e.id && !liveIds.has(e.id));
+        d.elementDetails = [...live, ...fallback];
       }
       this.rames.push(new Rame(d));
       const num = parseInt(d.id?.split('-')[1] || '0');
