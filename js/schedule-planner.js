@@ -16,7 +16,7 @@ export const SchedulePlanner = {
   _computePassageStops() {
       if (!this.world || !this.world.stations || this.stops.length < 2) return [];
       const passages = [];
-      const thresholdKm = 0.5;
+      const thresholdKm = 0.15;
       const stopsByStation = new Set();
       for (const s of this.stops) if (s.stationId) stopsByStation.add(s.stationId);
 
@@ -35,13 +35,22 @@ export const SchedulePlanner = {
         if (totalDist <= 0) continue;
         for (const st of this.world.stations) {
           if (stopsByStation.has(st.id)) continue;
-          let bestIdx = -1, bestDist = Infinity;
-          for (let i = 0; i < route.length; i++) {
-            const d = haversineDistance(st.lat, st.lon, route[i].lat, route[i].lon);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          let bestDist = Infinity, bestSeg = -1, bestT = 0;
+          for (let i = 0; i < route.length - 1; i++) {
+            const a = route[i], b = route[i + 1];
+            const kx = 111 * Math.cos(st.lat * Math.PI / 180), ky = 111;
+            const ax = a.lon * kx, ay = a.lat * ky;
+            const bx = b.lon * kx, by = b.lat * ky;
+            const px = st.lon * kx, py = st.lat * ky;
+            const dx = bx - ax, dy = by - ay;
+            const len2 = dx * dx + dy * dy;
+            const t = len2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+            const cx = ax + t * dx, cy = ay + t * dy;
+            const d = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+            if (d < bestDist) { bestDist = d; bestSeg = i; bestT = t; }
           }
-          if (bestDist <= thresholdKm && bestIdx >= 0) {
-            const dFromStart = cumDists[bestIdx];
+          if (bestDist <= thresholdKm && bestSeg >= 0) {
+            const dFromStart = cumDists[bestSeg] + bestT * (cumDists[bestSeg + 1] - cumDists[bestSeg]);
             const times = interpolatePassageTimes(depTime, arrTime, [0, dFromStart, totalDist]);
             passages.push({ stationId: st.id, name: st.name, time: times[1], leg, distKm: dFromStart });
           }
@@ -223,9 +232,9 @@ export const SchedulePlanner = {
         // Compute service window
         const lastStop = currentStops[currentStops.length - 1];
         const endTime = lastStop?.arrivalTime ?? firstDep + 120;
-        const plannedDuration = Math.max(0, endTime - firstDep);
+        const plannedDuration = ((endTime - firstDep + 1440) % 1440) || 0;
         const maxRuntime = Math.max(120, plannedDuration * 2 + 30);
-        const windowEnd = firstDep + maxRuntime;
+        const windowEnd = (firstDep + maxRuntime + 1440) % 1440;
 
         // CVO-04 : attendre l'arrivée de l'EVO avant le premier départ
         if (this.serviceType !== 'evo' && this._evoServiceId && !this._evoCompleted) {
@@ -854,25 +863,29 @@ export const SchedulePlanner = {
       }
 
       // Platform management: assign a platform at this station
+      const pm = window.game?.platformManager;
+      if (pm) pm.releasePlatform(station.id, this.id);
       // If stop has a voiePointId, force the voie from the voie point
       if (stop?.voiePointId && window.game?.voiePointManager) {
         const vp = window.game.voiePointManager.getVoiePointById(stop.voiePointId);
         if (vp) {
-          this._platformAssignment = { stationId: station.id, platform: vp.voie };
-          this.train.platform = vp.voie;
+          const plat = pm ? pm.assignPlatform(station.id, this.id, station.platforms || 2, vp.voie) : vp.voie;
+          this._platformAssignment = { stationId: station.id, platform: plat || vp.voie };
+          this.train.platform = plat || vp.voie;
         }
-      } else if ((stop?.type === 'arret' || (stop?.type === 'waypoint' && stop.platform)) && window.game?.platformManager) {
-        const pm = window.game.platformManager;
+      } else if ((stop?.type === 'arret' || (stop?.type === 'waypoint' && stop.platform)) && pm) {
         let preferred = stop.platform || '';
         const forced = !!stop.platform;
         if (!preferred) {
           preferred = this.isReturnLeg ? '2' : '1';
         }
-        if (forced) {
+        const plat = pm.assignPlatform(station.id, this.id, station.platforms || 2, preferred);
+        if (forced && !plat) {
+          // Forced platform but occupied: keep intended platform, warn.
           this._platformAssignment = { stationId: station.id, platform: preferred };
           this.train.platform = preferred;
+          console.warn(`Forced platform ${preferred} at ${station.name} already occupied for ${this.name}`);
         } else {
-          const plat = pm.assignPlatform(station.id, this.id, station.platforms || 2, preferred);
           this._platformAssignment = plat ? { stationId: station.id, platform: plat } : null;
           this.train.platform = plat;
           if (!plat) {
@@ -1023,10 +1036,21 @@ export const SchedulePlanner = {
         this._nextDepartureTime = (this._lastArrivalTime || 0) + this.terminusWait;
         // Rebuild forward stops with adjusted times for new trip
         this._adjustedStops = this._rebuildStopsFromTime(this._nextDepartureTime);
-        if (this.stops.length > 0 && this.world) {
-          const firstStation = this.world.getStationById(this.stops[0].stationId);
+        const s0 = this._adjustedStops?.[0] || this.stops?.[0] || null;
+        if (s0 && this.world) {
+          const firstStation = this.world.getStationById(s0.stationId);
           if (firstStation) {
-            this.position = { lat: firstStation.lat, lon: firstStation.lon };
+            let posLat = firstStation.lat, posLon = firstStation.lon;
+            if (window.game?.voiePointManager) {
+              if (s0.voiePointId) {
+                const vp = window.game.voiePointManager.getVoiePointById(s0.voiePointId);
+                if (vp) { posLat = vp.lat; posLon = vp.lon; }
+              } else if (s0.platform) {
+                const svp = window.game.voiePointManager.getStationVoiePoint(firstStation.id, s0.platform);
+                if (svp) { posLat = svp.lat; posLon = svp.lon; }
+              }
+            }
+            this.position = { lat: posLat, lon: posLon };
             this.train.stoppedAt = firstStation;
           }
         }

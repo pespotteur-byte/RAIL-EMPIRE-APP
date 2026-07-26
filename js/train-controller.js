@@ -818,13 +818,13 @@ export const TrainController = {
       const macroDecel = physics.decel; // weather already included
       const macroAccel = physics.accel;
 
-      // Macro speed: rame, current line limit, weather, and train-length infra limit.
+      // Macro speed: rame, weather, and train-length infra limit.
+      // The infra limit already covers the segment speed along the whole train,
+      // so the per-point getLineSpeedAtPosition fallback is redundant.
       const trainLength = this.rame ? this.rame.totalLength : (this.train.length || 20);
-      const infraLimit = this._getInfraSpeedLimit(route, this._state.index, this._state.progress, trainLength);
       let macroSpeed = Math.min(
         this.rame?.maxSpeed || 300,
-        this.getLineSpeedAtPosition(),
-        infraLimit,
+        this._getInfraSpeedLimit(route, this._state.index, this._state.progress, trainLength),
         (weather.speedCap || Infinity) * (weather.speedMult || 1.0)
       );
 

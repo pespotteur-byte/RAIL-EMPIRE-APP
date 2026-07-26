@@ -1401,8 +1401,11 @@ export const UISchedule = {
           const r = this._pointSegDistKm(snappedLat, snappedLon, a, b);
           if (r.dist < best) { best = r.dist; bestSeg = i; bestT = r.t; }
         }
-        if (bestSeg >= 0 && bestT > 0.05 && bestT < 0.95) insertIndex = bestSeg + 1;
-      }
+        if (bestSeg >= 0) {
+          if (bestT > 0.02 && bestT < 0.98) insertIndex = bestSeg + 1;
+        } else {
+          return; // no suitable segment found, don't add orphan waypoint
+        }
 
       const prevStop = this.schedStops[insertIndex - 1];
       const newStop = {
@@ -1744,8 +1747,8 @@ export const UISchedule = {
       if (field === 'stopCode') {
         stop.stopCode = value || '';
       }
-      // Auto-recalculate all subsequent stops (await async routing)
-      await this.recalcStopsFrom(index + 1);
+      // Auto-recalculate all subsequent stops (await async routing), except for stopCode which doesn't affect timing.
+      if (field !== 'stopCode') await this.recalcStopsFrom(index + 1);
       this.renderSchedStops();
     },
 
@@ -1965,7 +1968,8 @@ export const UISchedule = {
       const prevObj = route[prev];
       const prevIdx = controls.indexOf(prevObj);
       if (prevIdx < 0) return null;
-      const maxSpeed = prevObj.maxSpeed || 30;
+      const nearestMax = this._getNearestORMMaxSpeed(lat, lon, 0.5);
+      const maxSpeed = nearestMax ?? (prevObj.maxSpeed || 30);
       const newPt = { lat, lon, maxSpeed, control: true };
       controls.splice(prevIdx + 1, 0, newPt);
       this._manualRoutes[leg] = this._densifyRoute(controls);
@@ -1999,6 +2003,8 @@ export const UISchedule = {
       const snapped = this._snapToTrack(lat, lon);
       control.lat = snapped ? snapped.lat : lat;
       control.lon = snapped ? snapped.lon : lon;
+      const nearestMax = this._getNearestORMMaxSpeed(control.lat, control.lon, 0.5);
+      control.maxSpeed = nearestMax ?? control.maxSpeed ?? 30;
       const route = this._manualRoutes[leg];
       const controls = this._extractRouteControls(route);
       this._manualRoutes[leg] = this._densifyRoute(controls);
@@ -2022,6 +2028,8 @@ export const UISchedule = {
       const snapped = this._snapToTrack(lat, lon);
       pt.lat = snapped ? snapped.lat : lat;
       pt.lon = snapped ? snapped.lon : lon;
+      const nearestMax = this._getNearestORMMaxSpeed(pt.lat, pt.lon, 0.5);
+      pt.maxSpeed = nearestMax ?? pt.maxSpeed ?? 30;
     },
 
   async _recalcAfterTraceEdit(leg) {
