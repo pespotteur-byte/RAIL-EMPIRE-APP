@@ -22,10 +22,10 @@ export function toOdd(n) {
   return v % 2 === 0 ? v + 1 : v;
 }
 
-// SC-03 — return-leg number for a given forward (odd) number: the previous even
-// (aller 001 -> retour 000, aller 003 -> retour 002, etc.).
+// SC-03 — return-leg number for a given forward (odd) number: the next even
+// (aller 001 -> retour 002, aller 003 -> retour 004, etc.).
 export function returnNumberFor(forwardNumber) {
-  return Math.max(0, toOdd(forwardNumber) - 1);
+  return toOdd(forwardNumber) + 1;
 }
 
 // SC-03 — the k-th forward number after a base odd number (keeps it odd).

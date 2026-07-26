@@ -6,7 +6,7 @@ export class ServiceStop {
     this.type = type;
     this.stopCode = stopCode || '';
     this.departureTime = wrapTime(depTime);
-    this.arrivalTime = wrapTime(arrTime) || this.departureTime;
+    this.arrivalTime = Number.isFinite(wrapTime(arrTime)) ? wrapTime(arrTime) : this.departureTime;
     this.voiePointId = voiePointId || null;
     this.platform = platform || '';
   }

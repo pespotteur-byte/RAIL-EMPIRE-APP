@@ -157,7 +157,7 @@ itCases('returnNumberFor', (() => {
         const r = returnNumberFor(n);
         assert.equal(r % 2, 0, 'return number is even');
         assert.ok(r >= 0, 'return number is non-negative');
-        assert.equal(r, Math.max(0, toOdd(n) - 1));
+        assert.equal(r, toOdd(n) + 1);
       },
     });
   }

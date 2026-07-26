@@ -113,7 +113,7 @@ itCases('schedule numbering helpers', (() => {
       fn: () => {
         const odd = toOdd(n);
         assert.equal(odd % 2, 1);
-        assert.equal(returnNumberFor(odd), odd - 1);
+        assert.equal(returnNumberFor(odd), odd + 1);
         assert.equal(incrementForward(odd, 5), odd + 10);
         const padded = incrementTrailingNumber(`Train ${String(n).padStart(3, '0')}`, 2);
         assert.ok(padded.includes(String(n + 2).padStart(3, '0')));

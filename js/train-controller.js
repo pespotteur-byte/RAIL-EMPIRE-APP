@@ -930,8 +930,10 @@ export const TrainController = {
           this._state.index++;
         }
       }
-      this.totalDistance += stepKm;
+      const traveledKm = Math.max(0, stepKm - remaining);
+      this.totalDistance += traveledKm;
       this.train.totalKm = this.totalDistance;
+      this._updateContinuousDelay(timeOfDay);
       if (this._state.index >= route.length - 1) {
         const target = this.getTargetStation();
         if (target) this.arriveAtStation(target, timeOfDay, economy);

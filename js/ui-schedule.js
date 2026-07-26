@@ -1200,11 +1200,11 @@ export const UISchedule = {
         if (!modal || !list) return resolve(null);
         list.innerHTML = `
           <div class="sillon-item" style="margin-bottom:6px;cursor:pointer" onclick="game.ui._resolveSillonPicker('orm')">
-            <div><b>Itinéraire ORM automatique</b><br><span>Calcul normal entre ${fromName} et ${toName}</span></div>
+            <div><b>Itinéraire ORM automatique</b><br><span>Calcul normal entre ${escapeHtml(fromName)} et ${escapeHtml(toName)}</span></div>
           </div>
           ${sillons.map((s, i) => `
             <div class="sillon-item" style="cursor:pointer" onclick="game.ui._resolveSillonPicker(${i})">
-              <div><b>${s.name}</b> — ${s.fromStationName} → ${s.toStationName}<br><span>${Math.round(s.distance)} km · Vmax ${s.maxSpeed} km/h · ${s.electrified !== false ? 'électrifié' : 'non électrifié'}</span></div>
+              <div><b>${escapeHtml(s.name)}</b> — ${escapeHtml(s.fromStationName)} → ${escapeHtml(s.toStationName)}<br><span>${Math.round(s.distance)} km · Vmax ${s.maxSpeed} km/h · ${s.electrified !== false ? 'électrifié' : 'non électrifié'}</span></div>
             </div>
           `).join('')}
         `;
@@ -1497,7 +1497,7 @@ export const UISchedule = {
         let platformSelect = '';
         if (stop.voiePointId) {
           // Voie point: voie is fixed, show as label
-          platformSelect = `<span style="font-size:9px;color:#94a3b8;font-weight:600">Voie ${stop.platform || '?'}</span>`;
+          platformSelect = `<span style="font-size:9px;color:#94a3b8;font-weight:600">Voie ${escapeHtml(stop.platform || '?')}</span>`;
         } else if (stop.type === 'arret' || stop.type === 'waypoint') {
           const station = this.game.world.getStationById(stop.stationId);
           if (station) {
@@ -1506,14 +1506,15 @@ export const UISchedule = {
             let options = '<option value="">Auto</option>';
             if (stVPs.length > 0) {
               for (const svp of stVPs) {
+                const voie = escapeHtml(String(svp.voie));
                 const sel = stop.platform === svp.voie ? 'selected' : '';
-                options += `<option value="${svp.voie}" ${sel}>Voie ${svp.voie}</option>`;
+                options += `<option value="${voie}" ${sel}>Voie ${voie}</option>`;
               }
             } else if (station.platforms > 0) {
               const names = station.platformNames || [];
               for (let p = 1; p <= station.platforms; p++) {
-                const pName = names[p - 1] || String(p);
-                const sel = stop.platform === pName ? 'selected' : '';
+                const pName = escapeHtml(names[p - 1] || String(p));
+                const sel = stop.platform === (names[p - 1] || String(p)) ? 'selected' : '';
                 options += `<option value="${pName}" ${sel}>Voie ${pName}</option>`;
               }
             }
@@ -1522,10 +1523,10 @@ export const UISchedule = {
         }
 
         const arrCell = stop.type === 'waypoint' || stop.type === 'passage' || !isFirst
-          ? `<input type="text" value="${stop.arrTimeStr}" placeholder="${stop.type === 'waypoint' ? 'Via' : 'Arr'}" title="Heure ${stop.type === 'waypoint' ? 'de passage' : 'd\'arrivée'}" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">`
+          ? `<input type="text" value="${escapeHtml(stop.arrTimeStr)}" placeholder="${stop.type === 'waypoint' ? 'Via' : 'Arr'}" title="Heure ${stop.type === 'waypoint' ? 'de passage' : 'd\'arrivée'}" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">`
           : '';
         const depCell = (stop.type === 'arret' || stop.type === 'passage') && !isLast
-          ? `<input type="text" value="${stop.depTimeStr || stop.arrTimeStr}" placeholder="Dép" title="Heure de départ" onchange="game.ui.updateSchedStop(${i}, 'depTime', this.value)">`
+          ? `<input type="text" value="${escapeHtml(stop.depTimeStr || stop.arrTimeStr)}" placeholder="Dép" title="Heure de départ" onchange="game.ui.updateSchedStop(${i}, 'depTime', this.value)">`
           : '';
         const dwellCell = (stop.type === 'arret' && !isFirst && !isLast)
           ? `<div style="display:flex;align-items:center;gap:2px"><input type="number" value="${Math.max(0, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0))}" min="0" max="120" title="Temps d'arrêt" style="width:48px" onchange="game.ui.updateSchedStop(${i}, 'stopDuration', this.value)"><span style="font-size:9px;color:var(--text3);white-space:nowrap">min</span></div>`
@@ -1535,7 +1536,7 @@ export const UISchedule = {
           ${travelInfo}
           <div class="sched-stop-row">
             <span style="color:var(--text3);font-size:10px;text-align:center">${i + 1}</span>
-            <span class="stop-name" title="${stop.stationName}">${stop.stationName}</span>
+            <span class="stop-name" title="${escapeHtml(stop.stationName)}">${escapeHtml(stop.stationName)}</span>
             <select onchange="game.ui.updateSchedStop(${i}, 'type', this.value)" title="Type d'arrêt">
               <option value="arret" ${stop.type === 'arret' ? 'selected' : ''}>Arrêt</option>
               <option value="passage" ${stop.type === 'passage' ? 'selected' : ''}>Passage</option>
@@ -1607,17 +1608,18 @@ export const UISchedule = {
             const currentVal = this._schedReturnPlatforms?.[stop.stationId] || '';
             let options = '<option value="">Auto</option>';
             for (let p = 1; p <= station.platforms; p++) {
-              const pName = names[p - 1] || String(p);
-              const sel = currentVal === pName ? 'selected' : '';
+              const rawName = names[p - 1] || String(p);
+              const pName = escapeHtml(rawName);
+              const sel = currentVal === rawName ? 'selected' : '';
               options += `<option value="${pName}" ${sel}>Voie ${pName}</option>`;
             }
-            platformSelect = `<select style="width:70px;font-size:10px" onchange="game.ui.updateReturnPlatform('${stop.stationId}', this.value)">${options}</select>`;
+            platformSelect = `<select style="width:70px;font-size:10px" onchange="game.ui.updateReturnPlatform('${escapeHtml(stop.stationId)}', this.value)">${options}</select>`;
           }
 
           return `<div class="sched-stop-row" style="padding:3px 6px;display:flex;align-items:center;gap:6px">
             <span style="color:var(--text3);font-size:10px;min-width:14px">${i + 1}</span>
             <span style="color:${typeColor};font-size:9px;min-width:50px">${typeLabel}</span>
-            <span class="stop-name" style="flex:1">${stName}</span>
+            <span class="stop-name" style="flex:1">${escapeHtml(stName)}</span>
             <span style="font-size:9px;color:var(--text2);min-width:74px;text-align:right">${timeStr}</span>
             ${platformSelect}
           </div>`;
@@ -1640,7 +1642,7 @@ export const UISchedule = {
       if (!allerEl || !retourEl) return;
 
       const fmt = (t) => this.minToTimeStr(((Math.round(t) % 1440) + 1440) % 1440);
-      const row = (name, time, cls = '') => `<div class="ss-row ${cls}"><span class="ss-name">${name}</span><span class="ss-time">${time}</span></div>`;
+      const row = (name, time, cls = '') => `<div class="ss-row ${cls}"><span class="ss-name">${escapeHtml(name)}</span><span class="ss-time">${time}</span></div>`;
 
       const allerRows = this.schedStops.map((stop, i) => {
         const isFirst = i === 0;
@@ -2158,7 +2160,14 @@ export const UISchedule = {
 
   async _resolveLegRoute(prevStop, curStop, legIndex) {
       if (legIndex != null && this._manualRoutes && this._manualRoutes[legIndex]) {
-        return this._manualRoutes[legIndex];
+        const cached = this._manualRoutes[legIndex];
+        const start = this._getStopCoords(prevStop);
+        const end = this._getStopCoords(curStop);
+        if (start && end && cached.length >= 2) {
+          const dStart = haversineDistance(start.lat, start.lon, cached[0].lat, cached[0].lon);
+          const dEnd = haversineDistance(end.lat, end.lon, cached[cached.length - 1].lat, cached[cached.length - 1].lon);
+          if (dStart < 0.05 && dEnd < 0.05) return cached;
+        }
       }
       const route = await this._resolveRouteForLeg(prevStop, curStop);
       if (route && route.length >= 2 && legIndex != null) {
@@ -2264,7 +2273,7 @@ export const UISchedule = {
           } else {
             const last = route[route.length - 1];
             const first = leg[0];
-            if (Math.abs(last.lat - first.lat) < 1e-8 && Math.abs(last.lon - first.lon) < 1e-8) {
+            if (haversineDistance(last.lat, last.lon, first.lat, first.lon) < 0.05) {
               route.push(...leg.slice(1));
             } else {
               route.push(...leg);
@@ -2751,6 +2760,7 @@ export const UISchedule = {
         this.game.scheduleCreator._invalidateActiveCache();
       }
       this.renderSchedulesList();
+      this.game.saveState();
     },
 
   duplicateSchedulePrompt(id) {
@@ -2765,6 +2775,7 @@ export const UISchedule = {
       const rame = this.game.rameManager.getById(svc.rameId);
       this.game.scheduleCreator.duplicateService(id, intv, cnt, rame, this.game.world);
       this.renderSchedulesList();
+      this.game.saveState();
     },
 
   deleteSchedule(id) {

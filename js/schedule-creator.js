@@ -119,9 +119,10 @@ export class ScheduleCreator {
       const newReturnStops = src._returnStopsData
         ? shiftStops(src._returnStopsData)
         : null;
+      const cloneRoutes = (routes) => Array.isArray(routes) ? routes.map(r => Array.isArray(r) ? r.map(p => ({ ...p })) : r) : routes;
       const svc = this.addService({
         name: newName,
-        rameId: src.rameId, stops: newStops, routes: src.routes,
+        rameId: src.rameId, stops: newStops, routes: cloneRoutes(src.routes),
         roundTrip: src.roundTrip, multiDepartures: src.multiDepartures,
         terminusWait: src.terminusWait, totalDistance: 0,
         plannedDistance: src.plannedDistance,
@@ -129,10 +130,10 @@ export class ScheduleCreator {
         isWorkTrain: src.isWorkTrain,
         assignedContractId: src.assignedContractId || '',
         returnName: src.returnName ? incrementTrailingNumber(src.returnName, 2 * i) : '',
-        returnPlatforms: src.returnPlatforms,
+        returnPlatforms: { ...src.returnPlatforms },
         // SC-04 — propagate the independent return geometry/timetable so each
         // real duplicate keeps the same return path (fresh auto number).
-        returnRoutes: src._returnRoutes, returnStops: newReturnStops,
+        returnRoutes: cloneRoutes(src._returnRoutes), returnStops: newReturnStops,
         runDays: src.runDays, runDates: src.runDates,
       }, rame, world);
       created.push(svc);
@@ -151,10 +152,11 @@ export class ScheduleCreator {
       arrivalTime: (st.arrivalTime ?? st.time) + offset,
       voiePointId: st.voiePointId || null, platform: st.platform || '', stopCode: st.stopCode || '',
     }));
+    const cloneRoutes = (routes) => Array.isArray(routes) ? routes.map(r => Array.isArray(r) ? r.map(p => ({ ...p })) : r) : routes;
     for (let i = 1; i < requestedCount; i++) {
       const offset = oneRoundTripMin * i;
       const newForwardName = incrementTrailingNumber(baseService.name, 2 * i);
-      const returnNameBase = baseService.returnName || incrementTrailingNumber(baseService.name, -1);
+      const returnNameBase = baseService.returnName || incrementTrailingNumber(baseService.name, 1);
       const newReturnName = incrementTrailingNumber(returnNameBase, 2 * i);
       const newStops = shiftStops(baseService.stops, offset);
       const newReturnStops = baseService._returnStopsData
@@ -162,7 +164,7 @@ export class ScheduleCreator {
         : null;
       const svc = this.addService({
         name: newForwardName,
-        rameId: baseService.rameId, stops: newStops, routes: baseService.routes,
+        rameId: baseService.rameId, stops: newStops, routes: cloneRoutes(baseService.routes),
         roundTrip: baseService.roundTrip, multiDepartures: 1,
         terminusWait: baseService.terminusWait, totalDistance: 0,
         plannedDistance: baseService.plannedDistance,
@@ -170,8 +172,8 @@ export class ScheduleCreator {
         isWorkTrain: baseService.isWorkTrain,
         assignedContractId: baseService.assignedContractId || '',
         returnName: newReturnName,
-        returnPlatforms: baseService.returnPlatforms,
-        returnRoutes: baseService._returnRoutes, returnStops: newReturnStops,
+        returnPlatforms: { ...baseService.returnPlatforms },
+        returnRoutes: cloneRoutes(baseService._returnRoutes), returnStops: newReturnStops,
         runDays: baseService.runDays, runDates: baseService.runDates,
       }, rame, world);
       created.push(svc);
@@ -181,7 +183,15 @@ export class ScheduleCreator {
 
   removeService(id) {
     const svc = this.services.find(s => s.id === id);
-    if (svc) cantonManager.releaseAll(svc.id);
+    if (svc) {
+      cantonManager.releaseAll(svc.id);
+      if (typeof window !== 'undefined' && window.game?.voiePointManager) {
+        window.game.voiePointManager.releaseAllVoiePointsForTrain(svc.id);
+      }
+      if (typeof window !== 'undefined' && window.game?.platformManager && svc._platformAssignment) {
+        window.game.platformManager.releasePlatform(svc._platformAssignment.stationId, svc.id);
+      }
+    }
     this.services = this.services.filter(s => s.id !== id);
     this._invalidateActiveCache();
   }
