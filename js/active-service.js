@@ -91,22 +91,28 @@ export class ActiveService {
       this._pendingAltRoute = null; // { key, completed, route, failed }
       this._altRouteFailedKeys = new Set();
 
-      // Mass-based physics: compute accel/decel from rame properties
+      // Mass-based physics: compute accel/decel from rame power (kW) and loaded mass.
       let accel = 3.0; // default km/h/s
       let decel = 4.0;
       if (rame) {
         const totalMass = rame.getTotalMassWithPayload ? rame.getTotalMassWithPayload(0.7) : (rame.totalMass || rame.totalTonnage || 400);
+        const massKg = totalMass * 1000;
         const totalPower = rame.totalPower || 0;
-        if (totalPower > 0 && totalMass > 0) {
-          // F = P/v (at low speed, use 30 km/h reference), a = F/m
-          // accel in km/h/s: a_m/s² * 3.6
-          const forceKN = totalPower / (30 / 3.6); // force at 30 km/h in kN
-          accel = Math.min(5.0, Math.max(0.5, (forceKN / totalMass) * 3.6));
+        const powerW = totalPower * 1000;
+        const lengthM = rame.totalLength || 200;
+        const brakeServiceMs2 = rame.brakeServiceMs2 || 1.1; // typical service brake
+        if (powerW > 0 && massKg > 0) {
+          const params = {
+            massKg, powerW, lengthM, weather: 'clear',
+            adhesionMassKg: massKg, brakeServiceMs2,
+          };
+          // Reference starting acceleration at ~7 km/h (2 m/s).
+          const aMs2 = accelerationMs2(params, 2.0, 0);
+          accel = Math.max(0.3, Math.min(8.0, aMs2 * _units.MS_TO_KMH));
         }
-        // Heavier trains decelerate slightly slower
-        if (totalMass > 0) {
-          decel = Math.min(5.0, Math.max(2.0, 1600 / totalMass));
-        }
+        const params = { massKg, powerW, lengthM, weather: 'clear', adhesionMassKg: massKg, brakeServiceMs2 };
+        const bMs2 = brakingDecelMs2(params, 'clear');
+        decel = Math.max(2.5, Math.min(12.0, bMs2 * _units.MS_TO_KMH));
       }
       // DET-05 : curseur de réalisme physique
       const physicsMult = (typeof window !== 'undefined' && window.game?.realismSettings?.physics) ?? 1;

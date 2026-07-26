@@ -61,15 +61,15 @@ export const SchedulePlanner = {
 
   _getStopCoords(stop) {
       if (!stop) return null;
-      const vpm = window.game?.voiePointManager;
+      const vpm = (typeof window !== 'undefined' && window.game?.voiePointManager) ? window.game.voiePointManager : null;
       if (stop.voiePointId && vpm) {
         const vp = vpm.getVoiePointById(stop.voiePointId);
         if (vp) return { lat: vp.lat, lon: vp.lon };
       }
-      if (stop.stationId && this.world) {
+      if (stop.stationId && this.world?.getStationById) {
         const st = this.world.getStationById(stop.stationId);
         if (!st) return null;
-        if (stop.platform && vpm) {
+        if (stop.platform && vpm?.getStationVoiePoint) {
           const svp = vpm.getStationVoiePoint(st.id, stop.platform);
           if (svp) return { lat: svp.lat, lon: svp.lon };
         }
@@ -681,7 +681,16 @@ export const SchedulePlanner = {
             this.train.delayReason = 'attente voie libre en gare';
             return;
           }
-          const chosen = candidates[0];
+          // Pick the voie point that matches the route endpoint, otherwise the first free one.
+          let chosen = candidates[0];
+          if (this._state?.cachedRoute?.length >= 2) {
+            const lastPt = this._state.cachedRoute[this._state.cachedRoute.length - 1];
+            let bestD = Infinity;
+            for (const c of candidates) {
+              const d = haversineDistance(c.lat, c.lon, lastPt.lat, lastPt.lon);
+              if (d < bestD) { bestD = d; chosen = c; }
+            }
+          }
           stop.voiePointId = chosen.id;
           stop.platform = chosen.voie;
           vpm.occupyVoiePoint(chosen.id, this.id);

@@ -658,16 +658,24 @@ export const UIMap = {
 
       const displayStops = stops.map((s, i) => ({ s, origIdx: i })).filter(({ s }) => isArret(s));
 
+      // GPS arrow must point to the next arret when moving (ignoring waypoints/voie points).
       let displayCurIdx = -1;
-      for (let idx = 0; idx < displayStops.length; idx++) {
-        if (displayStops[idx].origIdx === curStationIdx) { displayCurIdx = idx; break; }
-        if (displayStops[idx].origIdx < curStationIdx) displayCurIdx = idx;
+      if (svc.state === 'moving') {
+        displayCurIdx = displayStops.findIndex(({ origIdx }) => origIdx >= curStationIdx);
+        if (displayCurIdx < 0) displayCurIdx = displayStops.length - 1;
+      } else {
+        displayCurIdx = displayStops.findIndex(({ origIdx }) => origIdx === curStationIdx);
+        if (displayCurIdx < 0) {
+          for (let idx = 0; idx < displayStops.length; idx++) {
+            if (displayStops[idx].origIdx < curStationIdx) displayCurIdx = idx;
+          }
+        }
       }
       if (displayCurIdx < 0) displayCurIdx = 0;
 
-      // GPS arrow: on the current station dot when stopped; halfway between stops when moving.
+      // GPS arrow: on the current station dot when stopped; at the top of the next arret row when moving.
       let arrowIdx = -1, arrowTop = '50%';
-      if (svc.state === 'moving' && displayCurIdx > 0) {
+      if (svc.state === 'moving' && displayCurIdx >= 0) {
         arrowIdx = displayCurIdx;
         arrowTop = '0%';
       } else if (svc.state !== 'completed' && displayCurIdx >= 0) {

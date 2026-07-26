@@ -25,9 +25,9 @@ export const TrainController = {
     },
 
   _computePhysicsAccel(weather) {
-      const baseAccel = this.train.accel || 3.0; // km/h/s
-      const baseDecel = this.train.decel || 4.0; // km/h/s
-      if (!this.rame) return { accel: baseAccel, decel: baseDecel };
+      const trainAccel = this.train?.accel || 3.0; // km/h/s
+      const trainDecel = this.train?.decel || 4.0; // km/h/s
+      if (!this.rame) return { accel: trainAccel, decel: trainDecel };
 
       const massKg = (this.rame.getTotalMassWithPayload
         ? this.rame.getTotalMassWithPayload(0.7)
@@ -38,22 +38,23 @@ export const TrainController = {
 
       const vMs = this.speed * _units.KMH_TO_MS;
       const grade = 0;
-      const params = { massKg, powerW, lengthM, weather: weatherType, adhesionMassKg: massKg, brakeServiceMs2: 0.9 };
+      const brakeServiceMs2 = this.rame.brakeServiceMs2 || this.train?.brakeServiceMs2 || 1.1;
+      const params = { massKg, powerW, lengthM, weather: weatherType, adhesionMassKg: massKg, brakeServiceMs2 };
 
       let aMs2 = 0;
       if (powerW > 0) {
         aMs2 = accelerationMs2(params, vMs, grade);
       }
       const aKmhS = aMs2 * _units.MS_TO_KMH;
-      const effectiveAccel = powerW > 0 && Number.isFinite(aKmhS) && aKmhS > 0
-        ? Math.min(baseAccel, aKmhS)
-        : baseAccel;
+      const effectiveAccel = Number.isFinite(aKmhS) && aKmhS > 0
+        ? Math.max(0.3, Math.min(8.0, aKmhS))
+        : trainAccel;
 
       const bMs2 = brakingDecelMs2(params, weatherType);
       const bKmhS = bMs2 * _units.MS_TO_KMH;
       const effectiveDecel = Number.isFinite(bKmhS) && bKmhS > 0
-        ? Math.min(baseDecel, bKmhS)
-        : baseDecel;
+        ? Math.max(2.5, Math.min(12.0, bKmhS))
+        : trainDecel;
 
       return { accel: effectiveAccel, decel: effectiveDecel };
     },
@@ -335,7 +336,7 @@ export const TrainController = {
       const physics = this._computePhysicsAccel(weather);
       const trainLength = this.rame ? this.rame.totalLength : (this.train.length || 20);
       const infraLimit = this._getInfraSpeedLimit(route, segIdx, this._state.progress, trainLength);
-      const decel = physics.decel * weather.brakeFactor;
+      const decel = physics.decel; // weather already included in _computePhysicsAccel
       const negativeCap = this._getNegativeTransitionCap(route, segIdx, this._state.progress, this.speed, decel);
       let segMaxSpeed = negativeCap != null ? Math.min(infraLimit, negativeCap) : infraLimit;
       // Train physical speed limit
@@ -461,7 +462,7 @@ export const TrainController = {
       }
 
       // --- MOVEMENT AUTHORITY (ETCS/MA) ---
-      const decelMps2 = (physics.decel / 3.6) * weather.brakeFactor;
+      const decelMps2 = physics.decel / 3.6;
       const ma = this._movementAuthority(allServices, decelMps2);
       if (ma && Number.isFinite(ma.eoaM)) {
         this.train.signalAlert = ma.aspect === 'clear' ? null : (ma.aspect || null);
@@ -532,8 +533,8 @@ export const TrainController = {
       // brakingDistance = speed² / (2 * deceleration), convert km/h to km/s²
       const brakeDist = (this.speed * this.speed) / (2 * decel * 3600);
 
-      if (!isNextPassThrough && remainingDist < brakeDist + 0.3 && remainingDist > 0.001) {
-        // Progressive deceleration / approach: move speed toward the safe target
+      if (!isNextPassThrough && remainingDist > 0 && remainingDist <= brakeDist) {
+        // Target speed that reaches exactly 0 km/h at the final route point.
         const targetSpeed = Math.sqrt(Math.max(0, 2 * decel * 3600 * remainingDist));
         if (this.speed > targetSpeed) {
           this.speed = Math.max(targetSpeed, this.speed - decelDelta);
@@ -811,7 +812,7 @@ export const TrainController = {
       // Weather and physics (same acceleration/deceleration cap as high-LOD).
       const weather = this._getWeatherEffects ? this._getWeatherEffects() : { brakeFactor: 1.0, speedCap: Infinity, speedMult: 1.0, type: 'clear' };
       const physics = this._computePhysicsAccel(weather);
-      const macroDecel = physics.decel * (weather.brakeFactor || 1.0);
+      const macroDecel = physics.decel; // weather already included
       const macroAccel = physics.accel;
 
       // Macro speed: rame, current line limit, weather.
@@ -829,11 +830,14 @@ export const TrainController = {
       const totalDist = this._state.cumDist[0];
       const frontDist = totalDist - this._state.cumDist[this._state.index] + this._state.progress * (this._state.segDists[this._state.index] || 0);
       const remainingDist = Math.max(0, totalDist - frontDist);
-      const stopBufferKm = 0.3;
-      const brakeDist = (this.speed * this.speed) / (2 * macroDecel * 3600);
-      if (remainingDist <= brakeDist + stopBufferKm) {
-        const safe = Math.sqrt(Math.max(0, 2 * macroDecel * 3600 * Math.max(0, remainingDist - stopBufferKm)));
-        macroSpeed = Math.min(macroSpeed, safe);
+      const nextStopMacro = this.getNextStop();
+      const isNextPassThroughMacro = nextStopMacro?.type === 'waypoint' || nextStopMacro?.type === 'passage';
+      if (!isNextPassThroughMacro) {
+        const brakeDist = (this.speed * this.speed) / (2 * macroDecel * 3600);
+        if (remainingDist > 0 && remainingDist <= brakeDist) {
+          const safe = Math.sqrt(Math.max(0, 2 * macroDecel * 3600 * remainingDist));
+          macroSpeed = Math.min(macroSpeed, safe);
+        }
       }
 
       // Movement Authority for low-LOD trains (replaces fixed signal aspect)
@@ -928,19 +932,68 @@ export const TrainController = {
 
   getCurrentRoute() {
       const idx = Math.max(0, this.currentStopIndex - 1);
+      const stops = this.getCurrentStops();
+      const startStop = stops?.[idx] || null;
+      const endStop = stops?.[idx + 1] || null;
+      let route;
       if (this.isReturnLeg) {
-        // SC-04 — use an independent return geometry when provided; otherwise
-        // fall back to reversing the forward legs.
         if (this._returnRoutes && this._returnRoutes.length) {
-          return this._returnRoutes[idx] || null;
+          route = this._returnRoutes[idx] || null;
         }
-        if (!this.routes || this.routes.length === 0) return null;
-        const routeIdx = this.routes.length - 1 - idx;
-        const route = this.routes[routeIdx];
-        return route ? [...route].reverse() : null;
+        if (!route && this.routes && this.routes.length) {
+          const routeIdx = this.routes.length - 1 - idx;
+          const r = this.routes[routeIdx];
+          if (r) route = [...r].reverse();
+        }
+      } else {
+        route = this.routes?.[idx] || null;
       }
-      if (!this.routes || this.routes.length === 0) return null;
-      return this.routes[idx] || null;
+      if (!route || route.length < 2) return null;
+      route = route.map(p => ({ ...p }));
+      this._clampRouteToStops(route, startStop, endStop);
+      this._normalizeRouteSpeeds(route);
+      return route;
+    },
+
+    // IV.02 — clamp the first/last points of a route to the exact departure/arrival
+    // voie points. This makes station stops land on the correct track and fixes
+    // "wrong departure voie" / overshoot bugs.
+    _clampRouteToStops(route, startStop, endStop) {
+      if (!route || route.length < 2) return;
+      const startCoords = startStop ? this._getStopCoords(startStop) : null;
+      const endCoords = endStop ? this._getStopCoords(endStop) : null;
+      if (startCoords) {
+        route[0].lat = startCoords.lat;
+        route[0].lon = startCoords.lon;
+      }
+      if (endCoords) {
+        const lastIdx = route.length - 1;
+        route[lastIdx].lat = endCoords.lat;
+        route[lastIdx].lon = endCoords.lon;
+      }
+    },
+
+    // SC-04 / remaster IV — any route point without a maxSpeed gets the nearest ORM
+    // speed, so 50 km/h-voie-stub and missing-tag segments don't slow the train.
+    _normalizeRouteSpeeds(route) {
+      if (!route || route.length < 2) return;
+      const orm = (typeof window !== 'undefined' && window.game?.orm) ? window.game.orm : null;
+      const getNearest = orm?.getNearestWayMaxSpeed ? orm.getNearestWayMaxSpeed.bind(orm) : null;
+      const fallback = this._getRouteAverageMaxSpeed(route) || 160;
+      for (let i = 0; i < route.length; i++) {
+        if (route[i].maxSpeed == null || route[i].maxSpeed <= 0) {
+          const nearest = getNearest ? getNearest(route[i].lat, route[i].lon, 0.5) : null;
+          route[i].maxSpeed = nearest ?? fallback;
+        }
+      }
+    },
+
+    _getRouteAverageMaxSpeed(route) {
+      let sum = 0, count = 0;
+      for (const p of route) {
+        if (p.maxSpeed > 0) { sum += p.maxSpeed; count++; }
+      }
+      return count > 0 ? sum / count : null;
     },
 
   getLineSpeedAtPosition() {

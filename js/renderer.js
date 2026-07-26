@@ -760,11 +760,11 @@ export class Renderer {
           const isEnd = i === 0 || i === route.length - 1;
           if (!isEnd && lastP) {
             const dx = p.x - lastP.x, dy = p.y - lastP.y;
-            if (Math.sqrt(dx * dx + dy * dy) < 12) continue;
+            if (Math.sqrt(dx * dx + dy * dy) < 6) continue;
           }
           ctx.fillStyle = isEnd ? '#f59e0b' : '#ffffff';
           ctx.beginPath();
-          ctx.arc(p.x, p.y, isEnd ? 5 : 3, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, isEnd ? 6 : 4, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
           lastP = p;

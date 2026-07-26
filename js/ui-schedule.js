@@ -382,7 +382,7 @@ export const UISchedule = {
             // markers even on very long (50 km+) routes. The underlying route still
             // keeps its 50 m resolution; we just thin the visual markers when they
             // would overlap on screen.
-            const minNodeGapPx = 12;
+            const minNodeGapPx = 6;
             let lastDrawn = null;
             for (let i = 0; i < route.length; i++) {
               const pt = route[i];
@@ -396,7 +396,7 @@ export const UISchedule = {
                 if (Math.sqrt(dx * dx + dy * dy) < minNodeGapPx) continue;
               }
               ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : '#ffffff'));
-              const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 3));
+              const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 4));
               ctx.beginPath();
               ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
               ctx.fill();
@@ -438,10 +438,10 @@ export const UISchedule = {
               const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
               if (lastTemp) {
                 const dx = p.x - lastTemp.x, dy = p.y - lastTemp.y;
-                if (Math.sqrt(dx * dx + dy * dy) < 12) continue;
+                if (Math.sqrt(dx * dx + dy * dy) < 6) continue;
               }
               ctx.fillStyle = '#ffffff';
-              ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+              ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
               ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1; ctx.stroke();
               lastTemp = p;
             }
@@ -718,7 +718,8 @@ export const UISchedule = {
               this._manualStartCoords = this._getStopCoords(lastStop);
               const rameId2 = document.getElementById('sched-rame')?.value;
               const rame2 = this.game.rameManager.getById(rameId2);
-              this._manualStartCoords.maxSpeed = rame2 ? rame2.maxSpeed : 30;
+              const nearestMax = this._getNearestORMMaxSpeed(this._manualStartCoords.lat, this._manualStartCoords.lon, 0.5);
+              this._manualStartCoords.maxSpeed = nearestMax ?? (rame2 ? rame2.maxSpeed : 30);
               this._manualControlPoints = [];
               this._updateManualUI();
               if (this._drawSchedMap) this._drawSchedMap();
@@ -844,7 +845,8 @@ export const UISchedule = {
         if (this._manualStartCoords) {
           const rameId = document.getElementById('sched-rame')?.value;
           const rame = this.game.rameManager.getById(rameId);
-          this._manualStartCoords.maxSpeed = rame ? rame.maxSpeed : 30;
+          const nearestMax = this._getNearestORMMaxSpeed(this._manualStartCoords.lat, this._manualStartCoords.lon, 0.5);
+          this._manualStartCoords.maxSpeed = nearestMax ?? (rame ? rame.maxSpeed : 30);
         }
         this._manualEndCoords = null;
         this._manualRetraceLeg = null;
@@ -1041,6 +1043,26 @@ export const UISchedule = {
       return stationId || voiePointId || '';
     },
 
+  _getNearestORMMaxSpeed(lat, lon, maxDistKm = 0.5) {
+      const orm = this.game?.orm;
+      if (!orm) return null;
+      if (orm.getNearestWayMaxSpeed) return orm.getNearestWayMaxSpeed(lat, lon, maxDistKm);
+      const snap = orm.snapToWay?.(lat, lon, maxDistKm);
+      if (snap?.maxSpeed > 0) return snap.maxSpeed;
+      const nodeSnap = orm.snapToNearest?.(lat, lon, maxDistKm);
+      if (nodeSnap?.node?.maxSpeed > 0) return nodeSnap.node.maxSpeed;
+      return null;
+    },
+
+  _normalizeRouteSpeeds(route, fallbackMaxSpeed = 30) {
+      if (!route || route.length < 2) return;
+      for (let i = 0; i < route.length; i++) {
+        if (route[i].maxSpeed == null || route[i].maxSpeed <= 0) {
+          route[i].maxSpeed = this._getNearestORMMaxSpeed(route[i].lat, route[i].lon, 0.5) ?? fallbackMaxSpeed;
+        }
+      }
+    },
+
   _toggleTraceEdit() {
       this._traceEditMode = !this._traceEditMode;
       if (!this._traceEditMode) this._traceSelectedPoint = null;
@@ -1071,7 +1093,10 @@ export const UISchedule = {
       if (this._manualStartCoords) {
         const maxSpeed = this._manualStartCoords.maxSpeed || 30;
         const snapped = this._snapToTrack(lat, lon);
-        this._manualControlPoints.push({ lat: snapped ? snapped.lat : lat, lon: snapped ? snapped.lon : lon, maxSpeed });
+        const ptLat = snapped ? snapped.lat : lat;
+        const ptLon = snapped ? snapped.lon : lon;
+        const nearestMax = this._getNearestORMMaxSpeed(ptLat, ptLon, 0.5);
+        this._manualControlPoints.push({ lat: ptLat, lon: ptLon, maxSpeed: nearestMax ?? maxSpeed });
         if (this._drawSchedMap) this._drawSchedMap();
       }
     },
@@ -1080,8 +1105,9 @@ export const UISchedule = {
       if (!this._manualMode || !this._manualStartCoords) return;
       const endCoords = this._getStopCoords(endStop);
       if (!endCoords) return;
-      endCoords.maxSpeed = maxSpeed;
-      const route = this._buildManualRoute(this._manualStartCoords, this._manualControlPoints, endCoords, maxSpeed);
+      const nearestMax = this._getNearestORMMaxSpeed(endCoords.lat, endCoords.lon, 0.5);
+      endCoords.maxSpeed = nearestMax ?? maxSpeed;
+      const route = this._buildManualRoute(this._manualStartCoords, this._manualControlPoints, endCoords, endCoords.maxSpeed);
       const legIdx = Math.max(0, this.schedStops.length - 1); // leg between last existing stop and endStop
       this._manualRoutes[legIdx] = route;
       // Stay in manual mode and continue from the new stop (My Maps style)
@@ -1140,7 +1166,11 @@ export const UISchedule = {
     },
 
   _buildManualRoute(start, controls, end, maxSpeed = 30) {
-      const points = [{ ...start, maxSpeed, control: true }, ...controls.map(p => ({ ...p, maxSpeed, control: true })), { ...end, maxSpeed, control: true }];
+      const allPoints = [start, ...controls, end];
+      const points = allPoints.map((p, i) => {
+        const nearestMax = this._getNearestORMMaxSpeed(p.lat, p.lon, 0.5);
+        return { ...p, maxSpeed: nearestMax ?? p.maxSpeed ?? maxSpeed, control: true };
+      });
       return this._densifyRoute(points, 0.05);
     },
 
@@ -1985,7 +2015,11 @@ export const UISchedule = {
 
       // Priority 1: player tronçon graph
       const trc = this.game.voiePointManager?.findTronconRoute(ca.lat, ca.lon, cb.lat, cb.lon);
-      if (trc && trc.route && trc.route.length >= 2) return trc.route;
+      if (trc && trc.route && trc.route.length >= 2) {
+        const route = trc.route.map(p => ({ ...p }));
+        this._normalizeRouteSpeeds(route, 160);
+        return route;
+      }
 
       // Priority 2: existing world track between two stations
       const sa = stopA.stationId ? this.game.world.getStationById(stopA.stationId) : null;
@@ -1993,11 +2027,13 @@ export const UISchedule = {
       if (sa && sb) {
         const track = this.game.world.getTrackBetween(sa.id, sb.id);
         if (track && track.route && track.route.length > 1) {
-          return (track.stationA !== sa.id) ? [...track.route].reverse() : track.route;
+          const route = (track.stationA !== sa.id) ? [...track.route].reverse().map(p => ({ ...p })) : track.route.map(p => ({ ...p }));
+          this._normalizeRouteSpeeds(route, 160);
+          return route;
         }
       }
 
-      // Priority 3: ORM (never return a straight-line fallback — R-03)
+      // Priority 3: ORM (with a straight fallback tagged as such)
       // R-07 : plafond vitesse routage à V160 (matériel joueur)
       // TRV-03/06 : éviter les tronçons fermés entre les deux gares
       try {
@@ -2019,10 +2055,30 @@ export const UISchedule = {
         }).filter(Boolean);
         const opts = { maxSpeed: routingSpeed };
         if (avoidPairs.length) opts.avoidStationPairs = avoidPairs;
-        return await this.game.orm.findRoute(ca.lat, ca.lon, cb.lat, cb.lon, opts);
+        const route = await this.game.orm.findRoute(ca.lat, ca.lon, cb.lat, cb.lon, opts);
+        if (route && route.length >= 2) {
+          const copied = route.map(p => ({ ...p }));
+          this._normalizeRouteSpeeds(copied, 160);
+          return copied;
+        }
       } catch (e) {
-        return null;
+        // fall through to direct synthetic
       }
+
+      // Last-resort direct route: keep it visible and give it the nearest ORM speed.
+      const dist = this.game.orm ? this.game.orm.getRouteDistance([ca, cb]) : 0;
+      const steps = Math.max(2, Math.ceil((dist || 0) / 0.05));
+      const synthetic = [];
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        synthetic.push({
+          lat: ca.lat + (cb.lat - ca.lat) * t,
+          lon: ca.lon + (cb.lon - ca.lon) * t,
+          maxSpeed: 160, fallback: true
+        });
+      }
+      this._normalizeRouteSpeeds(synthetic, 160);
+      return synthetic;
     },
 
   async _recalcPreviewRoutes() {
@@ -2091,14 +2147,17 @@ export const UISchedule = {
       if (dist <= 0) return 1;
       // No ORM route found: build a straight synthetic route and run the same
       // physics so the estimate is no longer "instant top speed".
-      const steps = 20;
+      // Speed = nearest ORM if available, otherwise the train's max speed.
+      const nearestMax = this._getNearestORMMaxSpeed((prevCoords.lat + curCoords.lat) / 2, (prevCoords.lon + curCoords.lon) / 2, 2.0);
+      const speedForSynthetic = nearestMax ?? rameSpeed;
+      const steps = Math.max(2, Math.ceil(dist / 0.05));
       const synthetic = [];
       for (let i = 0; i <= steps; i++) {
         const t = i / steps;
         synthetic.push({
           lat: prevCoords.lat + (curCoords.lat - prevCoords.lat) * t,
           lon: prevCoords.lon + (curCoords.lon - prevCoords.lon) * t,
-          maxSpeed: rameSpeed
+          maxSpeed: speedForSynthetic
         });
       }
       return this.game.orm.calculateTravelTime(synthetic, rame || rameSpeed, travelOpts);

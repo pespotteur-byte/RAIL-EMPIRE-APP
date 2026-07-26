@@ -188,7 +188,7 @@ export class ORMClient {
     this._turnPenaltyDeg = 100; // above this angle a movement counts as a reversal
     this._reversalPenaltyH = 6;  // ~6h penalty ≫ any real leg → forbids arbitrary back-up
     this._switchDivergePenaltyH = 0.25; // ~15 min penalty for taking a non-straight path at a switch (Annexe 10d)
-    this._maxFallbackKm = 1.0;   // only fabricate straight connectors up to 1 km (R-03)
+    this._maxFallbackKm = 100.0; // last-resort straight fallback, tagged `fallback: true`
     // R-07 : plafond V160 par défaut pour le calcul d'itinéraire (matériel joueur)
     this._routingSpeedCapKmh = 160;
   }
@@ -630,7 +630,8 @@ export class ORMClient {
     const cLat = Math.floor(lat / cs), cLon = Math.floor(lon / cs);
     let best = null, bestDist = Infinity, foundRing = -1;
     // Cap the search radius (in rings) to avoid scanning the whole grid
-    const ringCap = maxDistKm === Infinity ? 400 : Math.ceil(maxDistKm / (cs * 60)) + 3;
+    // One cell is about cs * 111 km (1 degree latitude ~ 111 km).
+    const ringCap = maxDistKm === Infinity ? 400 : Math.ceil(maxDistKm / (cs * 111)) + 3;
     for (let ring = 0; ring <= ringCap; ring++) {
       for (let dLat = -ring; dLat <= ring; dLat++) {
         for (let dLon = -ring; dLon <= ring; dLon++) {
@@ -899,6 +900,16 @@ export class ORMClient {
     return { lat: bestLat, lon: bestLon, dist: bestDist, wayId: bestWayId, maxSpeed: way?.maxSpeed ?? 30 };
   }
 
+  // SC-04 / remaster IV : vitesse d'un point du trace = vitesse de la voie
+  // ORM la plus proche (fallback 30 km/h pour les voies manuelles/inconnues).
+  getNearestWayMaxSpeed(lat, lon, maxDistKm = 0.5) {
+    const snap = this.snapToWay(lat, lon, maxDistKm);
+    if (snap?.maxSpeed > 0) return snap.maxSpeed;
+    const nodeSnap = this.snapToNearest(lat, lon, maxDistKm);
+    if (nodeSnap?.node?.maxSpeed > 0) return nodeSnap.node.maxSpeed;
+    return null;
+  }
+
   _projectOnSegment(px, py, ax, ay, bx, by) {
     const dx = bx - ax, dy = by - ay;
     const lenSq = dx * dx + dy * dy;
@@ -1097,7 +1108,8 @@ export class ORMClient {
 
     // Fallback: load area and try
     const distKm = haversine(fromLat, fromLon, toLat, toLon);
-    const padding = Math.max(0.01, Math.min(0.3, distKm * 0.003 + 0.01));
+    // Load a generous area: 1% of the leg distance, min 0.02 deg, max 0.5 deg.
+    const padding = Math.max(0.02, Math.min(0.5, distKm * 0.01));
     const south = Math.min(fromLat, toLat) - padding;
     const north = Math.max(fromLat, toLat) + padding;
     const west = Math.min(fromLon, toLon) - padding;
@@ -1115,7 +1127,7 @@ export class ORMClient {
     if (opts?.avoidStationPairs?.length && graph) {
       routeOpts.avoidEdges = this._avoidEdgesForPairs(graph, opts.avoidStationPairs);
     }
-    const snapRadius = distKm < 0.5 ? 0.3 : 5;
+    const snapRadius = distKm < 0.5 ? 0.3 : Math.max(5, Math.min(20, distKm * 0.05));
     const startResult = this.findNearestNode(graph, fromLat, fromLon, snapRadius);
     const endResult = this.findNearestNode(graph, toLat, toLon, snapRadius);
 
@@ -1127,7 +1139,7 @@ export class ORMClient {
 
     if (!startResult || !endResult) {
       // Try with larger padding
-      const extraPadding = padding * 2;
+      const extraPadding = padding * 3;
       await this.fetchArea(
         Math.min(fromLat, toLat) - extraPadding,
         Math.min(fromLon, toLon) - extraPadding,
@@ -1138,8 +1150,8 @@ export class ORMClient {
       if (opts?.avoidStationPairs?.length && graph2) {
         routeOpts.avoidEdges = this._avoidEdgesForPairs(graph2, opts.avoidStationPairs);
       }
-      const s2 = this.findNearestNode(graph2, fromLat, fromLon, 10);
-      const e2 = this.findNearestNode(graph2, toLat, toLon, 10);
+      const s2 = this.findNearestNode(graph2, fromLat, fromLon, 20);
+      const e2 = this.findNearestNode(graph2, toLat, toLon, 20);
       if (s2 && e2) {
         const retryPath = this.dijkstra(graph2, s2.node.key, e2.node.key, routeOpts);
         if (retryPath && retryPath.length > 0) {
@@ -1203,23 +1215,23 @@ export class ORMClient {
     return clamped || this.makeFallbackRoute(fromLat, fromLon, toLat, toLon);
   }
 
-  // R-03: no more straight-line diagonal masquerading as real track.
-  // A synthetic straight segment is only produced for SHORT connectors
-  // (≤ _maxFallbackKm, e.g. a platform-to-rail stub) and every point is
-  // tagged `fallback:true` so the renderer/schedule can flag it. For any
-  // longer origin/destination pair with no ORM path we return null and let
-  // the caller surface "route introuvable" instead of faking geometry.
+  // R-03: fallback direct (straight) when ORM has no graph. Tagged so the
+  // renderer can show it as unconfirmed, and sampled at 50 m for physics.
   makeFallbackRoute(fromLat, fromLon, toLat, toLon) {
     const distKm = haversine(fromLat, fromLon, toLat, toLon);
     if (distKm > this._maxFallbackKm) return null;
-    const steps = 20;
+    const stepKm = 0.05;
+    const steps = Math.max(2, Math.ceil(distKm / stepKm));
+    const midLat = (fromLat + toLat) / 2;
+    const midLon = (fromLon + toLon) / 2;
+    const maxSpeed = this.getNearestWayMaxSpeed(midLat, midLon, 2.0) ?? 160;
     const route = [];
     for (let i = 0; i <= steps; i++) {
       const t = i / steps;
       route.push({
         lat: fromLat + (toLat - fromLat) * t,
         lon: fromLon + (toLon - fromLon) * t,
-        maxSpeed: 160, electrified: true, tracks: 2, fallback: true,
+        maxSpeed, electrified: true, tracks: 2, fallback: true,
       });
     }
     return route;
