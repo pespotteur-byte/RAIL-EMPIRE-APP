@@ -95,7 +95,20 @@ export class RameManager {
   add(data) {
     const rame = new Rame(data);
     this.rames.push(rame);
+    this._rehydrateRame(rame, (typeof window !== 'undefined' && window.game?.rollingStock) ? window.game.rollingStock : null);
     return rame;
+  }
+
+  _rehydrateRame(rame, rollingStock) {
+    if (!rollingStock || !rame.elements || rame.elements.length === 0) return;
+    if (rame.elementDetails && rame.elementDetails.length > 0) return;
+    const ids = Array.isArray(rame.elements) ? rame.elements : [rame.elements];
+    rame.elementDetails = ids.map(id => rollingStock.getById(id)).filter(Boolean);
+  }
+
+  rehydrateElementDetails(rollingStock) {
+    if (!rollingStock) return;
+    for (const rame of this.rames) this._rehydrateRame(rame, rollingStock);
   }
 
   remove(id) {

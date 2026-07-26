@@ -405,6 +405,8 @@ class RailEmpire {
       if (adminSync.loaded) {
         // Re-seed catalog with overrides applied
         this.seedCatalog();
+        // Rehydrate rames that depend on catalog items added by admin overrides
+        this.rameManager.rehydrateElementDetails(this.rollingStock);
         // Start incident loop
         adminSync.startIncidentLoop(() => new Date());
       }
@@ -736,6 +738,7 @@ class RailEmpire {
     if (s.world) this.world.loadFromSave(s.world);
     if (s.rollingStock) this.rollingStock.loadFromSave(s.rollingStock);
     if (s.rames) this.rameManager.loadFromSave(s.rames, this.rollingStock);
+    this.rameManager.rehydrateElementDetails(this.rollingStock);
     if (s.schedules) this.scheduleCreator.loadFromSave(s.schedules, this.rameManager, this.world, loadTimeMin, loadDateStr);
     if (s.depots) this.depotManager.loadFromSave(s.depots);
     if (s.activeIncidents) this.incidentManager.loadFromSave(s.activeIncidents, this.world);
