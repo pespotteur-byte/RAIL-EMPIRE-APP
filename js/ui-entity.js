@@ -4683,7 +4683,7 @@ export const UIEntity = {
         this._showPickHint('Import en cours...');
 
         try {
-          const result = await this.game.orm.importInfrastructure(ptA.lat, ptA.lon, point.lat, point.lon);
+          const result = await this.game.orm.importInfrastructure(ptA.lat, ptA.lon, point.lat, point.lon, { vacuum: true });
           if (result.voiePoints.length === 0) {
             this._showPickHint('Aucune voie ferrée trouvée entre ces 2 points. Réessayez.');
             this._tracerLignePointA = null;
@@ -4693,7 +4693,16 @@ export const UIEntity = {
           // Tag everything with a group ID for bulk delete
           const lineGroupId = `line-${Date.now()}`;
 
-          // Link voie points near existing stations
+          // Fast coordinate-based dedup lookup for existing voie points.
+          const existingMap = new Map();
+          for (const v of vpm.getAll()) {
+            const k = `${v.lat.toFixed(6)},${v.lon.toFixed(6)}`;
+            if (!existingMap.has(k)) existingMap.set(k, v);
+          }
+
+          const vpKey = (lat, lon) => `${lat.toFixed(6)},${lon.toFixed(6)}`;
+
+          // Link voie points near existing stations and deduplicate
           for (const vpData of result.voiePoints) {
             vpData.lineGroupId = lineGroupId;
             for (const st of world.stations) {
@@ -4703,13 +4712,10 @@ export const UIEntity = {
                 break;
               }
             }
-            // Don't duplicate existing voie points at same location
-            const existing = vpm.getAll().find(v => {
-              const d = Math.sqrt(Math.pow((v.lat - vpData.lat) * 111, 2) + Math.pow((v.lon - vpData.lon) * 111 * Math.cos(v.lat * Math.PI / 180), 2));
-              return d < 0.02 && v.voie === vpData.voie; // within 20m and same voie
-            });
+            const existing = existingMap.get(vpKey(vpData.lat, vpData.lon));
             if (!existing) {
               vpm.addVoiePoint(vpData);
+              existingMap.set(vpKey(vpData.lat, vpData.lon), vpData);
             } else {
               // Remap tronçons to use existing VP
               for (const trc of result.troncons) {

@@ -978,7 +978,7 @@ export class ORMClient {
   // correspondants. N'importe plus tout le réseau au-delà de la destination.
   // ============================================================
 
-  async importInfrastructure(fromLat, fromLon, toLat, toLon) {
+  async importInfrastructure(fromLat, fromLon, toLat, toLon, opts = null) {
     const distKm = haversine(fromLat, fromLon, toLat, toLon);
     const padding = Math.max(0.02, Math.min(distKm * 0.005 + 0.015, 0.35));
     const south = Math.min(fromLat, toLat) - padding;
@@ -987,8 +987,62 @@ export class ORMClient {
     const east = Math.max(fromLon, toLon) + padding;
 
     const allWays = await this.fetchArea(south, west, north, east);
-    const wayById = new Map(allWays.map(w => [w.id, w]));
     if (allWays.length === 0) return { voiePoints: [], troncons: [] };
+
+    // VACUUM MODE — Tracer ligne absorbs every railway way in the fetched area.
+    if (opts?.vacuum) {
+      const vpMap = new Map();
+      const resultVoiePoints = [];
+      const resultTroncons = [];
+      const getOrCreateVP = (p) => {
+        const key = `${p.lat.toFixed(6)},${p.lon.toFixed(6)}`;
+        if (vpMap.has(key)) return vpMap.get(key);
+        const vpId = `vp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const vp = { id: vpId, lat: p.lat, lon: p.lon, voie: '1', stationId: null, linePoint: true };
+        resultVoiePoints.push(vp);
+        vpMap.set(key, vpId);
+        return vpId;
+      };
+
+      for (const way of allWays) {
+        const geom = way.geometry;
+        if (!geom || geom.length < 2) continue;
+        const ms = Number.isFinite(way.maxSpeed) ? way.maxSpeed : 30;
+        const tracks = way.tracks || 1;
+        const electrified = way.electrified !== false;
+        const wayId = way.id || '';
+        const name = way.name || '';
+        const ref = way.ref || '';
+        const trackRef = way.trackRef || '';
+
+        let prevId = null;
+        for (let i = 0; i < geom.length; i++) {
+          const p = geom[i];
+          const vpId = getOrCreateVP(p);
+          if (prevId && vpId !== prevId) {
+            const a = geom[i - 1];
+            const b = p;
+            const route = [
+              { lat: a.lat, lon: a.lon, maxSpeed: ms, tracks, electrified, wayId, name, ref, trackRef },
+              { lat: b.lat, lon: b.lon, maxSpeed: ms, tracks, electrified, wayId, name, ref, trackRef }
+            ];
+            const dist = this.getRouteDistance(route);
+            resultTroncons.push({
+              pointA: prevId, pointB: vpId,
+              route,
+              distance: Math.round(dist * 10) / 10,
+              name, ref, trackRef
+            });
+          }
+          prevId = vpId;
+        }
+      }
+
+      return { voiePoints: resultVoiePoints, troncons: resultTroncons };
+    }
+
+    // LEGACY PATH MODE — compute a shortest A→B path and split at junctions.
+    const wayById = new Map(allWays.map(w => [w.id, w]));
 
     // Snap A/B to existing node or project onto nearest way segment (and split it)
     const startSnap = this._snapAndSplitLocalWay(allWays, fromLat, fromLon, 5);
