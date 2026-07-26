@@ -616,7 +616,7 @@ export const UIEconomy = {
             </div>
           `;
           dynamicParts.push({ id: svc.id, html: rescueDynamic, speed: Math.round(t.speed), selected: this.selectedService?.id === svc.id });
-          stableKeys.push(`rescue:${svc.id}:${svc.name}:${svc.rescueState}:${this.selectedService?.id === svc.id}`);
+          stableKeys.push(`rescue:${svc.id}:${svc.name}:${svc.rescueState}`);
           return rescueStable;
         }
 
@@ -663,20 +663,27 @@ export const UIEconomy = {
         const ctxPrevName = escapeHtml(ctxPrevStation?.name || prevArretStation?.name || '');
         const ctxNextName = escapeHtml(ctxNextStation?.name || nextArretStation?.name || '');
 
-        // Distance to next scheduled arret for the approach label
+        // Next scheduled stop (arret or waypoint) for distance and info.
+        const nextStop = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
+        const nextTarget = nextArret || nextStop;
+        const nextTargetStation = nextTarget ? this.game.world?.getStationById(nextTarget.stationId) : null;
+
+        // Distance to next target for the approach / info label.
         let nextDistKm = null;
-        if (svc.state === 'moving' && nextArretStation && svc.position) {
-          let tgtLat = nextArretStation.lat, tgtLon = nextArretStation.lon;
-          if (nextArret?.voiePointId && this.game.voiePointManager) {
-            const vp = this.game.voiePointManager.getVoiePointById(nextArret.voiePointId);
+        if (nextTarget && svc.position) {
+          let tgtLat = nextTargetStation?.lat, tgtLon = nextTargetStation?.lon;
+          if (nextTarget.voiePointId && this.game.voiePointManager) {
+            const vp = this.game.voiePointManager.getVoiePointById(nextTarget.voiePointId);
             if (vp) { tgtLat = vp.lat; tgtLon = vp.lon; }
-          } else if (nextArret?.platform && this.game.voiePointManager) {
-            const svp = this.game.voiePointManager.getStationVoiePoint(nextArret.stationId, nextArret.platform);
+          } else if (nextTarget.platform && this.game.voiePointManager) {
+            const svp = this.game.voiePointManager.getStationVoiePoint(nextTarget.stationId, nextTarget.platform);
             if (svp) { tgtLat = svp.lat; tgtLon = svp.lon; }
           }
-          const dLat = (tgtLat - svc.position.lat) * 111;
-          const dLon = (tgtLon - svc.position.lon) * 111 * Math.cos(svc.position.lat * Math.PI / 180);
-          nextDistKm = Math.sqrt(dLat * dLat + dLon * dLon);
+          if (Number.isFinite(tgtLat) && Number.isFinite(tgtLon)) {
+            const dLat = (tgtLat - svc.position.lat) * 111;
+            const dLon = (tgtLon - svc.position.lon) * 111 * Math.cos(svc.position.lat * Math.PI / 180);
+            nextDistKm = Math.sqrt(dLat * dLat + dLon * dLon);
+          }
         }
 
         // S3: Approach / platform / regulation status
@@ -706,7 +713,7 @@ export const UIEconomy = {
           contextLabel = 'Régulation du trafic';
           contextClass = 'ctx-regulation';
         } else if (svc.state === 'moving' && t.speed > 0) {
-          if (nextArretStation && svc.position && nextDistKm != null) {
+          if (nextTarget && svc.position && nextDistKm != null) {
             if (nextDistKm < 0.3) {
               contextLabel = 'À l\'approche';
               contextClass = 'ctx-approach';
@@ -736,8 +743,8 @@ export const UIEconomy = {
           }
         }
 
-        // Next stop info — Annex 4: "Prochain arrêt : X - Arrivée prévue à XhX" (skip waypoints/passages)
-        const nextStop = typeof svc.getNextStop === 'function' ? svc.getNextStop() : null;
+        // Next stop info — Annex 4: "Prochain arrêt : X - Arrivée prévue à XhX".
+        const fmtTime = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
         let nextInfo;
         if (svc._atTerminus && svc._nextDepartureTime != null) {
           const pt = this.game?.engine?.getParisTime?.();
@@ -749,7 +756,6 @@ export const UIEconomy = {
         } else if (svc.completed) {
           nextInfo = 'Service terminé';
         } else if (nextArret && nextArretStation) {
-          const fmtTime = (m) => this.minToTimeStr(((Math.round(m) % 1440) + 1440) % 1440);
           const voie = (nextArret.platform && nextArret.stationId) ? ` Voie ${escapeHtml(nextArret.platform)}` : '';
           const plannedArr = nextArret.arrivalTime ?? 0;
           const actualArr = plannedArr + delayVal;
@@ -761,9 +767,20 @@ export const UIEconomy = {
             : actualStr;
           nextInfo = `Prochain arrêt : ${escapeHtml(nextArretStation.name)}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
         } else if (nextStop) {
-          nextInfo = `→ ...`;
+          const st = nextStop.stationId ? this.game.world?.getStationById(nextStop.stationId) : null;
+          const name = escapeHtml(st?.name || nextStop.stationName || 'Prochain point');
+          const arrTime = nextStop.arrivalTime ?? nextStop.departureTime ?? 0;
+          const actualArr = arrTime + delayVal;
+          const plannedStr = fmtTime(arrTime);
+          const actualStr = fmtTime(actualArr);
+          const distStr = nextDistKm != null ? ` — ${Math.round(nextDistKm)} km` : '';
+          const arrStr = delayVal !== 0
+            ? `<span style="text-decoration:line-through;color:#888">${plannedStr}</span> <span style="color:#facc15;font-weight:600">→ ${actualStr}</span>`
+            : actualStr;
+          const typeLabel = (nextStop.type === 'waypoint' || nextStop.type === 'passage') ? 'Passage sans arrêt' : 'Prochain arrêt';
+          nextInfo = `${typeLabel} : ${name} — ${arrStr}${distStr}`;
         } else {
-          nextInfo = 'Termine';
+          nextInfo = 'Terminus';
         }
 
         // S4 + S12: Platform label with station name + "Voie X"
@@ -883,7 +900,7 @@ export const UIEconomy = {
           ${wearHtml}
         `;
         dynamicParts.push({ id: svc.id, html: dynamicHtml, speed: Math.round(t.speed), selected: this.selectedService?.id === svc.id });
-        stableKeys.push(`${svc.id}:${cat}:${displayName}:${imageKey}:${this.selectedService?.id === svc.id}`);
+        stableKeys.push(`${svc.id}:${cat}:${displayName}:${imageKey}`);
         return stableHtml;
       }).join('');
 

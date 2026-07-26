@@ -186,7 +186,7 @@ header {
 .tc-next { color: var(--text3); font-size: 9px; }
 /* S2: Scrollable train image zone */
 .tc-images-scroll { display: flex; gap: 0; overflow-x: auto; overflow-y: visible; margin-top: 3px; padding: 2px 0; align-items: flex-end; max-height: none; }
-.tc-train-img { object-fit: contain; flex-shrink: 0; pointer-events: none; height: auto; width: auto; }
+.tc-train-img { object-fit: contain; flex-shrink: 0; pointer-events: none; height: auto; width: auto; max-height: 70px; }
 .tc-voie { color: #16a34a; font-weight: 600; background: #16a34a22; padding: 0 4px; border-radius: 3px; font-size: 10px; }
 /* S2: Delay status colors */
 .delay-late { color: #ef4444; font-weight: 600; }
