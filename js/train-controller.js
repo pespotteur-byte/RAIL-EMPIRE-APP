@@ -42,13 +42,16 @@ export const TrainController = {
       const params = { massKg, powerW, lengthM, weather: weatherType, adhesionMassKg: massKg, brakeServiceMs2 };
 
       let aMs2 = 0;
-      if (powerW > 0) {
+      if (massKg > 0) {
+        // Always compute net acceleration so air/grade resistance can slow the train
+        // when power is insufficient to maintain speed.
         aMs2 = accelerationMs2(params, vMs, grade);
       }
       const aKmhS = aMs2 * _units.MS_TO_KMH;
-      const effectiveAccel = Number.isFinite(aKmhS) && aKmhS > 0
-        ? Math.max(0.3, Math.min(8.0, aKmhS))
-        : trainAccel;
+      // Keep acceleration within a realistic range, but allow it to be negative.
+      const effectiveAccel = Number.isFinite(aKmhS)
+        ? Math.max(-8.0, Math.min(8.0, aKmhS))
+        : 0;
 
       const bMs2 = brakingDecelMs2(params, weatherType);
       const bKmhS = bMs2 * _units.MS_TO_KMH;
@@ -815,10 +818,13 @@ export const TrainController = {
       const macroDecel = physics.decel; // weather already included
       const macroAccel = physics.accel;
 
-      // Macro speed: rame, current line limit, weather.
+      // Macro speed: rame, current line limit, weather, and train-length infra limit.
+      const trainLength = this.rame ? this.rame.totalLength : (this.train.length || 20);
+      const infraLimit = this._getInfraSpeedLimit(route, this._state.index, this._state.progress, trainLength);
       let macroSpeed = Math.min(
         this.rame?.maxSpeed || 300,
         this.getLineSpeedAtPosition(),
+        infraLimit,
         (weather.speedCap || Infinity) * (weather.speedMult || 1.0)
       );
 
@@ -869,9 +875,11 @@ export const TrainController = {
       if (ipcsLimit) macroSpeed = Math.min(macroSpeed, ipcsLimit);
 
       if (this.speed < macroSpeed) {
-        this.speed = Math.min(macroSpeed, this.speed + macroAccel * dt);
+        this.speed = Math.max(0, Math.min(macroSpeed, this.speed + macroAccel * dt));
       } else if (this.speed > macroSpeed) {
-        this.speed = Math.max(macroSpeed, this.speed - macroDecel * dt);
+        this.speed = Math.max(0, Math.max(macroSpeed, this.speed - macroDecel * dt));
+      } else {
+        this.speed = Math.max(0, macroSpeed);
       }
       this.train.speed = Math.round(this.speed);
       if (this.speed <= 0) return;

@@ -12,7 +12,8 @@ const OVERPASS_URLS = [
 
 const DB_NAME = 'rail-empire-orm';
 const DB_STORE = 'areas';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // bump to force re-parse of cached ways after maxspeed fallback fix
+const ORM_CACHE_VERSION = 2; // payload version: ignore stale cached ways after maxspeed fallback fix
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
 // SC-05 : the base schedule is proposed at 0 % safety margin (pure physics
@@ -37,6 +38,11 @@ class ORMIndexedCache {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
+        const oldVersion = e.oldVersion;
+        // Clear stale cached ways so the new maxspeed/usage fallback rules apply.
+        if (oldVersion > 0 && db.objectStoreNames.contains(DB_STORE)) {
+          db.deleteObjectStore(DB_STORE);
+        }
         if (!db.objectStoreNames.contains(DB_STORE)) {
           const store = db.createObjectStore(DB_STORE, { keyPath: 'key' });
           store.createIndex('timestamp', 'timestamp', { unique: false });
@@ -286,14 +292,18 @@ export class ORMClient {
 
   async _loadCachedArea(key) {
     const rec = await this._persistentCache.get(key);
-    if (rec) return { ways: rec.ways, stations: rec.stations };
+    if (rec && rec.version === ORM_CACHE_VERSION) return { ways: rec.ways, stations: rec.stations };
     const legacy = localStorageGet(localStorageKey(key));
-    return legacy ? { ways: legacy.ways || [], stations: legacy.stations || [] } : null;
+    if (legacy && legacy.version === ORM_CACHE_VERSION) {
+      return { ways: legacy.ways || [], stations: legacy.stations || [] };
+    }
+    return null;
   }
 
   async _saveCachedArea(key, payload) {
-    await this._persistentCache.set(key, payload);
-    localStorageSet(localStorageKey(key), payload);
+    const versioned = { ...payload, version: ORM_CACHE_VERSION };
+    await this._persistentCache.set(key, versioned);
+    localStorageSet(localStorageKey(key), versioned);
   }
 
   parseWays(data) {
@@ -303,10 +313,13 @@ export class ORMClient {
       .map(el => {
         const usage = el.tags?.usage || '';
         const service = el.tags?.service || '';
-        const isMainOrBranch = usage === 'main' || usage === 'branch';
+        // A way is treated as a main/branch line (higher default speed) if it is
+        // tagged as main/branch, or if it has no usage/service tags at all and
+        // is therefore assumed to be a plain railway=rail line.
+        const isMainOrBranch = usage === 'main' || usage === 'branch' || (!usage && !service);
         // Annexe 3A / §IV — voie sans indication de vitesse :
-        //   • si ORM distingue voie principale (main/branch), défaut élevé (160);
-        //   • sinon (pas d’usage/service, ou service/triage) défaut sécuritaire 30 km/h.
+        //   • voie principale/branch ou ligne simple : défaut 160;
+        //   • service/triage ou usage explicite non principal : défaut 30.
         const hasSpeed = el.tags?.maxspeed && !Number.isNaN(parseInt(el.tags.maxspeed));
         const maxSpeed = hasSpeed ? parseInt(el.tags.maxspeed) : (isMainOrBranch ? 160 : 30);
         return {
@@ -314,7 +327,7 @@ export class ORMClient {
           maxSpeed,
           electrified: el.tags?.electrified !== 'no',
           tracks: parseInt(el.tags?.tracks) || 1,
-          usage: el.tags?.usage || 'main',
+          usage: el.tags?.usage || (service ? '' : 'main'),
           service,
           name: el.tags?.name || '',
           ref: el.tags?.ref || '',
@@ -469,7 +482,7 @@ export class ORMClient {
     for (const w of this._ways.values()) {
       if (!w.preferredDirection) w.preferredDirection = 'both';
       if (w.tracks == null) w.tracks = 1;
-      if (!w.usage) w.usage = 'main';
+      if (!w.usage && !w.service) w.usage = 'main';
       if (w.service == null) w.service = '';
     }
     const candidates = [...this._ways.values()].filter(w =>
@@ -880,9 +893,11 @@ export class ORMClient {
   }
 
   // Snap to the nearest point on any way (interpolated on the segment, not just nodes)
-  snapToWay(lat, lon, maxDistKm = 0.5) {
+  // Optional wayFilter can restrict the search (e.g. main/branch lines only).
+  snapToWay(lat, lon, maxDistKm = 0.5, wayFilter = null) {
     let bestDist = Infinity, bestLat = null, bestLon = null, bestWayId = null;
     for (const [, way] of this._ways) {
+      if (wayFilter && !wayFilter(way)) continue;
       const geom = way.geometry;
       for (let i = 0; i < geom.length - 1; i++) {
         const proj = this._projectOnSegment(lat, lon, geom[i].lat, geom[i].lon, geom[i + 1].lat, geom[i + 1].lon);
@@ -901,13 +916,15 @@ export class ORMClient {
   }
 
   // SC-04 / remaster IV : vitesse d'un point du trace = vitesse de la voie
-  // ORM la plus proche (fallback 30 km/h pour les voies manuelles/inconnues).
+  // ORM la plus proche. Prefer main/branch lines so a nearby service track
+  // does not force a 30 km/h limit on a main-line route.
   getNearestWayMaxSpeed(lat, lon, maxDistKm = 0.5) {
-    const snap = this.snapToWay(lat, lon, maxDistKm);
+    const mainFilter = (w) => w.usage === 'main' || w.usage === 'branch';
+    let snap = this.snapToWay(lat, lon, maxDistKm, mainFilter);
+    if (!snap?.wayId) snap = this.snapToWay(lat, lon, maxDistKm);
     if (snap?.wayId) {
       const way = this._ways.get(snap.wayId);
       if (way) {
-        // Use the routing-aware effective speed (160 for main/branch when missing).
         const v = this._effectiveSpeed(way);
         if (v > 0) return v;
       }

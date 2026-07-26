@@ -211,9 +211,10 @@ export function simulateProfileCumulative(segments, params = {}, queryDistancesM
       vNext = cap;
     } else if (v < cap) {
       const a = accelerationMs2(params, v);
-      if (a > 0) {
-        vNext = Math.min(cap, Math.sqrt(v * v + 2 * a * ds));
-      }
+      // Allow net acceleration to be negative (air/grade resistance can slow
+      // the train when power is insufficient to maintain speed).
+      const candidate = Math.max(0, v * v + 2 * a * ds);
+      vNext = Math.max(0, Math.min(cap, Math.sqrt(candidate)));
     }
 
     // Answer queries that fall inside this cell.
@@ -227,14 +228,11 @@ export function simulateProfileCumulative(segments, params = {}, queryDistancesM
         vPartial = cap;
       } else if (v < cap) {
         const a = accelerationMs2(params, v);
-        if (a > 0) {
-          if (dx >= ds - 1e-9) {
-            vPartial = vNext;
-          } else {
-            vPartial = Math.min(cap, Math.sqrt(v * v + 2 * a * dx));
-          }
+        if (dx >= ds - 1e-9) {
+          vPartial = vNext;
         } else {
-          vPartial = Math.min(cap, v);
+          const candidate = Math.max(0, v * v + 2 * a * dx);
+          vPartial = Math.max(0, Math.min(cap, Math.sqrt(candidate)));
         }
       } else {
         vPartial = v;

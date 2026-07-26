@@ -2139,7 +2139,8 @@ export const UISchedule = {
       const rameMaxMs = rameMaxSpeed / 3.6;
       const startMs = (isPass(prevStop) && legIndex !== 0) ? rameMaxMs : 0;
       const endMs = isPass(curStop) ? rameMaxMs : 0;
-      const travelOpts = { startMs, endMs };
+      const brakeServiceMs2 = rame?.brakeServiceMs2 || 1.1;
+      const travelOpts = { startMs, endMs, brakeServiceMs2 };
 
       if (route && route.length >= 2) {
         return this.game.orm.calculateTravelTime(route, rame || rameSpeed, travelOpts);
