@@ -1157,7 +1157,7 @@ export const SchedulePlanner = {
         const arrTime = currentTime + travelTime;
         const isIntermediate = i > 0 && i < reversed.length - 1;
         const dwell = (stop.type === 'arret' && isIntermediate)
-          ? Math.max(2, (stop.departureTime || 0) - (stop.arrivalTime || 0))
+          ? Math.max(0, (stop.departureTime || 0) - (stop.arrivalTime || 0))
           : 0;
         const depTime = arrTime + dwell;
         currentTime = depTime;
