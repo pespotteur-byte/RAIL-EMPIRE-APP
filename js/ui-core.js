@@ -142,6 +142,7 @@ export class UI {
         bank: 'dashboard',
       };
       if (DELETED_PAGES[page]) page = DELETED_PAGES[page];
+      if (this.activePage === 'infogare' && page !== 'infogare') this._stopInfogareClock();
       this.activePage = page;
       if (page !== 'dashboard' && this._dashboardInterval) {
         clearInterval(this._dashboardInterval);

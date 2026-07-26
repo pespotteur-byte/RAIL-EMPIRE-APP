@@ -23,10 +23,12 @@ export const UIInfogare = {
     const services = this.game.scheduleCreator?.services || [];
     const pt = this.game.engine.getParisTime();
     const now = pt.hours * 60 + pt.minutes;
+    const dateStr = this.game.engine?.getParisDate?.();
     const results = [];
 
     for (const svc of services) {
       if (!svc.active) continue;
+      if (dateStr && !this._serviceRunsToday(svc, dateStr)) continue;
       const stops = svc.getCurrentStops();
       if (!stops || stops.length === 0) continue;
 
@@ -66,13 +68,10 @@ export const UIInfogare = {
           if (st) nextStops.push({ name: st.name, time: stops[j].arrivalTime });
         }
 
+        // waitMin = time until next departure for this station
         let waitMin = null;
         if (!isLast && depTime != null) {
           waitMin = depTime - now;
-          if (waitMin < 0) waitMin += 1440;
-        }
-        if (!isFirst && arrTime != null) {
-          waitMin = arrTime - now;
           if (waitMin < 0) waitMin += 1440;
         }
 
@@ -101,7 +100,7 @@ export const UIInfogare = {
           servedStations, fromStations, nextStops,
           delay, isCancelled, isFull, isFreightFull,
           line, lineCode: line?.code || '', lineName: line?.name || '', lineColor: line?.color || '#3b82f6',
-          voie: stop.platform || svc.train?.platform || String(i + 1),
+          voie: (stop.platform ?? svc.train?.platform) || String(i + 1),
           state: svc.state,
           speed: svc.speed || 0,
           rame: svc.rame,
@@ -118,6 +117,16 @@ export const UIInfogare = {
     }
     return results.filter(r => r.isDeparture && r.waitMin != null && r.waitMin <= 1440)
       .sort((a, b) => a.waitMin - b.waitMin);
+  },
+
+  _serviceRunsToday(svc, dateStr) {
+    const days = svc.runDays || [0, 1, 2, 3, 4, 5, 6];
+    if (days.length === 0) return true;
+    const today = new Date(dateStr + 'T12:00:00');
+    if (!isNaN(today.getTime()) && !days.includes(today.getDay())) return false;
+    const dates = svc.runDates || [];
+    if (dates.length > 0 && !dates.includes(dateStr)) return false;
+    return true;
   },
 
   _fmtTime(min) {
@@ -179,12 +188,22 @@ export const UIInfogare = {
     });
 
     this._startInfogareClock(board);
+    if (this._infogareInterval) clearInterval(this._infogareInterval);
+    this._infogareInterval = setInterval(() => {
+      if (this.activePage !== 'infogare') { clearInterval(this._infogareInterval); this._infogareInterval = null; return; }
+      this._showInfogareBoard();
+    }, 30000);
+  },
+
+  _stopInfogareClock() {
+    if (this._infogareClockInterval) { clearInterval(this._infogareClockInterval); this._infogareClockInterval = null; }
+    if (this._infogareInterval) { clearInterval(this._infogareInterval); this._infogareInterval = null; }
   },
 
   _startInfogareClock(board) {
     if (this._infogareClockInterval) clearInterval(this._infogareClockInterval);
     const tick = () => {
-      if (this.activePage !== 'infogare') { clearInterval(this._infogareClockInterval); return; }
+      if (this.activePage !== 'infogare') { clearInterval(this._infogareClockInterval); this._infogareClockInterval = null; return; }
       const pt = this.game.engine.getParisTime();
       const nowStr = `${pt.hours.toString().padStart(2, '0')}:${pt.minutes.toString().padStart(2, '0')}`;
       board?.querySelectorAll('.ig2-clock').forEach(el => el.textContent = nowStr);
@@ -222,12 +241,12 @@ export const UIInfogare = {
   _renderSNCFDepartures(station, trains, nowStr) {
     const rows = trains.slice(0, 12).map(t => {
       const { type, num } = this._trainType(t);
-      const via = t.servedStations.slice(0, 6).join(' • ');
+      const via = t.servedStations.slice(0, 6).map(escapeHtml).join(' • ');
       return this._rowClick(t.svcId, `<div style="display:grid;grid-template-columns:90px 90px 1fr 90px 120px;align-items:center;padding:12px 14px;border-bottom:1px solid #1a2e4a;background:#0a1628;color:#fff;font-family:${IG_FONT};gap:8px;" onmouseover="this.style.background='#12223a'" onmouseout="this.style.background='#0a1628'">
         <span style="font-family:${IG_MONO};font-size:22px;font-weight:700;color:#facc15;">${this._fmtTime(t.depTime)}</span>
-        <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:900;font-size:18px;color:#fff;">${type}</span><span style="font-size:12px;color:#93c5fd;">${num}</span></span>
-        <span style="display:flex;flex-direction:column;gap:3px;"><span style="font-weight:700;font-size:18px;text-transform:uppercase;">${t.destination}</span>${via ? `<span style="font-size:11px;color:#94a3b8;">via ${via}</span>` : ''}</span>
-        <span style="display:flex;align-items:center;justify-content:center;background:#f59e0b;color:#000;font-weight:900;font-size:20px;width:42px;height:36px;border-radius:4px;margin:auto;">${t.voie || '—'}</span>
+        <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:900;font-size:18px;color:#fff;">${escapeHtml(type)}</span><span style="font-size:12px;color:#93c5fd;">${escapeHtml(num)}</span></span>
+        <span style="display:flex;flex-direction:column;gap:3px;"><span style="font-weight:700;font-size:18px;text-transform:uppercase;">${escapeHtml(t.destination)}</span>${via ? `<span style="font-size:11px;color:#94a3b8;">via ${via}</span>` : ''}</span>
+        <span style="display:flex;align-items:center;justify-content:center;background:#f59e0b;color:#000;font-weight:900;font-size:20px;width:42px;height:36px;border-radius:4px;margin:auto;">${escapeHtml(t.voie || '—')}</span>
         <span style="text-align:right;">${this._statusBadge(t)}</span>
       </div>`);
     }).join('');
@@ -246,12 +265,12 @@ export const UIInfogare = {
   _renderSNCFArrivals(station, trains, nowStr) {
     const rows = trains.slice(0, 12).map(t => {
       const { type, num } = this._trainType(t);
-      const via = t.fromStations.slice(0, 6).join(' • ');
+      const via = t.fromStations.slice(0, 6).map(escapeHtml).join(' • ');
       return this._rowClick(t.svcId, `<div style="display:grid;grid-template-columns:90px 90px 1fr 90px 120px;align-items:center;padding:12px 14px;border-bottom:1px solid #1a3a2a;background:#0b2e12;color:#fff;font-family:${IG_FONT};gap:8px;" onmouseover="this.style.background='#123d1a'" onmouseout="this.style.background='#0b2e12'">
         <span style="font-family:${IG_MONO};font-size:22px;font-weight:700;color:#4ade80;">${this._fmtTime(t.arrTime)}</span>
-        <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:900;font-size:18px;">${type}</span><span style="font-size:12px;color:#86efac;">${num}</span></span>
-        <span style="display:flex;flex-direction:column;gap:3px;"><span style="font-weight:700;font-size:18px;text-transform:uppercase;">${t.origin}</span>${via ? `<span style="font-size:11px;color:#86efac;">depuis ${via}</span>` : ''}</span>
-        <span style="display:flex;align-items:center;justify-content:center;background:#22c55e;color:#000;font-weight:900;font-size:20px;width:42px;height:36px;border-radius:4px;margin:auto;">${t.voie || '—'}</span>
+        <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:900;font-size:18px;">${escapeHtml(type)}</span><span style="font-size:12px;color:#86efac;">${escapeHtml(num)}</span></span>
+        <span style="display:flex;flex-direction:column;gap:3px;"><span style="font-weight:700;font-size:18px;text-transform:uppercase;">${escapeHtml(t.origin)}</span>${via ? `<span style="font-size:11px;color:#86efac;">depuis ${via}</span>` : ''}</span>
+        <span style="display:flex;align-items:center;justify-content:center;background:#22c55e;color:#000;font-weight:900;font-size:20px;width:42px;height:36px;border-radius:4px;margin:auto;">${escapeHtml(t.voie || '—')}</span>
         <span style="text-align:right;">${this._statusBadge(t)}</span>
       </div>`);
     }).join('');
@@ -273,8 +292,8 @@ export const UIInfogare = {
       const { type, num } = this._trainType(t);
       return this._rowClick(t.svcId, `<div style="display:grid;grid-template-columns:70px 70px 1fr 80px;align-items:center;padding:10px 12px;border-bottom:1px solid #1e3a5f;background:#0a1428;color:#fff;font-family:${IG_FONT};gap:8px;">
         <span style="font-family:${IG_MONO};font-size:20px;font-weight:700;color:#facc15;">${this._fmtTime(t.depTime)}</span>
-        <span style="font-weight:900;font-size:16px;">${type}</span>
-        <span style="font-weight:700;font-size:16px;text-transform:uppercase;">${t.destination}</span>
+        <span style="font-weight:900;font-size:16px;">${escapeHtml(type)}</span>
+        <span style="font-weight:700;font-size:16px;text-transform:uppercase;">${escapeHtml(t.destination)}</span>
         <span style="text-align:right;">${this._statusBadge(t)}</span>
       </div>`);
     }).join('');
@@ -294,11 +313,11 @@ export const UIInfogare = {
     const arrs = trains.filter(r => r.isArrival).slice(0, 16);
     const rows = arrs.map(t => {
       const { type, num } = this._trainType(t);
-      const via = t.fromStations.slice(0, 4).join(' • ');
+      const via = t.fromStations.slice(0, 4).map(escapeHtml).join(' • ');
       return this._rowClick(t.svcId, `<div style="display:grid;grid-template-columns:70px 80px 1fr 100px;align-items:center;padding:10px 12px;border-bottom:1px solid #1a3a2a;background:#0b2e12;color:#fff;font-family:${IG_FONT};gap:8px;">
         <span style="font-family:${IG_MONO};font-size:20px;font-weight:700;color:#4ade80;">${this._fmtTime(t.arrTime)}</span>
-        <span style="font-weight:900;font-size:16px;">${type}</span>
-        <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:700;font-size:16px;text-transform:uppercase;">${t.origin}</span>${via ? `<span style="font-size:10px;color:#86efac;">depuis ${via}</span>` : ''}</span>
+        <span style="font-weight:900;font-size:16px;">${escapeHtml(type)}</span>
+        <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:700;font-size:16px;text-transform:uppercase;">${escapeHtml(t.origin)}</span>${via ? `<span style="font-size:10px;color:#86efac;">depuis ${via}</span>` : ''}</span>
         <span style="text-align:right;">${this._statusBadge(t)}</span>
       </div>`);
     }).join('');
@@ -321,11 +340,11 @@ export const UIInfogare = {
 
     const cell = t => {
       if (!t) return '<div style="padding:14px;color:#5577aa;text-align:center;">—</div>';
-      const stops = t.servedStations.slice(0, 2).join(' ');
+      const stops = t.servedStations.slice(0, 2).map(escapeHtml).join(' ');
       return this._rowClick(t.svcId, `<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #1e3a5f;background:#0a1428;color:#fff;" onmouseover="this.style.background='#12223a'" onmouseout="this.style.background='#0a1428'">
         <span style="font-family:${IG_MONO};font-size:22px;font-weight:700;color:#facc15;">${this._fmtTime(t.depTime)}</span>
         <span style="flex:1;display:flex;flex-direction:column;gap:2px;">
-          <span style="font-weight:700;font-size:15px;text-transform:uppercase;">${t.destination}</span>
+          <span style="font-weight:700;font-size:15px;text-transform:uppercase;">${escapeHtml(t.destination)}</span>
           ${stops ? `<span style="font-size:10px;color:#94a3b8;">${stops}</span>` : ''}
         </span>
       </div>`);
@@ -333,7 +352,7 @@ export const UIInfogare = {
 
     const col = items => `<div style="flex:1;min-width:280px;border-right:1px solid #1e3a5f;">${items.map(cell).join('')}</div>`;
     const first = deps[0];
-    const top = first ? `${this._fmtTime(first.depTime)} ${first.destination}` : 'Aucun train';
+    const top = first ? `${this._fmtTime(first.depTime)} ${escapeHtml(first.destination)}` : 'Aucun train';
 
     return `<div style="background:#0a1428;border:2px solid #0d3a8f;border-radius:6px;overflow:hidden;max-width:1200px;margin:0 auto;">
       <div style="display:flex;align-items:center;justify-content:space-between;background:#0d3a8f;color:#fff;padding:10px 14px;">
@@ -350,7 +369,7 @@ export const UIInfogare = {
     const t = trains.filter(r => r.isDeparture)[this._infogarePage || 0] || trains.find(r => r.isDeparture);
     if (!t) return `<div style="background:#1a1a2e;color:#facc15;border:4px solid #facc15;padding:30px;text-align:center;font-family:${IG_FONT};"><div style="font-size:24px;font-weight:700;">${escapeHtml(station?.name || '')}</div><div style="margin-top:20px;font-size:20px;">Aucun départ prévu</div></div>`;
     const { type, num } = this._trainType(t);
-    const via = t.servedStations?.slice(0, 5).join(' – ') || '';
+    const via = t.servedStations?.slice(0, 5).map(escapeHtml).join(' – ') || '';
     const badge = this._statusBadge(t);
     return `<div style="background:#1a1a2e;color:#facc15;border:4px solid #facc15;padding:30px;text-align:center;font-family:${IG_FONT};">
       <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:20px;">
@@ -358,11 +377,11 @@ export const UIInfogare = {
         <span class="ig2-clock" style="font-family:${IG_MONO};font-size:26px;font-weight:700;">${nowStr}</span>
       </div>
       <div style="text-transform:uppercase;letter-spacing:4px;font-size:16px;margin-bottom:12px;">Prochain départ</div>
-      <div style="font-size:48px;font-weight:900;text-transform:uppercase;margin:16px 0;">${t.destination}</div>
+      <div style="font-size:48px;font-weight:900;text-transform:uppercase;margin:16px 0;">${escapeHtml(t.destination)}</div>
       ${via ? `<div style="font-size:18px;margin-bottom:18px;">via ${via}</div>` : ''}
-      <div style="font-size:28px;font-weight:700;margin-bottom:12px;">${this._fmtTime(t.depTime)} — ${type} ${num}</div>
+      <div style="font-size:28px;font-weight:700;margin-bottom:12px;">${this._fmtTime(t.depTime)} — ${escapeHtml(type)} ${escapeHtml(num)}</div>
       <div style="display:flex;justify-content:center;align-items:center;gap:24px;margin-top:20px;">
-        <span style="display:flex;align-items:center;justify-content:center;background:#f59e0b;color:#000;font-weight:900;font-size:32px;width:70px;height:56px;border-radius:6px;">V ${t.voie || '—'}</span>
+        <span style="display:flex;align-items:center;justify-content:center;background:#f59e0b;color:#000;font-weight:900;font-size:32px;width:70px;height:56px;border-radius:6px;">V ${escapeHtml(t.voie || '—')}</span>
         ${badge}
       </div>
     </div>`;
@@ -372,7 +391,7 @@ export const UIInfogare = {
     const t = trains.filter(r => r.isArrival)[this._infogarePage || 0] || trains.find(r => r.isArrival);
     if (!t) return `<div style="background:#1a1a2e;color:#4ade80;border:4px solid #4ade80;padding:30px;text-align:center;font-family:${IG_FONT};"><div style="font-size:24px;font-weight:700;">${escapeHtml(station?.name || '')}</div><div style="margin-top:20px;font-size:20px;">Aucune arrivée prévue</div></div>`;
     const { type, num } = this._trainType(t);
-    const from = t.fromStations?.slice(-4).join(' – ') || '';
+    const from = t.fromStations?.slice(-4).map(escapeHtml).join(' – ') || '';
     const status = t.state === 'stopped_at_station' && t.isLast ? 'Arrivé' : `dans ${this._fmtWait(t.waitMin) || '—'}`;
     return `<div style="background:#1a1a2e;color:#4ade80;border:4px solid #4ade80;padding:30px;text-align:center;font-family:${IG_FONT};">
       <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:20px;">
@@ -380,11 +399,11 @@ export const UIInfogare = {
         <span class="ig2-clock" style="font-family:${IG_MONO};font-size:26px;font-weight:700;">${nowStr}</span>
       </div>
       <div style="text-transform:uppercase;letter-spacing:4px;font-size:16px;margin-bottom:12px;">Prochaine arrivée</div>
-      <div style="font-size:48px;font-weight:900;text-transform:uppercase;margin:16px 0;">${t.origin}</div>
+      <div style="font-size:48px;font-weight:900;text-transform:uppercase;margin:16px 0;">${escapeHtml(t.origin)}</div>
       ${from ? `<div style="font-size:18px;margin-bottom:18px;">depuis ${from}</div>` : ''}
-      <div style="font-size:28px;font-weight:700;margin-bottom:12px;">${this._fmtTime(t.arrTime)} — ${type} ${num}</div>
+      <div style="font-size:28px;font-weight:700;margin-bottom:12px;">${this._fmtTime(t.arrTime)} — ${escapeHtml(type)} ${escapeHtml(num)}</div>
       <div style="font-size:22px;margin-top:16px;">${status}</div>
-      <div style="display:flex;justify-content:center;margin-top:18px;"><span style="display:flex;align-items:center;justify-content:center;background:#22c55e;color:#000;font-weight:900;font-size:32px;width:70px;height:56px;border-radius:6px;">V ${t.voie || '—'}</span></div>
+      <div style="display:flex;justify-content:center;margin-top:18px;"><span style="display:flex;align-items:center;justify-content:center;background:#22c55e;color:#000;font-weight:900;font-size:32px;width:70px;height:56px;border-radius:6px;">V ${escapeHtml(t.voie || '—')}</span></div>
     </div>`;
   },
 
@@ -398,8 +417,8 @@ export const UIInfogare = {
     const waitCol = isRatp ? '#fbbf24' : '#fbbf24';
     const headerBg = isRatp ? '#003DA5' : '#003DA5';
 
-    const dests = [...new Set(trains.map(t => t.destination))].slice(0, 4).join(' • ');
-    const lineCode = trains[0]?.lineCode || 'A';
+    const dests = [...new Set(trains.map(t => escapeHtml(t.destination)))].slice(0, 4).join(' • ');
+    const lineCode = escapeHtml(trains[0]?.lineCode || 'A');
     const lineColor = trains[0]?.lineColor || '#003DA5';
 
     const rows = trains.slice(0, 10).map(t => {
@@ -415,10 +434,10 @@ export const UIInfogare = {
         waitHtml = `<span style="background:${waitBox};color:${waitCol};padding:2px 8px;font-size:20px;font-weight:700;">${h}h${m.toString().padStart(2, '0')}</span>`;
       } else waitHtml = '';
       return this._rowClick(t.svcId, `<div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid ${isRatp ? '#b0b0b8' : '#334155'};background:${rowBg};color:${text};font-family:${IG_FONT};" onmouseover="this.style.background='${rowAlt}'" onmouseout="this.style.background='${rowBg}'">
-        <span style="font-weight:900;font-size:20px;min-width:50px;">${type}</span>
-        <span style="flex:1;font-weight:700;font-size:18px;">${t.destination}</span>
+        <span style="font-weight:900;font-size:20px;min-width:50px;">${escapeHtml(type)}</span>
+        <span style="flex:1;font-weight:700;font-size:18px;">${escapeHtml(t.destination)}</span>
         <span style="display:flex;align-items:center;gap:3px;min-width:120px;justify-content:flex-end;">${waitHtml}</span>
-        <span style="margin-left:8px;font-weight:700;color:${isRatp ? '#c00' : '#f59e0b'};">${t.voie || ''}</span>
+        <span style="margin-left:8px;font-weight:700;color:${isRatp ? '#c00' : '#f59e0b'};">${escapeHtml(t.voie || '')}</span>
       </div>`);
     }).join('');
 
@@ -440,19 +459,19 @@ export const UIInfogare = {
   _renderSolari(station, trains, nowStr) {
     const rows = trains.slice(0, 22).map(t => {
       const { type, num } = this._trainType(t);
-      const dest = t.destination.toUpperCase();
-      const served = t.servedStations.join('  ').toUpperCase();
+      const dest = escapeHtml(t.destination.toUpperCase());
+      const served = escapeHtml(t.servedStations.join('  ').toUpperCase());
       const destFull = `${dest}${served ? '  ' + served : ''}`;
-      let remark = (t.seriesName || 'TER').toUpperCase();
+      let remark = escapeHtml((t.seriesName || 'TER').toUpperCase());
       if (t.isCancelled) remark = 'SUPP';
       else if (t.isFull || t.isFreightFull) remark = 'PLEIN';
       else if (t.delay > 0) remark = `RET ${Math.round(t.delay)}M`;
-      return `<div data-svc-id="${t.svcId}" style="display:grid;grid-template-columns:70px 1fr 90px 70px 50px;align-items:center;padding:8px 14px;border-bottom:1px solid #333;background:#0a0a0a;color:#ccbb33;font-family:${IG_MONO};font-size:14px;cursor:pointer;" onmouseover="this.style.background='#141414'" onmouseout="this.style.background='#0a0a0a'">
+      return `<div data-svc-id="${escapeHtml(t.svcId)}" style="display:grid;grid-template-columns:70px 1fr 90px 70px 50px;align-items:center;padding:8px 14px;border-bottom:1px solid #333;background:#0a0a0a;color:#ccbb33;font-family:${IG_MONO};font-size:14px;cursor:pointer;" onmouseover="this.style.background='#141414'" onmouseout="this.style.background='#0a0a0a'">
         <span>${this._fmtTime(t.depTime).replace('h', '.')}</span>
         <span style="font-weight:700;">${destFull}</span>
         <span>${remark}</span>
-        <span>${num}</span>
-        <span style="text-align:center;background:#ccbb33;color:#000;font-weight:900;">${t.voie || ''}</span>
+        <span>${escapeHtml(num)}</span>
+        <span style="text-align:center;background:#ccbb33;color:#000;font-weight:900;">${escapeHtml(t.voie || '')}</span>
       </div>`;
     }).join('');
 
@@ -486,7 +505,7 @@ export const UIInfogare = {
       return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);">
         <span style="color:#facc15;font-size:18px;">•</span>
         <span style="font-family:${IG_MONO};font-size:18px;font-weight:700;color:#facc15;">${this._fmtTime(s.time)}</span>
-        <span style="font-size:18px;color:#fff;">${s.name}</span>
+        <span style="font-size:18px;color:#fff;">${escapeHtml(s.name)}</span>
       </div>`;
     }).join('');
 
@@ -499,8 +518,8 @@ export const UIInfogare = {
         <div style="flex:1;min-width:320px;background:#f5eef4;color:#000;padding:30px;">
           <div style="font-family:${IG_MONO};font-size:56px;font-weight:700;">${this._fmtTime(t.depTime)}</div>
           <div style="color:#16a34a;font-size:20px;font-weight:700;margin:8px 0;">${msg}</div>
-          <div style="font-size:42px;font-weight:900;text-transform:uppercase;line-height:1.1;">${t.destination}</div>
-          <div style="font-size:18px;font-weight:700;margin-top:12px;">${type} ${num}</div>
+          <div style="font-size:42px;font-weight:900;text-transform:uppercase;line-height:1.1;">${escapeHtml(t.destination)}</div>
+          <div style="font-size:18px;font-weight:700;margin-top:12px;">${escapeHtml(type)} ${escapeHtml(num)}</div>
         </div>
         <div style="flex:1.5;min-width:400px;padding:30px;background:#0b4f9b;">
           <div style="font-size:14px;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;color:#93c5fd;">Gares desservies</div>
@@ -508,7 +527,7 @@ export const UIInfogare = {
         </div>
       </div>
       <div style="padding:10px 20px;background:#0b4f9b;color:#fff;border-top:2px solid rgba(255,255,255,.2);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ON. LES VOYAGEURS À DESTINATION DE ${t.destination}</span>
+        <span style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ON. LES VOYAGEURS À DESTINATION DE ${escapeHtml(t.destination)}</span>
         <span class="ig2-clock" style="font-family:${IG_MONO};font-size:20px;font-weight:700;">${clockStr}</span>
       </div>
     </div>`;
@@ -518,16 +537,16 @@ export const UIInfogare = {
     const im = this.game.incidentManager;
     const bulletins = im?.getBulletins?.() || [];
     const services = this.game.scheduleCreator?.services || [];
-    const delayed = services.filter(s => s.active && s.delay >= 15).slice(0, 6);
+    const delayed = services.filter(s => s.active && !s.cancelled && s.state !== 'cancelled' && s.delay >= 15).slice(0, 6);
     const pt = this.game.engine?.getParisTime?.();
     const timeOfDay = pt ? (pt.hours * 60 + pt.minutes) : 0;
     const dateStr = this.game.engine?.currentDate || this.game.engine?.getParisDate?.() || '';
     const works = this.game.worksManager?.getActive?.(dateStr, timeOfDay) || [];
 
     const items = [];
-    for (const b of bulletins) items.push(`${b.name} : ${b.description || 'perturbation en cours'}`);
-    for (const d of delayed) items.push(`${d.name} — retard ${Math.round(d.delay)} min`);
-    for (const w of works) items.push(`Travaux en cours : ${w.name || w.type || 'chantier'}`);
+    for (const b of bulletins) items.push(`${escapeHtml(b.name)} : ${escapeHtml(b.description || 'perturbation en cours')}`);
+    for (const d of delayed) items.push(`${escapeHtml(d.name)} — retard ${Math.round(d.delay)} min`);
+    for (const w of works) items.push(`Travaux en cours : ${escapeHtml(w.name || w.type || 'chantier')}`);
     const ticker = items.length ? `${items.join('   +++   ')}   +++   ` : 'Circulation normale.';
     const main = items.length ? items.join(' / ') : 'Trafic fluide sur le réseau.';
 
@@ -565,6 +584,7 @@ export const UIInfogare = {
     const numCars = svc.rame?.elementDetails?.length || 8;
     const board = document.getElementById('infogare-board');
     if (!board) return;
+    if (this._infogareInterval) { clearInterval(this._infogareInterval); this._infogareInterval = null; }
     board.innerHTML = isGrandeLigne
       ? this._renderPlatformGL(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars)
       : this._renderPlatformBanlieue(svc, station, destStation, servedAfter, depTime, delayStr, nowStr, numCars);
@@ -576,7 +596,7 @@ export const UIInfogare = {
     const stopsHtml = servedAfter.map(s =>
       `<div style="display:flex;align-items:center;gap:8px;font-size:16px;">
         <span style="color:#a855f7;font-size:18px;">${s.isLast ? '◉' : '●'}</span>
-        <span${s.isLast ? ' style="color:#a855f7;font-weight:900;"' : ''}>${s.name}</span>
+        <span${s.isLast ? ' style="color:#a855f7;font-weight:900;"' : ''}>${escapeHtml(s.name)}</span>
       </div>`
     ).join('');
     const seriesName = svc.train?.seriesName || svc.rame?.seriesName || '';
@@ -592,11 +612,11 @@ export const UIInfogare = {
       <div class="ig2-platform-back" style="position:absolute;top:10px;left:10px;z-index:10;cursor:pointer;background:rgba(0,0,0,.4);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:4px 10px;font-size:12px;">← Retour</div>
       <div style="display:flex;padding:36px 20px 12px;gap:16px;">
         <div style="min-width:200px;">
-          <div style="background:#b5006b;color:#fff;font-weight:700;font-size:12px;display:inline-block;padding:3px 12px;border-radius:14px;margin-bottom:8px;">${seriesName}</div>
+          <div style="background:#b5006b;color:#fff;font-weight:700;font-size:12px;display:inline-block;padding:3px 12px;border-radius:14px;margin-bottom:8px;">${escapeHtml(seriesName)}</div>
           <div style="font-family:${IG_MONO};font-size:42px;font-weight:700;">${this._fmtTime(depTime)}</div>
           ${delayStr !== "à l'heure" ? `<div style="color:#facc15;font-weight:700;">${delayStr}</div>` : ''}
-          <div style="font-size:28px;font-weight:900;text-transform:uppercase;margin-top:8px;">${destStation?.name || '?'}</div>
-          <div style="font-size:14px;color:#93c5fd;margin-top:6px;">${seriesName} ${trainNum}</div>
+          <div style="font-size:28px;font-weight:900;text-transform:uppercase;margin-top:8px;">${escapeHtml(destStation?.name || '?')}</div>
+          <div style="font-size:14px;color:#93c5fd;margin-top:6px;">${escapeHtml(seriesName)} ${escapeHtml(trainNum)}</div>
         </div>
         <div style="flex:1;">
           <div style="font-size:14px;color:#93c5fd;text-transform:uppercase;margin-bottom:8px;">Gares desservies</div>
@@ -622,24 +642,34 @@ export const UIInfogare = {
     const col2 = servedAfter.slice(half);
     const col = items => items.map(s => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
       <span style="color:#333;font-size:14px;">${s.isLast ? '◉' : '●'}</span>
-      <span${s.isLast ? ' style="color:#c00;font-weight:900;"' : ''}>${s.name}</span>
+      <span${s.isLast ? ' style="color:#c00;font-weight:900;"' : ''}>${escapeHtml(s.name)}</span>
     </div>`).join('');
 
+    const isFreight = (svc.rame?.totalFreightCapacity || 0) > 0 && (svc.rame?.totalCapacity || 0) === 0;
+    const totalLoad = isFreight ? (svc.rame.totalFreightCapacity || 0) : (svc.rame?.totalCapacity || 0);
+    const onboardLoad = isFreight ? (svc._onboardFreight || 0) : (svc._onboardPax || 0);
+    const carCap = totalLoad > 0 ? Math.ceil(totalLoad / numCars) : 0;
     const crowdIcons = ['🟢', '🟠', '🔴'];
     let crowdHtml = '';
     for (let i = 0; i < numCars; i++) {
-      const lvl = Math.floor(Math.random() * 3);
+      let lvl = 0;
+      if (carCap > 0) {
+        const carOnboard = Math.min(carCap, Math.max(0, onboardLoad - i * carCap));
+        const ratio = carOnboard / carCap;
+        if (ratio > 0.85) lvl = 2;
+        else if (ratio > 0.5) lvl = 1;
+      }
       crowdHtml += `<div style="flex:1;height:34px;display:flex;align-items:center;justify-content:center;background:${lvl===0?'#22c55e':lvl===1?'#f97316':'#ef4444'};border-radius:4px;color:#fff;font-weight:700;">${crowdIcons[lvl]}</div>`;
     }
 
     const lineColor = svc.train?.color || '#2d8a4e';
-    const lineCode = svc.train?.seriesName?.[0] || '?';
+    const lineCode = escapeHtml(svc.train?.seriesName?.[0] || '?');
     const pt = this.game.engine.getParisTime();
     const now = pt.hours * 60 + pt.minutes;
     let waitMin = depTime != null ? depTime - now : null;
     if (waitMin != null && waitMin < 0) waitMin += 1440;
     const waitStr = svc.state === 'stopped_at_station' ? 'à quai' : this._fmtWait(waitMin);
-    const voieStr = svc.train?.platform || '?';
+    const voieStr = escapeHtml(svc.train?.platform || '?');
 
     return `<div style="background:#ddd8c8;color:#333;border:3px solid #bbb;border-radius:6px;overflow:hidden;max-width:1200px;margin:0 auto;font-family:${IG_FONT};position:relative;">
       <div class="ig2-platform-back" style="position:absolute;top:6px;left:6px;z-index:10;cursor:pointer;background:rgba(0,0,0,.1);color:#333;border:1px solid #aaa;border-radius:4px;padding:4px 10px;font-size:12px;">← Retour</div>
@@ -652,9 +682,9 @@ export const UIInfogare = {
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
           <div style="background:${lineColor};color:#fff;font-weight:900;font-size:28px;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${lineCode}</div>
           <div style="flex:1;">
-            <div style="font-size:28px;font-weight:900;">${destStation?.name || '?'}</div>
-            ${servedAfter.length ? `<div style="font-size:13px;color:#555;">via ${servedAfter[0]?.name}</div>` : ''}
-            <div style="font-size:12px;color:#666;">Mission: ${svc.name}</div>
+            <div style="font-size:28px;font-weight:900;">${escapeHtml(destStation?.name || '?')}</div>
+            ${servedAfter.length ? `<div style="font-size:13px;color:#555;">via ${escapeHtml(servedAfter[0]?.name)}</div>` : ''}
+            <div style="font-size:12px;color:#666;">Mission: ${escapeHtml(svc.name)}</div>
           </div>
           <div style="font-size:40px;font-weight:700;color:${lineColor};">${waitStr}</div>
         </div>
