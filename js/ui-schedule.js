@@ -1888,12 +1888,12 @@ export const UISchedule = {
         for (const k of Object.keys(b || a)) {
           if (k !== 'lat' && k !== 'lon' && k !== 'control' && k !== 'maxSpeed') edgeProps[k] = (b || a)[k];
         }
-        for (let s = 0; s < steps; s++) {
+        for (let s = 0; s <= steps; s++) {
           const t = s / steps;
           const pt = { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t, maxSpeed, ...edgeProps };
           if (markControls) {
             if (s === 0 && a.control) pt.control = true;
-            if (s === steps - 1 && b.control) pt.control = true;
+            if (s === steps && b.control) pt.control = true;
           }
           if (out.length > 0) {
             const last = out[out.length - 1];
@@ -1902,17 +1902,6 @@ export const UISchedule = {
           out.push(pt);
         }
         prevBearing = bearing;
-      }
-      // Keep exact first/last input coordinates and control flags.
-      if (out.length > 0) {
-        out[0].lat = route[0].lat;
-        out[0].lon = route[0].lon;
-        out[out.length - 1].lat = route[route.length - 1].lat;
-        out[out.length - 1].lon = route[route.length - 1].lon;
-        if (markControls) {
-          out[0].control = route[0].control || true;
-          out[out.length - 1].control = route[route.length - 1].control || true;
-        }
       }
       return out;
     },
