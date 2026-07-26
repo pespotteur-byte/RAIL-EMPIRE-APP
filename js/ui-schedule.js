@@ -14,6 +14,14 @@ export const UISchedule = {
       document.getElementById('btn-sched-edit-trace')?.addEventListener('click', () => this._toggleTraceEdit());
       document.getElementById('btn-sched-delete-point')?.addEventListener('click', () => this._deleteSelectedTracePoint());
       document.getElementById('btn-sched-return-mode')?.addEventListener('click', () => this._toggleReturnEditMode());
+      document.addEventListener('keydown', (e) => {
+        if (document.getElementById('modal-schedule')?.classList.contains('hidden')) return;
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault();
+          this._deleteSelectedTracePoint();
+        }
+      });
       document.getElementById('sched-service-type')?.addEventListener('change', () => {
         const workCb = document.getElementById('sched-work-train');
         if (workCb) workCb.checked = document.getElementById('sched-service-type').value === 'work';
@@ -932,7 +940,7 @@ export const UISchedule = {
         btn.style.color = '';
         clear.classList.add('hidden');
         const base = "Cliquer sur les gares/points de voie pour définir le trajet. Ctrl+clic ou clic droit sur un point de voie pour le supprimer.";
-        const editHint = hasTrace ? " Attrapez un point blanc pour déplacer le tracé, Shift+clic sur un segment pour ajouter un point, Ctrl+clic pour supprimer." : '';
+        const editHint = hasTrace ? " Clic gauche sur un point blanc pour le déplacer, double-clic pour retracer depuis ce point, clic droit pour le supprimer, touche Suppr pour supprimer le point sélectionné." : '';
         hint.textContent = base + editHint;
       }
     },
