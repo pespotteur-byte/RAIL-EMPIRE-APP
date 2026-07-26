@@ -15,10 +15,13 @@ export const UISchedule = {
       document.getElementById('btn-sched-delete-point')?.addEventListener('click', () => this._deleteSelectedTracePoint());
       document.getElementById('btn-sched-return-mode')?.addEventListener('click', () => this._toggleReturnEditMode());
       document.addEventListener('keydown', (e) => {
-        if (document.getElementById('modal-schedule')?.classList.contains('hidden')) return;
+        const modal = document.getElementById('modal-schedule');
+        if (!modal || modal.classList.contains('hidden')) return;
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
         if (e.key === 'Delete' || e.key === 'Backspace') {
           e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
           this._deleteSelectedTracePoint();
         }
       });
