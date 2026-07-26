@@ -1406,6 +1406,7 @@ export const UISchedule = {
         } else {
           return; // no suitable segment found, don't add orphan waypoint
         }
+      }
 
       const prevStop = this.schedStops[insertIndex - 1];
       const newStop = {
