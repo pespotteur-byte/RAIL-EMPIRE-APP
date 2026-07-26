@@ -202,6 +202,18 @@ export class ORMClient {
     this._routingSpeedCapKmh = 160;
   }
 
+  // SC-06 : default speeds for service tracks without an explicit maxspeed.
+  // Crossovers and sidings can run faster than yards/spurs.
+  _serviceDefaultSpeed(service) {
+    switch (service) {
+      case 'crossover': return 60;
+      case 'siding': return 60;
+      case 'yard': return 30;
+      case 'spur': return 30;
+      default: return 30;
+    }
+  }
+
   // Reduce point density while keeping the rail line shape.
   // Tolerance is the minimum distance (m) between kept points.
   simplifyGeometry(points, toleranceM = 5) {
@@ -324,10 +336,12 @@ export class ORMClient {
         //   • voie principale/branch ou ligne simple : défaut 160;
         //   • service/triage ou usage explicite non principal : défaut 30.
         const hasSpeed = el.tags?.maxspeed && !Number.isNaN(parseInt(el.tags.maxspeed));
-        const maxSpeed = hasSpeed ? parseInt(el.tags.maxspeed) : (isMainOrBranch ? 160 : 30);
+        const serviceDefault = !isMainOrBranch ? this._serviceDefaultSpeed(service) : 30;
+        const maxSpeed = hasSpeed ? parseInt(el.tags.maxspeed) : (isMainOrBranch ? 160 : serviceDefault);
         return {
           id: el.id,
           maxSpeed,
+          maxSpeedExplicit: !!hasSpeed,
           electrified: el.tags?.electrified !== 'no',
           tracks: parseInt(el.tags?.tracks) || 1,
           usage: el.tags?.usage || (service ? '' : 'main'),
@@ -530,7 +544,7 @@ export class ORMClient {
   _addDirectedWayEdges(nodes, aKey, bKey, way, segmentIdx, dist, seedDir = true) {
     const pd = way.preferredDirection || 'both';
     const base = {
-      dist, maxSpeed: way.maxSpeed, electrified: way.electrified, tracks: way.tracks,
+      dist, maxSpeed: way.maxSpeed, maxSpeedExplicit: way.maxSpeedExplicit, electrified: way.electrified, tracks: way.tracks,
       usage: way.usage, service: way.service, wayId: way.id, name: way.name || '',
       ref: way.ref || '', trackRef: way.trackRef || '', preferredDirection: pd,
     };
@@ -683,12 +697,24 @@ export class ORMClient {
   // le maxSpeed du matériel sélectionné peut être passé via opts.maxSpeed.
   _effectiveSpeed(edge, routingMaxSpeed = null) {
     // Annexe 3A / §IV — défaut conditionnel : 160 pour voie principale/branch,
-    // 30 si absence d’usage/service (on ne peut pas distinguer) ou service/triage.
-    const isMainOrBranch = edge.usage === 'main' || edge.usage === 'branch';
-    let v = edge.maxSpeed != null ? edge.maxSpeed : (isMainOrBranch ? 160 : 30);
-    const isService = (edge.service && edge.service !== '') ||
-      (edge.usage && edge.usage !== 'main' && edge.usage !== 'branch');
-    if (isService) v = Math.min(v, this._serviceSpeedKmh);
+    // défaut par type de service (crossover/siding 60, yard/spur 30) si pas
+    // de maxspeed OSM. Si un maxspeed OSM est présent, on l'honore.
+    // A way is a main/branch running line only if it has no service tag and
+    // its usage is main/branch (or plain railway=rail with both empty).
+    const hasService = edge.service && edge.service !== '';
+    const isMainOrBranch = (edge.usage === 'main' || edge.usage === 'branch' || (!edge.usage && !hasService)) && !hasService;
+    let v;
+    if (edge.maxSpeedExplicit) {
+      v = edge.maxSpeed;
+    } else if (edge.maxSpeedExplicit === false) {
+      v = isMainOrBranch ? 160 : this._serviceDefaultSpeed(edge.service);
+    } else {
+      // Old cached ways without the explicit flag: keep non-default values,
+      // but recompute the old hard-coded defaults (160 / 30) by type.
+      const defaultValue = isMainOrBranch ? 160 : this._serviceDefaultSpeed(edge.service);
+      const isOldDefault = edge.maxSpeed === 160 || edge.maxSpeed === 30 || edge.maxSpeed === defaultValue;
+      v = isOldDefault ? defaultValue : edge.maxSpeed;
+    }
     const cap = routingMaxSpeed ?? this._routingSpeedCapKmh ?? Infinity;
     if (cap > 0) v = Math.min(v, cap);
     return Math.max(5, v);
@@ -821,12 +847,9 @@ export class ORMClient {
     }
     if (edges.length === 0) return null;
 
-    const cap = routingMaxSpeed ?? this._routingSpeedCapKmh ?? Infinity;
-    const capSpeed = (v) => (cap > 0 && Number.isFinite(cap) ? Math.min(v, cap) : v);
-
     const path = [{
       lat: startNode.lat, lon: startNode.lon,
-      maxSpeed: capSpeed(edges[0].maxSpeed), electrified: edges[0].electrified !== false,
+      maxSpeed: this._effectiveSpeed(edges[0], routingMaxSpeed), electrified: edges[0].electrified !== false,
       tracks: edges[0].tracks || 1, wayId: edges[0].wayId,
       name: edges[0].name || '', ref: edges[0].ref || '', trackRef: edges[0].trackRef || '',
     }];
@@ -834,7 +857,7 @@ export class ORMClient {
       const n = graph.nodes.get(e.to);
       path.push({
         lat: n.lat, lon: n.lon,
-        maxSpeed: capSpeed(e.maxSpeed), electrified: e.electrified !== false,
+        maxSpeed: this._effectiveSpeed(e, routingMaxSpeed), electrified: e.electrified !== false,
         tracks: e.tracks || 1, wayId: e.wayId, usage: e.usage, service: e.service,
         name: e.name || '', ref: e.ref || '', trackRef: e.trackRef || '',
       });
@@ -915,7 +938,7 @@ export class ORMClient {
     }
     if (bestLat === null) return null;
     const way = bestWayId ? this._ways.get(bestWayId) : null;
-    return { lat: bestLat, lon: bestLon, dist: bestDist, wayId: bestWayId, maxSpeed: way?.maxSpeed ?? 30 };
+    return { lat: bestLat, lon: bestLon, dist: bestDist, wayId: bestWayId, maxSpeed: way ? this._effectiveSpeed(way) : 30 };
   }
 
   // SC-04 / remaster IV : vitesse d'un point du trace = vitesse de la voie
