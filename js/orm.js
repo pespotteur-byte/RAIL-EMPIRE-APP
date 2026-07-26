@@ -12,8 +12,8 @@ const OVERPASS_URLS = [
 
 const DB_NAME = 'rail-empire-orm';
 const DB_STORE = 'areas';
-const DB_VERSION = 3; // bump to force re-parse of cached ways after maxspeed fallback fix
-const ORM_CACHE_VERSION = 3; // payload version: ignore stale cached ways after maxspeed fallback fix
+const DB_VERSION = 2; // keep stable; _effectiveSpeed migrates old cached maxspeed values
+const ORM_CACHE_VERSION = 2; // _effectiveSpeed handles missing maxSpeedExplicit flag
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
 // TL-XX numbering for imported line points (vacuum tracer ligne)
