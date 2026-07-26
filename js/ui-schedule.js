@@ -503,7 +503,7 @@ export const UISchedule = {
         }
         return false;
       };
-      const isNearVoiePoint = (x, y, threshold = 14) => {
+      const isNearVoiePoint = (x, y, threshold = 20) => {
         if (!this.game.voiePointManager) return false;
         for (const vp of this.getPlayerVoiePoints()) {
           const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
@@ -536,7 +536,7 @@ export const UISchedule = {
 
         // Delete player-created voie point with Ctrl+click or right-click.
         if (e.ctrlKey || e.button === 2) {
-          const delVp = this._findNearestPlayerVoiePoint(x, y, tileMap, canvas, 14);
+          const delVp = this._findNearestPlayerVoiePoint(x, y, tileMap, canvas, 20);
           if (delVp) {
             this._deletePlayerVoiePoint(delVp);
             schedDrag = false; schedDragStart = null; totalDragDist = 0;
@@ -1266,7 +1266,7 @@ export const UISchedule = {
       const newStop = {
         stationId: station.id,
         stationName: station.name,
-        type: 'arret',
+        type: this.schedStops.length === 0 ? 'arret' : 'waypoint',
         stopCode: '',
         arrTimeMin: 0,
         depTimeMin: 0,
@@ -1323,7 +1323,7 @@ export const UISchedule = {
         stationId: vpStationId,
         voiePointId: voiePoint.id,
         stationName: vpName,
-        type: 'waypoint',
+        type: this.schedStops.length === 0 ? 'arret' : 'waypoint',
         stopCode: '',
         arrTimeMin: 0,
         depTimeMin: 0,
@@ -1707,7 +1707,8 @@ export const UISchedule = {
       const stop = this.schedStops[index];
       if (field === 'type') {
         stop.type = value;
-        if (value === 'passage' || value === 'waypoint') {
+        if (index === 0 || value === 'passage' || value === 'waypoint') {
+          // First stop / passage / waypoint: departure equals arrival.
           stop.depTimeMin = stop.arrTimeMin;
           stop.depTimeStr = stop.arrTimeStr;
         } else if (stop.depTimeMin <= stop.arrTimeMin) {
@@ -1734,7 +1735,11 @@ export const UISchedule = {
         if (Number.isFinite(parsed)) {
           stop.depTimeStr = value;
           stop.depTimeMin = parsed;
-          if (stop.type !== 'passage' && stop.type !== 'waypoint' && stop.depTimeMin < stop.arrTimeMin) {
+          // First stop: the departure time is the origin time, so arrival follows it.
+          if (index === 0) {
+            stop.arrTimeMin = parsed;
+            stop.arrTimeStr = value;
+          } else if (stop.type !== 'passage' && stop.type !== 'waypoint' && stop.depTimeMin < stop.arrTimeMin) {
             stop.depTimeMin = stop.arrTimeMin + 2;
             stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
           }
@@ -1928,7 +1933,7 @@ export const UISchedule = {
           if (d < bestDist) { bestDist = d; best = pt; bestLeg = leg; bestIdx = i; }
         }
       }
-      return (best && bestDist <= 14) ? { leg: bestLeg, control: best, index: bestIdx } : null;
+      return (best && bestDist <= 20) ? { leg: bestLeg, control: best, index: bestIdx } : null;
     },
 
   _findNearestSegmentPoint(x, y, tileMap, canvas) {
@@ -2028,7 +2033,7 @@ export const UISchedule = {
         const d = Math.hypot(p.x - x, p.y - y);
         if (d < bestDist) { bestDist = d; best = { index: i, pt }; }
       }
-      return bestDist <= 14 ? best : null;
+      return bestDist <= 20 ? best : null;
     },
 
   _moveManualControlPoint(index, lat, lon) {
