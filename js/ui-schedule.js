@@ -2802,7 +2802,7 @@ export const UISchedule = {
   getPlayerVoiePoints() {
       const vpm = this.game?.voiePointManager;
       if (!vpm) return [];
-      return vpm.getAll();
+      return vpm.getAll().filter(vp => !vp.linePoint);
     },
 
   _findNearestPlayerVoiePoint(x, y, tileMap, canvas, threshold = 14) {

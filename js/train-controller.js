@@ -983,18 +983,23 @@ export const TrainController = {
       }
     },
 
-    // SC-04 / remaster IV — any route point without a maxSpeed gets the nearest ORM
-    // speed. If no ORM data is found, the default fallback is 30 km/h for manual
-    // or synthetic sections, unless explicitly overridden.
+    // SC-04 / remaster IV — recompute every route point's maxSpeed from the ORM
+    // way it follows (wayId) or the nearest ORM way. This fixes stale 30 km/h
+    // values from old saves and keeps real OSM speed limits intact.
     _normalizeRouteSpeeds(route, fallbackMaxSpeed = 30) {
       if (!route || route.length < 2) return;
       const orm = (typeof window !== 'undefined' && window.game?.orm) ? window.game.orm : null;
       const getNearest = orm?.getNearestWayMaxSpeed ? orm.getNearestWayMaxSpeed.bind(orm) : null;
       for (let i = 0; i < route.length; i++) {
-        if (route[i].maxSpeed == null || route[i].maxSpeed <= 0) {
-          const nearest = getNearest ? getNearest(route[i].lat, route[i].lon, 0.5) : null;
-          route[i].maxSpeed = nearest ?? fallbackMaxSpeed;
+        const p = route[i];
+        let v = null;
+        if (p.wayId && orm?._ways?.has(p.wayId)) {
+          const way = orm._ways.get(p.wayId);
+          if (way) v = orm._effectiveSpeed(way);
         }
+        if (v == null && getNearest) v = getNearest(p.lat, p.lon, 0.5);
+        if (v == null || v <= 0) v = fallbackMaxSpeed;
+        route[i].maxSpeed = v;
       }
     },
 
