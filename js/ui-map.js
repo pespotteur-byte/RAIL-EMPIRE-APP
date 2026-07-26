@@ -104,6 +104,9 @@ export const UIMap = {
       window.addEventListener('mouseup', () => {
         this.isDragging = false;
         this.dragMoved = false;
+        this._draggingStation = null;
+        this._draggingVoiePoint = null;
+        this._draggingIndustry = null;
         canvas.style.cursor = 'grab';
       });
 

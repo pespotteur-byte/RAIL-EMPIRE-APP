@@ -173,9 +173,10 @@ export class Renderer {
     if (window.game?.ui?._manualTronconWaypoints?.length > 1) {
       this._drawTempTrace(ctx, window.game.ui._manualTronconWaypoints);
     }
-    if (showTrains) this.drawServices(ctx, world, services);
+    // Draw route, signals, then trains so the train icon stays on top of its route.
     this.drawSelectedServiceRoute(ctx, world);
     this.drawSignals(ctx, services);
+    if (showTrains) this.drawServices(ctx, world, services);
   }
 
   _drawCloudOverlay(ctx, w, h, alphaScale = 1.0) {
@@ -462,10 +463,10 @@ export class Renderer {
     const ic = window.game?.industrialClients;
     if (!ic) return;
 
-    // Cache locations array (heavy to compute every frame)
-    if (!this._indLocs || this._indLocsTick !== (this._frameTick || 0)) {
+    // Cache locations array; invalidate when industrial data changes (new/moved/hidden sites)
+    if (!this._indLocs || this._indLocsVersion !== ic._version) {
       this._indLocs = ic.getAllRealLocations();
-      this._indLocsTick = this._frameTick || 0;
+      this._indLocsVersion = ic._version;
     }
     const locs = this._indLocs;
     if (!locs || locs.length === 0) return;

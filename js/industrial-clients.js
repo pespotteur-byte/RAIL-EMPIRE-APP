@@ -4417,6 +4417,8 @@ export class IndustrialClients {
     this.customSites = [];
     // Static real locations hidden by the player (XXI).
     this.hiddenStaticKeys = new Set();
+    // Cache-busting version for livemap marker refresh.
+    this._version = 0;
   }
 
   // Persist a player-moved industry location (static or custom).
@@ -4424,9 +4426,10 @@ export class IndustrialClients {
     if (!key) return;
     if (String(key).startsWith('custom|')) {
       const s = this.customSites.find(s => s._key === key);
-      if (s) { s.lat = lat; s.lon = lon; }
+      if (s) { s.lat = lat; s.lon = lon; this._version++; }
       return;
     }
+    this._version++;
     this.locationOverrides[key] = { lat, lon };
   }
 
@@ -4479,6 +4482,7 @@ export class IndustrialClients {
     const _key = `custom|${id}`;
     const s = { id, type, name, lat, lon, country: country || 'FR', _key };
     this.customSites.push(s);
+    this._version++;
     return s;
   }
 
@@ -4489,10 +4493,12 @@ export class IndustrialClients {
       this.hiddenStaticKeys.add(key);
       delete this.locationOverrides[key];
     }
+    this._version++;
   }
 
   restoreStaticSite(key) {
     this.hiddenStaticKeys.delete(key);
+    this._version++;
   }
 
   updateSite(key, data) {
@@ -4504,12 +4510,14 @@ export class IndustrialClients {
       if (data.country != null) s.country = data.country;
       if (data.lat != null) s.lat = parseFloat(data.lat);
       if (data.lon != null) s.lon = parseFloat(data.lon);
+      this._version++;
       return s;
     }
     // Static sites can only be renamed/hidden/moved; name override stored in locationOverrides.
     if (data.name != null) {
       this.locationOverrides[key] = this.locationOverrides[key] || {};
       this.locationOverrides[key].name = data.name;
+      this._version++;
     }
     return null;
   }

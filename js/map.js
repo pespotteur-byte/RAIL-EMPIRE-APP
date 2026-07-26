@@ -174,22 +174,41 @@ export class TileMap {
   }
 
   worldToScreen(lat, lon, canvasW, canvasH) {
+    // Normalize to CSS pixels if the caller passed the canvas backing-store size.
+    const dpr = window.devicePixelRatio || 1;
+    let cssW = canvasW, cssH = canvasH;
+    if (this.viewportWidth > 0 && canvasW > this.viewportWidth * 1.2 && Math.abs(canvasW - this.viewportWidth * dpr) < 2) {
+      cssW = this.viewportWidth;
+    }
+    if (this.viewportHeight > 0 && canvasH > this.viewportHeight * 1.2 && Math.abs(canvasH - this.viewportHeight * dpr) < 2) {
+      cssH = this.viewportHeight;
+    }
     // Use fast path if frame cache is valid
-    if (this._frameScale && canvasW === this.viewportWidth && canvasH === this.viewportHeight) {
+    if (this._frameScale && cssW === this.viewportWidth && cssH === this.viewportHeight) {
       return this.worldToScreenFast(lat, lon);
     }
     const center = this.latLonToGlobalPixel(this.centerLat, this.centerLon, this.zoomLevel);
     const point = this.latLonToGlobalPixel(lat, lon, this.zoomLevel);
     return {
-      x: point.x - center.x + canvasW / 2,
-      y: point.y - center.y + canvasH / 2,
+      x: point.x - center.x + cssW / 2,
+      y: point.y - center.y + cssH / 2,
     };
   }
 
   screenToWorld(sx, sy, canvasW, canvasH) {
+    // Use CSS viewport dimensions for the projection center even if the caller
+    // passed the canvas backing-store width/height.
+    const dpr = window.devicePixelRatio || 1;
+    let cssW = canvasW, cssH = canvasH;
+    if (this.viewportWidth > 0 && canvasW > this.viewportWidth * 1.2 && Math.abs(canvasW - this.viewportWidth * dpr) < 2) {
+      cssW = this.viewportWidth;
+    }
+    if (this.viewportHeight > 0 && canvasH > this.viewportHeight * 1.2 && Math.abs(canvasH - this.viewportHeight * dpr) < 2) {
+      cssH = this.viewportHeight;
+    }
     const center = this.latLonToGlobalPixel(this.centerLat, this.centerLon, this.zoomLevel);
-    const px = sx - canvasW / 2 + center.x;
-    const py = sy - canvasH / 2 + center.y;
+    const px = sx - cssW / 2 + center.x;
+    const py = sy - cssH / 2 + center.y;
     return this.globalPixelToLatLon(px, py, this.zoomLevel);
   }
 
