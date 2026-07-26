@@ -335,7 +335,7 @@ export const UISchedule = {
           // Draw voie point markers — always visible, viewport-culled
           if (tileMap.zoomLevel >= 6) {
             const usedVPIds = new Set(this.schedStops.filter(s => s.voiePointId).map(s => s.voiePointId));
-            for (const vp of vpm.getAll()) {
+            for (const vp of this.getPlayerVoiePoints()) {
               if (vp.lat < vpMinLat || vp.lat > vpMaxLat || vp.lon < vpMinLon || vp.lon > vpMaxLon) continue;
               const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
               const isUsed = usedVPIds.has(vp.id);
@@ -505,7 +505,7 @@ export const UISchedule = {
       };
       const isNearVoiePoint = (x, y, threshold = 14) => {
         if (!this.game.voiePointManager) return false;
-        for (const vp of this.game.voiePointManager.getAll()) {
+        for (const vp of this.getPlayerVoiePoints()) {
           const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
           if (Math.hypot(p.x - x, p.y - y) < threshold) return true;
         }
@@ -597,7 +597,7 @@ export const UISchedule = {
         if (manualPt || controlHit) cursor = 'grab';
         else {
           if (this.game.voiePointManager) {
-            for (const vp of this.game.voiePointManager.getAll()) {
+            for (const vp of this.getPlayerVoiePoints()) {
               const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
               if (Math.hypot(p.x - x, p.y - y) < 12) { cursor = 'pointer'; break; }
             }
@@ -619,7 +619,7 @@ export const UISchedule = {
             const x = e.offsetX, y = e.offsetY;
             let closestVP = null, minVPDist = Infinity;
             if (this.game.voiePointManager) {
-              for (const vp of this.game.voiePointManager.getAll()) {
+              for (const vp of this.getPlayerVoiePoints()) {
                 const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
                 const d = Math.hypot(p.x - x, p.y - y);
                 if (d < minVPDist && d < 15) { minVPDist = d; closestVP = vp; }
@@ -690,7 +690,7 @@ export const UISchedule = {
 
             let closestVP = null, minVPDist = Infinity;
             if (this.game.voiePointManager) {
-              for (const vp of this.game.voiePointManager.getAll()) {
+              for (const vp of this.getPlayerVoiePoints()) {
                 const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
                 const d = Math.hypot(p.x - x, p.y - y);
                 if (d < minVPDist && d < 15) { minVPDist = d; closestVP = vp; }
@@ -756,7 +756,7 @@ export const UISchedule = {
           // Check voie points first
           let closestVP = null, minVPDist = Infinity;
           if (this.game.voiePointManager) {
-            for (const vp of this.game.voiePointManager.getAll()) {
+            for (const vp of this.getPlayerVoiePoints()) {
               const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
               const d = Math.hypot(p.x - x, p.y - y);
               if (d < minVPDist && d < 15) { minVPDist = d; closestVP = vp; }
@@ -819,7 +819,7 @@ export const UISchedule = {
             if (st.name?.toLowerCase().includes(q)) { best = st; break; }
           }
           if (!best && this.game.voiePointManager) {
-            for (const vp of this.game.voiePointManager.getAll()) {
+            for (const vp of this.getPlayerVoiePoints()) {
               if (vp.name?.toLowerCase().includes(q) || (vp.voie && String(vp.voie).toLowerCase().includes(q))) { best = vp; break; }
             }
           }
@@ -2785,6 +2785,12 @@ export const UISchedule = {
       this.game.scheduleCreator.duplicateService(id, intv, cnt, rame, this.game.world);
       this.renderSchedulesList();
       this.game.saveState();
+    },
+
+  getPlayerVoiePoints() {
+      const vpm = this.game?.voiePointManager;
+      if (!vpm) return [];
+      return vpm.getAll().filter(vp => !vp.linePoint);
     },
 
   deleteSchedule(id) {

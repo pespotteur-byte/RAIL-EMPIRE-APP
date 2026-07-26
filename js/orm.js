@@ -16,6 +16,9 @@ const DB_VERSION = 2; // bump to force re-parse of cached ways after maxspeed fa
 const ORM_CACHE_VERSION = 2; // payload version: ignore stale cached ways after maxspeed fallback fix
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
+// TL-XX numbering for imported line points (vacuum tracer ligne)
+let _linePointCounter = 0;
+
 // SC-05 : the base schedule is proposed at 0 % safety margin (pure physics
 // travel time). The player can tighten it manually if they want.
 function applyTravelTimeSafety(baseMin) {
@@ -998,7 +1001,8 @@ export class ORMClient {
         const key = `${p.lat.toFixed(6)},${p.lon.toFixed(6)}`;
         if (vpMap.has(key)) return vpMap.get(key);
         const vpId = `vp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-        const vp = { id: vpId, lat: p.lat, lon: p.lon, voie: '1', stationId: null, linePoint: true };
+        const voieLabel = `TL-${++_linePointCounter}`;
+        const vp = { id: vpId, lat: p.lat, lon: p.lon, voie: voieLabel, stationId: null, linePoint: true };
         resultVoiePoints.push(vp);
         vpMap.set(key, vpId);
         return vpId;
