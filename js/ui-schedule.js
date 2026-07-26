@@ -943,10 +943,13 @@ export const UISchedule = {
         if (!this._returnStops || this._returnStops.length < 2) {
           this._returnStops = this._generateDefaultReturnStops();
           this._returnManualRoutes = this._generateDefaultReturnRoutes();
+          this.schedStops = this._returnStops;
+          this._manualRoutes = this._returnManualRoutes;
           await this._recalcReturnTimes();
+        } else {
+          this.schedStops = this._returnStops;
+          this._manualRoutes = this._returnManualRoutes;
         }
-        this.schedStops = this._returnStops;
-        this._manualRoutes = this._returnManualRoutes;
         this._isReturnEditMode = true;
       }
       this._traceSelectedPoint = null;
@@ -988,16 +991,23 @@ export const UISchedule = {
         currentTime = depTime;
         // Mirror platform swap from ActiveService.buildReturnStops.
         let returnPlat = s.platform || '';
-        if (returnPlat === '1' || returnPlat === 'Voie 1') returnPlat = '2';
+        if (this._schedReturnPlatforms && this._schedReturnPlatforms[s.stationId]) {
+          returnPlat = this._schedReturnPlatforms[s.stationId];
+        } else if (returnPlat === '1' || returnPlat === 'Voie 1') returnPlat = '2';
         else if (returnPlat === '2' || returnPlat === 'Voie 2') returnPlat = '1';
         else if (/^\d+$/.test(returnPlat)) {
           const n = parseInt(returnPlat, 10);
           returnPlat = String(n % 2 === 0 ? n - 1 : n + 1);
         }
+        let returnVoiePointId = s.voiePointId || null;
+        if (returnPlat && s.stationId && this.game.voiePointManager) {
+          const svp = this.game.voiePointManager.getStationVoiePoint(s.stationId, returnPlat);
+          if (svp) returnVoiePointId = svp.id;
+        }
         out.push({
           stationId: s.stationId,
-          voiePointId: s.voiePointId || null,
-          stationName: this._stopNameFor(s.stationId, s.voiePointId),
+          voiePointId: returnVoiePointId,
+          stationName: this._stopNameFor(s.stationId, returnVoiePointId),
           type: s.type,
           stopCode: s.stopCode || '',
           arrTimeMin: arrTime,
@@ -1028,8 +1038,12 @@ export const UISchedule = {
       for (let i = 1; i < this._returnStops.length; i++) {
         const prev = this._returnStops[i - 1], cur = this._returnStops[i];
         const travelTime = await this._getSegmentTravelTime(prev, cur, rameSpeed, rame, i - 1);
+        const isIntermediate = i > 0 && i < this._returnStops.length - 1;
+        const oldDwell = (isIntermediate && cur.type === 'arret')
+          ? Math.max(2, (cur.depTimeMin || 0) - (cur.arrTimeMin || 0))
+          : 0;
         cur.arrTimeMin = prev.depTimeMin + travelTime;
-        cur.depTimeMin = cur.arrTimeMin + (cur.type === 'arret' ? 2 : 0);
+        cur.depTimeMin = cur.arrTimeMin + oldDwell;
         cur.arrTimeStr = this.minToTimeStr(cur.arrTimeMin);
         cur.depTimeStr = this.minToTimeStr(cur.depTimeMin);
       }
@@ -1436,14 +1450,21 @@ export const UISchedule = {
     },
 
   minToTimeStr(m) {
-      const h = Math.floor(m / 60) % 24;
-      const min = m % 60;
+      const total = Math.round(m || 0);
+      const wrapped = ((total % 1440) + 1440) % 1440;
+      const h = Math.floor(wrapped / 60);
+      const min = wrapped % 60;
       return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
     },
 
   timeStrToMin(s) {
-      const [h, m] = s.split(':').map(Number);
-      return h * 60 + (m || 0);
+      if (typeof s !== 'string') return NaN;
+      const parts = s.split(':');
+      if (parts.length !== 2) return NaN;
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || h > 23 || m < 0 || m > 59) return NaN;
+      return h * 60 + m;
     },
 
   incrementTime(timeStr, minutes) {
@@ -1681,19 +1702,29 @@ export const UISchedule = {
         }
       }
       if (field === 'arrTime') {
-        stop.arrTimeStr = value;
-        stop.arrTimeMin = this.timeStrToMin(value);
-        if (stop.type === 'passage') {
-          stop.depTimeMin = stop.arrTimeMin;
-          stop.depTimeStr = stop.arrTimeStr;
-        } else if (stop.depTimeMin < stop.arrTimeMin) {
-          stop.depTimeMin = stop.arrTimeMin + 2;
-          stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
+        const parsed = this.timeStrToMin(value);
+        if (Number.isFinite(parsed)) {
+          stop.arrTimeStr = value;
+          stop.arrTimeMin = parsed;
+          if (stop.type === 'passage') {
+            stop.depTimeMin = stop.arrTimeMin;
+            stop.depTimeStr = stop.arrTimeStr;
+          } else if (stop.depTimeMin < stop.arrTimeMin) {
+            stop.depTimeMin = stop.arrTimeMin + 2;
+            stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
+          }
         }
       }
       if (field === 'depTime') {
-        stop.depTimeStr = value;
-        stop.depTimeMin = this.timeStrToMin(value);
+        const parsed = this.timeStrToMin(value);
+        if (Number.isFinite(parsed)) {
+          stop.depTimeStr = value;
+          stop.depTimeMin = parsed;
+          if (stop.type !== 'passage' && stop.type !== 'waypoint' && stop.depTimeMin < stop.arrTimeMin) {
+            stop.depTimeMin = stop.arrTimeMin + 2;
+            stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
+          }
+        }
       }
       if (field === 'stopDuration') {
         const dur = Math.max(0, parseInt(value) || 0);
@@ -1702,6 +1733,11 @@ export const UISchedule = {
       }
       if (field === 'platform') {
         stop.platform = value || '';
+        // Synchronise voiePointId with the chosen platform so routing endpoints stay correct.
+        if (stop.stationId && this.game.voiePointManager) {
+          const svp = this.game.voiePointManager.getStationVoiePoint(stop.stationId, stop.platform);
+          stop.voiePointId = svp ? svp.id : (stop.voiePointId || null);
+        }
       }
       if (field === 'stopCode') {
         stop.stopCode = value || '';
@@ -1746,11 +1782,7 @@ export const UISchedule = {
 
   _getStopCoords(stop) {
       // Resolve lat/lon for any stop type (station, voie point, waypoint).
-      // Prefer the exact platform voie point when a platform is selected.
-      if (stop.voiePointId && this.game.voiePointManager) {
-        const vp = this.game.voiePointManager.getVoiePointById(stop.voiePointId);
-        if (vp) return { lat: vp.lat, lon: vp.lon };
-      }
+      // Platform takes precedence over a stale voiePointId so user edits are honored.
       if (stop.stationId) {
         const st = this.game.world.getStationById(stop.stationId);
         if (!st) return null;
@@ -1758,7 +1790,15 @@ export const UISchedule = {
           const svp = this.game.voiePointManager.getStationVoiePoint(st.id, stop.platform);
           if (svp) return { lat: svp.lat, lon: svp.lon };
         }
+        if (stop.voiePointId && this.game.voiePointManager) {
+          const vp = this.game.voiePointManager.getVoiePointById(stop.voiePointId);
+          if (vp) return { lat: vp.lat, lon: vp.lon };
+        }
         return { lat: st.lat, lon: st.lon };
+      }
+      if (stop.voiePointId && this.game.voiePointManager) {
+        const vp = this.game.voiePointManager.getVoiePointById(stop.voiePointId);
+        if (vp) return { lat: vp.lat, lon: vp.lon };
       }
       return null;
     },
@@ -2021,7 +2061,7 @@ export const UISchedule = {
       const trc = this.game.voiePointManager?.findTronconRoute(ca.lat, ca.lon, cb.lat, cb.lon);
       if (trc && trc.route && trc.route.length >= 2) {
         const route = trc.route.map(p => ({ ...p }));
-        this._normalizeRouteSpeeds(route, 160);
+        this._normalizeRouteSpeeds(route, 30);
         return route;
       }
 
@@ -2032,7 +2072,7 @@ export const UISchedule = {
         const track = this.game.world.getTrackBetween(sa.id, sb.id);
         if (track && track.route && track.route.length > 1) {
           const route = (track.stationA !== sa.id) ? [...track.route].reverse().map(p => ({ ...p })) : track.route.map(p => ({ ...p }));
-          this._normalizeRouteSpeeds(route, 160);
+          this._normalizeRouteSpeeds(route, 30);
           return route;
         }
       }
@@ -2078,10 +2118,10 @@ export const UISchedule = {
         synthetic.push({
           lat: ca.lat + (cb.lat - ca.lat) * t,
           lon: ca.lon + (cb.lon - ca.lon) * t,
-          maxSpeed: 160, fallback: true
+          maxSpeed: undefined, fallback: true
         });
       }
-      this._normalizeRouteSpeeds(synthetic, 160);
+      this._normalizeRouteSpeeds(synthetic, 30);
       return synthetic;
     },
 
@@ -2244,7 +2284,8 @@ export const UISchedule = {
         }
 
         if (!missing && route.length >= 2 && queryDistancesKm.length > 0) {
-          const profile = this.game.orm.calculateTravelTimeProfile(route, rame || rameSpeed, { startMs: 0, endMs: 0 }, queryDistancesKm);
+          const brakeServiceMs2 = rame?.brakeServiceMs2 || 1.1;
+          const profile = this.game.orm.calculateTravelTimeProfile(route, rame || rameSpeed, { startMs: 0, endMs: 0, brakeServiceMs2 }, queryDistancesKm);
           if (profile && Array.isArray(profile.queryTimesMin)) {
             const anchorDep = this.schedStops[groupStart].depTimeMin || 0;
             for (let k = 0; k < queryIndices.length; k++) {

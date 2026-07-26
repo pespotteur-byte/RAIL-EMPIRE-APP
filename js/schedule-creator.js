@@ -353,69 +353,8 @@ export class ScheduleCreator {
     return this.services.map(s => {
       try {
         // Compact route encoding: delta-encoded flat arrays + strip defaults
-        const safeRoutes = (s.routes || []).map(route => {
-          if (!Array.isArray(route) || route.length === 0) return null;
-          // Downsample: keep every Nth point for long routes
-          let pts = route;
-          if (pts.length > 100) {
-            const step = Math.ceil(pts.length / 80);
-            const sampled = [pts[0]];
-            for (let i = step; i < pts.length - 1; i += step) sampled.push(pts[i]);
-            sampled.push(pts[pts.length - 1]);
-            pts = sampled;
-          }
-          // Delta-encode coords as flat int array
-          const coords = [];
-          let prevLat = 0, prevLon = 0;
-          for (let i = 0; i < pts.length; i++) {
-            const lat5 = Math.round(pts[i].lat * 1e5);
-            const lon5 = Math.round(pts[i].lon * 1e5);
-            if (i === 0) { coords.push(lat5, lon5); }
-            else { coords.push(lat5 - prevLat, lon5 - prevLon); }
-            prevLat = lat5; prevLon = lon5;
-          }
-          // Speed segments: only store when speed differs from the 30 km/h default.
-          const speeds = [];
-          let hasCustomSpeed = false;
-          for (const pt of pts) {
-            const sp = pt.maxSpeed || 30;
-            if (sp !== 30) hasCustomSpeed = true;
-            speeds.push(sp);
-          }
-          const o = { c: coords };
-          if (hasCustomSpeed) o.s = speeds;
-          return o;
-        }).filter(r => r !== null);
-        const safeReturnRoutes = (s._returnRoutes || []).map(route => {
-          if (!Array.isArray(route) || route.length === 0) return null;
-          let pts = route;
-          if (pts.length > 100) {
-            const step = Math.ceil(pts.length / 80);
-            const sampled = [pts[0]];
-            for (let i = step; i < pts.length - 1; i += step) sampled.push(pts[i]);
-            sampled.push(pts[pts.length - 1]);
-            pts = sampled;
-          }
-          const coords = [];
-          let prevLat = 0, prevLon = 0;
-          for (let i = 0; i < pts.length; i++) {
-            const lat5 = Math.round(pts[i].lat * 1e5);
-            const lon5 = Math.round(pts[i].lon * 1e5);
-            if (i === 0) { coords.push(lat5, lon5); }
-            else { coords.push(lat5 - prevLat, lon5 - prevLon); }
-            prevLat = lat5; prevLon = lon5;
-          }
-          const speeds = [];
-          let hasCustomSpeed = false;
-          for (const pt of pts) {
-            const sp = pt.maxSpeed || 30;
-            if (sp !== 30) hasCustomSpeed = true;
-            speeds.push(sp);
-          }
-          const o = { c: coords };
-          if (hasCustomSpeed) o.s = speeds;
-          return o;
-        }).filter(r => r !== null);
+        const safeRoutes = (s.routes || []).map(r => this._encodeRoute(r)).filter(r => r !== null);
+        const safeReturnRoutes = (s._returnRoutes || []).map(r => this._encodeRoute(r)).filter(r => r !== null);
         // Compact stops: short keys
         const compactStops = (s.stops || []).map(st => {
           const o = { si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime };
@@ -474,6 +413,7 @@ export class ScheduleCreator {
         if (s._adjustedStops) {
           o._r.as = s._adjustedStops.map(st => ({
             si: st.stationId, t: st.type, d: st.departureTime, a: st.arrivalTime,
+            vp: st.voiePointId || undefined, p: st.platform || undefined, sc: st.stopCode || undefined,
           }));
         }
         return o;
@@ -484,19 +424,75 @@ export class ScheduleCreator {
     });
   }
 
+  _encodeRoute(route) {
+    if (!Array.isArray(route) || route.length === 0) return null;
+    const pts = route;
+    const coords = [];
+    let prevLat = 0, prevLon = 0;
+    const speeds = [];
+    const nonElectrified = [];
+    const fallbackIdx = [];
+    const controlIdx = [];
+    const trackList = [];
+    let hasCustomSpeed = false;
+    let hasNonElectrified = false;
+    let hasNonDefaultTrack = false;
+    let hasFallback = false;
+    let hasControl = false;
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const lat5 = Math.round(p.lat * 1e5);
+      const lon5 = Math.round(p.lon * 1e5);
+      if (i === 0) {
+        coords.push(lat5, lon5);
+        prevLat = lat5; prevLon = lon5;
+      } else {
+        coords.push(lat5 - prevLat, lon5 - prevLon);
+        prevLat = lat5; prevLon = lon5;
+      }
+      const sp = p.maxSpeed;
+      if (sp != null && sp > 0 && sp !== 160) hasCustomSpeed = true;
+      speeds.push(sp != null && sp > 0 && sp !== 160 ? sp : null);
+
+      if (p.electrified === false) { nonElectrified.push(i); hasNonElectrified = true; }
+      if ((p.tracks || 1) !== 1) { trackList.push([i, p.tracks]); hasNonDefaultTrack = true; }
+      if (p.fallback === true) { fallbackIdx.push(i); hasFallback = true; }
+      if (p.control === true) { controlIdx.push(i); hasControl = true; }
+    }
+    const o = { c: coords };
+    if (hasCustomSpeed) o.s = speeds;
+    if (hasNonElectrified) o.e = nonElectrified;
+    if (hasNonDefaultTrack) o.t = trackList;
+    if (hasFallback) o.f = fallbackIdx;
+    if (hasControl) o.ctrl = controlIdx;
+    return o;
+  }
+
   _decodeRoutes(routes) {
     if (!routes || !Array.isArray(routes)) return [];
     return routes.map(r => {
-      // New compact format: { c: [delta-encoded ints], s: [speeds] }
+      // New compact format: { c: [delta-encoded ints], optional s/e/t/f/ctrl }
       if (r && r.c && Array.isArray(r.c)) {
         const pts = [];
         let lat = 0, lon = 0;
+        const speedArr = r.s || [];
+        const elecSet = new Set(r.e || []);
+        const fallbackSet = new Set(r.f || []);
+        const controlSet = new Set(r.ctrl || []);
+        const trackMap = new Map((r.t || []).map(([idx, v]) => [idx, v]));
         for (let i = 0; i < r.c.length; i += 2) {
           if (i === 0) { lat = r.c[0]; lon = r.c[1]; }
           else { lat += r.c[i]; lon += r.c[i + 1]; }
-          // Annexe 3A — absence d'indication de vitesse → 30 km/h.
-          const pt = { lat: lat / 1e5, lon: lon / 1e5, maxSpeed: 30, electrified: true, tracks: 1 };
-          if (r.s && r.s[i / 2] !== undefined) pt.maxSpeed = r.s[i / 2];
+          const idx = i / 2;
+          const pt = {
+            lat: lat / 1e5, lon: lon / 1e5,
+            maxSpeed: undefined,
+            electrified: !elecSet.has(idx),
+            tracks: trackMap.get(idx) || 1,
+            fallback: fallbackSet.has(idx),
+            control: controlSet.has(idx),
+          };
+          if (speedArr[idx] != null && speedArr[idx] > 0) pt.maxSpeed = speedArr[idx];
           pts.push(pt);
         }
         return pts;
@@ -551,6 +547,7 @@ export class ScheduleCreator {
           position: d._r.pos || null,
           _adjustedStops: d._r.as ? d._r.as.map(s => ({
             stationId: s.si, type: s.t, departureTime: s.d, arrivalTime: s.a,
+            voiePointId: s.vp || null, platform: s.p || '', stopCode: s.sc || '',
           })) : null,
           _contractFreight: d._r.cf || 0,
           _contractDelivered: d._r.cd || 0,
@@ -595,7 +592,7 @@ export class ScheduleCreator {
         svc._iteDwellExtra = rt.iteDwellExtra || 0;
         if (rt._adjustedStops) {
           svc._adjustedStops = rt._adjustedStops.map(s => new ServiceStop(
-            s.stationId, s.type, s.departureTime, s.arrivalTime
+            s.stationId, s.type, s.departureTime, s.arrivalTime, s.voiePointId, s.platform, s.stopCode
           ));
         }
       }
@@ -718,8 +715,8 @@ export class ScheduleCreator {
       svc._contractFreight = d._runtime?._contractFreight || 0;
       svc._contractDelivered = d._runtime?._contractDelivered || 0;
       svc.revenueCollected = false;
-      // Clear multi-trip adjusted stops to use original schedule on reload
-      svc._adjustedStops = null;
+      // Preserve runtime adjusted stops if present; otherwise clear them.
+      if (svc._adjustedStops === undefined) svc._adjustedStops = null;
       svc._tripCount = 0;
       svc._atTerminus = false;
       svc._resetState();

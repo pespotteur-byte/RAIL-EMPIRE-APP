@@ -62,18 +62,23 @@ export const SchedulePlanner = {
   _getStopCoords(stop) {
       if (!stop) return null;
       const vpm = (typeof window !== 'undefined' && window.game?.voiePointManager) ? window.game.voiePointManager : null;
-      if (stop.voiePointId && vpm) {
-        const vp = vpm.getVoiePointById(stop.voiePointId);
-        if (vp) return { lat: vp.lat, lon: vp.lon };
-      }
       if (stop.stationId && this.world?.getStationById) {
         const st = this.world.getStationById(stop.stationId);
         if (!st) return null;
+        // Platform takes precedence over a stale voiePointId so user edits are honored.
         if (stop.platform && vpm?.getStationVoiePoint) {
           const svp = vpm.getStationVoiePoint(st.id, stop.platform);
           if (svp) return { lat: svp.lat, lon: svp.lon };
         }
+        if (stop.voiePointId && vpm) {
+          const vp = vpm.getVoiePointById(stop.voiePointId);
+          if (vp) return { lat: vp.lat, lon: vp.lon };
+        }
         return { lat: st.lat, lon: st.lon };
+      }
+      if (stop.voiePointId && vpm) {
+        const vp = vpm.getVoiePointById(stop.voiePointId);
+        if (vp) return { lat: vp.lat, lon: vp.lon };
       }
       return null;
     },
@@ -1120,13 +1125,17 @@ export const SchedulePlanner = {
           const origIdxPrev = fwdStops.length - 1 - revIdxPrev;
           const origIdxCurr = fwdStops.length - 1 - revIdxCurr;
           if (origIdxPrev >= 0 && origIdxCurr >= 0 && origIdxPrev < fwdStops.length && origIdxCurr < fwdStops.length) {
-            travelTime = Math.abs((fwdStops[origIdxPrev].departureTime || 0) - (fwdStops[origIdxCurr].arrivalTime || 0));
+            travelTime = Math.max(0, (fwdStops[origIdxPrev].arrivalTime || 0) - (fwdStops[origIdxCurr].departureTime || 0));
           }
           if (travelTime <= 0) travelTime = 15;
         }
 
         const arrTime = currentTime + travelTime;
-        const depTime = arrTime + (stop.type === 'arret' ? 2 : 0);
+        const isIntermediate = i > 0 && i < reversed.length - 1;
+        const dwell = (stop.type === 'arret' && isIntermediate)
+          ? Math.max(2, (stop.departureTime || 0) - (stop.arrivalTime || 0))
+          : 0;
+        const depTime = arrTime + dwell;
         currentTime = depTime;
 
         // Default: swap platform for return leg (voie 1 ↔ voie 2)
@@ -1142,7 +1151,12 @@ export const SchedulePlanner = {
           const n = parseInt(returnPlat, 10);
           returnPlat = String(n % 2 === 0 ? n - 1 : n + 1);
         }
-        const rs = new ServiceStop(stop.stationId, stop.type, depTime, arrTime, stop.voiePointId, returnPlat, stop.stopCode);
+        let returnVoiePointId = stop.voiePointId;
+        if (returnPlat && stop.stationId && window.game?.voiePointManager?.getStationVoiePoint) {
+          const svp = window.game.voiePointManager.getStationVoiePoint(stop.stationId, returnPlat);
+          if (svp) returnVoiePointId = svp.id;
+        }
+        const rs = new ServiceStop(stop.stationId, stop.type, depTime, arrTime, returnVoiePointId, returnPlat, stop.stopCode);
         return rs;
       });
     },

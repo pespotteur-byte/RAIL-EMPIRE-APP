@@ -982,16 +982,16 @@ export const TrainController = {
     },
 
     // SC-04 / remaster IV — any route point without a maxSpeed gets the nearest ORM
-    // speed, so 50 km/h-voie-stub and missing-tag segments don't slow the train.
-    _normalizeRouteSpeeds(route) {
+    // speed. If no ORM data is found, the default fallback is 30 km/h for manual
+    // or synthetic sections, unless explicitly overridden.
+    _normalizeRouteSpeeds(route, fallbackMaxSpeed = 30) {
       if (!route || route.length < 2) return;
       const orm = (typeof window !== 'undefined' && window.game?.orm) ? window.game.orm : null;
       const getNearest = orm?.getNearestWayMaxSpeed ? orm.getNearestWayMaxSpeed.bind(orm) : null;
-      const fallback = this._getRouteAverageMaxSpeed(route) || 160;
       for (let i = 0; i < route.length; i++) {
         if (route[i].maxSpeed == null || route[i].maxSpeed <= 0) {
           const nearest = getNearest ? getNearest(route[i].lat, route[i].lon, 0.5) : null;
-          route[i].maxSpeed = nearest ?? fallback;
+          route[i].maxSpeed = nearest ?? fallbackMaxSpeed;
         }
       }
     },
