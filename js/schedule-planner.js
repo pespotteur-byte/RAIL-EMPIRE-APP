@@ -322,28 +322,17 @@ export const SchedulePlanner = {
 
           // Position train at platform only once route is clear
           if (!this.position) {
-            const depStation = this.world?.getStationById(currentStops[0]?.stationId);
-            if (depStation) {
-              let posLat = depStation.lat, posLon = depStation.lon;
-              if (window.game?.voiePointManager) {
-                const s0 = currentStops[0];
-                if (s0?.voiePointId) {
-                  const vp = window.game.voiePointManager.getVoiePointById(s0.voiePointId);
-                  if (vp) { posLat = vp.lat; posLon = vp.lon; }
-                } else if (s0?.platform) {
-                  const svp = window.game.voiePointManager.getStationVoiePoint(depStation.id, s0.platform);
-                  if (svp) { posLat = svp.lat; posLon = svp.lon; }
-                }
-              }
-              this.position = { lat: posLat, lon: posLon };
-            }
+            const startCoords = this._getStopCoords(currentStops[0]);
+            if (startCoords) this.position = { lat: startCoords.lat, lon: startCoords.lon };
           }
 
           // Board passengers at departure station before moving
           if (economy) {
-            const firstStation = this.world?.getStationById(currentStops[0]?.stationId);
-            if (firstStation) {
-              economy.processStopRevenue(this, firstStation.name, 0, true, false);
+            const firstStop = currentStops[0];
+            const firstStation = firstStop?.stationId ? this.world?.getStationById(firstStop.stationId) : null;
+            const firstStationName = firstStation?.name || firstStop?.stationName || '';
+            if (firstStationName) {
+              economy.processStopRevenue(this, firstStationName, 0, true, false);
             }
           }
 
@@ -386,9 +375,10 @@ export const SchedulePlanner = {
             // Board passengers at departure station for return/multi-trip
             const curStops = this.getCurrentStops();
             if (economy && curStops[0]) {
-              const depStation = this.world?.getStationById(curStops[0].stationId);
-              if (depStation) {
-                economy.processStopRevenue(this, depStation.name, 0, true, false);
+              const depStation = curStops[0].stationId ? this.world?.getStationById(curStops[0].stationId) : null;
+              const depName = depStation?.name || curStops[0].stationName || '';
+              if (depName) {
+                economy.processStopRevenue(this, depName, 0, true, false);
               }
             }
             this._nextDepartureTime = null;
@@ -398,8 +388,8 @@ export const SchedulePlanner = {
             // Ensure position is set for multi-trip departure
             if (!this.position) {
               const curStops2 = this.getCurrentStops();
-              const depSt = this.world?.getStationById(curStops2[0]?.stationId);
-              if (depSt) this.position = { lat: depSt.lat, lon: depSt.lon };
+              const startCoords = this._getStopCoords(curStops2[0]);
+              if (startCoords) this.position = { lat: startCoords.lat, lon: startCoords.lon };
             }
             if (this.isReturnLeg) this._adjustedReturnStops = this._buildAdjustedStops(this.returnStops);
             else this._adjustedStops = this._buildAdjustedStops();
@@ -1038,20 +1028,11 @@ export const SchedulePlanner = {
         this._adjustedStops = this._rebuildStopsFromTime(this._nextDepartureTime);
         const s0 = this._adjustedStops?.[0] || this.stops?.[0] || null;
         if (s0 && this.world) {
-          const firstStation = this.world.getStationById(s0.stationId);
-          if (firstStation) {
-            let posLat = firstStation.lat, posLon = firstStation.lon;
-            if (window.game?.voiePointManager) {
-              if (s0.voiePointId) {
-                const vp = window.game.voiePointManager.getVoiePointById(s0.voiePointId);
-                if (vp) { posLat = vp.lat; posLon = vp.lon; }
-              } else if (s0.platform) {
-                const svp = window.game.voiePointManager.getStationVoiePoint(firstStation.id, s0.platform);
-                if (svp) { posLat = svp.lat; posLon = svp.lon; }
-              }
-            }
-            this.position = { lat: posLat, lon: posLon };
-            this.train.stoppedAt = firstStation;
+          const startCoords = this._getStopCoords(s0);
+          if (startCoords) {
+            this.position = { lat: startCoords.lat, lon: startCoords.lon };
+            const firstStation = s0.stationId ? this.world.getStationById(s0.stationId) : null;
+            this.train.stoppedAt = firstStation || { name: s0.stationName || 'Point de voie' };
           }
         }
         return;
