@@ -139,14 +139,22 @@ export function simulateProfileCumulative(segments, params = {}, queryDistancesM
   // 2) VIT-03 — shift each speed REDUCTION upstream by preBrakeMargin so the
   //    lower speed is reached before the slower zone, then run a backward
   //    braking pass so braking is always physically feasible.
-  const limit = cells.map(c => c.limitMs);
+  //    Use the original limits to find reductions, then clamp a separate limit
+  //    array, otherwise every newly-clamped cell looks like a new reduction and
+  //    the low speed cascades all the way back to the start of the run.
+  const origLimit = cells.map(c => c.limitMs);
+  const limit = origLimit.slice();
+  const reductions = [];
   for (let i = N - 1; i > 0; i--) {
-    if (limit[i] < limit[i - 1] - 1e-6) {
-      let acc = 0, j = i - 1;
-      while (j >= 0 && acc < preBrakeMarginM) {
-        if (limit[j] > limit[i]) limit[j] = limit[i];
-        acc += cells[j].ds; j--;
-      }
+    if (origLimit[i] < origLimit[i - 1] - 1e-6) reductions.push(i);
+  }
+  for (const r of reductions) {
+    const low = origLimit[r];
+    let acc = 0;
+    for (let j = r - 1; j >= 0; j--) {
+      if (acc >= preBrakeMarginM) break;
+      if (limit[j] > low) limit[j] = low;
+      acc += cells[j].ds;
     }
   }
   const vCap = limit.slice();
