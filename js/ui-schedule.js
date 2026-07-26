@@ -1,7 +1,7 @@
-import { haversineDistance } from './simulation.js?v=1784931691';
-import { incrementTrailingNumber } from './schedule-logic.js?v=1784931691';
-import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931691';
-import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931691';
+import { haversineDistance } from './simulation.js?v=1785109000';
+import { incrementTrailingNumber } from './schedule-logic.js?v=1785109000';
+import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1785109000';
+import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1785109000';
 
 export const UISchedule = {
   setupSchedulePage() {
@@ -57,6 +57,16 @@ export const UISchedule = {
         }
         this._updateManualUI();
       });
+
+      // Stop the schedule map refresh interval when the modal is closed from the UI.
+      const modalSchedule = document.getElementById('modal-schedule');
+      const closeBtn = modalSchedule?.querySelector('.modal-close');
+      if (closeBtn && !closeBtn._schedCloseBound) {
+        closeBtn._schedCloseBound = true;
+        closeBtn.addEventListener('click', () => {
+          if (this._schedMapInterval) { clearInterval(this._schedMapInterval); this._schedMapInterval = null; }
+        });
+      }
     },
 
   _stopDataToEditObj(s) {
@@ -177,7 +187,7 @@ export const UISchedule = {
       row.style.display = (type === 'fret' || (type === 'passager' && hasFreight)) ? 'flex' : 'none';
 
       const contracts = this.game.freightManager?.getAllActive() || [];
-      const opts = contracts.map(c => `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.from} → ${c.to} : ${c.cargoName} (${c.quantity}${c.unit}) — ${c.payment.toLocaleString()} €</option>`).join('');
+      const opts = contracts.map(c => `<option value="${escapeHtml(c.id || '')}" ${c.id === selectedId ? 'selected' : ''}>${escapeHtml(c.from || '')} → ${escapeHtml(c.to || '')} : ${escapeHtml(c.cargoName || '')} (${escapeHtml(c.quantity != null ? String(c.quantity) : '')}${escapeHtml(c.unit || '')}) — ${Number(c.payment || 0).toLocaleString()} €</option>`).join('');
       select.innerHTML = '<option value="">— Aucun contrat assigné —</option>' + opts;
     },
 
@@ -370,33 +380,43 @@ export const UISchedule = {
         }
 
         // Draw editable trace (SC-04 / remaster IV — points every 50 m).
-        // Tracé actuel en jaune, points de contrôle visibles.
         if (this._manualRoutes) {
           for (let leg = 0; leg < this._manualRoutes.length; leg++) {
             const route = this._manualRoutes[leg];
             if (!route || route.length < 2) continue;
 
-            // Yellow continuous line for the current trace
+            // Yellow continuous line for the current trace. On very long routes we
+            // decimate the visible line to a fixed number of points to keep the
+            // frame rate acceptable; the underlying route keeps its 50 m resolution.
+            const lineStep = Math.max(1, Math.floor(route.length / 300));
             ctx.strokeStyle = '#facc15';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            const p0 = tileMap.worldToScreen(route[0].lat, route[0].lon, canvas.width, canvas.height);
-            ctx.moveTo(p0.x, p0.y);
-            for (let i = 1; i < route.length; i++) {
+            let firstPt = true;
+            for (let i = 0; i < route.length; i += lineStep) {
               const pt = route[i];
               const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
-              ctx.lineTo(p.x, p.y);
+              if (firstPt) { ctx.moveTo(p.x, p.y); firstPt = false; }
+              else { ctx.lineTo(p.x, p.y); }
+            }
+            const lastIndex = route.length - 1;
+            if (lastIndex % lineStep !== 0) {
+              const pt = route[lastIndex];
+              const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
+              if (firstPt) ctx.moveTo(p.x, p.y);
+              else ctx.lineTo(p.x, p.y);
             }
             ctx.stroke();
 
             // Draw nodes with an adaptive spacing so they stay visible as individual
             // markers even on very long (50 km+) routes. The underlying route still
             // keeps its 50 m resolution; we just thin the visual markers when they
-            // would overlap on screen.
+            // would overlap on screen, and we skip points outside the viewport.
             const minNodeGapPx = 6;
             let lastDrawn = null;
             for (let i = 0; i < route.length; i++) {
               const pt = route[i];
+              if (pt.lat < vMinLat || pt.lat > vMaxLat || pt.lon < vMinLon || pt.lon > vMaxLon) continue;
               const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
               const isEnd = (i === 0 || i === route.length - 1);
               const isSelected = this._traceSelectedPoint && this._traceSelectedPoint.leg === leg && this._traceSelectedPoint.control === pt;
@@ -406,8 +426,8 @@ export const UISchedule = {
                 const dx = p.x - lastDrawn.x, dy = p.y - lastDrawn.y;
                 if (Math.sqrt(dx * dx + dy * dy) < minNodeGapPx) continue;
               }
-              ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#a5f3fc' : '#ffffff'));
-              const radius = isSelected ? 8 : (isEnd ? 6 : (isControl ? 6 : 4));
+              ctx.fillStyle = isSelected ? '#38bdf8' : (isEnd ? '#f59e0b' : (isControl ? '#06b6d4' : '#cbd5e1'));
+              const radius = isSelected ? 9 : (isEnd ? 6 : (isControl ? 7 : 3));
               ctx.beginPath();
               ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
               ctx.fill();
@@ -545,6 +565,33 @@ export const UISchedule = {
           }
         }
 
+        // 2) Trace-node interactions: left click selects/drags, right/Ctrl deletes a control
+        // or starts a retrace from a white/auto point. These take priority over stations/voie points.
+        const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
+        if (controlHit) {
+          const route = this._manualRoutes[controlHit.leg];
+          if (route) {
+            if (e.ctrlKey || e.button === 2) {
+              if (controlHit.control && controlHit.control.control) {
+                this._removeTraceControl(controlHit.leg, controlHit.control);
+              } else {
+                // White/auto point: promote to a real control and retrace from there.
+                if (!controlHit.control.control) controlHit.control.control = true;
+                this._startManualRetrace(controlHit.leg, controlHit.index);
+              }
+              this._traceSelectedPoint = null;
+            } else {
+              // Promote any grabbed trace point to a control so it can be edited.
+              if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
+              this._traceSelectedPoint = { leg: controlHit.leg, control: controlHit.control };
+              this._traceDragging = { leg: controlHit.leg, control: controlHit.control, startX: x, startY: y, moved: false };
+              requestDraw();
+            }
+          }
+          schedDrag = false; schedDragStart = null; totalDragDist = 0;
+          return;
+        }
+
         // Delete player-created voie point with Ctrl+click or right-click.
         if (e.ctrlKey || e.button === 2) {
           const delVp = this._findNearestPlayerVoiePoint(x, y, tileMap, canvas, 20);
@@ -559,23 +606,6 @@ export const UISchedule = {
         // Never start a map pan when clicking on a station or voie-point marker.
         // The mouseup handler will select the object instead.
         if (isNearStationOrVoie(x, y)) {
-          schedDrag = false; schedDragStart = null; totalDragDist = 0;
-          return;
-        }
-
-        // 2) Existing route control-point drag (works in manual mode too, so nodes can be edited at any time).
-        const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
-        if (controlHit) {
-          // Promote any grabbed trace point to a control so it can be edited.
-          if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
-          if (e.ctrlKey || e.button === 2) {
-            this._removeTraceControl(controlHit.leg, controlHit.control);
-            this._traceSelectedPoint = null;
-          } else {
-            this._traceSelectedPoint = { leg: controlHit.leg, control: controlHit.control };
-            this._traceDragging = { leg: controlHit.leg, control: controlHit.control, startX: x, startY: y, moved: false };
-            requestDraw();
-          }
           schedDrag = false; schedDragStart = null; totalDragDist = 0;
           return;
         }
@@ -813,12 +843,12 @@ export const UISchedule = {
         this._manualControlPoints = [];
         this._manualControlDrag = null;
         this._traceDragging = null;
-        const controlHit = this._findNearestControlPoint(x, y, tileMap, canvas);
-        if (controlHit) {
+        const traceHit = this._findNearestTracePoint(x, y, tileMap, canvas);
+        if (traceHit) {
           this._manualMode = true;
           // Promote the clicked point to a control so the retrace starts exactly there.
-          if (controlHit.control && !controlHit.control.control) controlHit.control.control = true;
-          this._startManualRetrace(controlHit.leg, controlHit.index);
+          if (traceHit.pt && !traceHit.pt.control) traceHit.pt.control = true;
+          this._startManualRetrace(traceHit.leg, traceHit.index);
         }
       };
 
@@ -860,6 +890,9 @@ export const UISchedule = {
     },
 
   _toggleManualMode() {
+      this._traceSelectedPoint = null;
+      this._traceDragging = null;
+      this._manualControlDrag = null;
       if (this._manualMode) {
         // cancel manual mode, keep control points? If no next stop yet, just exit
         this._manualMode = false;
@@ -942,8 +975,8 @@ export const UISchedule = {
         btn.style.background = '';
         btn.style.color = '';
         clear.classList.add('hidden');
-        const base = "Cliquer sur les gares/points de voie pour définir le trajet. Ctrl+clic ou clic droit sur un point de voie pour le supprimer.";
-        const editHint = hasTrace ? " Clic gauche sur un point blanc pour le déplacer, double-clic pour retracer depuis ce point, clic droit pour le supprimer, touche Suppr pour supprimer le point sélectionné." : '';
+        const base = "Cliquer sur les gares/points de voie pour ajouter des arrêts. Ctrl+clic ou clic droit sur un point de voie pour le supprimer.";
+        const editHint = hasTrace ? " Sur le tracé : clic gauche sur un point pour le déplacer, double-clic pour retracer depuis ce point, clic droit sur un point de contrôle (cyan) pour le supprimer ou sur un point blanc pour retracer le segment, touche Suppr pour supprimer le point sélectionné." : '';
         hint.textContent = base + editHint;
       }
     },
@@ -1024,9 +1057,16 @@ export const UISchedule = {
           returnPlat = String(n % 2 === 0 ? n - 1 : n + 1);
         }
         let returnVoiePointId = s.voiePointId || null;
+        let finalReturnPlat = returnPlat;
         if (returnPlat && s.stationId && this.game.voiePointManager) {
           const svp = this.game.voiePointManager.getStationVoiePoint(s.stationId, returnPlat);
-          if (svp) returnVoiePointId = svp.id;
+          if (svp) {
+            returnVoiePointId = svp.id;
+          } else {
+            // Fallback to the forward platform if the swapped one does not exist.
+            finalReturnPlat = s.platform || '';
+            returnVoiePointId = s.voiePointId || null;
+          }
         }
         out.push({
           stationId: s.stationId,
@@ -1038,7 +1078,7 @@ export const UISchedule = {
           depTimeMin: depTime,
           arrTimeStr: this.minToTimeStr(arrTime),
           depTimeStr: this.minToTimeStr(depTime),
-          platform: returnPlat,
+          platform: finalReturnPlat,
         });
       }
       return out;
@@ -1142,7 +1182,7 @@ export const UISchedule = {
       if (this._manualStartCoords) {
         const maxSpeed = this._manualStartCoords.maxSpeed || 30;
         const nearestMax = this._getNearestORMMaxSpeed(lat, lon, 0.5);
-        this._manualControlPoints.push({ lat, lon, maxSpeed: nearestMax ?? maxSpeed });
+        this._manualControlPoints.push({ lat, lon, maxSpeed: nearestMax ?? maxSpeed, control: true });
         if (this._drawSchedMap) this._drawSchedMap();
       }
     },
@@ -1166,26 +1206,26 @@ export const UISchedule = {
 
   _startManualRetrace(leg, routeIndex) {
       const route = this._manualRoutes[leg];
-      if (!route || route.length < 3) return;
-      let startIdx = routeIndex;
-      let endIdx = routeIndex;
-      // Find the previous control point (or start of route)
-      while (startIdx >= 0 && !route[startIdx]?.control) startIdx--;
-      if (startIdx < 0) startIdx = 0;
-      if (!route[startIdx].control) route[startIdx].control = true;
-      // Find the next control point (or end of route)
-      endIdx = startIdx + 1;
-      while (endIdx < route.length && !route[endIdx]?.control) endIdx++;
-      if (endIdx >= route.length) endIdx = route.length - 1;
-      if (!route[endIdx].control) route[endIdx].control = true;
-      if (startIdx >= endIdx) return;
+      if (!route || route.length < 3 || routeIndex < 0 || routeIndex >= route.length) return;
+      route[routeIndex].control = true;
+      // Find the previous control point (or start of route) and make sure it's flagged.
+      let prevIdx = routeIndex - 1;
+      while (prevIdx >= 0 && !route[prevIdx]?.control) prevIdx--;
+      if (prevIdx < 0) prevIdx = 0;
+      if (!route[prevIdx].control) route[prevIdx].control = true;
+      // Find the next control point (or end of route) and make sure it's flagged.
+      let nextIdx = routeIndex + 1;
+      while (nextIdx < route.length && !route[nextIdx]?.control) nextIdx++;
+      if (nextIdx >= route.length) nextIdx = route.length - 1;
+      if (!route[nextIdx].control) route[nextIdx].control = true;
+      if (routeIndex >= nextIdx) return;
       this._manualMode = true;
       this._manualRetraceLeg = leg;
-      this._manualStartCoords = route[startIdx];
-      this._manualEndCoords = route[endIdx];
+      this._manualStartCoords = route[routeIndex];
+      this._manualEndCoords = route[nextIdx];
       this._manualControlPoints = [];
       // Strip the old segment between the fixed controls; it will be redrawn by hand.
-      this._manualRoutes[leg] = [...route.slice(0, startIdx + 1), ...route.slice(endIdx)];
+      this._manualRoutes[leg] = [...route.slice(0, routeIndex + 1), ...route.slice(nextIdx)];
       this._updateManualUI();
       if (this._drawSchedMap) this._drawSchedMap();
     },
@@ -1557,7 +1597,7 @@ export const UISchedule = {
         const arrCell = stop.type === 'waypoint' || stop.type === 'passage' || !isFirst
           ? `<input type="text" value="${escapeHtml(stop.arrTimeStr)}" placeholder="${stop.type === 'waypoint' ? 'Via' : 'Arr'}" title="Heure ${stop.type === 'waypoint' ? 'de passage' : 'd\'arrivée'}" onchange="game.ui.updateSchedStop(${i}, 'arrTime', this.value)">`
           : '';
-        const depCell = (stop.type === 'arret' || stop.type === 'passage') && !isLast
+        const depCell = (stop.type === 'arret') && !isLast
           ? `<input type="text" value="${escapeHtml(stop.depTimeStr || stop.arrTimeStr)}" placeholder="Dép" title="Heure de départ" onchange="game.ui.updateSchedStop(${i}, 'depTime', this.value)">`
           : '';
         const dwellCell = (stop.type === 'arret' && !isFirst && !isLast)
@@ -1727,25 +1767,28 @@ export const UISchedule = {
       const stop = this.schedStops[index];
       if (field === 'type') {
         stop.type = value;
-        if (index === 0 || value === 'passage' || value === 'waypoint') {
-          // First stop / passage / waypoint: departure equals arrival.
+        if (value === 'passage' || value === 'waypoint') {
+          // Passage / waypoint: no dwell, departure equals arrival.
           stop.depTimeMin = stop.arrTimeMin;
           stop.depTimeStr = stop.arrTimeStr;
-        } else if (stop.depTimeMin <= stop.arrTimeMin) {
-          stop.depTimeMin = stop.arrTimeMin;
-          stop.depTimeStr = stop.arrTimeStr;
+        } else if (stop.depTimeMin < stop.arrTimeMin) {
+          // arret: keep a meaningful dwell (preserve the existing one, otherwise 0).
+          const oldDwell = Math.max(0, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0));
+          stop.depTimeMin = stop.arrTimeMin + oldDwell;
+          stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
         }
       }
       if (field === 'arrTime') {
         const parsed = this.timeStrToMin(value);
         if (Number.isFinite(parsed)) {
+          const oldDwell = Math.max(0, (stop.depTimeMin || 0) - (stop.arrTimeMin || 0));
           stop.arrTimeStr = value;
           stop.arrTimeMin = parsed;
-          if (stop.type === 'passage') {
+          if (stop.type === 'passage' || stop.type === 'waypoint') {
             stop.depTimeMin = stop.arrTimeMin;
             stop.depTimeStr = stop.arrTimeStr;
-          } else if (stop.depTimeMin < stop.arrTimeMin) {
-            stop.depTimeMin = stop.arrTimeMin + 2;
+          } else {
+            stop.depTimeMin = stop.arrTimeMin + oldDwell;
             stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
           }
         }
@@ -1759,9 +1802,14 @@ export const UISchedule = {
           if (index === 0) {
             stop.arrTimeMin = parsed;
             stop.arrTimeStr = value;
-          } else if (stop.type !== 'passage' && stop.type !== 'waypoint' && stop.depTimeMin < stop.arrTimeMin) {
-            stop.depTimeMin = stop.arrTimeMin + 2;
-            stop.depTimeStr = this.minToTimeStr(stop.depTimeMin);
+          } else if (stop.type === 'passage' || stop.type === 'waypoint') {
+            // Passage/waypoint always have dep = arr.
+            stop.arrTimeMin = parsed;
+            stop.arrTimeStr = value;
+          } else if (stop.depTimeMin < stop.arrTimeMin) {
+            // Cannot depart before arriving.
+            stop.depTimeMin = stop.arrTimeMin;
+            stop.depTimeStr = stop.arrTimeStr;
           }
         }
       }
@@ -1847,14 +1895,22 @@ export const UISchedule = {
       if (!vpm) return null;
       let best = null, bestDist = Infinity;
       const cosLat = Math.cos(lat * Math.PI / 180);
+      const maxSnapDistKm = 0.2;
+      const marginDeg = 0.02;
       for (const trc of vpm.getAllTroncons()) {
-        if (!trc.route) continue;
+        if (!trc.route || trc.route.length < 2) continue;
+        const r0 = trc.route[0], rL = trc.route[trc.route.length - 1];
+        const minLat = Math.min(r0.lat, rL.lat) - marginDeg;
+        const maxLat = Math.max(r0.lat, rL.lat) + marginDeg;
+        const minLon = Math.min(r0.lon, rL.lon) - marginDeg;
+        const maxLon = Math.max(r0.lon, rL.lon) + marginDeg;
+        if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon) continue;
         for (const pt of trc.route) {
           const d = Math.sqrt(Math.pow((pt.lat - lat) * 111, 2) + Math.pow((pt.lon - lon) * 111 * cosLat, 2));
           if (d < bestDist) { bestDist = d; best = { lat: pt.lat, lon: pt.lon }; }
         }
       }
-      return (best && bestDist <= 5) ? best : null;
+      return (best && bestDist <= maxSnapDistKm) ? best : null;
     },
 
   _densifyRoute(route, spacingKm = 0.05) {
@@ -1913,30 +1969,45 @@ export const UISchedule = {
       return this._densifyRoute(route, spacingKm);
     },
 
+  _getSchedViewportBounds(tileMap, canvas) {
+      const tl = tileMap.screenToWorld(0, 0, canvas.width, canvas.height);
+      const br = tileMap.screenToWorld(canvas.width, canvas.height, canvas.width, canvas.height);
+      return {
+        vMinLat: Math.min(tl.lat, br.lat) - 0.02,
+        vMaxLat: Math.max(tl.lat, br.lat) + 0.02,
+        vMinLon: Math.min(tl.lon, br.lon) - 0.02,
+        vMaxLon: Math.max(tl.lon, br.lon) + 0.02,
+      };
+    },
+
   _findNearestTracePoint(x, y, tileMap, canvas) {
       if (!this._manualRoutes || this._manualRoutes.length === 0) return null;
+      const { vMinLat, vMaxLat, vMinLon, vMaxLon } = this._getSchedViewportBounds(tileMap, canvas);
       let best = null, bestDist = Infinity;
       for (let leg = 0; leg < this._manualRoutes.length; leg++) {
         const route = this._manualRoutes[leg];
         if (!route) continue;
         for (let i = 0; i < route.length; i++) {
           const pt = route[i];
+          if (pt.lat < vMinLat || pt.lat > vMaxLat || pt.lon < vMinLon || pt.lon > vMaxLon) continue;
           const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
           const d = Math.hypot(p.x - x, p.y - y);
           if (d < bestDist) { bestDist = d; best = { leg, index: i, pt }; }
         }
       }
-      return bestDist <= 10 ? best : null;
+      return bestDist <= 12 ? best : null;
     },
 
   _findNearestControlPoint(x, y, tileMap, canvas) {
       if (!this._manualRoutes || this._manualRoutes.length === 0) return null;
+      const { vMinLat, vMaxLat, vMinLon, vMaxLon } = this._getSchedViewportBounds(tileMap, canvas);
       let best = null, bestDist = Infinity, bestLeg = -1, bestIdx = -1;
       for (let leg = 0; leg < this._manualRoutes.length; leg++) {
         const route = this._manualRoutes[leg];
         if (!route || route.length < 3) continue;
         for (let i = 1; i < route.length - 1; i++) {
           const pt = route[i];
+          if (pt.lat < vMinLat || pt.lat > vMaxLat || pt.lon < vMinLon || pt.lon > vMaxLon) continue;
           const p = tileMap.worldToScreen(pt.lat, pt.lon, canvas.width, canvas.height);
           const d = Math.hypot(p.x - x, p.y - y);
           if (d < bestDist) { bestDist = d; best = pt; bestLeg = leg; bestIdx = i; }
@@ -1947,18 +2018,22 @@ export const UISchedule = {
 
   _findNearestSegmentPoint(x, y, tileMap, canvas) {
       if (!this._manualRoutes || this._manualRoutes.length === 0) return null;
+      const { vMinLat, vMaxLat, vMinLon, vMaxLon } = this._getSchedViewportBounds(tileMap, canvas);
       let best = null, bestDist = Infinity;
       for (let leg = 0; leg < this._manualRoutes.length; leg++) {
         const route = this._manualRoutes[leg];
         if (!route || route.length < 2) continue;
         for (let i = 0; i < route.length - 1; i++) {
-          const a = tileMap.worldToScreen(route[i].lat, route[i].lon, canvas.width, canvas.height);
-          const b = tileMap.worldToScreen(route[i + 1].lat, route[i + 1].lon, canvas.width, canvas.height);
-          const abx = b.x - a.x, aby = b.y - a.y;
+          const a = route[i], b = route[i + 1];
+          if ((a.lat < vMinLat && b.lat < vMinLat) || (a.lat > vMaxLat && b.lat > vMaxLat) ||
+              (a.lon < vMinLon && b.lon < vMinLon) || (a.lon > vMaxLon && b.lon > vMaxLon)) continue;
+          const ap = tileMap.worldToScreen(a.lat, a.lon, canvas.width, canvas.height);
+          const bp = tileMap.worldToScreen(b.lat, b.lon, canvas.width, canvas.height);
+          const abx = bp.x - ap.x, aby = bp.y - ap.y;
           const len2 = abx * abx + aby * aby;
-          let t = len2 > 0 ? ((x - a.x) * abx + (y - a.y) * aby) / len2 : 0;
+          let t = len2 > 0 ? ((x - ap.x) * abx + (y - ap.y) * aby) / len2 : 0;
           t = Math.max(0, Math.min(1, t));
-          const px = a.x + abx * t, py = a.y + aby * t;
+          const px = ap.x + abx * t, py = ap.y + aby * t;
           const d = Math.hypot(px - x, py - y);
           if (d < bestDist) {
             bestDist = d;
@@ -2141,7 +2216,7 @@ export const UISchedule = {
         // fall through to direct synthetic
       }
 
-      // Last-resort direct route: keep it visible and give it the nearest ORM speed.
+      // Last-resort direct route: keep it visible and give it a sensible fallback speed.
       const dist = this.game.orm ? this.game.orm.getRouteDistance([ca, cb]) : 0;
       const steps = Math.max(2, Math.ceil((dist || 0) / 0.05));
       const synthetic = [];
@@ -2153,7 +2228,10 @@ export const UISchedule = {
           maxSpeed: undefined, fallback: true
         });
       }
-      this._normalizeRouteSpeeds(synthetic, 30);
+      const rameId2 = document.getElementById('sched-rame')?.value;
+      const rame2 = rameId2 ? this.game.rameManager.getById(rameId2) : null;
+      const syntheticFallback = rame2 ? Math.min(rame2.maxSpeed || 160, 160) : 160;
+      this._normalizeRouteSpeeds(synthetic, syntheticFallback);
       return synthetic;
     },
 
@@ -2498,11 +2576,6 @@ export const UISchedule = {
       for (const route of forwardRoutes) totalDist += this.game.orm.getRouteDistance(route);
       for (const route of returnRoutes) totalDist += this.game.orm.getRouteDistance(route);
 
-      // If editing, remove old service first
-      if (this._editingScheduleId) {
-        this.game.scheduleCreator.removeService(this._editingScheduleId);
-      }
-
       const serviceType = document.getElementById('sched-service-type')?.value || 'passager';
       const isWorkTrain = serviceType === 'work';
 
@@ -2555,14 +2628,25 @@ export const UISchedule = {
       const oneRoundTrip = roundTrip ? (oneWayMin + returnMin + terminusWait * 2) : 0;
 
       // SC-05 — create a single base service, then generate real duplicates for Auto 24h.
-      const baseService = this.game.scheduleCreator.addService({
-        name, rameId, stops, routes: forwardRoutes, returnStops: returnStopsData, returnRoutes,
-        roundTrip, multiDepartures: 1, terminusWait,
-        totalDistance: 0, plannedDistance: Math.round(totalDist),
-        serviceType, isWorkTrain, assignedContractId, returnName, returnPlatforms,
-        runDays, runDates,
-      }, rame, this.game.world);
-      if (roundTrip && multiDepartures > 1) {
+      let baseService;
+      try {
+        baseService = this.game.scheduleCreator.addService({
+          name, rameId, stops, routes: forwardRoutes, returnStops: returnStopsData, returnRoutes,
+          roundTrip, multiDepartures: 1, terminusWait,
+          totalDistance: 0, plannedDistance: Math.round(totalDist),
+          serviceType, isWorkTrain, assignedContractId, returnName, returnPlatforms,
+          runDays, runDates,
+        }, rame, this.game.world);
+      } catch (err) {
+        return alertToast('Erreur lors de la création du service : ' + (err.message || err));
+      }
+
+      // Only remove the old service once the new one has been created successfully.
+      if (baseService && this._editingScheduleId) {
+        this.game.scheduleCreator.removeService(this._editingScheduleId);
+      }
+
+      if (roundTrip && multiDepartures > 1 && baseService) {
         this.game.scheduleCreator.createAutoRoundTripDuplicates(
           baseService, multiDepartures, oneRoundTrip, rame, this.game.world
         );
@@ -2635,7 +2719,7 @@ export const UISchedule = {
       const pageItems = sorted.slice(start, start + perPage);
 
       const dayNames = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
-      const typeLabels = { passager: 'Voy', w: 'W', hlp: 'HLP', tm: 'TM', evo: 'EVO', work: 'Travaux' };
+      const typeLabels = { passager: 'Voy', fret: 'Fret', w: 'W', hlp: 'HLP', tm: 'TM', evo: 'EVO', work: 'Travaux' };
 
       const rows = pageItems.map(svc => {
         const firstSt = this.game.world.getStationById(svc.stops[0]?.stationId);
