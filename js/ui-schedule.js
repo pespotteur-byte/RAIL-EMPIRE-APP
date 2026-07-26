@@ -534,6 +534,17 @@ export const UISchedule = {
           }
         }
 
+        // Delete player-created voie point with Ctrl+click or right-click.
+        if (e.ctrlKey || e.button === 2) {
+          const delVp = this._findNearestPlayerVoiePoint(x, y, tileMap, canvas, 14);
+          if (delVp) {
+            this._deletePlayerVoiePoint(delVp);
+            schedDrag = false; schedDragStart = null; totalDragDist = 0;
+            requestDraw();
+            return;
+          }
+        }
+
         // Never start a map pan when clicking on a station or voie-point marker.
         // The mouseup handler will select the object instead.
         if (isNearStationOrVoie(x, y)) {
@@ -907,7 +918,7 @@ export const UISchedule = {
         } else {
           btn.textContent = hasStart ? 'Terminer (cliquer gare/point)' : 'Choisir le départ';
           hint.textContent = hasStart
-            ? 'Mode manuel actif — cliquez pour poser des points, gare/point de voie pour terminer ce segment.'
+            ? 'Mode manuel actif — cliquez pour poser des points exactement sous le curseur, gare/point de voie pour terminer ce segment.'
             : 'Mode manuel — cliquez sur la gare ou le point de voie de départ (comme sur la livemap).';
         }
         btn.style.background = '#3b82f6';
@@ -918,7 +929,7 @@ export const UISchedule = {
         btn.style.background = '';
         btn.style.color = '';
         clear.classList.add('hidden');
-        const base = "Cliquer sur les gares de la carte pour définir le trajet. Les horaires sont calculés automatiquement depuis les données ORM et la rame.";
+        const base = "Cliquer sur les gares/points de voie pour définir le trajet. Ctrl+clic ou clic droit sur un point de voie pour le supprimer.";
         const editHint = hasTrace ? " Attrapez un point blanc pour déplacer le tracé, Shift+clic sur un segment pour ajouter un point, Ctrl+clic pour supprimer." : '';
         hint.textContent = base + editHint;
       }
@@ -1110,11 +1121,8 @@ export const UISchedule = {
   _addManualPoint(lat, lon) {
       if (this._manualStartCoords) {
         const maxSpeed = this._manualStartCoords.maxSpeed || 30;
-        const snapped = this._snapToTrack(lat, lon);
-        const ptLat = snapped ? snapped.lat : lat;
-        const ptLon = snapped ? snapped.lon : lon;
-        const nearestMax = this._getNearestORMMaxSpeed(ptLat, ptLon, 0.5);
-        this._manualControlPoints.push({ lat: ptLat, lon: ptLon, maxSpeed: nearestMax ?? maxSpeed });
+        const nearestMax = this._getNearestORMMaxSpeed(lat, lon, 0.5);
+        this._manualControlPoints.push({ lat, lon, maxSpeed: nearestMax ?? maxSpeed });
         if (this._drawSchedMap) this._drawSchedMap();
       }
     },
@@ -2026,10 +2034,9 @@ export const UISchedule = {
   _moveManualControlPoint(index, lat, lon) {
       const pt = this._manualControlPoints[index];
       if (!pt) return;
-      const snapped = this._snapToTrack(lat, lon);
-      pt.lat = snapped ? snapped.lat : lat;
-      pt.lon = snapped ? snapped.lon : lon;
-      const nearestMax = this._getNearestORMMaxSpeed(pt.lat, pt.lon, 0.5);
+      pt.lat = lat;
+      pt.lon = lon;
+      const nearestMax = this._getNearestORMMaxSpeed(lat, lon, 0.5);
       pt.maxSpeed = nearestMax ?? pt.maxSpeed ?? 30;
     },
 
@@ -2791,6 +2798,26 @@ export const UISchedule = {
       const vpm = this.game?.voiePointManager;
       if (!vpm) return [];
       return vpm.getAll().filter(vp => !vp.linePoint);
+    },
+
+  _findNearestPlayerVoiePoint(x, y, tileMap, canvas, threshold = 14) {
+      let best = null, bestDist = Infinity;
+      for (const vp of this.getPlayerVoiePoints()) {
+        const p = tileMap.worldToScreen(vp.lat, vp.lon, canvas.width, canvas.height);
+        const d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestDist) { bestDist = d; best = vp; }
+      }
+      return (best && bestDist <= threshold) ? best : null;
+    },
+
+  _deletePlayerVoiePoint(vp) {
+      if (!vp || !this.game?.voiePointManager) return;
+      this.game.voiePointManager.removeVoiePoint(vp.id);
+      // Detach from any schedule stop that used it.
+      for (const stop of this.schedStops || []) {
+        if (stop.voiePointId === vp.id) stop.voiePointId = null;
+      }
+      this.game.saveState();
     },
 
   deleteSchedule(id) {
