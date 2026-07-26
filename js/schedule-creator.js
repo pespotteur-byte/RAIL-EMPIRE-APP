@@ -496,7 +496,7 @@ export class ScheduleCreator {
           const idx = i / 2;
           const pt = {
             lat: lat / 1e5, lon: lon / 1e5,
-            maxSpeed: undefined,
+            maxSpeed: 160,
             electrified: !elecSet.has(idx),
             tracks: trackMap.get(idx) || 1,
             fallback: fallbackSet.has(idx),

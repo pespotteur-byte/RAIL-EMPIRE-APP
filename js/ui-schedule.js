@@ -1646,7 +1646,7 @@ export const UISchedule = {
       if (!allerEl || !retourEl) return;
 
       const fmt = (t) => this.minToTimeStr(((Math.round(t) % 1440) + 1440) % 1440);
-      const row = (name, time, cls = '') => `<div class="ss-row ${cls}"><span class="ss-name">${escapeHtml(name)}</span><span class="ss-time">${time}</span></div>`;
+      const row = (name, time, cls = '') => `<div class="ss-row ${cls}"><span class="ss-name">${escapeHtml(name)}</span> <span class="ss-time">${time}</span></div>`;
 
       const allerRows = this.schedStops.map((stop, i) => {
         const isFirst = i === 0;
@@ -1655,7 +1655,7 @@ export const UISchedule = {
         if (stop.type === 'waypoint') t = `Pass ${fmt(stop.arrTimeMin || 0)}`;
         else if (isFirst) t = `Dép ${fmt(stop.depTimeMin || 0)}`;
         else if (isLast) t = `Arr ${fmt(stop.arrTimeMin || 0)}`;
-        else t = `${fmt(stop.arrTimeMin || 0)}-${fmt(stop.depTimeMin || 0)}`;
+        else t = `${fmt(stop.arrTimeMin || 0)} - ${fmt(stop.depTimeMin || 0)}`;
         return row(stop.stationName || '?', t);
       }).join('');
       allerEl.innerHTML = allerRows || '—';
@@ -1689,7 +1689,7 @@ export const UISchedule = {
         if (stop.type === 'waypoint') t = `Pass ${fmt(rt.arr)}`;
         else if (isFirst) t = `Dép ${fmt(rt.dep)}`;
         else if (isLast) t = `Arr ${fmt(rt.arr)}`;
-        else t = `${fmt(rt.arr)}-${fmt(rt.dep)}`;
+        else t = `${fmt(rt.arr)} - ${fmt(rt.dep)}`;
         return row(stop.stationName || '?', t);
       }).join('');
       retourEl.innerHTML = retourRows || '—';

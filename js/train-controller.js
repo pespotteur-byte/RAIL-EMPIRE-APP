@@ -961,7 +961,7 @@ export const TrainController = {
       if (!route || route.length < 2) return null;
       route = route.map(p => ({ ...p }));
       this._clampRouteToStops(route, startStop, endStop);
-      this._normalizeRouteSpeeds(route);
+      this._normalizeRouteSpeeds(route, this.rame?.maxSpeed || 160);
       return route;
     },
 

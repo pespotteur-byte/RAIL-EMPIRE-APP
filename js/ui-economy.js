@@ -749,7 +749,7 @@ export const UIEconomy = {
           const actualStr = fmtTime(actualArr);
           const distStr = nextDistKm != null ? ` — ${Math.round(nextDistKm)} km` : '';
           const arrStr = delayVal !== 0
-            ? `<span style="text-decoration:line-through;color:#888">${plannedStr}</span> <span style="color:#facc15;font-weight:600">${actualStr}</span>`
+            ? `<span style="text-decoration:line-through;color:#888">${plannedStr}</span> <span style="color:#facc15;font-weight:600">→ ${actualStr}</span>`
             : actualStr;
           nextInfo = `Prochain arrêt : ${escapeHtml(nextArretStation.name)}${voie} — Arrivée prévue à ${arrStr}${distStr}`;
         } else if (nextStop) {

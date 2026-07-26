@@ -131,9 +131,14 @@ export class RameManager {
     }));
   }
 
-  loadFromSave(arr) {
+  loadFromSave(arr, rollingStock = null) {
     this.rames = [];
+    const catalog = rollingStock || (typeof window !== 'undefined' && window.game?.rollingStock ? window.game.rollingStock : null);
     for (const d of arr) {
+      if (catalog && d.elements) {
+        const ids = Array.isArray(d.elements) ? d.elements : [d.elements];
+        d.elementDetails = ids.map(id => catalog.getById(id)).filter(Boolean);
+      }
       this.rames.push(new Rame(d));
       const num = parseInt(d.id?.split('-')[1] || '0');
       if (num >= nextRameId) nextRameId = num + 1;

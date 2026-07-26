@@ -735,7 +735,7 @@ class RailEmpire {
     if (s.economy) this.economy.loadFromSave(s.economy);
     if (s.world) this.world.loadFromSave(s.world);
     if (s.rollingStock) this.rollingStock.loadFromSave(s.rollingStock);
-    if (s.rames) this.rameManager.loadFromSave(s.rames);
+    if (s.rames) this.rameManager.loadFromSave(s.rames, this.rollingStock);
     if (s.schedules) this.scheduleCreator.loadFromSave(s.schedules, this.rameManager, this.world, loadTimeMin, loadDateStr);
     if (s.depots) this.depotManager.loadFromSave(s.depots);
     if (s.activeIncidents) this.incidentManager.loadFromSave(s.activeIncidents, this.world);
