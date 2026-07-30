@@ -16,8 +16,8 @@ const OVERPASS_URLS = [
 
 const DB_NAME = 'rail-empire-orm';
 const DB_STORE = 'areas';
-const DB_VERSION = 2; // keep stable; _effectiveSpeed migrates old cached maxspeed values
-const ORM_CACHE_VERSION = 2; // _effectiveSpeed handles missing maxSpeedExplicit flag
+const DB_VERSION = 3; // bump to invalidate cached empty/narrow Overpass results
+const ORM_CACHE_VERSION = 3; // _effectiveSpeed handles missing maxSpeedExplicit flag
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep cached areas for 7 days
 
 // TL-XX numbering for imported line points (vacuum tracer ligne)
@@ -299,6 +299,7 @@ export class ORMClient {
           this._graphDirty = true;
           this._loadedBboxes.push({ south, west, north, east, key });
 
+          if (ways.length === 0) return ways; // don't cache empty results, allow retry later
           this.areaCache.set(key, ways);
           await this._saveCachedArea(key, { bbox: { south, west, north, east }, ways, stations });
           return ways;
@@ -1021,7 +1022,7 @@ export class ORMClient {
     const east = Math.max(fromLon, toLon) + padding;
 
     const allWays = await this.fetchArea(south, west, north, east);
-    if (allWays.length === 0) return { voiePoints: [], troncons: [] };
+    if (allWays.length === 0) return { voiePoints: [], troncons: [], stations: [] };
 
     // VACUUM MODE — Tracer ligne absorbs every railway way in the fetched area.
     if (opts?.vacuum) {
@@ -1084,7 +1085,7 @@ export class ORMClient {
     // Snap A/B to existing node or project onto nearest way segment (and split it)
     const startSnap = this._snapAndSplitLocalWay(allWays, fromLat, fromLon, 5);
     const endSnap = this._snapAndSplitLocalWay(allWays, toLat, toLon, 5);
-    if (!startSnap || !endSnap) return { voiePoints: [], troncons: [] };
+    if (!startSnap || !endSnap) return { voiePoints: [], troncons: [], stations: [] };
 
     // Node-level adjacency for junction detection
     const nodes = new Map();
