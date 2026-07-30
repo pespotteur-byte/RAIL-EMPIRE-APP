@@ -51,6 +51,14 @@ _state = {}
 _db_pool = None
 _s3 = None
 
+OVERPASS_URLS = [
+    "https://overpass.openstreetmap.fr/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.osm.ch/api/interpreter",
+]
+_http_client = httpx.AsyncClient(timeout=httpx.Timeout(60.0))
+
 
 def hash_password(password: str) -> str:
     return pwd_ctx.hash(password)
@@ -230,6 +238,7 @@ async def lifespan(app: FastAPI):
     yield
     if _db_pool:
         await _db_pool.close()
+    await _http_client.aclose()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -254,6 +263,46 @@ async def healthz():
         except Exception:
             pass
     return {"status": "ok", "db": db_ok, "trains": len(_state)}
+
+
+@app.post("/api/overpass")
+async def overpass_proxy(request: Request):
+    """Proxy Overpass API queries from the frontend.
+
+    Solves two problems at once:
+    - Browser CORS restrictions on some Overpass mirrors.
+    - Network blocks that prevent the client from reaching Overpass directly.
+    """
+    try:
+        body = await request.body()
+        text = body.decode("utf-8")
+        if not text.startswith("data="):
+            raise HTTPException(status_code=400, detail="Missing data parameter")
+
+        last_error = None
+        for url in OVERPASS_URLS:
+            try:
+                resp = await _http_client.post(
+                    url,
+                    content=text,
+                    headers={
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "User-Agent": "curl/7.81.0",
+                    },
+                    timeout=httpx.Timeout(60.0),
+                )
+                if resp.status_code == 200:
+                    return Response(content=resp.content, media_type="application/json")
+                if resp.status_code == 429:
+                    continue
+                last_error = f"{url} returned {resp.status_code}"
+            except Exception as e:
+                last_error = str(e)
+        raise HTTPException(status_code=503, detail=f"Overpass unavailable: {last_error}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/auth/register")

@@ -4,6 +4,9 @@
 import { segmentsFromRoute, simulateProfile, simulateProfileCumulative } from './train-physics.js?v=1784931691';
 
 const OVERPASS_URLS = [
+  // Local backend proxy: bypasses browser CORS/network restrictions.
+  '/api/overpass',
+  // Direct mirrors as fallback.
   'https://overpass.openstreetmap.fr/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
