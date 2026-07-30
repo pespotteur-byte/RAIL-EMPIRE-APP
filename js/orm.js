@@ -1015,7 +1015,7 @@ export class ORMClient {
 
   async importInfrastructure(fromLat, fromLon, toLat, toLon, opts = null) {
     const distKm = haversine(fromLat, fromLon, toLat, toLon);
-    const padding = Math.max(0.03, Math.min(distKm * 0.01 + 0.02, 0.6));
+    const padding = Math.max(0.03, Math.min(distKm * 0.01 + 0.02, 0.15));
     const south = Math.min(fromLat, toLat) - padding;
     const north = Math.max(fromLat, toLat) + padding;
     const west = Math.min(fromLon, toLon) - padding;

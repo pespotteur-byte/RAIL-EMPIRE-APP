@@ -1239,25 +1239,34 @@ class RailEmpire {
 }
 
 // Global error handler: try to save the latest state before the page dies.
+function emergencySave() {
+  if (!window.game?.storage || !window.game?.saveState) return;
+  try {
+    const state = window.game.saveState();
+    window.game.storage.saveGameSync(state);
+    // Also fire a remote beacon (fire-and-forget, works on unload and avoids
+    // localStorage quota limits for large states).
+    try {
+      const json = JSON.stringify(state);
+      const blob = new Blob([json], { type: 'application/json' });
+      navigator.sendBeacon('/save/' + window.game.storage.remoteKey, blob);
+    } catch (_) {}
+  } catch (_) {}
+}
+
 window.addEventListener('error', (e) => {
   console.error('Uncaught error:', e.error);
-  if (window.game?.storage && window.game?.saveState) {
-    try { window.game.storage.saveGameSync(window.game.saveState()); } catch (_) {}
-  }
+  emergencySave();
   e.preventDefault();
 });
 window.addEventListener('unhandledrejection', (e) => {
   console.error('Unhandled rejection:', e.reason);
-  if (window.game?.storage && window.game?.saveState) {
-    try { window.game.storage.saveGameSync(window.game.saveState()); } catch (_) {}
-  }
+  emergencySave();
   e.preventDefault();
 });
 
 window.addEventListener('beforeunload', () => {
-  if (window.game?.storage && window.game?.saveState) {
-    try { window.game.storage.saveGameSync(window.game.saveState()); } catch (_) {}
-  }
+  emergencySave();
 });
 
 window.game = new RailEmpire();
