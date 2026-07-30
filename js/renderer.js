@@ -1016,27 +1016,26 @@ export class Renderer {
 
   drawVoiePoints(ctx, voiePointManager) {
     for (const vp of voiePointManager.getAll()) {
+      // Affiche uniquement les points de voie créés par le joueur (pas les points générés automatiquement par le jeu).
+      if (vp.linePoint) continue;
       const p = this.latLonToScreen(vp.lat, vp.lon);
       if (p.x < -20 || p.x > this.logicalWidth + 20 || p.y < -20 || p.y > this.logicalHeight + 20) continue;
 
       const isStationVP = !!vp.stationId;
       const isOccupied = !!vp.occupiedBy;
-      const isLinePoint = !!vp.linePoint;
-      // Line points only visible at high zoom
-      if (isLinePoint && this.tileMap.zoomLevel < 11) continue;
-      const size = isStationVP ? 3 : (isLinePoint ? 1.5 : 2.5);
+      const size = isStationVP ? 3 : 2.5;
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = isOccupied ? '#ef4444' : (isStationVP ? '#1e40af' : (isLinePoint ? '#334155' : '#0f172a'));
+      ctx.fillStyle = isOccupied ? '#ef4444' : (isStationVP ? '#1e40af' : '#0f172a');
       ctx.fillRect(-size, -size, size * 2, size * 2);
-      ctx.strokeStyle = isLinePoint ? '#64748b' : '#ffffff';
-      ctx.lineWidth = isLinePoint ? 0.8 : 1.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(-size, -size, size * 2, size * 2);
       ctx.restore();
 
-      // Voie label at higher zoom (not for line points)
-      if (!isLinePoint && this.tileMap.zoomLevel >= 10) {
+      // Voie label at higher zoom
+      if (this.tileMap.zoomLevel >= 10) {
         ctx.fillStyle = isOccupied ? '#ef4444' : '#94a3b8';
         ctx.font = 'bold 9px sans-serif';
         ctx.fillText(`Voie ${vp.voie}`, p.x + 8, p.y + 3);
@@ -1146,22 +1145,7 @@ export class Renderer {
       ctx.stroke();
     }
 
-    // Player note / Annex 6 — visible nodes on each traced point (50 m vertex) at high zoom.
-    if (zoom >= 12 && visibleTrcs.length > 0) {
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 0.5;
-      for (const trc of visibleTrcs) {
-        if (!trc.route || trc.route.length < 2) continue;
-        for (let i = step; i < trc.route.length - 1; i += step) {
-          const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
-          ctx.fillStyle = zoom >= 14 ? '#ffffff' : '#cbd5e1';
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, zoom >= 14 ? 2.5 : 1.5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        }
-      }
-    }
+
 
     // Annex 6 — direction arrows + PA/PB markers on user tronçons at high zoom
     if (zoom >= 14 && visibleTrcs.length > 0) {
