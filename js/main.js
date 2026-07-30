@@ -779,8 +779,9 @@ class RailEmpire {
   }
 
   saveState() {
-    if (this._saveInProgress) return;
+    if (this._saveInProgress) { this._savePending = true; return; }
     this._saveInProgress = true;
+    this._savePending = false;
     // Sync rame km: use the rame's own accumulated km (source of truth),
     // not the sum of all services (which would multiply km)
     for (const svc of this.scheduleCreator.getActiveServices()) {
@@ -835,13 +836,17 @@ class RailEmpire {
       rngState: this.rng ? this.rng.getState() : null,
       realism: { ...this.realismSettings },
     };
+    const finalize = () => {
+      this._saveInProgress = false;
+      if (this._savePending) setTimeout(() => this.saveState(), 0);
+    };
     try {
       Promise.resolve(this.storage.saveGame(state))
         .catch(e => console.warn('Auto-save failed:', e))
-        .finally(() => { this._saveInProgress = false; });
+        .finally(finalize);
     } catch(e) {
       console.warn('Auto-save failed:', e);
-      this._saveInProgress = false;
+      finalize();
     }
     return state;
   }
