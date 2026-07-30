@@ -182,7 +182,10 @@ export class GameStorage {
           localStorage.removeItem(RAW_KEY);
           localStorage.setItem(RAW_KEY, data || JSON.stringify(state));
           return data || json;
-        } catch (_) {}
+        } catch (_) {
+          // Still not enough room; remote save is the fallback.
+          return data || json;
+        }
       }
       console.warn('Sync raw save failed:', e);
       return json || null;
@@ -202,7 +205,17 @@ export class GameStorage {
       const compressed = await compressData(json);
       localStorage.setItem(SAVE_KEY, compressed);
     } catch (e) {
-      console.warn('Local compressed save failed:', e);
+      if (e.name === 'QuotaExceededError' || (e.message && e.message.includes('quota'))) {
+        try {
+          localStorage.removeItem(RAW_KEY);
+          const compressed = await compressData(json);
+          localStorage.setItem(SAVE_KEY, compressed);
+        } catch (_) {
+          // No room on device; rely on remote save.
+        }
+      } else {
+        console.warn('Local compressed save failed:', e);
+      }
     }
     try {
       const blob = await compressBytes(json);
