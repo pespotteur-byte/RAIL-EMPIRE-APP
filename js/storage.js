@@ -1,5 +1,6 @@
 import { alertToast } from './html-utils.js?v=1784931691';
 const SAVE_KEY = 'rail-empire-save';
+const RAW_KEY = SAVE_KEY + '_raw';
 const TOKEN_KEY = 're_api_token';
 const COMPRESSED_PREFIX = 'RELZ:';
 
@@ -157,18 +158,28 @@ export class GameStorage {
   }
 
   async hasSave() {
-    if (!!localStorage.getItem(SAVE_KEY)) return true;
+    if (!!localStorage.getItem(SAVE_KEY) || !!localStorage.getItem(RAW_KEY)) return true;
     await this._checkRemote();
     return this._remoteAvailable;
   }
 
+  saveGameSync(state) {
+    // Synchronous emergency backup: raw JSON, fastest possible path.
+    try {
+      localStorage.setItem(RAW_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn('Sync raw save failed:', e);
+    }
+  }
+
   async saveGame(state) {
     const json = JSON.stringify(state);
+    this.saveGameSync(state);
     try {
       const compressed = await compressData(json);
       localStorage.setItem(SAVE_KEY, compressed);
     } catch (e) {
-      console.warn('Local save failed:', e);
+      console.warn('Local compressed save failed:', e);
     }
     try {
       const blob = await compressBytes(json);
@@ -188,34 +199,50 @@ export class GameStorage {
   }
 
   async loadGame() {
+    // Pick the newest local save between compressed and raw emergency backup.
+    let best = null;
+    let bestTime = 0;
+    const tryLoad = async (stored) => {
+      try {
+        const json = stored.startsWith(COMPRESSED_PREFIX) ? await decompressData(stored) : stored;
+        const data = JSON.parse(json);
+        if (data && (data.saveTime || 0) > bestTime) {
+          best = data;
+          bestTime = data.saveTime;
+        }
+      } catch (e) {}
+    };
+    const compressed = localStorage.getItem(SAVE_KEY);
+    if (compressed) await tryLoad(compressed);
+    const raw = localStorage.getItem(RAW_KEY);
+    if (raw) await tryLoad(raw);
+
     try {
       const res = await this._api(`/load/${this.remoteKey}`);
       if (res.ok) {
         const data = await res.json();
-        try {
-          const compressed = await compressData(JSON.stringify(data));
-          localStorage.setItem(SAVE_KEY, compressed);
-        } catch (e) {}
+        if (data && (data.saveTime || 0) > bestTime) {
+          best = data;
+          bestTime = data.saveTime;
+        }
+        if (best) {
+          try {
+            const compressed = await compressData(JSON.stringify(best));
+            localStorage.setItem(SAVE_KEY, compressed);
+          } catch (e) {}
+        }
         this._remoteAvailable = true;
-        return data;
+        return best;
       }
     } catch (e) {
       console.warn('Remote load failed:', e);
     }
-    // Fallback localStorage
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return null;
-      const json = await decompressData(raw);
-      return json ? JSON.parse(json) : null;
-    } catch (e) {
-      console.warn('Local load failed:', e);
-      return null;
-    }
+    return best;
   }
 
   async deleteSave() {
     localStorage.removeItem(SAVE_KEY);
+    localStorage.removeItem(RAW_KEY);
     try {
       await this._api(`/delete/${this.remoteKey}`, { method: 'DELETE' });
     } catch (e) {

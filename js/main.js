@@ -1238,14 +1238,26 @@ class RailEmpire {
   }
 }
 
-// Global error handler to prevent game crashes
+// Global error handler: try to save the latest state before the page dies.
 window.addEventListener('error', (e) => {
   console.error('Uncaught error:', e.error);
+  if (window.game?.storage && window.game?.saveState) {
+    try { window.game.storage.saveGameSync(window.game.saveState()); } catch (_) {}
+  }
   e.preventDefault();
 });
 window.addEventListener('unhandledrejection', (e) => {
   console.error('Unhandled rejection:', e.reason);
+  if (window.game?.storage && window.game?.saveState) {
+    try { window.game.storage.saveGameSync(window.game.saveState()); } catch (_) {}
+  }
   e.preventDefault();
+});
+
+window.addEventListener('beforeunload', () => {
+  if (window.game?.storage && window.game?.saveState) {
+    try { window.game.storage.saveGameSync(window.game.saveState()); } catch (_) {}
+  }
 });
 
 window.game = new RailEmpire();
