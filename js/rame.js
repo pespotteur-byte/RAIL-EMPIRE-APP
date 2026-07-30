@@ -3,9 +3,29 @@ let nextRameId = 1;
 export class Rame {
   constructor(data) {
     this.id = data.id || `rame-${nextRameId++}`;
+    this.serialNumber = data.serialNumber || ''; // DEP-03 : n° de série (optionnel, distinct de l'ID interne)
     this.name = data.name || 'Sans nom';
+    this.liveryId = data.liveryId || '';
+    this.liveryName = data.liveryName || '';
     this.elements = data.elements || []; // array of RollingStockItem ids
     this.elementDetails = data.elementDetails || []; // cached details
+    this.createdDate = data.createdDate || new Date().toISOString().split('T')[0];
+    this.totalKmRun = isFinite(data.totalKmRun) ? data.totalKmRun : 0;
+    this.kmSinceLastMaint = isFinite(data.kmSinceLastMaint) ? data.kmSinceLastMaint : 0;
+    this.wearLevel = isFinite(data.wearLevel) ? data.wearLevel : 0;
+    this.inMaintenance = data.inMaintenance ?? false;
+    // MNT-06 : suivi mensuel de la maintenance préventive recommandée
+    this.lastMaintenanceMonth = data.lastMaintenanceMonth || '';
+    this.recommendedMaintenance = data.recommendedMaintenance ?? false;
+    this.depotId = data.depotId || '';
+    // DEP-05 : localisation permanente de chaque engin
+    this.currentLocation = data.currentLocation || {
+      depotId: data.depotId || '',
+      stationId: '',
+      serviceId: '',
+      lat: null,
+      lon: null,
+    };
   }
 
   get totalLength() {
@@ -21,12 +41,17 @@ export class Rame {
   }
 
   get totalFreightCapacity() {
-    return this.elementDetails.reduce((s, e) => s + (e.freightCapacity || 0), 0);
+    return this.elementDetails.reduce((s, e) => {
+      if (e.freightCapacity > 0) return s + e.freightCapacity;
+      // Wagons fret: use tonnage as freight capacity if freightCapacity not set
+      if (e.category === 'wagon') return s + (e.tonnage || 0);
+      return s;
+    }, 0);
   }
 
   get maxSpeed() {
     if (this.elementDetails.length === 0) return 0;
-    return Math.min(...this.elementDetails.map(e => e.maxSpeed || 400));
+    return Math.min(...this.elementDetails.map(e => e.maxSpeed || 160));
   }
 
   get traction() {
@@ -36,6 +61,25 @@ export class Rame {
     if (tractors.length === 0) return 'none';
     const tractions = [...new Set(tractors.map(t => t.traction))];
     return tractions.join('+');
+  }
+
+  // Physics: total empty mass (tonnes)
+  get totalMass() {
+    return this.elementDetails.reduce((s, e) => s + (e.mass || e.tonnage || 0), 0);
+  }
+
+  // Physics: total power (kW) from traction units
+  get totalPower() {
+    return this.elementDetails
+      .filter(e => e.category === 'locomotive' || e.category === 'automotrice')
+      .reduce((s, e) => s + (e.power || 0), 0);
+  }
+
+  // Physics: total mass including payload estimate
+  getTotalMassWithPayload(loadFactor = 0.7) {
+    const passengerMass = this.totalCapacity * loadFactor * 0.08; // ~80kg per passenger
+    const freightMass = this.totalFreightCapacity * loadFactor;
+    return this.totalMass + passengerMass + freightMass;
   }
 
   get isValid() {
@@ -51,7 +95,20 @@ export class RameManager {
   add(data) {
     const rame = new Rame(data);
     this.rames.push(rame);
+    this._rehydrateRame(rame, (typeof window !== 'undefined' && window.game?.rollingStock) ? window.game.rollingStock : null);
     return rame;
+  }
+
+  _rehydrateRame(rame, rollingStock) {
+    if (!rollingStock || !rame.elements || rame.elements.length === 0) return;
+    const ids = Array.isArray(rame.elements) ? rame.elements : [rame.elements];
+    const savedById = new Map((rame.elementDetails || []).filter(Boolean).map(e => [e.id, e]));
+    rame.elementDetails = ids.map(id => rollingStock.getById(id) || savedById.get(id)).filter(Boolean);
+  }
+
+  rehydrateElementDetails(rollingStock) {
+    if (!rollingStock) return;
+    for (const rame of this.rames) this._rehydrateRame(rame, rollingStock);
   }
 
   remove(id) {
@@ -69,15 +126,36 @@ export class RameManager {
   toSave() {
     return this.rames.map(r => ({
       id: r.id,
+      serialNumber: r.serialNumber,
       name: r.name,
+      liveryId: r.liveryId,
+      liveryName: r.liveryName,
       elements: r.elements,
       elementDetails: r.elementDetails,
+      createdDate: r.createdDate,
+      totalKmRun: r.totalKmRun,
+      kmSinceLastMaint: r.kmSinceLastMaint,
+      wearLevel: r.wearLevel,
+      inMaintenance: r.inMaintenance,
+      lastMaintenanceMonth: r.lastMaintenanceMonth,
+      recommendedMaintenance: r.recommendedMaintenance,
+      depotId: r.depotId,
+      currentLocation: r.currentLocation,
     }));
   }
 
-  loadFromSave(arr) {
+  loadFromSave(arr, rollingStock = null) {
     this.rames = [];
+    const catalog = rollingStock || (typeof window !== 'undefined' && window.game?.rollingStock ? window.game.rollingStock : null);
     for (const d of arr) {
+      if (catalog && d.elements) {
+        const ids = Array.isArray(d.elements) ? d.elements : [d.elements];
+        const live = ids.map(id => catalog.getById(id)).filter(Boolean);
+        const liveIds = new Set(live.map(e => e.id));
+        const saved = Array.isArray(d.elementDetails) ? d.elementDetails : [];
+        const fallback = saved.filter(e => e && e.id && !liveIds.has(e.id));
+        d.elementDetails = [...live, ...fallback];
+      }
       this.rames.push(new Rame(d));
       const num = parseInt(d.id?.split('-')[1] || '0');
       if (num >= nextRameId) nextRameId = num + 1;

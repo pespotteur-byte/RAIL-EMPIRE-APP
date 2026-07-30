@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rail Empire — Admin Catalogue</title>
+<style>
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#475569;--text:#e2e8f0;--text2:#94a3b8;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--purple:#a855f7;--bg2:var(--surface);--bg3:var(--surface2);--input-bg:var(--bg)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{background:var(--surface);padding:10px 20px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--border);flex-shrink:0}
+header h1{font-size:1.2em;white-space:nowrap;display:flex;align-items:center;gap:10px}
+header h1 svg{flex-shrink:0}
+header .stats{font-size:.85em;color:var(--text2);max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header .stats b{color:var(--blue)}
+.toolbar{background:var(--surface);padding:8px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:.85em}
+input:focus,select:focus{outline:none;border-color:var(--blue)}
+#search{width:300px}
+.btn{padding:6px 14px;border:none;border-radius:6px;font-size:.85em;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.9}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-orange{background:var(--orange);color:#000}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}.btn-ghost:hover{background:var(--surface2)}
+
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.table-wrap{flex:1;overflow-y:auto;position:relative}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead{position:sticky;top:0;z-index:2}
+th{background:var(--surface2);padding:8px 6px;text-align:left;font-size:.78em;color:var(--text2);text-transform:uppercase;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+td{padding:5px 6px;border-bottom:1px solid rgba(71,85,105,.3);font-size:.82em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover{background:rgba(59,130,246,.08)}
+tr.selected{background:rgba(59,130,246,.2)}
+.img-cell{width:80px;height:30px;object-fit:contain;background:rgba(0,0,0,.3);border-radius:3px}
+.badge{display:inline-block;padding:1px 6px;border-radius:10px;font-size:.75em;font-weight:600}
+.badge-loco{background:rgba(239,68,68,.2);color:#fca5a5}
+.badge-wagon{background:rgba(59,130,246,.2);color:#93c5fd}
+.badge-auto{background:rgba(168,85,247,.2);color:#c4b5fd}
+.badge-source{background:rgba(34,197,94,.15);color:#86efac;font-size:.7em}
+
+/* Edit modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h2{margin-bottom:16px;font-size:1.1em}
+.form-row{display:flex;gap:10px;margin-bottom:10px}
+.form-row label{flex:1;display:flex;flex-direction:column;gap:3px;font-size:.8em;color:var(--text2)}
+.form-row input,.form-row select{width:100%}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* Import modal */
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:.2s}
+.drop-zone.drag{border-color:var(--blue);background:rgba(59,130,246,.1)}
+.drop-zone p{color:var(--text2);margin:8px 0}
+#import-progress{margin-top:12px;display:none}
+#import-progress .bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+#import-progress .bar-fill{height:100%;background:var(--blue);transition:width .3s}
+
+/* Col widths */
+th:nth-child(1),td:nth-child(1){width:40px}
+th:nth-child(2),td:nth-child(2){width:90px}
+th:nth-child(3),td:nth-child(3){width:180px}
+th:nth-child(4),td:nth-child(4){width:120px}
+th:nth-child(5),td:nth-child(5){width:80px}
+th:nth-child(6),td:nth-child(6){width:70px}
+th:nth-child(7),td:nth-child(7){width:60px}
+th:nth-child(8),td:nth-child(8){width:70px}
+th:nth-child(9),td:nth-child(9){width:60px}
+th:nth-child(10),td:nth-child(10){width:70px}
+th:nth-child(11),td:nth-child(11){width:90px}
+th:nth-child(12),td:nth-child(12){width:90px}
+
+.footer{background:var(--surface);padding:6px 20px;border-top:1px solid var(--border);font-size:.8em;color:var(--text2);display:flex;align-items:center;gap:16px;flex-shrink:0}
+.page-nav{display:flex;align-items:center;gap:6px}
+.page-nav button{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 10px;border-radius:4px;cursor:pointer;font-size:.85em}
+.page-nav button:disabled{opacity:.3;cursor:default}
+.page-nav button.active-page{background:var(--blue);border-color:var(--blue)}
+.modal{position:relative}
+.hidden{display:none!important}
+.admin-form-section{margin-bottom:16px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
+.admin-form-section-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.admin-form-section-header .section-icon{width:18px;height:18px;flex-shrink:0;opacity:.85}
+.admin-form-section-header h4{margin:0;font-size:12px;font-weight:600;color:var(--text);letter-spacing:.3px;text-transform:uppercase}
+.admin-form-group{margin-bottom:8px}
+.admin-form-group:last-child{margin-bottom:0}
+.admin-form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.admin-form-group label .label-hint{font-size:9px;color:var(--text3);font-weight:400;margin-left:4px}
+.admin-form-group input,.admin-form-group select{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:12px}
+.admin-form-group input:focus,.admin-form-group select:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+.admin-form-row{display:flex;gap:10px;margin-bottom:8px}
+.admin-form-row:last-child{margin-bottom:0}
+.admin-form-row .admin-form-group{flex:1}
+.admin-image-drop{border:2px dashed var(--border);border-radius:6px;padding:20px;text-align:center;cursor:pointer;color:var(--text3);font-size:12px}
+.admin-image-drop.dragging{border-color:var(--blue);background:rgba(59,130,246,.1)}
+.admin-image-preview{max-width:100%;max-height:80px;margin-top:8px;object-fit:contain}
+.admin-computed-field{padding:8px 10px;background:var(--surface);border:1px dashed var(--border);border-radius:5px;color:var(--text2);font-size:12px}
+.stock-multi-check{display:flex;flex-wrap:wrap;gap:6px 12px;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px}
+.stock-multi-check label{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text);cursor:pointer}
+.stock-multi-check input[type="checkbox"]{width:14px;height:14px;accent-color:var(--blue);margin:0}
+.cargo-types-container{max-height:320px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px}
+.cargo-cat-header{font-size:11px;font-weight:600;color:var(--blue);padding:6px 8px 4px;margin-top:6px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.3px}
+.cargo-cat-header:first-child{margin-top:0}
+.cargo-cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;padding:4px 4px 4px 8px}
+.cargo-cb-label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text);padding:4px 6px;border-radius:4px;cursor:pointer}
+.cargo-cb-label:hover{background:rgba(59,130,246,.08)}
+.cargo-cb-label input[type="checkbox"]{margin:0;width:14px;height:14px;accent-color:var(--blue);flex-shrink:0}
+.cargo-cb-unit{color:var(--text3);font-size:9px;margin-left:2px}
+#modal-edit h3{font-size:16px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+#modal-edit .modal{max-width:520px}
+.modal-close{position:absolute;top:8px;right:12px;background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer}
+.modal-close:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><svg viewBox="0 0 32 32" width="28" height="28" xmlns="http://www.w3.org/2000/svg"><path d="M4 24h24" stroke="#64748b" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M4 26h24" stroke="#64748b" stroke-width="1.5" fill="none" stroke-linecap="round"/><g stroke="#475569" stroke-width="1" opacity="0.5"><line x1="8" y1="23" x2="8" y2="27"/><line x1="13" y1="23" x2="13" y2="27"/><line x1="18" y1="23" x2="18" y2="27"/><line x1="23" y1="23" x2="23" y2="27"/></g><path d="M6 22 L6 16 Q6 14 8 14 L16 14 Q18 13 19 11 Q20 10 21 10 L23 10 Q24 10 24 12 L24 14 L27 14 Q28 14 28 16 L28 22" stroke="#3b82f6" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="23" r="2" stroke="#3b82f6" stroke-width="1" fill="none"/><circle cx="17" cy="23" r="2" stroke="#3b82f6" stroke-width="1" fill="none"/><circle cx="25" cy="23" r="2" stroke="#3b82f6" stroke-width="1" fill="none"/></svg>Admin Catalogue</h1>
+  <div class="stats" style="max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+    <span>Total : <b id="stat-total">0</b></span> &middot;
+    <span>Locos : <b id="stat-locos">0</b></span> &middot;
+    <span>Wagons : <b id="stat-wagons">0</b></span> &middot;
+    <span>Sources : <b id="stat-sources" title="">-</b></span> &middot;
+    <span>Affichés : <b id="stat-filtered">0</b></span>
+  </div>
+  <button id="btn-back" class="btn btn-ghost" style="margin-left:auto">← Livemap</button>
+</header>
+
+<div class="toolbar">
+  <input type="text" id="search" placeholder="Rechercher (nom, série, source...)">
+  <select id="filter-cat">
+    <option value="">Toutes catégories</option>
+    <option value="locomotive">Locomotives</option>
+    <option value="wagon">Wagons</option>
+    <option value="automotrice">Automotrices</option>
+    <option value="voiture">Voitures</option>
+  </select>
+  <select id="filter-source">
+    <option value="">Toutes sources</option>
+  </select>
+  <select id="filter-traction">
+    <option value="">Toutes tractions</option>
+    <option value="electrique">Électrique</option>
+    <option value="diesel">Diesel</option>
+    <option value="bi">Bi-mode</option>
+    <option value="none">Aucune</option>
+  </select>
+  <div style="flex:1"></div>
+  <button class="btn btn-purple" id="btn-import">Importer</button>
+  <button class="btn btn-blue" id="btn-add">+ Ajouter</button>
+  <button class="btn btn-green" id="btn-export">Exporter JSON</button>
+  <button class="btn btn-orange" id="btn-export-csv">Exporter CSV</button>
+  <button class="btn btn-red" id="btn-delete-selected">Supprimer sélection</button>
+  <button class="btn btn-blue" id="btn-incidents" style="margin-left:8px">Incidents</button>
+  <button class="btn btn-green" id="btn-publish" style="font-weight:700">Publier pour tous</button>
+</div>
+
+<div class="main">
+  <div class="table-wrap" id="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="select-all"></th>
+          <th data-col="imageData">Image</th>
+          <th data-col="name">Nom</th>
+          <th data-col="seriesName">Série</th>
+          <th data-col="category">Type</th>
+          <th data-col="traction">Traction</th>
+          <th data-col="maxSpeed">VMax</th>
+          <th data-col="power">Puissance</th>
+          <th data-col="length">Long.</th>
+          <th data-col="mass">Masse</th>
+          <th data-col="purchasePrice">Prix</th>
+          <th data-col="_source">Source</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="page-nav">
+    <button id="page-prev">&laquo; Préc</button>
+    <span id="page-info">1 / 1</span>
+    <button id="page-next">Suiv &raquo;</button>
+    <select id="page-size">
+      <option value="100">100/page</option>
+      <option value="200">200/page</option>
+      <option value="500" selected>500/page</option>
+      <option value="1000">1000/page</option>
+    </select>
+  </div>
+  <div style="flex:1"></div>
+  <span id="footer-info"></span>
+</div>
+
+<!-- Edit Modal (same panel as inventory rolling stock) -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <button class="modal-close">&times;</button>
+    <h3 id="edit-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><rect x="1" y="6" width="22" height="12" rx="3"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><line x1="6" y1="6" x2="6" y2="12"/><line x1="12" y1="6" x2="12" y2="12"/></svg>
+      <span>Ajouter un engin</span>
+    </h3>
+    <input type="hidden" id="edit-id">
+    <div class="modal-body">
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <h4>Visuel</h4>
+        </div>
+        <div class="admin-form-group">
+          <label>Image de l'engin</label>
+          <div id="admin-stock-image-drop" class="admin-image-drop">
+            <span>Cliquer ou glisser une image</span>
+            <input type="file" id="admin-stock-image-input" accept="image/*" hidden>
+          </div>
+          <img id="admin-stock-image-preview" class="admin-image-preview hidden" alt="">
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <h4>Identification</h4>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Nom de l'engin</label>
+            <input type="text" id="admin-stock-name" placeholder="ex: BB 22200">
+          </div>
+          <div class="admin-form-group">
+            <label>Catégorie</label>
+            <select id="admin-stock-category">
+              <option value="locomotive">Locomotive</option>
+              <option value="voiture">Voiture voyageurs</option>
+              <option value="wagon">Wagon fret</option>
+              <option value="automotrice">Automotrice</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group" style="flex:1">
+            <label>Série <span class="label-hint">(ex: BB 26000)</span></label>
+            <input type="text" id="admin-stock-series" placeholder="BB 26000">
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <h4>Caractéristiques techniques</h4>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group" style="flex:1">
+            <label>Traction <span class="label-hint">(plusieurs choix possibles)</span></label>
+            <div id="admin-stock-traction" class="stock-multi-check">
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="Diesel"> Diesel</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="Vapeur"> Vapeur</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="1.5kV"> 1,5 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="3kV"> 3 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="15kV"> 15 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="25kV"> 25 kV</label>
+              <label class="stock-cb-label"><input type="checkbox" class="stock-traction-cb" value="3e Rail"> 3e Rail</label>
+            </div>
+          </div>
+          <div class="admin-form-group">
+            <label>Vitesse max <span class="label-hint">(km/h)</span></label>
+            <input type="number" id="admin-stock-speed" value="160" min="10" max="400">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Puissance <span class="label-hint">(kW — locos)</span></label>
+            <input type="number" id="admin-stock-power" value="0" min="0" max="20000">
+          </div>
+          <div class="admin-form-group">
+            <label>Longueur <span class="label-hint">(m)</span></label>
+            <input type="number" id="admin-stock-length" value="20" min="1" max="200" step="0.1">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Masse à vide <span class="label-hint">(t — physique)</span></label>
+            <input type="number" id="admin-stock-mass" value="80" min="1" max="500">
+          </div>
+          <div class="admin-form-group">
+            <label>Tonnage calculé <span class="label-hint">(masse + fret / masse seule)</span></label>
+            <div id="admin-stock-tonnage" class="admin-computed-field">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <h4>Capacités</h4>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-form-group">
+            <label>Places voyageurs</label>
+            <input type="number" id="admin-stock-capacity" value="0" min="0" max="1000">
+          </div>
+          <div class="admin-form-group">
+            <label>Capacité fret <span class="label-hint">(t)</span></label>
+            <input type="number" id="admin-stock-freight" value="0" min="0" max="99999">
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-section" id="admin-stock-wagon-subcat-group" style="display:none">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <h4>Type de wagon <span class="label-hint" style="text-transform:none">(un seul choix)</span></h4>
+        </div>
+        <div class="admin-form-group">
+          <select id="admin-stock-wagon-subcat">
+            <option value="">— Sélectionner —</option>
+            <option value="tombereau">Tombereau</option>
+            <option value="citerne">Citerne</option>
+            <option value="gaz">Gaz</option>
+            <option value="porte-auto">Porte-Auto</option>
+            <option value="tremie">Trémie</option>
+            <option value="cerealier">Céréalier</option>
+            <option value="ciment">Ciment</option>
+            <option value="silos">Silos</option>
+            <option value="plat">Plat</option>
+            <option value="ttx">TTX</option>
+            <option value="intermodal">Intermodal</option>
+            <option value="speciaux">Spéciaux</option>
+            <option value="couvert">Couvert</option>
+            <option value="bache">Bâché</option>
+            <option value="infra">Infra</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-form-section" id="admin-stock-cargo-group" style="display:none">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <h4>Chargements autorisés <span class="label-hint" style="text-transform:none">(choix multiple)</span></h4>
+        </div>
+        <div class="admin-form-group">
+          <div id="admin-stock-cargo-list" class="cargo-types-container"></div>
+        </div>
+      </div>
+      <div class="admin-form-section">
+        <div class="admin-form-section-header">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <h4>Tarification</h4>
+        </div>
+        <div class="admin-form-group">
+          <label>Prix d'achat <span class="label-hint">(calcul automatique)</span></label>
+          <div id="admin-stock-price" class="admin-computed-field">0 €</div>
+        </div>
+      </div>
+      <button id="edit-save" class="btn btn-blue" style="width:100%;margin-top:16px;padding:10px;font-size:13px;font-weight:600;border-radius:6px;text-transform:uppercase;letter-spacing:.5px">Enregistrer l'engin</button>
+      <button id="edit-cancel" class="btn btn-ghost" style="width:100%;margin-top:8px">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal" style="width:700px">
+    <h2>Importer des trains</h2>
+    <p style="color:var(--text2);font-size:.85em;margin-bottom:12px">Glissez un ZIP d'images organisé par dossiers (1 dossier = 1 série). Les specs seront auto-détectées.</p>
+    <div class="drop-zone" id="drop-zone">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p>Cliquer ou glisser un fichier <b>.zip</b> ou <b>.7z</b></p>
+      <input type="file" id="import-file" accept=".zip,.7z" hidden>
+    </div>
+    <div id="import-progress">
+      <div class="bar"><div class="bar-fill" id="import-bar" style="width:0"></div></div>
+      <p id="import-status" style="font-size:.85em;color:var(--text2);margin-top:6px"></p>
+    </div>
+    <div id="import-results" style="display:none;margin-top:12px">
+      <h3 style="font-size:.95em;margin-bottom:8px">Aperçu des engins détectés</h3>
+      <div id="import-table-wrap" style="max-height:300px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="import-cancel">Fermer</button>
+      <button class="btn btn-green" id="import-confirm" style="display:none">Ajouter au catalogue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Incidents Modal -->
+<div class="modal-overlay" id="modal-incidents">
+  <div class="modal" style="width:800px">
+    <h2>Gestion des incidents</h2>
+    <p style="color:var(--text2);font-size:.85em;margin-bottom:12px">Créez des incidents qui apparaîtront aléatoirement chez les joueurs qui l'ont activé.</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-green" id="incident-add">+ Nouvel incident</button>
+    </div>
+    <div id="incidents-list" style="max-height:400px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="incidents-close">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Incident Edit Modal -->
+<div class="modal-overlay" id="modal-incident-edit">
+  <div class="modal" style="width:550px">
+    <h2 id="incident-edit-title">Nouvel incident</h2>
+    <div class="form-row">
+      <label>Nom <input type="text" id="inc-name" placeholder="Ex: Grève SNCF"></label>
+    </div>
+    <div class="form-row">
+      <label>Description <input type="text" id="inc-desc" placeholder="Ex: Perturbation du trafic pendant 2h"></label>
+    </div>
+    <div class="form-row">
+      <label>Effet
+        <select id="inc-effect">
+          <option value="speed_reduction">Réduction de vitesse (-50%)</option>
+          <option value="line_blocked">Ligne bloquée</option>
+          <option value="extra_cost">Surcoût (+30%)</option>
+          <option value="delay">Retards (+15 min)</option>
+          <option value="revenue_bonus">Bonus recette (+20%)</option>
+        </select>
+      </label>
+      <label>Sévérité
+        <select id="inc-severity">
+          <option value="low">Faible</option>
+          <option value="medium" selected>Moyenne</option>
+          <option value="high">Élevée</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-row">
+      <label>Durée (minutes) <input type="number" id="inc-duration" value="60" min="5" max="480"></label>
+      <label>Probabilité (%/heure) <input type="number" id="inc-probability" value="5" min="1" max="50"></label>
+    </div>
+    <div class="form-row">
+      <label>Heure début (0-23) <input type="number" id="inc-hour-start" value="6" min="0" max="23"></label>
+      <label>Heure fin (0-23) <input type="number" id="inc-hour-end" value="22" min="0" max="23"></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="incident-edit-cancel">Annuler</button>
+      <button class="btn btn-blue" id="incident-edit-save">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Modal -->
+<div class="modal-overlay" id="modal-publish">
+  <div class="modal" style="width:500px">
+    <h2>Publier pour tous</h2>
+    <p style="color:var(--text2);font-size:.85em;margin-bottom:12px">
+      Publier les modifications du catalogue et les incidents sur le serveur. Les joueurs verront les changements au prochain rafraîchissement.
+    </p>
+    <div id="publish-status" style="display:none;padding:12px;border-radius:8px;margin-top:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="publish-cancel">Annuler</button>
+      <button class="btn btn-green" id="publish-confirm">Publier</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module">
+// ============ LOAD ALL CATALOGS ============
+import { CATALOG, CATALOG_CARGO_TYPES } from './js/catalog-data.js?v=1784931691';
+import { CATALOG_PACK_RE } from './js/catalog-data-pack-re.js?v=1784931691';
+
+let allItems = [];
+let filteredItems = [];
+let currentPage = 0;
+let pageSize = 500;
+let sortCol = 'name';
+let sortAsc = true;
+let selectedIds = new Set();
+let editingItem = null;
+let editImageData = '';
+
+// Load everything
+function loadCatalogs() {
+  allItems = [];
+  // MLG
+  if (Array.isArray(CATALOG)) {
+    for (const c of CATALOG) allItems.push({...c, _source: c._source || 'MLG'});
+  }
+  // Pack RE
+  if (Array.isArray(CATALOG_PACK_RE)) {
+    for (const c of CATALOG_PACK_RE) allItems.push({...c, _source: c._source || 'PACK RE'});
+  }
+  // Load any locally saved modifications
+  const saved = localStorage.getItem('admin_catalog_mods');
+  if (saved) {
+    try {
+      const mods = JSON.parse(saved);
+      const modMap = new Map(mods.map(m => [m.id, m]));
+      const deletedIds = new Set(JSON.parse(localStorage.getItem('admin_catalog_deleted') || '[]'));
+      allItems = allItems.filter(i => !deletedIds.has(i.id));
+      allItems = allItems.map(i => modMap.has(i.id) ? {...i, ...modMap.get(i.id)} : i);
+      // Add imported items
+      const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+      allItems.push(...imported);
+    } catch(e) {}
+  }
+  updateStats();
+  applyFilters();
+}
+
+// ============ STATS ============
+function updateStats() {
+  const sources = new Set(allItems.map(i => i._source || '?'));
+  document.getElementById('stat-total').textContent = allItems.length.toLocaleString();
+  document.getElementById('stat-locos').textContent = allItems.filter(i=>i.category==='locomotive'||i.category==='automotrice').length.toLocaleString();
+  document.getElementById('stat-wagons').textContent = allItems.filter(i=>i.category==='wagon'||i.category==='voiture').length.toLocaleString();
+  const statSources = document.getElementById('stat-sources');
+  statSources.textContent = sources.size.toLocaleString();
+  statSources.title = [...sources].slice(0, 20).join('\n');
+  // Populate source filter
+  const sel = document.getElementById('filter-source');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Toutes sources</option>';
+  for (const s of [...sources].sort()) {
+    sel.innerHTML += `<option value="${s}">${s} (${allItems.filter(i=>(i._source||'')=== s).length.toLocaleString()})</option>`;
+  }
+  sel.value = cur;
+}
+
+// ============ FILTER + SORT ============
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const cat = document.getElementById('filter-cat').value;
+  const src = document.getElementById('filter-source').value;
+  const trac = document.getElementById('filter-traction').value;
+  
+  filteredItems = allItems.filter(i => {
+    if (cat && i.category !== cat) return false;
+    if (src && (i._source || '') !== src) return false;
+    if (trac && !tractionMatchesAdmin(i.traction || '', trac)) return false;
+    if (q) {
+      const hay = `${i.name||''} ${i.seriesName||''} ${i._source||''} ${i.id||''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  
+  // Sort
+  filteredItems.sort((a, b) => {
+    let va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+    if (typeof va === 'number' && typeof vb === 'number') return sortAsc ? va - vb : vb - va;
+    va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  
+  document.getElementById('stat-filtered').textContent = filteredItems.length.toLocaleString();
+  currentPage = 0;
+  renderPage();
+}
+
+// ============ RENDER ============
+function renderPage() {
+  const start = currentPage * pageSize;
+  const end = Math.min(start + pageSize, filteredItems.length);
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  
+  const tbody = document.getElementById('tbody');
+  let html = '';
+  for (let i = start; i < end; i++) {
+    const item = filteredItems[i];
+    const checked = selectedIds.has(item.id) ? 'checked' : '';
+    const catBadge = item.category === 'locomotive' ? 'badge-loco' : item.category === 'automotrice' ? 'badge-auto' : 'badge-wagon';
+    const catLabel = (item.category||'').substring(0, 5);
+    const price = item.purchasePrice ? (item.purchasePrice >= 1000000 ? (item.purchasePrice/1000000).toFixed(1)+'M€' : (item.purchasePrice/1000).toFixed(0)+'k€') : '-';
+    
+    html += `<tr data-id="${item.id}" ondblclick="window._editItem('${item.id}')">
+      <td><input type="checkbox" class="row-cb" data-id="${item.id}" ${checked}></td>
+      <td><img src="${item.imageData||''}" class="img-cell" loading="lazy" onerror="this.style.display='none'"></td>
+      <td title="${item.name||''}">${item.name||''}</td>
+      <td title="${item.seriesName||''}">${item.seriesName||''}</td>
+      <td><span class="badge ${catBadge}">${catLabel}</span></td>
+      <td>${item.traction||'-'}</td>
+      <td>${item.maxSpeed||'-'}</td>
+      <td>${item.power||'-'}</td>
+      <td>${item.length||'-'}</td>
+      <td>${item.mass||'-'}</td>
+      <td>${price}</td>
+      <td><span class="badge badge-source">${item._source||'?'}</span></td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+  
+  document.getElementById('page-info').textContent = `${currentPage+1} / ${totalPages}`;
+  document.getElementById('page-prev').disabled = currentPage === 0;
+  document.getElementById('page-next').disabled = currentPage >= totalPages - 1;
+  document.getElementById('footer-info').textContent = `Lignes ${start+1}-${end} sur ${filteredItems.length.toLocaleString()}`;
+}
+
+// ============ EVENTS ============
+document.getElementById('search').addEventListener('input', debounce(applyFilters, 200));
+document.getElementById('filter-cat').addEventListener('change', applyFilters);
+document.getElementById('filter-source').addEventListener('change', applyFilters);
+document.getElementById('filter-traction').addEventListener('change', applyFilters);
+document.getElementById('page-size').addEventListener('change', e => { pageSize = +e.target.value; currentPage = 0; renderPage(); });
+document.getElementById('page-prev').addEventListener('click', () => { if (currentPage > 0) { currentPage--; renderPage(); document.getElementById('table-wrap').scrollTop = 0; }});
+document.getElementById('page-next').addEventListener('click', () => { const tp = Math.ceil(filteredItems.length / pageSize); if (currentPage < tp-1) { currentPage++; renderPage(); document.getElementById('table-wrap').scrollTop = 0; }});
+
+// Sort headers
+document.querySelectorAll('th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortAsc = !sortAsc;
+    else { sortCol = col; sortAsc = true; }
+    applyFilters();
+  });
+});
+
+// Select all
+document.getElementById('select-all').addEventListener('change', e => {
+  const start = currentPage * pageSize;
+  const end = Math.min(start + pageSize, filteredItems.length);
+  for (let i = start; i < end; i++) {
+    if (e.target.checked) selectedIds.add(filteredItems[i].id);
+    else selectedIds.delete(filteredItems[i].id);
+  }
+  renderPage();
+});
+
+// Row checkbox
+document.getElementById('tbody').addEventListener('change', e => {
+  if (e.target.classList.contains('row-cb')) {
+    const id = e.target.dataset.id;
+    if (e.target.checked) selectedIds.add(id); else selectedIds.delete(id);
+  }
+});
+
+// ============ DELETE ============
+document.getElementById('btn-delete-selected').addEventListener('click', () => {
+  if (selectedIds.size === 0) return alert('Aucun engin sélectionné');
+  if (!confirm(`Supprimer ${selectedIds.size} engin(s) ?`)) return;
+  const deletedIds = new Set(JSON.parse(localStorage.getItem('admin_catalog_deleted') || '[]'));
+  for (const id of selectedIds) deletedIds.add(id);
+  localStorage.setItem('admin_catalog_deleted', JSON.stringify([...deletedIds]));
+  allItems = allItems.filter(i => !selectedIds.has(i.id));
+  selectedIds.clear();
+  updateStats();
+  applyFilters();
+});
+
+// ============ EDIT MODAL (same panel as inventory rolling stock) ============
+let adminStockImageData = null;
+
+const ADMIN_TRACTION_LEGACY = {
+  'electrique': ['25kV'],
+  'électrique': ['25kV'],
+  'diesel': ['Diesel'],
+  'bi': ['Diesel','25kV'],
+  'bi-mode': ['Diesel','25kV'],
+  'bimode': ['Diesel','25kV'],
+  'vapeur': ['Vapeur'],
+  'none': [],
+  'aucune': [],
+  '1500v': ['1.5kV'],
+  '1.5kv': ['1.5kV'],
+  '3kv': ['3kV'],
+  '15kv': ['15kV'],
+  '25kv': ['25kV'],
+  '3e rail': ['3e Rail'],
+  '3erail': ['3e Rail'],
+  '3e': ['3e Rail']
+};
+
+function escapeHtmlAdmin(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function parseAdminTraction(str) {
+  if (!str || str.toLowerCase() === 'none') return [];
+  const key = str.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (ADMIN_TRACTION_LEGACY[key]) return [...ADMIN_TRACTION_LEGACY[key]];
+  return str.split('+').map(s => s.trim()).filter(Boolean);
+}
+
+function getAdminTractionString() {
+  const vals = Array.from(document.querySelectorAll('.stock-traction-cb:checked')).map(cb => cb.value);
+  if (vals.length === 0) return 'none';
+  return vals.join('+');
+}
+
+function setAdminTraction(str) {
+  const vals = new Set(parseAdminTraction(str).map(v => v.toLowerCase()));
+  document.querySelectorAll('.stock-traction-cb').forEach(cb => {
+    cb.checked = vals.has(cb.value.toLowerCase());
+  });
+}
+
+function getAdminCargoTypes() {
+  return Array.from(document.querySelectorAll('.stock-cargo-cb:checked')).map(cb => cb.value);
+}
+
+function setAdminCargoTypes(types) {
+  const set = new Set((types || []).map(t => String(t).trim()));
+  document.querySelectorAll('.stock-cargo-cb').forEach(cb => {
+    cb.checked = set.has(cb.value);
+  });
+}
+
+function populateAdminCargoTypes() {
+  const list = document.getElementById('admin-stock-cargo-list');
+  if (!list || !CATALOG_CARGO_TYPES) return;
+  const byCat = {};
+  for (const t of CATALOG_CARGO_TYPES) {
+    (byCat[t.category] ||= []).push(t);
+  }
+  let html = '';
+  for (const [cat, types] of Object.entries(byCat)) {
+    html += `<div class="cargo-cat-header">${escapeHtmlAdmin(cat)}</div><div class="cargo-cat-grid">`;
+    for (const t of types) {
+      html += `<label class="cargo-cb-label"><input type="checkbox" class="stock-cargo-cb" value="${escapeHtmlAdmin(t.type)}"> ${escapeHtmlAdmin(t.name)} <span class="cargo-cb-unit">${escapeHtmlAdmin(t.unit)}</span></label>`;
+    }
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+function computeAdminTonnage() {
+  const category = document.getElementById('admin-stock-category')?.value || 'locomotive';
+  const mass = parseFloat(document.getElementById('admin-stock-mass')?.value) || 0;
+  const freightCap = parseFloat(document.getElementById('admin-stock-freight')?.value) || 0;
+  return category === 'wagon' ? Math.round(mass + freightCap) : Math.round(mass);
+}
+
+function computeAdminPrice() {
+  const category = document.getElementById('admin-stock-category')?.value || 'locomotive';
+  const power = parseFloat(document.getElementById('admin-stock-power')?.value) || 0;
+  const capacity = parseFloat(document.getElementById('admin-stock-capacity')?.value) || 0;
+  const freightCap = parseFloat(document.getElementById('admin-stock-freight')?.value) || 0;
+  if (category === 'locomotive' || category === 'automotrice') return Math.max(0, Math.round(power * 1000));
+  if (category === 'voiture') return Math.max(0, Math.round(capacity * 100));
+  if (category === 'wagon') return Math.max(0, Math.round(freightCap * 100));
+  return 0;
+}
+
+function updateAdminComputedFields() {
+  const tonnage = computeAdminTonnage();
+  const price = computeAdminPrice();
+  const tonEl = document.getElementById('admin-stock-tonnage');
+  if (tonEl) tonEl.textContent = tonnage + ' t';
+  const priceEl = document.getElementById('admin-stock-price');
+  if (priceEl) priceEl.textContent = price.toLocaleString('fr-FR') + ' €';
+}
+
+function wireAdminCategoryToggle() {
+  const catSel = document.getElementById('admin-stock-category');
+  const cargoGroup = document.getElementById('admin-stock-cargo-group');
+  const subcatGroup = document.getElementById('admin-stock-wagon-subcat-group');
+  if (!catSel) return;
+  const onChange = () => {
+    const isWagon = catSel.value === 'wagon';
+    if (cargoGroup) cargoGroup.style.display = isWagon ? 'block' : 'none';
+    if (subcatGroup) subcatGroup.style.display = isWagon ? 'block' : 'none';
+    updateAdminComputedFields();
+  };
+  catSel.onchange = onChange;
+  onChange();
+  ['admin-stock-mass','admin-stock-speed','admin-stock-power','admin-stock-capacity','admin-stock-freight'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateAdminComputedFields);
+  });
+  document.querySelectorAll('.stock-traction-cb').forEach(cb => {
+    cb.addEventListener('change', updateAdminComputedFields);
+  });
+}
+
+function loadAdminStockImage(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    adminStockImageData = e.target.result;
+    const preview = document.getElementById('admin-stock-image-preview');
+    if (preview) { preview.src = adminStockImageData; preview.classList.remove('hidden'); }
+    const img = new Image();
+    img.onload = () => {
+      const lengthInput = document.getElementById('admin-stock-length');
+      if (lengthInput) lengthInput.value = (img.naturalWidth * 0.1).toFixed(1);
+      updateAdminComputedFields();
+    };
+    img.src = adminStockImageData;
+  };
+  reader.readAsDataURL(file);
+}
+
+function openAdminStockEditor(item) {
+  editingItem = item || null;
+  adminStockImageData = item?.imageData || null;
+  const title = document.getElementById('edit-title');
+  if (title) {
+    const txt = title.querySelector('span');
+    if (txt) txt.textContent = item ? `Modifier : ${item.name}` : 'Ajouter un engin';
+  }
+  document.getElementById('edit-id').value = item?.id || '';
+  setAdminField('admin-stock-name', item?.name || '');
+  setAdminField('admin-stock-series', item?.seriesName || '');
+  setAdminField('admin-stock-category', item?.category || 'locomotive');
+  setAdminTraction(item?.traction || 'none');
+  setAdminField('admin-stock-speed', item?.maxSpeed ?? 160);
+  setAdminField('admin-stock-power', item?.power ?? 0);
+  setAdminField('admin-stock-length', item?.length ?? 20);
+  setAdminField('admin-stock-mass', item?.mass ?? 80);
+  setAdminField('admin-stock-capacity', item?.passengerCapacity ?? 0);
+  setAdminField('admin-stock-freight', item?.freightCapacity ?? 0);
+  setAdminField('admin-stock-wagon-subcat', item?.wagonSubCategory || '');
+  const preview = document.getElementById('admin-stock-image-preview');
+  if (preview) {
+    if (adminStockImageData) { preview.src = adminStockImageData; preview.classList.remove('hidden'); }
+    else preview.classList.add('hidden');
+  }
+  populateAdminCargoTypes();
+  setAdminCargoTypes(item?.cargoTypes || []);
+  wireAdminCategoryToggle();
+  updateAdminComputedFields();
+  document.getElementById('modal-edit')?.classList.add('active');
+}
+
+function setAdminField(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+window._editItem = function(id) {
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+  openAdminStockEditor(item);
+};
+window._addItem = function() {
+  openAdminStockEditor(null);
+};
+
+document.getElementById('btn-add')?.addEventListener('click', window._addItem);
+
+const adminStockImageDrop = document.getElementById('admin-stock-image-drop');
+const adminStockImageInput = document.getElementById('admin-stock-image-input');
+adminStockImageDrop?.addEventListener('click', () => adminStockImageInput?.click());
+adminStockImageDrop?.addEventListener('dragover', (e) => { e.preventDefault(); adminStockImageDrop.classList.add('dragging'); });
+adminStockImageDrop?.addEventListener('dragleave', () => adminStockImageDrop.classList.remove('dragging'));
+adminStockImageDrop?.addEventListener('drop', (e) => { e.preventDefault(); adminStockImageDrop.classList.remove('dragging'); if (e.dataTransfer.files[0]) loadAdminStockImage(e.dataTransfer.files[0]); });
+adminStockImageInput?.addEventListener('change', () => { if (adminStockImageInput.files[0]) loadAdminStockImage(adminStockImageInput.files[0]); });
+
+document.getElementById('edit-cancel')?.addEventListener('click', () => document.getElementById('modal-edit')?.classList.remove('active'));
+document.querySelector('#modal-edit .modal-close')?.addEventListener('click', () => document.getElementById('modal-edit')?.classList.remove('active'));
+document.getElementById('edit-save')?.addEventListener('click', () => {
+  const name = document.getElementById('admin-stock-name')?.value.trim();
+  if (!name) return alert('Nom requis');
+  const category = document.getElementById('admin-stock-category')?.value || 'locomotive';
+  const mass = parseFloat(document.getElementById('admin-stock-mass')?.value) || 80;
+  const freightCapacity = parseFloat(document.getElementById('admin-stock-freight')?.value) || 0;
+  const tonnage = category === 'wagon' ? Math.round(mass + freightCapacity) : Math.round(mass);
+  const itemData = {
+    name,
+    seriesName: document.getElementById('admin-stock-series')?.value.trim() || '',
+    category,
+    traction: getAdminTractionString(),
+    maxSpeed: parseInt(document.getElementById('admin-stock-speed')?.value) || 0,
+    power: parseInt(document.getElementById('admin-stock-power')?.value) || 0,
+    mass,
+    length: parseFloat(document.getElementById('admin-stock-length')?.value) || 20,
+    passengerCapacity: parseInt(document.getElementById('admin-stock-capacity')?.value) || 0,
+    freightCapacity,
+    tonnage,
+    purchasePrice: computeAdminPrice(),
+    cargoTypes: getAdminCargoTypes(),
+    wagonSubCategory: document.getElementById('admin-stock-wagon-subcat')?.value || '',
+    imageData: adminStockImageData,
+  };
+  const id = document.getElementById('edit-id')?.value;
+  if (id) {
+    const item = allItems.find(i => i.id === id);
+    if (!item) return;
+    Object.assign(item, itemData);
+    const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+    const idx = imported.findIndex(i => i.id === id);
+    if (idx >= 0) {
+      imported[idx] = {...imported[idx], ...itemData};
+      localStorage.setItem('admin_catalog_imported', JSON.stringify(imported));
+    } else {
+      const mods = JSON.parse(localStorage.getItem('admin_catalog_mods') || '[]');
+      const mIdx = mods.findIndex(m => m.id === id);
+      if (mIdx >= 0) mods[mIdx] = {...item}; else mods.push({...item});
+      localStorage.setItem('admin_catalog_mods', JSON.stringify(mods));
+    }
+  } else {
+    const newItem = { ...itemData, id: 'admin_' + Date.now(), _source: 'ADMIN', _catalog: true };
+    const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+    imported.push(newItem);
+    localStorage.setItem('admin_catalog_imported', JSON.stringify(imported));
+    allItems.push(newItem);
+  }
+  document.getElementById('modal-edit')?.classList.remove('active');
+  updateStats();
+  applyFilters();
+});
+
+function tractionMatchesAdmin(itemTraction, filter) {
+  if (!filter) return true;
+  const it = (itemTraction || '').toLowerCase();
+  const f = filter.toLowerCase();
+  if (f === 'none' || f === 'aucune') return it === '' || it === 'none' || it === 'aucune';
+  if (f === 'diesel') return it.includes('diesel') || it.includes('vapeur');
+  if (f === 'electrique' || f === 'électrique') return it.includes('electrique') || it.includes('électrique') || ['25kv','15kv','3kv','1.5kv','1500v','3e rail','3erail','3e'].some(k => it.includes(k));
+  if (f === 'bi' || f === 'bi-mode' || f === 'bimode') return (it.includes('diesel') || it.includes('vapeur')) && ['25kv','15kv','3kv','1.5kv','1500v','3e rail','3erail','electrique','électrique'].some(k => it.includes(k));
+  return it.includes(f);
+}
+
+// ============ EXPORT JSON ============
+document.getElementById('btn-export').addEventListener('click', () => {
+  const data = JSON.stringify(filteredItems, null, 2);
+  downloadBlob(data, 'catalogue-rail-empire.json', 'application/json');
+});
+
+// ============ EXPORT CSV ============
+document.getElementById('btn-export-csv').addEventListener('click', () => {
+  const cols = ['id','name','seriesName','category','traction','maxSpeed','power','mass','length','passengerCapacity','freightCapacity','purchasePrice','imageData','_source','cargoTypes'];
+  let csv = cols.join(';') + '\n';
+  for (const item of filteredItems) {
+    csv += cols.map(c => {
+      let v = item[c] ?? '';
+      if (Array.isArray(v)) v = v.join(',');
+      return String(v).replace(/;/g, ',');
+    }).join(';') + '\n';
+  }
+  downloadBlob(csv, 'catalogue-rail-empire.csv', 'text/csv');
+});
+
+function downloadBlob(content, name, type) {
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ============ IMPORT ============
+const dropZone = document.getElementById('drop-zone');
+const importFile = document.getElementById('import-file');
+let importedEntries = [];
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  importedEntries = [];
+  document.getElementById('import-progress').style.display = 'none';
+  document.getElementById('import-results').style.display = 'none';
+  document.getElementById('import-confirm').style.display = 'none';
+  document.getElementById('modal-import').classList.add('active');
+});
+
+document.getElementById('import-cancel').addEventListener('click', () => document.getElementById('modal-import').classList.remove('active'));
+
+dropZone.addEventListener('click', () => importFile.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); processImportFile(e.dataTransfer.files[0]); });
+importFile.addEventListener('change', e => { if (e.target.files[0]) processImportFile(e.target.files[0]); });
+
+async function processImportFile(file) {
+  document.getElementById('import-progress').style.display = 'block';
+  const status = document.getElementById('import-status');
+  const bar = document.getElementById('import-bar');
+  status.textContent = 'Lecture du fichier...';
+  bar.style.width = '10%';
+  
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const imageFiles = Object.keys(zip.files).filter(f => !zip.files[f].dir && /\.(png|gif|jpg|jpeg|bmp|webp)$/i.test(f));
+    
+    status.textContent = `${imageFiles.length} images trouvées. Analyse...`;
+    bar.style.width = '30%';
+    
+    // Group by folder
+    const folders = {};
+    for (const path of imageFiles) {
+      const parts = path.split('/').filter(Boolean);
+      let folderName, fileName;
+      if (parts.length >= 2) {
+        // Skip root folder, use immediate parent as series
+        folderName = parts[parts.length - 2];
+        fileName = parts[parts.length - 1];
+      } else {
+        folderName = '_root';
+        fileName = parts[0];
+      }
+      if (!folders[folderName]) folders[folderName] = [];
+      folders[folderName].push({path, fileName});
+    }
+    
+    status.textContent = `${Object.keys(folders).length} séries détectées. Extraction des images...`;
+    bar.style.width = '50%';
+    
+    importedEntries = [];
+    let processed = 0;
+    
+    for (const [folderName, files] of Object.entries(folders)) {
+      for (const {path, fileName} of files) {
+        const nameNoExt = fileName.replace(/\.\w+$/, '');
+        const blob = await zip.files[path].async('blob');
+        const url = URL.createObjectURL(blob);
+        
+        // Get image dimensions for length calculation
+        let lengthM = 15.0;
+        try {
+          const img = new Image();
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = url;
+          });
+          lengthM = Math.round(img.naturalWidth * 0.1 * 10) / 10; // 1px = 10cm
+        } catch(e) {}
+        
+        // Auto-detect specs from folder/name
+        const specs = autoDetectSpecs(folderName, nameNoExt, lengthM);
+        
+        const entry = {
+          id: `import-${Date.now()}-${processed}`,
+          name: nameNoExt,
+          category: specs.category,
+          traction: specs.traction,
+          maxSpeed: specs.vmax,
+          mass: specs.mass,
+          power: specs.power,
+          passengerCapacity: 0,
+          freightCapacity: specs.freightCapacity,
+          length: lengthM,
+          imageData: url,
+          _importPath: path,
+          _importBlob: blob,
+          seriesName: folderName === '_root' ? nameNoExt : folderName,
+          numberStart: '',
+          purchasePrice: specs.price,
+          cargoTypes: specs.cargoTypes,
+          _source: 'Import',
+          tonnage: specs.mass,
+          _catalog: true,
+        };
+        
+        importedEntries.push(entry);
+        processed++;
+        bar.style.width = `${50 + Math.round(processed / imageFiles.length * 40)}%`;
+      }
+    }
+    
+    bar.style.width = '100%';
+    status.textContent = `${importedEntries.length} engins prêts à importer.`;
+    
+    // Show preview table
+    const wrap = document.getElementById('import-table-wrap');
+    let html = '<table style="width:100%"><thead><tr><th>Image</th><th>Nom</th><th>Série</th><th>Cat.</th><th>VMax</th><th>Puiss.</th><th>Long.</th><th>Prix</th></tr></thead><tbody>';
+    for (const e of importedEntries.slice(0, 50)) {
+      const price = e.purchasePrice >= 1000000 ? (e.purchasePrice/1000000).toFixed(1)+'M€' : (e.purchasePrice/1000).toFixed(0)+'k€';
+      html += `<tr>
+        <td><img src="${e.imageData}" style="height:25px;max-width:80px;object-fit:contain"></td>
+        <td>${e.name}</td><td>${e.seriesName}</td><td>${e.category}</td>
+        <td>${e.maxSpeed}</td><td>${e.power}</td><td>${e.length}</td><td>${price}</td></tr>`;
+    }
+    if (importedEntries.length > 50) html += `<tr><td colspan="8" style="text-align:center;color:var(--text2)">...et ${importedEntries.length-50} autres</td></tr>`;
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+    
+    document.getElementById('import-results').style.display = 'block';
+    document.getElementById('import-confirm').style.display = 'inline-flex';
+    
+  } catch(e) {
+    status.textContent = `Erreur : ${e.message}`;
+    bar.style.width = '100%';
+    bar.style.background = 'var(--red)';
+  }
+}
+
+// Auto-detect specs from folder name and file name
+function autoDetectSpecs(folder, name, lengthM) {
+  const fl = folder.toLowerCase();
+  const nl = name.toLowerCase();
+  const combined = fl + ' ' + nl;
+  
+  // Known loco patterns
+  const locoPatterns = {
+    '185': {vmax:140,power:5600,mass:84,traction:'electrique'},
+    '186': {vmax:160,power:5600,mass:86,traction:'electrique'},
+    '187': {vmax:140,power:5600,mass:87,traction:'bi'},
+    '188': {vmax:160,power:2400,mass:90,traction:'bi'},
+    '193': {vmax:200,power:6400,mass:87,traction:'electrique'},
+    'vectron': {vmax:200,power:6400,mass:87,traction:'electrique'},
+    '218': {vmax:140,power:2060,mass:79,traction:'diesel'},
+    '214': {vmax:100,power:1100,mass:62,traction:'diesel'},
+    'g1206': {vmax:100,power:1500,mass:87,traction:'diesel'},
+    'g2000': {vmax:120,power:2240,mass:90,traction:'diesel'},
+    'g1000': {vmax:100,power:1100,mass:80,traction:'diesel'},
+    'de18': {vmax:120,power:1800,mass:85,traction:'diesel'},
+    'e4000': {vmax:160,power:3178,mass:126,traction:'diesel'},
+    'euro4000': {vmax:160,power:3178,mass:126,traction:'diesel'},
+    'tgv': {vmax:300,power:8800,mass:383,traction:'electrique'},
+    'ave': {vmax:300,power:8800,mass:392,traction:'electrique'},
+  };
+  
+  // Check if it's a known loco
+  for (const [pattern, specs] of Object.entries(locoPatterns)) {
+    if (combined.includes(pattern)) {
+      const price = 1000 * specs.power;
+      return {category:'locomotive', ...specs, freightCapacity:0, price, cargoTypes:[]};
+    }
+  }
+  
+  // Wagon type detection from folder
+  const wagonTypes = {
+    'citerne': {vmax:100,mass:24,freightCapacity:66,cargoTypes:['hydrocarbures','produits chimiques']},
+    'gaz': {vmax:100,mass:24,freightCapacity:65,cargoTypes:['gaz liquéfié','GPL']},
+    'intermodal': {vmax:120,mass:25,freightCapacity:60,cargoTypes:['conteneurs','caisses mobiles']},
+    'conteneur': {vmax:120,mass:25,freightCapacity:60,cargoTypes:['conteneurs','caisses mobiles']},
+    'porte-auto': {vmax:120,mass:35,freightCapacity:25,cargoTypes:['véhicules automobiles']},
+    'auto': {vmax:120,mass:35,freightCapacity:25,cargoTypes:['véhicules automobiles']},
+    'bach': {vmax:120,mass:22,freightCapacity:68,cargoTypes:['bobines acier','produits sidérurgiques']},
+    'plat': {vmax:100,mass:20,freightCapacity:55,cargoTypes:['bois','machines','rails']},
+    'tremi': {vmax:100,mass:20,freightCapacity:60,cargoTypes:['céréales','sable','ciment']},
+    'hopper': {vmax:100,mass:20,freightCapacity:60,cargoTypes:['céréales','sable','ciment']},
+    'silo': {vmax:100,mass:22,freightCapacity:60,cargoTypes:['ciment','céréales','engrais']},
+  };
+  
+  for (const [pattern, specs] of Object.entries(wagonTypes)) {
+    if (combined.includes(pattern)) {
+      const price = 100 * specs.freightCapacity;
+      return {category:'wagon', traction:'none', power:0, ...specs, price};
+    }
+  }
+  
+  // UIC code patterns in name
+  if (/^z/i.test(nl)) return {category:'wagon',traction:'none',power:0,vmax:100,mass:24,freightCapacity:65,price:6500,cargoTypes:['hydrocarbures']};
+  if (/^s[gn]/i.test(nl)) return {category:'wagon',traction:'none',power:0,vmax:120,mass:22,freightCapacity:60,price:6000,cargoTypes:['conteneurs']};
+  if (/^e/i.test(nl) && lengthM < 20) return {category:'wagon',traction:'none',power:0,vmax:100,mass:20,freightCapacity:55,price:5500,cargoTypes:['charbon','minerai']};
+  if (/^h/i.test(nl)) return {category:'wagon',traction:'none',power:0,vmax:120,mass:30,freightCapacity:25,price:2500,cargoTypes:['véhicules']};
+  if (/^f/i.test(nl)) return {category:'wagon',traction:'none',power:0,vmax:100,mass:20,freightCapacity:60,price:6000,cargoTypes:['céréales','sable']};
+  if (/^t/i.test(nl) && lengthM < 20) return {category:'wagon',traction:'none',power:0,vmax:100,mass:20,freightCapacity:60,price:6000,cargoTypes:['céréales']};
+  
+  // Default: if short = wagon, if long or name looks like loco = loco
+  if (lengthM > 20 || /\d{3}/.test(nl) || /^(br|bb|cc|class)/i.test(nl)) {
+    return {category:'locomotive',traction:'electrique',power:4000,vmax:160,mass:84,freightCapacity:0,price:4000000,cargoTypes:[]};
+  }
+  
+  return {category:'wagon',traction:'none',power:0,vmax:100,mass:20,freightCapacity:55,price:5500,cargoTypes:[]};
+}
+
+// Confirm import
+document.getElementById('import-confirm').addEventListener('click', () => {
+  // Save to localStorage and add to catalog
+  const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+  // For each entry, convert blob URL to stored data
+  for (const e of importedEntries) {
+    // Keep the blob URL for display in this session
+    imported.push({...e, _importBlob: undefined});
+  }
+  localStorage.setItem('admin_catalog_imported', JSON.stringify(imported));
+  
+  allItems.push(...importedEntries);
+  updateStats();
+  applyFilters();
+  document.getElementById('modal-import').classList.remove('active');
+  alert(`${importedEntries.length} engins importés avec succès !`);
+});
+
+// ============ UTILS ============
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// Close modals on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+  }
+});
+
+// Close modal clicking overlay
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); });
+});
+
+// ============ INCIDENTS MANAGEMENT ============
+let incidents = JSON.parse(localStorage.getItem('admin_incidents') || '[]');
+let editingIncident = null;
+
+document.getElementById('btn-incidents').addEventListener('click', () => {
+  renderIncidentsList();
+  document.getElementById('modal-incidents').classList.add('active');
+});
+document.getElementById('incidents-close').addEventListener('click', () => document.getElementById('modal-incidents').classList.remove('active'));
+
+function renderIncidentsList() {
+  const list = document.getElementById('incidents-list');
+  if (incidents.length === 0) {
+    list.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px">Aucun incident créé. Clique sur "+ Nouvel incident" pour commencer.</p>';
+    return;
+  }
+  let html = '<table style="width:100%"><thead><tr><th>Nom</th><th>Effet</th><th>Sévérité</th><th>Durée</th><th>Prob.</th><th>Horaires</th><th>Actions</th></tr></thead><tbody>';
+  for (const inc of incidents) {
+    const effectLabels = {speed_reduction:'Vitesse -50%',line_blocked:'Ligne bloquée',extra_cost:'Surcoût +30%',delay:'Retard +15min',revenue_bonus:'Bonus +20%'};
+    const sevColors = {low:'var(--green)',medium:'var(--orange)',high:'var(--red)'};
+    html += `<tr>
+      <td><b>${inc.name}</b><br><span style="font-size:.75em;color:var(--text2)">${inc.description||''}</span></td>
+      <td>${effectLabels[inc.effect]||inc.effect}</td>
+      <td><span style="color:${sevColors[inc.severity]||'var(--text)'}">${inc.severity}</span></td>
+      <td>${inc.duration} min</td>
+      <td>${inc.probability}%/h</td>
+      <td>${inc.hourStart}h - ${inc.hourEnd}h</td>
+      <td>
+        <button class="btn btn-ghost" style="padding:3px 8px;font-size:.75em" onclick="window._editIncident('${inc.id}')">Modifier</button>
+        <button class="btn btn-red" style="padding:3px 8px;font-size:.75em" onclick="window._deleteIncident('${inc.id}')">Supprimer</button>
+      </td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  list.innerHTML = html;
+}
+
+document.getElementById('incident-add').addEventListener('click', () => {
+  editingIncident = null;
+  document.getElementById('incident-edit-title').textContent = 'Nouvel incident';
+  document.getElementById('inc-name').value = '';
+  document.getElementById('inc-desc').value = '';
+  document.getElementById('inc-effect').value = 'speed_reduction';
+  document.getElementById('inc-severity').value = 'medium';
+  document.getElementById('inc-duration').value = 60;
+  document.getElementById('inc-probability').value = 5;
+  document.getElementById('inc-hour-start').value = 6;
+  document.getElementById('inc-hour-end').value = 22;
+  document.getElementById('modal-incident-edit').classList.add('active');
+});
+
+window._editIncident = function(id) {
+  editingIncident = incidents.find(i => i.id === id);
+  if (!editingIncident) return;
+  document.getElementById('incident-edit-title').textContent = 'Modifier : ' + editingIncident.name;
+  document.getElementById('inc-name').value = editingIncident.name;
+  document.getElementById('inc-desc').value = editingIncident.description || '';
+  document.getElementById('inc-effect').value = editingIncident.effect;
+  document.getElementById('inc-severity').value = editingIncident.severity;
+  document.getElementById('inc-duration').value = editingIncident.duration;
+  document.getElementById('inc-probability').value = editingIncident.probability;
+  document.getElementById('inc-hour-start').value = editingIncident.hourStart;
+  document.getElementById('inc-hour-end').value = editingIncident.hourEnd;
+  document.getElementById('modal-incident-edit').classList.add('active');
+};
+
+window._deleteIncident = function(id) {
+  if (!confirm('Supprimer cet incident ?')) return;
+  incidents = incidents.filter(i => i.id !== id);
+  localStorage.setItem('admin_incidents', JSON.stringify(incidents));
+  renderIncidentsList();
+};
+
+document.getElementById('incident-edit-cancel').addEventListener('click', () => document.getElementById('modal-incident-edit').classList.remove('active'));
+document.getElementById('incident-edit-save').addEventListener('click', () => {
+  const name = document.getElementById('inc-name').value.trim();
+  if (!name) return alert('Le nom est obligatoire');
+  const data = {
+    name,
+    description: document.getElementById('inc-desc').value.trim(),
+    effect: document.getElementById('inc-effect').value,
+    severity: document.getElementById('inc-severity').value,
+    duration: +document.getElementById('inc-duration').value,
+    probability: +document.getElementById('inc-probability').value,
+    hourStart: +document.getElementById('inc-hour-start').value,
+    hourEnd: +document.getElementById('inc-hour-end').value,
+  };
+  if (editingIncident) {
+    Object.assign(editingIncident, data);
+  } else {
+    data.id = 'inc-' + Date.now();
+    incidents.push(data);
+  }
+  localStorage.setItem('admin_incidents', JSON.stringify(incidents));
+  document.getElementById('modal-incident-edit').classList.remove('active');
+  renderIncidentsList();
+});
+
+// ============ PUBLISH FOR ALL PLAYERS ============
+async function publishToServer() {
+  const token = localStorage.getItem('re_api_token') || '';
+  if (!token) return alert('Connectez-vous d’abord au jeu pour publier.');
+
+  const statusEl = document.getElementById('publish-status');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'rgba(59,130,246,.15)';
+  statusEl.style.color = 'var(--blue)';
+  statusEl.textContent = 'Publication vers le serveur...';
+
+  const mods = JSON.parse(localStorage.getItem('admin_catalog_mods') || '[]');
+  const deletedIds = JSON.parse(localStorage.getItem('admin_catalog_deleted') || '[]');
+  const imported = JSON.parse(localStorage.getItem('admin_catalog_imported') || '[]');
+
+  const overrideData = {
+    version: Date.now(),
+    publishedAt: new Date().toISOString(),
+    modifications: mods,
+    deletions: deletedIds,
+    imports: imported.map(i => {
+      const clean = {...i};
+      delete clean._importBlob;
+      delete clean._importPath;
+      if (clean.imageData && !clean.imageData.startsWith('data:')) clean.imageData = undefined;
+      return clean;
+    }),
+    incidents: incidents,
+  };
+
+  try {
+    const res = await fetch('/admin/publish', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Token': token,
+      },
+      body: JSON.stringify(overrideData),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Erreur serveur');
+    }
+    statusEl.style.background = 'rgba(34,197,94,.15)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✓ Publié sur le serveur ! Les joueurs verront les changements en rafraîchissant.';
+  } catch(e) {
+    statusEl.style.background = 'rgba(239,68,68,.15)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Erreur : ' + e.message;
+  }
+}
+
+document.getElementById('btn-publish').addEventListener('click', () => {
+  document.getElementById('publish-status').style.display = 'none';
+  document.getElementById('modal-publish').classList.add('active');
+});
+document.getElementById('publish-cancel').addEventListener('click', () => document.getElementById('modal-publish').classList.remove('active'));
+document.getElementById('publish-confirm').addEventListener('click', publishToServer);
+
+// ============ INIT ============
+document.getElementById('btn-back')?.addEventListener('click', () => {
+  if (window.history.length > 1) window.history.back();
+  else {
+    const v = new URLSearchParams(window.location.search).get('v') || '1785017600';
+    window.location.href = 'index.html?v=' + v;
+  }
+});
+loadCatalogs();
+</script>
+</body>
+</html>

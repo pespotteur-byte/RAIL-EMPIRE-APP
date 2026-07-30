@@ -1,0 +1,14 @@
+node_modules/
+package-lock.json
+.DS_Store
+*.log
+.cache_rebuild/
+scripts/.mlg_cache.json
+scripts/.dbcargo_page_cache.json
+scripts/.wagon_specs_cache.json
+scripts/__pycache__/
+*.pyc
+dist/
+dist2/
+rail-empire/
+rail-empire-build/

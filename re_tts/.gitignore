@@ -1,0 +1,6 @@
+models/
+samples/
+*.wav
+*.mp3
+__pycache__/
+*.log

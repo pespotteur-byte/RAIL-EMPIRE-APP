@@ -1,4 +1,29 @@
-import { TileMap } from './map.js';
+import { TileMap } from './map.js?v=1784931691';
+
+// LVM-01 — couleurs des trains sur la livemap par catégorie (annexe 2a).
+export const LIVEMAP_CATEGORY_COLORS = {
+  voyageur: '#3b82f6', // bleu
+  fret: '#22c55e',     // vert
+  travaux: '#f59e0b',  // orange
+  machine: '#a855f7',  // violet — HLP / TM (Section VI)
+};
+
+// LVM-01 — icônes de train reproduites à l'identique des annexes 2a (image2-5).
+const TRAIN_ICON_SRC = {
+  generic: 'img/livemap/train_generic.png',
+  voyageur: 'img/livemap/train_voyageur.png',
+  fret: 'img/livemap/train_fret.png',
+  travaux: 'img/livemap/train_travaux.png',
+  machine: 'img/livemap/train_generic.png',
+};
+const TRAIN_ICON_IMAGES = {};
+if (typeof Image !== 'undefined') {
+  for (const [k, src] of Object.entries(TRAIN_ICON_SRC)) {
+    const img = new Image();
+    img.src = src;
+    TRAIN_ICON_IMAGES[k] = img;
+  }
+}
 
 export class Renderer {
   constructor(canvas) {
@@ -8,9 +33,25 @@ export class Renderer {
     this.hoveredStation = null;
     this.logicalWidth = 0;
     this.logicalHeight = 0;
+    this._minimapCache = null;
+    this._lastMinimapDraw = 0;
+    this._minimapInterval = 50; // ~20 FPS throttle
+    this._liveryCache = new Map(); // liveryId -> Image
+    this._liveryLoading = new Set();
+    this._liveryObjectURLs = new Set();
+    this.deleteCircle = null;
+    // Static layer offscreen canvas (tracks, stations, depots)
+    this._staticCanvas = null;
+    this._staticCtx = null;
+    this._staticValid = false;
+    this._lastStaticZoom = 0;
+    this._lastStaticCLat = 0;
+    this._lastStaticCLon = 0;
     this.resize();
     window.addEventListener('resize', () => this.resize());
   }
+
+  invalidateStatic() { this._staticValid = false; }
 
   resize() {
     const container = this.canvas.parentElement;
@@ -26,9 +67,11 @@ export class Renderer {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.tileMap.viewportWidth = rect.width;
     this.tileMap.viewportHeight = rect.height;
+    this._staticValid = false;
+    this.tileMap.markDirty();
   }
 
-  render(world, services, engine, depotManager) {
+  render(world, services, engine, depotManager, lineManager, platformManager, voiePointManager) {
     const ctx = this.ctx;
     const w = this.logicalWidth;
     const h = this.logicalHeight;
@@ -37,24 +80,174 @@ export class Renderer {
     ctx.fillRect(0, 0, w, h);
 
     this.tileMap.renderTiles(ctx, w, h);
-    this.drawTracks(ctx, world);
-    this.drawStations(ctx, world);
+
+    // Update frame projection cache once per render (avoids redundant trig in latLonToScreen)
+    this.tileMap._updateFrameCache();
+
+    // Cache toggle element refs (avoid per-frame DOM lookups, re-query if null)
+    if (!this._toggleEls || !this._toggleEls.stations) {
+      this._toggleEls = {
+        stations: document.getElementById('toggle-stations'),
+        names: document.getElementById('toggle-station-names'),
+        trains: document.getElementById('toggle-trains'),
+        voie: document.getElementById('toggle-voie-points'),
+        orm: document.getElementById('toggle-orm'),
+        basic: document.getElementById('toggle-basic'),
+        satellite: document.getElementById('toggle-satellite'),
+        weather: document.getElementById('toggle-weather'),
+      };
+      // Sync toggle inputs with the initial TileMap state
+      if (this._toggleEls.weather) this._toggleEls.weather.checked = this.tileMap.weatherEnabled;
+      if (this._toggleEls.satellite) this._toggleEls.satellite.checked = this.tileMap.satelliteEnabled;
+      if (this._toggleEls.basic) this._toggleEls.basic.checked = this.tileMap.basicMode;
+      if (this._toggleEls.orm) this._toggleEls.orm.checked = this.tileMap.railEnabled;
+
+      if (this._toggleEls.orm) {
+        this._toggleEls.orm.addEventListener('change', () => {
+          // If basic mode is active and the user re-enables ORM, turn basic off.
+          if (this.tileMap.basicMode && this._toggleEls.orm.checked) {
+            this._toggleEls.basic.checked = false;
+            this.tileMap.toggleBasic();
+          }
+          this.tileMap.railEnabled = this._toggleEls.orm.checked;
+          this.tileMap.markDirty();
+        });
+      }
+      if (this._toggleEls.basic) {
+        this._toggleEls.basic.addEventListener('change', () => {
+          const isBasic = this.tileMap.toggleBasic();
+          this._toggleEls.basic.checked = isBasic;
+          this._toggleEls.orm.checked = this.tileMap.railEnabled;
+          this._toggleEls.orm.disabled = isBasic;
+        });
+      }
+      if (this._toggleEls.weather) {
+        this._toggleEls.weather.addEventListener('change', () => {
+          this.tileMap.setWeatherEnabled(this._toggleEls.weather.checked);
+        });
+      }
+      if (this._toggleEls.satellite) {
+        this._toggleEls.satellite.addEventListener('change', () => {
+          this.tileMap.setSatelliteEnabled(this._toggleEls.satellite.checked);
+        });
+      }
+    }
+    const showStations = this._toggleEls.stations?.checked !== false;
+    const showNames = this._toggleEls.names?.checked !== false;
+    const showTrains = this._toggleEls.trains?.checked !== false;
+    const showVoiePoints = this._toggleEls.voie?.checked !== false;
+
+    // Industries toggle
+    if (!this._toggleEls.industries) {
+      this._toggleEls.industries = document.getElementById('toggle-industries');
+    }
+    const showIndustries = this._toggleEls.industries?.checked === true;
+
+    // Zones toggle (signal boxes + regulation zones)
+    if (!this._toggleEls.zones) {
+      this._toggleEls.zones = document.getElementById('toggle-zones');
+    }
+    const showZones = this._toggleEls.zones?.checked !== false;
+
+    // Draw static layers directly to main ctx (tracks ~3ms, stations ~0.2ms = fast)
+    this.drawTracks(ctx, world, lineManager);
+    if (showStations) this.drawStations(ctx, world, platformManager, showNames);
     this.drawDepots(ctx, world, depotManager);
-    this.drawServices(ctx, world, services);
-    this.drawMinimap(ctx, w, h, world, services);
+    if (showZones) this.drawSignalBoxes(ctx);
+    if (showZones) this.drawRegulationZones(ctx);
+    if (showVoiePoints && voiePointManager) {
+      this.drawVoieTroncons(ctx, voiePointManager, world);
+      this.drawVoiePoints(ctx, voiePointManager);
+    }
+
+    // Industry markers
+    if (showIndustries) {
+      this.drawIndustries(ctx);
+    }
+
+    // Cloud overlay: canvas fallback drawn in addition to/instead of tile layer
+    if (this.tileMap.cloudEnabled) {
+      this._drawCloudOverlay(ctx, w, h, this.tileMap._cloudTileUrl ? 0.4 : 1.0);
+    }
+
+    // Dynamic layers always drawn
+    if (window.game?.ui?._manualTronconWaypoints?.length > 1) {
+      this._drawTempTrace(ctx, window.game.ui._manualTronconWaypoints);
+    }
+    // Draw route, signals, then trains so the train icon stays on top of its route.
+    this.drawSelectedServiceRoute(ctx, world);
+    this.drawSignals(ctx, services);
+    if (showTrains) this.drawServices(ctx, world, services);
+    this.drawDeleteCircle(ctx);
+  }
+
+  _drawCloudOverlay(ctx, w, h, alphaScale = 1.0) {
+    const weather = window.game?.weather;
+    if (!weather) return;
+    const low = weather.cloudLow || 0;
+    const mid = weather.cloudMid || 0;
+    const high = weather.cloudHigh || 0;
+    if (low + mid + high === 0) return;
+
+    // Low clouds: dense, gray-white
+    if (low > 0) {
+      ctx.fillStyle = `rgba(200,210,220,${low * 0.002 * alphaScale})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // Mid clouds: lighter, blue-gray
+    if (mid > 0) {
+      ctx.fillStyle = `rgba(180,195,215,${mid * 0.0015 * alphaScale})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    // High clouds: wispy, very transparent
+    if (high > 0) {
+      ctx.fillStyle = `rgba(220,225,235,${high * 0.001 * alphaScale})`;
+      ctx.fillRect(0, 0, w, h);
+    }
   }
 
   latLonToScreen(lat, lon) {
     return this.tileMap.latLonToPixel(lat, lon);
   }
 
-  drawTracks(ctx, world) {
+  drawTracks(ctx, world, lineManager) {
+    const tm = this.tileMap;
+    const topLeft = tm ? tm.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight) : null;
+    const botRight = tm ? tm.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight) : null;
+    const hasVP = topLeft && botRight;
+    const vpMinLat = hasVP ? Math.min(topLeft.lat, botRight.lat) - 0.01 : -90;
+    const vpMaxLat = hasVP ? Math.max(topLeft.lat, botRight.lat) + 0.01 : 90;
+    const vpMinLon = hasVP ? Math.min(topLeft.lon, botRight.lon) - 0.01 : -180;
+    const vpMaxLon = hasVP ? Math.max(topLeft.lon, botRight.lon) + 0.01 : 180;
+
+    const zoom = tm?.zoomLevel || 10;
+    const pxPerDegLon = tm._frameScale ? (tm._frameScale / 360) : 500;
+
     for (const track of world.tracks) {
       const stA = world.getStationById(track.stationA);
       const stB = world.getStationById(track.stationB);
       if (!stA || !stB) continue;
 
-      // Determine track color: incidents/works override normal colors
+      // Use cached bounding box if available
+      let tMinLat, tMaxLat, tMinLon, tMaxLon;
+      if (track._bbox) {
+        tMinLat = track._bbox[0]; tMaxLat = track._bbox[1];
+        tMinLon = track._bbox[2]; tMaxLon = track._bbox[3];
+      } else {
+        tMinLat = Math.min(stA.lat, stB.lat);
+        tMaxLat = Math.max(stA.lat, stB.lat);
+        tMinLon = Math.min(stA.lon, stB.lon);
+        tMaxLon = Math.max(stA.lon, stB.lon);
+        track._bbox = [tMinLat, tMaxLat, tMinLon, tMaxLon];
+      }
+      if (tMaxLat < vpMinLat || tMinLat > vpMaxLat || tMaxLon < vpMinLon || tMinLon > vpMaxLon) continue;
+
+      // Skip tiny tracks that would be sub-pixel at current zoom
+      const spanPx = (tMaxLon - tMinLon) * pxPerDegLon;
+      const spanPy = (tMaxLat - tMinLat) * pxPerDegLon;
+      if (spanPx < 2 && spanPy < 2 && zoom < 10) continue;
+
+      // Determine track color: incidents/works override, then line color, then speed-based
       let trackColor, trackWidth;
       const hasInterruption = (track.worksActive && track.worksImpact === 'stop') ||
                               (track.incidentActive && track.incidentEffect === 'stop');
@@ -62,15 +255,28 @@ export class Renderer {
                           (track.incidentActive && track.incidentEffect === 'slow');
 
       if (hasInterruption) {
-        trackColor = '#ef4444'; // Red for interruptions
+        trackColor = track.worksActive ? '#c2410c' : '#7f1d1d';
         trackWidth = 4;
       } else if (hasSlowdown) {
-        trackColor = '#f59e0b'; // Orange/yellow for slowdowns
+        trackColor = track.worksActive ? '#c2410c' : '#facc15';
         trackWidth = 3.5;
       } else {
-        trackColor = track.maxSpeed >= 250 ? '#3b82f6' :
-                     track.maxSpeed >= 160 ? '#f59e0b' : '#64748b';
-        trackWidth = track.maxSpeed >= 250 ? 2.5 : 1.5;
+        // Check if track belongs to a line (skip expensive lookup at very low zoom)
+        let lineColor = null;
+        if (lineManager && zoom >= 7) {
+          const linesOnTrack = lineManager.getLinesForTrack(track.id);
+          if (linesOnTrack.length > 0) {
+            lineColor = linesOnTrack[0].color;
+          }
+        }
+        if (lineColor) {
+          trackColor = lineColor;
+          trackWidth = 2.5;
+        } else {
+          trackColor = track.maxSpeed >= 250 ? '#3b82f6' :
+                       track.maxSpeed >= 160 ? '#f59e0b' : '#64748b';
+          trackWidth = track.maxSpeed >= 250 ? 2.5 : 1.5;
+        }
       }
 
       ctx.strokeStyle = trackColor;
@@ -83,21 +289,89 @@ export class Renderer {
       }
 
       if (track.route && track.route.length > 1) {
+        const len = track.route.length;
+        const routeStep = len <= 20 ? 1 :
+          zoom >= 15 ? 1 : zoom >= 12 ? Math.max(1, len >> 6) :
+          zoom >= 9 ? Math.max(2, len >> 4) : Math.max(4, len >> 3);
         ctx.beginPath();
-        const p0 = this.latLonToScreen(track.route[0].lat, track.route[0].lon);
-        ctx.moveTo(p0.x, p0.y);
-        for (let i = 1; i < track.route.length; i++) {
-          const p = this.latLonToScreen(track.route[i].lat, track.route[i].lon);
-          ctx.lineTo(p.x, p.y);
+        // Inline Mercator projection for speed (avoid method call overhead)
+        const fScale = tm._frameScale;
+        const fCx = tm._frameCx;
+        const fCy = tm._frameCy;
+        const fHW = tm._frameHalfW;
+        const fHH = tm._frameHalfH;
+        const DEG2RAD = Math.PI / 180;
+        const INV4PI = 1 / (4 * Math.PI);
+        const r0 = track.route[0];
+        let sinLat = Math.sin(r0.lat * DEG2RAD);
+        let sx = ((r0.lon + 180) / 360) * fScale - fCx + fHW;
+        let sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) * INV4PI) * fScale - fCy + fHH;
+        ctx.moveTo(sx, sy);
+        for (let i = routeStep; i < len; i += routeStep) {
+          const rp = track.route[i];
+          sinLat = Math.sin(rp.lat * DEG2RAD);
+          sx = ((rp.lon + 180) / 360) * fScale - fCx + fHW;
+          sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) * INV4PI) * fScale - fCy + fHH;
+          ctx.lineTo(sx, sy);
         }
+        const rl = track.route[len - 1];
+        sinLat = Math.sin(rl.lat * DEG2RAD);
+        sx = ((rl.lon + 180) / 360) * fScale - fCx + fHW;
+        sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) * INV4PI) * fScale - fCy + fHH;
+        ctx.lineTo(sx, sy);
         ctx.stroke();
       } else {
-        const pa = this.latLonToScreen(stA.lat, stA.lon);
-        const pb = this.latLonToScreen(stB.lat, stB.lon);
+        const pa = tm.worldToScreenFast(stA.lat, stA.lon);
+        const pb = tm.worldToScreenFast(stB.lat, stB.lon);
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(pb.x, pb.y);
         ctx.stroke();
+      }
+
+      // Annex 3A / LVM — per-segment voie labels + direction arrows from OSM railway:track_ref
+      if (zoom >= 13 && track.route && track.route.length > 1) {
+        const route = track.route;
+        const screenPoints = route.map(r => this.latLonToScreen(r.lat, r.lon));
+        let i = 1;
+        while (i < route.length) {
+          const ref = (route[i].trackRef || '').toString().trim();
+          if (!ref) { i++; continue; }
+          let j = i;
+          while (j < route.length && (route[j].trackRef || '').toString().trim() === ref) j++;
+          const pStart = screenPoints[i - 1];
+          const pEnd = screenPoints[j - 1];
+          const dx = pEnd.x - pStart.x;
+          const dy = pEnd.y - pStart.y;
+          const len = Math.hypot(dx, dy);
+          if (len > 25) {
+            let sumX = 0, sumY = 0, n = 0;
+            for (let k = i; k < j; k++) {
+              sumX += screenPoints[k].x;
+              sumY += screenPoints[k].y;
+              n++;
+            }
+            const mx = sumX / n;
+            const my = sumY / n;
+            const angle = Math.atan2(dy, dx);
+            const label = `VOIE ${ref}`;
+            ctx.save();
+            ctx.font = 'bold 9px sans-serif';
+            const metrics = ctx.measureText(label);
+            const pad = 3;
+            const bw = metrics.width + pad * 2;
+            const bh = 14;
+            ctx.fillStyle = 'rgba(30, 58, 138, 0.9)';
+            ctx.fillRect(mx - bw / 2, my - bh / 2, bw, bh);
+            ctx.fillStyle = '#e0e7ff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, mx, my);
+            ctx.restore();
+            this._drawArrow(ctx, mx, my, angle, 5, '#e2e8f0');
+          }
+          i = j;
+        }
       }
 
       // Draw incident/works label on track at midpoint
@@ -107,36 +381,45 @@ export class Renderer {
         const label = track.incidentActive ? (track.incidentName || 'Incident') :
                       track.worksActive ? 'Travaux' : '';
         if (label) {
-          ctx.fillStyle = hasInterruption ? '#ef4444' : '#f59e0b';
+          ctx.fillStyle = hasInterruption ? (track.worksActive ? '#c2410c' : '#7f1d1d') : '#facc15';
           ctx.font = 'bold 10px sans-serif';
-          ctx.fillText(`⚠ ${label}`, mp.x + 5, mp.y - 5);
+          ctx.fillText(`\u26A0 ${label}`, mp.x + 5, mp.y - 5);
         }
       }
     }
     ctx.setLineDash([]);
   }
 
-  drawStations(ctx, world) {
+  drawStations(ctx, world, platformManager, showNames = true) {
+    const stColors = { voyageur: '#fbbf24', marchandise: '#06b6d4', ite: '#a855f7', depot: '#10b981', mixed: '#f59e0b' };
+    const zoom = this.tileMap.zoomLevel;
+    const fontSize = zoom >= 11 ? 12 : 10;
     for (const st of world.stations) {
       const p = this.latLonToScreen(st.lat, st.lon);
       if (p.x < -30 || p.x > this.logicalWidth + 30 || p.y < -30 || p.y > this.logicalHeight + 30) continue;
 
-      const colors = {
-        voyageur: '#fbbf24',
-        marchandise: '#06b6d4',
-        ite: '#a855f7',
-        depot: '#10b981',
-        mixed: '#f59e0b',
-      };
-      const color = colors[st.type] || '#fbbf24';
+      const color = st.closed ? '#6b7280' : (stColors[st.type] || '#fbbf24');
 
       ctx.fillStyle = color;
       ctx.beginPath();
 
-      if (st.type === 'ite' || st.type === 'depot') {
+      const baseSize = 5;
+
+      if (st.closed) {
+        // Closed station: X shape
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.moveTo(p.x - 4, p.y - 4); ctx.lineTo(p.x + 4, p.y + 4);
+        ctx.moveTo(p.x + 4, p.y - 4); ctx.lineTo(p.x - 4, p.y + 4);
+        ctx.stroke();
+        ctx.fillStyle = '#6b7280';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (st.type === 'ite' || st.type === 'depot') {
         ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
       } else {
-        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, baseSize, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -144,10 +427,21 @@ export class Renderer {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      if (this.tileMap.zoomLevel >= 8) {
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = `bold ${this.tileMap.zoomLevel >= 11 ? 12 : 10}px sans-serif`;
-        ctx.fillText(st.name, p.x + 8, p.y + 4);
+      if (showNames && zoom >= 8) {
+        ctx.fillStyle = st.closed ? '#6b7280' : '#e2e8f0';
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.fillText(st.closed ? `${st.name} (Fermee)` : st.name, p.x + baseSize + 4, p.y + 4);
+
+        // Show platform occupancy for stations with multiple platforms at high zoom
+        if (platformManager && zoom >= 10 && st.platforms > 1) {
+          const status = platformManager.getStatus(st.id);
+          if (status.total > 0) {
+            const label = `${status.used}/${status.total}`;
+            ctx.font = '9px sans-serif';
+            ctx.fillStyle = status.used >= status.total ? '#ef4444' : status.used > 0 ? '#f59e0b' : '#64748b';
+            ctx.fillText(`[${label}]`, p.x + baseSize + 4, p.y + 14);
+          }
+        }
       }
     }
   }
@@ -167,42 +461,239 @@ export class Renderer {
     }
   }
 
-  drawServices(ctx, world, services) {
-    for (const svc of services) {
-      if (!svc.position) continue;
+  drawIndustries(ctx) {
+    const ic = window.game?.industrialClients;
+    if (!ic) return;
 
-      const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
-      if (p.x < -30 || p.x > this.logicalWidth + 30 || p.y < -30 || p.y > this.logicalHeight + 30) continue;
+    // Cache locations array; invalidate when industrial data changes (new/moved/hidden sites)
+    if (!this._indLocs || this._indLocsVersion !== ic._version) {
+      this._indLocs = ic.getAllRealLocations();
+      this._indLocsVersion = ic._version;
+    }
+    const locs = this._indLocs;
+    if (!locs || locs.length === 0) return;
 
-      // Bigger train markers for visibility at all zoom levels
-      const baseSize = svc.state === 'waiting' ? 8 : 12;
-      const color = svc.state === 'waiting' ? '#475569' : (svc.train.color || '#22d3ee');
+    const zoom = this.tileMap?.zoomLevel || 10;
+    const w = this.logicalWidth;
+    const h = this.logicalHeight;
 
-      // Outer glow for moving trains
-      if (svc.state === 'moving') {
-        ctx.save();
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 12;
+    // Adaptive: at low zoom, only show every Nth site and skip labels
+    const showLabels = zoom >= 9;
+    const step = zoom < 7 ? 4 : zoom < 8 ? 2 : 1;
+    const dotSize = zoom >= 10 ? 5 : zoom >= 8 ? 4 : 3;
+
+    ctx.textAlign = 'center';
+    ctx.font = `${zoom >= 10 ? 9 : 8}px sans-serif`;
+
+    for (let i = 0; i < locs.length; i += step) {
+      const loc = locs[i];
+      const p = this.latLonToScreen(loc.lat, loc.lon);
+      if (p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) continue;
+
+      // Colored diamond marker
+      const color = loc.color || '#94a3b8';
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = color;
+      ctx.fillRect(-dotSize / 2, -dotSize / 2, dotSize, dotSize);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(-dotSize / 2, -dotSize / 2, dotSize, dotSize);
+      ctx.restore();
+
+      // Label at sufficient zoom
+      if (showLabels) {
         ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, baseSize * 0.6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        ctx.globalAlpha = 0.9;
+        const label = zoom >= 11 ? loc.name : loc.industryName;
+        ctx.fillText(label, p.x, p.y - dotSize - 3);
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  drawSignalBoxes(ctx) {
+    const sbs = window.game?.staffManager?.signalBoxes;
+    if (!sbs || sbs.length === 0) return;
+    const zoom = this.tileMap?.zoomLevel || 10;
+    for (const sb of sbs) {
+      const p = this.latLonToScreen(sb.lat, sb.lon);
+      if (p.x < -40 || p.x > this.logicalWidth + 40) continue;
+      // Draw radius circle
+      const metersPerPixel = 156543.03 * Math.cos(sb.lat * Math.PI / 180) / Math.pow(2, zoom);
+      const radiusPx = (sb.radiusKm * 1000) / metersPerPixel;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(168, 85, 247, 0.08)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Draw icon
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+      ctx.strokeStyle = '#1e1b4b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(p.x - 4, p.y - 4, 8, 8);
+      // Label
+      if (zoom >= 9) {
+        ctx.fillStyle = '#c4b5fd';
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(sb.name, p.x, p.y - 8);
+      }
+    }
+  }
+
+  drawRegulationZones(ctx) {
+    const zones = window.game?.staffManager?.zones;
+    if (!zones || zones.length === 0) return;
+    const zoom = this.tileMap?.zoomLevel || 10;
+    for (const z of zones) {
+      if (!z.lat || !z.lon) continue;
+      const p = this.latLonToScreen(z.lat, z.lon);
+      if (p.x < -100 || p.x > this.logicalWidth + 100) continue;
+      const metersPerPixel = 156543.03 * Math.cos(z.lat * Math.PI / 180) / Math.pow(2, zoom);
+      const radiusPx = ((z.radiusKm || 30) * 1000) / metersPerPixel;
+      // Draw radius circle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(14, 165, 233, 0.06)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(14, 165, 233, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Draw center marker
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fill();
+      ctx.strokeStyle = '#0c4a6e';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Label
+      if (zoom >= 8) {
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(z.name, p.x, p.y - 10);
+      }
+    }
+  }
+
+  drawServices(ctx, world, services) {
+    const zoom = this.tileMap?.zoomLevel || 10;
+    // DEP-06 : trains en maintenance absents de la Livemap ET du bandeau train
+    services = services.filter(svc => !svc.train?.inMaintenance && !(svc.rame && svc.rame.inMaintenance));
+    const len = services.length;
+    if (len === 0) return;
+
+    // Viewport bounds for fast lat/lon reject
+    let vpMinLat, vpMaxLat, vpMinLon, vpMaxLon;
+    if (len > 200 && this.tileMap) {
+      const tl = this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight);
+      const br = this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight);
+      if (tl && br) {
+        vpMinLat = Math.min(tl.lat, br.lat) - 0.1;
+        vpMaxLat = Math.max(tl.lat, br.lat) + 0.1;
+        vpMinLon = Math.min(tl.lon, br.lon) - 0.1;
+        vpMaxLon = Math.max(tl.lon, br.lon) + 0.1;
+      }
+    }
+
+    const bs = 5;  // baseSize
+    const bsH = bs * 0.5;
+    const bsW = bs * 0.7;
+    const useBatch = len > 1000;
+    const showLabels = zoom >= 7 && len < 5000;
+    const w = this.logicalWidth, h = this.logicalHeight;
+
+    if (useBatch) {
+      // BATCHED RENDERING: dots (fillRect) for massive scale, much faster than path triangles
+      const tm = this.tileMap;
+      const fScale = tm._frameScale || (256 * Math.pow(2, tm.zoomLevel));
+      const fCx = tm._frameCx;
+      const fCy = tm._frameCy;
+      const fHW = w / 2;
+      const fHH = h / 2;
+      const DEG2RAD = Math.PI / 180;
+      const MAX_VISIBLE = 5000; // cap visible trains for performance
+      const dotSize = len > 10000 ? 3 : 4;
+
+      ctx.fillStyle = '#22d3ee';
+      let drawn = 0;
+      for (let i = 0; i < len && drawn < MAX_VISIBLE; i++) {
+        const svc = services[i];
+        if (!svc || !svc.position) continue;
+        const lat = svc.position.lat, lon = svc.position.lon;
+        if (vpMinLat !== undefined) {
+          if (lat < vpMinLat || lat > vpMaxLat || lon < vpMinLon || lon > vpMaxLon) continue;
+        }
+        const sx = ((lon + 180) / 360) * fScale - fCx + fHW;
+        if (sx < -30 || sx > w + 30) continue;
+        const sinLat = Math.sin(lat * DEG2RAD);
+        const sy = (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * fScale - fCy + fHH;
+        if (sy < -30 || sy > h + 30) continue;
+        ctx.fillRect(sx - dotSize/2, sy - dotSize/2, dotSize, dotSize);
+        drawn++;
+      }
+      return;
+    }
+
+    // NON-BATCHED: detailed rendering for smaller sets
+    for (let i = 0; i < len; i++) {
+      const svc = services[i];
+      if (!svc || !svc.position || !svc.train) continue;
+      if (svc.state === 'completed') continue;
+      if (svc.state === 'waiting' && !svc.train.stoppedAt) continue;
+      if (vpMinLat !== undefined) {
+        const lat = svc.position.lat, lon = svc.position.lon;
+        if (lat < vpMinLat || lat > vpMaxLat || lon < vpMinLon || lon > vpMaxLon) continue;
       }
 
-      // Train triangle marker
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y - baseSize);
-      ctx.lineTo(p.x + baseSize * 0.7, p.y + baseSize * 0.5);
-      ctx.lineTo(p.x - baseSize * 0.7, p.y + baseSize * 0.5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      const p = this.latLonToScreen(svc.position.lat, svc.position.lon);
+      if (p.x < -30 || p.x > w + 30 || p.y < -30 || p.y > h + 30) continue;
 
-      if (svc.train.incident || svc.train.breakdown) {
+      // LVM-01 — 3 déclinaisons couleur par catégorie (annexe 2a).
+      const cat = svc.category || svc.train.category || 'voyageur';
+      const catColor = LIVEMAP_CATEGORY_COLORS[cat] || svc.train.color || '#22d3ee';
+      const color = svc.state === 'waiting' ? '#475569' : catColor;
+
+      // LVM-06 — anneau de sélection autour du train choisi.
+      if (window.game?.ui?.selectedService?.id === svc.id) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, bs * 3.5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      if (svc.state === 'moving') {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.25;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, bs * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      }
+
+      // LVM-01 — icône directionnelle : flèche orientée vers la cible du train.
+      let heading = svc.train?.heading;
+      if (heading == null && svc.position) {
+        const target = typeof svc.getTargetStation === 'function' ? svc.getTargetStation() : null;
+        if (target) {
+          const pa = this.latLonToScreen(svc.position.lat, svc.position.lon);
+          const pb = this.latLonToScreen(target.lat, target.lon);
+          heading = Math.atan2(pb.y - pa.y, pb.x - pa.x);
+        }
+      }
+      if (heading == null) heading = 0;
+      this._drawTrainIcon(ctx, p, cat, color, bs, svc.state, heading, svc.rame);
+
+      if (svc.train.breakdown) {
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(p.x + 10, p.y - 10, 4, 0, Math.PI * 2);
@@ -216,24 +707,222 @@ export class Renderer {
         ctx.fill();
       }
 
-      // Show labels at zoom >= 7 (not just 10) for better visibility
-      if (this.tileMap.zoomLevel >= 7) {
+      if (showLabels) {
+        const labelX = p.x + bs * 3 + 4;
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = `bold ${zoom >= 10 ? 11 : 9}px sans-serif`;
         ctx.fillStyle = '#fff';
-        ctx.font = `bold ${this.tileMap.zoomLevel >= 10 ? 11 : 9}px sans-serif`;
         let label = `${Math.round(svc.train.speed)} km/h`;
         if (svc.train.blockedBy) label += ' [BLOQUE]';
-        ctx.fillText(label, p.x + baseSize + 4, p.y - 2);
-        ctx.fillStyle = svc.train.delay > 0 ? '#ef4444' : '#10b981';
-        ctx.fillText(svc.name, p.x + baseSize + 4, p.y + 10);
+        ctx.fillText(label, labelX, p.y - 7);
+        ctx.fillStyle = svc.isRescue ? '#ef4444' : (svc.train.delay > 0 ? '#ef4444' : svc.train.delay < 0 ? '#38bdf8' : '#10b981');
+        ctx.fillText(svc.isRescue ? `${svc.name} [SECOURS]` : svc.name, labelX, p.y + 7);
         if (svc.train.delay > 0) {
           ctx.fillStyle = '#ef4444';
-          ctx.fillText(`+${svc.train.delay} min`, p.x + baseSize + 4, p.y + 22);
+          ctx.fillText(`+${svc.train.delay} min`, labelX, p.y + 21);
+        } else if (svc.train.delay < 0) {
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillText(`- ${Math.abs(svc.train.delay)} min`, labelX, p.y + 21);
         }
+        ctx.restore();
       }
     }
   }
 
+  // LVM-06 — tracer le service sélectionné sur la livemap avec ses arrêts.
+  drawSelectedServiceRoute(ctx, world) {
+    const svc = window.game?.ui?.selectedService;
+    if (!svc || !world || !this.tileMap) return;
+
+    const drawRoute = (routes, color) => {
+      if (!routes) return;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      for (const route of routes) {
+        if (!route || route.length < 2) continue;
+        // Draw the full densified curve (the route is already 50 m sampled).
+        ctx.beginPath();
+        const p0 = this.latLonToScreen(route[0].lat, route[0].lon);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < route.length; i++) {
+          const p = this.latLonToScreen(route[i].lat, route[i].lon);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.stroke();
+        // Annex 10c — visible, contrasted dots along the traced route.
+        // Adaptive on-screen spacing so the nodes stay distinct on very long routes.
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1;
+        let lastP = null;
+        for (let i = 0; i < route.length; i++) {
+          const p = this.latLonToScreen(route[i].lat, route[i].lon);
+          const isEnd = i === 0 || i === route.length - 1;
+          if (!isEnd && lastP) {
+            const dx = p.x - lastP.x, dy = p.y - lastP.y;
+            if (Math.sqrt(dx * dx + dy * dy) < 6) continue;
+          }
+          ctx.fillStyle = isEnd ? '#f59e0b' : '#ffffff';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, isEnd ? 6 : 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          lastP = p;
+        }
+      }
+      ctx.shadowBlur = 0;
+    };
+
+    drawRoute(svc.routes, '#22d3ee');
+    if (svc.roundTrip) {
+      const returnRoutes = svc._returnRoutes || (svc.routes ? svc.routes.slice().reverse().map(r => r ? [...r].reverse() : null) : null);
+      drawRoute(returnRoutes, '#c084fc');
+    }
+
+    const drawStop = (stop, color) => {
+      let lat, lon;
+      if (stop.voiePointId && window.game?.voiePointManager) {
+        const vp = window.game.voiePointManager.getVoiePointById(stop.voiePointId);
+        if (vp) { lat = vp.lat; lon = vp.lon; }
+      } else if (stop.stationId) {
+        const st = world.getStationById(stop.stationId);
+        if (st) { lat = st.lat; lon = st.lon; }
+      }
+      if (lat == null || lon == null) return;
+      const p = this.latLonToScreen(lat, lon);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    };
+
+    for (const s of svc.stops || []) drawStop(s, '#22d3ee');
+    if (svc.roundTrip) {
+      const returnStops = svc.returnStops?.length ? svc.returnStops : (svc._returnStopsData || (svc.stops ? svc.stops.slice().reverse() : []));
+      for (const s of returnStops) drawStop(s, '#c084fc');
+    }
+  }
+
+  async _loadLivery(liveryId) {
+    if (this._liveryCache.has(liveryId) || this._liveryLoading.has(liveryId)) return;
+    this._liveryLoading.add(liveryId);
+    const token = window.game?.storage?.getToken?.();
+    try {
+      const res = await fetch(`/liveries/${liveryId}`, {
+        headers: token ? { 'X-API-Token': token } : {},
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      this._liveryObjectURLs.add(url);
+      const img = new Image();
+      img.onload = () => {
+        this._liveryCache.set(liveryId, img);
+        URL.revokeObjectURL(url);
+        this._liveryObjectURLs.delete(url);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        this._liveryObjectURLs.delete(url);
+      };
+      img.src = url;
+    } catch (e) {
+      // ignore
+    } finally {
+      this._liveryLoading.delete(liveryId);
+    }
+  }
+
+  // LVM-01 — icônes de train directionnelles (annexes 2a images 2-5).
+  // Utilise les PNG colorés par catégorie ; la pointe de la flèche est orientée
+  // dans le sens du mouvement (heading). Fallback polygon si l'image n'est pas chargée.
+  _drawTrainIcon(ctx, p, cat, color, bs, state, heading = 0, rame = null) {
+    // Try custom livery image first, loading it in background if needed.
+    const rameLivery = rame?.liveryId || rame?.elementDetails?.find(e => e.liveryId)?.liveryId || '';
+    if (rameLivery) {
+      this._loadLivery(rameLivery);
+      const livImg = this._liveryCache.get(rameLivery);
+      if (livImg && livImg.complete && livImg.naturalWidth) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(heading - Math.PI / 2);
+        if (state === 'waiting') {
+          ctx.filter = 'grayscale(100%) brightness(0.55)';
+        }
+        const scale = (bs * 5) / livImg.naturalHeight;
+        const w = livImg.naturalWidth * scale;
+        const h = livImg.naturalHeight * scale;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(livImg, -w / 2, -h / 2, w, h);
+        ctx.restore();
+        return;
+      }
+    }
+
+    const key = (TRAIN_ICON_IMAGES[cat] ? cat : 'generic');
+    const img = TRAIN_ICON_IMAGES[key];
+    if (img && img.complete && img.naturalWidth) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      // L'image a une flèche vers le bas (sens +y). On la tourne pour que la
+      // flèche pointe dans le sens du heading (atan2 dy,dx en canvas).
+      ctx.rotate(heading - Math.PI / 2);
+      if (state === 'waiting') {
+        ctx.filter = 'grayscale(100%) brightness(0.55)';
+      }
+      // Icônes redimensionnées pour ne pas masquer la carte (hauteur cible ~5 fois la taille de base).
+      const scale = (bs * 5) / img.naturalHeight;
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      ctx.restore();
+      return;
+    }
+
+    // Fallback arrow
+    const len = bs * 5;
+    const wid = bs * 2;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(heading);
+    if (state === 'waiting') {
+      ctx.filter = 'grayscale(100%) brightness(0.55)';
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(len, 0);
+    ctx.lineTo(-len * 0.35, -wid);
+    ctx.lineTo(-len * 0.2, -wid * 0.4);
+    ctx.lineTo(-len * 0.55, 0);
+    ctx.lineTo(-len * 0.2, wid * 0.4);
+    ctx.lineTo(-len * 0.35, wid);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = Math.max(1, bs * 0.25);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   drawMinimap(ctx, w, h, world, services) {
+    const now = performance.now();
+    // Throttle minimap rendering to ~20 FPS
+    if (now - this._lastMinimapDraw < this._minimapInterval) {
+      // Draw cached minimap if available
+      if (this._minimapCache) {
+        ctx.putImageData(this._minimapCache.data, this._minimapCache.x, this._minimapCache.y);
+      }
+      return;
+    }
+    this._lastMinimapDraw = now;
+
     const mw = 150, mh = 110;
     const mx = w - mw - 8, my = 8;
 
@@ -261,6 +950,7 @@ export class Renderer {
       y: my + ((maxLat - lat) / (maxLat - minLat)) * mh,
     });
 
+    // Simplified tracks (no labels)
     for (const track of world.tracks) {
       const stA = world.getStationById(track.stationA);
       const stB = world.getStationById(track.stationB);
@@ -275,6 +965,7 @@ export class Renderer {
       ctx.stroke();
     }
 
+    // Simplified station dots (no labels)
     for (const st of world.stations) {
       const p = projMini(st.lat, st.lon);
       ctx.fillStyle = '#3b82f6';
@@ -283,21 +974,370 @@ export class Renderer {
       ctx.fill();
     }
 
+    // Active train dots only (hide if stopped at station > 5 game min)
     for (const svc of services) {
-      if (!svc.position) continue;
+      if (!svc.position || svc.state === 'waiting' || svc.state === 'completed') continue;
+      if (svc.train?._stoppedSinceGameTime != null && svc.train.stoppedAt && window.game?.timeOfDay != null) {
+        let el = window.game.timeOfDay - svc.train._stoppedSinceGameTime;
+        if (el < 0) el += 1440;
+        if (el > 5) continue;
+      }
       const p = projMini(svc.position.lat, svc.position.lon);
-      ctx.fillStyle = svc.state === 'waiting' ? '#475569' : svc.train.color;
+      ctx.fillStyle = svc.train.color || '#22d3ee';
       ctx.beginPath();
       ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Cache the minimap region
+    try {
+      const dpr = window.devicePixelRatio || 1;
+      this._minimapCache = {
+        data: ctx.getImageData(mx * dpr, my * dpr, mw * dpr, mh * dpr),
+        x: mx * dpr,
+        y: my * dpr,
+      };
+    } catch (e) { /* security restriction on getImageData */ }
+  }
+
+  // S9: Cache train images for map rendering (no per-frame resizing)
+  _getTrainImage(svc) {
+    if (!this._trainImageCache) this._trainImageCache = new Map();
+    const cacheKey = svc.id;
+    if (this._trainImageCache.has(cacheKey)) return this._trainImageCache.get(cacheKey);
+
+    // Get first element with image data
+    const el = svc.rame?.elementDetails?.find(e => e.imageData);
+    if (!el?.imageData) { this._trainImageCache.set(cacheKey, null); return null; }
+
+    const img = new Image();
+    img.src = el.imageData;
+    this._trainImageCache.set(cacheKey, img);
+    return img;
+  }
+
+  drawVoiePoints(ctx, voiePointManager) {
+    for (const vp of voiePointManager.getAll()) {
+      // Affiche uniquement les points de voie créés par le joueur (pas les points générés automatiquement par le jeu).
+      if (vp.linePoint) continue;
+      const p = this.latLonToScreen(vp.lat, vp.lon);
+      if (p.x < -20 || p.x > this.logicalWidth + 20 || p.y < -20 || p.y > this.logicalHeight + 20) continue;
+
+      const isStationVP = !!vp.stationId;
+      const isOccupied = !!vp.occupiedBy;
+      const size = isStationVP ? 3 : 2.5;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = isOccupied ? '#ef4444' : (isStationVP ? '#1e40af' : '#0f172a');
+      ctx.fillRect(-size, -size, size * 2, size * 2);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-size, -size, size * 2, size * 2);
+      ctx.restore();
+
+      // Voie label at higher zoom
+      if (this.tileMap.zoomLevel >= 10) {
+        ctx.fillStyle = isOccupied ? '#ef4444' : '#94a3b8';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(`Voie ${vp.voie}`, p.x + 8, p.y + 3);
+      }
+    }
+  }
+
+  drawVoieTroncons(ctx, voiePointManager, world) {
+    // Viewport bounds for culling
+    const vw = ctx.canvas.width, vh = ctx.canvas.height;
+    const topLeft = this.tileMap ? this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight) : null;
+    const botRight = this.tileMap ? this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight) : null;
+    const hasViewport = topLeft && botRight;
+    const vpMinLat = hasViewport ? Math.min(topLeft.lat, botRight.lat) - 0.005 : -90;
+    const vpMaxLat = hasViewport ? Math.max(topLeft.lat, botRight.lat) + 0.005 : 90;
+    const vpMinLon = hasViewport ? Math.min(topLeft.lon, botRight.lon) - 0.005 : -180;
+    const vpMaxLon = hasViewport ? Math.max(topLeft.lon, botRight.lon) + 0.005 : 180;
+
+    // Batch troncons by color (occupied vs free) for fewer state changes
+    const freeTrcs = [];
+    const occupiedTrcs = [];
+    const visibleTrcs = [];
+
+    for (const trc of voiePointManager.getAllTroncons()) {
+      if (!trc.route || trc.route.length < 2) {
+        const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
+        const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
+        if (!ptA || !ptB) continue;
+        // Viewport cull
+        const minLat = Math.min(ptA.lat, ptB.lat);
+        const maxLat = Math.max(ptA.lat, ptB.lat);
+        const minLon = Math.min(ptA.lon, ptB.lon);
+        const maxLon = Math.max(ptA.lon, ptB.lon);
+        if (maxLat < vpMinLat || minLat > vpMaxLat || maxLon < vpMinLon || minLon > vpMaxLon) continue;
+        (trc.occupiedBy ? occupiedTrcs : freeTrcs).push(trc);
+        visibleTrcs.push(trc);
+        continue;
+      }
+      // Viewport cull using first/last route points
+      const rF = trc.route[0], rL = trc.route[trc.route.length - 1];
+      const minLat = Math.min(rF.lat, rL.lat);
+      const maxLat = Math.max(rF.lat, rL.lat);
+      const minLon = Math.min(rF.lon, rL.lon);
+      const maxLon = Math.max(rF.lon, rL.lon);
+      if (maxLat < vpMinLat || minLat > vpMaxLat || maxLon < vpMinLon || minLon > vpMaxLon) continue;
+      (trc.occupiedBy ? occupiedTrcs : freeTrcs).push(trc);
+      visibleTrcs.push(trc);
+    }
+
+    // Route simplification step based on zoom
+    const zoom = this.tileMap?.zoomLevel || 10;
+    const step = zoom >= 14 ? 1 : zoom >= 11 ? 2 : 4;
+
+    // Draw free tronçons (single batch)
+    if (freeTrcs.length > 0) {
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      for (const trc of freeTrcs) {
+        if (!trc.route || trc.route.length < 2) {
+          const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
+          const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
+          const pa = this.latLonToScreen(ptA.lat, ptA.lon);
+          const pb = this.latLonToScreen(ptB.lat, ptB.lon);
+          ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+        } else {
+          const p0 = this.latLonToScreen(trc.route[0].lat, trc.route[0].lon);
+          ctx.moveTo(p0.x, p0.y);
+          for (let i = step; i < trc.route.length; i += step) {
+            const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
+            ctx.lineTo(p.x, p.y);
+          }
+          const pL = trc.route[trc.route.length - 1];
+          const pEnd = this.latLonToScreen(pL.lat, pL.lon);
+          ctx.lineTo(pEnd.x, pEnd.y);
+        }
+      }
+      ctx.stroke();
+    }
+
+    // Draw occupied tronçons (red, single batch)
+    if (occupiedTrcs.length > 0) {
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      for (const trc of occupiedTrcs) {
+        if (!trc.route || trc.route.length < 2) {
+          const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
+          const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
+          const pa = this.latLonToScreen(ptA.lat, ptA.lon);
+          const pb = this.latLonToScreen(ptB.lat, ptB.lon);
+          ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y);
+        } else {
+          const p0 = this.latLonToScreen(trc.route[0].lat, trc.route[0].lon);
+          ctx.moveTo(p0.x, p0.y);
+          for (let i = step; i < trc.route.length; i += step) {
+            const p = this.latLonToScreen(trc.route[i].lat, trc.route[i].lon);
+            ctx.lineTo(p.x, p.y);
+          }
+          const pL = trc.route[trc.route.length - 1];
+          const pEnd = this.latLonToScreen(pL.lat, pL.lon);
+          ctx.lineTo(pEnd.x, pEnd.y);
+        }
+      }
+      ctx.stroke();
+    }
+
+
+
+  }
+
+  _drawArrow(ctx, x, y, angle, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(size, 0);
+    ctx.lineTo(-size / 2, -size / 2);
+    ctx.lineTo(-size / 2, size / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /**
+   * Draw signal lights at canton boundaries for active services.
+   * Green = clear, Yellow = approach (next canton occupied), Red = stop.
+   */
+  drawSignals(ctx, services) {
+    const zoom = this.tileMap.zoomLevel;
+    if (zoom < 12) return; // Only show signals at high zoom
+
+    // Viewport bounds for culling
+    const topLeft = this.tileMap.screenToWorld(0, 0, this.logicalWidth, this.logicalHeight);
+    const botRight = this.tileMap.screenToWorld(this.logicalWidth, this.logicalHeight, this.logicalWidth, this.logicalHeight);
+    if (!topLeft || !botRight) return;
+    const vpMinLat = Math.min(topLeft.lat, botRight.lat) - 0.005;
+    const vpMaxLat = Math.max(topLeft.lat, botRight.lat) + 0.005;
+    const vpMinLon = Math.min(topLeft.lon, botRight.lon) - 0.005;
+    const vpMaxLon = Math.max(topLeft.lon, botRight.lon) + 0.005;
+
+    const cantonMgr = window.game?.cantonManager;
+    if (!cantonMgr) return;
+
+    const drawnSignals = new Set();
+    const signalRadius = zoom >= 15 ? 5 : zoom >= 13 ? 4 : 3;
+
+    // Collect all signal positions from active services' canton assignments
+    for (const svc of services) {
+      if (!svc._cantonAssignments || !svc.active || svc.isRescue) continue;
+      const route = svc._state?.cachedRoute;
+      if (!route || route.length < 2) continue;
+
+      for (const assignment of svc._cantonAssignments) {
+        const endIdx = assignment.endIndex;
+        if (endIdx >= route.length) continue;
+
+        const pt = route[endIdx];
+        if (!pt || pt.lat < vpMinLat || pt.lat > vpMaxLat || pt.lon < vpMinLon || pt.lon > vpMaxLon) continue;
+
+        const signalKey = `${pt.lat.toFixed(5)},${pt.lon.toFixed(5)}`;
+        if (drawnSignals.has(signalKey)) continue;
+        drawnSignals.add(signalKey);
+
+        // Determine signal aspect
+        const canton = cantonMgr.cantons.get(assignment.cantonId);
+        let color = '#22c55e'; // green (clear)
+
+        if (canton && canton.occupiedBy) {
+          color = '#ef4444'; // red (occupied)
+        }
+
+        const screenPos = this.latLonToScreen(pt.lat, pt.lon);
+
+        // Signal post (small vertical line)
+        ctx.strokeStyle = '#6b7280';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(screenPos.x, screenPos.y + signalRadius);
+        ctx.lineTo(screenPos.x, screenPos.y + signalRadius + 6);
+        ctx.stroke();
+
+        // Signal head (filled circle with glow)
+        ctx.beginPath();
+        ctx.arc(screenPos.x, screenPos.y, signalRadius, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#1f2937';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Glow effect for red/yellow signals
+        if (color !== '#22c55e') {
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, signalRadius + 3, 0, Math.PI * 2);
+          ctx.fillStyle = color === '#ef4444' ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)';
+          ctx.fill();
+        }
+
+        // Annex 7 — label signal aspect at very high zoom
+        if (zoom >= 15) {
+          const aspectLabel = color === '#22c55e' ? 'voie libre' : color === '#eab308' ? 'avertissement' : 'carré';
+          ctx.fillStyle = color;
+          ctx.font = 'bold 8px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(aspectLabel, screenPos.x, screenPos.y - signalRadius - 2);
+        }
+      }
+    }
+  }
+
+  _getTronconEndpoint(pointId, voiePointManager, world) {
+    // Could be a voie point or a station
+    const vp = voiePointManager.getVoiePointById(pointId);
+    if (vp) return { lat: vp.lat, lon: vp.lon };
+    const st = world.getStationById(pointId);
+    if (st) return { lat: st.lat, lon: st.lon };
+    return null;
+  }
+
+  getVoiePointAt(x, y, voiePoints) {
+    const hitR = 'ontouchstart' in window ? 25 : 15;
+    for (const vp of voiePoints) {
+      const p = this.latLonToScreen(vp.lat, vp.lon);
+      if (Math.hypot(p.x - x, p.y - y) < hitR) return vp;
+    }
+    return null;
+  }
+
+  _drawTempTrace(ctx, waypoints) {
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    const p0 = this.latLonToScreen(waypoints[0].lat, waypoints[0].lon);
+    ctx.moveTo(p0.x, p0.y);
+    for (let i = 1; i < waypoints.length; i++) {
+      const p = this.latLonToScreen(waypoints[i].lat, waypoints[i].lon);
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Draw dots at each waypoint
+    for (const wp of waypoints) {
+      const p = this.latLonToScreen(wp.lat, wp.lon);
+      ctx.fillStyle = '#3b82f6';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  drawDeleteCircle(ctx) {
+    const c = this.deleteCircle;
+    if (!c) return;
+    ctx.save();
+    ctx.strokeStyle = '#ef4444';
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, Math.max(0, c.r), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Crosshair at center
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(c.x - 6, c.y); ctx.lineTo(c.x + 6, c.y);
+    ctx.moveTo(c.x, c.y - 6); ctx.lineTo(c.x, c.y + 6);
+    ctx.stroke();
+    ctx.restore();
   }
 
   getStationAt(x, y, stations) {
+    const hitR = 'ontouchstart' in window ? 25 : 15;
     for (const st of stations) {
       const p = this.latLonToScreen(st.lat, st.lon);
-      if (Math.hypot(p.x - x, p.y - y) < 15) return st;
+      if (Math.hypot(p.x - x, p.y - y) < hitR) return st;
     }
     return null;
+  }
+
+  // Hit-test an industry marker (uses the per-frame cached locations). Returns
+  // the nearest industry loc within the hit radius, or null.
+  getIndustryAt(x, y) {
+    const locs = this._indLocs;
+    if (!locs || locs.length === 0) return null;
+    const hitR = 'ontouchstart' in window ? 22 : 12;
+    let best = null, bestD = hitR;
+    for (const loc of locs) {
+      const p = this.latLonToScreen(loc.lat, loc.lon);
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < bestD) { bestD = d; best = loc; }
+    }
+    return best;
   }
 }

@@ -1,0 +1,49 @@
+{
+  "version": 1785002168572,
+  "publishedAt": "2026-07-25T17:56:08.572Z",
+  "modifications": [
+    {
+      "id": "cat-12081",
+      "name": "BB 7200 Plaquée",
+      "category": "locomotive",
+      "traction": "1.5kV",
+      "maxSpeed": 160,
+      "mass": 84,
+      "power": 4400,
+      "passengerCapacity": 0,
+      "freightCapacity": 0,
+      "length": 17.6,
+      "imageData": "img/catalog/SNCF/LE/BB7200_PC_GB1_R.gif",
+      "seriesName": "BB 7200",
+      "numberStart": "7200",
+      "purchasePrice": 4400000,
+      "cargoTypes": [],
+      "_source": "Trains d'Europe: http://trains-europe.fr/sncf/locomotives/7200.htm",
+      "tonnage": 84,
+      "wagonSubCategory": ""
+    },
+    {
+      "id": "cat-12088",
+      "name": "BB 7200 PV FRET Logo Carmillon",
+      "category": "locomotive",
+      "traction": "1.5kV",
+      "maxSpeed": 100,
+      "mass": 84,
+      "power": 4400,
+      "passengerCapacity": 0,
+      "freightCapacity": 0,
+      "length": 17.6,
+      "imageData": "img/catalog/SNCF/LE/BB7200_PC_FI_R.gif",
+      "seriesName": "Petites cabines — Logo Carmillon.",
+      "numberStart": "7200",
+      "purchasePrice": 4400000,
+      "cargoTypes": [],
+      "_source": "Trains d'Europe: http://trains-europe.fr/sncf/locomotives/7200.htm",
+      "tonnage": 84,
+      "wagonSubCategory": ""
+    }
+  ],
+  "deletions": [],
+  "imports": [],
+  "incidents": []
+}
