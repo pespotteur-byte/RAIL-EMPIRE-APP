@@ -39,6 +39,7 @@ export class Renderer {
     this._liveryCache = new Map(); // liveryId -> Image
     this._liveryLoading = new Set();
     this._liveryObjectURLs = new Set();
+    this.deleteCircle = null;
     // Static layer offscreen canvas (tracks, stations, depots)
     this._staticCanvas = null;
     this._staticCtx = null;
@@ -177,6 +178,7 @@ export class Renderer {
     this.drawSelectedServiceRoute(ctx, world);
     this.drawSignals(ctx, services);
     if (showTrains) this.drawServices(ctx, world, services);
+    this.drawDeleteCircle(ctx);
   }
 
   _drawCloudOverlay(ctx, w, h, alphaScale = 1.0) {
@@ -1290,6 +1292,29 @@ export class Renderer {
       ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  drawDeleteCircle(ctx) {
+    const c = this.deleteCircle;
+    if (!c) return;
+    ctx.save();
+    ctx.strokeStyle = '#ef4444';
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, Math.max(0, c.r), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Crosshair at center
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(c.x - 6, c.y); ctx.lineTo(c.x + 6, c.y);
+    ctx.moveTo(c.x, c.y - 6); ctx.lineTo(c.x, c.y + 6);
+    ctx.stroke();
+    ctx.restore();
   }
 
   getStationAt(x, y, stations) {

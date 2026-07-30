@@ -10,6 +10,20 @@ export const UIMap = {
       if (!canvas) return;
 
       canvas.addEventListener('mousedown', (e) => {
+        // Alt + drag: deletion circle mode
+        if (e.altKey && this.activePage === 'map') {
+          const rect = canvas.getBoundingClientRect();
+          this._deleteCircleActive = true;
+          this._deleteCircleCenter = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+          this._deleteCircleStartX = e.clientX;
+          this._deleteCircleRadius = 5;
+          if (this.game.renderer) {
+            this.game.renderer.deleteCircle = { x: this._deleteCircleCenter.x, y: this._deleteCircleCenter.y, r: 5 };
+          }
+          canvas.style.cursor = 'crosshair';
+          e.preventDefault();
+          return;
+        }
         // S9: Check if clicking on a station for drag-to-move (shift+click)
         if (e.shiftKey && this._hoveredStation) {
           this._draggingStation = this._hoveredStation;
@@ -43,6 +57,14 @@ export const UIMap = {
       });
 
       canvas.addEventListener('mousemove', (e) => {
+        // Alt + drag: update deletion circle radius (horizontal movement)
+        if (this._deleteCircleActive && this.game.renderer) {
+          const r = Math.max(5, Math.abs(e.clientX - this._deleteCircleStartX));
+          this._deleteCircleRadius = r;
+          this.game.renderer.deleteCircle = { x: this._deleteCircleCenter.x, y: this._deleteCircleCenter.y, r };
+          e.preventDefault();
+          return;
+        }
         // S9: Handle station dragging
         if (this._draggingStation && this.game.renderer) {
           const rect = canvas.getBoundingClientRect();
@@ -94,6 +116,7 @@ export const UIMap = {
       canvas.addEventListener('mouseleave', () => {
         this.isDragging = false;
         this.dragMoved = false;
+        if (this._deleteCircleActive) this._cancelDeleteCircle();
         if (this._draggingStation || this._draggingVoiePoint || this._draggingIndustry) {
           this._draggingStation = null;
           this._draggingVoiePoint = null;
@@ -101,7 +124,13 @@ export const UIMap = {
           canvas.style.cursor = 'grab';
         }
       });
-      window.addEventListener('mouseup', () => {
+      window.addEventListener('mouseup', (e) => {
+        if (this._deleteCircleActive) {
+          this._executeDeleteCircle();
+          this._cancelDeleteCircle();
+          if (e && e.preventDefault) e.preventDefault();
+          return;
+        }
         this.isDragging = false;
         this.dragMoved = false;
         this._draggingStation = null;
@@ -111,6 +140,7 @@ export const UIMap = {
       });
 
       canvas.addEventListener('mouseup', (e) => {
+        if (this._deleteCircleActive) return;
         // S9: Finish station drag
         if (this._draggingStation) {
           this._draggingStation = null;
@@ -449,7 +479,94 @@ export const UIMap = {
       });
     },
 
+  _cancelDeleteCircle() {
+      this._deleteCircleActive = false;
+      if (this.game.renderer) this.game.renderer.deleteCircle = null;
+      const canvas = document.getElementById('game-canvas');
+      if (canvas) canvas.style.cursor = 'grab';
+    },
+
+  _executeDeleteCircle() {
+      if (!this._deleteCircleActive || !this.game.renderer) return;
+      const renderer = this.game.renderer;
+      const cx = this._deleteCircleCenter.x;
+      const cy = this._deleteCircleCenter.y;
+      const r = this._deleteCircleRadius;
+
+      const inCircle = (lat, lon) => {
+        const p = renderer.latLonToScreen(lat, lon);
+        return p && Math.hypot(p.x - cx, p.y - cy) <= r;
+      };
+
+      let count = 0;
+
+      // Stations
+      const stationsToRemove = [];
+      for (const st of this.game.world.stations) {
+        if (inCircle(st.lat, st.lon)) stationsToRemove.push(st.id);
+      }
+      for (const id of stationsToRemove) { this.game.world.removeStation(id); count++; }
+
+      // Voie points
+      const vpm = this.game.voiePointManager;
+      const vpsToRemove = [];
+      for (const vp of vpm.getAll()) {
+        if (inCircle(vp.lat, vp.lon)) vpsToRemove.push(vp.id);
+      }
+      for (const id of vpsToRemove) { vpm.removeVoiePoint(id); count++; }
+
+      // Tronçons (any route point inside the circle)
+      const trcsToRemove = [];
+      for (const trc of vpm.getAllTroncons()) {
+        if (trc.route && trc.route.some(p => inCircle(p.lat, p.lon))) {
+          trcsToRemove.push(trc.id);
+        } else {
+          const a = vpm.getVoiePointById(trc.pointA);
+          const b = vpm.getVoiePointById(trc.pointB);
+          if ((a && inCircle(a.lat, a.lon)) || (b && inCircle(b.lat, b.lon))) trcsToRemove.push(trc.id);
+        }
+      }
+      for (const id of trcsToRemove) { vpm.removeTroncon(id); count++; }
+
+      // Custom industrial sites
+      if (this.game.industrialClients) {
+        for (const loc of this.game.industrialClients.getAllRealLocations()) {
+          if (loc.custom && inCircle(loc.lat, loc.lon)) {
+            this.game.industrialClients.removeSite(loc._key);
+            count++;
+          }
+        }
+      }
+
+      // Signal boxes and regulation zones
+      if (this.game.staffManager) {
+        const sbsToRemove = this.game.staffManager.signalBoxes.filter(sb => inCircle(sb.lat, sb.lon)).map(sb => sb.id);
+        for (const id of sbsToRemove) { this.game.staffManager.removeSignalBox(id); count++; }
+        const zonesToRemove = this.game.staffManager.zones.filter(z => inCircle(z.lat, z.lon)).map(z => z.id);
+        for (const id of zonesToRemove) { this.game.staffManager.removeZone(id); count++; }
+      }
+
+      // Depots
+      if (this.game.depotManager) {
+        const depotsToRemove = [];
+        for (const d of this.game.depotManager.getAll()) {
+          const station = this.game.world.getStationById(d.stationId);
+          if (station && inCircle(station.lat, station.lon)) depotsToRemove.push(d.id);
+          else if (d.lat != null && d.lon != null && inCircle(d.lat, d.lon)) depotsToRemove.push(d.id);
+        }
+        for (const id of depotsToRemove) { this.game.depotManager.remove(id); count++; }
+      }
+
+      if (count > 0) {
+        alertToast(`${count} élément(s) supprimé(s)`);
+        this.game.saveState();
+      } else {
+        alertToast('Aucun élément dans le cercle');
+      }
+    },
+
   handleMapHover(x, y) {
+      if (this._deleteCircleActive) return;
       const renderer = this.game.renderer;
       if (!renderer) return;
       this._hoveredIndustry = null;
