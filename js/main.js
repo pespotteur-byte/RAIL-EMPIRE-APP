@@ -1243,14 +1243,15 @@ function emergencySave() {
   if (!window.game?.storage || !window.game?.saveState) return;
   try {
     const state = window.game.saveState();
-    window.game.storage.saveGameSync(state);
+    const json = window.game.storage.saveGameSync(state);
     // Also fire a remote beacon (fire-and-forget, works on unload and avoids
     // localStorage quota limits for large states).
-    try {
-      const json = JSON.stringify(state);
-      const blob = new Blob([json], { type: 'application/json' });
-      navigator.sendBeacon('/save/' + window.game.storage.remoteKey, blob);
-    } catch (_) {}
+    if (json) {
+      try {
+        const blob = new Blob([json], { type: 'application/json' });
+        navigator.sendBeacon('/save/' + window.game.storage.remoteKey, blob);
+      } catch (_) {}
+    }
   } catch (_) {}
 }
 

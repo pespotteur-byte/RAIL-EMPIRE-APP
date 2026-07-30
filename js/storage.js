@@ -165,11 +165,10 @@ export class GameStorage {
 
   saveGameSync(state, json = null) {
     // Synchronous emergency backup: raw JSON, fastest possible path.
-    // localStorage is limited (typically 5 MB), so skip the uncompressed raw
-    // copy when the state is large — the compressed SAVE_KEY and remote copies
-    // will still be written by saveGame.
+    // localStorage is limited (typically 5 MB), so try to free space first.
+    let data;
     try {
-      const data = json || JSON.stringify(state);
+      data = json || JSON.stringify(state);
       if (data.length > 2_000_000) {
         try { localStorage.removeItem(RAW_KEY); } catch (_) {}
         return data;
@@ -177,8 +176,13 @@ export class GameStorage {
       localStorage.setItem(RAW_KEY, data);
       return data;
     } catch (e) {
-      if (e.name === 'QuotaExceededError') {
-        try { localStorage.removeItem(RAW_KEY); } catch (_) {}
+      if (e.name === 'QuotaExceededError' || (e.message && e.message.includes('quota'))) {
+        try {
+          localStorage.removeItem(SAVE_KEY);
+          localStorage.removeItem(RAW_KEY);
+          localStorage.setItem(RAW_KEY, data || JSON.stringify(state));
+          return data || json;
+        } catch (_) {}
       }
       console.warn('Sync raw save failed:', e);
       return json || null;
