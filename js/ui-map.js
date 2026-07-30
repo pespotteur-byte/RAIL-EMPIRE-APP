@@ -109,13 +109,21 @@ export const UIMap = {
         }
         if (this.game.renderer) {
           const rect = canvas.getBoundingClientRect();
-          this.handleMapHover(e.clientX - rect.left, e.clientY - rect.top);
+          const x = e.clientX - rect.left, y = e.clientY - rect.top;
+          this._hoverX = x; this._hoverY = y;
+          if (!this._hoverRaf) {
+            this._hoverRaf = requestAnimationFrame(() => {
+              this._hoverRaf = null;
+              this.handleMapHover(this._hoverX, this._hoverY);
+            });
+          }
         }
       });
 
       canvas.addEventListener('mouseleave', () => {
         this.isDragging = false;
         this.dragMoved = false;
+        if (this._hoverRaf) { cancelAnimationFrame(this._hoverRaf); this._hoverRaf = null; }
         if (this._deleteCircleActive) this._cancelDeleteCircle();
         if (this._draggingStation || this._draggingVoiePoint || this._draggingIndustry) {
           this._draggingStation = null;
