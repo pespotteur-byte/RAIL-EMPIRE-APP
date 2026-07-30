@@ -166,15 +166,17 @@ export class GameStorage {
   saveGameSync(state) {
     // Synchronous emergency backup: raw JSON, fastest possible path.
     try {
-      localStorage.setItem(RAW_KEY, JSON.stringify(state));
+      const json = JSON.stringify(state);
+      localStorage.setItem(RAW_KEY, json);
+      return json;
     } catch (e) {
       console.warn('Sync raw save failed:', e);
+      return null;
     }
   }
 
   async saveGame(state) {
-    const json = JSON.stringify(state);
-    this.saveGameSync(state);
+    const json = this.saveGameSync(state) || JSON.stringify(state);
     try {
       const compressed = await compressData(json);
       localStorage.setItem(SAVE_KEY, compressed);

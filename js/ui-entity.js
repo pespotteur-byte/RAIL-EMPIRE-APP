@@ -268,11 +268,12 @@ export const UIEntity = {
 
       const orm = this.game.orm;
 
-      // Snap station to nearest railway node
+      // Snap station to nearest railway node (with a short timeout so the UI never freezes)
       const loadingEl = document.getElementById('station-loading');
       if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Accrochage au reseau ferroviaire...'; }
+      const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))]);
       try {
-        const snapped = await orm.snapToRailway(lat, lon, 2);
+        const snapped = await withTimeout(orm.snapToRailway(lat, lon, 2), 5000);
         if (snapped) {
           lat = snapped.lat;
           lon = snapped.lon;
@@ -326,7 +327,7 @@ export const UIEntity = {
         if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Calcul du trace ORM en cours...'; }
 
         try {
-          const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+          const route = await withTimeout(orm.findRoute(connectTo.lat, connectTo.lon, lat, lon), 8000);
           const distance = orm.getRouteDistance(route);
           const speeds = route.filter(r => r.maxSpeed).map(r => r.maxSpeed);
           const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;

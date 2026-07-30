@@ -4,6 +4,7 @@
 import { segmentsFromRoute, simulateProfile, simulateProfileCumulative } from './train-physics.js?v=1784931691';
 
 const OVERPASS_URLS = [
+  'https://overpass.openstreetmap.fr/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.osm.ch/api/interpreter',
@@ -257,8 +258,12 @@ export class ORMClient {
       return cached.ways;
     }
 
-    // Fetch ways + stations in one query
-    const query = `[out:json][timeout:90];(way["railway"="rail"](${south},${west},${north},${east});node["railway"~"^(station|halt)$"](${south},${west},${north},${east}););out body geom;`;
+    // Fetch ways + stations in one query.
+    // Broad railway value regex to include main/branch/secondary lines, narrow gauge,
+    // light rail, subways, trams, preserved/disused/abandoned lines, industrial spurs,
+    // funiculars, monorails and proposed/under construction lines.
+    const railwayRegex = '^(rail|tram|subway|light_rail|narrow_gauge|preserved|disused|abandoned|construction|proposed|industrial|military|funicular|monorail)$';
+    const query = `[out:json][timeout:90];(way["railway"~"${railwayRegex}"](${south},${west},${north},${east});node["railway"~"^(station|halt)$"](${south},${west},${north},${east}););out body geom;`;
 
     let lastError = null;
     for (const url of OVERPASS_URLS) {
@@ -266,7 +271,7 @@ export class ORMClient {
         try {
           if (attempt > 0) await new Promise(r => setTimeout(r, 1500 * attempt));
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 30000); // 30 s per endpoint
+          const timeout = setTimeout(() => controller.abort(), 10000); // 10 s per endpoint
           const resp = await fetch(url, {
             method: 'POST',
             body: 'data=' + encodeURIComponent(query),
@@ -1006,7 +1011,7 @@ export class ORMClient {
 
   async importInfrastructure(fromLat, fromLon, toLat, toLon, opts = null) {
     const distKm = haversine(fromLat, fromLon, toLat, toLon);
-    const padding = Math.max(0.02, Math.min(distKm * 0.005 + 0.015, 0.35));
+    const padding = Math.max(0.03, Math.min(distKm * 0.01 + 0.02, 0.6));
     const south = Math.min(fromLat, toLat) - padding;
     const north = Math.max(fromLat, toLat) + padding;
     const west = Math.min(fromLon, toLon) - padding;
