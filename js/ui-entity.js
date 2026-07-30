@@ -4693,6 +4693,34 @@ export const UIEntity = {
           // Tag everything with a group ID for bulk delete
           const lineGroupId = `line-${Date.now()}`;
 
+          // Auto-create OSM stations that lie on the imported route
+          const routePoints = [];
+          for (const trc of result.troncons || []) {
+            if (trc?.route) {
+              for (const p of trc.route) routePoints.push(p);
+            }
+          }
+          const osmStations = result.stations || this.game.orm.getOSMStations() || [];
+          const nearExistingStation = (lat, lon) => {
+            for (const s of world.stations) {
+              if (haversineDistance(lat, lon, s.lat, s.lon) < 0.3) return true;
+            }
+            return false;
+          };
+          const nearRoute = (lat, lon) => {
+            if (routePoints.length === 0) return false;
+            for (const p of routePoints) {
+              if (haversineDistance(lat, lon, p.lat, p.lon) < 1.0) return true;
+            }
+            return false;
+          };
+          for (const st of osmStations) {
+            if (!nearRoute(st.lat, st.lon)) continue;
+            if (nearExistingStation(st.lat, st.lon)) continue;
+            const platforms = st.type === 'halt' ? 1 : 2;
+            world.addStation({ name: st.name || 'Gare', lat: st.lat, lon: st.lon, type: 'voyageur', platforms, country: 'FR' });
+          }
+
           // Fast coordinate-based dedup lookup for existing voie points.
           const existingMap = new Map();
           for (const v of vpm.getAll()) {
@@ -4702,7 +4730,7 @@ export const UIEntity = {
 
           const vpKey = (lat, lon) => `${lat.toFixed(6)},${lon.toFixed(6)}`;
 
-          // Link voie points near existing stations and deduplicate
+          // Link voie points near stations (including newly created ones) and deduplicate
           for (const vpData of result.voiePoints) {
             vpData.lineGroupId = lineGroupId;
             for (const st of world.stations) {

@@ -1065,7 +1065,9 @@ export class ORMClient {
         }
       }
 
-      return { voiePoints: resultVoiePoints, troncons: resultTroncons };
+      // Include railway stations/halts found in the fetched area.
+      const allStations = this.getOSMStations().filter(s => s.lat >= south && s.lat <= north && s.lon >= west && s.lon <= east);
+      return { voiePoints: resultVoiePoints, troncons: resultTroncons, stations: allStations };
     }
 
     // LEGACY PATH MODE — compute a shortest A→B path and split at junctions.
@@ -1159,7 +1161,8 @@ export class ORMClient {
       });
     }
 
-    return { voiePoints: resultVoiePoints, troncons: resultTroncons };
+    const allStations = this.getOSMStations().filter(s => s.lat >= south && s.lat <= north && s.lon >= west && s.lon <= east);
+    return { voiePoints: resultVoiePoints, troncons: resultTroncons, stations: allStations };
   }
 
   // ============================================================
