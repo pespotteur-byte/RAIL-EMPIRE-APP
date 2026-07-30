@@ -1147,65 +1147,6 @@ export class Renderer {
 
 
 
-    // Annex 6 — direction arrows + PA/PB markers on user tronçons at high zoom
-    if (zoom >= 14 && visibleTrcs.length > 0) {
-      ctx.save();
-      ctx.fillStyle = '#e2e8f0';
-      ctx.strokeStyle = '#e2e8f0';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      for (const trc of visibleTrcs) {
-        const ptA = this._getTronconEndpoint(trc.pointA, voiePointManager, world);
-        const ptB = this._getTronconEndpoint(trc.pointB, voiePointManager, world);
-        if (!ptA || !ptB) continue;
-        const start = this.latLonToScreen(ptA.lat, ptA.lon);
-        const end = this.latLonToScreen(ptB.lat, ptB.lon);
-        const dx = end.x - start.x;
-        const dy = end.y - start.y;
-        const len = Math.hypot(dx, dy);
-        if (len < 12) continue;
-        const angle = Math.atan2(dy, dx);
-        const perp = angle + Math.PI / 2;
-        const off = 10;
-        const ox = Math.cos(perp) * off;
-        const oy = Math.sin(perp) * off;
-        // PA / PB labels
-        ctx.fillText('PA', start.x + ox, start.y + oy);
-        ctx.fillText('PB', end.x + ox, end.y + oy);
-        // Direction arrow + labels at midpoint
-        const midX = (start.x + end.x) / 2;
-        const midY = (start.y + end.y) / 2;
-        this._drawArrow(ctx, midX, midY, angle, 5, '#e2e8f0');
-
-        // Track label (OSM ref/name/trackRef)
-        const trkLabel = trc.trackRef || trc.ref || trc.name || '';
-        if (trkLabel) {
-          ctx.save();
-          ctx.font = 'bold 8px sans-serif';
-          const metrics = ctx.measureText(trkLabel);
-          const pad = 2;
-          ctx.fillStyle = 'rgba(30, 58, 138, 0.85)';
-          ctx.fillRect(midX - metrics.width / 2 - pad, midY - 18, metrics.width + pad * 2, 12);
-          ctx.fillStyle = '#e0e7ff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(trkLabel, midX, midY - 12);
-          ctx.restore();
-        }
-
-        // Direction label
-        const destName = ptB.stationId ? (world.getStationById(ptB.stationId)?.name || 'PB') : 'PB';
-        ctx.save();
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = 'bold 8px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`Direction ${destName}`, midX + 6, midY + 8);
-        ctx.restore();
-      }
-      ctx.restore();
-    }
   }
 
   _drawArrow(ctx, x, y, angle, size, color) {
