@@ -4,8 +4,64 @@ import { escapeHtml, jsString, alertToast } from './html-utils.js?v=1784931691';
 import { LVM_CAT_COLORS, LVM_CAT_LABELS, LVM_CAT_ICONS, IG_IMAGE_LAYOUTS, PAGE_PARENT, PAGE_GROUPS } from './ui-constants.js?v=1784931691';
 
 export const UIEntity = {
+  clearCreationModes(except) {
+    const canvas = document.getElementById('game-canvas');
+    if (except !== 'station') {
+      this.stationCreationMode = false;
+      const btn = document.getElementById('btn-create-station');
+      if (btn) { btn.textContent = '+ Creer une gare'; btn.classList.remove('active-mode'); }
+    }
+    if (except !== 'voiePoint') {
+      this.voiePointCreationMode = false;
+      const btn = document.getElementById('btn-create-voie-point');
+      if (btn) { btn.textContent = '+ Point de voie'; btn.classList.remove('active-mode'); }
+    }
+    if (except !== 'troncon') {
+      this.tronconCreationMode = false;
+      this._tronconPointA = null;
+      const btn = document.getElementById('btn-create-troncon');
+      if (btn) { btn.textContent = '+ Troncon'; btn.classList.remove('active-mode'); }
+    }
+    if (except !== 'manualTroncon') {
+      this.manualTronconMode = false;
+      this._manualTronconPointA = null;
+      this._manualTronconWaypoints = [];
+      const btn = document.getElementById('btn-create-troncon-manual');
+      if (btn) { btn.textContent = '+ Trace manuel'; btn.classList.remove('active-mode'); }
+    }
+    if (except !== 'tracerLigne') {
+      this.tracerLigneMode = false;
+      this._tracerLignePointA = null;
+      const btn = document.getElementById('btn-tracer-ligne');
+      if (btn) { btn.textContent = 'Tracer ligne'; btn.classList.remove('active-mode'); }
+    }
+    if (except !== 'ite') {
+      this.iteCreationMode = false;
+      this._pendingITE = null;
+      this._iteTrackPoints = [];
+      const btn = document.getElementById('btn-create-ite');
+      if (btn) { btn.textContent = '+ ITE'; btn.classList.remove('active-mode'); }
+    }
+    if (except !== 'industry') {
+      this.industryCreationMode = false;
+      const btn = document.getElementById('btn-create-industry');
+      if (btn) { btn.textContent = '+ Industrie'; btn.classList.remove('active-mode'); }
+    }
+    if (except !== 'signalbox') {
+      this.game._pendingSignalBox = null;
+    }
+    if (except !== 'regzone') {
+      this.game._pendingRegZone = null;
+    }
+    if (canvas) canvas.style.cursor = 'grab';
+    if (except !== 'tracerLigne' && except !== 'manualTroncon' && except !== 'troncon' && except !== 'voiePoint' && except !== 'station' && except !== 'ite' && except !== 'industry') {
+      this._hidePickHint();
+    }
+  },
+
   toggleStationCreation() {
       this.stationCreationMode = !this.stationCreationMode;
+      if (this.stationCreationMode) this.clearCreationModes('station');
       if (!this.stationCreationMode && this._multiCreateMode === 'station') {
         // Single click to deactivate clears multi-mode too
         this._multiCreateMode = null;
@@ -18,10 +74,13 @@ export const UIEntity = {
       }
       const canvas = document.getElementById('game-canvas');
       if (canvas) canvas.style.cursor = this.stationCreationMode ? 'crosshair' : 'grab';
+      if (this.stationCreationMode) this._showPickHint('Cliquez sur la carte pour placer la gare');
+      else this._hidePickHint();
     },
 
   toggleIndustryCreation() {
       this.industryCreationMode = !this.industryCreationMode;
+      if (this.industryCreationMode) this.clearCreationModes('industry');
       const btn = document.getElementById('btn-create-industry');
       if (btn) {
         btn.textContent = this.industryCreationMode ? '✕ Annuler' : '+ Industrie';
@@ -3096,6 +3155,7 @@ export const UIEntity = {
     },
 
   openITECreation() {
+      this.clearCreationModes('ite');
       this.iteCreationMode = true;
       this._pendingITE = { lat: null, lon: null, tracks: [] };
       this._iteTrackPoints = [];
@@ -4240,16 +4300,18 @@ export const UIEntity = {
       document.getElementById('btn-create-signalbox')?.addEventListener('click', () => {
         const name = prompt('Nom du poste d\'aiguillage :') || '';
         const radius = parseFloat(prompt('Rayon d\'influence (km) :', '10')) || 10;
+        if (!name) return;
+        this.clearCreationModes('signalbox');
         this.game._pendingSignalBox = { name, radiusKm: radius };
-        this.game._pendingRegZone = null;
         this._showPickHint('Cliquez sur la carte pour placer le poste d\'aiguillage');
         document.getElementById('game-canvas').style.cursor = 'crosshair';
       });
       document.getElementById('btn-create-regzone')?.addEventListener('click', () => {
         const name = prompt('Nom de la zone de régulation :') || '';
         const radius = parseFloat(prompt('Rayon de la zone (km) :', '30')) || 30;
+        if (!name) return;
+        this.clearCreationModes('regzone');
         this.game._pendingRegZone = { name, radiusKm: radius };
-        this.game._pendingSignalBox = null;
         this._showPickHint('Cliquez sur la carte pour placer la zone de régulation');
         document.getElementById('game-canvas').style.cursor = 'crosshair';
       });
@@ -4262,11 +4324,7 @@ export const UIEntity = {
 
   toggleVoiePointCreation() {
       this.voiePointCreationMode = !this.voiePointCreationMode;
-      if (this.voiePointCreationMode) {
-        this.tronconCreationMode = false;
-        this.stationCreationMode = false;
-        this._tronconPointA = null;
-      }
+      if (this.voiePointCreationMode) this.clearCreationModes('voiePoint');
       const btn = document.getElementById('btn-create-voie-point');
       if (btn) {
         btn.textContent = this.voiePointCreationMode ? '✕ Annuler' : '+ Point de voie';
@@ -4274,20 +4332,11 @@ export const UIEntity = {
       }
       const canvas = document.getElementById('game-canvas');
       if (canvas) canvas.style.cursor = this.voiePointCreationMode ? 'crosshair' : 'grab';
-      // Reset other buttons
-      const stBtn = document.getElementById('btn-create-station');
-      if (stBtn && this.voiePointCreationMode) { stBtn.textContent = '+ Creer une gare'; stBtn.classList.remove('active-mode'); }
-      const trcBtn = document.getElementById('btn-create-troncon');
-      if (trcBtn && this.voiePointCreationMode) { trcBtn.textContent = '+ Troncon'; trcBtn.classList.remove('active-mode'); }
     },
 
   toggleTronconCreation() {
       this.tronconCreationMode = !this.tronconCreationMode;
-      if (this.tronconCreationMode) {
-        this.voiePointCreationMode = false;
-        this.stationCreationMode = false;
-        this._tronconPointA = null;
-      }
+      if (this.tronconCreationMode) this.clearCreationModes('troncon');
       const btn = document.getElementById('btn-create-troncon');
       if (btn) {
         btn.textContent = this.tronconCreationMode ? '✕ Annuler' : '+ Troncon';
@@ -4295,11 +4344,6 @@ export const UIEntity = {
       }
       const canvas = document.getElementById('game-canvas');
       if (canvas) canvas.style.cursor = this.tronconCreationMode ? 'pointer' : 'grab';
-      // Reset other buttons
-      const stBtn = document.getElementById('btn-create-station');
-      if (stBtn && this.tronconCreationMode) { stBtn.textContent = '+ Creer une gare'; stBtn.classList.remove('active-mode'); }
-      const vpBtn = document.getElementById('btn-create-voie-point');
-      if (vpBtn && this.tronconCreationMode) { vpBtn.textContent = '+ Point de voie'; vpBtn.classList.remove('active-mode'); }
       if (this.tronconCreationMode) {
         this._showPickHint('Cliquer sur le point de depart (gare ou point de voie)');
       } else {
@@ -4503,13 +4547,7 @@ export const UIEntity = {
 
   toggleManualTronconCreation() {
       this.manualTronconMode = !this.manualTronconMode;
-      if (this.manualTronconMode) {
-        this.voiePointCreationMode = false;
-        this.stationCreationMode = false;
-        this.tronconCreationMode = false;
-        this._manualTronconPointA = null;
-        this._manualTronconWaypoints = [];
-      }
+      if (this.manualTronconMode) this.clearCreationModes('manualTroncon');
       const btn = document.getElementById('btn-create-troncon-manual');
       if (btn) {
         btn.textContent = this.manualTronconMode ? '✕ Annuler tracé' : '+ Tracé manuel';
@@ -4517,11 +4555,6 @@ export const UIEntity = {
       }
       const canvas = document.getElementById('game-canvas');
       if (canvas) canvas.style.cursor = this.manualTronconMode ? 'crosshair' : 'grab';
-      // Reset other mode buttons
-      const trcBtn = document.getElementById('btn-create-troncon');
-      if (trcBtn && this.manualTronconMode) { trcBtn.textContent = '+ Troncon'; trcBtn.classList.remove('active-mode'); }
-      const vpBtn = document.getElementById('btn-create-voie-point');
-      if (vpBtn && this.manualTronconMode) { vpBtn.textContent = '+ Point de voie'; vpBtn.classList.remove('active-mode'); }
       if (this.manualTronconMode) {
         this._showPickHint('Cliquer sur le point de départ (gare ou point de voie)');
       } else {
@@ -4634,13 +4667,8 @@ export const UIEntity = {
 
   toggleTracerLigne() {
       this.tracerLigneMode = !this.tracerLigneMode;
-      if (this.tracerLigneMode) {
-        this.voiePointCreationMode = false;
-        this.stationCreationMode = false;
-        this.tronconCreationMode = false;
-        this.manualTronconMode = false;
-        this._tracerLignePointA = null;
-      }
+      if (this.tracerLigneMode) this.clearCreationModes('tracerLigne');
+      this._tracerLignePointA = null;
       const btn = document.getElementById('btn-tracer-ligne');
       if (btn) {
         btn.textContent = this.tracerLigneMode ? '✕ Annuler' : 'Tracer ligne';
@@ -4763,12 +4791,12 @@ export const UIEntity = {
             addedTrc++;
           }
 
-          this.game.saveState();
           this._lastLineGroupId = lineGroupId;
           this._tracerLignePointA = null;
           const vpCount = result.voiePoints.length;
           const trackInfo = result.troncons.length > 0 ? ` (${addedTrc} tronçons)` : '';
           this._showPickHint(`Import OK: ${vpCount} points de voie${trackInfo}. Cliquer pour un autre tracé, Suppr pour annuler l'import, ou Echap.`);
+          setTimeout(() => this.game.saveState(), 0);
         } catch (e) {
           console.error('Tracer ligne error:', e);
           this._showPickHint('Erreur lors de l\'import. Réessayez.');

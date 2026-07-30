@@ -455,7 +455,7 @@ class RailEmpire {
     this.orm.reloadAreas().catch(() => {});
     // Clear previous autoSave interval to prevent double-save on re-login
     if (this.autoSaveInterval) clearInterval(this.autoSaveInterval);
-    this.autoSaveInterval = setInterval(() => this.saveState(), 10000);
+    this.autoSaveInterval = setInterval(() => this.saveState(), 30000);
 
     // Save on tab hide, catch up on tab show
     document.addEventListener('visibilitychange', async () => {
@@ -779,6 +779,8 @@ class RailEmpire {
   }
 
   saveState() {
+    if (this._saveInProgress) return;
+    this._saveInProgress = true;
     // Sync rame km: use the rame's own accumulated km (source of truth),
     // not the sum of all services (which would multiply km)
     for (const svc of this.scheduleCreator.getActiveServices()) {
@@ -833,7 +835,14 @@ class RailEmpire {
       rngState: this.rng ? this.rng.getState() : null,
       realism: { ...this.realismSettings },
     };
-    try { this.storage.saveGame(state).catch(e => console.warn('Auto-save failed:', e)); } catch(e) { console.warn('Auto-save failed:', e); }
+    try {
+      Promise.resolve(this.storage.saveGame(state))
+        .catch(e => console.warn('Auto-save failed:', e))
+        .finally(() => { this._saveInProgress = false; });
+    } catch(e) {
+      console.warn('Auto-save failed:', e);
+      this._saveInProgress = false;
+    }
     return state;
   }
 
