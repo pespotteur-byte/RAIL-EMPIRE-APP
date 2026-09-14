@@ -1,0 +1,6 @@
+Rail Empire v1.1.99 — HOTFIX23 SCREEN-CENTERED FOLLOW ARROW
+
+- Train suivi en 3D déplacé sur une couche écran non inclinée/non projetée.
+- Centre visuel garanti à 50% / 50% du viewport, indépendamment du zoom, pitch, overscan et cap.
+- Les autres trains restent projetés sur la dalle 3D et conservent leurs orientations relatives.
+- HOTFIX22 overscan/netteté conservé.

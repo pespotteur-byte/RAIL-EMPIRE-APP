@@ -1,0 +1,39 @@
+RAIL EMPIRE v1.1.99 — HOTFIX17 EXACT ORIGIN TRACK
+
+Objet
+- Corrige le faux blocage LiveMap / Schedule V2 : « Bloqué — attente voie libre au départ » alors que le train est seul et que les voyants sont au vert.
+
+Cause racine reproduite
+- Les horaires V2 transportent une voie physique exacte via TrackBinding.displayName (ex. Paris Gare de l'Est, voie 20).
+- Quand aucun VoiePoint natif n'existe pour cette voie, ActiveService utilise PlatformManager comme filet de sécurité.
+- PlatformManager interprétait alors « 20 » comme un numéro ordinal devant être compris entre 1 et world.station.platforms.
+- Une gare générique déclarée à 2 quais refusait donc artificiellement la voie 20, sans qu'aucun autre train n'occupe la voie.
+- Ce refus publiait ORIGIN_RESOURCE / STOP via MovementAuthority, donc [BLOQUE] et vitesse 0 km/h.
+
+Correction
+- PlatformManager accepte désormais, uniquement pour Schedule V2, une voie numérique exacte hors capacité générique (ex. 20 avec platforms=2) comme ressource physique nommée.
+- Deux trains V2 demandant réellement la même voie exacte restent incompatibles : le second est bloqué.
+- La logique legacy reste fail-closed et n'est pas assouplie globalement.
+- Le chemin pré-départ efface le vieux motif « attente voie libre au départ » dès que la ressource est réellement acquise.
+- Le refus au départ publie maintenant explicitement ORIGIN_RESOURCE avec le motif exact, au lieu d'un RUNTIME_STOP générique.
+- La restauration après rechargement utilise la même règle de voie exacte V2.
+
+Validation dynamique
+- Reproduction : gare générique platforms=2, départ V2 voie 20, aucun VoiePoint natif, un seul train.
+- Avant correction : waiting, blockedBy=true, ORIGIN_RESOURCE, 0 km/h.
+- Après correction : waiting -> moving, blockedBy=false, MovementAuthority=GO.
+- Formation V2 réelle 3 MW / 80 t : après 20 s simulées, vitesse ~99.8 km/h et position GPS avancée (~0.278 km parcourus).
+
+Non-régression
+- Batterie ciblée circulation/PlatformManager/HOTFIX11→17/bundle/perf : 4060 PASS, 0 FAIL.
+- Test HOTFIX17 dédié : 3 PASS, 0 FAIL, dont accélération physique et déplacement GPS.
+- Bundle : un seul writer production de blockedBy, toujours MovementAuthority.
+- Le retard LiveMap à la minute complète de HOTFIX16 est conservé.
+
+Build FILE://
+- Core/cache : 1199dep9
+- Flavor : FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX16-MOVEMENT-AUTHORITY-HOTFIX17-EXACT-ORIGIN-TRACK
+- index.html charge js/rail-empire.file.bundle.js?v=1199dep9&fullaudit=1
+
+Note QA
+- Les suites intégrales géantes *.test.js / *.test.mjs ont été lancées mais dépassent la fenêtre d'exécution disponible avant leur résumé final ; aucun échec n'avait été publié avant interruption. Elles ne sont donc pas comptabilisées comme PASS complet dans ce rapport.

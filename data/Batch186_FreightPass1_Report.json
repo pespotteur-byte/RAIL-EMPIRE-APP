@@ -1,0 +1,18 @@
+{
+  "project": "Rail Empire Batch186 FreightPass1",
+  "base": "Batch186 game integration / RE-code-only",
+  "cargoDefinitionsValidated": 44,
+  "wagonEntriesPatched": 75,
+  "lot001RilsEntries": 8,
+  "lot002TankEntries": 32,
+  "lot003HopperEntries": 35,
+  "industryTypesAugmented": 17,
+  "newIndustryTypes": 5,
+  "policy": [
+    "technical IDs remain stable/ASCII-like; player-visible cargo names are French",
+    "cargoTypes = documented/enabled only for patched wagons",
+    "technicallyCompatibleCargoTypes is informational and not auto-enabled",
+    "no technical mass/speed/capacity values invented by this freight pass",
+    "existing catalog IDs and Batch186 identity mapping preserved"
+  ]
+}

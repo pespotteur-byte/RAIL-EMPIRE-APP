@@ -1,0 +1,44 @@
+Rail Empire v1.1.47 — OSM SWITCH VISIBILITY FIX
+2026-08-17
+
+FIELD ISSUE
+- v1.1.46 could draw the OSM railway ways seen by the engine, but a real turnout at Château-Thierry still did not appear as an identifiable switch.
+- Root cause: OSM railway switches are point features (railway=switch nodes). v1.1.46 only fetched/drew railway ways, so switch objects themselves were invisible.
+
+CHANGES
+1) Tagged OSM switch nodes
+- Schedule Creator now fetches node[railway=switch] for the visible detailed viewport.
+- Tagged switches are drawn as bright yellow diamonds over the engine OSM overlay.
+- Switch fetch is editor-only and does not modify routing connectivity or route costs.
+
+2) Topological fallback
+- Resident railway ways already retain exact OSM node IDs.
+- A shared OSM node with >=3 incident railway segments is inferred as a physical junction.
+- Inferred junctions are drawn as light points when no tagged switch occupies the same exact OSM node.
+- This keeps a junction visible even if railway=switch is missing or the point-feature fetch temporarily fails.
+
+3) Performance / network scope
+- Overlay still activates only at zoom >= 11.
+- Railway ways remain viewport/tile scoped; no continent-wide _ways scan was introduced.
+- Switch point queries use only the current gridded editor viewport and are cached in memory by bbox.
+- FILE:// core bundle cache-buster advanced to v=1147 so browsers cannot silently reuse the old v1.1.46 bundle.
+
+PRESERVED CONTRACTS
+- v1.1.45 ORM availability fix.
+- v1.1.44 directed anti-reversal routing and manual ORM trace.
+- No automatic synthetic straight-line railway fallback.
+- Timetable regulation and exact-second V2 runtime.
+- 17,817 gameplay stations at minimum zoom.
+- Deferred heavy rolling-stock catalogue architecture.
+
+QA ACTUALLY RUN
+- v1.1.46 + v1.1.47 overlay regression cluster: 12/12 PASS.
+- Routing/editor/runtime targeted cluster: 94/94 PASS.
+- Functional non-bulk/non-weather suite: 341/341 PASS.
+- Bulk ORM bank: 20,275/20,275 PASS.
+- JavaScript/MJS syntax: 191/191 PASS.
+- FILE:// bundle rebuilt as v1.1.47 and verified to contain switch-node fetch/render code.
+
+FIELD SMOKE
+- Château-Thierry: zoom >= 11, keep “OSM moteur” enabled.
+- Expected: railway geometry in cyan; tagged OSM turnout as yellow diamond; untagged 3+ branch junction as light point.

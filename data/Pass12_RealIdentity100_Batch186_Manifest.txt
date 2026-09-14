@@ -1,0 +1,48 @@
+Rail Empire — Pass12 RealIdentity100 — Batch186 STRICT100
+Base: Pass12 RealIdentity100 Batch185 FINAL100
+
+BEFORE
+- Total MLG rows: 36824
+- Batch185 rolling-stock denominator: 34635
+- Strict external/formal-family identity: 34428/34635 = 99.4023%
+- Best-defensible limited family classification: 207/34635 = 0.5977%
+- Limited canonical roots: 66
+
+BATCH186 CLOSURE
+- Strictly upgraded rolling-stock roots: 62
+- Strictly upgraded rolling-stock drawings: 195
+- Scope-corrected non-rolling tram graphics: 4 roots / 12 drawings
+- Scope correction roots: BG_Tram60, FG_Tram60, BG_TRAM60, Voie_Tram
+- Those 12 graphics are track/background strips, not rolling stock, and are now OUT_OF_SCOPE.
+- Surviving opaque MLG livery/state/suffix tokens remain unexpanded.
+- Technical numeric values added: 0
+- Technical blocks changed: 0
+- Catalog IDs reassigned: 0
+- Scope-only Pass12 catalog links removed: 12
+- Previous Batch185 files overwritten: NO
+
+AFTER
+- Total MLG rows: 36824 / unique MLG IDs: 36824
+- OUT_OF_SCOPE rows: 2201
+- True matchable rolling-stock drawings: 34623
+- STRICT EXTERNAL/FORMAL-FAMILY RESOLUTION: 34623/34623 = 100.0000%
+- Remaining limited-family classifications: 0 drawings / 0 roots
+- Remaining FINAL_UNRESOLVED: 0 drawings / 0 roots
+- All 34623 in-scope rows retain a non-empty Pass12 catalog ID.
+
+POLICY
+- Family/type-level real-world identity is sufficient for strict final resolution when supported by direct external evidence or formal MLG family/silhouette evidence tied to a documented real-world family.
+- Exact subtype/state/livery semantics are never invented for opaque MLG tokens.
+- Formal-only residual identities explicitly state when an exact sub-purpose is unasserted.
+- Non-rolling infrastructure/background graphics do not belong in the rolling-stock denominator.
+- Unknown technical values remain null / unchanged.
+
+DIFFERENTIAL QA
+- Matching rows changed vs Batch185: 207 and only 207.
+- Of these: 195 retain the same catalog ID; 12 clear the Pass12 link due to scope correction; 0 non-empty ID is reassigned to a different ID.
+- Matching columns allowed to change: pass12_catalog_id, pass12_catalog_series, pass12_identity_disposition, pass12_source, pass12_validation_scope, pass12_coverage_status.
+- Registry rows changed: 66 and only 66.
+- Pass2 / Pass9 / Pass10 / Pass11 history untouched.
+- Technical blocks are value-identical to Batch185 for every inventory entry.
+
+INTEGRITY: PASS

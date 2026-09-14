@@ -1,0 +1,56 @@
+Rail Empire v1.1.45 — ORM AVAILABILITY REGRESSION FIX
+2026-08-17
+
+FIELD BUG
+- v1.1.44 could report ORM / OSM network unavailable even though ORM had just worked and usable railway geometry was present.
+- The regression appeared after anti-reversal routing was made directed in v1.1.44.
+
+ROOT CAUSES
+1) Pure same-way back-up was hard-forbidden with Infinity.
+   - A cursor/platform snap landing on a dead-end or awkward OSM stub could make the directed graph appear disconnected.
+   - This was too strict: a valid real-rail route could become impossible instead of merely undesirable.
+
+2) Failure diagnosis mixed partial network errors with topology failures.
+   - When one Overpass tile request failed but other real OSM railway data was successfully loaded, a later no-path result was labelled NETWORK_OR_TOPOLOGY.
+   - Schedule V2 treated every reason beginning with NETWORK as "ORM unavailable".
+   - Result: ORM could be visibly and locally usable while the UI still claimed it was unavailable.
+
+FIXES
+1) Anti-reversal remains enabled.
+   - Schedule V2 cursor routing still runs directed:true.
+   - A pure same-way back-up is now an extreme 72-hour routing penalty instead of Infinity.
+   - Any normal direct crossover / connected path wins overwhelmingly.
+   - If the real OSM topology genuinely requires the back-up as the only solution, routing stays possible instead of declaring ORM unavailable.
+
+2) Correct ORM availability diagnosis.
+   - Once usable real OSM railway ways were loaded, a failed graph search is classified NO_CONNECTED_PATH, even if one auxiliary Overpass fetch partially failed.
+   - ORM_NETWORK_UNAVAILABLE is now emitted only for the explicit NETWORK_UNAVAILABLE state (zero usable rail data after network failure).
+
+3) Cache/version hygiene.
+   - Cursor route cache key bumped to cursor-v8.
+   - ORM / UI / Schedule V2 routing cache-busters bumped for v1.1.45.
+   - FILE:// core + deferred catalogue bundles rebuilt as v1.1.45.
+   - VERSION.txt, package.json and visible UI version corrected to 1.1.45.
+
+PRESERVED
+- v1.1.44 timetable regulation / no early arrival gate.
+- directed anti-reversal preference.
+- manual ORM trace and Auto segment.
+- real OSM/ORM only; no synthetic straight-line railway fallback.
+- direct Rame assignment and V2 runtime.
+- J+1 handling.
+- all 17,817 gameplay stations visible at minimum zoom.
+- v1.1.43 performance architecture and deferred heavy catalogue.
+
+QA ACTUALLY RUN
+- ORM/Schedule V2/routing/runtime/performance regression cluster: 140/140 PASS.
+- Bulk ORM bank: 20,275/20,275 PASS.
+- JavaScript/MJS syntax: 189/189 PASS.
+- Focused v1.1.45 ORM availability tests include:
+  * directed anti-reversal remains active;
+  * pure same-way backup is finite but massively penalized;
+  * partial Overpass failure + usable rail data is NOT reported as ORM unavailable;
+  * genuine zero-data network failure still reports ORM unavailable;
+  * Schedule V2 maps only genuine NETWORK_UNAVAILABLE to the network-unavailable UI error.
+
+Browser smoke remains the final field validation on the user's machine.

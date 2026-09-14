@@ -1,0 +1,77 @@
+Rail Empire v1.1.87 — EXACT CONNECTIVITY ROUTING FIX
+Date: 2026-08-21
+
+OBJET
+-----
+Cette version corrige une régression terrain bloquante observée dans Schedule Creator V2 :
+un trajet local de quelques kilomètres à Karlsruhe Hbf vers un point VIA posé sur une voie
+OpenRailwayMap réelle pouvait être refusé avec « Aucun tracé ferroviaire ORM réel et continu ».
+La correction porte sur la connectivité exacte des voies et est appliquée au même pipeline
+utilisé par les itinéraires régionaux et longue distance.
+
+CORRECTIONS DE CONNECTIVITÉ
+---------------------------
+1. Sens de circulation ORM / signalisation
+- railway:bidirectional=no sans railway:preferred_direction n'invente plus un sens interdit à partir de l'ordre arbitraire des nœuds OSM.
+- Dans Schedule V2, une direction signalée comme non préférée/restrictive reste fortement pénalisée mais ne supprime plus physiquement une voie du graphe.
+- Le routeur générique bas niveau conserve son mode strict lorsqu'il est explicitement demandé.
+
+2. segmentIndex périmé
+- Le segmentIndex sauvegardé est désormais un indice, pas une autorité.
+- Si un autre segment du même wayId exact est réellement plus proche du clic, le snap choisit ce segment.
+- Aucun saut vers une voie parallèle différente n'est autorisé par ce mécanisme.
+
+3. Secours continu également sur les petits trajets
+- Le secours bbox OSM continu n'est plus réservé aux legs >=12 km.
+- Un leg exact de 2–3 km qui échoue après les stratégies locales normales bénéficie du même dernier secours réel que les parcours régionaux.
+- Ce secours reste tardif : il n'ajoute pas de requête aux petits trajets qui routent normalement.
+
+4. Les voies exactes cliquées sont toujours conservées
+- Toutes les stratégies exactes commencent désormais par les snapshots OSM exacts des ancres sélectionnées puis fusionnent les ways acquis autour.
+- Corrigé dans le secours bbox, le graphe chargé, le chemin OSM-main local et le préchargement de voyage.
+- Une réponse bbox qui omet un long way de départ ou d'arrivée ne peut donc plus faire disparaître le point exact du graphe.
+
+5. Préchargement longue distance
+- Un préchargement de classe ~300 km reste exploitable même si les tuiles téléchargées n'ont pas répété le way exact de départ/arrivée : les snapshots des ancres le complètent.
+- La logique 1.1.86 de réparation ciblée des tuiles manquantes, distinction panne réseau / NO_CONNECTED_PATH et absence de fallback synthétique est conservée.
+
+QUALITÉ DU TRACÉ
+----------------
+- Aucun tracé droit synthétique n'est ajouté.
+- wayId / nodeIds / géométrie OSM restent l'autorité.
+- Les protections anti-soudure de voies parallèles sont conservées.
+- Le micro-secours d'extrémités alignées <=4 m reste strictement borné et n'est utilisé qu'après échec du graphe strict.
+
+CAS DE RÉGRESSION AJOUTÉS
+-------------------------
+8 tests dédiés v1.1.87 couvrent :
+- bidirectional=no sans preferred_direction ;
+- circulation physique Schedule V2 dans une direction signalée restrictive ;
+- segmentIndex stale sur le même way exact ;
+- secours bbox d'un leg ~3 km ;
+- gorge de gare de classe Karlsruhe (quai exact -> crossover -> ligne -> branche exacte) ;
+- way exact omis par une réponse bbox ;
+- préfetch longue distance dont les ways terminaux ne viennent que des snapshots ;
+- OSM-main local complété par les snapshots exacts.
+
+IDENTITÉ / BUILD
+----------------
+- Version : 1.1.87
+- Cache navigateur : 1187
+- Bundle cœur FILE:// : 63 modules, 3 865 559 octets
+- Bundle catalogue différé : 66 modules, 45 802 563 octets
+
+QA FINALE
+---------
+- Cas dédiés v1.1.87 : 8/8 PASS.
+- Tous les tests MJS : 286/286 PASS.
+- Banque JS hors météo : 97 314/97 314 PASS, 128 suites, 0 échec.
+- Post-build startup/bundle/UI ciblé : 43/43 PASS.
+- Syntaxe JS/MJS/CJS : 237/237 PASS.
+- Météo : 5 501 assertions leaf observées, 0 "not ok". Le runner conserve son handle historique après les assertions et est arrêté par timeout externe ; aucun exit normal n'est revendiqué.
+
+LIMITATION DE VALIDATION
+------------------------
+Le screenshot Karlsruhe est devenu un cas de régression synthétique de même classe, mais l'environnement de build ne reproduit pas le navigateur de l'utilisateur avec les wayId exacts et les réponses live des serveurs OSM/Overpass au moment du clic. Il n'est donc pas revendiqué que ce screenshot précis a été exécuté end-to-end ici. Les familles de défauts capables de produire ce faux NO_CONNECTED_PATH ont été corrigées et testées.
+
+La même limitation s'applique au benchmark live Karlsruhe–Kassel : le moteur est testé sur des topologies exactes et des scénarios de ~300 km, sans prétendre à un chrono réel sur les serveurs publics depuis cet environnement.

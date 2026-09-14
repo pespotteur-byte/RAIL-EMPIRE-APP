@@ -1,0 +1,26 @@
+Rail Empire v1.1.99 — HOTFIX72
+ANTONY ARRIVAL PRIORITY + GPS NIGHT STABILITY
+Date: 2026-09-04
+
+1) LIVEMAP / ARRIVEE EN GARE — DEADLOCK DE RESERVATION
+- Corrige le cas observe a Antony ou le train de tete (EYAN 02) attendait une voie libre alors que le train suiveur (EYAN 04) etait bloque derriere par l'espacement.
+- Cause: selon l'ordre des ticks, le train suiveur pouvait reserver speculativement la voie/quai de la gare avant le train physiquement devant lui.
+- Correctif: si le proprietaire de la reservation est prouve comme etant le train suiveur en approche de la meme gare, la reservation speculative est retiree et donnee au train physiquement en tete.
+- Securite: une voie/quai reellement occupe par un train deja en gare n'est jamais vole.
+
+2) VUE 3D GPS — STABILITE DE LA VUE SATELLITE NOCTURNE
+- Conserve la vraie couche nocturne NASA VIIRS Black Marble introduite par HOTFIX71.
+- Conserve l'imagerie satellite detaillee Esri sous la couche nocturne et OpenRailwayMap au-dessus.
+- Supprime du chemin nocturne les operations Canvas/GPU lourdes qui pouvaient faire planter les vieux Chromium/Opera: filtre plein ecran complexe et mode de fusion "screen".
+- Nouveau rendu low-memory: assombrissement simple du satellite + VIIRS en alpha normal/source-over.
+- Aucun changement de la meteo physique: les filtres meteo GPS restent visuels.
+
+3) BUILD / CACHE
+- Bundle FILE reconstruit.
+- Cache runtime: 1199dep67.
+
+QA
+- Tests HOTFIX69/70/71/72 + contrat bundle post-build: 20/20 OK.
+- Suite standard npm: 102834 tests, 102833 OK, 1 echec.
+- Echec restant: REG-01/02/04 — zones regulateurs et postes AC couvrent par axe.
+  Cet echec est preexistant et avait deja ete reproduit sur les versions precedentes; il n'est pas lie a HOTFIX72.

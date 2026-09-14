@@ -1,0 +1,70 @@
+Rail Empire v1.1.48 — SHORT ROUTE / OVERPASS PRIORITY FIX
+2026-08-17
+
+FIELD ISSUE
+- In v1.1.47, a very short route (~300 m) could take an extremely long time to calculate and eventually fail.
+- OSM/ORM could appear to "crash" or become unavailable while the Schedule Creator was open.
+- Even a simple straight real-rail segment could be refused after long waits.
+
+ROOT CAUSES CONFIRMED
+1) The optional "OSM moteur" overlay independently launched Overpass railway + switch requests while routing was trying to use the same public endpoints.
+2) Schedule Creator also launched background OSM station enrichment although the 17,817 gameplay stations were already resident.
+3) getTrackCandidates() fetched a tiny local bbox but then scanned the entire resident this._ways collection, so track picking slowed as more railway data had been loaded.
+4) Cursor routing for short legs eagerly paid for multiple corridor passes before trying the local graph.
+5) Short-route loaded-way rescue used a very large +/-0.35 degree envelope, allowing a station-throat move to build a graph from tens of kilometres of resident railway.
+6) Some offline/reload states can have a small resident _ways set without bbox metadata; the new local index initially ignored those states.
+
+CHANGES
+1) Routing gets absolute network priority
+- "OSM moteur" is now a PASSIVE diagnostic overlay: it never starts its own Overpass request.
+- It only draws railway geometry already loaded by routing/track picking.
+- Existing switch-fetch helpers remain available internally, but the normal overlay no longer calls them.
+
+2) Background station enrichment suppressed when unnecessary
+- When the gameplay world already contains the large native station baseline (>=1000 stations; normal game = 17,817), Schedule Creator does not launch an automatic station Overpass batch.
+- This prevents station metadata enrichment from competing with route calculation.
+
+3) Local track picker
+- getTrackCandidates() uses a short 3.2 s/endpoint-bounded local fetch.
+- Candidate search is restricted to fetched/resident tiles intersecting the small picker envelope.
+- It no longer scans continent-wide this._ways after every click.
+
+4) Short-leg fast path
+- For legs below 3 km, routing performs one compact local railway fetch first and immediately tries the real OSM graph.
+- A wider fetch is performed only if real rail data exists but the compact graph is not connected enough.
+- No eager narrow+wide double pass for a 300 m move.
+
+5) Short-route graph scope reduced
+- Already-loaded rescue window for short chains is reduced from the historical +/-0.35 degree scale to a few-kilometre local envelope.
+- Long routes retain the wider rescue policy.
+
+6) Bounded offline/reload compatibility
+- If bbox metadata is absent but the resident _ways collection is small, a bounded local fallback scan is allowed.
+- A continent-scale resident cache never falls back to a global scan.
+
+PRESERVED CONTRACTS
+- Real OSM/ORM railway topology remains authoritative.
+- No automatic synthetic straight-line railway fallback was reintroduced.
+- v1.1.44 directed anti-reversal + manual trace remain.
+- v1.1.45 ORM availability diagnostics remain.
+- v1.1.46/47 engine-topology visualization and inferred junction rendering remain.
+- 17,817 gameplay stations remain visible at minimum zoom.
+- FILE:// startup bundle remains split: small gameplay core + deferred rolling-stock catalogue.
+
+QA ACTUALLY RUN
+- v1.1.44 -> v1.1.48 routing/editor/runtime/performance/offline targeted cluster: 118/118 PASS.
+- Dedicated v1.1.48 tests include a ~300 m straight real OSM way: PASS, no synthetic fallback.
+- Dedicated local track-picker test with 5,000 unrelated resident ways: PASS; only local way considered.
+- Bulk ORM bank: 20,275/20,275 PASS.
+- JavaScript/MJS syntax: 192/192 PASS.
+- FILE:// bundles rebuilt as v1.1.48: core 61 modules / 2,883,715 bytes; deferred catalogue 66 modules / 45,802,563 bytes.
+
+QA LIMIT
+- The entire historical non-bulk runner was not used as the release claim because some old tests intentionally contact live Overpass endpoints; network access in the build container was unavailable and those tests waited on endpoint timeouts. Deterministic routing/runtime/performance tests above completed successfully.
+
+FIELD SMOKE PRIORITY
+1. Open Schedule Creator at Chateau-Thierry.
+2. Select two points/track bindings roughly 300 m apart on real OSM railway.
+3. Expected: track candidate list appears without a continent-wide pause; route calculation starts with one compact local fetch.
+4. "OSM moteur" must not generate a second Overpass workload.
+5. If the compact graph is insufficient, only then should one widened retry occur.

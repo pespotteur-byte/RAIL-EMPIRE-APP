@@ -1,0 +1,93 @@
+Rail Empire v1.1.88 — ROULEMENTS V3 / MATERIAL DUTIES
+======================================================
+Date : 2026-08-23
+Base autoritaire : v1.1.87 SC place-search fonctionnel
+
+OBJECTIF
+--------
+Transformer les Roulements V2 en véritable outil de gestion du matériel tout en conservant le mode simple : un joueur peut toujours affecter directement une rame à un horaire sans créer de roulement.
+
+ROULEMENTS V3 — MODELE MATERIEL
+-------------------------------
+- Le planning d'un roulement n'utilise plus un curseur global qui sérialisait tous ses trains.
+- Les dépendances temporelles sont désormais calculées par matériel physique réellement commun entre les circulations.
+- Des branches indépendantes peuvent donc circuler en parallèle dans un même roulement.
+- SPLIT / DETACH libèrent le matériel à l'arrêt réel et après la fenêtre d'opération prévue.
+- ATTACH / MERGE / ADD_CV / ADD_PUSHER / CHANGE_LOCOMOTIVE réservent le matériel au bon moment.
+- Un coupon détaché à Valence peut repartir sur une branche Briançon pendant que le reste du train poursuit vers Nice.
+- La détection de double réservation utilise les intervalles matériels dynamiques, et non plus la durée complète du train.
+- Vérification proactive de continuité géographique : un engin ne peut pas "sauter" entre deux gares sans acheminement explicite.
+
+MATERIEL PHYSIQUE / COUPONS / UM / CV
+--------------------------------------
+- PhysicalVehicle conserve désormais image, orientation, statut voiture-pilote et odomètre.
+- Les coupons restent ordonnés voiture par voiture et peuvent être détachés/réutilisés indépendamment.
+- Le rôle CV reste non moteur : masse/résistance oui, puissance non.
+- L'interface expose une case CV lors de l'affectation de matériel.
+- ATTACH/MERGE d'un engin motorisé détecte automatiquement une UM active au lieu de transformer l'engin en voiture non motrice.
+- CHANGE_LOCOMOTIVE sait construire une nouvelle traction avec LEAD + ACTIVE_MULTIPLE.
+- Le sens d'une occurrence peut être inversé ; la composition graphique est retournée au runtime.
+- Les images du matériel physique sont hydratées dans la formation runtime uniquement lorsqu'elles existent.
+- L'odomètre physique est incrémenté après un service terminé normalement.
+
+RAMES DE BASE + EXCEPTIONS
+--------------------------
+- Une rame peut rester la formation de base d'un roulement.
+- Les occurrences qui héritent de cette rame continuent à suivre ses modifications.
+- Une occurrence personnalisée devient une exception et n'est plus écrasée lors d'une modification ultérieure de la rame de base.
+- Retirer la rame de base peut conserver les compositions déjà présentes.
+
+NOUVELLE PAGE ROULEMENTS
+------------------------
+- Refonte en trois zones : Bibliothèque / Timeline ou vue centrale / Inspecteur.
+- Bibliothèque avec recherche et onglets Horaires / Matériel / Coupons.
+- Ajout rapide d'un horaire depuis la bibliothèque.
+- Vues : Roulement / Matériel / Tableau.
+- Vue Matériel globale : tous les services d'un engin, rôle, roulement, kilométrage planifié et odomètre.
+- Timeline basée sur les vrais intervalles matériels : une coupe s'arrête visuellement à la gare de séparation.
+- Blocs de train cliquables avec numéro, sens et abréviations origine/destination.
+- Inspecteur : composition, images, rôles, coupons, opérations et diagnostics.
+- Gestion du roulement : renommer, dupliquer, activer/désactiver, supprimer.
+- Réordonnancement des occurrences, inversion du sens, ajout/édition/suppression des opérations.
+- Undo / Redo de la page Roulements.
+- Résumé persistant : trains, km horaires, matériels, opérations et état des conflits.
+- Les alertes de continuité et conflits indiquent la cause avant le runtime.
+
+ERGONOMIE DES OPERATIONS
+------------------------
+- Les opérations restent basées sur le moteur V2 (atteler, dételer, changer de locomotive, séparer, réunir, pousse, CV).
+- Recherche du matériel dans les fenêtres d'affectation/opération.
+- Édition d'une opération existante et suppression directe depuis l'inspecteur.
+- Durée minimale de 5 minutes conservée.
+- Les règles de temps d'arrêt historiques restent conservées.
+
+MODE SIMPLE / JOUEURS DEBUTANTS
+-------------------------------
+- Les roulements NE SONT PAS obligatoires.
+- L'affectation directe Horaire -> Rame est conservée.
+- Une affectation directe ne crée aucun roulement visible ou caché.
+- Si un vrai roulement référence le même horaire, il reste prioritaire et aucun doublon de train n'est généré.
+
+SAUVEGARDES
+-----------
+- Schema Roulements passe de 2 à 3.
+- Les sauvegardes schema 2 de la v1.1.87 restent acceptées et migrent au chargement.
+- Les nouveaux champs physiques et les exceptions de formation sont persistés.
+
+QA
+--
+- Tests ciblés Roulements/Runtime/Rames/Direct/contrats bundle : 117/117 PASS.
+- Nouveau pack Roulements V3 : 10/10 PASS.
+- JavaScript : 184/184 fichiers passent node --check.
+- Suite .test.js hors bulk-weather : 97 309 PASS / 5 FAIL hérités de la v1.1.87 ; les 5 échecs ont été reproduits sur le zip 1.1.87 intact.
+- Suite .test.mjs : 326 PASS / 3 FAIL hérités de la v1.1.87 ; les 3 échecs ont été reproduits sur le zip 1.1.87 intact.
+- bulk-weather : 5 501 sous-tests OK observés, 0 not ok ; le runner conserve son handle historique et ne quitte pas proprement avant timeout.
+- Chromium : navigation file:// et localhost bloquée par la politique administrateur de l'environnement. Smoke du bundle final via harness Chromium : timeline, sélection train, inspecteur, vue Matériel et vue Tableau opérationnels ; 0 pageerror et 0 erreur console pertinente.
+
+ECHECS QA HERITES CONFIRMES (NON INTRODUITS PAR 1.1.88)
+-------------------------------------------------------
+- 2 diagnostics ORM historiques de field-repair-v1132-routing-diagnostics.
+- 3 assertions historiques du pack global-stations-v1113-rail-only, déjà incompatibles avec la baseline gares actuelle du 1.1.87.
+- 3 contrats historiques ORM/texte/budget dans v1145, v1149 et v1183.
+
+Aucun des 8 échecs hérités ne touche les Roulements V3, Rames, affectations directes ou le runtime matériel modifié en 1.1.88.

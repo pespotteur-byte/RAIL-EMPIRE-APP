@@ -1,0 +1,88 @@
+Rail Empire v1.1.86 — Schedule Router Core Rebuild
+Date: 2026-08-21
+
+OBJECTIF
+Cette version n'est pas un hotfix supplémentaire. Elle restructure le cœur du Schedule Creator V2 afin de supprimer les comportements dépendants de seuils arbitraires, de l'état du cache ou d'une tuile réseau manquante. Le même pipeline exact doit fonctionner pour quelques centaines de mètres, quelques kilomètres, un trajet régional et plusieurs centaines de kilomètres.
+
+ROUTAGE — PIPELINE UNIFIÉ
+- Suppression du changement de solveur arbitraire autour de 3 km.
+- Les legs exacts départ/arrivée utilisent désormais le même pipeline exact quelle que soit leur longueur.
+- Les multi-VIA locaux conservent uniquement le solveur whole-chain lorsque sa résolution globale apporte réellement un bénéfice dans les gorges de gare.
+- Suppression du balayage interactif de jusqu'à 120 anciennes tuiles IndexedDB avant chaque routage exact.
+- Réutilisation prioritaire des snapshots OSM exacts, des routes validées et des tuiles déterministes.
+- Annulation réelle des anciens calculs via AbortSignal jusque dans les fetchs/corridors.
+
+LONGUE DISTANCE / 300 KM
+- Routage longue distance hiérarchique conservant exclusivement la géométrie ferroviaire OSM réelle.
+- Aucune ligne droite synthétique et aucun raccord longue distance artificiel.
+- Les tuiles réseau échouées sont maintenant mémorisées avec leur emprise exacte.
+- Hole-healing: une tuile manquante au milieu du parcours est redécoupée et retentée sur les 3 endpoints avant d'élargir tout le corridor.
+- Les données partielles de préfetch peuvent aider un nouvel essai mais ne sont jamais considérées comme une topologie complète fiable.
+- Si le corridor le plus large reste incomplet à cause du réseau, le diagnostic est NETWORK_UNAVAILABLE, jamais un faux NO_CONNECTED_PATH.
+- Un NO_CONNECTED_PATH n'est donc émis qu'après acquisition complète de la topologie examinée.
+- Rescue graph-only final pour des micro-coupures OSM alignées jusqu'à 4 m, avec index spatial et garde-fous stricts.
+- Le rescue 4 m exige des extrémités réciproques, alignées, sur mêmes layer/bridge/tunnel ; il refuse les voies parallèles côte à côte.
+- Test synthétique dédié: trajet de classe ~300 km avec une tuile centrale absente, réparée localement puis route exacte trouvée.
+
+RÉSEAU / PERFORMANCE
+- Les politiques de hedging Overpass sont réellement propagées jusqu'au fetch final.
+- Les diagnostics de fetch sont locaux à chaque batch et ne peuvent plus être écrasés par une autre requête concurrente.
+- Le préchargement de voyage ne peut plus transformer silencieusement une acquisition partielle en cache complet.
+- Suppression de la revalidation Overpass automatique de tous les horaires au démarrage.
+- Modifier uniquement des métadonnées, Vmax ou paramètres de timing ne reroute plus le réseau si la géométrie reste valide.
+- Valider un horaire déjà structurellement courant ne relance plus le routage par principe.
+
+TRACK PICKER
+- Une voie parallèle déjà présente en RAM ne peut plus voler le clic à une voie réellement plus proche.
+- Une réponse OSM-main partielle ne bloque plus la vérification Overpass lorsqu'elle ne permet pas d'établir avec certitude la voie la plus proche.
+- Le snap reste basé sur les ways OSM exacts ; pas de snap arbitraire à une voie voisine.
+
+COHÉRENCE DU TRACÉ / DISTANCES
+- Une seule fonction canonique assemble désormais legs, routePoints, segments et distanceKm.
+- Les kilomètres ne peuvent plus rester figés sur le dernier arrêt pendant qu'une preview réelle continue au-delà.
+- FALLBACK_30 reste un avertissement de vitesse OSM inconnue, pas un segment exclu du kilométrage.
+- La validation recalcule et compare la géométrie réelle au compteur stocké.
+- La validation contrôle le nombre de segments, leurs extrémités, la concaténation exacte des legs et le kilométrage global.
+- Un suffixe qui échoue ne remet plus le préfixe déjà résolu à 0 km.
+
+VALIDATION / MATÉRIEL
+- Contrôles renforcés: écartement, électrification, gabarit, charge par essieu, charge au mètre.
+- Schedule V2 interdit un back-up pur sur la même voie à l'intérieur d'un leg.
+- Une inversion de sens entre deux legs à une gare exige explicitement TAQ.
+- Les métadonnées nom/numéro n'altèrent plus l'état de validation et ne déclenchent aucun reroutage.
+
+SAUVEGARDE / TRANSACTIONS
+- Chargement Schedule V2 transactionnel: un payload invalide ne peut plus vider l'état live.
+- Chargement Rotation V2 transactionnel, migrations comprises.
+- Chargement runtime V2 transactionnel: un save corrompu ne peut plus libérer les rames ou vider les snapshots avant rejet.
+- Undo/redo transactionnel.
+- Duplication par fréquence atomique: aucune série partielle laissée en cas d'échec.
+- Création aller/retour atomique.
+- Suppression d'un point technique remappe les VIA concernés et marque la géométrie stale proprement.
+- Suppression de calendrier détache les références Schedule/Rotation de manière cohérente.
+- Revalidation explicite construit et valide une route candidate avant de remplacer la dernière géométrie connue bonne.
+
+CACHE / ÉTAT
+- Lire une tuile identique depuis IndexedDB n'invalide plus les routes exactes mémorisées.
+- Les routes sauvegardées validées restent utilisables malgré le simple streaming ORM.
+- Les caches de routage et leurs diagnostics ne reposent plus sur les mêmes invalidations contradictoires qu'avant.
+
+IDENTITÉ / BUILD
+- Version: 1.1.86
+- Cache navigateur: 1186
+- Bundle cœur FILE://: 63 modules, 3 862 670 octets
+- Bundle catalogue différé: 66 modules, 45 802 563 octets
+
+QA FINALE
+- Suite dédiée v1.1.86: 34/34 PASS.
+- Tous les tests MJS: 278/278 PASS.
+- Banque JS hors météo: 97 314/97 314 PASS, 128 suites, 0 échec.
+- Météo: 5 501 assertions leaf observées, 0 "not ok". Le runner conserve son handle historique après les assertions et est arrêté par timeout externe; aucun exit normal n'est revendiqué.
+- Syntaxe JS/MJS/CJS: 236/236 PASS.
+- Post-build routing/startup/bundle: 80/80 PASS.
+
+GARANTIE DE QUALITÉ
+Le routage final reste fondé sur les ways/nodes OSM exacts. La v1.1.86 ne résout pas les échecs en fabriquant une droite entre deux points ni en soudant arbitrairement des voies parallèles.
+
+LIMITATION DE VALIDATION
+L'environnement de build n'effectue pas un parcours navigateur réel Karlsruhe–Kassel sur les serveurs Overpass publics. La QA prouve le comportement du moteur sur topologies exactes, y compris un cas synthétique d'environ 300 km avec panne réseau centrale, et vérifie la distinction entre panne réseau et vraie absence de chemin. Le temps et la disponibilité d'Overpass restent externes au jeu.

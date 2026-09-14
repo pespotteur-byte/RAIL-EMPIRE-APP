@@ -1,0 +1,37 @@
+Rail Empire v1.1.42 — LIVEMAP IDLE PERFORMANCE HOTFIX
+Date: 2026-08-17
+
+But
+- Corriger la régression de latence apparue en v1.1.41, y compris au repos / au chargement d'une partie contenant une affectation directe V2.
+- Conserver les corrections v1.1.41: contexte « Se situe entre A et B » basé sur l'horaire réel et affichage des images de la rame joueur.
+
+Corrections
+1. Runtime direct léger restauré
+- Un ActiveService V2 direct utilise de nouveau une rame-proxy technique légère pour la simulation.
+- La vraie rame créée dans la page Rames reste référencée par _v2DirectRameId mais n'est plus greffée à l'objet runtime chaud.
+
+2. Images Livemap persistantes
+- Les images de la vraie rame sont résolues uniquement côté UI.
+- Les nœuds <img> de la composition sont détachés/réattachés lors des mises à jour textuelles au lieu d'être détruits/recréés à chaque refresh.
+- Les GIF ne sont donc plus relancés/re-décodés plusieurs fois par seconde quand vitesse/retard change.
+
+3. Idle sans train
+- Avec 0 train actif, le message « Aucun train en service » n'est plus réinjecté dans le DOM à chaque update UI.
+
+4. Contexte A/B conservé
+- « Se situe entre A et B » continue d'utiliser les arrêts précédent/suivant du propre horaire du train.
+- Aucun retour au scan des 17 817 gares par train.
+
+5. Données joueur conservées côté affichage
+- Nom/composition/capacité/maintenance de l'affectation directe sont résolus depuis la rame de la page Rames pour l'UI.
+- Le moteur conserve son objet technique léger pour la physique/réservation.
+
+QA
+- 5/5 tests spécifiques Livemap/perf PASS.
+- 52/52 tests critiques post-bundle PASS.
+- 297/297 tests fonctionnels hors bulk/météo PASS.
+- 183/183 fichiers JS/MJS passent node --check.
+- Contrats préservés: affectation directe, J+1, runtime V2, validation, WAYPOINT/ORM, OSM direct, 17 817 gares all-zoom.
+
+Limite de validation
+- Un smoke Chromium réel a été tenté mais l'environnement d'exécution bloque la navigation Chromium avec ERR_BLOCKED_BY_ADMINISTRATOR, y compris localhost. Aucun benchmark navigateur n'est donc revendiqué pour cette build.

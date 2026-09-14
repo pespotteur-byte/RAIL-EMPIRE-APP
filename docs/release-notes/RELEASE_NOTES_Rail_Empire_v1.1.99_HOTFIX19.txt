@@ -1,0 +1,9 @@
+Rail Empire v1.1.99 — HOTFIX19 3D ARROW AXIS
+
+Correctif LiveMap vue 3D GPS :
+- La caméra/route HOTFIX18 était correcte, mais la flèche SVG restait décalée d’environ 90°.
+- Cause : le triangle SVG est dessiné nativement vers le haut à rotate(0deg), alors que la formule HOTFIX18 le traitait comme un symbole orienté vers +X (droite).
+- Fallback CSS : rotation locale = cap géographique - cap caméra, sans offset -90°.
+- Relief DEM : conversion du tangent écran atan2 (+X=0) vers l’axe natif du SVG par +90°.
+- Le suivi caméra 3D et le moteur de mouvement HOTFIX17 ne sont pas modifiés.
+- Cache FILE : 1199dep11.

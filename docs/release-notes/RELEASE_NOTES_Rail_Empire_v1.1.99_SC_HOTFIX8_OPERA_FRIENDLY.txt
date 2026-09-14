@@ -1,0 +1,23 @@
+Rail Empire v1.1.99 — SC HOTFIX8 OPERA-FRIENDLY
+
+Purpose
+HOTFIX7 proved the Schedule Creator can find a 1,500+ km route, but the browser could still OOM after completion or when editing timetable stop times. HOTFIX8 reduces those post-routing/editing memory spikes without weakening the long-range router.
+
+Player-visible behavior
+- Changing a dwell time should no longer trigger a full physical simulation of the entire route when route/profile/weather are unchanged.
+- Undo/redo of timing edits no longer stores a complete copy of continental route geometry.
+- Very long schedules save through a low-memory path designed for constrained/32-bit browsers.
+- Existing + VIA insertion between stops remains available and only affected legs reroute.
+- Long-range topology fragmentation and LOW-MEM route cleanup remain enabled.
+
+Persistence
+New compact long-route format: SC8P1.
+Existing legacy Schedule V2 path saves remain readable. New long saves rebuild derived global segments on load from canonical leg points.
+
+FILE:// cache id
+1199sc8
+
+QA
+479/479 modern project tests PASS after the changes.
+80/80 targeted SC/ORM/timing/model tests PASS.
+18/18 bundle-level HOTFIX tests PASS after rebuilding the actual FILE:// bundle.

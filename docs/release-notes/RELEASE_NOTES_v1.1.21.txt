@@ -1,0 +1,54 @@
+Rail Empire v1.1.21 — Schedule Creator V2 + Roulements
+
+Base : v1.1.20 ALL_STATIONS_ALL_ZOOMS
+Rupture volontaire : les anciens horaires/sillons V1 ne sont pas migrés vers le nouveau domaine V2. Les autres données de sauvegarde restent chargées.
+
+NOUVEAU — HORAIRES V2
+- Editeur plein écran fond Satellite + OpenRailwayMap.
+- Gare d’arrêt = clic gare puis sélection obligatoire de la voie ORM/OSM exacte et nom Livemap obligatoire.
+- Clics de passage = contraintes ORM éditables, invisibles dans la fiche horaire.
+- Aucun fallback synthétique/ligne droite dans V2 : route ORM impossible = blocage.
+- Points techniques réutilisables sur voie ORM exacte.
+- Aller bleu, retour vert indépendant, aller simple autorisé.
+- TAQ (minimum 5 min), C/S/[C]/[S] hors voyageurs ; [C]/[S] tirés à 50 % par circulation et figés.
+- W, HLP, TM et Infra ajoutés aux catégories V2.
+- Temps d’arrêt par défaut 2 min, modifiable.
+- J+1/J+2/... sans limite de durée ; affichage HH:MM (+N).
+- Marge automatique : 0 seconde. Les overrides horaires du joueur sont conservés.
+- Calcul via composition-type ou Vmax de sillon + rame étalon par catégorie.
+- Vmax ORM inconnue = 30 km/h clairement signalée.
+- Attributs ORM conservés : Vmax directionnelles, électrification, tension, fréquence, écartement, usage/service, direction préférentielle, etc.
+- Calendriers datés, exclusions, priorité par ordre, chevauchements signalés, versions d’horaires.
+- Etats Brouillon / Valide / À réparer, autosave brouillons, revalidation ORM au chargement.
+- Cache des routes validées : services existants utilisables si ORM est temporairement indisponible.
+- Duplication AR jusqu’à 24 h par fréquence ou prochain départ ; numérotation +1 retour / +2 paire suivante ; ajout direct à un roulement possible.
+
+NOUVEAU — ROULEMENTS / MATERIEL
+- Un horaire seul ne fait plus naître de train : seule une occurrence de roulement affectée à du matériel réel est compilée vers ActiveService.
+- Timeline par objet matériel individuel.
+- Locomotives/voitures/wagons individuels, numéros uniques ; coupons uniques composés voiture par voiture.
+- Rôles LEAD / UM active / pousse / véhicule-CV / voiture / wagon.
+- CV ajoute masse/résistance, aucune traction. Puissances des engins actifs additionnées.
+- Actions : atteler, dételer, changer de locomotive, split/merge, pousse, CV ; 5 min minimum/action, parallèle ou séquentiel.
+- Séparations/fusions de compositions représentées sur la timeline.
+- Double-booking d’un engin = conflit bloquant.
+- Loco titulaire absente = train annulé ; coupon absent = départ possible avec alerte.
+- Recalcul avec la formation réelle : durée modifiée et roulement suivant repoussé automatiquement.
+- Incompatibilité électrique réelle connue = le train ne part pas ; diesel ignore l’électricité mais pas un écartement connu incompatible.
+
+RUNTIME / COMPATIBILITE
+- ActiveService est conservé comme moteur de circulation éprouvé et reçoit les occurrences V2.
+- Support V2 des temps absolus J+N, y compris trajets >24 h.
+- Pas d’EVO automatique pour V2.
+- Anciens modals Schedule/Sillons retirés de l’interface ; menus remplacés par Horaires et Roulements.
+- 17 817 gares gameplay de la v1.1.20 conservées et visibles au dézoom maximal.
+- Bundle file:// reconstruit (48,4 Mo).
+
+QA
+- 162 fichiers JavaScript : node --check PASS.
+- 97 188/97 188 assertions hors météo : PASS.
+- 5 501 assertions météo exécutées sans échec ; le runner météo conserve un handle historique et ne quitte pas avant timeout.
+- Total logique observé sans échec : 102 689 assertions.
+- Contrat startup bundle : PASS.
+- 17 817 gares tous zooms : PASS.
+- Chromium de l’environnement bloque file:// ET localhost par politique d’organisation ; aucun smoke navigateur réel n’a donc pu être exécuté ici. Ce blocage intervient avant le chargement de Rail Empire.

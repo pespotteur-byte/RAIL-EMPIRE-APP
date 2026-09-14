@@ -1,0 +1,47 @@
+Rail Empire v1.1.99 — HOTFIX73 — GPS LOADER / MEMORY FREEZE FIX
+================================================================
+
+Objectif
+--------
+Corriger le gel/crash de la vue 3D GPS observé à l'ouverture, notamment avec la
+vue satellite nocturne sur navigateurs anciens / faible mémoire.
+
+Cause racine corrigée
+---------------------
+Le pipeline de tuiles pouvait remettre _baseLoading/_railLoading à zéro pendant
+que d'anciennes Image étaient encore en vol. Leurs callbacks terminaient ensuite
+sur les nouveaux compteurs et pouvaient les rendre négatifs. La limite de
+connexions était alors contournée et un grand nombre de téléchargements/décodages
+pouvaient être lancés simultanément.
+
+Correctifs HOTFIX73
+-------------------
+- Chaque changement de pipeline invalide désormais les callbacks précédents via
+  une génération de chargement avant remise à zéro des compteurs.
+- Les compteurs actifs sont bornés à >= 0.
+- Timeout des tuiles distantes : 8 s en GPS, 15 s hors GPS, afin qu'un endpoint
+  bloqué ne monopolise jamais un slot indéfiniment.
+- Mode GPS faible mémoire :
+    * 4 connexions base maximum ;
+    * 4 connexions overlay maximum ;
+    * cache de tuiles borné à 600 entrées ;
+    * purge du cache 2D à l'entrée du GPS ;
+    * purge des tuiles GPS à la sortie ;
+    * libération explicite du backing-store du canvas de tuiles.
+- Correction du pruning du cache : comparaison avec le zoom de tuile entier
+  effectif, et non avec le zoom visuel fractionnaire (ex. 12.5).
+- Les correctifs HOTFIX69/70/71/72 sont conservés, dont NASA VIIRS Black Marble
+  en vue nocturne et la priorité physique à Antony.
+
+Cache FILE
+----------
+1199dep68
+
+QA
+--
+- Tests GPS cumulés HOTFIX29 + 69 -> 73 : 27/27 OK.
+- Test fonctionnel dédié : un callback d'image obsolète ne peut plus rendre le
+  compteur de chargement négatif après bascule satellite/nuit.
+- Suite complète : 102 833 / 102 834 tests OK.
+- Unique rouge : REG-01/02/04 (regulation.test.js), panne préexistante identique
+  aux HOTFIX69/70/71/72 et sans lien avec la LiveMap/GPS.

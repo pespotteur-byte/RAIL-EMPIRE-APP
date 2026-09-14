@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {"skipLibCheck": false, "noEmit": true},
+  "files": ["src/ts/route-linear-reference.ts", "src/ts/route-electrification-index.ts"],
+  "include": []
+}

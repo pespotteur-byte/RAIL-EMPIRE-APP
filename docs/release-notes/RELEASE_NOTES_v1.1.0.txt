@@ -1,0 +1,40 @@
+RAIL EMPIRE v1.1.0 — FULL CATALOG RELEASE
+=========================================
+Release date: 13 August 2026
+
+HIGHLIGHTS
+- Full Batch186 rolling-stock catalog integrated into the playable game.
+- 34,623 / 34,623 in-scope MLG rolling-stock drawings represented in the game catalog.
+- 36,307 total catalog entries at runtime, all with unique catalog IDs.
+- 20,134 new catalog entries added without replacing legacy cat-* IDs.
+- 36,824 original MLG GIF assets bundled in img/catalog.
+- Batch186 real-identity metadata integrated (RE-EU IDs and validated family identity).
+- FreightPass1 + FreightPass2 integrated directly into the runtime.
+- 204 unique cargo types after normalization, with French display names.
+- 661 wagons already have validated/corrected freight mappings from FreightPass1+2.
+- Purchase prices rebalanced for gameplay: no item exceeds EUR 6,000,000.
+- High-speed rolling stock is component-priced so normal TGV/ICE-style formations remain on the <= EUR 6M scale.
+- Provisional gameplay technical fallbacks are explicitly labelled "Perf. jeu*" and are not presented as certified real-world specifications.
+
+DATA SAFETY
+- Legacy catalog IDs and save compatibility preserved.
+- No missing real-world technical value is silently presented as certified fact.
+- Missing historical/composite artwork is hidden gracefully; no substitute rolling-stock artwork is invented.
+
+QA SNAPSHOT
+- Runtime catalog IDs: 36,307 / 36,307 unique.
+- Batch186 MLG rolling-stock coverage: 34,623 / 34,623.
+- New FullCatalog images missing: 0 / 20,134.
+- Numeric RollingStockItem smoke test: 36,307 objects, 0 invalid numeric fields, 0 price > EUR 6M.
+- Relevant freight/rolling-stock/physics tests: 24 / 24 PASS.
+- Broader split test suite: 97,117 PASS / 0 FAIL across the 19 files that completed in the execution window.
+- bulk-weather.test.js is the only suite not completed in that window and is unrelated to the catalog changes.
+
+KNOWN ASSET LIMITATIONS FROM RECOVERED SOURCE
+- Some legacy generated composite PNGs and Pack RE image assets were not present in the recovered code-only source.
+- These missing legacy images do not reduce Batch186 MLG rolling-stock coverage and are hidden gracefully by the UI.
+
+RUNNING LOCALLY
+Serve the extracted folder with a local HTTP server because the game uses ES modules.
+Example: python3 -m http.server 8000
+Then open http://localhost:8000 in a modern browser.

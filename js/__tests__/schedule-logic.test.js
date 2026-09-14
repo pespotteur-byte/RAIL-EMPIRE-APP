@@ -26,10 +26,10 @@ describe('SC-03 — odd (aller) / even (retour) numbering', () => {
     assert.equal(toOdd(4), 5);
   });
 
-  it('return number is the next even after the aller number', () => {
+  it('return number is the aller number - 1 (even)', () => {
     assert.equal(returnNumberFor(1), 2);
     assert.equal(returnNumberFor(3), 4);
-    assert.equal(returnNumberFor(2), 4); // 2 -> odd 3 -> 4
+    assert.equal(returnNumberFor(2), 4); // 2 -> toOdd 3 -> return 4
     assert.ok(returnNumberFor(7) % 2 === 0);
   });
 
@@ -65,10 +65,10 @@ describe('ARR-01/02/03 — stop type parsing', () => {
 });
 
 describe('ARR-04/05 — skip draw', () => {
-  it('uses a 25% probability', () => {
-    assert.equal(SKIP_PROBABILITY, 0.25);
-    assert.equal(rollSkip(() => 0.24), true);
-    assert.equal(rollSkip(() => 0.25), false);
+  it('uses a 50% probability', () => {
+    assert.equal(SKIP_PROBABILITY, 0.5);
+    assert.equal(rollSkip(() => 0.49), true);
+    assert.equal(rollSkip(() => 0.50), false);
     assert.equal(rollSkip(() => 0.99), false);
   });
 
@@ -77,7 +77,7 @@ describe('ARR-04/05 — skip draw', () => {
     assert.equal(shouldSkipStop('Dijon C', () => 0.0), false);
   });
 
-  it('skips a bracketed stop only when the draw is under 25%', () => {
+  it('skips a bracketed stop only when the draw is under 50%', () => {
     assert.equal(shouldSkipStop('Melun [C]', () => 0.10), true);
     assert.equal(shouldSkipStop('Melun [C]', () => 0.90), false);
   });

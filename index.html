@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<!-- HOTFIX10 legacy-test compatibility: style.css?v=1199re3d7 | rail-empire.file.bundle.js?v=1199dep78&fullaudit=1 -->
+
+<!-- SAISON 3 TYPESCRIPT ALPHA 5 — Schedule V2 model/timing/validation/routing migrated -->
+
   <meta charset="UTF-8">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>Rail Empire</title>
+  <title>Rail Empire v1.1.99</title>
   <!-- Preconnect to tile servers for faster first load -->
   <link rel="preconnect" href="https://a.tiles.openrailwaymap.org" crossorigin>
   <link rel="preconnect" href="https://b.tiles.openrailwaymap.org" crossorigin>
   <link rel="preconnect" href="https://c.tiles.openrailwaymap.org" crossorigin>
-  <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossorigin>
-  <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossorigin>
-  <link rel="preconnect" href="https://c.basemaps.cartocdn.com" crossorigin>
+  <link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
   <link rel="dns-prefetch" href="https://a.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://b.tiles.openrailwaymap.org">
   <link rel="dns-prefetch" href="https://c.tiles.openrailwaymap.org">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=1784931691">
+  <link rel="stylesheet" href="style.css?v=1199repair24">
 </head>
 <body>
   <!-- LOGIN / ACCOUNT SCREEN -->
@@ -30,26 +30,16 @@
           <text x="152" y="28" font-family="'Segoe UI', system-ui, sans-serif" font-size="28" font-weight="800" fill="rgba(255,255,255,0.98)" letter-spacing="4" text-anchor="end">RAIL</text>
           <text x="160" y="28" font-family="'Segoe UI', system-ui, sans-serif" font-size="28" font-weight="800" fill="#3b82f6" letter-spacing="4">EMPIRE</text>
           <!-- V1.0 centered below title -->
-          <text x="160" y="58" font-family="'Segoe UI', system-ui, sans-serif" font-size="22" font-weight="900" fill="rgba(255,255,255,0.98)" letter-spacing="2" text-anchor="middle">V1.0</text>
+          <text x="160" y="58" font-family="'Segoe UI', system-ui, sans-serif" font-size="22" font-weight="900" fill="rgba(255,255,255,0.98)" letter-spacing="2" text-anchor="middle">V1.1.99</text>
         </svg>
       </div>
       <p class="login-subtitle">Simulateur de Gestion de compagnie ferroviaire</p>
       <div class="login-form">
-        <div id="auth-section">
-          <input type="text" id="login-username" placeholder="Nom d'utilisateur" maxlength="30">
-          <input type="password" id="login-password" placeholder="Mot de passe" maxlength="50">
-          <button id="btn-login" class="btn-primary">Se connecter</button>
-          <button id="btn-register" class="btn-secondary">Créer un compte</button>
-          <div id="auth-message" style="color:#f87171;font-size:.85em;margin-top:6px;min-height:1.2em"></div>
-        </div>
-        <div id="game-section" style="display:none">
-          <input type="text" id="login-name" placeholder="Nom de compagnie" maxlength="30">
-          <button id="btn-new-game" class="btn-primary">Nouvelle Partie</button>
-          <button id="btn-load-game" class="btn-secondary" style="display:none">Reprendre la partie</button>
-          <button id="btn-import-file" class="btn-secondary">Charger un fichier de sauvegarde</button>
-          <input type="file" id="import-file-input" accept=".json,.json.gz,.gz" style="display:none">
-          <button id="btn-logout" class="btn-secondary" style="margin-top:8px">Déconnexion</button>
-        </div>
+        <input type="text" id="login-name" placeholder="Nom de compagnie" maxlength="30">
+        <button id="btn-new-game" class="btn-primary">Nouvelle Partie</button>
+        <button id="btn-load-game" class="btn-secondary" style="display:none">Reprendre la partie</button>
+        <button id="btn-import-file" class="btn-secondary">Charger un fichier de sauvegarde</button>
+        <input type="file" id="import-file-input" accept=".json,.json.gz,.gz" style="display:none">
       </div>
     </div>
   </div>
@@ -62,20 +52,23 @@
         <button id="nav-toggle" class="nav-toggle">&#9776;</button>
         <nav class="nav-tabs">
           <button class="nav-btn active" data-page="map">Carte</button>
+          <button class="nav-btn" data-page="qg">QG</button>
           <button class="nav-btn" data-page="rolling-stock">Materiel</button>
           <button class="nav-btn" data-page="rames">Rames</button>
           <button class="nav-btn" data-page="liveries">Livrées</button>
           <button class="nav-btn" data-page="schedules">Horaires</button>
+          <button class="nav-btn" data-page="rotations" title="Module avancé facultatif">Roulements</button>
           <button class="nav-btn" data-page="lines">Lignes</button>
           <button class="nav-btn" data-page="depots">Depots/ITE</button>
           <button class="nav-btn" data-page="incidents">Incidents</button>
           <button class="nav-btn" data-page="infogare">Infogare</button>
           <button class="nav-btn" data-page="dashboard">Dashboard</button>
           <button class="nav-btn" data-page="graph-marche">Graphique</button>
-          <button class="nav-btn" data-page="staff">Personnel</button>
+          <button class="nav-btn" data-page="staff" title="Module avancé facultatif">Personnel</button>
           <button class="nav-btn" data-page="weather">Météo</button>
           <button class="nav-btn" data-page="cargo-types">Marchandises</button>
           <button class="nav-btn" data-page="industrial-clients">Industriels</button>
+          <button class="nav-btn" data-page="marketing">Marketing</button>
         </nav>
       </div>
       <div class="header-right">
@@ -85,11 +78,11 @@
         <span id="clock" class="clock">--:--</span>
         <span id="date-display" class="date"></span>
         <div class="header-icons-stack">
-          <span class="header-brand"><span class="header-brand-rail">Rail</span> <span class="header-brand-empire">Empire</span> <span class="header-brand-version">V1.0</span></span>
+          <span class="header-brand"><span class="header-brand-rail">Rail</span> <span class="header-brand-empire">Empire</span> <span class="header-brand-version">V1.1.99</span></span>
           <div class="header-icons-row">
             <button id="btn-settings" class="btn-header" title="Paramètres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
-            <button id="btn-admin" class="btn-header" title="Admin Catalogue" onclick="if(confirm('⚠️ ZONE DANGEREUSE !\n\nUNIQUEMENT autorisé au créateur du jeu.\nMERCI DE NE PAS ALLER DESSUS.\n\nContinuer ?')){window.location.href='admin.html'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></button>
-            <button id="btn-tutorial" class="btn-header" title="Tutoriel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 015.12-2.13A3 3 0 0112 14v1"/><circle cx="12" cy="19" r="0.5" fill="currentColor"/></svg></button>
+            <button id="btn-admin" class="btn-header" title="Admin Catalogue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></button>
+            <button id="btn-tutorial" class="btn-header btn-header-help" title="Tutoriel général"><span aria-hidden="true">❓</span><span>Tutoriel</span></button>
             <button id="btn-save-file" class="btn-header" title="Sauvegarder sur PC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
             <button id="btn-load-file" class="btn-header" title="Charger depuis fichier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></button>
           </div>
@@ -98,14 +91,58 @@
       </div>
     </header>
 
+    <div id="re-chronological-status" role="status" style="display:none;flex-shrink:0;padding:7px 14px;background:#172235;color:#fde68a;border-bottom:1px solid #475569;font:600 12px/1.4 system-ui,sans-serif;overflow-wrap:anywhere"></div>
+
     <div id="alert-banner-interruptions" class="alert-banner alert-banner-interruptions hidden"></div>
     <div id="alert-banner-slowdowns" class="alert-banner alert-banner-slowdowns hidden"></div>
+    <div id="alert-banner-works" class="alert-banner alert-banner-works hidden"></div>
 
     <div class="game-body">
       <!-- MAP PAGE -->
       <div id="page-map" class="page active">
         <div id="main-area">
-          <canvas id="game-canvas"></canvas>
+          <!-- RE3D-01 — optional GPS-style 3D follow view. The existing Livemap canvas
+               remains the map renderer; only its presentation is tilted. Train arrows
+               live in a separate DOM plane so they can stay flat/readable. -->
+          <div id="re3d-stage" class="re3d-stage">
+            <canvas id="game-canvas"></canvas>
+            <canvas id="re3d-terrain-canvas" class="re3d-terrain-canvas" aria-label="Relief 3D DEM"></canvas>
+            <div id="re3d-marker-plane" class="re3d-marker-plane" aria-label="Trains proches en vue 3D"></div>
+            <div id="re3d-follow-marker-plane" class="re3d-follow-marker-plane" aria-label="Train suivi centré en vue 3D"></div>
+          </div>
+          <div id="re3d-atmosphere" class="re3d-atmosphere" aria-hidden="true"></div>
+          <div id="re3d-mode-badge" class="re3d-mode-badge hidden">SUIVI 3D GPS</div>
+          <div id="re3d-weather-chip" class="re3d-weather-chip hidden"></div>
+          <div id="re3d-dem-chip" class="re3d-dem-chip hidden">⛰ DEM · chargement…</div>
+          <div id="re3d-dem-credit" class="re3d-dem-credit hidden">Relief: Mapzen / AWS Terrain Tiles</div>
+          <div id="re3d-controls" class="re3d-controls hidden">
+            <button type="button" data-re3d-action="zoom-in" title="Zoomer">+</button>
+            <button type="button" data-re3d-action="zoom-out" title="Dézoomer">−</button>
+            <button type="button" data-re3d-action="recenter" class="wide">⌖ Recentrer</button>
+            <button type="button" data-re3d-action="follow" class="wide active">⌖ Suivi</button>
+            <button type="button" data-re3d-action="labels" class="wide active">🏷 Labels</button>
+            <button type="button" data-re3d-action="relief" class="wide">⛰ Relief DEM</button>
+            <label class="re3d-weather-filter wide">Éclairage visuel
+              <select id="re3d-lighting-filter" aria-label="Filtre jour ou nuit GPS" aria-describedby="re3d-lighting-note">
+                <option value="auto">Auto · heure du jeu</option>
+                <option value="day">☀ Jour</option>
+                <option value="night">☾ Nuit</option>
+              </select>
+            </label>
+            <small id="re3d-lighting-note" class="re3d-lighting-note">Filtres visuels : l’heure et la simulation ne changent pas.</small>
+            <label class="re3d-weather-filter wide">Météo visuelle
+              <select id="re3d-weather-filter" aria-label="Filtre météo visuel GPS">
+                <option value="auto">Auto · météo réelle</option>
+                <option value="clear">Dégagé</option>
+                <option value="rain">Pluie</option>
+                <option value="snow">Neige</option>
+                <option value="storm">Orage</option>
+                <option value="fog">Brouillard</option>
+                <option value="heat">Canicule</option>
+              </select>
+            </label>
+            <button type="button" data-re3d-action="exit" class="wide">▱ Vue 2D</button>
+          </div>
           <div id="tooltip" class="tooltip hidden"></div>
           <!-- LVM-03/04/06 — panneau détail du train sélectionné (annexes 4-5) -->
           <div id="livemap-train-panel" class="livemap-panel hidden"></div>
@@ -115,6 +152,34 @@
             <span><i style="background:#22c55e"></i>Fret</span>
             <span><i style="background:#f59e0b"></i>Travaux</span>
           </div>
+          <div id="map-base-notice" class="map-base-notice" role="status" hidden>
+            <strong>Fond de carte</strong><span data-base-notice-text></span>
+            <a href="AIDE_CARTE_OSM.html" target="_blank" rel="noopener">Aide au chargement OSM</a>
+          </div>
+          <details id="map-source-panel" class="map-source-panel">
+            <summary data-tile-summary>Fond OSM</summary>
+            <p data-tile-status role="status"></p>
+            <div class="map-source-actions">
+              <button type="button" class="btn-sm" data-tile-pause>Suspendre</button>
+              <button type="button" class="btn-sm" data-tile-retry>Réessayer après correction</button>
+            </div>
+            <p data-rail-status role="status"></p>
+            <div class="map-source-actions"><button type="button" class="btn-sm" data-rail-pause>Suspendre ORM</button><button type="button" class="btn-sm" data-rail-retry>Réessayer ORM après correction</button></div>
+            <p><a href="AIDE_CARTE_OSM.html" target="_blank" rel="noopener">Aide OSM et lancement local</a></p>
+            <details class="map-source-config">
+              <summary>Configurer un fournisseur autorisé</summary>
+              <form>
+                <label>URL XYZ HTTPS<input name="tile-url" type="text" maxlength="2048" required placeholder="https://votre-service/{z}/{x}/{y}.png"></label>
+                <label>Attribution du fournisseur<input name="tile-credit" type="text" maxlength="300" required></label>
+                <label>Zoom natif maximal<input name="tile-zoom" type="number" min="1" max="20" step="1" required></label>
+                <label class="map-source-consent"><input name="tile-consent" type="checkbox">Ce fournisseur autorise cet usage et ces identifiants sont destinés au navigateur.</label>
+                <p>Une clé placée dans cette URL reste publique dans le navigateur. Aucun fournisseur de remplacement n’est activé automatiquement.</p>
+                <div class="map-source-actions"><button type="submit" class="btn-sm">Appliquer</button><button type="button" class="btn-sm" data-tile-standard>Afficher OSM original</button></div>
+              </form>
+            </details>
+            <p data-tile-result role="status"></p>
+          </details>
+          <div id="livemap-attribution" class="livemap-attribution">© OpenStreetMap contributors · OpenRailwayMap · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">Licence OSM</a></div>
           <div class="map-controls">
             <button id="btn-create-station" class="btn-sm btn-map-action">+ Creer une gare</button>
             <button id="btn-create-voie-point" class="btn-sm btn-map-action" style="background:#334155">+ Point de voie</button>
@@ -132,8 +197,9 @@
             <label><input type="checkbox" id="toggle-trains" checked> Trains</label>
             <label><input type="checkbox" id="toggle-voie-points"> Points voie</label>
             <label><input type="checkbox" id="toggle-orm" checked> ORM</label>
-            <label><input type="checkbox" id="toggle-basic"> Basique</label>
+            <label title="Vrai fond OpenStreetMap Carto, couleurs d’origine. Les voies ORM restent un filtre indépendant."><input type="checkbox" id="toggle-basic"> OSM original</label>
             <label><input type="checkbox" id="toggle-satellite"> Satellite</label>
+            <label title="Filtre nocturne du fond sélectionné. Lumières NASA atténuées en vue régionale ; détail local sans halos. Ne change pas l’heure du jeu."><input type="checkbox" id="toggle-night"> ☾ Nuit</label>
             <label><input type="checkbox" id="toggle-weather"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><path d="M18 10a5 5 0 00-9.3-2.3A4 4 0 006 15h12a3 3 0 000-6z"/><path d="M12 12l4-8"/><circle cx="12" cy="12" r="1.5"/></svg> Météo</label>
             <label><input type="checkbox" id="toggle-industries"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><path d="M2 20h20M4 20V8l6 4V8l6 4V4h4v16"/><path d="M8 16h.01M14 16h.01"/></svg> Industries</label>
             <label><input type="checkbox" id="toggle-zones" checked> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle"><circle cx="12" cy="12" r="9" stroke-dasharray="4 3"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg> Zones</label>
@@ -149,6 +215,7 @@
             <button class="tab-btn" data-tab="freight">Fret</button>
           </div>
           <div id="tab-trains" class="tab-content active">
+            <div id="v2-runtime-sidebar-status" style="margin:6px 6px 8px;padding:8px;border:1px solid #334155;border-radius:6px;background:#0b1726;color:#cbd5e1;font:600 10px/1.35 system-ui,sans-serif">V2 : analyse du roulement…</div>
             <div id="trains-list" class="trains-list"></div>
           </div>
           <div id="tab-freight" class="tab-content">
@@ -162,16 +229,36 @@
         <div class="page-content">
           <div class="page-header">
             <h2>Materiel Roulant</h2>
-            <button id="btn-add-stock" class="btn-primary">+ Ajouter un engin</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end;">
+              <input id="stock-catalog-file" type="file" accept=".json,.tar.gz,.tgz,application/json,application/gzip" hidden>
+              <button id="btn-import-stock-catalog" class="btn-secondary" title="Importer un catalogue créé avec Rail Empire Catalog Editor">Importer un catalogue</button>
+              <button id="btn-clear-stock-catalog" class="btn-secondary" title="Retirer le catalogue externe actuellement mémorisé">Retirer le catalogue externe</button>
+              <button id="btn-add-stock" class="btn-primary">+ Ajouter un engin</button>
+            </div>
           </div>
           <div class="stock-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
             <input id="stock-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:200px;padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
             <select id="stock-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
-              <option value="">Toutes catégories</option>
+              <option value="">Toutes catégories racines</option>
               <option value="locomotive">Locomotives</option>
               <option value="automotrice">Automotrices</option>
               <option value="voiture">Voitures</option>
               <option value="wagon">Wagons</option>
+            </select>
+            <select id="stock-detail-filter" title="Type détaillé" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:230px;">
+              <option value="">Tous types détaillés</option>
+            </select>
+            <select id="stock-traction-filter" title="Traction" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:190px;">
+              <option value="">Toutes tractions</option>
+            </select>
+            <select id="stock-country-filter" title="Pays" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:190px;">
+              <option value="">Tous pays</option>
+            </select>
+            <select id="stock-operator-filter" title="Opérateur" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:220px;">
+              <option value="">Tous opérateurs</option>
+            </select>
+            <select id="stock-mlg-filter" title="Catégorie / dossier MLG" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:220px;">
+              <option value="">Toutes catégories MLG</option>
             </select>
             <select id="stock-subcat-filter" style="display:none;padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
               <option value="">Tous les wagons</option>
@@ -190,6 +277,7 @@
       </div>
 
       <!-- RAMES PAGE -->
+      <div id="page-liveries" class="page"></div>
       <div id="page-rames" class="page">
         <div class="page-content">
           <div class="page-header">
@@ -198,6 +286,38 @@
           </div>
           <div class="rames-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
             <input id="rames-search" type="text" placeholder="Rechercher une rame..." style="flex:1;min-width:180px;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit;">
+            <select id="rames-kind-filter" title="Type de rame" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit;max-width:220px;">
+              <option value="">Tous types de rames</option>
+              <option value="passenger">Voyageurs</option>
+              <option value="freight">Fret</option>
+              <option value="mixed">Mixte voyageurs + fret</option>
+              <option value="traction-only">Traction seule / HLP</option>
+              <option value="multiple-unit">Automotrice / rame automotrice</option>
+              <option value="loco-hauled-passenger">Rame voyageurs tractée</option>
+              <option value="loco-hauled-freight">Rame fret tractée</option>
+              <option value="high-speed">Grande vitesse</option>
+              <option value="double-deck">Deux niveaux</option>
+              <option value="night">Nuit / lits / couchettes</option>
+              <option value="infra">Infra / TTX</option>
+              <option value="driving-trailer">Avec voiture pilote</option>
+            </select>
+            <select id="rames-traction-filter" title="Traction de la rame" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit;max-width:180px;">
+              <option value="">Toutes tractions</option>
+              <option value="electric">Électrique</option>
+              <option value="diesel">Diesel</option>
+              <option value="steam">Vapeur</option>
+              <option value="bimode">Bi-mode / hybride</option>
+              <option value="none">Sans traction</option>
+            </select>
+            <select id="rames-status-filter" title="État de la rame" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit;max-width:180px;">
+              <option value="">Tous états</option>
+              <option value="service">En service</option>
+              <option value="maintenance">En maintenance</option>
+              <option value="depot">Au dépôt</option>
+              <option value="station">En gare</option>
+              <option value="available">Disponible</option>
+              <option value="recommended">Entretien recommandé</option>
+            </select>
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;">
               <span>Par page</span>
               <select id="rames-per-page" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit;">
@@ -212,46 +332,23 @@
         </div>
       </div>
 
-      <!-- LIVERIES PAGE -->
-      <div id="page-liveries" class="page">
-        <div class="page-content">
-          <div class="page-header">
-            <h2>Livrées</h2>
-          </div>
-          <div class="livery-upload" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding:12px;border:1px dashed var(--border);border-radius:8px;background:rgba(255,255,255,0.03)">
-            <input type="file" id="livery-page-file" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;min-width:160px;font-size:12px">
-            <input type="text" id="livery-page-name" placeholder="Nom de la livrée" style="flex:1;min-width:140px">
-            <div id="livery-base-stock-wrap" style="flex:1;min-width:180px;position:relative">
-              <input type="text" id="livery-page-base-stock-input" placeholder="Rechercher un engin..." autocomplete="off" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #333;background:#000;color:#fff;">
-              <input type="hidden" id="livery-page-base-stock">
-              <div id="livery-base-stock-results" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:180px;overflow-y:auto;background:#111;border:1px solid #333;border-radius:0 0 6px 6px;z-index:50"></div>
-            </div>
-            <button id="btn-upload-page-livery" class="btn-primary">Uploader</button>
-          </div>
-          <div id="liveries-list" class="liveries-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
-        </div>
-      </div>
-
-      <!-- SCHEDULES PAGE -->
+      <!-- SCHEDULES V2 PAGE -->
       <div id="page-schedules" class="page">
-        <div class="page-content">
+        <div class="page-content" style="max-width:none">
           <div class="page-header">
-            <h2>Horaires & Trajets</h2>
-            <button id="btn-new-schedule" class="btn-primary">+ Creer un trajet</button>
+            <div><h2 style="margin-bottom:2px">Horaires V2</h2><small style="color:var(--text3)">Horaire indépendant du matériel réel • ORM exact • marge automatique 0 s</small></div>
+            <div style="display:flex;gap:6px"><button id="btn-schedule-connections" class="btn-secondary">Correspondances</button><button id="btn-schedule-calendars" class="btn-secondary">Calendriers</button><button id="btn-new-schedule" class="btn-primary">+ Créer un horaire</button></div>
           </div>
-          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-            <label style="color:var(--text2);font-size:11px">Trier par :</label>
-            <select id="sched-sort" style="background:var(--bg2);color:var(--text1);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px">
-              <option value="departure" selected>Heure de depart</option>
-              <option value="creation">Ordre de creation</option>
-              <option value="rame">Rame affectee</option>
-              <option value="name">Nom du service</option>
-              <option value="route">Itineraire</option>
-            </select>
+          <div class="schedules-toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px">
+            <input id="schedules-search" type="search" placeholder="Rechercher un horaire (nom, n°, gare, catégorie...)" autocomplete="off" style="flex:1;min-width:240px;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--input-bg);color:inherit">
+            <span id="schedules-search-count" style="font-size:11px;color:var(--text3)"></span>
           </div>
           <div id="schedules-list" class="schedules-list"></div>
         </div>
       </div>
+
+      <!-- ROTATIONS V2 PAGE -->
+      <div id="page-rotations" class="page"></div>
 
       <!-- LINES PAGE -->
       <div id="page-lines" class="page">
@@ -322,42 +419,6 @@
           <div id="lines-stations-list" style="margin-bottom:16px"></div>
           <div id="lines-list" class="lines-list"></div>
 
-          <!-- Sillons automatiques (Section V) -->
-          <div class="sillon-section" style="margin-top:16px">
-            <div class="page-header" style="margin:0 0 8px">
-              <h3>Sillons automatiques</h3>
-              <button id="btn-new-sillon" class="btn-primary">+ Creer un sillon</button>
-            </div>
-            <div id="sillon-creator" class="hidden" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">
-              <div class="form-row">
-                <div class="form-group" style="flex:1">
-                  <label>Nom</label>
-                  <input type="text" id="sillon-name" placeholder="ex: V1, V1BIS, V1TER..." value="V1">
-                </div>
-                <div class="form-group" style="flex:1">
-                  <label>Gare A</label>
-                  <select id="sillon-from"><option value="">—</option></select>
-                </div>
-                <div class="form-group" style="flex:1">
-                  <label>Gare B</label>
-                  <select id="sillon-to"><option value="">—</option></select>
-                </div>
-              </div>
-              <div id="sillon-manual-hint" class="sched-hint" style="margin-top:6px">Sélectionnez les gares A et B, puis cliquez sur "Tracer manuellement" pour dessiner le sillon sur la carte.</div>
-              <div class="form-row" style="margin-top:6px;gap:6px">
-                <button id="btn-sillon-manual" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Tracer manuellement</button>
-                <button id="btn-sillon-clear-manual" class="btn-sm hidden" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Effacer le tracé</button>
-                <button id="btn-sillon-finish-manual" class="btn-sm hidden" type="button" style="background:var(--blue);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:#fff">Terminer le tracé</button>
-                <button id="btn-save-sillon" class="btn-primary" type="button" style="margin-left:auto">Creer</button>
-                <button id="btn-cancel-sillon" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 12px;cursor:pointer;color:var(--text)">Annuler</button>
-              </div>
-              <div class="sched-map-container" style="height:70vh;margin-top:8px">
-                <canvas id="sillon-map-canvas"></canvas>
-              </div>
-              <div id="sillon-creator-loading" class="hidden" style="color:var(--blue);font-size:11px;padding:4px">Calcul du tracé ferroviaire...</div>
-            </div>
-            <div id="sillons-list" class="sillons-list"></div>
-          </div>
         </div>
       </div>
 
@@ -382,47 +443,50 @@
             <h2>Incidents & Travaux</h2>
             <button id="btn-add-works" class="btn-secondary">+ Travaux</button>
           </div>
-          <h3>Incidents en cours</h3>
-          <div id="active-incidents-list" class="incidents-active"></div>
-          <h3 style="margin-top:12px">Types d'incidents predefinis</h3>
-          <p style="font-size:11px;color:var(--text3);margin:0 0 8px">Cochez pour activer/desactiver l'apparition aleatoire. Probabilites et durees issues de l'Annexe 11.</p>
-          <div id="incident-types-table" class="incident-types-table"></div>
-          <h3 style="margin-top:12px">Travaux programmes</h3>
-          <div id="planned-works-list" class="works-list"></div>
+          <div class="operations-split">
+            <section class="operations-column operations-column-works">
+              <div class="operations-column-heading">
+                <span class="op-icon op-icon-works operations-column-icon" aria-hidden="true"></span>
+                <h3>Travaux <span id="active-works-count" class="incident-count-badge works-count-badge">0</span></h3>
+              </div>
+              <div id="planned-works-list" class="works-list"></div>
+            </section>
+
+            <section class="operations-column operations-column-incidents">
+              <div class="operations-column-heading">
+                <div class="operations-column-icons" aria-hidden="true">
+                  <span class="op-icon op-icon-warn operations-column-icon"></span>
+                  <span class="op-icon op-icon-stop operations-column-icon"></span>
+                </div>
+                <h3 class="incidents-current-title">Incidents et Interruptions en cours <span id="active-incidents-count" class="incident-count-badge">0</span></h3>
+              </div>
+              <div id="active-incidents-list" class="incidents-active"></div>
+              <div class="incident-types-section">
+                <h3>Types d'incidents predefinis</h3>
+                <p>Cochez pour activer/desactiver l'apparition aleatoire. Probabilites et durees issues de l'Annexe 11.</p>
+                <div id="incident-types-table" class="incident-types-table"></div>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
 
       <!-- INFOGARE PAGE -->
+      <div id="page-qg" class="page"></div>
       <div id="page-infogare" class="page">
-        <div class="page-content">
-          <div class="page-header">
-            <h2>Infogare</h2>
-          </div>
-          <div class="form-row" style="margin-bottom:12px;align-items:flex-end">
-            <div class="form-group" style="flex:2">
-              <label>Gare</label>
-              <select id="infogare-station"></select>
+        <div class="page-content re-infogare-content">
+          <div class="page-header"><div><span class="re-eyebrow">RAIL EMPIRE · VOYAGEURS</span><h2>Infogare RE</h2></div></div>
+          <div class="form-row infogare-control-panel re-infogare-picker">
+            <div class="form-group" style="flex:1;position:relative">
+              <label for="infogare-station">Gare</label>
+              <div class="infogare-station-picker">
+                <input type="text" id="infogare-station" placeholder="Tapez le nom d’une gare…" autocomplete="off" spellcheck="false">
+                <div id="infogare-station-suggestions" class="infogare-station-suggestions hidden"></div>
+              </div>
             </div>
-            <div class="form-group" style="flex:1">
-              <label>Type d'affichage</label>
-              <select id="infogare-display">
-                <option value="rer-ratp">RER RATP</option>
-                <option value="rer-sncf">RER SNCF</option>
-                <option value="sncf-dep">Départs grandes lignes (AFL DP)</option>
-                <option value="sncf-arr">Arrivées grandes lignes (AFL AR)</option>
-                <option value="cati-3-3">CATI 3-3</option>
-                <option value="cati-complet">CATI Complet</option>
-                <option value="cati-ar">CATI Arrivées</option>
-                <option value="old-sncf">Palette SNCF</option>
-                <option value="ecran-quai">Écran quai</option>
-                <option value="flash-circulation">Flash Circulation</option>
-                <option value="afl-depart">Annonce départ</option>
-                <option value="afl-arrivee">Annonce arrivée</option>
-              </select>
-            </div>
-            <button id="btn-infogare-show" class="btn-primary" style="height:34px">Afficher</button>
+            <button id="btn-infogare-show" class="btn-primary" type="button">Afficher</button>
           </div>
-          <div id="infogare-board" style="width:100%"></div>
+          <div id="infogare-board"><p class="re-empty">Sélectionnez une gare pour afficher le panneau Rail Empire.</p></div>
         </div>
       </div>
 
@@ -454,6 +518,10 @@
       <!-- INDUSTRIAL CLIENTS PAGE -->
       <div id="page-industrial-clients" class="page">
         <div class="page-content" id="industrial-clients-container"></div>
+      </div>
+
+      <div id="page-marketing" class="page">
+        <div class="page-content" id="marketing-container"></div>
       </div>
 
     </div>
@@ -639,7 +707,7 @@
     <div id="modal-rame" class="modal hidden">
       <div class="modal-content modal-wide">
         <button class="modal-close">&times;</button>
-        <h3>Composer une rame</h3>
+        <h3 id="rame-modal-title">Composer une rame</h3>
         <div class="modal-body">
           <div class="form-group">
             <label>Nom de la rame</label>
@@ -654,18 +722,6 @@
               <label>Dépôt d'affectation</label>
               <select id="rame-depot"><option value="">—</option></select>
             </div>
-          </div>
-          <div class="form-group" style="border:1px dashed var(--border);padding:10px;border-radius:8px;background:rgba(255,255,255,0.03)">
-            <label>Livrée personnalisée</label>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-              <input type="file" id="rame-livery-file" accept="image/png,image/jpeg,image/webp,image/gif" style="flex:1;min-width:160px;font-size:12px">
-              <input type="text" id="rame-livery-name" placeholder="Nom de la livrée" style="flex:1;min-width:120px">
-              <button id="btn-upload-livery" class="btn-sm" type="button">Uploader</button>
-            </div>
-            <label>Livrée appliquée</label>
-            <select id="rame-livery" style="width:100%;padding:6px 8px">
-              <option value="">— Livrée d'origine —</option>
-            </select>
           </div>
           <div class="rame-stats">
             <span>Longueur: <b id="rame-length">0</b> / 750 m</span>
@@ -689,11 +745,26 @@
           <div class="stock-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
             <input id="rame-search" type="text" placeholder="Rechercher (nom, série, type...)" style="flex:1;min-width:180px;padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
             <select id="rame-cat-filter" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
-              <option value="">Toutes catégories</option>
+              <option value="">Toutes catégories racines</option>
               <option value="locomotive">Locomotives</option>
               <option value="automotrice">Automotrices</option>
               <option value="voiture">Voitures</option>
               <option value="wagon">Wagons</option>
+            </select>
+            <select id="rame-detail-filter" title="Type détaillé" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:230px;">
+              <option value="">Tous types détaillés</option>
+            </select>
+            <select id="rame-traction-filter" title="Traction" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:190px;">
+              <option value="">Toutes tractions</option>
+            </select>
+            <select id="rame-country-filter" title="Pays" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:190px;">
+              <option value="">Tous pays</option>
+            </select>
+            <select id="rame-operator-filter" title="Opérateur" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:220px;">
+              <option value="">Tous opérateurs</option>
+            </select>
+            <select id="rame-mlg-filter" title="Catégorie / dossier MLG" style="padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);max-width:220px;">
+              <option value="">Toutes catégories MLG</option>
             </select>
             <select id="rame-subcat-filter" style="display:none;padding:8px 10px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
               <option value="">Tous les wagons</option>
@@ -702,135 +773,26 @@
               <input id="rame-qty" type="number" value="1" min="1" max="50" style="width:54px;padding:6px 8px;border-radius:6px;border:1px solid var(--input-border,var(--border));background:var(--input-bg);color:var(--text);">
             </label>
             <span id="rame-picker-count" style="opacity:.7;font-size:12px;color:var(--text2);"></span>
+            <button id="btn-rame-wagon-multi" class="btn-sm rame-random-btn" type="button">☑ Sélection multiple wagons</button>
+            <button id="btn-rame-random-wagons" class="btn-sm rame-random-btn primary" type="button" disabled>🎲 Random 750 m</button>
+            <button id="btn-rame-clear-wagon-selection" class="btn-sm rame-random-btn" type="button" disabled>Effacer sélection</button>
+            <span id="rame-random-selection-count" class="rame-random-selection-count">0 modèle sélectionné</span>
           </div>
+          <div class="rame-random-options">
+            <label for="rame-random-max">Nombre maximal d’engins (locomotives comprises)<input id="rame-random-max" type="number" min="1" step="1" placeholder="Sans limite de nombre"></label>
+            <label class="rame-random-toggle"><input id="rame-random-departure" type="checkbox">Remélanger les wagons à chaque nouvelle course</label>
+          </div>
+          <div class="rame-random-help">À la création, Random remplace les wagons avec les modèles sélectionnés, sans dépasser 750 m ni le maximum d’engins. Il active le remélange aux départs : mêmes wagons, mêmes identifiants et livrées ; locomotives fixes. Aucun achat ni ajout au départ, aucun remélange aux arrêts intermédiaires.</div>
+          <div id="rame-random-status" class="rame-random-status"></div>
           <div id="rame-stock-picker" class="stock-picker"></div>
           <div id="rame-picker-pager" style="display:flex;justify-content:center;margin:10px 0;"></div>
+          <div id="rame-edit-hint" class="rame-edit-hint hidden">En mode édition, les véhicules déjà présents ne sont pas refacturés. Les nouveaux ajouts le sont.</div>
           <button id="btn-save-rame" class="btn-primary btn-full">Enregistrer la rame</button>
         </div>
       </div>
     </div>
 
-    <!-- Schedule Modal -->
-    <div id="modal-schedule" class="modal hidden">
-      <div class="modal-content modal-wide">
-        <button class="modal-close">&times;</button>
-        <h3>Creer un trajet</h3>
-        <div class="modal-body">
-          <div class="sched-layout">
-            <div class="sched-map-col">
-              <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px">
-                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                  <button type="button" id="btn-sched-manual" class="btn-sm" style="font-size:12px;padding:7px 14px;background:linear-gradient(135deg,#7c3aed,#2563eb);border:1px solid #7c3aeb;border-radius:6px;cursor:pointer;color:#fff;font-weight:700;box-shadow:0 3px 10px rgba(59,130,246,0.45);white-space:nowrap">Tracer manuellement (points 50 m)</button>
-                  <button type="button" id="btn-sched-edit-trace" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Éditer le tracé</button>
-                  <button type="button" id="btn-sched-delete-point" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Supprimer point</button>
-                  <button type="button" id="btn-sched-clear-manual" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Effacer tracé</button>
-                  <button type="button" id="btn-sched-return-mode" class="btn-sm hidden" style="font-size:10px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Tracer le retour</button>
-                  <span id="sched-mode-label" style="font-size:10px;color:var(--text2);margin-left:auto;padding:2px 6px;border-radius:4px;background:var(--bg2)">Aller</span>
-                </div>
-                <span id="sched-manual-hint" style="font-size:10px;color:var(--text3)">Cliquer sur les gares de la carte pour définir le trajet. Les horaires sont calculés automatiquement depuis les données ORM et la rame. Astuce : ajoutez des gares intermédiaires en "Waypoint" pour forcer le passage par un raccordement précis (ex: via Troyes au lieu de Nancy).</span>
-              </div>
-              <div class="sched-map-container">
-                <canvas id="sched-map-canvas"></canvas>
-              </div>
-              <input type="text" id="sched-map-search" class="sched-map-search" placeholder="Rechercher un lieu...">
-              <p class="sched-hint">
-                <span style="display:inline-block;width:12px;height:4px;background:#ff00ff;vertical-align:middle;margin:0 4px 0 0"></span>Tracé objectif (bon trajet)
-                <span style="display:inline-block;width:12px;height:4px;background:#facc15;vertical-align:middle;margin:0 4px 0 8px"></span>Tracé actuel
-                <span style="display:inline-block;width:12px;height:4px;background:#38bdf8;vertical-align:middle;margin:0 4px 0 8px"></span>Tracé en cours
-                <span style="display:inline-block;width:0;height:0;border-left:6px solid #e2e8f0;border-top:4px solid transparent;border-bottom:4px solid transparent;vertical-align:middle;margin:0 4px 0 8px"></span>Sens de circulation
-                — Gares/points de voie sur la carte. Mode manuel si ORM ne trouve pas le bon chemin. Shift+clic sur un segment pour ajouter un point, glisser pour déplacer, Ctrl+clic pour supprimer.
-              </p>
-            </div>
-            <div class="sched-form-col">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Rame</label>
-                  <select id="sched-rame"></select>
-                </div>
-                <div class="form-group">
-                  <label>Nom du service</label>
-                  <input type="text" id="sched-name" placeholder="ex: TGV 8001">
-                </div>
-                <div class="form-group">
-                  <label>Nom retour <span style="font-size:9px;color:var(--text3)">(si different)</span></label>
-                  <input type="text" id="sched-return-name" placeholder="ex: TGV 8002">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Attente au terminus (min)</label>
-                  <input type="number" id="sched-terminus-wait" value="0" min="0" max="120">
-                </div>
-                <div class="form-group">
-                  <label>Nb allers-retours</label>
-                  <div style="display:flex;gap:4px;align-items:center">
-                    <input type="number" id="sched-multi-departures" value="1" min="1" max="50" style="flex:1">
-                    <button type="button" id="btn-auto-ar" class="btn-sm" title="Calcul auto pour ne pas depasser 24h" style="font-size:9px;padding:3px 6px;white-space:nowrap;background:var(--bg3);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">Auto 24h</button>
-                  </div>
-                </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:6px;min-width:160px">
-                  <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="sched-round-trip"> Aller-retour</label>
-                </div>
-                <div class="form-group" style="display:flex;align-items:center;gap:6px;min-width:220px">
-                  <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="sched-work-train"> Train de travaux (non affecté par les travaux)</label>
-                </div>
-              </div>
-              <div id="sched-route-summary" class="sched-route-summary">
-                <div class="sched-summary-col">
-                  <strong>Aller</strong>
-                  <div id="sched-summary-aller" class="sched-summary-stops">—</div>
-                </div>
-                <div class="sched-summary-col">
-                  <strong>Retour</strong>
-                  <div id="sched-summary-retour" class="sched-summary-stops">—</div>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group" style="flex:1">
-                  <label>Type de convoi</label>
-                  <select id="sched-service-type">
-                    <option value="passager">Voyageur</option>
-                    <option value="fret">Fret</option>
-                    <option value="w">W — Vide voyageur</option>
-                    <option value="hlp">HLP — Haut le pied (max 2 locos)</option>
-                    <option value="tm">TM — Train de machines (3-12 locos)</option>
-                    <option value="m-">M- — Machine de manœuvre</option>
-                    <option value="evo">EVO — Évolution</option>
-                    <option value="work">Train de travaux</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-row" id="sched-contract-row" style="display:none">
-                <div class="form-group" style="flex:1">
-                  <label>Contrat fret assigné <span style="font-size:9px;color:var(--text3)">(optionnel)</span></label>
-                  <select id="sched-contract"></select>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group" style="flex:1">
-                  <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Jours de circulation</label>
-                  <div class="sched-days-grid">
-                    <label><input type="checkbox" class="sched-run-day" value="1" checked> Lu</label>
-                    <label><input type="checkbox" class="sched-run-day" value="2" checked> Ma</label>
-                    <label><input type="checkbox" class="sched-run-day" value="3" checked> Me</label>
-                    <label><input type="checkbox" class="sched-run-day" value="4" checked> Je</label>
-                    <label><input type="checkbox" class="sched-run-day" value="5" checked> Ve</label>
-                    <label><input type="checkbox" class="sched-run-day" value="6" checked> Sa</label>
-                    <label><input type="checkbox" class="sched-run-day" value="0" checked> Di</label>
-                  </div>
-                </div>
-                <div class="form-group" style="flex:1">
-                  <label style="font-size:11px;font-weight:600;margin-bottom:4px;display:block">Dates specifiques <span style="font-size:9px;color:var(--text3)">(vide = tous les jours)</span></label>
-                  <input type="text" id="sched-run-dates" placeholder="2026-01-15, 2026-03-20, ..." style="font-size:10px;width:100%">
-                </div>
-              </div>
-              <div id="sched-stops-list" class="sched-stops"></div>
-              <button id="btn-save-schedule" class="btn-primary btn-full">Enregistrer le trajet</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Legacy Schedule Creator modal removed in v1.1.21; V2 is full-screen and dynamic. -->
 
     <!-- Depot Modal -->
     <div id="modal-depot" class="modal hidden">
@@ -1123,16 +1085,6 @@
             <canvas id="line-map-canvas"></canvas>
           </div>
           <div id="line-manual-hint" class="sched-hint" style="margin-top:6px">Cliquez sur les gares pour definir les arrets de la ligne. Le tracé ORM sera utilisé par defaut.</div>
-          <div id="line-voie-row" class="form-row hidden" style="margin-top:6px;gap:6px">
-            <div class="form-group" style="flex:1;min-width:120px">
-              <label>Point de voie départ</label>
-              <select id="line-manual-start-voie" style="width:100%;font-size:12px"><option value="">Gare (centre)</option></select>
-            </div>
-            <div class="form-group" style="flex:1;min-width:120px">
-              <label>Point de voie arrivée</label>
-              <select id="line-manual-end-voie" style="width:100%;font-size:12px"><option value="">Gare (centre)</option></select>
-            </div>
-          </div>
           <div class="form-row" style="margin-top:6px;gap:6px">
             <button id="btn-line-manual" class="btn-sm" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Tracer manuellement le segment</button>
             <button id="btn-line-clear-manual" class="btn-sm hidden" type="button" style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:6px 10px;cursor:pointer;color:var(--text)">Effacer le tracé</button>
@@ -1273,7 +1225,7 @@
     <!-- Modal: Fiche horaire de gare -->
     <div id="modal-fiche-horaire" class="modal hidden">
       <div class="modal-content" style="max-width:340px">
-        <button class="modal-close" onclick="document.getElementById('modal-fiche-horaire').classList.add('hidden')">&times;</button>
+        <button class="modal-close" id="btn-close-fiche-horaire">&times;</button>
         <h3>Fiche horaire de gare</h3>
         <div class="modal-body">
           <div class="form-group">
@@ -1346,6 +1298,18 @@
             <input type="color" id="settings-company-color" value="#3b82f6" style="width:50px;height:32px;border:none;background:none;cursor:pointer;margin-top:4px">
           </div>
           <hr style="border-color:#334155;margin:16px 0">
+          <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Systèmes avancés — facultatifs</div>
+          <div style="padding:10px;border:1px solid #334155;border-radius:8px;background:#0f172a;margin-bottom:12px">
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:.82em;margin-bottom:10px;cursor:pointer">
+              <input type="checkbox" id="settings-rotations-required" style="width:18px;height:18px;margin-top:1px">
+              <span><b>Roulements avancés obligatoires</b><br><small style="color:#94a3b8">Désactivé : un horaire validé peut circuler avec une rame affectée directement. Activé : chaque train doit passer par une ligne de roulement.</small></span>
+            </label>
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:.82em;cursor:pointer">
+              <input type="checkbox" id="settings-personnel-required" style="width:18px;height:18px;margin-top:1px">
+              <span><b>Personnel opérationnel contraignant</b><br><small style="color:#94a3b8">Désactivé : aucun départ ni travail dépôt n'est bloqué faute d'agents. Activé : conducteurs, 3×8, habilitations et équipes sont requis.</small></span>
+            </label>
+          </div>
+
           <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Réalisme</div>
           <div class="form-group" style="margin-bottom:10px">
             <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>Physique (accél/frein)</span><span id="settings-physics-val">2.00</span></label>
@@ -1362,6 +1326,13 @@
           <div class="form-group" style="margin-bottom:14px">
             <label style="display:flex;justify-content:space-between;font-size:.8em;margin-bottom:4px"><span>Tolérance retard (min)</span><span id="settings-delay-tolerance-val">120</span></label>
             <input type="range" id="settings-delay-tolerance" min="0" max="120" step="5" value="120" style="width:100%">
+          </div>
+          <hr style="border-color:#334155;margin:16px 0">
+          <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Référentiel ferroviaire</div>
+          <div style="padding:10px;border:1px solid #334155;border-radius:8px;background:#0f172a;margin-bottom:12px">
+            <p id="settings-rail-reference-status" style="font-size:.78em;color:#bfdbfe;margin:0 0 8px">Base locale chargée. La synchronisation complète se fait automatiquement et reste disponible hors ligne via le cache.</p>
+            <button id="settings-sync-rail-reference" type="button" class="btn-secondary" style="width:100%">Synchroniser gares + fret + ITE</button>
+            <p style="font-size:.72em;color:#94a3b8;margin:7px 0 0">Sources : OpenStreetMap/OpenRailwayMap pour les pays desservis ; Cerema ITE 3000 pour les embranchements français. Métro, tram et bus sont exclus.</p>
           </div>
           <hr style="border-color:#334155;margin:16px 0">
           <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Tarifs au km</div>
@@ -1403,16 +1374,7 @@
       </div>
     </div>
 
-    <!-- Sillon Picker Modal (Schedule Creator) -->
-    <div id="modal-sillon-picker" class="modal hidden">
-      <div class="modal-content">
-        <button class="modal-close" onclick="game.ui._resolveSillonPicker(null)">&times;</button>
-        <h3>Sillons automatiques disponibles</h3>
-        <p style="font-size:11px;color:var(--text3);margin:0 0 10px">Choisissez un sillon predefini pour ce segment ou laissez l'ORM calculer.</p>
-        <div id="sillon-picker-list" class="sillons-list" style="margin-bottom:10px"></div>
-        <button id="btn-sillon-picker-orm" class="btn-secondary" style="width:100%" onclick="game.ui._resolveSillonPicker(null)">Utiliser l'itineraire ORM</button>
-      </div>
-    </div>
+    <!-- Legacy Schedule Creator sillon picker removed in v1.1.21. -->
 
     <!-- Incident Notification Toast -->
     <div id="incident-toast" style="display:none;position:fixed;top:60px;right:20px;z-index:9999;background:#1e293b;border:1px solid #f59e0b;border-radius:10px;padding:12px 18px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:slideIn .3s ease">
@@ -1425,6 +1387,45 @@
     </div>
 
   </div>
-  <script type="module" src="js/main.js?v=1784931691"></script>
+  <script src="data/railnet/stations/manifest.js?v=1152"></script>
+  <script src="data/railnet/tracks/manifest.js?v=1187&scf=4"></script>
+  <!-- compatibility-cache-markers: style.css?v=1199re3d14 | rail-empire.file.bundle.js?v=1199dep48&fullaudit=1 -->
+  <!-- previous-weather-cache: rail-empire.file.bundle.js?v=1199dep49&fullaudit=1 -->
+    <!-- HOTFIX56 compatibility-cache: rail-empire.file.bundle.js?v=1199dep50&fullaudit=1 | style.css?v=1199re3d16 -->
+<!-- HOTFIX60 previous-cache compatibility: style.css?v=1199re3d19 | rail-empire.file.bundle.js?v=1199dep53&fullaudit=1 -->
+<!-- HOTFIX61 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep54&fullaudit=1 -->
+<!-- HOTFIX62 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep55&fullaudit=1 -->
+<!-- HOTFIX63 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep56&fullaudit=1 -->
+<!-- HOTFIX64 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep57&fullaudit=1 -->
+<!-- HOTFIX65 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep59&fullaudit=1 -->
+<!-- HOTFIX66 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep60&fullaudit=1 -->
+<!-- HOTFIX67 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep60&fullaudit=1 -->
+<!-- HOTFIX68 French-Piper compatibility: rail-empire.file.bundle.js?v=1199dep62&fullaudit=1 -->
+<!-- HOTFIX69 previous-cache compatibility: rail-empire.file.bundle.js?v=1199dep63&fullaudit=1 -->
+<!-- HOTFIX72 cache: rail-empire.file.bundle.js?v=1199dep67&fullaudit=1 | style.css?v=1199re3d20 -->
+<!-- HOTFIX73 cache: rail-empire.file.bundle.js?v=1199dep68&fullaudit=1 | GPS loader/memory stability -->
+<!-- HOTFIX74 cache: rail-empire.file.bundle.js?v=1199dep69&fullaudit=1 | forced Piper audio unlock/playback -->
+<!-- HOTFIX75 cache: rail-empire.file.bundle.js?v=1199dep70&fullaudit=1 | audio root-cause / OPFS + language fallback -->
+<!-- HOTFIX77 cache: rail-empire.file.bundle.js?v=1199dep72&fullaudit=1 | graph ultra zoom 32x -->
+<!-- HOTFIX78 cache: rail-empire.file.bundle.js?v=1199dep73&fullaudit=1 | graph theoretical V2 timetable routing -->
+<!-- HOTFIX81 previous-cache: rail-empire.file.bundle.js?v=1199dep76&fullaudit=1 | SC short-route topology + LiveMap physics/refresh/audio + rame km -->
+<!-- HOTFIX82 cache: rail-empire.file.bundle.js?v=1199dep77&fullaudit=1 | off-page simulation + timetable reload catch-up -->
+<!-- HOTFIX83 cache: rail-empire.file.bundle.js?v=1199dep78&fullaudit=1 | background-tab simulation + directional timing symmetry -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 1: rail-empire.file.bundle.js?v=1199ts14&fullaudit=1 | rng + operational-time + train-physics migrated -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 2: rail-empire.file.bundle.js?v=1199ts14&fullaudit=1 | + movement-authority + rail-section-geometry migrated -->
+  <!-- SAISON 3 TYPESCRIPT ALPHA 6: rame + rotation-v2-model + schedule-v2-runtime migrated -->
+  <!-- SAISON 3 TYPESCRIPT ALPHA 7: engine + simulation + storage migrated -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 8: rail-empire.file.bundle.js?v=1199ts14&fullaudit=1 | + economy/freight/weather/works/shunting/junctions -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 9: rail-empire.file.bundle.js?v=1199ts14&fullaudit=1 | + lines/connections/seasonal/unions/upgrades/revalidation -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 12: rail-empire.file.bundle.js?v=1199ts14&fullaudit=1 | + world rail cache + operational editors -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 13: rail-empire.file.bundle.js?v=1199ts14&fullaudit=1 | + ITE + cargo types + graph-marche -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 14: rail-empire.file.bundle.js?v=1199ts14&fullaudit=1 | + depot + incidents + staff -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 16: rail-empire.file.bundle.js?v=1199ts18&fullaudit=1 | + renderer + main -->
+<!-- SAISON 3 TYPESCRIPT ALPHA 17: rail-empire.file.bundle.js?v=1199ts18&fullaudit=1 | + industrial-clients + schedule-creator -->
+  <!-- SAISON 3 TYPESCRIPT ALPHA 18: rail-empire.file.bundle.js?v=1199ts18&fullaudit=1 | + orm + railgraph-pack -->
+  <!-- SAISON 3 TYPESCRIPT ALPHA 23: rail-empire.file.bundle.js?v=1199ts23&fullaudit=1 | schedule routing/validation typing + deterministic QA gate -->
+  <!-- SAISON 3 TYPESCRIPT ALPHA 19: ui.js now generated from src/ts/ui.ts -->
+  <!-- SAISON 3 TYPESCRIPT ALPHA 20: final port freeze/audit -->
+  <script src="js/rail-empire.file.bundle.js?v=1199repair24&fullaudit=1"></script>
 </body>
 </html>

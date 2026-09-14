@@ -1,0 +1,41 @@
+Rail Empire v1.1.34 — ALL STATIONS / ALL ZOOMS HOTFIX
+========================================================
+
+Base
+----
+v1.1.33 Schedule V2 Native Station Visibility Hotfix.
+
+Regression corrigee
+-------------------
+La v1.1.33 reposait encore sur le streaming local des gares OSM pour remplir world.stations.
+Au zoom minimum, le renderer savait afficher toutes les gares gameplay, mais le monde n'en
+contenait qu'une fraction locale. Le resultat terrain etait donc l'absence de la majorite des
+gares au dezoom maximal et dans le Schedule Creator.
+
+Correctif v1.1.34
+-----------------
+- Le catalogue europeen rail-only embarque (17 817 gares) est charge DES l'ecran de connexion.
+- Nouvelle partie, chargement et import attendent explicitement que cette baseline soit
+  entierement materialisee dans world.stations avant d'ouvrir le jeu.
+- Ce catalogue est une baseline GAMEPLAY, pas une couche de reference a activer :
+  referenceStations reste vide et les gares sont directement cliquables/utilisables.
+- Le renderer conserve le contrat v1.1.20 : au zoom minimum il parcourt world.stations en entier
+  et dessine chaque gare comme un pixel leger, sans grille LOD ni deduplication ecran.
+- Le Schedule Creator V2 herite maintenant exactement du zoom Livemap, y compris le zoom minimum,
+  et affiche lui aussi toutes les gares gameplay a ce niveau de zoom.
+- Le streaming OSM/ORM local reste actif pour enrichir les zones visitees et reste autoritaire
+  pour le routage ferroviaire reel.
+- Aucun fallback ferroviaire automatique en ligne droite n'est reintroduit.
+
+Contrat terrain
+---------------
+17 817 gares baseline -> 17 817 objets dans world.stations -> zoom 5 -> 17 817 marqueurs dessines.
+
+QA
+--
+- Nouveau contrat v1.1.34 ALL STATIONS / ALL ZOOMS : 3/3 PASS.
+- Grappe stations/zoom/bootstrap : 15/15 PASS.
+- Non-regression critique Schedule V2/ORM/runtime/roulements/validation : 114/114 PASS.
+- Suite fonctionnelle non-bulk : 13 609 / 13 609 PASS, 0 fail.
+- JavaScript : 177 / 177 fichiers passent node --check.
+- Bundle file:// reconstruit en v1.1.34.

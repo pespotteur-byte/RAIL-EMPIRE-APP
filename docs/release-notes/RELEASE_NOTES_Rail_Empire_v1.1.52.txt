@@ -1,0 +1,58 @@
+Rail Empire v1.1.52 — RAME EDITING + REORDER CONTROLS
+2026-08-17
+
+OBJECTIF
+- Permettre de corriger facilement l'ordre des engins pendant la création d'une rame.
+- Permettre l'édition complète d'une rame après sa création.
+- Préserver les liens v1.1.51 entre rame, matériel physique, coupons et roulements lors d'un réordonnancement.
+
+NOUVEAUTÉS
+1. Réordonnancement visuel
+- Chaque engin de la composition affiche désormais deux boutons sous son visuel : ← et →.
+- Le bouton impossible à utiliser à une extrémité est automatiquement désactivé.
+- Le déplacement est immédiat et recalcule les statistiques d'affichage de la rame.
+
+2. Édition post-création
+- Chaque carte de rame possède désormais un bouton « ✎ Éditer ».
+- Le même éditeur visuel est rouvert avec le nom, numéro, dépôt et composition actuels.
+- Le joueur peut renommer la rame, modifier son numéro, changer son dépôt, ajouter/retirer des véhicules, les retourner et les réordonner.
+
+3. Facturation correcte
+- Lors d'une édition, les véhicules déjà présents dans la rame ne sont jamais refacturés.
+- Seuls les nouveaux engins réellement ajoutés à la composition sont facturés.
+- Aucun remboursement automatique n'est créé lors du retrait d'un véhicule.
+
+4. Identité stable des éléments de rame
+- Chaque élément de rame possède désormais un elementId interne persistant.
+- Le déplacement d'une voiture de la position N à la position M ne crée donc pas un nouveau véhicule logique.
+- Les anciennes sauvegardes sans elementId sont migrées automatiquement lors du chargement.
+
+5. Compatibilité Roulements v1.1.51
+- Les PhysicalVehicle liés à une rame suivent leur elementId lors d'un réordonnancement.
+- Les sourceRameElementIndex sont recalculés après édition.
+- Les coupons sont remis dans le nouvel ordre et conservent les bons véhicules.
+- Les roulements affectés à la rame reçoivent automatiquement la formation réordonnée lorsque tout le matériel physique existe.
+- Si un nouvel élément de rame n'a pas encore été créé dans « Rame → matériel », la formation du roulement est vidée/bloquée plutôt que de conserver une ancienne composition fantôme.
+
+6. Sécurité en circulation
+- Une rame actuellement en service peut être renommée/renumérotée, mais sa composition ne peut pas être structurellement modifiée pendant qu'elle roule.
+
+CONTRATS PRÉSERVÉS
+- Affectation directe Rame -> Horaire.
+- Affectation Rame -> Roulement de v1.1.51.
+- Création visuelle des locomotives/coupons depuis une rame.
+- RAME_DOUBLE_BOOKED.
+- Routage OSM direct / Overpass failover v1.1.49.
+- Schedule Creator panel stability v1.1.50.
+- Aucun fallback ferroviaire synthétique automatique.
+- Bundle FILE:// core + catalogue différé conservé.
+
+QA FINALE
+- Tests dédiés v1.1.52 : 4/4 PASS.
+- Bloc Rame/Roulements ciblé : 24/24 PASS avant bundle.
+- Post-bundle Rame v1.1.51 + v1.1.52 : 11/11 PASS.
+- Suite fonctionnelle hors bulk : 369/369 PASS.
+- Bulk ORM : 20 275/20 275 PASS.
+- Syntaxe JS/MJS/CJS : 198/198 PASS.
+- FILE:// core bundle : 61 modules, 2 930 137 octets.
+- Catalogue différé : 66 modules, 45 802 563 octets.

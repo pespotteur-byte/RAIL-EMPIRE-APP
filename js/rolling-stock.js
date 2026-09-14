@@ -1,153 +1,273 @@
 let nextId = 1;
-
-export class RollingStockItem {
-  constructor(data) {
-    this.id = data.id || `stock-${nextId++}`;
-    this.name = data.name || 'Sans nom';
-    this.category = data.category || 'locomotive';
-    this.traction = data.traction || 'none';
-    this.maxSpeed = data.maxSpeed || 160;
-    // Robust defaults: a zero/null mass or tonnage breaks train physics.
-    const defaultMass = this.category === 'wagon' ? 20 : (this.category === 'voiture' ? 30 : 80);
-    this.mass = data.mass || data.tonnage || defaultMass; // tonnes (empty mass)
-    this.power = data.power || ((this.category === 'locomotive' || this.category === 'automotrice') ? 1000 : 0); // kW
-    this.passengerCapacity = data.passengerCapacity || 0;
-    this.freightCapacity = data.freightCapacity || 0;
-    // Annexe 7 : tonnage = masse à vide + capacité fret (wagons), sinon masse à vide.
-    this.tonnage = data.tonnage || (this.category === 'wagon' ? this.mass + this.freightCapacity : this.mass);
-    this.length = data.length || 20;
-    this.imageData = data.imageData || null;
-    // S12: Train identification
-    this.seriesName = data.seriesName || ''; // e.g. 'BB 26000'
-    this.numberStart = data.numberStart || 1;  // e.g. 26001
-    this.notes = data.notes || ''; // description from MLG / source
-    // Price rule: power × 1000 for locomotives/automotrices, capacity × 100 for wagons/coaches.
-    if (data.purchasePrice) {
-      this.purchasePrice = data.purchasePrice;
-    } else if (this.category === 'locomotive' || this.category === 'automotrice') {
-      this.purchasePrice = this.power * 1000;
-    } else {
-      this.purchasePrice = (this.passengerCapacity + this.freightCapacity) * 100;
-    }
-    this.cargoTypes = data.cargoTypes || []; // allowed cargo type keys (wagon only)
-    this.wagonSubCategory = data.wagonSubCategory || ''; // Annexe 7
-    this.isDrivingTrailer = data.isDrivingTrailer || false; // voiture-pilote: flip image in rame formation
-    // Catalog bookkeeping: pristine catalog items are re-seeded from catalog-data.js
-    // on every load, so they are NOT persisted to the save (keeps localStorage small).
-    // Once a catalog item is edited, _edited is set and it IS persisted.
-    this._catalog = !!data._catalog;
-    this._edited = !!data._edited;
-    this._source = data._source || null;
-  }
+function text(value, fallback = '') {
+    if (value == null)
+        return fallback;
+    const s = String(value).trim();
+    return s || fallback;
 }
-
-export class RollingStockManager {
-  constructor() {
-    this.items = [];
-    // Rame series numbering: global counter per series name (Annexe 8).
-    this.seriesCounters = {};
-  }
-
-  add(data) {
-    const item = new RollingStockItem(data);
-    this.items.push(item);
-    return item;
-  }
-
-  // Renvoie le prochain numéro d'instance pour une série donnée.
-  // Ex: "BB26000" -> BB26001, BB26002... ; "BR186-XXX" -> BR186-1, BR186-2...
-  nextSeriesNumber(seriesName) {
-    if (!seriesName) return null;
-    const m = seriesName.match(/^(.+?)(\d*)$/);
-    const prefix = (m ? m[1] : seriesName).replace(/-XXX$/i, '-');
-    const base = m && m[2] ? parseInt(m[2], 10) : null;
-    let counter = this.seriesCounters[seriesName];
-    if (counter == null) counter = base != null ? base : 0;
-    counter += 1;
-    this.seriesCounters[seriesName] = counter;
-    return prefix + counter;
-  }
-
-  remove(id) {
-    this.items = this.items.filter(i => i.id !== id);
-  }
-
-  // Update an existing item in place (used by the "Modifier" feature and admin overrides).
-  // Only overwrites provided fields; keeps id and any untouched fields.
-  // Marks catalog items as edited only when a field actually changes.
-  update(id, data) {
-    const item = this.items.find(i => i.id === id);
-    if (!item) return null;
-    const editable = ['name', 'category', 'traction', 'maxSpeed', 'tonnage', 'mass',
-      'power', 'passengerCapacity', 'freightCapacity', 'length', 'imageData',
-      'seriesName', 'numberStart', 'notes', 'purchasePrice', 'cargoTypes', 'wagonSubCategory', 'isDrivingTrailer'];
-    let changed = false;
-    for (const k of editable) {
-      if (k in data && data[k] !== undefined) {
-        const newVal = data[k];
-        const oldVal = item[k];
-        if (Array.isArray(newVal) && Array.isArray(oldVal)) {
-          if (newVal.length !== oldVal.length || newVal.some((v, i) => v !== oldVal[i])) {
-            item[k] = newVal;
-            changed = true;
-          }
-        } else if (newVal !== oldVal) {
-          item[k] = newVal;
-          changed = true;
+function finite(value, fallback = 0) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+}
+function nonNegative(value, fallback = 0) { return Math.max(0, finite(value, fallback)); }
+function positive(value, fallback) { const n = finite(value, fallback); return n > 0 ? n : fallback; }
+function stringArray(value) {
+    return Array.isArray(value) ? [...new Set(value.map(v => text(v)).filter(Boolean))] : [];
+}
+function mlgPathCategory(path = '') {
+    const parts = text(path).split('/').filter(Boolean);
+    return parts.length > 1 ? parts.slice(0, -1).join('/') : '';
+}
+export class RollingStockItem {
+    constructor(data = {}) {
+        const rawId = text(data.id);
+        this.id = rawId || `stock-${nextId++}`;
+        this.name = text(data.name, 'Sans nom');
+        this.category = text(data.category, 'locomotive').toLowerCase();
+        this.traction = text(data.traction, 'none');
+        this.maxSpeed = positive(data.maxSpeed, 160);
+        // A zero/negative mass or length is physically impossible, so those two fields
+        // deliberately fall back. Explicit zero POWER/CAPACITY values, however, are real
+        // data (e.g. unpowered EMU trailers) and must NEVER be replaced by defaults.
+        const defaultMass = this.category === 'wagon' ? 20 : (this.category === 'voiture' ? 30 : 80);
+        const rawMass = finite(data.mass, NaN);
+        const rawTonnage = finite(data.tonnage, NaN);
+        this.mass = Number.isFinite(rawMass) && rawMass > 0 ? rawMass
+            : (Number.isFinite(rawTonnage) && rawTonnage > 0 ? rawTonnage : defaultMass);
+        const defaultPower = (this.category === 'locomotive' || this.category === 'automotrice') ? 1000 : 0;
+        this.power = Object.prototype.hasOwnProperty.call(data, 'power') ? nonNegative(data.power, 0) : defaultPower;
+        // A coach/wagon is never an active traction unit in the RE component model.
+        // Historical catalogue pollution used to inject locomotive power into Corail and
+        // other unpowered vehicles; enforce the invariant at the model boundary so admin
+        // overrides and old saves cannot re-introduce it.
+        if (this.category === 'wagon' || this.category === 'voiture') {
+            this.power = 0;
+            this.traction = 'none';
         }
-      }
+        this.passengerCapacity = nonNegative(data.passengerCapacity, 0);
+        this.freightCapacity = nonNegative(data.freightCapacity, 0);
+        // Historical saves use "tonnage" inconsistently. Preserve a valid explicit value;
+        // otherwise derive a gameplay total only for wagons.
+        this.tonnage = Number.isFinite(rawTonnage) && rawTonnage > 0
+            ? rawTonnage
+            : (this.category === 'wagon' ? this.mass + this.freightCapacity : this.mass);
+        this.length = positive(data.length, 20);
+        this.imageData = data.imageData || null;
+        this.seriesName = text(data.seriesName);
+        this.numberStart = finite(data.numberStart, 1);
+        this.notes = text(data.notes);
+        if (Object.prototype.hasOwnProperty.call(data, 'purchasePrice')) {
+            this.purchasePrice = nonNegative(data.purchasePrice, 0);
+        }
+        else if (this.category === 'locomotive' || this.category === 'automotrice') {
+            this.purchasePrice = this.power * 1000;
+        }
+        else {
+            this.purchasePrice = (this.passengerCapacity + this.freightCapacity) * 100;
+        }
+        this.cargoTypes = stringArray(data.cargoTypes);
+        this.technicallyCompatibleCargoTypes = stringArray(data.technicallyCompatibleCargoTypes);
+        this.freightValidationSource = text(data.freightValidationSource);
+        this.freightValidationScope = text(data.freightValidationScope);
+        this.freightBatch = text(data.freightBatch);
+        this.wagonSubCategory = text(data.wagonSubCategory);
+        this.isDrivingTrailer = !!data.isDrivingTrailer;
+        this._catalog = !!data._catalog;
+        this._edited = !!data._edited;
+        this._source = data._source || null;
+        this.realIdentityId = text(data.realIdentityId);
+        this.realIdentitySeries = text(data.realIdentitySeries);
+        this.identityDisposition = text(data.identityDisposition);
+        this.identitySource = text(data.identitySource);
+        this.identityScope = text(data.identityScope);
+        this.identityConfidence = text(data.identityConfidence);
+        this.identityCountry = text(data.identityCountry);
+        this.identityOperator = text(data.identityOperator);
+        this.identityMatchMethod = text(data.identityMatchMethod);
+        this.identityBatch = text(data.identityBatch);
+        this.mlgId = text(data.mlgId);
+        this.mlgArchivePath = text(data.mlgArchivePath);
+        this.mlgSeriesName = text(data.mlgSeriesName);
+        // Search-oriented MLG metadata. Older catalogue rows do not carry explicit
+        // categories, so the archive path is exposed as a deterministic fallback.
+        this.mlgPathCategory = text(data.mlgPathCategory, mlgPathCategory(this.mlgArchivePath));
+        this.mlgCategory = text(data.mlgCategory, this.mlgPathCategory.split('/').pop() || '');
+        this.componentRole = text(data.componentRole);
+        this.technicalDataStatus = text(data.technicalDataStatus, 'LEGACY_CATALOG');
+        this.technicalDataNote = text(data.technicalDataNote);
+        this.catalogExpansionBatch = text(data.catalogExpansionBatch);
+        this.purchasePriceBasis = text(data.purchasePriceBasis);
+        this.purchasePriceClass = text(data.purchasePriceClass);
+        this.purchasePriceNote = text(data.purchasePriceNote);
     }
-    if (item._catalog && changed) item._edited = true;
-    return item;
-  }
-
-  getById(id) {
-    return this.items.find(i => i.id === id);
-  }
-
-  getAll() {
-    return this.items;
-  }
-
-  toSave() {
-    // Skip pristine catalog items (re-seeded from catalog-data.js on load).
-    return {
-      items: this.items.filter(i => !(i._catalog && !i._edited)).map(i => ({
-        id: i.id,
-        name: i.name,
-        category: i.category,
-        traction: i.traction,
-        maxSpeed: i.maxSpeed,
-        tonnage: i.tonnage,
-        mass: i.mass,
-        power: i.power,
-        passengerCapacity: i.passengerCapacity,
-        freightCapacity: i.freightCapacity,
-        length: i.length,
-        imageData: i.imageData,
-        seriesName: i.seriesName || '',
-        numberStart: i.numberStart || 1,
-        notes: i.notes || '',
-        purchasePrice: i.purchasePrice || 0,
-        cargoTypes: i.cargoTypes || [],
-        wagonSubCategory: i.wagonSubCategory || '',
-        isDrivingTrailer: i.isDrivingTrailer || false,
-        _catalog: i._catalog || undefined,
-        _edited: i._edited || undefined,
-        _source: i._source || undefined,
-      })),
-      seriesCounters: { ...this.seriesCounters },
-    };
-  }
-
-  loadFromSave(data) {
-    this.items = [];
-    const arr = Array.isArray(data) ? data : (data?.items || []);
-    for (const d of arr) {
-      this.items.push(new RollingStockItem(d));
-      const num = parseInt(d.id?.split('-')[1] || '0');
-      if (num >= nextId) nextId = num + 1;
+}
+export class RollingStockManager {
+    constructor() {
+        this.items = [];
+        // v1.1.99 HOTFIX41 — catalogue loads can contain 36k+ rows. The historical
+        // manager searched the whole array twice on every add(), turning a full seed
+        // into O(n²). Keep a canonical id index so add/getById are O(1).
+        this._byId = new Map();
+        // Rame series numbering: global counter per series name (Annexe 8).
+        this.seriesCounters = {};
     }
-    this.seriesCounters = (data && !Array.isArray(data) && data.seriesCounters) ? { ...data.seriesCounters } : {};
-  }
+    add(data = {}) {
+        const explicitId = text(data?.id);
+        if (explicitId && this._byId.has(explicitId))
+            return null;
+        const item = new RollingStockItem(data);
+        // Generated ids are expected to be unique, but keep the manager fail-closed if a
+        // malformed save or counter collision ever violates that assumption.
+        if (this._byId.has(item.id))
+            return null;
+        this.items.push(item);
+        this._byId.set(item.id, item);
+        return item;
+    }
+    // Renvoie le prochain numéro d'instance pour une série donnée.
+    // Ex: "BB26000" -> BB26001, BB26002... ; "BR186-XXX" -> BR186-1, BR186-2...
+    nextSeriesNumber(seriesName) {
+        if (!seriesName)
+            return null;
+        const m = seriesName.match(/^(.+?)(\d*)$/);
+        const prefix = (m ? m[1] : seriesName).replace(/-XXX$/i, '-');
+        const base = m && m[2] ? parseInt(m[2], 10) : null;
+        let counter = this.seriesCounters[seriesName];
+        if (counter == null)
+            counter = base != null ? base : 0;
+        counter += 1;
+        this.seriesCounters[seriesName] = counter;
+        return prefix + counter;
+    }
+    remove(id) {
+        const key = text(id);
+        if (!this._byId.has(key))
+            return false;
+        this._byId.delete(key);
+        const idx = this.items.findIndex((i) => i.id === key);
+        if (idx >= 0)
+            this.items.splice(idx, 1);
+        return true;
+    }
+    // Update through RollingStockItem again so edits/admin overrides cannot bypass
+    // numeric sanitisation or physical invariants. `markEdited:false` is reserved for
+    // authoritative admin catalogue refreshes; normal player edits keep the old flag.
+    update(id, data = {}, { markEdited = true } = {}) {
+        const item = this._byId.get(text(id));
+        if (!item || !data || typeof data !== 'object')
+            return null;
+        const editable = ['name', 'category', 'traction', 'maxSpeed', 'tonnage', 'mass',
+            'power', 'passengerCapacity', 'freightCapacity', 'length', 'imageData',
+            'seriesName', 'numberStart', 'notes', 'purchasePrice', 'cargoTypes', 'technicallyCompatibleCargoTypes', 'freightValidationSource', 'freightValidationScope', 'freightBatch', 'wagonSubCategory', 'isDrivingTrailer', 'mlgId', 'mlgArchivePath', 'mlgSeriesName', 'mlgCategory', 'mlgPathCategory', 'componentRole',
+            'realIdentityId', 'realIdentitySeries', 'identityDisposition', 'identitySource', 'identityScope', 'identityConfidence', 'identityCountry', 'identityOperator', 'identityMatchMethod', 'identityBatch',
+            'technicalDataStatus', 'technicalDataNote', 'catalogExpansionBatch', 'purchasePriceBasis', 'purchasePriceClass', 'purchasePriceNote'];
+        const merged = {};
+        for (const k of editable)
+            merged[k] = item[k];
+        for (const k of editable)
+            if (Object.prototype.hasOwnProperty.call(data, k) && data[k] !== undefined)
+                merged[k] = data[k];
+        merged.id = item.id;
+        merged._catalog = item._catalog;
+        merged._edited = item._edited;
+        merged._source = item._source;
+        const clean = new RollingStockItem(merged);
+        for (const k of editable)
+            item[k] = clean[k];
+        if (item._catalog && markEdited)
+            item._edited = true;
+        return item;
+    }
+    getById(id) {
+        return this._byId.get(text(id));
+    }
+    getAll() {
+        return this.items;
+    }
+    toSave() {
+        // Skip pristine catalog items (re-seeded from catalog-data.js on load).
+        return {
+            items: this.items.filter((i) => !(i._catalog && !i._edited)).map((i) => ({
+                id: i.id,
+                name: i.name,
+                category: i.category,
+                traction: i.traction,
+                maxSpeed: i.maxSpeed,
+                tonnage: i.tonnage,
+                mass: i.mass,
+                power: i.power,
+                passengerCapacity: i.passengerCapacity,
+                freightCapacity: i.freightCapacity,
+                length: i.length,
+                imageData: i.imageData,
+                seriesName: i.seriesName || '',
+                numberStart: i.numberStart || 1,
+                notes: i.notes || '',
+                purchasePrice: i.purchasePrice || 0,
+                cargoTypes: i.cargoTypes || [],
+                technicallyCompatibleCargoTypes: i.technicallyCompatibleCargoTypes || [],
+                freightValidationSource: i.freightValidationSource || undefined,
+                freightValidationScope: i.freightValidationScope || undefined,
+                freightBatch: i.freightBatch || undefined,
+                wagonSubCategory: i.wagonSubCategory || '',
+                isDrivingTrailer: i.isDrivingTrailer || false,
+                _catalog: i._catalog || undefined,
+                _edited: i._edited || undefined,
+                _source: i._source || undefined,
+                realIdentityId: i.realIdentityId || undefined,
+                realIdentitySeries: i.realIdentitySeries || undefined,
+                identityDisposition: i.identityDisposition || undefined,
+                identitySource: i.identitySource || undefined,
+                identityScope: i.identityScope || undefined,
+                identityConfidence: i.identityConfidence || undefined,
+                identityCountry: i.identityCountry || undefined,
+                identityOperator: i.identityOperator || undefined,
+                identityMatchMethod: i.identityMatchMethod || undefined,
+                identityBatch: i.identityBatch || undefined,
+                mlgId: i.mlgId || undefined,
+                mlgArchivePath: i.mlgArchivePath || undefined,
+                mlgSeriesName: i.mlgSeriesName || undefined,
+                mlgCategory: i.mlgCategory || undefined,
+                mlgPathCategory: i.mlgPathCategory || undefined,
+                componentRole: i.componentRole || undefined,
+                technicalDataStatus: i.technicalDataStatus || undefined,
+                technicalDataNote: i.technicalDataNote || undefined,
+                catalogExpansionBatch: i.catalogExpansionBatch || undefined,
+                purchasePriceBasis: i.purchasePriceBasis || undefined,
+                purchasePriceClass: i.purchasePriceClass || undefined,
+                purchasePriceNote: i.purchasePriceNote || undefined,
+            })),
+            seriesCounters: { ...this.seriesCounters },
+        };
+    }
+    loadFromSave(data) {
+        const saved = data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+        this.items = [];
+        this._byId = new Map();
+        const arr = Array.isArray(data) ? data : (Array.isArray(saved?.items) ? saved.items : []);
+        const seen = new Set();
+        for (const raw of arr) {
+            if (!raw || typeof raw !== 'object')
+                continue;
+            const item = new RollingStockItem(raw);
+            if (!item.id || seen.has(item.id))
+                continue;
+            seen.add(item.id);
+            this.items.push(item);
+            this._byId.set(item.id, item);
+            const m = /^stock-(\d+)$/.exec(item.id);
+            const num = m ? Number(m[1]) : 0;
+            if (num >= nextId)
+                nextId = num + 1;
+        }
+        this.seriesCounters = {};
+        const rawCounters = saved?.seriesCounters;
+        const counters = rawCounters && typeof rawCounters === 'object' && !Array.isArray(rawCounters) ? rawCounters : {};
+        for (const [series, value] of Object.entries(counters)) {
+            const key = text(series);
+            const n = Math.floor(nonNegative(value, 0));
+            if (key)
+                this.seriesCounters[key] = n;
+        }
+    }
 }

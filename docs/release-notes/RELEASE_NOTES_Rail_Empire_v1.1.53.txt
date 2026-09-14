@@ -1,0 +1,43 @@
+Rail Empire v1.1.53 — RETURN / ROUND-TRIP INTEGRITY FIX
+Date: 2026-08-17
+
+Purpose
+-------
+Audit and harden Schedule Creator V2 return creation and round-trip duplication after v1.1.52.
+
+Fixes
+-----
+1. Return calendar inheritance
+- "Créer le retour" now copies the outbound version's calendarIds to the new return version.
+- A weekday/seasonal outbound no longer silently creates an always-active return.
+
+2. True A->B / B->A integrity
+- Round-trip validation now checks that the return starts at the outbound terminal.
+- It also checks that the return ends at the outbound origin.
+- Invalid pairs such as A->B + C->D cannot be validated or duplicated as a round trip.
+
+3. Turnaround timing
+- Return departure must not precede outbound arrival + configured terminal layover.
+- Existing automatic return-start synchronization remains in place.
+
+4. Duplication protection
+- duplicateRoundTrip() refuses structurally invalid round-trip pairs before cloning them.
+- Existing numbering remains: original outbound N, return N+1, next outbound N+2, next return N+3.
+- Absolute J+N times remain preserved across midnight.
+
+Verified preserved behavior
+---------------------------
+- Return immediately switches Schedule Creator to green RETURN mode and arms exact terminal track selection.
+- Return keeps an independent player-editable name.
+- Performance profile is copied from outbound to return.
+- Terminal layover still synchronizes the return start.
+- AR duplication up to 24 h still works by frequency or next departure time.
+- Duplicated pairs can still be appended directly to an existing rotation.
+- v1.1.49 OSM routing, v1.1.50 panel stability, v1.1.51 Rame/rotation workflow and v1.1.52 Rame editing remain unchanged.
+
+QA
+--
+- Functional non-bulk/non-weather: 13,713 / 13,713 PASS.
+- Bulk ORM: 20,275 / 20,275 PASS.
+- JavaScript/MJS/CJS syntax: 198 / 198 PASS.
+- Dedicated return/AR tests include calendar inheritance, B->A continuity, terminal layover, +1/+2 numbering, rotation append and J+1 midnight duplication.

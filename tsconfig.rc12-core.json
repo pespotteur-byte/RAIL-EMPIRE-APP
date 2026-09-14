@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": false,
+    "lib": [
+      "ES2022"
+    ],
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "files": [
+    "src/ts/rescue-route-contract.ts",
+    "src/ts/movement-diagnostics.ts"
+  ]
+}

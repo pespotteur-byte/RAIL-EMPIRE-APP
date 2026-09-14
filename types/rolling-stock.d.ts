@@ -1,0 +1,68 @@
+export declare class RollingStockItem {
+    [key: string]: unknown;
+    id: string;
+    name: string;
+    category: string;
+    traction: string;
+    maxSpeed: number;
+    mass: number;
+    power: number;
+    passengerCapacity: number;
+    freightCapacity: number;
+    tonnage: number;
+    length: number;
+    imageData: unknown;
+    seriesName: string;
+    numberStart: number;
+    notes: string;
+    purchasePrice: number;
+    cargoTypes: string[];
+    technicallyCompatibleCargoTypes: string[];
+    freightValidationSource: string;
+    freightValidationScope: string;
+    freightBatch: string;
+    wagonSubCategory: string;
+    isDrivingTrailer: boolean;
+    _catalog: boolean;
+    _edited: boolean;
+    _source: unknown;
+    realIdentityId: string;
+    realIdentitySeries: string;
+    identityDisposition: string;
+    identitySource: string;
+    identityScope: string;
+    identityConfidence: string;
+    identityCountry: string;
+    identityOperator: string;
+    identityMatchMethod: string;
+    identityBatch: string;
+    mlgId: string;
+    mlgArchivePath: string;
+    mlgSeriesName: string;
+    mlgPathCategory: string;
+    mlgCategory: string;
+    componentRole: string;
+    technicalDataStatus: string;
+    technicalDataNote: string;
+    catalogExpansionBatch: string;
+    purchasePriceBasis: string;
+    purchasePriceClass: string;
+    purchasePriceNote: string;
+    constructor(data?: Record<string, unknown>);
+}
+export declare class RollingStockManager {
+    items: RollingStockItem[];
+    _byId: Map<string, RollingStockItem>;
+    seriesCounters: Record<string, number>;
+    constructor();
+    add(data?: Record<string, unknown>): RollingStockItem | null;
+    nextSeriesNumber(seriesName: string): string | null;
+    remove(id: unknown): boolean;
+    update(id: unknown, data?: Record<string, unknown>, { markEdited }?: {
+        markEdited?: boolean;
+    }): RollingStockItem | null;
+    getById(id: unknown): RollingStockItem | undefined;
+    getAll(): RollingStockItem[];
+    toSave(): Record<string, unknown>;
+    loadFromSave(data: unknown): void;
+}

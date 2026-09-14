@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {SillonManager} from '../sillon.js';
+const world={stations:[{id:'A'},{id:'B'}]};
+test('sillon old numeric identity is normalized and valid route repairs bad distance',()=>{const m=new SillonManager();m.loadFromSave([{id:7,fromStationId:'A',toStationId:'B',route:[{lat:0,lon:0},{lat:0,lon:0.01}],distance:Infinity}],world);assert.equal(m.getById('7')?.id,'7');assert.ok(m.getById('7').distance>1);});
+test('sillon with deleted station or invalid coordinate is rejected',()=>{const m=new SillonManager();m.loadFromSave([{id:'x',fromStationId:'A',toStationId:'Z',route:[{lat:0,lon:0},{lat:0,lon:1}],distance:1},{id:'y',fromStationId:'A',toStationId:'B',route:[{lat:999,lon:0},{lat:0,lon:1}],distance:1}],world);assert.equal(m.getAll().length,0);});

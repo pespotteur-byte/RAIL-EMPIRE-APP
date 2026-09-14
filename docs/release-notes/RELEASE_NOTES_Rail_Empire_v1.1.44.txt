@@ -1,0 +1,47 @@
+Rail Empire v1.1.44 — Timetable Regulation + Anti-Reversal + Manual ORM Trace
+2026-08-17
+
+Field feedback addressed
+- A real V2 train could arrive roughly 2 minutes early because runtime always pursued the physical/infrastructure maximum and only computed the negative delay afterwards.
+- Schedule Creator cursor routing accidentally invoked Dijkstra with directed:false, bypassing the turn/reversal policy used by the ORM graph. This could produce absurd station throat paths with a reversal even when a direct crossover existed.
+- The player needed a practical escape hatch when automatic ORM routing still chose an undesirable path.
+
+Changes
+1) Timetable regulation
+- V2 runtime computes an ETA-based speed cap toward the next booked time.
+- An early train coasts/slows instead of blindly running at Vmax.
+- A late train is never slowed by this timetable cap.
+- For booked stopping points, a hard arrival gate prevents the stop from being declared before the booked arrival time (1-second tolerance).
+- A train held solely for the booked arrival is shown as timetable regulation, not as an operational delay.
+
+2) Automatic anti-reversal
+- Schedule Creator cursor-anchor routing now keeps directed routing enabled in both global candidate-chain and local candidate routing.
+- Existing one-way restrictions, preferred-direction handling and switch/turn penalties remain active.
+- Pure same-track back-up remains forbidden by the ORM turn policy.
+- No synthetic/straight-line fallback was added.
+
+3) Manual ORM trace override
+- New "✎ Tracé manuel" button in Schedule Creator.
+- On an existing segment, every map click adds a persistent ORM VIA constraint on that same leg; the mode stays active for successive clicks.
+- This lets the player force a specific crossover/track sequence without creating a fake railway line.
+- "✓ Fin tracé" exits the mode while keeping the VIA constraints.
+- "↺ Auto segment" deletes VIA constraints for the active segment and recalculates automatic ORM routing.
+- For multi-stop schedules, the selected VIA's leg is used when available; otherwise the latest completed leg is targeted. Existing per-stop "+ VIA" can be used to select a specific leg before entering continuous manual mode.
+
+Preserved contracts
+- Direct Rame-page assignment and train spawn.
+- V2 J+1 absolute timetable handling.
+- VIA -> station routing and connected parallel-track backtracking.
+- Real OSM/ORM only: no automatic synthetic straight route.
+- 17,817 gameplay stations remain visible at minimum zoom.
+- v1.1.43 split FILE:// startup bundle remains in place (small core + deferred catalogue).
+
+QA actually run
+- Curated gameplay/routing/performance/package cluster: 96/96 PASS, 0 fail.
+- New v1.1.44 tests: 5/5 PASS.
+- JavaScript/MJS syntax: 188/188 PASS.
+- FILE:// core and deferred catalogue bundles rebuilt as v1.1.44.
+- Core bundle ~2.86 MB; deferred catalogue ~45.80 MB.
+
+Note
+The enormous all-test runner was intentionally not used as the final claim: one broad invocation wandered into the historical bulk weather/radar banks and exceeded the execution window. The release QA above reports only completed runs.

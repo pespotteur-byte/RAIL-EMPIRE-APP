@@ -1,0 +1,20 @@
+Rail Empire v1.1.99 — HOTFIX69 — LiveMap runtime bugfixes
+
+1. INCIDENT AU DEPART / DEPARTS SUIVANTS
+- Un train immobilise a son origine par un incident `effect=stop` n'entre plus dans la priorite globale des departs voyageurs de la gare.
+- Il reste bien un obstacle physique sur sa propre voie / son propre quai : la securite locale n'est pas contournee.
+- Les autres circulations independantes de la gare ne sont donc plus bloquees en cascade par ce seul incident.
+- Garde defensive ajoutee si l'incident apparait apres la construction de l'index du tick.
+
+2. ANNONCES LIVEMAP / PIPER
+- Corrige le cas ou seule la phrase enregistree « Attention » etait jouee lors d'un premier lancement Piper.
+- Le timeout court de 5 s reste utilise quand le moteur est deja disponible / cache.
+- Si le modele Piper est reellement en cours de preparation, le meme chargement peut maintenant aller jusqu'a 90 s avant abandon.
+- Aucun fallback anglais n'a ete active.
+
+3. CANTONNEMENT / DEGAGEMENT PAR LA QUEUE
+- Un train deja arrete ou en tres faible vitesse derriere une circulation quittant une gare reste bloque tant que la queue de la rame de devant n'a pas libere le point de depart.
+- Le verrou repose sur `_departureResourceHold`, deja libere uniquement apres une distance egale a la longueur complete de la rame.
+- Un train encore en approche conserve la regulation continue existante afin d'eviter un arret brutal artificiel a distance.
+
+Cache runtime: 1199dep64

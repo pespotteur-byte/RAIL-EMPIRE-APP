@@ -1,0 +1,19 @@
+Rail Empire v1.1.99 — HOTFIX29 LOW 70° GPS CAMERA
+
+Objectif
+- Donner à la vue GPS 3D une caméra nettement plus basse que HOTFIX28, proche d'une navigation embarquée plutôt que d'une vue satellite inclinée.
+
+Corrections
+- Inclinaison CSS réelle portée de 50° à 70°.
+- Compensation verticale limitée à 1.30 : l'effet de perspective reste nettement plus prononcé que HOTFIX28 tout en évitant une dalle raster gigantesque.
+- Focale adaptée à 3.50x la diagonale du viewport pour conserver toute la dalle devant la caméra à 70°.
+- Overscan porté à 1.90x la diagonale ; couverture validée à tous les caps sur 982x540, 1366x768, 1920x1080, 1280x1024 et 800x600.
+- Zoom 3D jusqu'à z30 conservé.
+- Flèche du train suivi screen-space centrée conservée.
+- Suivi compositor HOTFIX26 conservé : déplacement CSS entre les rerenders lourds.
+- MovementAuthority / correctif voie 20 HOTFIX16-17 conservés.
+
+Cache
+- CSS : 1199re3d13
+- FILE bundle : 1199dep21
+- Renderer import : 1199cam22

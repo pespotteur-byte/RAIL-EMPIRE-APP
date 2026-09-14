@@ -1,0 +1,51 @@
+RAIL EMPIRE v1.1.96 — LIVEMAP ARRIVAL / TRACE / SIV
+===================================================
+Base
+----
+Rail_Empire_v1.1.95_CATALOG_NAME_DEDUP.zip
+
+1. Arrivée physique en avance reconnue en gare
+----------------------------------------------
+- Un train voyageurs qui atteint réellement sa voie/quai avant l'heure prévue est maintenant déclaré à l'arrêt en gare immédiatement.
+- L'ancienne garde d'arrivée pouvait immobiliser le train à 0 km/h tout en laissant ActiveService dans l'état moving ; au tick suivant l'arrivée n'était plus revalidée et le train pouvait accumuler du retard sans repartir.
+- La règle "pas d'avance voyageurs" est conservée au départ : l'avance affichée est neutralisée et le train attend son heure de départ prévue.
+- train.state et ActiveService.state restent synchronisés lors des transitions moving / stopped_at_station.
+
+2. Tracé Livemap aligné sur le Schedule Creator
+------------------------------------------------
+- Suppression des points/nodes blancs intermédiaires du tracé sélectionné.
+- Tracé propre : sous-trait sombre + trait arrondi bleu à l'aller, vert au retour.
+- Le tracé est dessiné sous les marqueurs des trains.
+- Les arrêts en gare sont affichés en rouge avec contour blanc.
+- La position exacte V2/voie est prioritaire sur le centroïde de la gare.
+- Aucun retour synthétique n'est créé : seule la vraie géométrie ORM du retour est dessinée.
+
+3. Annonce vocale au clic sur un train
+--------------------------------------
+- Nouveau module js/livemap-train-announcer.js.
+- Un clic sur un train déclenche une annonce de forme :
+  "Attention. Ce train a pour destination X. Il s'arrêtera en gare de Y, Z et P."
+- Les trois phrases fixes utilisent des extraits du fichier RER B fourni par le joueur :
+  * Attention
+  * Ce train a pour destination
+  * Il s'arrêtera en gare de
+- Les éléments variables (destination et gares restantes) utilisent la meilleure voix française locale disponible via SpeechSynthesis.
+- Les waypoints techniques ne sont pas annoncés comme gares voyageurs.
+- L'origine est omise quand le train attend encore son départ.
+- Au terminus, l'annonce reste grammaticalement complète.
+- Hbf / Bhf sont développés en Hauptbahnhof / Bahnhof pour la prononciation.
+- Un nouveau clic annule immédiatement l'annonce précédente.
+- Si HTMLAudio ou les extraits enregistrés sont indisponibles, fallback automatique vers une annonce 100 % TTS.
+
+Audio SIV
+---------
+- audio/siv/rerb_attention.m4a
+- audio/siv/rerb_destination_prefix.m4a
+- audio/siv/rerb_stops_prefix.m4a
+Les extraits proviennent uniquement de l'enregistrement utilisateur fourni dans cette conversation.
+
+Catalogue
+---------
+- Le catalogue v1.1.95 n'est pas modifié par cette passe.
+- Le bundle catalogue différé conserve le cache 1195.
+- Le bundle cœur passe à la version 1.1.96 / cache 1196.

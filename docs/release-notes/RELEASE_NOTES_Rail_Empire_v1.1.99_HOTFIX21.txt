@@ -1,0 +1,30 @@
+Rail Empire v1.1.99 — HOTFIX21 3D FULL FRAME / SHARP / CENTER
+Date: 2026-08-31
+
+Objectif
+- Corriger les 3 défauts encore visibles en vue 3D après HOTFIX20 :
+  1) zones/carrés noirs aux bords de l'écran lorsque la carte est inclinée/rotée ;
+  2) train suivi pas exactement au centre ;
+  3) fond cartographique trop flou après projection 3D.
+
+Corrections
+- Surface pseudo-3D surdimensionnée de façon adaptative selon le ratio largeur/hauteur de la fenêtre.
+- Overscan borné : scale 2.1 à 3.4, calculé à partir de l'aspect ratio, afin que la rotation de la carte ne découvre plus le fond sombre du stage.
+- Perspective adoucie et pitch ramené à 38° pour conserver de la profondeur sans écraser le fond cartographique.
+- Train sélectionné/suivi verrouillé visuellement à x=50 %, y=50 % du viewport en pseudo-3D et en DEM.
+- Suppression du look-ahead géographique de HOTFIX20 : le centre de carte est de nouveau exactement la position du train.
+- Zoom d'entrée 3D élargi pour conserver davantage de distance visible malgré le recentrage.
+- Qualité cartographique 3D : source de tuiles +1 niveau de zoom, buffer hors-écran 1.5x et canvas 3D suréchantillonné avec plafonds explicites.
+- Relief DEM : DPR plafonné à 1.75x et caméra recentrée sur l'origine du train, avec angle plus vertical pour réduire l'étirement de texture à l'horizon.
+- Taille des billboards recalculée comme l'inverse du scale du plan afin que les flèches gardent une taille lisible malgré l'overscan.
+- Les filtres d'affichage HOTFIX20 restent disponibles en 3D.
+- Les correctifs HOTFIX17 (départ), HOTFIX18 (bearing caméra), HOTFIX19 (axe de flèche) et HOTFIX20 (filtres/portée) sont conservés.
+
+Cache / bundle
+- FILE bundle : 1199dep13
+- CSS : 1199re3d6
+- Build : ...HOTFIX21-3D-FULL-FRAME-SHARP-CENTER
+
+QA
+- 75 tests ciblés LiveMap / 3D / DEM / départ / MovementAuthority / sauvegarde / performance : 75 PASS, 0 FAIL.
+- Bundle FILE reconstruit après le patch final.

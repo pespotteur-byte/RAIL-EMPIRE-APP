@@ -253,11 +253,17 @@ itCases('ORM save/load roundtrip', (() => {
       name: `save-${i}`,
       fn: () => {
         const orm = new ORMClient();
-        orm._loadedBboxes = [`${i},${i},${i + 1},${i + 1}`];
+        const bbox = { south: i, west: i, north: i + 1, east: i + 1, key: `${i},${i},${i + 1},${i + 1}` };
+        orm._loadedBboxes = [bbox];
         const save = orm.toSave();
         const restored = new ORMClient();
         restored.loadFromSave(save);
-        assert.deepEqual(restored._loadedBboxes, orm._loadedBboxes);
+        // v1.1.43: persisted coverage is history only. A fresh process has no
+        // resident ORM graph until a route/snap operation refetches the area.
+        assert.deepEqual(restored._loadedBboxes, []);
+        assert.deepEqual(restored._savedLoadedBboxes, [bbox]);
+        // Saving again without refetching must preserve that history.
+        assert.deepEqual(restored.toSave().loadedBboxes, [bbox]);
       },
     });
   }

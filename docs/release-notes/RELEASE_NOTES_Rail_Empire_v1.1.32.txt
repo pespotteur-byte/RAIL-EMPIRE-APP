@@ -1,0 +1,129 @@
+Rail Empire v1.1.32 — OSM Native + Schedule V2 Full Repair
+===========================================================
+Date: 2026-08-16
+Base: v1.1.31 FIELD REGRESSION REPAIR
+Audit source: 66 findings from AUDIT_MAXIMUM_v1.1.31
+
+OBJECTIF
+--------
+Fermer la vague de régressions révélée par le test terrain Château-Thierry -> VIA(s) -> Dormans et restaurer le contrat architectural v1.1.19 "OSM/ORM IS THE GAME" sans perdre Schedule Creator V2, les roulements ni le catalogue Batch186.
+
+1. OSM / OPENRAILWAYMAP REDEVIENT LE MONDE NATIF
+--------------------------------------------------
+- Suppression de la dépendance runtime au manifest RailNet fixe 17 817 gares.
+- Streaming direct des gares OSM vers world.stations par zone visitée.
+- Identité OSM native conservée (osm-node / osm-way / osm-relation).
+- RER / S-Bahn / rail lourd et gares multimodales train=yes conservés.
+- Stations purement métro, tram, light_rail et monorail exclues.
+- Pinning/deltas des gares OSM utilisées restaurés dans les sauvegardes.
+- Réseau RailNet historique conservé seulement comme actif de compatibilité, jamais comme source runtime obligatoire.
+
+2. AUCUNE VOIE FERROVIAIRE AUTOMATIQUE FICTIVE
+----------------------------------------------
+- makeFallbackRoute() ne fabrique plus aucune géométrie ferroviaire synthétique.
+- _maxFallbackKm = 0.
+- Création/édition automatique de lignes : échec propre et rollback si aucun chemin OSM réel n'existe.
+- Création automatique de gare : plus de liaison droite persistante en cas d'échec ORM.
+- Les extensions manuelles explicitement dessinées par le joueur restent autorisées.
+- Le cache de route sépare désormais les politiques strictes/options et ne peut plus injecter une ancienne route permissive dans un appel strict.
+
+3. WAYPOINT -> GARE / VIA -> VIA
+--------------------------------
+- Le routage curseur est désormais résolu globalement sur toute la chaîne d'ancres.
+- Backtracking/dynamic programming sur plusieurs candidats de snap : un VIA n'est plus figé sur la voie la plus proche avant de savoir si la suite est connectée.
+- Reproduction adversariale corrigée : une voie parallèle légèrement plus proche mais en impasse ne bloque plus A -> VIA -> B lorsque la voie voisine est réellement connectée.
+- Plus d'arrêt prématuré des candidats à <20 m pouvant sélectionner un détour absurde.
+- wayId mémorisé = préférence légère, plus verrou exclusif.
+- Cache curseur passé à cursor-v7.
+- Les legs successifs doivent être continus à <=2 m.
+- Un échec de recalcul vide le nouveau path au lieu de conserver silencieusement l'ancien tracé partiel.
+- +VIA global cible désormais le dernier leg existant, pas un leg fantôme après le terminus.
+
+4. CACHE ORM / OVERPASS
+-----------------------
+- Cache rail bumpé à v6 ; cache gares bumpé à stations-v6.
+- Les réponses HTTP 200 contenant remark/error Overpass sont considérées comme des erreurs et ne sont jamais mises en cache comme tuiles vides.
+- Le routeCache est invalidé lorsque de nouvelles ways modifient le graphe.
+- avoidStationPairs encode désormais l'identité réelle des paires dans la clé de cache.
+- Echec réseau et absence réelle de topologie sont distingués dans la chaîne V2.
+
+5. SENS DES VOIES / ALERTES
+---------------------------
+- Lecture de oneway=* et blocage des arêtes interdites dans le graphe.
+- Les voies parallèles/connectées sont comparées globalement avant sélection.
+- Alertes UNKNOWN dédupliquées par section/way.
+- Alertes de direction préférentielle regroupées.
+- La validation ne confond plus une ancienne tuile ORM vide empoisonnée avec une suppression réelle de voie.
+
+6. VALIDATION SCHEDULE V2 FAIL-CLOSED
+-------------------------------------
+Un horaire ne peut plus devenir VALID si :
+- il n'a pas exactement N-1 legs pour N arrêts ;
+- un leg contient moins de 2 points ou ne correspond pas aux bons from/to ;
+- un VIA n'est pas couvert par le bon leg ;
+- deux legs ne sont pas géométriquement continus ;
+- path.error est présent ;
+- les heures ne sont pas monotones ;
+- la traction/électrification/écartement connus sont incompatibles ;
+- une formation référence un véhicule inexistant ou dupliqué ;
+- aucune traction active n'est disponible.
+Toute modification fonctionnelle pertinente repasse l'horaire en DRAFT jusqu'à revalidation.
+
+7. TRAIN V2 / DEPART / LIVEMAP
+------------------------------
+- Respect strict de occ.versionId, calendrier et occ.cancelled : aucun fallback fail-open vers une autre version.
+- Un service avec un leg vide n'est jamais compilé.
+- Préflight de la route avant le passage à moving.
+- Horloge V2 à la seconde : un départ 16:19:37 peut être déclenché à 16:19:37 au lieu d'attendre 16:20.
+- Réservation des véhicules physiques déterministe et transactionnelle ; une même locomotive ne peut plus naître dans deux services concurrents.
+- blocked_route reste visible sur la Livemap, explique le problème et libère correctement le matériel.
+- Les causes de non-spawn sont également visibles depuis le Schedule Creator.
+- Position de départ issue du binding de voie V2 même si la gare n'est pas encore re-streamée.
+- Premier frame de mouvement V2 testé explicitement après le départ.
+
+8. ROULEMENTS / MATERIEL
+------------------------
+- Actions de roulement à l'origine appliquées avant départ.
+- Dwell et opérations terminales prolongent réellement la disponibilité planifiée du matériel.
+- Dépendances d'opérations résolues par graphe ; cycles/dépendances invalides détectés.
+- Localisation du matériel par coordonnées prise en compte.
+- Rotations désactivées ignorées dans les conflits.
+- Traction mixte diesel/électrique : la puissance électrique connue incompatible n'est plus comptée comme disponible.
+- Une annulation ne téléporte plus le matériel au terminus prévu.
+
+9. SAVE / RELOAD
+----------------
+- Revalidation ORM effectuée avant la recompilation des services V2 au chargement.
+- L'état runtime d'un train V2 en ligne est sauvegardé séparément et restauré : index de leg, progression, position, vitesse, retard, état et véhicules physiques.
+- Un train en ligne ne redémarre plus artificiellement de son origine après reload.
+- Les verrous de matériel fantômes sans ActiveService propriétaire sont réparés.
+
+10. QA / NON-REGRESSION
+-----------------------
+- 45 fichiers de tests hors météo exécutés séquentiellement anti-crash.
+- 97 288 / 97 288 tests PASS, 0 FAIL.
+- 173 fichiers JavaScript passent node --check, bundle inclus.
+- 70 / 70 tests post-bundle ciblés PASS.
+- Contrat OSM direct historique v1.1.19 adapté au périmètre actuel (light rail/monorail purs exclus) : 13 / 13 PASS.
+- Suite terrain/adversariale v1.1.32 : 45 / 45 PASS (13 régressions terrain + 7 ORM + 10 roulements + 9 runtime + 6 validation).
+- Les anciens scripts de reproduction de l’audit ont été relancés : aucun de leurs bugs d’origine n’est encore reproduit.
+- Cache/revalidation ORM ciblés : 7 / 7 PASS.
+- Reload très retardé : un snapshot V2 est restauré même hors fenêtre normale ; sans snapshot, une alerte V2_RUNTIME_WINDOW_MISSED remplace l’échec silencieux.
+- Bulk weather : 5 501 assertions OK observées, 0 not ok ; le runner conserve son handle historique après les assertions et est stoppé par timeout.
+
+REGLE ABSOLUE
+-------------
+Rail Empire ne fabrique aucune voie ferroviaire automatique en ligne droite lorsqu'OSM/ORM ne fournit pas de chemin réel. Une extension manuelle explicitement construite par le joueur reste possible.
+
+SMOKE TERRAIN PRIORITAIRE
+-------------------------
+Château-Thierry -> VIA(s) -> Dormans, horaire + roulement + matériel réel :
+1. vérifier le tracé complet gare -> VIA -> VIA -> gare ;
+2. vérifier l'absence de faux warning de sens ;
+3. observer le train de T-5 à T+2 sur la Livemap ;
+4. vérifier le départ exact ;
+5. sauvegarder/recharger avant puis pendant le trajet.
+
+NOTE
+----
+Le navigateur réel file:// de l'utilisateur reste le smoke terrain final. L'environnement de build ne permet pas de déclarer artificiellement ce smoke navigateur comme PASS.

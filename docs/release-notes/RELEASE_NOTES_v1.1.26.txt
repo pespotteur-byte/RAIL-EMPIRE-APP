@@ -1,0 +1,32 @@
+Rail Empire v1.1.26 — SCHEDULE V2 LOCAL ORM ROUTING + PERFORMANCE HARDENING
+Date: 2026-08-16
+
+Correctifs terrain principaux
+- Schedule Creator V2: le routage par position curseur ne dépend plus d'un nœud OSM situé à moins de 500 m.
+- Chaque ancre est projetée sur le segment ferroviaire réel le plus proche puis injectée comme nœud local de routage.
+- Routage calculé sur un graphe LOCAL par liaison, et non plus par reconstruction du graphe ORM global après chaque clic.
+- Corridor adaptatif: première passe étroite/rapide, seconde passe élargie si le chemin ferroviaire réel s'écarte de la ligne directe.
+- Aucun fallback synthétique: réseau déconnecté = aucun tracé, jamais de ligne droite.
+- Les échecs de routage ne sont plus mis en cache définitivement: même couple de clics peut être retenté après un souci réseau.
+
+Performances
+- Fin du redraw forcé toutes les 500 ms dans Schedule Creator V2.
+- Le redraw devient piloté par le dirty flag / événements.
+- Pendant le déplacement de carte, le navigateur ne lance plus un rendu complet à chaque mousemove; le cycle RAF regroupe les mouvements.
+- A faible zoom, toutes les 17 817 gares restent visibles mais utilisent des pixels fillRect ultra-légers comme le renderer principal.
+- Le clic station ne reprojette plus inutilement la position du clic pour chaque candidat.
+- Les requêtes Overpass du Schedule Creator utilisent un profil rapide: 8 s max par endpoint, 1 tentative, redécoupage limité, résultats partiels conservés.
+- Les imports ORM massifs historiques conservent leur stratégie patiente séparée.
+
+QA
+- 97 209 / 97 209 assertions hors météo PASS, 0 fail.
+- Météo: 5 501 assertions exécutées, 0 "not ok"; le runner garde toujours son handle historique et est arrêté au timeout.
+- Total observé sans échec: 102 710 assertions.
+- Tests dédiés v1.1.26: routing segment-snapped, absence de graphe global, pas de redraw forcé, Overpass rapide.
+- Startup bundle: PASS.
+- 17 817 gares gameplay natives: PASS.
+- Toutes les gares visibles au dézoom max: PASS.
+- Aucun fallback ligne droite: test dédié PASS.
+
+Important
+- Le tracé V2 dépend toujours des données vectorielles OSM obtenues via Overpass. Le calque visuel OpenRailwayMap est une couche de tuiles et n'est pas lui-même un graphe routable.

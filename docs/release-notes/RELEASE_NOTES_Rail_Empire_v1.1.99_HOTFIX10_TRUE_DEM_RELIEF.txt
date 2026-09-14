@@ -1,0 +1,34 @@
+Rail Empire v1.1.99 — HOTFIX10 TRUE DEM RELIEF
+
+NEW — TRUE TERRAIN IN 3D GPS FOLLOW
+- Adds real DEM-based terrain deformation to the optional 3D GPS train-follow view.
+- Loads public Terrain Tiles automatically around the followed train.
+- Uses Terrarium elevation data in real metres.
+- Reuses the existing satellite/ORM Livemap as the terrain texture.
+- Keeps trains as flat 2D GPS arrows, including nearby traffic.
+- Broad default visibility (tens of kilometres) with detail scaling according to zoom.
+
+VISUALS
+- Real hills, valleys and mountain relief instead of a merely tilted flat map.
+- Lightweight hillshade from terrain normals for clearer slopes.
+- Existing dynamic night/rain/snow/fog/storm/heat atmosphere remains active.
+- 1.18x vertical exaggeration improves readability without turning the terrain into a caricature.
+
+LOW-MEM DESIGN
+- No Three.js/Babylon or 3D train models.
+- One custom WebGL terrain mesh.
+- Bounded DEM cache and bounded mesh resolution.
+- GPU resources are released when leaving relief/3D mode.
+- Dead-zone recentering avoids rebuilding the terrain every frame.
+- Automatic fallback to the HOTFIX9 pseudo-3D view on unsupported/failed DEM or WebGL.
+
+INHERITS
+- HOTFIX8 Opera-friendly schedule editing/autosave.
+- HOTFIX7 topology fragmentation.
+- HOTFIX6 low-memory long-range routing.
+- HOTFIX4–5 long-range route engine and VIA editing.
+- HOTFIX3 all-ORM-track routing.
+
+BUILD
+FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX10-TRUE-DEM-RELIEF
+Cache identity: 1199re3d2

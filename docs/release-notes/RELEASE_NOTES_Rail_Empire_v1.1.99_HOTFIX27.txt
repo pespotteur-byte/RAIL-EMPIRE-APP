@@ -1,0 +1,8 @@
+Rail Empire v1.1.99 — HOTFIX27 GPS ZOOM30
+
+- Vue 3D GPS : plafond de zoom visuel porté de z20 à z30 (+10 niveaux).
+- Le zoom 2D normal conserve son plafond historique.
+- Les sources raster restent plafonnées à leur résolution native (base/satellite/labels z20, ORM z19) et sont recadrées/upscalées pour les niveaux GPS supérieurs.
+- Correction de la file de chargement : un niveau source inférieur au zoom visuel n'est plus rejeté comme obsolète.
+- L'inclinaison reste plafonnée à 68° au-delà de z20 : le +10 concerne uniquement le rapprochement, sans fragiliser la couverture 3D.
+- HOTFIX26 compositor follow, flèche centrée et MovementAuthority conservés.

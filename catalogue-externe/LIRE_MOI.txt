@@ -1,0 +1,45 @@
+RAIL EMPIRE — CATALOGUE EXTERNE 1.0
+===================================
+
+UTILISATION
+1. Windows 64 bits : double-cliquer sur RailEmpireCatalogEditor.exe.
+   Windows 32 bits : double-cliquer sur RailEmpireCatalogEditor-x86.exe.
+2. L'éditeur s'ouvre dans le navigateur sur une adresse locale 127.0.0.1.
+   Rien n'est envoyé sur Internet : le programme tourne uniquement sur le PC.
+3. Modifier / ajouter / supprimer les fiches voulues.
+4. Pour une famille : choisir une fiche comme « modèle », puis importer le dossier
+   d'images. Les nouvelles fiches reprennent ses specs, tout en gardant un nom et
+   une image propres à chaque fichier.
+5. Exporter en JSON ou TAR.GZ.
+6. Dans Rail Empire : Matériel Roulant > « Importer un catalogue » et choisir
+   l'export. Le jeu se recharge et applique le catalogue.
+
+SAUVEGARDE
+- L'éditeur autosauvegarde le travail dans le profil utilisateur Windows.
+- « Réinitialiser » efface le travail de l'éditeur et revient aux 36 307 fiches
+  natives de Rail Empire 1.1.99.
+- Dans le jeu, « Retirer le catalogue externe » restaure les fiches natives au
+  rechargement.
+
+FORMATS
+- JSON : simple, autonome ; les images ajoutées sont embarquées en data URL.
+- TAR.GZ : recommandé pour un gros catalogue ; catalog.json + images séparées.
+
+PRIORITÉ DES MODIFICATIONS
+Une fiche que le joueur a retouchée dans sa sauvegarde après import reste
+prioritaire : le catalogue externe ne l'écrase pas au chargement.
+
+CONSEIL
+Garder l'éditeur dans le dossier « catalogue-externe » livré avec Rail Empire :
+il détecte alors automatiquement img/catalog et affiche les aperçus du catalogue
+natif.
+
+Le bouton « Quitter » ferme le serveur local de l'éditeur.
+
+RC28 — Windows 7 32 bits
+-------------------------
+Pour Windows 7 x86, utiliser en priorité :
+- Setup-RailEmpireCatalogEditor-Win7-x86.exe (installateur)
+- RailEmpireCatalogEditor-Win7-x86.exe (programme autonome)
+
+Ces deux fichiers remplacent le vieux binaire x86 générique pour les machines Windows 7.

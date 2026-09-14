@@ -1,0 +1,46 @@
+{
+  "project": "Rail Empire Batch186 STRICT100 FreightPass2 Game Integration",
+  "base": {
+    "catalogEntries": 16056,
+    "wagons": 9662,
+    "cargoTypesBeforeRuntimePatches": 119,
+    "industries": 52
+  },
+  "freightPass1": {
+    "patchedWagons": 75,
+    "cargoDefinitions": 44,
+    "industryPatch": {
+      "updated": 17,
+      "added": 5
+    }
+  },
+  "freightPass2": {
+    "patchedWagons": 586,
+    "cargoDefinitions": 16,
+    "industryPatch": {
+      "updated": 17
+    }
+  },
+  "combined": {
+    "patchedCatalogEntries": 661,
+    "actualRuntimeCargoTypes": 201,
+    "industryTypes": 57,
+    "fieldChangeCounts": {
+      "cargoTypes": 661,
+      "technicallyCompatibleCargoTypes": 661,
+      "freightValidationSource": 661,
+      "freightValidationScope": 661,
+      "freightEvidence": 586,
+      "freightBatch": 661
+    },
+    "technicalOrIdentityFieldsChanged": 0,
+    "catalogIdsChanged": 0
+  },
+  "tests": {
+    "pass1": "5/5 PASS",
+    "pass2": "19/19 PASS",
+    "rollingStock": "3/3 PASS",
+    "fullSuite": "stopped by execution window after very large positive run; no not-ok/fail observed before cutoff"
+  },
+  "integrity": "PASS"
+}

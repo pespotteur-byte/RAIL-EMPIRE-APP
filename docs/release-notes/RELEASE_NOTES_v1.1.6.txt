@@ -1,0 +1,65 @@
+Rail Empire v1.1.6 — NO-FREEZE TRACER LIGNE + STATIONS
+2026-08-14
+
+Objectif
+--------
+Rendre Tracer ligne et la création/importation de gares robustes sur de très gros
+imports (jusqu'à ~500 km et plus) sans bloquer l'interface et sans faire tomber
+l'import des voies si les métadonnées de gare rencontrent un problème réseau.
+
+Tracer ligne
+------------
+- Longue distance (>120 km): requêtes dans un corridor chevauchant A→B plutôt
+  que tout le rectangle géographique entre les deux points.
+- Tuiles ferroviaires indépendantes, retries multi-Overpass et subdivision.
+- Les voies restent prioritaires; les gares sont un flux indépendant.
+- Accrochage A/B coopératif: yields réguliers sur les très gros jeux de données.
+- Suppression d'une construction de graphe legacy inutilisée pendant l'import.
+- Suppression de l'ancien simplificateur degré-2 quadratique; le chain-follow
+  produit déjà des tronçons jonction→jonction.
+- Construction des nœuds, adjacency et chaînes découpée avec yields.
+- Injection des points et tronçons dans le jeu par lots; une erreur d'insertion
+  rollbacke le groupe d'import au lieu de laisser une demi-ligne.
+- Clic A/B: index spatial, plus de scan complet de tous les points de voie.
+
+Gares OSM
+---------
+- Cache gare persistant séparé du cache voie.
+- Une tuile gare en panne ne supprime plus les gares déjà récupérées ailleurs.
+- Résultats partiels d'une tuile subdivisée conservés puis partie manquante réessayée.
+- 2 passes de récupération après la passe initiale; les caches réussis sont réutilisés.
+- Aucun échec de métadonnées gare ne peut annuler/rollbacker les voies déjà importées.
+- Ajout des gares au monde par petits lots avec yield.
+- Détection des doublons et rattachement gare↔point de voie par index spatial;
+  suppression du produit cartésien gares × points de voie.
+- Tram, métro, light rail, monorail et train=no restent exclus.
+
+Création manuelle de gare
+-------------------------
+- Le bouton bleu valide et ferme immédiatement la modale.
+- Aucune requête Overpass, reconstruction de graphe ou Dijkstra n'est attendue
+  avant la validation.
+- Si une connexion est demandée, une liaison provisoire valide est créée tout
+  de suite puis son tracé ORM est affiné en arrière-plan.
+- Recherche de la gare la plus proche via index spatial.
+
+Routage
+-------
+- Reconstruction du graphe ORM asynchrone/cooperative pour éviter qu'un gros
+  import reporte un gel sur la première demande de routage suivante.
+
+Performance / QA
+----------------
+- Stress test synthétique: 8 001 ways, 160 101 points géométriques,
+  16 002 voie-points, 8 001 tronçons.
+- Durée observée dans l'environnement QA: ~1,6 s.
+- Plus gros gap heartbeat observé: ~38,6 ms (au lieu d'un blocage continu).
+- 97 137 tests principaux PASS, 0 FAIL.
+- 117+ fichiers JS / bundle vérifiés syntaxiquement.
+
+Limite externe honnête
+----------------------
+Le code peut empêcher un timeout/une tuile gare de faire planter ou geler la partie,
+mais il ne peut pas créer une gare absente d'OpenStreetMap ni garantir la disponibilité
+d'Internet/Overpass. Les données réussies sont conservées en cache et les zones
+manquantes restent reprenables.

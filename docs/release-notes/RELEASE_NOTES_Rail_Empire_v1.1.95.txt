@@ -1,0 +1,53 @@
+RAIL EMPIRE v1.1.95 — CATALOGUE NAME DEDUP
+================================================
+
+Objectif de cette build
+-----------------------
+Première passe de remise au propre du catalogue matériel : supprimer les milliers de noms d'affichage identiques sans toucher aux identifiants ni aux caractéristiques gameplay.
+
+Résultat
+--------
+- Catalogue total : 36 307 entrées.
+- IDs avant/après : strictement identiques et tous uniques.
+- 3 256 groupes de noms dupliqués avant la passe.
+- 13 592 fiches appartenaient à un groupe de nom dupliqué.
+- 10 336 répétitions surnuméraires de noms.
+- 13 582 noms effectivement modifiés.
+- 0 groupe de nom dupliqué après normalisation espace/casse.
+- 0 autre champ catalogue modifié dans cette passe.
+
+Politique de renommage
+----------------------
+- Le nom de famille/classe reste toujours au début, pour conserver la recherche habituelle.
+- Les variantes sont distinguées uniquement à partir de données déjà présentes : série, livrée/description, variante MLG, chemin/archive MLG.
+- Aucun suffixe artificiel du type « copie 1 », « copie 2 » n'est utilisé.
+- Quand deux sources sont réellement impossibles à distinguer autrement, l'identifiant documentaire/catalogue est utilisé en dernier recours.
+- Aucun ID n'est supprimé à J-4 de la release afin de ne pas casser les rames/sauvegardes existantes.
+
+Exemples
+--------
+BB 26000 -> BB 26000 — Sybic — Livre d'origine / Livrée FRET / Livrée fantôme / variantes Carmillon, etc.
+BB 22200 -> distinction petites/grandes cabines et livrées.
+X 73500 -> distinctions de livrées/régions/variantes.
+Les anciens noms très génériques A / B / AB récupèrent une famille/variante documentaire.
+
+Cache / chargement
+------------------
+- Version application : 1.1.95.
+- Bundle FILE:// : CATALOG-NAME-DEDUP1.
+- Cache du bundle catalogue différé : 1195.
+- Imports HTTP des fichiers catalogue/chunks : ?v=1195.
+
+QA
+--
+- 36 307 / 36 307 IDs uniques.
+- 36 307 / 36 307 noms d'affichage uniques dans les sources.
+- 36 307 / 36 307 noms d'affichage uniques dans le bundle catalogue différé réellement construit.
+- 0 champ autre que name modifié par rapport à la 1.1.94.
+- 123/123 tests PASS sur les suites relancées : catalogue/fret, Rames/Direct, SC/OSM monde, aide, Roulements et performance.
+- 242 fichiers JS/MJS vérifiés syntaxiquement.
+
+Fichiers d'audit
+----------------
+- QA_CATALOG_NAME_DEDUP_v1.1.95.json
+- CATALOG_NAME_RENAMES_v1.1.95.csv

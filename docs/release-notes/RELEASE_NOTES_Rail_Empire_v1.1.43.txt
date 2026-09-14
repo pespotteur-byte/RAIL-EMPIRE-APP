@@ -1,0 +1,50 @@
+Rail Empire v1.1.43 — FULL PERFORMANCE AUDIT FIX
+================================================
+
+Purpose
+-------
+Whole-code performance audit after v1.1.42 failed to improve real-world Livemap latency.
+This release deliberately focuses on startup/idle/runtime cost and preserves the train workflow already working in v1.1.40+.
+
+Major fixes
+-----------
+1. Real Livemap static-layer caching activated. Tracks, static VoiePoints, industries, depots/zones and all 17,817 gameplay stations are no longer re-rasterized every dynamic frame.
+2. Livemap render gate: hidden/idle map no longer repaints at full frame rate.
+3. Zero-moving-train fast path skips 10 Hz projection/grid/route-index work.
+4. Station Web-Mercator projection is cached.
+5. Schedule V2 physical timing and direct-Rame proxy work is cached.
+6. Schedule V2 rotation plans are cached for the current simulation minute; forceSync invalidates immediately after edits.
+7. Several train movement route scans were changed from whole-route rescans to bounded/indexed lookups.
+8. Platform occupancy is fully lazy: no 17,817 empty Maps at startup, and the dynamic overlay only inspects actually occupied platform states.
+9. Unchanged works/incidents no longer rescan all tracks and invalidate the complete static map every minute.
+10. Historical ORM areas are no longer refetched/rebuilt automatically when loading a save. Saved coverage is history, not resident graph.
+11. Network revalidation of every Schedule V2 route is no longer launched automatically at save load.
+12. Heavy rolling-stock/Batch186 data is lazy. Livemap startup only loads the tiny cargo-definition module.
+13. FILE:// bundle architecture split:
+    - startup core: 2,853,757 bytes / 61 modules
+    - deferred catalogue: 45,802,563 bytes / 66 modules
+    The deferred catalogue is injected only when a material-dependent page needs it.
+14. Header/weather/diagnostics/freight/train-list DOM refreshes are throttled/diffed; idle approach polling returns before DOM queries.
+15. Paris real-time formatter is cached instead of recreated/reparsed repeatedly.
+
+Preserved contracts
+-------------------
+- All 17,817 gameplay stations remain visible at minimum zoom.
+- OSM/ORM remains routing authority; no automatic synthetic straight-line fallback.
+- Page Rames -> Horaire -> Affecter rame direct workflow remains.
+- Real Roulement remains authoritative when present, with no duplicate direct train.
+- J+1 fixes remain.
+- Schedule V2 exact-second departure remains.
+- WAYPOINT -> gare routing remains.
+- "Se situe entre A et B" continues to use the train's timetable stops.
+- Direct runtime keeps the lightweight proxy; player-facing imagery resolves from the real page-Rames consist.
+
+QA actually executed
+--------------------
+- 320 / 320 functional non-bulk/non-weather tests PASS
+- 69 / 69 post-bundle critical tests PASS
+- 20,275 / 20,275 bulk ORM tests PASS
+- 187 / 187 JavaScript/MJS syntax checks PASS
+
+The full historical ~97k bulk bank was not rerun for this final performance-only pass.
+No browser FPS claim is made: this environment does not provide a usable Rail Empire browser benchmark, so real latency must be confirmed on the target machine.

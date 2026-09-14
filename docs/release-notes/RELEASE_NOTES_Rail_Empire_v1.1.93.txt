@@ -1,0 +1,55 @@
+Rail Empire v1.1.93 — SC WORLD OSM RAIL BASE
+=============================================
+
+Objectif
+--------
+Rendre l’existence géométrique des voies du Schedule Creator indépendante du bon chargement ponctuel d’OpenRailwayMap et étendre cette base ferroviaire à une couverture mondiale.
+
+Architecture 1.1.93
+-------------------
+- OSM vectoriel = squelette de base de l’infrastructure ferroviaire routable.
+- ORM/OpenRailwayMap = enrichissement ferroviaire ; il ne peut plus faire disparaître une voie OSM valide.
+- Couverture géographique : monde entier (-90/+90, -180/+180), avec gestion explicite de l’antiméridien.
+- Grille de cache : cellules mondiales de 0,5° x 0,5°.
+- Chargement : uniquement les cellules réellement nécessaires au trajet / à la zone affichée.
+- Persistance : chaque cellule validée est conservée dans IndexedDB sans expiration automatique.
+- Réutilisation : une zone déjà obtenue peut être reprise au lancement suivant et hors-ligne sans nouvel appel réseau.
+- Mémoire vive : LRU borné ; RE ne conserve pas la planète entière en RAM.
+- Types routables conservés selon les règles RE : railway=rail, narrow_gauge, preserved ; yards/sidings/spurs/crossovers restent inclus lorsqu’ils sont des service=* de ces voies. Métro/tram/light_rail restent exclus du routage ferroviaire lourd selon les règles actuelles de RE.
+
+Schedule Creator
+----------------
+- Nouveau bouton « 🌍 OSM monde » : affiche l’état de la grille mondiale, tuiles mémoire, voies résidentes, hits, acquisitions et échecs réseau.
+- Nouveau bouton « ↻ OSM zone » : purge et réacquiert proprement la zone visible (zoom 10+) si une zone comme Dijon paraît incomplète.
+- Le picker de voie exacte peut rouvrir des vecteurs OSM mondiaux déjà mis en cache après F5 / redémarrage / hors-ligne.
+- Le routage dynamique utilise désormais le cache mondial avant de solliciter le réseau.
+- Les réponses OSM partielles ne sont jamais persistées comme tuiles mondiales complètes.
+- Les informations ORM résidentes enrichissent les mêmes ways mais ne remplacent jamais leur géométrie OSM de base.
+- Les corridors traversant +/-180° utilisent le chemin géographique court et sont scindés proprement à l’antiméridien.
+
+Mémoire de tracé
+----------------
+- schedule-route-v6
+- exact-leg-v3
+Les mémoires pré-1.1.93 sont donc invalidées. Un ancien détour erroné (par exemple Dijon -> Beaune) ne peut pas masquer la nouvelle autorité OSM mondiale.
+
+Pack statique mondial
+---------------------
+Le ZIP principal n’embarque PAS un planet.osm.pbf complet. Cela rendrait le jeu déraisonnablement volumineux et incompatible avec la cible mémoire légère.
+Le dépôt conserve toutefois scripts/build_railgraph_pack.py, capable de convertir un ou plusieurs .osm.pbf en shards RailGraph Binary V2. Il peut donc servir à produire ultérieurement un pack mondial / régional totalement hors-ligne à distribuer séparément.
+
+Compatibilité
+-------------
+- Les correctifs 1.1.91 Dijon/Beaune restent actifs : healing, rescue continu, distinction panne réseau / absence réelle de chemin, Auto segment frais.
+- Le forçage horaire 1.1.92 reste actif.
+- L’aide contextuelle globale 1.1.92 reste active et documente désormais la couche OSM mondiale.
+- Roulements/Rames/Direct inchangés fonctionnellement.
+
+QA
+--
+- 8/8 nouveaux tests v1.1.93 : PASS.
+- Batterie Schedule Creator sélectionnée : 147/147 PASS.
+- Batterie croisée Roulements/Rames/Direct/performance : 78/78 PASS.
+- Syntaxe : 238/238 fichiers JS/MJS source valides + bundles CORE/CATALOG valides.
+- Smoke Chromium sur le bundle final : boutons « 🌍 OSM monde » et « ↻ OSM zone » présents ; panneau d’état du cache mondial fonctionnel.
+- Aucun appel Overpass mondial réel n’est revendiqué dans le smoke Chromium : l’environnement d’exécution ne fournit pas un accès réseau public fiable. Le premier test terrain Dijon/Beaune reste donc à faire dans le navigateur du joueur.

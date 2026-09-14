@@ -1,0 +1,58 @@
+Rail Empire — HOTFIX68 multilingual station-name voices
+
+Rail Empire does NOT redistribute the Piper ONNX station voice models in this ZIP.
+Models are requested at runtime only when their language is needed and may be
+cached by the browser. Piper voice model licenses are model-specific: the
+MODEL_CARD associated with each voice is authoritative and must be respected.
+
+Voice registry used by HOTFIX68:
+fr-FR  fr_FR-siwis-low
+de-DE  de_DE-eva_k-x_low
+it-IT  it_IT-riccardo-x_low
+es-ES  es_ES-carlfm-x_low
+ca-ES  ca_ES-upc_ona-x_low
+eu-ES  eu_ES-maider-medium
+en-GB  en_GB-alba-medium
+cy-GB  cy_GB-bu_tts-medium
+ru-RU  ru_RU-irina-medium
+uk-UA  uk_UA-ukrainian_tts-medium
+ro-RO  ro_RO-mihai-medium
+hu-HU  hu_HU-berta-medium
+nl-NL  nl_NL-mls_5809-low
+nl-BE  nl_BE-nathalie-x_low
+cs-CZ  cs_CZ-kasandra-medium
+no-NO  no_NO-talesyntese-medium
+fi-FI  fi_FI-harri-low
+da-DK  da_DK-talesyntese-medium
+pl-PL  pl_PL-mls_6892-low
+et-EE  et_EE-news-medium
+lv-LV  lv_LV-aivars-medium
+sv-SE  sv_SE-alma-medium
+lb-LU  lb_LU-marylux-medium
+sk-SK  sk_SK-lili-medium
+pt-PT  pt_PT-tugão-medium
+sl-SI  sl_SI-artur-medium
+sq-AL  sq_AL-edon-medium
+sr-RS  sr_RS-serbski_institut-medium
+bg-BG  bg_BG-dimitar-medium
+el-GR  el_GR-rapunzelina-medium
+is-IS  is_IS-ugla-medium
+tr-TR  tr_TR-dfki-medium
+ka-GE  ka_GE-natia-medium
+hy-AM  hy_AM-gor-medium
+
+Languages without a configured Piper pack in this build use ONLY a matching
+system voice and otherwise remain silent: lt-LT, hr-HR, bs-BA, mk-MK, be-BY,
+sr-ME, az-AZ. Rail Empire deliberately does not substitute another language.
+
+Voice catalog / model cards:
+https://huggingface.co/rhasspy/piper-voices
+https://huggingface.co/rhasspy/piper-voices/blob/main/voices.json
+
+Browser runtime:
+@mintplex-labs/piper-tts-web 1.0.5 (MIT)
+https://github.com/Mintplex-Labs/piper-tts-web
+
+Important: the Piper repository/library license is not a blanket license for
+all voice datasets. Review each voice MODEL_CARD before redistributing a model.
+HOTFIX68 downloads models at runtime and does not embed their ONNX files.

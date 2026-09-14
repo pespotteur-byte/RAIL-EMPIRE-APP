@@ -1,0 +1,162 @@
+[
+  {
+    "type": "sugar-bulk",
+    "name": "Sucre en vrac",
+    "category": "cereales_agri",
+    "categoryName": "Céréales & Agri",
+    "unit": "t",
+    "pricePerUnit": 50,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "potatoes-bulk",
+    "name": "Pommes de terre en vrac",
+    "category": "alimentaire",
+    "categoryName": "Alimentaire & boissons",
+    "unit": "t",
+    "pricePerUnit": 45,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "industrial-ice",
+    "name": "Glace industrielle",
+    "category": "alimentaire",
+    "categoryName": "Alimentaire & boissons",
+    "unit": "t",
+    "pricePerUnit": 20,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "bananas-refrigerated",
+    "name": "Bananes réfrigérées",
+    "category": "alimentaire",
+    "categoryName": "Alimentaire & boissons",
+    "unit": "t",
+    "pricePerUnit": 95,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "glass-sand",
+    "name": "Sable siliceux de verrerie",
+    "category": "vrac_solide",
+    "categoryName": "Vrac solide",
+    "unit": "t",
+    "pricePerUnit": 22,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "excavated-material",
+    "name": "Déblais de chantier",
+    "category": "dechets",
+    "categoryName": "Déchets & recyclage",
+    "unit": "t",
+    "pricePerUnit": 4,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "acts-containers",
+    "name": "Caisses ACTS",
+    "category": "conteneurs",
+    "categoryName": "Conteneurs",
+    "unit": "unités",
+    "pricePerUnit": 150,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "automotive-parts",
+    "name": "Pièces automobiles",
+    "category": "automobiles",
+    "categoryName": "Automobile & véhicules",
+    "unit": "t",
+    "pricePerUnit": 120,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "lignite",
+    "name": "Lignite",
+    "category": "vrac_solide",
+    "categoryName": "Vrac solide",
+    "unit": "t",
+    "pricePerUnit": 20,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "zinc",
+    "name": "Zinc",
+    "category": "siderurgie",
+    "categoryName": "Sidérurgie & Métaux",
+    "unit": "t",
+    "pricePerUnit": 90,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "concrete-sleepers",
+    "name": "Traverses en béton",
+    "category": "btp",
+    "categoryName": "BTP & Matériaux",
+    "unit": "t",
+    "pricePerUnit": 45,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "mini-containers",
+    "name": "Mini-conteneurs porte-à-porte",
+    "category": "conteneurs",
+    "categoryName": "Conteneurs",
+    "unit": "unités",
+    "pricePerUnit": 90,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "postal-roll-containers",
+    "name": "Conteneurs postaux roulants",
+    "category": "courrier",
+    "categoryName": "Courrier & Express",
+    "unit": "unités",
+    "pricePerUnit": 80,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "bulk-powders",
+    "name": "Produits pulvérulents en vrac",
+    "category": "vrac_solide",
+    "categoryName": "Vrac solide",
+    "unit": "t",
+    "pricePerUnit": 25,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "quarry-products",
+    "name": "Produits de carrière",
+    "category": "vrac_solide",
+    "categoryName": "Vrac solide",
+    "unit": "t",
+    "pricePerUnit": 18,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  },
+  {
+    "type": "oversized-loads",
+    "name": "Charges encombrantes",
+    "category": "exceptionnel",
+    "categoryName": "Convois exceptionnels",
+    "unit": "t",
+    "pricePerUnit": 100,
+    "hazard": false,
+    "balanceStatus": "provisional-game-balance"
+  }
+]

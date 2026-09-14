@@ -1,0 +1,17 @@
+Rail Empire v1.1.99 — HOTFIX28 TRUE 50° GPS TILT
+
+Objectif
+- Donner à la vue GPS 3D une inclinaison réellement visible de 50° par rapport à la verticale de la carte, au lieu d'un angle numérique largement annulé par l'étirement vertical.
+
+Corrections
+- Pitch pseudo-3D fixé à 50°.
+- Suppression de la compensation verticale scaleY(1.75) : yComp = 1.0.
+- Overscan réel recalculé à 1.60 + pénalité d'aspect afin de conserver zéro coin noir à tous les caps.
+- Zoom 3D z30 HOTFIX27 conservé.
+- Suivi compositor HOTFIX26 conservé : la carte glisse sous la flèche sans gros redraw à chaque tick.
+- Flèche suivie screen-space HOTFIX23 conservée au centre exact.
+
+Cache
+- CSS : 1199re3d12
+- FILE bundle : 1199dep20
+- Renderer import : 1199cam21

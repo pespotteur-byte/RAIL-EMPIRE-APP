@@ -1,0 +1,80 @@
+Rail Empire v1.1.85 — Exact Track Picker + Regional One-Block Routing Fix
+2026-08-20
+
+FIELD REPORT
+------------
+1. A station with two parallel real ORM tracks could bind a precise maximum-zoom click on the RIGHT track to the LEFT track.
+2. A regional leg such as Weinheim -> Darmstadt could still fail as one block even though the real railway is visible/continuous in OpenRailwayMap.
+3. v1.1.84 claimed hedged Overpass tile acquisition, but the tile-resilience wrapper silently discarded maxEndpoints/raceEndpoints/hedgeDelayMs before calling fetchArea(). Real field latency therefore remained much closer to the old serial behaviour than intended.
+
+ROOT CAUSES
+-----------
+A. Parallel-track picker cache shadowing
+- getTrackCandidates() ranked resident vector ways first.
+- As soon as ANY resident way was within the click radius it returned immediately.
+- In a two-track station, the left way could already be resident while the right way remained visible only in the ORM raster / not-yet-streamed vector set.
+- A 3-5 m-away cached left track could therefore beat the exact real right track under the click.
+
+B. Hedged network options were dropped
+- fetchRailwayTiles() supplied the v1.1.84 hedged request policy.
+- _fetchRailTileResilient() forwarded only timeout/attempt/deadline/endpointOffset.
+- maxEndpoints, raceEndpoints and hedgeDelayMs never reached fetchArea().
+
+C. Regional exact-leg continuity
+- Medium regional legs used corridor tiles with only one effective endpoint per tile.
+- One unavailable/missing tile could create a graph gap even when the railway itself was continuous.
+- _findCursorLegBroadArea() already existed as a continuous real-OSM bbox rescue, but was never called by the exact-leg engine.
+
+CHANGES v1.1.85
+---------------
+1. Exact parallel-track click protection
+- Resident geometry is accepted immediately only when the click is essentially on that resident way (<= 1.25 m).
+- Otherwise a tiny official OSM Map API bbox is consulted and merged before final ranking.
+- A cached neighbouring track can no longer shadow a more precise real OSM track under the click.
+- wayId remains authoritative after selection; segmentIndex remains a hint.
+
+2. Hedged tile requests are now REAL
+- _fetchRailTileResilient() forwards maxEndpoints, raceEndpoints and hedgeDelayMs to fetchArea().
+- Schedule regional/long tile work can race two Overpass endpoints and accept the first valid response.
+- Slow/failed first-choice endpoint no longer serially blocks a healthy alternate endpoint.
+
+3. Regional 12-120 km routing hardening
+- Regional corridor tiles use 2 hedged endpoints.
+- Tile concurrency is bounded (max 4 workers in this path).
+- One bounded split rescue is allowed for a failed regional tile; no recursive explosion.
+- If both corridor tiers still fail to connect, the exact-leg engine now calls the existing continuous real-OSM bbox rescue before giving up.
+- This specifically targets one-block regional cases such as Weinheim -> Darmstadt.
+
+4. Whole-journey / long-route acquisition hardening
+- Whole-journey prefetch also uses hedged 2-endpoint tile acquisition.
+- One bounded split rescue is allowed per failed prefetch/long-route tile.
+- Long-route worker concurrency is capped while each worker can hedge, avoiding unbounded request fan-out.
+
+PRESERVED QUALITY CONTRACTS
+---------------------------
+- No synthetic straight-line railway fallback.
+- Exact OSM/ORM railway geometry remains authoritative.
+- Exact wayId track binding retained.
+- v1.1.79 strict-topology-first / lazy turnout rescue retained.
+- Sub-1.2 m endpoint micro-stitch and bounded sub-1.8 m turnout projection rescue retained.
+- v1.1.84 preview distance/yellow FALLBACK_30 accounting retained.
+- Failed suffix keeps already-resolved prefix and distance.
+- One 180 s wall-clock Schedule action budget retained.
+
+QA
+--
+- v1.1.85 dedicated picker/regional/network tests: 4/4 PASS.
+- Routing/Schedule targeted regression pack used during development: 58/58 PASS.
+- Full non-weather bank: 97,558/97,558 PASS, 0 FAIL.
+- Weather bulk: 5,501 useful assertion lines observed, 0 not ok; historical lingering runner handle remains after assertions.
+- JS/MJS/CJS syntax: 235/235 PASS.
+- FILE:// bundle rebuilt: 63 core modules + 66 deferred catalogue modules.
+- Release identity/cache: v1.1.85 / 1185.
+
+FIELD TEST PRIORITY
+-------------------
+1. Re-test the exact two-parallel-track station: click the RIGHT track at maximum zoom and confirm the bound way/track remains RIGHT.
+2. Test a short ~3 km route and measure wall-clock time again.
+3. Test Weinheim -> Darmstadt as ONE direct leg without intermediate VIA.
+4. If successful, extend Darmstadt -> Frankfurt and then continue toward Kassel.
+5. Real browser/API timing remains the final field benchmark; no fabricated browser-time claim is made from the build environment.

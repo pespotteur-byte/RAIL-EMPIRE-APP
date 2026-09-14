@@ -1,0 +1,20 @@
+{
+  "totalCatalog": 36307,
+  "uniqueIds": 36307,
+  "uniqueMlgIds": 34623,
+  "expectedMlgIds": 34623,
+  "priceMin": 50000,
+  "priceMax": 5000000,
+  "over6M": 0,
+  "zeroPrices": 0,
+  "cargoTypes": 204,
+  "badCargoRefs": 0,
+  "fullCatalogAdditions": 20134,
+  "provisionalEntries": 17520,
+  "categories": {
+    "locomotive": 8303,
+    "automotrice": 10539,
+    "voiture": 11455,
+    "wagon": 6010
+  }
+}

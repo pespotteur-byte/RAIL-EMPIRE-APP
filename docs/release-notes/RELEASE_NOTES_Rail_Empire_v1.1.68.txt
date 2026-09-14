@@ -1,0 +1,52 @@
+Rail Empire v1.1.68 — Schedule Long Route Performance Hotfix
+Date: 2026-08-18
+Baseline: v1.1.67 RAME_DUP_FREQUENCY_SEARCH
+
+OBJECTIF
+Corriger le retour de fortes latences / blocages du Schedule Creator V2 lors du calcul de tracés de l'ordre de 10 km et plus, sans dégrader la topologie OSM/ORM, les aiguilles, VIA, station throats, ni introduire de fallback ferroviaire synthétique.
+
+DIAGNOSTIC
+- Le fichier orm.js de v1.1.67 était byte-for-byte identique à celui de la référence stable v1.1.57.
+- Le problème provenait d'un comportement devenu pathologique quand le cache OSM/ORM résident et IndexedDB grossissait :
+  * chargement préventif d'enveloppes/corridors beaucoup trop larges ;
+  * jusqu'à ~22 000 ways persistants réinjectés dans un calcul local ;
+  * jusqu'à 10x10 candidats de snap (100 recherches A*) ou 14x14 (196) par segment ;
+  * deep-copy de toute la géométrie des ways avant routage ;
+  * yield du graph builder indexé sur le nombre de ways, pas sur le nombre de segments.
+
+CORRECTIONS v1.1.68
+1. Routage narrow-first :
+   - corridor étroit tenté en premier ;
+   - un tracé 2-points connecté est routé immédiatement après chaque passe ;
+   - le corridor large n'est chargé que si la passe étroite échoue.
+2. Limites de cache adaptatives selon la longueur maximale du segment :
+   - <25 km : enveloppes et quotas beaucoup plus petits ;
+   - 25–80 km : quotas intermédiaires ;
+   - >=80 km : secours plus large, mais toujours borné.
+3. Fan-out des snaps réduit :
+   - 6 candidats normaux au lieu de 10 ;
+   - 8 candidats de secours au lieu de 14 ;
+   - max courant ramené de 100/196 recherches A* à 36/64.
+4. Clone local sans deep-copy de la géométrie immutable.
+5. Construction du graphe coopérative aussi par nombre de segments (yield toutes les 2 500 arêtes environ), afin qu'un seul très grand way ne monopolise pas le thread UI.
+6. Ancien fallback local qui pouvait réinjecter tout le cache résident remplacé par une sélection bbox locale bornée.
+7. Aucun segment droit synthétique ajouté. OSM vectoriel reste la topologie de référence.
+
+BENCHMARKS SYNTHETIQUES DEDIES
+- Tracé simple ~10 km : une seule passe corridor quand la voie est connectée.
+- Tracé simple ~50 km : une seule passe corridor quand la voie est connectée.
+- Géométrie dense de 1 000 voies parallèles : <=36 recherches A*.
+- Ces tests sont synthétiques et ne remplacent pas le test réel en navigateur sur le réseau du joueur.
+
+QA
+- 5/5 tests performance v1.1.68 dédiés.
+- 67/67 tests ORM ciblés (VIA, aiguilles, station throat, mémoire OSM, réseau déconnecté, etc.).
+- 453/453 tests non-bulk.
+- 20 275/20 275 bulk ORM.
+- 20 143/20 143 bulk schedule/misc.
+- 213/213 fichiers JS/MJS/CJS sources syntaxiquement valides.
+- Bundles CORE et CATALOG syntaxiquement valides.
+- FILE:// CORE reconstruit en v1.1.68, cache-buster 1168.
+
+NOTE TEST JOUEUR
+Le correctif vise précisément le gel observé sur les tracés longs et les caches OSM volumineux. Le test in-game sur un vrai trajet de 10–50+ km reste le test déterminant pour confirmer le gain sur la machine du joueur.

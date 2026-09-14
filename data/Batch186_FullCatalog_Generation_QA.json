@@ -1,0 +1,21 @@
+{
+  "batch186_in_scope_drawings": 34623,
+  "already_represented_unique_mlg_ids": 14489,
+  "new_catalog_entries": 20134,
+  "expected_mlg_coverage": 34623,
+  "category_overrides_existing": 6182,
+  "new_category_counts": {
+    "voiture": 6421,
+    "automotrice": 7432,
+    "wagon": 1772,
+    "locomotive": 4509
+  },
+  "technical_status_counts": {
+    "GAMEPLAY_PROVISIONAL": 5102,
+    "MIXED_DOCUMENTED_AND_GAMEPLAY_PROVISIONAL": 12418,
+    "INHERITED_RE_FAMILY": 2557,
+    "DOCUMENTED_BATCH186": 57
+  },
+  "new_ids_unique": true,
+  "new_mlg_ids_unique": true
+}

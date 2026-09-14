@@ -1,0 +1,76 @@
+Rail Empire v1.1.99 — FULL AUDIT + INVENTAIRE/RAMES TAXONOMY
+============================================================
+Base: v1.1.98 LIVEMAP SIV AUDIO UNMUTE
+
+Scope audited
+-------------
+All gameplay/UI pages were audited except the Schedule/Horaire editor itself. Runtime hooks used by train circulation were audited because they are required by Livemap/Roulements. Inventaire/Matériel and Rames were added to the audit in the final passes.
+
+Major Livemap/runtime repairs
+-----------------------------
+- Physical arrival cannot deadlock a train a few metres before a stop in normal or macro/LOD movement.
+- Arrival, stopped state, next-stop cursor, departure and completion states are kept synchronized between ActiveService and train state.
+- Stop/dwell clocks and route vertex progress survive save/reload, including F5 while stopped at intermediate stations.
+- Side-effect failures (economy, freight, ITE) are isolated so they cannot abort the physical arrival/departure state machine.
+- V2 runtime isolates one corrupt rotation or one compile failure instead of aborting all following trains.
+- Save/load sanitizes non-finite runtime data and stale state combinations.
+- Garage/regulation timing is date-aware and cannot be perpetually pushed forward.
+- Selected Livemap route uses the clean Schedule Creator style; stations are red; raw route-node dots are removed.
+
+Inventaire / Matériel
+---------------------
+- 68 detailed classification families added above the four physical root categories.
+- Dynamic filters: detailed type, traction, country, operator and MLG category.
+- Search covers MLG metadata, identity country/operator and detailed classification.
+- Explicit technical zeroes are preserved (notably power=0 for unpowered EMU/DMU components).
+- Coaches/wagons cannot regain locomotive traction/power through malformed saves, edits or admin overrides.
+- IDs, NaN/Infinity and duplicate records are hardened on load/update.
+
+Rames
+-----
+- Detailed material picker uses the same 68-family taxonomy and dynamic filters.
+- Rame list gains composition categories: passenger, freight, mixed, traction-only, MU, hauled passenger/freight, high-speed, double-deck, night, infra/TTX, driving trailer; plus traction/status filters.
+- Old/malformed saves reconcile elements/details, locations, IDs and missing catalogue references.
+- Explicit freight capacity 0 stays 0; old gross-tonnage fallback uses only gross minus tare.
+- Dangerous edit/delete operations are blocked while material/rames are in service, maintenance or operational use.
+- Maintenance queues and rame maintenance flags reconcile after reload.
+
+Other audited systems
+---------------------
+- Lines/sillons: no automatic synthetic straight-line fallback, sub-km distances preserved, save/load hardened, auto sillons persisted.
+- Depots/ITE: orphan modules/queues cleaned, usable-length logic fixed, long trains work by tranches, module lookup uses actual ITE id.
+- Freight/Industries: delayed-payment crash fixed, partial deliveries and stats corrected, phantom cargo/contracts rejected, industrial stats separated from generic freight.
+- Economy/Bank: zero values preserved, numeric coercion hardened, loan interest/caps corrected, save/export parity improved.
+- Staff: rest/availability/reference reconciliation, invalid dates/coordinates/assignments hardened.
+- Incidents/Works: malformed IDs/routes/dates hardened, duplicate incidents/zones pruned, night windows corrected.
+- Infogare: DB Quai refresh path fixed, invalid times/composition data hardened.
+- Weather: zero longitude supported; network payloads and saved values finite/bounded.
+- Graphique de marche: return-leg data and midnight discontinuity handling fixed.
+- Hidden/merged subsystems: unions, connections, station upgrades, junctions/garages, shunting and voie-points/troncons hardened.
+- Save/export: duplicate world serialization removed; manual export aligned with the complete persistent game state.
+- Seasons: seasonal enable/disable now affects runtime and is evaluated before midnight departure compilation.
+
+Cross-system certification scenario
+-----------------------------------
+A -> B -> C -> D freight service, with RH, weather, works speed restriction, freight contract and ITE operation.
+- Stop B reached and held correctly.
+- F5/reload while stopped at B: exact position + next-stop cursor preserved.
+- Freight delivered at C and revenue booked once.
+- ITE adds operational dwell without hard-blocking the train.
+- Second F5/reload during the C ITE dwell preserves the real stop clock and remaining operational hold.
+- Train departs C, reaches D and completes; freight does not respawn after reload.
+
+QA summary
+----------
+- v1.1.99 audit/hardening/bundle contracts: 61 / 61 PASS.
+- Bulk economy/misc/physics/RNG/schedule/signaling: 53,923 / 53,923 PASS.
+- Bulk ORM/world: 24,270 / 24,270 PASS.
+- Current v1.1.99 test total above: 78,254 / 78,254 PASS.
+- Syntax: 279 / 279 JS/MJS/CJS files PASS before final packaging.
+- Historical targeted regression cluster: 175 PASS / 4 legacy marker assertions FAIL only because those tests explicitly require old bundle/version strings (1.1.64/65/67/97); no gameplay failure in those four cases.
+- FILE:// core + deferred catalogue bundles rebuilt as v1.1.99, cache=1199.
+- Catalogue source/chunks are byte-identical to the v1.1.98 baseline; this audit does not mutate the 36k catalogue data source.
+
+Environment limitation
+----------------------
+Managed Chromium in the audit environment cannot open this local file:// game build, so the final graphical/browser field smoke remains a player-side test. Source logic, bundle content, save/reload scenarios, fuzz/hardening and syntax are covered by the automated certification above.

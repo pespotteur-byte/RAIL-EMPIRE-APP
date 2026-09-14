@@ -1,0 +1,56 @@
+Rail Empire v1.1.11 — RailNet Stations Resilience Hotfix
+========================================================
+
+CORRECTION PRINCIPALE
+--------------------
+La v1.1.10 pouvait demarrer avec 0 gare mondiale parce que son manifest livre
+etait volontairement vide (prepared:false) et que toute la fonctionnalite
+dependait du succes d'une grosse requete QLever executee sur le PC du joueur.
+
+v1.1.11 SUPPRIME CE POINT DE PANNE UNIQUE
+----------------------------------------
+- Bootstrap ferroviaire embarque et utilisable hors ligne des l'extraction.
+- Source bootstrap : dataset Trainline EU stations, selection stricte des lignes
+  non-ville avec coordonnees valides et code UIC.
+- 22 230 enregistrements UIC embarques ; 22 204 references jouables apres la
+  deduplication spatiale/nom deja appliquee par Rail Empire.
+- 12 shards classic-script locaux compatibles file://.
+- Exemples verifies dans le pack : Trilport, Mannheim Hbf, Hannover Hbf,
+  Paris Gare de Lyon.
+
+PREPARATION MONDIALE
+--------------------
+- 1_PREPARER_GARES_MONDE.cmd n'utilise plus QLever comme dependance obligatoire.
+- Source principale : dump mondial quotidien GeoNames allCountries.zip.
+- Filtre : RSTN (railroad station) + RSTP (railroad stop).
+- RSTNQ / RSTPQ (gares/arrets abandonnes) exclus.
+- Telechargement unique d'environ 400 Mo, ensuite fichiers locaux.
+- Conversion en shards RailNet et manifest local.
+
+ANTI-CASSE / ATOMICITE
+----------------------
+- Le preparateur construit tout dans un dossier temporaire.
+- Les nouveaux shards sont copies avant la bascule du manifest.
+- manifest.js est remplace EN DERNIER.
+- Si telechargement/decompression/parsing echoue, le bootstrap Europe reste actif.
+- 2_RESTAURER_BOOTSTRAP_EUROPE.cmd restaure instantanement le bootstrap embarque.
+
+COMPATIBILITE
+-------------
+- Lancement direct index.html / file:// conserve.
+- Bundle classic reconstruit.
+- Sauvegardes : seules les gares de reference activees sont serialisees, comme avant.
+- IDs du bootstrap : tl-<id Trainline>.
+- IDs du pack mondial GeoNames : gn-<geonameid>.
+
+QA
+--
+- 97 153 tests PASS / 0 FAIL, bulk-weather exclu comme dans la batterie longue v1.1.10.
+- 12/12 tests gares cibles PASS avant la batterie globale.
+- Bundle : node --check PASS.
+- ZIP final : test CRC/integrite a effectuer au packaging final.
+
+SOURCES / LICENCES
+------------------
+Trainline EU stations : https://github.com/trainline-eu/stations — ODbL 1.0
+GeoNames : https://www.geonames.org/ — CC BY 4.0

@@ -1,0 +1,41 @@
+Rail Empire v1.1.60 — Infogare Exact Photo + Live Timetable Fix
+Date: 2026-08-17
+
+PURPOSE
+Correct the v1.1.58/v1.1.59 Infogare remaster after field testing exposed two regressions:
+1) supplied reference photographs were being visually covered by large recreated opaque backgrounds;
+2) Infogare train lists were sourced mainly from already-spawned runtime services, so future V2 timetable trains could be absent.
+
+FIXES
+- The user-supplied Infogare images are now the authoritative visible boards.
+- RER RATP, RER SNCF/Transilien and DB use the exact original supplied photographs directly.
+- AFL DP, AFL AR, CATI 3-3, CATI AR, CATI COMPLET, Ecran Quai, Flash Circulation and Palette retain the exact supplied flat images.
+- Removed obsolete cropped/redrawn RATP, Transilien and DB derivative assets.
+- Removed the large opaque board/row repaint masks from the problematic photo renderers.
+- Only small changing text regions are masked/animated over the original photographs.
+- Ecran Quai, Palette, RATP, RER SNCF and DB therefore keep the original photographic visual character.
+- Palette keeps the photographed analogue clock and overlays live clock hands.
+- DB keeps the original angled photograph and receives a lightweight live-data overlay rather than a recreated rectangular board.
+
+LIVE TIMETABLE DATA
+- Infogare now reads Schedule Creator V2 timetable plans / rotations directly, before a service has spawned on the Livemap.
+- Reads J-1, J and J+1 planning windows to correctly handle after-midnight services and upcoming trains.
+- Supports rotation-assigned and direct-assignment V2 schedules.
+- Runtime services are used as live overlays for current delay/state/cancellation where available, rather than as the sole source of trains.
+- Planned and spawned representations are deduplicated.
+- Arrival and departure times are handled independently at intermediate stations.
+- Legacy service compatibility is retained.
+
+STATION SEARCH
+- Keeps the v1.1.59 station autocomplete: direct typing, accent/punctuation-insensitive matching, max 12 suggestions, gameplay station ID selection.
+
+UNCHANGED
+- OSM/ORM routing logic from v1.1.57 is untouched.
+- Schedule routing, route memory, spatial OSM cache, Livemap runtime and rolling-stock logic are not redesigned by this release.
+
+QA
+- Infogare/photo/search/post-bundle: 15/15 PASS
+- Critical Schedule V2/runtime/routing regression selection: 156/156 PASS
+- Bulk ORM: 20,275/20,275 PASS
+- JavaScript/MJS syntax checks: 215/215 PASS
+- Full npm test was attempted separately but exceeded the execution time window; no full-suite completion is claimed for this release.

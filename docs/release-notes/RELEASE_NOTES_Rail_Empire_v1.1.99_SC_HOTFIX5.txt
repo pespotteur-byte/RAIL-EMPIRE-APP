@@ -1,0 +1,17 @@
+Rail Empire v1.1.99 SC HOTFIX5 — LONG RANGE KM FIX
+
+Fixes a HOTFIX4 regression exposed by a real Calais -> Aachen long-distance Schedule Creator attempt.
+
+The long-range engine could successfully discover a railway corridor, then fail while reporting progress to the Schedule Creator UI because it referenced an undefined identifier `distanceKm` instead of the in-scope `distKm`.
+
+Changes:
+- Fixed long-window progress payload: distanceKm: distKm.
+- Added real-UI-callback regression coverage on the ~400 km stress network.
+- Bumped FILE:// cache to 1199sc5.
+- Rebuilt rail-empire.file.bundle.js and deferred catalog bundle.
+- Preserved HOTFIX4 long-range hierarchical routing and inter-stop VIA insertion unchanged.
+
+Validation:
+- 31/31 targeted SC/ORM tests PASS.
+- 461/461 modern .mjs tests PASS.
+- Bundle syntax PASS.

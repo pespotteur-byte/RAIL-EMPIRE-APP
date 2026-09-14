@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { ScheduleCreator, ActiveService } from '../schedule-creator.js';
 import { StaffManager } from '../staff.js';
 import { CantonManager } from '../simulation.js';
-import { getGlobalRng, setGlobalRng, SeededRng } from '../rng.js?v=1784931691';
+import { getGlobalRng, setGlobalRng, SeededRng } from '../rng.js?v=1784250033';
 
 const economy = {
   processStopRevenue() {},
@@ -207,7 +207,8 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     mgr.release(c0, 'A');
 
     mgr.setTime(1);
-    assert.equal(mgr.occupy(c0, 'B'), true, 'le canton est disponible immédiatement après libération');
+    assert.equal(mgr.reserve(c0, 'B'), true, 'le canton est disponible immédiatement après libération');
+    assert.equal(mgr.occupy(c0, 'B'), true);
   });
 
   it('RET-03 — retard au terminus : 1/3 chance d annuler le retour', () => {

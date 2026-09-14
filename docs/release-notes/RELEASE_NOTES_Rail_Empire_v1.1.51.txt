@@ -1,0 +1,59 @@
+Rail Empire v1.1.51 — Rame → Roulement + Visual Material Workflow
+=====================================================================
+Date: 2026-08-17
+Base: v1.1.50 Schedule Panel Stability Hotfix
+
+OBJECTIF
+--------
+Rendre la page Rames réellement réutilisable par le domaine Roulements V2 : le joueur ne doit plus recréer/rechercher à l’aveugle une locomotive, des voitures ou des wagons déjà assemblés visuellement dans une rame.
+
+NOUVEAU — RAME → MATÉRIEL PHYSIQUE
+-----------------------------------
+- Nouveau workflow « 🚆 Rame → matériel » dans l’éditeur de roulements.
+- Une rame de la page Rames est affichée visuellement dans son ordre réel avec les images de ses éléments.
+- Clic sur une locomotive/automotrice : création du véhicule physique correspondant.
+- Clic sur une voiture ou un wagon : sélection visuelle pour constitution d’un coupon.
+- « Créer le coupon sélectionné » matérialise automatiquement les véhicules physiques manquants et construit le coupon dans l’ordre exact de la rame.
+- Les liens rame / index d’élément sont persistés : rouvrir la partie ne duplique pas les véhicules déjà créés.
+- Les numéros individuels issus de la rame sont conservés lorsqu’ils existent ; un suffixe sûr est généré seulement en cas de collision réelle.
+
+NOUVEAU — AFFECTER UNE RAME À UN ROULEMENT
+-------------------------------------------
+- Nouveau bouton « 🚆 Affecter une rame » sur un roulement.
+- La rame doit d’abord disposer de ses objets matériels physiques ; l’interface propose directement de les préparer si nécessaire.
+- L’affectation copie la formation complète vers toutes les occurrences existantes du roulement.
+- Les nouveaux horaires ajoutés ultérieurement au même roulement héritent automatiquement de cette formation.
+- L’ordre réel de la composition, les rôles de traction et les références de coupon sont conservés.
+- L’affectation Rame/roulement est sauvegardée et restaurée.
+- Une modification manuelle du matériel d’une occurrence retire proprement le binding global sans effacer la formation déjà construite.
+
+COHÉRENCE MATÉRIEL / SÉCURITÉ
+-----------------------------
+- Une rame affectée à un roulement mais supprimée de la page Rames bloque le roulement avec diagnostic explicite.
+- Une rame en maintenance ne peut pas faire circuler son roulement.
+- Une même rame utilisée simultanément par une affectation directe et par un roulement sur des créneaux qui se chevauchent déclenche RAME_DOUBLE_BOOKED.
+- Les positions de la rame de la page Rames sont maintenues cohérentes avec le départ et la fin d’un service V2 affecté au roulement.
+- Aucun clonage implicite du matériel n’est utilisé pour contourner les conflits.
+
+CONTRATS PRÉSERVÉS
+------------------
+- Routage OSM direct / Overpass failover de v1.1.49 inchangé.
+- Anti-rebroussement et tracé manuel ORM conservés.
+- Régulation horaire conservée.
+- Affectation directe depuis la page Rames conservée comme workflow séparé.
+- Stabilisation des panneaux du Schedule Creator v1.1.50 conservée.
+- Architecture FILE:// split conservée : core léger + catalogue différé.
+- 17 817 gares gameplay et politique sans fallback ferroviaire droit synthétique inchangées.
+
+QA EXÉCUTÉE
+-----------
+- Workflow v1.1.51 dédié : 7/7 PASS.
+- Fonctionnels hors bulk/météo après rebuild final : 365/365 PASS, 0 fail.
+- Bulk ORM : 20 275/20 275 PASS, 0 fail.
+- Post-bundle critique : 32/32 PASS, 0 fail.
+- Syntaxe JavaScript/MJS : 207/207 PASS.
+- Bundle FILE:// final : 61 modules core / 2 919 475 octets ; catalogue différé 66 modules / 45 802 563 octets.
+
+LIMITE DE VALIDATION
+--------------------
+Le navigateur réel file:// du joueur reste le smoke terrain final. Aucun benchmark navigateur artificiel n’est revendiqué depuis l’environnement de build.

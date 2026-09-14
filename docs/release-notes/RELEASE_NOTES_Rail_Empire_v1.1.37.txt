@@ -1,0 +1,27 @@
+Rail Empire v1.1.37 — Header Cleanup Hotfix
+============================================
+
+Base
+----
+v1.1.36 Livemap V2 Diagnostics + Resync Fix.
+
+Correction UI
+-------------
+- Suppression du statut V2 du bandeau supérieur.
+- Suppression du statut "Gares gameplay Europe" du bandeau supérieur.
+- Les menus retrouvent toute la largeur disponible du header.
+- Les diagnostics V2 restent disponibles uniquement dans le bandeau droit de la page Carte.
+- Aucun changement de routage, horaires, roulements, spawn runtime, gares ou ORM.
+
+Contrat verrouillé
+------------------
+- Aucun élément `v2-runtime-status` dans le header.
+- Aucun élément `world-stations-status` dans le header.
+- `v2-runtime-sidebar-status` reste présent dans la page Carte.
+
+QA
+--
+- 20 / 20 tests ciblés PASS après rebundle.
+- 179 / 179 fichiers JavaScript passent node --check.
+- Contrat OSM direct historique conservé.
+- Train V2 visible T-5 + départ exact à la seconde conservés.

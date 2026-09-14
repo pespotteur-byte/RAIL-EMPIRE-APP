@@ -1,0 +1,125 @@
+Rail Empire v1.1.73 — Core Circulation / Routing / Braking Rebuild
+Date: 2026-08-19
+Base: v1.1.72
+
+OBJECTIF
+-------
+Refondre le coeur circulation après les retours terrain : routages incohérents,
+trains voyageurs 1–2 min en avance, dépassements/chevauchements autour de trains
+arrêtés, blocages en gare, différences LOD/caméra et freinages irréalistes.
+Cette version remplace une accumulation de garde-fous par des invariants communs
+entre routage, empreinte physique, cantonnement, interlocking, horaires et physique.
+
+CORRECTIONS MAJEURES
+-------------------
+1. Cantonnement et empreinte complète
+- Occupation de la tête à la queue ; aucun canton n'est libéré avant dégagement réel.
+- Les découpages virtuels différents d'un même rail OSM partagent une ressource physique.
+- Réservation/occupation fail-closed : un train ne peut plus voler la ressource d'un autre.
+- Les trains arrêtés, en panne ou bloqués restent visibles pour la sécurité.
+- Pré-réservation du prochain canton dans l'horizon physique de freinage : à une convergence,
+  le perdant freine en amont au lieu de découvrir le conflit à la frontière du canton.
+
+2. Gares, quais, grils et aiguilles
+- Quai/voie réservés dès qu'une rame V2 est physiquement visible à son origine.
+- Une arrivée voyageurs anticipée conserve sa ressource pendant l'attente de l'heure prévue.
+- Au départ, quai, voie, cantons et tronçons restent protégés jusqu'au passage de la queue.
+- La route d'approche exacte d'un train immobilisé en gare est conservée pour la détection
+  du leader ; elle ne bascule plus accidentellement sur sa prochaine étape.
+- Réservations de tronçons/aiguilles distinctes de l'occupation, fail-closed.
+- Cisaillements aux nez d'aiguilles / extrémités communes et géométries collinéaires protégés.
+
+3. Routage ORM / voies parallèles
+- État du routeur distingué par wayId + sens : les arêtes parallèles ne s'écrasent plus.
+- Pénalité de mauvais sens proportionnelle à la distance physique, plus au nombre de segments OSM.
+- Pénalités d'aiguilles/rebroussement ramenées à des valeurs opérationnelles ; le vrai recul sur
+  le même rail reste un dernier recours fortement pénalisé.
+- Aucun fallback ferroviaire synthétique droit si une route manque : le service passe blocked_route.
+- Un retour principal ne peut plus être fabriqué par route.reverse().
+- Les trains de secours utilisent eux aussi un vrai routage ORM aller ET retour ; jamais de ligne
+  droite ni de simple inversion de l'aller.
+- Le renderer ne fabrique plus visuellement un faux tracé retour inversé.
+
+4. Physique traction/freinage
+- Masse totale et masse adhérente des seuls véhicules moteurs séparées.
+- Les données réelles de freinage pondérées de la formation V2 sont utilisées lorsqu'elles existent ;
+  la catégorie n'est plus qu'un fallback.
+- Montée/propagation du frein : un long fret établit son frein plus lentement qu'une automotrice.
+- Correction d'erreurs d'unités km/h/s <-> m/s² dans les enveloppes de freinage.
+- Pente OSM injectée dans la physique lorsqu'elle est documentée, avec signe selon le sens de marche.
+- Impact météo appliqué une seule fois au freinage.
+- Distance de chaque tick intégrée avec la vitesse moyenne (v_avant + v_après)/2, y compris en LOD,
+  au lieu d'utiliser la vitesse finale pendant tout le pas.
+
+5. LOD / macro
+- Cadence stable par service, indépendante de l'index dans une liste mouvante.
+- Seule la distance réellement parcourue est comptabilisée si un gros pas rencontre une limite.
+- Même freinage vers les gares, mêmes incidents/travaux, mêmes cantons et même interlocking qu'à
+  proximité de la caméra. Observer un train ne change plus ses règles d'exploitation.
+- Un train macro ne peut plus arriver à vitesse de ligne puis être déclaré arrivé instantanément.
+
+6. Horaires / avance voyageurs
+- Le moteur de mouvement reçoit l'heure à la seconde, plus une minute entière tronquée.
+- Les voyageurs ne peuvent jamais valider une arrivée avant l'heure réservée : s'ils atteignent le
+  point d'arrêt tôt, ils y attendent sans être bridés artificiellement pendant le trajet.
+- Le départ/retournement est minuit-safe et les durées J+1/>24 h utilisent l'horloge absolue V2.
+- Correction du cas 00:00 où une valeur 0 pouvait être interprétée comme absence de temps d'arrêt.
+
+7. Incidents / travaux
+- Approche d'un incident/stop par enveloppe physique de freinage, pas vitesse=0 téléportée.
+- Timeout de blocage maintenu pendant toute la phase de freinage d'un incident immobilisant.
+- Restrictions spatiales ; une limitation située loin devant ne plafonne plus toute la ligne.
+- Comportement identique en simulation détaillée et macro/LOD.
+
+8. Sauvegarde / rechargement
+- Conservation du sens aller/retour, progression/distance exacte, état de montée du frein,
+  quai/voie, ressources de départ encore sous la queue et route stationnaire d'approche.
+- Les routes ORM ne sont plus décimées à ~80 points en perdant les wayId : la géométrie utile et
+  l'identité de voie sont conservées dans le format compact.
+- Après F5, les ressources de sécurité sont reconstruites depuis l'empreinte physique de la rame.
+
+9. Fail-closed et nettoyage
+- Une destination/station perdue ne peut plus être convertie silencieusement en « service terminé ».
+- Annulation/suppression/fin libèrent proprement cantons, réservations, points de voie et tronçons.
+- Suppression des derniers chemins releaseAll() trop agressifs qui ouvraient la voie sous une rame.
+
+CONTRATS CONSERVÉS
+------------------
+- OSM/ORM vectoriel = topologie ferroviaire autoritaire.
+- Aucun fallback ferroviaire droit synthétique.
+- FALLBACK_30 = vitesse inconnue, pas limitation réelle à 30 km/h.
+- Marge automatique V2 = 0 s et aucun plafonnement de croisière dérivé de l'horaire.
+- Pas d'avance voyageurs à l'arrivée.
+- Correctifs UI/incidents v1.1.72 conservés.
+
+QA FINALE
+---------
+- Tests dédiés v1.1.73 : 6/6 PASS.
+- Post-bundle critique : 18/18 PASS.
+- Non-bulk : 459/459 PASS sur 71 fichiers.
+- Bulk ORM : 20 275/20 275 PASS.
+- Bulk Schedule : 8 502/8 502 PASS.
+- Bulk Signaling : 11 902/11 902 PASS.
+- Bulk Physics : 5 376/5 376 PASS.
+- Bulk Bank : 5 501/5 501 PASS.
+- Bulk Economy : 11 501/11 501 PASS.
+- Bulk Misc : 11 641/11 641 PASS.
+- Bulk RNG : 5 001/5 001 PASS.
+- Bulk Weather : 5 483/5 483 PASS.
+- Bulk World : 3 928/3 928 PASS.
+- Bulk 10k : 13 340/13 340 PASS.
+- Total des banques bulk ci-dessus : 102 450/102 450 PASS.
+- Batch186 fret : 5/5 + 19/19 PASS.
+- Syntaxe : 215/215 sources + 2/2 bundles = 217/217 PASS.
+- Bundle FILE:// : 63 modules coeur / 66 modules catalogue différé,
+  3 718 489 octets / 45 802 563 octets, v1.1.73 cache 1173.
+
+TEST TERRAIN PRIORITAIRE
+------------------------
+1. 3–5 trains à 2–3 min d'intervalle ; immobiliser le premier en ligne puis en gare.
+2. Rame longue dans un gril : le suivant ne doit entrer qu'après dégagement de la queue.
+3. Deux trains convergeant vers la même aiguille / voie unique / IPCS.
+4. Rejouer les mêmes scènes sous la caméra puis loin de la caméra.
+5. Voyageur très détendu : il peut atteindre son quai tôt mais l'arrivée enregistrée reste à 0 min d'avance.
+6. Freinages 160→80, signal fermé, gare, incident et travaux avec automotrice puis fret long.
+7. F5 avec une rame au quai et une rame en sortie de gare ; les ressources/sens doivent rester cohérents.

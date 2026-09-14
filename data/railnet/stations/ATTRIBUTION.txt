@@ -1,0 +1,22 @@
+Rail Empire v1.1.87 — STATIONS STRICT V5 recovered
+
+New station evidence accepted in this checkpoint:
+- RailwayStations/Bahnhofsdaten: OSM-derived node[railway=station] country extracts.
+- OpenTransportData.swiss: official Swiss atlas service points, TRAIN/RACK_RAILWAY only.
+
+Policy:
+- Existing Rail Empire baseline retained for compatibility.
+- Trainline-only NEW candidates from the old 35,337 reservoir are not accepted as proof.
+- Russia chainage points (km/км/kilometr/picket) rejected.
+- Obvious Russian bus/Gazelle road-stop artefacts rejected.
+- Metro/tram/light rail remain excluded by default; explicit gameplay exceptions are handled separately.
+
+V5.1 additions:
+- RailwayStations/Bahnhofsdaten OSM extracts: Albania, Bosnia-Herzegovina.
+- Estonia Kirsi: peatus.ee timetable + OSM extract.
+- Lithuania additions: LTG Link official station/timetable material, coordinates cross-checked against OSM/Wikidata.
+
+V5.2 France restoration:
+- SNCF Open Data / TER: Châlons-en-Champagne, UIC 87174003.
+- Île-de-France Mobilités current GTFS / Arrêts et lignes associées: RER B and explicit tram line membership.
+- Station coordinates cross-checked against railway/tram station references and OSM; shared interchanges deduplicated.

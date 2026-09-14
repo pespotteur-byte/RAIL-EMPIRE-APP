@@ -1,0 +1,85 @@
+Rail Empire v1.1.83 — Karlsruhe–Kassel 3-Minute Routing Architecture
+2026-08-20
+
+TARGET
+- Schedule Creator long-distance contract: Karlsruhe Hbf -> Kassel Hbf class journey must never spend more than 180 s in one routing action.
+- Performance work must not reduce route/topology quality: exact real OSM/ORM geometry remains authoritative.
+- No automatic synthetic straight-line railway fallback.
+
+BASE / RECOVERY NOTE
+- The latest complete source archive recoverable from the project library was v1.1.76.
+- v1.1.77-v1.1.82 release notes/QA were available but their complete ZIP archives were not.
+- v1.1.83 therefore uses the complete v1.1.76 codebase and reconstructs the routing contracts introduced through v1.1.82 before adding the new long-distance architecture.
+
+LONG-DISTANCE PERFORMANCE CHANGES
+1. Dedicated >=120 km hierarchical routing path
+- Long exact Schedule legs no longer enter the generic large resident/persistent A/B rectangle scan.
+- They use bounded real-OSM corridor acquisition tiers and try exact routing after each tier.
+- Karlsruhe->Kassel coordinates produce 7 first-tier corridor requests (42 km target, 24 km buffer) instead of many 18-22 km serial corridor requests.
+
+2. Network work parallelised and distributed
+- Long-route tile concurrency starts at 6 workers (larger rescue tiers 6-8).
+- Tile requests rotate first-choice Overpass endpoint across the 3 global providers.
+- One slow first server therefore does not serialize every corridor tile.
+- Recursive tile splitting is disabled in the Schedule long-route fast path; rescue is performed by the explicit next corridor tier instead.
+
+3. Hard 180-second wall-clock budget
+- Deadline is propagated into tile workers and individual Overpass calls.
+- New tile work stops when the global deadline expires.
+- A request timeout cannot extend beyond the remaining global budget.
+- Schedule V2 surfaces ORM_TIME_BUDGET distinctly rather than pretending the railway does not exist.
+- A failed long hierarchical attempt does not restart the historical giant whole-chain rescue.
+
+QUALITY / v1.1.77-v1.1.82 CONTRACT RECONSTRUCTION
+4. Exact cursor identity / snapshots
+- RouteConstraint now retains exact osmSnapshot + segmentIndex.
+- Track picker snapshot retains nodeIds and railway directional metadata.
+- VIA preview/edit paths carry the exact OSM snapshot.
+- wayId remains authoritative; segmentIndex remains a hint resilient to geometry revisions.
+
+5. Railway direction semantics
+- Generic road-style OSM oneway=* is metadata only for railway graph direction.
+- Explicit railway:bidirectional + railway:preferred_direction remain authoritative.
+- This prevents physically valid rail directions from disappearing because of road semantics.
+
+6. v1.1.77 endpoint micro-stitch restored
+- Only compatible way ENDPOINTS within <=1.2 m may be stitched.
+- bridge/tunnel/layer must match.
+- The repair exists only inside the routing graph; OSM geometry is never mutated.
+
+7. v1.1.79 lazy Friedrichsfeld turnout rescue restored
+- Strict OSM graph always runs first.
+- Endpoint->segment projection is attempted once only after NO_CONNECTED_PATH.
+- <=1.8 m, endpoint-only initiator, different way, matching bridge/tunnel/layer.
+- Perpendicular crossings and mathematically parallel adjacent tracks are rejected.
+- Maximum 96 projection repairs per graph.
+- No synthetic long railway connector is introduced.
+
+8. v1.1.81/v1.1.82 local multi-VIA semantics restored
+- Compact exact local chains use whole-chain/backtracking routing.
+- OSM-main topology load is chain-wide, not per VIA leg.
+- Compact Overpass load and wider rescue are also chain-wide.
+- Local resident/persistent budgets are tightened (2600 / 3200 ways).
+- Ordinary long journeys remain incremental exact-leg routing and reuse the exact-leg cache.
+
+QA COMPLETED
+- v1.1.83 dedicated Karlsruhe/Kassel + topology tests: 11/11 PASS.
+- Curated routing/gameplay regression cluster: 68/68 PASS.
+- Full non-weather *.test.js bank: 97,314/97,314 PASS.
+- Weather bulk: 5,501 leaf assertions observed, 0 not ok; historical lingering handle still prevents normal runner exit.
+- Post-build startup/routing/contracts: 23/23 PASS.
+- JS/MJS/CJS syntax after bundle: 219/219 PASS.
+- FILE:// bundles rebuilt: 63 core modules + 66 catalogue modules.
+- Core bundle: 3,795,244 bytes. Catalogue bundle: 45,802,563 bytes.
+- Cache/version identity: v1.1.83 / 1183.
+
+SYNTHETIC QUALITY/PERFORMANCE SANITY
+- Karlsruhe->Kassel-class synthetic exact topology routes through the complete multi-way chain; it is not collapsed into coarse geometry.
+- First-tier acquisition count for Karlsruhe Hbf (49.0069, 8.4037) -> Kassel Hbf (51.3127, 9.4797): 7 corridor requests.
+- Healthy connected graphs invoke 0 endpoint->segment projection rescues.
+- Deadline/endpoint rotation/no-giant-rescue contracts have dedicated executable tests.
+
+FIELD TEST REQUIRED
+- This build environment cannot run a real Rail Empire browser + live public Overpass benchmark.
+- Therefore <=180 s is implemented as a hard routing action budget and architecture target, but a live Karlsruhe Hbf -> Kassel Hbf success time is NOT falsely claimed here.
+- Priority field test: exact station tracks Karlsruhe Hbf -> Kassel Hbf, then with realistic VIA constraints if desired.

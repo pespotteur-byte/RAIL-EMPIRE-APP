@@ -1,0 +1,34 @@
+Rail Empire v1.1.61 — RER RATP LIVE BOARD
+==========================================
+
+Scope
+-----
+RER RATP Infogare only. Other Infogare models and the OSM/ORM routing engine are unchanged.
+
+Implemented from the player-validated mock/specification
+--------------------------------------------------------
+- Player company name replaces the fixed RER A logo block (example: PEET).
+- Current time remains at the upper right.
+- Header shows the two most frequent final destinations among departures from the selected station over the next 24 h.
+- Five fixed departure rows.
+- Left badge = train name/code.
+- Main row text = final destination.
+- Waiting time:
+  * 0–59 minutes: number with small "min" underneath.
+  * 60 minutes and above: h:mm (example 1:07), with no "h:min" legend.
+- A train remains visible at 0 min for one minute after its planned/live departure time, then the list shifts.
+- Incident footer is dynamic and only includes active incidents touching the selected station, stations served by departures from it, or a directly relevant live service.
+- Future V2 timetable rows keep served station IDs so incident filtering does not depend on a train already being spawned.
+- RER RATP has no paging: it always shows the next five eligible departures.
+
+Typography
+----------
+The renderer prefers the CSS font family "Parisine". No Parisine font file is bundled; when unavailable on the player's system/browser, Rail Empire falls back to Arial Narrow / Segoe UI / Arial.
+
+QA
+--
+- 34/34 targeted Infogare + Schedule V2/runtime + OSM route-memory tests PASS.
+- 204/204 JS/MJS syntax checks PASS.
+- 4/4 post-bundle contracts PASS.
+- Real Chromium render captured and visually inspected: QA_RER_RATP_CHROMIUM_v1.1.61.png.
+- Full bulk ORM suite was not rerun because v1.1.61 does not modify routing/topology code; the v1.1.57 route-memory regression tests were rerun and passed.

@@ -113,7 +113,7 @@ describe('ORM directed routing graph', () => {
   });
 
   describe('R-04 — no arbitrary reverse / wrong-way movement', () => {
-    it('_turnPenalty forbids a U-turn on the same physical track', () => {
+    it('_turnPenalty makes a U-turn on the same physical track an extreme last resort', () => {
       const orm = clientWithWays([makeWay(1, [[48.0, 2.0], [48.0, 2.1]])]);
       const g = orm._ensureGraph();
       const a = g.nodes.get(key(48.0, 2.0));
@@ -121,7 +121,8 @@ describe('ORM directed routing graph', () => {
       const b = g.nodes.get(key(48.0, 2.1));
       const back = b.edges.find(e => e.to === fwd.from && e.wayId === fwd.wayId); // 2.1 -> 2.0
       assert.ok(back, 'reverse edge exists physically');
-      assert.equal(orm._turnPenalty(g, fwd, back, true), Infinity, 'reversal forbidden');
+      const p = orm._turnPenalty(g, fwd, back, true);
+      assert.ok(Number.isFinite(p) && p >= 72, 'same-way reversal must be an extreme last resort, not a graph disconnection');
     });
 
     it('_turnPenalty penalises a sharp (>100°) turn but not a gentle one', () => {
@@ -157,12 +158,11 @@ describe('ORM directed routing graph', () => {
   });
 
   describe('R-03 — no straight-line fallback for long routes', () => {
-    it('makeFallbackRoute returns null beyond 1 km and a tagged stub within 1 km', () => {
+    it('makeFallbackRoute never fabricates a railway connector', () => {
       const orm = new ORMClient();
       assert.equal(orm.makeFallbackRoute(48.0, 2.0, 49.0, 3.0), null, 'long: no diagonal');
       const stub = orm.makeFallbackRoute(48.0, 2.0, 48.004, 2.004); // < 1 km
-      assert.ok(Array.isArray(stub) && stub.length > 1, 'short connector produced');
-      assert.equal(orm.isFallbackRoute(stub), true, 'tagged as fallback');
+      assert.equal(stub, null, 'short connector must also be forbidden');
     });
 
     it('routing between two disconnected components returns null (not a straight line)', () => {
@@ -198,5 +198,93 @@ describe('ORM directed routing graph', () => {
       assert.ok(distKm >= 1200, `route length ${distKm.toFixed(0)} km >= 1200 km`);
       assert.ok(ms < 3000, `routed in ${ms} ms`);
     });
+  });
+});
+
+describe('ORM V2 technical metadata snapshot', () => {
+  it('preserves loading gauge, axle load and metre load tags used by railway infrastructure', () => {
+    const orm=new ORMClient();
+    const ways=orm.parseWays({elements:[{type:'way',id:99,nodes:[1,2],geometry:[{lat:48,lon:2},{lat:48.01,lon:2.01}],tags:{railway:'rail',maxspeed:'120',loading_gauge:'TSI_GC',axle_load:'22.5',metre_load:'8.0'}}]});
+    assert.equal(ways.length,1);
+    assert.equal(ways[0].loadingGauge,'TSI_GC');
+    assert.equal(ways[0].axleLoad,22.5);
+    assert.equal(ways[0].metreLoad,8);
+  });
+});
+
+describe('Schedule V2 cursor anchors', () => {
+  it('routes between player cursor anchors on the real railway geometry without way ids', async () => {
+    const coords = [[48.0,2.0],[48.03,2.04],[48.06,2.01],[48.10,2.08]];
+    const orm = clientWithWays([makeWay(501,coords,{maxSpeed:120})]);
+    orm.fetchRailwayTiles = async () => [];
+    const route = await orm.findRouteViaCursorAnchors([
+      {lat:48.0001,lon:2.0001},
+      {lat:48.0999,lon:2.0799},
+    ],{allowFallback:false});
+    assert.ok(route && route.length >= 4, 'real graph path returned');
+    assert.equal(orm.isFallbackRoute(route), false, 'never a synthetic line');
+    assert.ok(route.some(p=>Math.abs(p.lat-48.03)<1e-6 && Math.abs(p.lon-2.04)<1e-6), 'bent intermediate railway geometry preserved');
+  });
+
+
+  it('snaps cursor anchors to rail segments even when OSM geometry nodes are more than 500 m away', async () => {
+    const orm = clientWithWays([
+      makeWay(701,[[48.0,2.0],[48.0,2.03],[48.0,2.06]],{maxSpeed:100}),
+    ]);
+    orm.fetchRailwayTiles = async () => [...orm._ways.values()];
+    orm._ensureGraphAsync = async () => { throw new Error('global graph must not be rebuilt'); };
+    const route = await orm.findRouteViaCursorAnchors([
+      {lat:48.0,lon:2.015},
+      {lat:48.0,lon:2.045},
+    ],{allowFallback:false});
+    assert.ok(route && route.length >= 3, 'segment-projected local route returned');
+    assert.equal(orm.isFallbackRoute(route), false);
+  });
+
+  it('returns null rather than drawing a straight line when cursor anchors are disconnected', async () => {
+    const orm = clientWithWays([
+      makeWay(601,[[48.0,2.0],[48.01,2.01]]),
+      makeWay(602,[[48.2,2.2],[48.21,2.21]]),
+    ]);
+    orm.fetchRailwayTiles = async () => [];
+    orm._findCursorLegBroadArea = async () => null;
+    const route = await orm.findRouteViaCursorAnchors([
+      {lat:48.0,lon:2.0},
+      {lat:48.2,lon:2.2},
+    ],{allowFallback:false});
+    assert.equal(route,null);
+  });
+});
+
+describe('Schedule V2 permissive pathfinding policy', () => {
+  it('finds a real connected rail path even when directed turn policy would strongly penalise it', async () => {
+    const orm = clientWithWays([
+      makeWay(801, [[48.0,2.0],[48.01,2.0]], {maxSpeed:80}),
+      makeWay(802, [[48.01,2.0],[48.005,1.99]], {maxSpeed:40}),
+      makeWay(803, [[48.005,1.99],[48.02,1.98]], {maxSpeed:80}),
+    ]);
+    orm.fetchRailwayTiles = async () => [...orm._ways.values()];
+    const route = await orm.findRouteViaCursorAnchors([
+      {lat:48.0,lon:2.0},
+      {lat:48.02,lon:1.98},
+    ], {allowFallback:false});
+    assert.ok(route && route.length >= 4);
+    assert.equal(orm.isFallbackRoute(route), false);
+  });
+});
+
+describe('Schedule V2 connected cursor snapping', () => {
+  it('chooses a slightly farther connected rail when the absolute-nearest platform/siding is disconnected', async () => {
+    const main = makeWay(901, [[48.0,2.00008],[48.01,2.00008],[48.02,2.00008]], {maxSpeed:120});
+    const isolated = makeWay(902, [[47.999,2.0],[48.004,2.0]], {service:'siding',maxSpeed:30});
+    const orm = clientWithWays([main, isolated]);
+    orm.fetchRailwayTiles = async () => [...orm._ways.values()];
+    const route = await orm.findRouteViaCursorAnchors([
+      {lat:48.001,lon:2.00001},
+      {lat:48.019,lon:2.00008},
+    ], {allowFallback:false});
+    assert.ok(route && route.length >= 2, 'connected main line chosen instead of disconnected nearest siding');
+    assert.ok(route.some(p => String(p.wayId) === '901' || p.wayId === 901));
+    assert.equal(orm.isFallbackRoute(route), false);
   });
 });

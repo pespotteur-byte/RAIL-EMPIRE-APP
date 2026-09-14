@@ -1,0 +1,59 @@
+Rail Empire v1.1.89 — Roulements V3.1 Exploitation UX
+======================================================
+
+Base
+----
+v1.1.88 Roulements V3 — Material Duties.
+
+Objectif
+--------
+Transformer la page Roulements V3 en véritable outil d'exploitation ferroviaire sans rendre les roulements obligatoires. Le workflow débutant Horaire -> Affecter rame -> circulation directe reste conservé.
+
+NOUVEAU — FEUILLE DE ROULEMENT
+-------------------------------
+- Timeline enrichie avec numéro de train, heures de départ/arrivée et codes/noms courts des gares sur chaque trait.
+- Boutons d'opération ⊕ directement positionnés sur les points d'arrêt du train sélectionné.
+- Opérations rapides : changement de locomotive, coupe, attelage, réunion, CV et pousse.
+- La timeline repose toujours sur les intervalles matériels dynamiques de la v1.1.88 : une coupe réelle modifie réellement la période d'utilisation du matériel.
+
+NOUVEAU — COUPONS COMME OBJETS D'EXPLOITATION
+----------------------------------------------
+- Un coupon restant physiquement uni est affiché sur UNE seule ligne de roulement, au lieu d'une ligne par voiture.
+- Si le coupon est partiellement séparé par SPLIT/DETACH, la timeline conserve le coupon commun jusqu'au point de coupe puis déplie uniquement les matériels dont les trajectoires divergent.
+- La vue Matériel accepte maintenant aussi les coupons et affiche leur journée complète.
+- Statistiques de journée : nombre de services, kilomètres planifiés, temps de circulation, attente, origine/début et destination/fin.
+
+NOUVEAU — CONSTRUCTION PLUS RAPIDE
+----------------------------------
+- Horaires, véhicules physiques et coupons sont glissables depuis la bibliothèque.
+- Un horaire peut être déposé sur la zone de roulement pour l'ajouter.
+- Une locomotive ou un coupon peut être déposé directement sur un bloc de train pour modifier sa formation.
+- Les engins motorisés déposés deviennent automatiquement Tête s'il n'existe pas encore de traction active, sinon UM active.
+- Les coupons déposés conservent leur identité et leur ordre matériel.
+
+NOUVEAU — SUGGESTIONS D'EXPLOITATION
+------------------------------------
+- Après le dernier/selected service, Rail Empire propose les prochains horaires valides partant de la gare où le matériel termine.
+- Les propositions sont triées chronologiquement et gèrent le passage à J+1.
+- Un clic ajoute directement le service suivant avec le décalage temporel nécessaire.
+
+ERGONOMIE
+---------
+- Bibliothèque Horaires / Matériel / Coupons plus orientée manipulation directe.
+- Vue Roulement, vue Matériel/Coupon et vue Tableau conservées.
+- Inspecteur contextuel conservé.
+- Les workflows v1.1.88 (Rame -> matériel, affectation globale, overrides par occurrence, Undo/Redo, duplication, activation/suppression du roulement) restent disponibles.
+
+COMPATIBILITE
+-------------
+- Les roulements restent facultatifs.
+- Affectation directe conservée pour les joueurs qui veulent simplement créer un horaire puis choisir une rame.
+- Données lourdes du catalogue inchangées ; le cache catalogue reste sur la révision 1188 tandis que le bundle cœur passe en 1189.
+
+QA
+--
+- 123 / 123 tests ciblés PASS sur le bundle final et les domaines concernés.
+- 184 / 184 fichiers JavaScript passent node --check.
+- Chromium : le lancement normal file:// / localhost reste bloqué par la politique d'organisation de l'environnement avant le chargement du jeu.
+- Smoke Chromium de contournement : injection du bundle final 1.1.89 dans about:blank, puis instanciation des vraies classes ScheduleV2Manager / RotationV2Manager / RotationV2Editor.
+- Smoke validé : coupon Corail groupé sur une ligne, BB séparée, horaires/codes gares visibles, recommandation du service suivant, boutons ⊕, modal d'opération prépositionné, vue Journée coupon et vue Tableau.

@@ -1,0 +1,25 @@
+Rail Empire v1.1.32 — Audit closure
+===================================
+Source audit: v1.1.31 / 66 findings.
+
+Status: repair implemented across all P0/P1 blocks and diagnostic P2 contracts identified by the audit.
+
+Architecture: v1.1.19 direct OSM/ORM world contract restored and re-protected by executable tests.
+Routing: global cursor-anchor chain solution with backtracking; strict no-synthetic railway geometry.
+Validation: fail-closed complete-leg/VIA/continuity/chronology/physical checks.
+Runtime: deterministic physical reservation, exact pinned version/calendar/cancellation, exact-second departure, preflight route, visible/recoverable blocked_route.
+Persistence: native OSM station pinning/deltas and in-line V2 runtime snapshot restore.
+Caches: rail v6 / stations-v6; Overpass remark/error rejection; cache policy/options identity fixed.
+Roulements: origin/terminal operations, dependency graph, material/location/traction coherence.
+Diagnostics: route/network distinction and no-spawn reasons surfaced.
+
+Release gates:
+- non-weather: 97,288 PASS / 0 FAIL
+- JS syntax: 173 PASS / 0 FAIL
+- post-bundle targeted: 70 PASS / 0 FAIL
+- direct OSM world contract: 13 PASS / 0 FAIL
+- v1.1.32 field/adversarial regression suite: 45 PASS / 0 FAIL; legacy audit reproducers no longer reproduce their original bugs
+- ORM/cache/revalidation targeted: 7 PASS / 0 FAIL
+- weather: 5,501 assertion lines OK, 0 not ok before known lingering-handle timeout
+
+No real-browser smoke is claimed by the build environment.

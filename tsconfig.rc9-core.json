@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ES2020","module":"ES2020","moduleResolution":"Bundler","strict":true,"noEmit":true,"skipLibCheck":false,"lib":["ES2022","DOM","DOM.Iterable"],"noImplicitReturns":true,"noFallthroughCasesInSwitch":true,"noUnusedLocals":true,"noUnusedParameters":true},"files":["src/ts/tile-access-policy.ts","src/ts/map.ts","src/ts/map-source-panel.ts"]}

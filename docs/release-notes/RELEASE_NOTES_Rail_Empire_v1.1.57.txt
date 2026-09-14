@@ -1,0 +1,40 @@
+Rail Empire v1.1.57 — OSM ROUTE MEMORY + SPATIAL VECTOR CACHE
+Date: 2026-08-17
+
+OBJECTIF
+Empêcher le Schedule Creator de dépendre d'une nouvelle requête API OSM/Overpass pour un trajet ou un secteur OSM réel déjà connu par le jeu.
+
+CORRECTIONS
+1. Mémoire locale des tracés Schedule V2
+- Chaque chaîne d'ancres (départ / VIA / arrivée) résolue avec succès mémorise son vrai tracé OSM.
+- Cette mémoire est consultée AVANT toute requête HTTP externe.
+- Aucun fallback synthétique / ligne droite n'est introduit.
+
+2. Reconstruction de la mémoire depuis la sauvegarde
+- Au chargement, les géométries ORM/OSM déjà stockées dans les horaires Schedule V2 reconstruisent automatiquement la mémoire de routage.
+- Pas de duplication massive du graphe OSM dans la sauvegarde : les routePoints déjà présents dans les horaires servent de source.
+- Un itinéraire déjà calculé dans la partie peut donc être réutilisé sans accès réseau après reload/import de sauvegarde.
+
+3. Cache IndexedDB désormais spatial
+- Avant v1.1.57, une tuile n'était relue que si sa clé de bbox était strictement identique.
+- v1.1.57 peut réutiliser des zones vectorielles persistantes qui INTERSECTENT le corridor demandé.
+- Un léger changement de snap/bbox ne force donc plus automatiquement une nouvelle requête réseau.
+
+4. Ordre des sources de routage Schedule Creator
+- route mémoire Schedule V2
+- voies OSM déjà résidentes en RAM
+- cache vectoriel spatial persistant
+- API OSM directe (petites zones)
+- Overpass (fallback réseau / zones plus larges)
+
+5. Compatibilité
+- Conservation des fixes v1.1.45 à v1.1.56 : anti-rebroussement, VIA, aiguillages, fast-path court, OSM direct, préservation des tracés, retours/AR, roulements, Livemap.
+- Aucun changement au principe : OSM vectoriel réel = topologie de routage, OpenRailwayMap raster = fond visuel.
+
+QA
+- Tests dédiés v1.1.57 : 3/3 PASS
+- Suite fonctionnelle : 393/393 PASS
+- Bulk ORM : 20 275/20 275 PASS
+- Post-bundle dédié : 3/3 PASS
+- Syntaxe JS/MJS/CJS : 202/202 PASS
+- Bundle FILE:// : core 61 modules / 2 959 745 octets ; catalogue différé 66 modules / 45 802 563 octets

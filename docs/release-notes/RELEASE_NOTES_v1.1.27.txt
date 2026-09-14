@@ -1,0 +1,41 @@
+Rail Empire v1.1.27 — SCHEDULE CREATOR V2 USABILITY FIX
+=========================================================
+Base: v1.1.26 Routing + Performance Fix
+
+Corrections terrain principales
+------------------------------
+1. VIA / waypoints de routage
+   - Nouveau bouton + VIA explicite.
+   - Le clic suivant est obligatoirement un point de passage de routage, même près d'une gare.
+   - Le VIA apparaît immédiatement puis le vrai tracé ORM est recalculé.
+   - Aucun fallback géométrique en ligne droite.
+
+2. Routage ORM / tracé visible
+   - Routage Schedule V2 permissif sur les sens: un chemin réel à contre-sens peut être trouvé puis signalé comme anomalie, au lieu d'être rejeté par le routeur.
+   - Nouveau snap connecté: plusieurs segments ferroviaires proches du curseur sont examinés. Une voie de quai/siding légèrement plus proche mais isolée ne bloque plus un itinéraire si une voie réellement connectée est voisine.
+   - Le tracé bleu/vert reçoit un halo sombre pour rester visible sur satellite + ORM.
+
+3. Panneau d'arrêts compact
+   - Panneau réduit à 325 px.
+   - Arrêts présentés en lignes compactes avec commandes icônes.
+   - Paramètres train/calendriers déplacés dans des sections repliables.
+
+4. Calculs visibles
+   - Résumé permanent Distance / Temps de marche / Départ / Arrivée.
+   - Avec une gare de départ + des VIA, distance et ETA provisoires sont déjà calculées jusqu'au dernier VIA.
+   - Calcul physique sans marge automatique conservé.
+
+5. Retour simplifié
+   - Bouton Créer le retour -> bascule immédiate en RETOUR VERT.
+   - Le terminus de l'aller devient automatiquement le point de départ du retour.
+   - Le joueur clique directement la voie de départ du terminus, puis utilise + VIA et les gares.
+   - Onglets ALLER BLEU / RETOUR VERT visibles lorsque le retour existe.
+   - Nom du retour et attente terminus restent directement accessibles.
+
+QA
+--
+- 97 214 / 97 214 tests hors météo: PASS, 0 fail.
+- Bulk weather: aucune ligne "not ok" observée; le runner garde son handle historique ouvert après exécution.
+- 44 / 44 tests post-bundle ciblés: PASS.
+- Tous les JS source: node --check PASS.
+- Bundle file://: node --check PASS.

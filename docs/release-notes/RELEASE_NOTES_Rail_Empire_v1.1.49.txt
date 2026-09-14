@@ -1,0 +1,63 @@
+Rail Empire v1.1.49 — OSM DIRECT VECTOR FAILOVER
+2026-08-17
+
+FIELD BUG REPRODUCED
+- Schedule Creator could display the OpenRailwayMap raster around Château-Thierry (including switch refs 34a / 34b) while the routing engine had zero resident OSM vector ways.
+- Result: 0.0 km, long waits, then the misleading message "Réseau OSM/Overpass temporairement indisponible".
+- The raster being visible did NOT mean the vector routing graph was available.
+
+ROOT CAUSE
+1) Short-route authoring still depended on public Overpass whenever the local vector cache was empty.
+2) The OSM-engine overlay was correctly passive after v1.1.48, so it could not refill that missing vector graph itself.
+3) The UI error incorrectly referred to "ORM data" although OpenRailwayMap raster tiles could remain visible independently.
+
+FIXES
+1) Official OSM small-bbox vector fallback
+- New fetchSmallOsmMapArea() uses the OpenStreetMap v0.6 map JSON endpoint for tiny local bboxes only.
+- It reconstructs railway way geometry from exact OSM node IDs, preserving switch/crossover connectivity.
+- Hard bbox/area guards prevent this endpoint from being used for long-distance/continental imports.
+
+2) Track picker priority
+- Track selection now tries, in order:
+  a) already-resident/local OSM geometry;
+  b) tiny direct OSM map bbox;
+  c) Overpass as final network source.
+- If the direct OSM bbox already finds the track, Overpass is not called.
+
+3) Short route priority
+- For Schedule V2 legs under 3 km, a tiny direct OSM bbox is attempted before Overpass.
+- If it contains a connected real railway path, routing completes immediately.
+- No synthetic straight railway fallback was added.
+
+4) Switch visibility
+- railway=switch nodes returned by the direct OSM map request are injected into the existing switch-overlay cache.
+- OSM moteur can therefore show switch refs such as 34a / 34b from the same vector dataset used for routing.
+
+5) Overpass failover
+- Added a third global Overpass endpoint: VK Maps.
+- Existing private.coffee and overpass-api.de endpoints remain.
+
+6) Diagnostic wording
+- Network errors now explicitly say "Données vectorielles OSM de routage".
+- The message explains that the OpenRailwayMap background may still be visible because it is an independent raster layer.
+
+PRESERVED CONTRACTS
+- v1.1.44 timetable regulation + manual ORM trace.
+- v1.1.45 finite last-resort anti-reversal policy.
+- v1.1.46/47 OSM-engine overlay and switch diagnostics.
+- v1.1.48 passive overlay and local/performance short-route fixes.
+- Real OSM railway only; no automatic synthetic straight route.
+- 17,817 gameplay stations and split FILE:// bundle architecture preserved.
+
+QA EXECUTED
+- Functional non-bulk/non-weather: 354/354 PASS.
+- Bulk ORM: 20,275/20,275 PASS.
+- v1.1.49 dedicated tests: 6/6 PASS.
+- JavaScript/MJS syntax: 193/193 PASS.
+- FILE:// bundle rebuilt: 61 core modules, 66 deferred-catalog modules.
+- Core bundle: 2,892,689 bytes.
+- Deferred catalogue: 45,802,563 bytes.
+
+IMPORTANT LIMIT
+- The build environment cannot perform the user's real file:// browser/network smoke against live OSM/Overpass.
+- Final field smoke remains Château-Thierry on the user's browser.

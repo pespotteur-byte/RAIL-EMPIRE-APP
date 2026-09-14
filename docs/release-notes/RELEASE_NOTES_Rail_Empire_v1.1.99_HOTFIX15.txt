@@ -1,0 +1,13 @@
+Rail Empire v1.1.99 — HOTFIX15 DIRECT TRONCON RECOVERY
+
+Cette version cible le blocage LiveMap [BLOQUE] observé au départ d'un service DIRECT alors que les voyants de préparation sont verts.
+
+Cause corrigée:
+HOTFIX12/13 nettoyait les propriétaires fantômes lorsqu'un tronçon était inspecté, mais les primitives reserveTroncon()/occupyTroncon() pouvaient être appelées directement par la logique de départ/look-ahead. Un reservedBy ou occupiedBy appartenant à un ancien service mort pouvait donc encore maintenir le premier tronçon verrouillé à 0 km/h.
+
+HOTFIX15 nettoie désormais le propriétaire mort à la frontière d'acquisition elle-même. Une réservation appartenant à un vrai train actif n'est jamais volée.
+
+Le diagnostic LiveMap/runtime a également été durci: si blockedBy est actif, la raison de blocage physique est affichée explicitement au lieu d'être masquée par un état générique "En attente".
+
+Build: FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX15-DIRECT-TRONCON-RECOVERY
+Cache FILE://: 1199dep7

@@ -1,0 +1,14 @@
+Rail Empire v1.1.23 — Schedule Creator V2 Field Fixes
+Date: 2026-08-16
+
+Corrections issues du premier test joueur de v1.1.22:
+- Zoom Schedule Creator V2 réparé: la molette appelle maintenant TileMap.applyZoom(), la vraie API du moteur de carte.
+- Boutons + / - ajoutés dans la barre supérieure pour zoomer/dézoomer sans molette.
+- Choix direct d'une rame de référence visible dans le panneau Calcul de marche. Choisir une rame utilise automatiquement ses performances comme composition type.
+- Nom du train retour éditable directement depuis le bloc Aller-retour, indépendamment du nom de l'aller.
+- Cache-buster du bundle file:// passé à v=1123 et version affichée V1.1.23.
+
+QA:
+- 97 197 / 97 197 tests hors météo PASS, 0 échec.
+- Tests ciblés V2 ajoutés pour zoom, rame de référence et nom du retour: PASS.
+- Bundle file:// reconstruit (126 modules) et node --check PASS.

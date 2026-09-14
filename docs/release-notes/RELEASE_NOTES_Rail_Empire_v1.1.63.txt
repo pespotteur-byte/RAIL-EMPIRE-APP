@@ -1,0 +1,64 @@
+Rail Empire v1.1.63 — INCIDENTS EXPANSION I
+Date: 2026-08-18
+
+Base: v1.1.62 DB Quai Live Board.
+
+NOUVEAUX INCIDENTS
+1. Obstacle sur les voies
+   - Probabilité: 15 % par contrôle horaire
+   - Portée: gare OU tronçon entre deux gares
+   - Effet: interruption totale
+   - Durée: 30 à 120 min
+   - Condition: aucune
+
+2. Incident voie
+   - Probabilité: 15 %
+   - Portée: tronçon entre deux gares
+   - Effet: interruption totale
+   - Durée: 15 à 30 min
+   - Condition: aucune
+
+3. Personnes sur les voies
+   - Probabilité: 15 %
+   - Portée: gare OU tronçon entre deux gares
+   - Effet: ralentissement à 30 km/h
+   - Durée: 15 à 45 min
+   - Condition: aucune
+
+4. Incendie aux abords des voies
+   - Probabilité: 15 %
+   - Portée: gare OU tronçon entre deux gares
+   - Effet: interruption totale
+   - Durée: 60 min
+   - Condition: aucune
+
+5. Malaise voyageur
+   - Probabilité: 15 %
+   - Portée: un seul train
+   - Effet: interruption du train
+   - Durée: 10 à 25 min
+   - Condition: train à l'arrêt en gare
+
+6. Intervention des forces de l'ordre
+   - Probabilité: 15 %
+   - Portée: gare uniquement
+   - Effet: ralentissement à 60 km/h dans la zone gare
+   - Durée: 15 à 30 min
+
+MOTEUR DE PORTEE
+- Nouveau scope station-or-track pour les incidents pouvant survenir soit dans une gare, soit sur un vrai tronçon intergare.
+- Nouveau spawn de gare pure: stationA = stationB. Un incident de gare n'active plus artificiellement le tronçon adjacent.
+- Les incidents intergare continuent de marquer le vrai world.track concerné et d'utiliser sa route réelle.
+- Les sauvegardes restent compatibles: la portée gare pure est représentée par le même identifiant de gare aux deux extrémités.
+
+NON-REGRESSION
+- Les 7 incidents historiques sont conservés.
+- RER RATP v1.1.61 et DB Quai v1.1.62 inchangés.
+- Aucun changement du routage OSM/ORM ou du Schedule Creator.
+
+QA
+- 6/6 tests dédiés v1.1.63
+- 36/36 tests ciblés incidents/runtime/Infogare
+- 20 275/20 275 bulk ORM
+- 208/208 fichiers JS/MJS/CJS syntaxiquement valides
+- Bundle FILE:// reconstruit: 61 modules core + 66 modules catalogue différé

@@ -1,0 +1,1954 @@
+{
+  "project": "Rail Empire game integration — Batch186 STRICT100",
+  "base": "RE-code-only.zip",
+  "catalog_entries_game": 16056,
+  "catalog_entries_with_runtime_identity_overlay": 14593,
+  "single_image_entries": 14914,
+  "single_image_entries_mapped": 14593,
+  "single_image_entries_unmapped_legacy_aliases": 321,
+  "composite_entries_not_assigned_single_raw_identity": 1142,
+  "batch186_raw_drawings_total": 36824,
+  "batch186_in_scope_drawings": 34623,
+  "batch186_out_of_scope_drawings": 2201,
+  "mapping_methods": {
+    "EXACT_ARCHIVE_PATH": 13882,
+    "CASEFOLD_ARCHIVE_PATH": 193,
+    "LEGACY_ANIM_ALIAS": 254,
+    "LEGACY_SIDE_ALIAS": 264
+  },
+  "policy": [
+    "Identity-only overlay",
+    "No catalog IDs changed",
+    "No technical/gameplay numeric values changed",
+    "Existing MLG name/series/notes preserved",
+    "Pack RE unchanged"
+  ],
+  "unmapped_single_image_entries": [
+    {
+      "catalog_id": "cat-910",
+      "imageData": "img/catalog/Suisse/CFF/LE/CFF_Re44I_1S_R.gif",
+      "name": "Re 4/4 I 1re srie",
+      "seriesName": "1re srie — Livre rouge."
+    },
+    {
+      "catalog_id": "cat-924",
+      "imageData": "img/catalog/Suisse/CFF/LE/CFF_Re44II_2S_R.gif",
+      "name": "Re 4/4 II 2me srie",
+      "seriesName": "2me srie — Livre rouge."
+    },
+    {
+      "catalog_id": "cat-950",
+      "imageData": "img/catalog/Suisse/CFF/LE/CFF_Re66_P1_R.gif",
+      "name": "Re 6/6 11601 et 2",
+      "seriesName": "Prototypes — Livre rouge."
+    },
+    {
+      "catalog_id": "cat-2485",
+      "imageData": "img/catalog/DB/LD/DB_V60_P_PRC_Anim_R.gif",
+      "name": "261",
+      "seriesName": "Prototypes — Livre exprimentale de la 261 001, reprenant  peu prs la future dcoupe de la livre bleu/beige, mais en conservant le rouge pourpre  la place du bleu."
+    },
+    {
+      "catalog_id": "cat-2486",
+      "imageData": "img/catalog/DB/LD/DB_V60_P_BB_Anim_R.gif",
+      "name": "261",
+      "seriesName": "Prototypes — Livre bleu-beige."
+    },
+    {
+      "catalog_id": "cat-2490",
+      "imageData": "img/catalog/DB/LD/DB_260_BBK_Anim_R.gif",
+      "name": "360/361",
+      "seriesName": "Machines de srie — Logo DB AG."
+    },
+    {
+      "catalog_id": "cat-3512",
+      "imageData": "img/catalog/DB/V/DB_Bi26_R.gif",
+      "name": "Bi-26",
+      "seriesName": "DR 26 — 2me classe. Version avec chauffage autonome pour trains en traction Diesel. Livre rouge faon autorails, anciens marquages."
+    },
+    {
+      "catalog_id": "cat-3515",
+      "imageData": "img/catalog/DB/V/DB_ABi28_R.gif",
+      "name": "ABi-28",
+      "seriesName": "DR 28/29 — 1re / 2me classes. Version avec chauffage autonome pour trains en traction Diesel. Livre rouge faon autorails, anciens marquages."
+    },
+    {
+      "catalog_id": "cat-4974",
+      "imageData": "img/catalog/DB/DK/DB_185_2_2P_DSRS.gif",
+      "name": "185.2",
+      "seriesName": "Traxx — Traxx   2 pantographes. Livre spcifique DB Schenker Rail Scandinavia / Green Cargo pour les 185 323  337, 402, 403 et 405."
+    },
+    {
+      "catalog_id": "cat-5360",
+      "imageData": "img/catalog/D_P/AKN_VT3_R.gif",
+      "name": "VT 3.07  10",
+      "seriesName": "Schienenbus Uerdingen — Deuxime srie de Schienenbus Uerdingen d'AKN, rcuprs avec le rseau EBOE. 4 exemplaires, de type VT98 monomoteur. Livre rouge (faon DB) d'origine."
+    },
+    {
+      "catalog_id": "cat-5363",
+      "imageData": "img/catalog/D_P/AKN_VT3_11II_OB_R.gif",
+      "name": "VT 3.11 II",
+      "seriesName": "Schienenbus Uerdingen — Schienenbus Uerdingen supplmentaire rachet  la DB en 1987, de type VT 98 bimoteur standard (ex 798 677 \"Erlebte Eisenbahn\" des festivits du centcinquantenaire du rail en Allemagne)."
+    },
+    {
+      "catalog_id": "cat-5621",
+      "imageData": "img/catalog/D_P/HLB_G1206_R.gif",
+      "name": "G1206",
+      "seriesName": "Mak G1206 — Livre rouge d'origine (provisoire), marquages HLB."
+    },
+    {
+      "catalog_id": "cat-5666",
+      "imageData": "img/catalog/D_P/HzL_RS1_1S_L2_R.gif",
+      "name": "RS1 VT 200  221",
+      "seriesName": "RegioShuttle RS1 — Aprs rvision, livre  portes rouges et inclinaison des surfaces rouges identique sur les 2 faces."
+    },
+    {
+      "catalog_id": "cat-5667",
+      "imageData": "img/catalog/D_P/HzL_RS1_2S_L2_R.gif",
+      "name": "RS1 VT 46 et 47",
+      "seriesName": "RegioShuttle RS1 — Srie complmentaire construite par Stadler en 2005, appartenant aux HzL. D'origine dans la livre  portes rouges et inclinaison des surfaces rouges identique sur les 2 faces."
+    },
+    {
+      "catalog_id": "cat-6149",
+      "imageData": "img/catalog/D_P/Nordbahn_VT2_70_L2_R.gif",
+      "name": "LINT 41 VT 2.70",
+      "seriesName": "LINT 41 — VT 2.71  77 (l'ensemble des LINT ex AKN, SHB et Nordbahn, enrichis d'un autorail supplmentaire), LINT 41  plancher haut utiliss de 2011  2021 pour les 2 lignes Neumnster - Bad Oldesloe et Neumnster - Heide - Bsum."
+    },
+    {
+      "catalog_id": "cat-6402",
+      "imageData": "img/catalog/D_P/SWEG_VTMAN_L1_R.gif",
+      "name": "MAN VT",
+      "seriesName": "Autorails — Livre SWEG du dbut des annes '80, avec toit blanc."
+    },
+    {
+      "catalog_id": "cat-6403",
+      "imageData": "img/catalog/D_P/SWEG_VTMAN_L2_R.gif",
+      "name": "MAN VT",
+      "seriesName": "Autorails — Version  toit bleu, plus rcente."
+    },
+    {
+      "catalog_id": "cat-6408",
+      "imageData": "img/catalog/D_P/SWEG_VBMAN_L1_R.gif",
+      "name": "MAN VB",
+      "seriesName": "Remorques intermdiaires — Livre SWEG du dbut des annes '80, avec toit blanc."
+    },
+    {
+      "catalog_id": "cat-6411",
+      "imageData": "img/catalog/D_P/SWEG_VTMaK_R.gif",
+      "name": "VT 85",
+      "seriesName": "Autorails GDT MaK — Livre rouge SWEG."
+    },
+    {
+      "catalog_id": "cat-6413",
+      "imageData": "img/catalog/D_P/SWEG_VTMaK_R.gif",
+      "name": "VB 181",
+      "seriesName": "Autorails GDT MaK — Livre orange ex KSE."
+    },
+    {
+      "catalog_id": "cat-7119",
+      "imageData": "img/catalog/FS/LE/FS_E402P_L1_R.gif",
+      "name": "E 402P",
+      "seriesName": "E 402P — Livre d'origine."
+    },
+    {
+      "catalog_id": "cat-7385",
+      "imageData": "img/catalog/FS/V/FS_MDVE_RG_nA_DTR1_R.gif",
+      "name": "nA",
+      "seriesName": "1re clase : nA — Version modernise (climatisation, baies remplaces). Nouvelle livre DTR  portes vert pomme."
+    },
+    {
+      "catalog_id": "cat-7393",
+      "imageData": "img/catalog/FS/V/FS_MDVE_RG_nB_DTR1_R.gif",
+      "name": "nB",
+      "seriesName": "2me classe : nB — Version modernise (climatisation, baies remplaces). Nouvelle livre DTR  portes vert pomme."
+    },
+    {
+      "catalog_id": "cat-7644",
+      "imageData": "img/catalog/FS/V/FS_UICX80R_XMPRT_Bc_R.gif",
+      "name": "UIC X 80 Bc",
+      "seriesName": "UIC-X 80 — Voitures modernises (reconnaissables aux nouvelles baies). Livre XMPR \"Cuccette\". Logo Trenitalia."
+    },
+    {
+      "catalog_id": "cat-7959",
+      "imageData": "img/catalog/F_P/Agrivap_CC65005_R.gif",
+      "name": "CC 65005",
+      "seriesName": "Agrivap"
+    },
+    {
+      "catalog_id": "cat-7960",
+      "imageData": "img/catalog/F_P/CFD_Class20_R.gif",
+      "name": "2000",
+      "seriesName": "Locomotives — Type anglais rachet d'occasion (2001  2003)."
+    },
+    {
+      "catalog_id": "cat-7968",
+      "imageData": "img/catalog/F_P/X2400_T1V_R.gif",
+      "name": "X 2416",
+      "seriesName": "CFTA Bretagne — Un X 2400 a t rachet et repeint par les CFTA. Il est aujourd'hui rform."
+    },
+    {
+      "catalog_id": "cat-7969",
+      "imageData": "img/catalog/F_P/X3800_T1V_R.gif",
+      "name": "X 4051",
+      "seriesName": "CFTA Bretagne — Un Picasso (X 3800) a t rachet et repeint par les CFTA. Il n'est plus aujourd'hui en service sur ce rseau."
+    },
+    {
+      "catalog_id": "cat-7970",
+      "imageData": "img/catalog/F_P/X97150_T1V_R.gif",
+      "name": "X 97150",
+      "seriesName": "CFTA Bretagne — Numrotation bizarre pour trois autorails  deux essieux (correspond en fait  la srie X 71500 pour des engins n'appartenant pas  la SNCF). Premire livre drive du TER Bretagne de premire gnration."
+    },
+    {
+      "catalog_id": "cat-7971",
+      "imageData": "img/catalog/F_P/X97150_T2_R.gif",
+      "name": "X 97150",
+      "seriesName": "CFTA Bretagne — Les X 97151  97153 ont t repeints depuis 2002 en nouvelle livre TER."
+    },
+    {
+      "catalog_id": "cat-7972",
+      "imageData": "img/catalog/F_P/XR8100_T1V_R.gif",
+      "name": "XR 8100",
+      "seriesName": "CFTA Bretagne — Remorque d'autorail unifie repeinte aux couleurs TER Bretagne."
+    },
+    {
+      "catalog_id": "cat-7977",
+      "imageData": "img/catalog/F_P/Colas_Fanps_Y25_R.gif",
+      "name": "Fanps",
+      "seriesName": "Wagons — Bogies Y25, livre Colas Rail."
+    },
+    {
+      "catalog_id": "cat-7978",
+      "imageData": "img/catalog/F_P/Colas_Fanps_Y25_R.gif",
+      "name": "Fanps",
+      "seriesName": "Wagons — Bogies AFR22, livre Colas Rail."
+    },
+    {
+      "catalog_id": "cat-8030",
+      "imageData": "img/catalog/F_P/BDR_50_J1_R.gif",
+      "name": "50",
+      "seriesName": "50 / 300 — Livre d'origine. Chassis noir. Ex : 51."
+    },
+    {
+      "catalog_id": "cat-8031",
+      "imageData": "img/catalog/F_P/BDR_50_J2_R.gif",
+      "name": "50",
+      "seriesName": "50 / 300 — Livre d'origine. Chassis jaune. Ex : 53."
+    },
+    {
+      "catalog_id": "cat-8032",
+      "imageData": "img/catalog/F_P/BDR_50_J3_R.gif",
+      "name": "50",
+      "seriesName": "50 / 300 — Nouvelle livre. Chassis noir. Ex : 55."
+    },
+    {
+      "catalog_id": "cat-8033",
+      "imageData": "img/catalog/F_P/BDR_50_J4_R.gif",
+      "name": "50",
+      "seriesName": "50 / 300 — Nouvelle livre. Chassis jaune. Ex : 56, 57."
+    },
+    {
+      "catalog_id": "cat-8034",
+      "imageData": "img/catalog/F_P/BDR_1200_J1_R.gif",
+      "name": "1200",
+      "seriesName": "1200 — Livre d'origine."
+    },
+    {
+      "catalog_id": "cat-8035",
+      "imageData": "img/catalog/F_P/BDR_1201_J2_R.gif",
+      "name": "1201",
+      "seriesName": "1200 — Livre intermdiaire RDT13."
+    },
+    {
+      "catalog_id": "cat-8036",
+      "imageData": "img/catalog/F_P/BDR_1202_J2_R.gif",
+      "name": "1202",
+      "seriesName": "1200 — Livre intermdiaire RDT13."
+    },
+    {
+      "catalog_id": "cat-8037",
+      "imageData": "img/catalog/F_P/BDR_1203_J2_R.gif",
+      "name": "1203",
+      "seriesName": "1200 — Livre intermdiaire RDT13."
+    },
+    {
+      "catalog_id": "cat-8038",
+      "imageData": "img/catalog/F_P/BDR_1200_J3_R.gif",
+      "name": "1200",
+      "seriesName": "1200 — Livre actuelle."
+    },
+    {
+      "catalog_id": "cat-8039",
+      "imageData": "img/catalog/F_P/BDR_1204_J3_R.gif",
+      "name": "1204",
+      "seriesName": "1200 — Avec un chappement diffrent, sur le toit. Livre actuelle."
+    },
+    {
+      "catalog_id": "cat-8040",
+      "imageData": "img/catalog/F_P/BDR_1400_J1_R.gif",
+      "name": "1400",
+      "seriesName": "1400 — Livre et marquages d'origine."
+    },
+    {
+      "catalog_id": "cat-8041",
+      "imageData": "img/catalog/F_P/BDR_1400_J2_R.gif",
+      "name": "1400",
+      "seriesName": "1400 — Livre actuelle (RDT 13)."
+    },
+    {
+      "catalog_id": "cat-8046",
+      "imageData": "img/catalog/F_P/VFL_10_Anim_R.gif",
+      "name": "Locotracteurs 10  12",
+      "seriesName": "Locomotives Diesel et locotracteurs — Anciennes locomotives  vapeur 030T reconstruites. 1 moteur de 180 ch. Jupes raccourcies."
+    },
+    {
+      "catalog_id": "cat-8048",
+      "imageData": "img/catalog/F_P/VFL_Y1_R.gif",
+      "name": "Y 01 et 02",
+      "seriesName": "Locomotives Diesel et locotracteurs — Locotracteurs de type Y 7400 SNCF, acquis en 1974 par les VFL."
+    },
+    {
+      "catalog_id": "cat-8049",
+      "imageData": "img/catalog/F_P/VFL_01_Anim_R.gif",
+      "name": "BB 01",
+      "seriesName": "Locomotives Diesel et locotracteurs — Type BB200 CFD."
+    },
+    {
+      "catalog_id": "cat-8050",
+      "imageData": "img/catalog/F_P/VFL_BB207_Anim_L.gif",
+      "name": "BB 207",
+      "seriesName": "Locomotives Diesel et locotracteurs — Type BB200 CFD. Ex-CFD Autun"
+    },
+    {
+      "catalog_id": "cat-8051",
+      "imageData": "img/catalog/F_P/VFL_71000_Anim_R.gif",
+      "name": "BB 71000",
+      "seriesName": "Locomotives Diesel et locotracteurs — Ex-BB 71003 et 71011 SNCF."
+    },
+    {
+      "catalog_id": "cat-8052",
+      "imageData": "img/catalog/F_P/VFL_63500_R.gif",
+      "name": "BB 63500",
+      "seriesName": "Locomotives Diesel et locotracteurs — Ex-BB 63795 et 63622 SNCF."
+    },
+    {
+      "catalog_id": "cat-8053",
+      "imageData": "img/catalog/F_P/VFL_BB63622_R.gif",
+      "name": "BB 63622",
+      "seriesName": "Locomotives Diesel et locotracteurs — Avant peinture en rouge."
+    },
+    {
+      "catalog_id": "cat-8054",
+      "imageData": "img/catalog/F_P/Blanzy_BB.gif",
+      "name": "BB \"Bote  sel\"",
+      "seriesName": "Houillres de Blanzy — Ns 1  6, construites par la SACM de 1926  1937."
+    },
+    {
+      "catalog_id": "cat-8055",
+      "imageData": "img/catalog/F_P/Blanzy_Tremie1.gif",
+      "name": "Trmie",
+      "seriesName": "Houillres de Blanzy"
+    },
+    {
+      "catalog_id": "cat-8056",
+      "imageData": "img/catalog/F_P/Blanzy_Tremie2.gif",
+      "name": "Trmie",
+      "seriesName": "Houillres de Blanzy"
+    },
+    {
+      "catalog_id": "cat-8461",
+      "imageData": "img/catalog/W/Gos_70_6_Sernam.gif",
+      "name": "G70",
+      "seriesName": "Couverts  essieux — Avec logo Sernam."
+    },
+    {
+      "catalog_id": "cat-8462",
+      "imageData": "img/catalog/W/G79.gif",
+      "name": "G79",
+      "seriesName": "Couverts  essieux — Dernire livre Sernam grise, sans logo."
+    },
+    {
+      "catalog_id": "cat-8463",
+      "imageData": "img/catalog/W/G79 Sernam.gif",
+      "name": "G79",
+      "seriesName": "Couverts  essieux — Avec logo Sernam."
+    },
+    {
+      "catalog_id": "cat-8477",
+      "imageData": "img/catalog/W/CitSimotra_PN4_R.gif",
+      "name": "PN4",
+      "seriesName": "Citernes"
+    },
+    {
+      "catalog_id": "cat-8819",
+      "imageData": "img/catalog/GySEV/GySEV_Bpz_1S_L2_R.gif",
+      "name": "Bpz",
+      "seriesName": "Ex ÖBB — 2ème classe. Première série (ex ÖBB Bp 29-35.0). Livrée GySEV / Raaberbahn."
+    },
+    {
+      "catalog_id": "cat-9760",
+      "imageData": "img/catalog/OBB/AE/OBB_7130_L1_R.gif",
+      "name": "7130",
+      "seriesName": "4130 — Remorques intermdiaires, ex 1re classe. Livre bleu / beige d'origine."
+    },
+    {
+      "catalog_id": "cat-9762",
+      "imageData": "img/catalog/OBB/AE/OBB_7130_L2_R.gif",
+      "name": "7130",
+      "seriesName": "4130 — Livre bleu / beige inverse."
+    },
+    {
+      "catalog_id": "cat-10168",
+      "imageData": "img/catalog/OBB/V/OBB_B29303_S1_R.gif",
+      "name": "B 29-30.3",
+      "seriesName": "39-40 000 — Livre \"Komfortstufe II\" pour quelques exemplaires."
+    },
+    {
+      "catalog_id": "cat-10869",
+      "imageData": "img/catalog/SNCB/LD/SNCB_HLD73V_V70_Anim_R.gif",
+      "name": "8275",
+      "seriesName": "Sries 263 et 273 - HLD 73, 74 et 82 — La dernire unit de la srie HLD 82 est une locomotive sans cabine destine  tre en couplage permanent avec une de ses soeurs. Surnomme le \"veau\". Livre verte \"manoeuvres\"."
+    },
+    {
+      "catalog_id": "cat-11080",
+      "imageData": "img/catalog/SNCB/V/SNCB_Dms_BarDisco_RT2_R.gif",
+      "name": "SR2",
+      "seriesName": "Bar Dancing SR2 — Livre Railtour 2."
+    },
+    {
+      "catalog_id": "cat-11081",
+      "imageData": "img/catalog/SNCB/V/SNCB_Dms_BarDisco_RT3_R.gif",
+      "name": "SR2",
+      "seriesName": "Bar Dancing SR2 — Livre Railtour 3."
+    },
+    {
+      "catalog_id": "cat-12617",
+      "imageData": "img/catalog/VL/VTU_CICBN_A_R.gif",
+      "name": "VTU A",
+      "seriesName": "VTU — Premire classe."
+    },
+    {
+      "catalog_id": "cat-12618",
+      "imageData": "img/catalog/VL/VTU_CICBN_B_R.gif",
+      "name": "VTU B",
+      "seriesName": "VTU — Deuxime classe."
+    },
+    {
+      "catalog_id": "cat-12619",
+      "imageData": "img/catalog/VL/VU_CICBN_B11_R.gif",
+      "name": "VU B11",
+      "seriesName": "VU — Deuxime classe."
+    },
+    {
+      "catalog_id": "cat-12656",
+      "imageData": "img/catalog/VB/RRR_T2PBou_VP_R.gif",
+      "name": "RRR Voiture pilote",
+      "seriesName": "RRR — Rnovation avec nouvelle identit visuelle Bourgogne. Cabine climatise."
+    },
+    {
+      "catalog_id": "cat-12657",
+      "imageData": "img/catalog/VB/RRR_T2PBou_VI_R.gif",
+      "name": "RRR Remorque intermdiaire",
+      "seriesName": "RRR"
+    },
+    {
+      "catalog_id": "cat-12658",
+      "imageData": "img/catalog/VB/RRR_T2PBou_VX_R.gif",
+      "name": "RRR Remorque d'extrmit",
+      "seriesName": "RRR"
+    },
+    {
+      "catalog_id": "cat-12792",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU_Aqualys_A_R.gif",
+      "name": "VTU Aqualys A",
+      "seriesName": "Aqualys — VTU de premire classe."
+    },
+    {
+      "catalog_id": "cat-12793",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU_AqualysI_A_R.gif",
+      "name": "VTU Aqualys A",
+      "seriesName": "Aqualys — Sigle Carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-12794",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU2_Aqualys_AB_R.gif",
+      "name": "VTU Aqualys AB",
+      "seriesName": "Aqualys — VTU mixte 1re/2me classe avec emplacements pour vlos et PMR (A5B4x). Prises dans les dernires tranches de VTU avec portes louvoyantes-coulissantes."
+    },
+    {
+      "catalog_id": "cat-12795",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU2_AqualysI_AB_R.gif",
+      "name": "VTU Aqualys AB",
+      "seriesName": "Aqualys — Sigle Carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-12796",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU_Aqualys_B_R.gif",
+      "name": "VTU Aqualys B",
+      "seriesName": "Aqualys — VTU de deuxime classe."
+    },
+    {
+      "catalog_id": "cat-12797",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU_AqualysI_B_R.gif",
+      "name": "VTU Aqualys B",
+      "seriesName": "Aqualys — Sigle Carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-12798",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU_Aqualys_BR_R.gif",
+      "name": "VTU Aqualys BR",
+      "seriesName": "Aqualys — VTU de deuxime classe avec espace restauration (distributeurs)."
+    },
+    {
+      "catalog_id": "cat-12799",
+      "imageData": "img/catalog/SNCF/VLCorail/VTU_AqualysI_BR_R.gif",
+      "name": "VTU Aqualys BR",
+      "seriesName": "Aqualys — Sigle Carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-12800",
+      "imageData": "img/catalog/SNCF/VLCorail/VU_Aqualys_B11_R.gif",
+      "name": "VU Aqualys B",
+      "seriesName": "Aqualys — VU de deuxime classe."
+    },
+    {
+      "catalog_id": "cat-12801",
+      "imageData": "img/catalog/SNCF/VLCorail/VU_AqualysI_B11_R.gif",
+      "name": "VU Aqualys B",
+      "seriesName": "Aqualys — Sigle Carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13708",
+      "imageData": "img/catalog/SNCF/Mtrique/Z200_R.gif",
+      "name": "Z200",
+      "seriesName": "Srie Z 200 — Z 201  220."
+    },
+    {
+      "catalog_id": "cat-13709",
+      "imageData": "img/catalog/SNCF/Mtrique/Z200_T_R.gif",
+      "name": "Z200",
+      "seriesName": "Srie Z 200 — Lanterneau supprim, service des trains de travaux."
+    },
+    {
+      "catalog_id": "cat-13710",
+      "imageData": "img/catalog/SNCF/Mtrique/ZS10000_R.gif",
+      "name": "ZS10000",
+      "seriesName": "Srie Z 200 — 2me classe. ZS 10001   4 et 63  80."
+    },
+    {
+      "catalog_id": "cat-13711",
+      "imageData": "img/catalog/SNCF/Mtrique/ZS10100_R.gif",
+      "name": "ZS10100",
+      "seriesName": "Srie Z 200 — Mixtes 1re/2me classe. ZS 10117  130."
+    },
+    {
+      "catalog_id": "cat-13712",
+      "imageData": "img/catalog/SNCF/Mtrique/ZS10200_R.gif",
+      "name": "ZS10200",
+      "seriesName": "Srie Z 200 — Plats. ZS 10201  8."
+    },
+    {
+      "catalog_id": "cat-13713",
+      "imageData": "img/catalog/SNCF/Mtrique/ZS10400.gif",
+      "name": "ZS10400",
+      "seriesName": "Srie Z 200 — Tombereaux. ZS 10401  34."
+    },
+    {
+      "catalog_id": "cat-13714",
+      "imageData": "img/catalog/SNCF/Mtrique/Z600_RC2_R.gif",
+      "name": "Z 600 rouge-crme",
+      "seriesName": "Srie Z 600 — Z 601  608. Premire livre type autorail, mais avec plaques de classe remplaces par des marquages peints."
+    },
+    {
+      "catalog_id": "cat-13715",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20600_RC2_R.gif",
+      "name": "ZR 20600 rouge-crme",
+      "seriesName": "Srie Z 600 — Remorques ZR 20601  604. Premire livre type autorail, mais avec plaques de classe remplaces par des marquages peints."
+    },
+    {
+      "catalog_id": "cat-13716",
+      "imageData": "img/catalog/SNCF/Mtrique/Z600_RC3_R.gif",
+      "name": "Z 600 rouge-crme",
+      "seriesName": "Srie Z 600 — Evolution du marquage  la fin des annes '70 avec pose des cartouches de classe unifis."
+    },
+    {
+      "catalog_id": "cat-13717",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20600_RC3_R.gif",
+      "name": "ZR 20600 rouge-crme",
+      "seriesName": "Srie Z 600 — Evolution du marquage  la fin des annes '70 avec pose des cartouches de classe unifis."
+    },
+    {
+      "catalog_id": "cat-13718",
+      "imageData": "img/catalog/SNCF/Mtrique/Z600_O_R.gif",
+      "name": "Z 600 orange",
+      "seriesName": "Srie Z 600 — Nouvelle livre en 1985, proche de celle des TER contemporains, mais orange."
+    },
+    {
+      "catalog_id": "cat-13719",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20600_O_R.gif",
+      "name": "ZR 20600 orange",
+      "seriesName": "Srie Z 600 — Nouvelle livre en 1985, proche de celle des TER contemporains, mais orange."
+    },
+    {
+      "catalog_id": "cat-13720",
+      "imageData": "img/catalog/SNCF/Mtrique/Z600_ON_R.gif",
+      "name": "Z 600 orange",
+      "seriesName": "Srie Z 600 — Sigle \"nouille\" SNCF."
+    },
+    {
+      "catalog_id": "cat-13721",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20600_ON_R.gif",
+      "name": "ZR 20600 orange",
+      "seriesName": "Srie Z 600 — Sigle \"nouille\" SNCF."
+    },
+    {
+      "catalog_id": "cat-13722",
+      "imageData": "img/catalog/SNCF/Mtrique/Z600_OC_R.gif",
+      "name": "Z 600 orange",
+      "seriesName": "Srie Z 600 — Sigle \"casquette\" SNCF."
+    },
+    {
+      "catalog_id": "cat-13723",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20600_OC_R.gif",
+      "name": "ZR 20600 orange",
+      "seriesName": "Srie Z 600 — Sigle \"casquette\" SNCF."
+    },
+    {
+      "catalog_id": "cat-13724",
+      "imageData": "img/catalog/SNCF/Mtrique/Z600_T1R_R.gif",
+      "name": "Z 600 rouge",
+      "seriesName": "Srie Z 600 — Nouvelle livre  la sortie des Z 800, de type TER rouge."
+    },
+    {
+      "catalog_id": "cat-13725",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20600_T1R_R.gif",
+      "name": "ZR 20600 rouge",
+      "seriesName": "Srie Z 600 — Nouvelle livre  la sortie des Z 800, de type TER rouge."
+    },
+    {
+      "catalog_id": "cat-13726",
+      "imageData": "img/catalog/SNCF/Mtrique/Z800.gif",
+      "name": "Z 800",
+      "seriesName": "Srie Z 800 — Z 801/2  5/6 (SNCF), Z 821/2 et 3/4 (MC). Sigle \"casquette\" SNCF."
+    },
+    {
+      "catalog_id": "cat-13727",
+      "imageData": "img/catalog/SNCF/Mtrique/Z800_I.gif",
+      "name": "Z 800",
+      "seriesName": "Srie Z 800 — Sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13728",
+      "imageData": "img/catalog/SNCF/Mtrique/Z850.gif",
+      "name": "Z 850",
+      "seriesName": "Srie Z 850 — Dessin en collaboration avec Pierre Lottero."
+    },
+    {
+      "catalog_id": "cat-13729",
+      "imageData": "img/catalog/SNCF/Mtrique/ZS10450_R.gif",
+      "name": "ZS 10450 et 10451",
+      "seriesName": "Chasse-neige — Chasse-neige peron. 2 exemplaires. Le deuxime a t renumrot ZR 20451 aprs dmotorisation  la fin des annes '60 pour utilisation avec Z 600."
+    },
+    {
+      "catalog_id": "cat-13730",
+      "imageData": "img/catalog/SNCF/Mtrique/Z691_RC_R.gif",
+      "name": "Z 691",
+      "seriesName": "Chasse-neige — Chasse-neige rotatif, driv de la srie Z600. Il fonctionne toujours coupl avec une Z 600. Premire livre type autorail."
+    },
+    {
+      "catalog_id": "cat-13731",
+      "imageData": "img/catalog/SNCF/Mtrique/Z691_ON_R.gif",
+      "name": "Z 691",
+      "seriesName": "Chasse-neige — Livre TER orange au milieu des annes \"80. Sigle \"nouille\" SNCF."
+    },
+    {
+      "catalog_id": "cat-13732",
+      "imageData": "img/catalog/SNCF/Mtrique/Z691_OC_R.gif",
+      "name": "Z 691",
+      "seriesName": "Chasse-neige — Sigle \"casquette\" SNCF."
+    },
+    {
+      "catalog_id": "cat-13733",
+      "imageData": "img/catalog/SNCF/Mtrique/Z100_L1_R.gif",
+      "name": "Z 100",
+      "seriesName": "Z100 et remorques — Z 103,104 et 106  109. Etat initial."
+    },
+    {
+      "catalog_id": "cat-13734",
+      "imageData": "img/catalog/SNCF/Mtrique/Z110_L1_R.gif",
+      "name": "Z 110",
+      "seriesName": "Z100 et remorques — Z 111  118 et Z 105. Etat initial."
+    },
+    {
+      "catalog_id": "cat-13735",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20000_L1_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — ZR 20001  4. Etat initial."
+    },
+    {
+      "catalog_id": "cat-13736",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20020_L1_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — ZR 20023 et 20036  39. Etat initial."
+    },
+    {
+      "catalog_id": "cat-13737",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20030_L1_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — \"Baladeuses\" ZR 20030  34. Etat initial."
+    },
+    {
+      "catalog_id": "cat-13738",
+      "imageData": "img/catalog/SNCF/Mtrique/Z100_R.gif",
+      "name": "Z 100",
+      "seriesName": "Z100 et remorques — Z 102  104 et 106  109. Etat aprs premire modernisation dans les annes '60."
+    },
+    {
+      "catalog_id": "cat-13739",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20020_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — ZR 20023 et 20036  39. Etat aprs premire modernisation dans les annes '60."
+    },
+    {
+      "catalog_id": "cat-13740",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20030_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — \"Baladeuses\" ZR 20030  34. Etat aprs premire modernisation dans les annes '60."
+    },
+    {
+      "catalog_id": "cat-13741",
+      "imageData": "img/catalog/SNCF/Mtrique/Z100_R2_R.gif",
+      "name": "Z 100",
+      "seriesName": "Z100 et remorques — Z 102  118. Etat aprs deuxime modernisation dans les annes '80. Les diagrammes ont t harmoniss."
+    },
+    {
+      "catalog_id": "cat-13742",
+      "imageData": "img/catalog/SNCF/Mtrique/Z100_R2_LR_R.gif",
+      "name": "Z 100",
+      "seriesName": "Z100 et remorques — Logos rgionaux Languedoc-Roussillon et sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13743",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20000_R2_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — ZR 20001  4. Etat aprs deuxime modernisation dans les annes '80."
+    },
+    {
+      "catalog_id": "cat-13744",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20000_R2_LR_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — Logos rgionaux Languedoc-Roussillon et sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13745",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20020_R2_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — ZR 20023 et 20036  39. Etat aprs deuxime modernisation dans les annes '80."
+    },
+    {
+      "catalog_id": "cat-13746",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20020_R2_LR_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — Logos rgionaux Languedoc-Roussillon et sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13747",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20030_R2_R.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — \"Baladeuses\" ZR 20030  34. Etat aprs deuxime modernisation dans les annes '80."
+    },
+    {
+      "catalog_id": "cat-13748",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20030_R2_I.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — Sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13749",
+      "imageData": "img/catalog/SNCF/Mtrique/ZR20030_R2_LR.gif",
+      "name": "ZR 20000",
+      "seriesName": "Z100 et remorques — Logos rgionaux Languedoc-Roussillon et sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13750",
+      "imageData": "img/catalog/SNCF/Mtrique/Z150_JC_R.gif",
+      "name": "Z 150",
+      "seriesName": "Z 150 — Livre de base avec logo TER et sigle casquette SNCF. Z 151 et 152."
+    },
+    {
+      "catalog_id": "cat-13751",
+      "imageData": "img/catalog/SNCF/Mtrique/Z150_JCLR1_R.gif",
+      "name": "Z 150",
+      "seriesName": "Z 150 — Avec premire version des logos rgionaux pour la Z 151."
+    },
+    {
+      "catalog_id": "cat-13752",
+      "imageData": "img/catalog/SNCF/Mtrique/Z150_JILR2_R.gif",
+      "name": "Z 150",
+      "seriesName": "Z 150 — Logos rgionaux Languedoc-Roussillon actuels et sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13753",
+      "imageData": "img/catalog/SNCF/Mtrique/Z201_L1_R.gif",
+      "name": "Z 201 + 202",
+      "seriesName": "Chasse-neige — Livre initiale."
+    },
+    {
+      "catalog_id": "cat-13754",
+      "imageData": "img/catalog/SNCF/Mtrique/Z201_L2_R.gif",
+      "name": "Z 201 + 202",
+      "seriesName": "Chasse-neige — Nouvelle livre."
+    },
+    {
+      "catalog_id": "cat-13755",
+      "imageData": "img/catalog/SNCF/Mtrique/X200_TC_R.gif",
+      "name": "X 200",
+      "seriesName": "X 200 — Livre autorail classique."
+    },
+    {
+      "catalog_id": "cat-13756",
+      "imageData": "img/catalog/SNCF/Mtrique/X200_TR_R.gif",
+      "name": "X 200",
+      "seriesName": "X 200 — Toit rouge (X 204 et 206)."
+    },
+    {
+      "catalog_id": "cat-13757",
+      "imageData": "img/catalog/SNCF/Mtrique/X220_TC_R.gif",
+      "name": "X 210/220",
+      "seriesName": "X 210/220 — Livre autorail classique."
+    },
+    {
+      "catalog_id": "cat-13758",
+      "imageData": "img/catalog/SNCF/Mtrique/X220_T1B_R.gif",
+      "name": "X 224",
+      "seriesName": "X 210/220 — Seul exemplaire non modernis.Livre TER bleue avec logos de la rgion Centre."
+    },
+    {
+      "catalog_id": "cat-13759",
+      "imageData": "img/catalog/SNCF/Mtrique/X210_RGBB_R.gif",
+      "name": "X 210 moderniss",
+      "seriesName": "X 210/220 — X 211  214. Livre aprs modernisation."
+    },
+    {
+      "catalog_id": "cat-13760",
+      "imageData": "img/catalog/SNCF/Mtrique/X210_RGT1B_R.gif",
+      "name": "X 210 moderniss",
+      "seriesName": "X 210/220 — Livre actuelle (TER bleue)."
+    },
+    {
+      "catalog_id": "cat-13761",
+      "imageData": "img/catalog/SNCF/Mtrique/X240_BB_R.gif",
+      "name": "X 240",
+      "seriesName": "X 240 — Livre d'origine."
+    },
+    {
+      "catalog_id": "cat-13762",
+      "imageData": "img/catalog/SNCF/Mtrique/X240_T1B_R.gif",
+      "name": "X 240",
+      "seriesName": "X 240 — Livre TER bleue."
+    },
+    {
+      "catalog_id": "cat-13763",
+      "imageData": "img/catalog/SNCF/Mtrique/X240_T2BICen_R.gif",
+      "name": "X 240",
+      "seriesName": "X 240 — Livre TER actuelle."
+    },
+    {
+      "catalog_id": "cat-13764",
+      "imageData": "img/catalog/SNCF/Mtrique/X240_Billard_R.gif",
+      "name": "X 240 (Billard)",
+      "seriesName": "X 240 (Billard) — Livre autorail classique."
+    },
+    {
+      "catalog_id": "cat-13765",
+      "imageData": "img/catalog/SNCF/Mtrique/X74500_R.gif",
+      "name": "X 74500",
+      "seriesName": "X 74500 — Livre TER actuelle."
+    },
+    {
+      "catalog_id": "cat-13766",
+      "imageData": "img/catalog/SNCF/Mtrique/X74500_T2BICen_R.gif",
+      "name": "X 74500",
+      "seriesName": "X 74500 — Logo carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-13767",
+      "imageData": "img/catalog/SNCF/Mtrique/XR700_TC_R.gif",
+      "name": "XR 700",
+      "seriesName": "Remorques XR 700 — Livre autorail classique."
+    },
+    {
+      "catalog_id": "cat-13768",
+      "imageData": "img/catalog/SNCF/Mtrique/XR700_TR_R.gif",
+      "name": "XR 700",
+      "seriesName": "Remorques XR 700 — Au moins la XR 703 a eu son toit repeint en rouge."
+    },
+    {
+      "catalog_id": "cat-13769",
+      "imageData": "img/catalog/SNCF/Mtrique/XR700_BB_R.gif",
+      "name": "XR 700",
+      "seriesName": "Remorques XR 700 — Nouvelle livre suite  la modernisation des autorails Verney."
+    },
+    {
+      "catalog_id": "cat-13770",
+      "imageData": "img/catalog/SNCF/Mtrique/XR700_T1B_R.gif",
+      "name": "XR 700",
+      "seriesName": "Remorques XR 700 — Livre actuelle (TER bleue)."
+    },
+    {
+      "catalog_id": "cat-13771",
+      "imageData": "img/catalog/SNCF/Mtrique/XR700_RGT1B_R.gif",
+      "name": "XR 700",
+      "seriesName": "Remorques XR 700 — Modernises (XR 703) avec fentres ouvrantes  chassis. Livre TER bleue actuelle."
+    },
+    {
+      "catalog_id": "cat-13936",
+      "imageData": "img/catalog/VL/DEVU46_TN_B_R.gif",
+      "name": "B",
+      "seriesName": "DEV U46 — Deuxime classe."
+    },
+    {
+      "catalog_id": "cat-13937",
+      "imageData": "img/catalog/VL/DEVU46_V1_B_R.gif",
+      "name": "B",
+      "seriesName": "DEV U46 — Marquages UIC (premire variante)."
+    },
+    {
+      "catalog_id": "cat-13938",
+      "imageData": "img/catalog/VL/DEVU46_B_R.gif",
+      "name": "B",
+      "seriesName": "DEV U46 — Marquages UIC (deuxime variante)."
+    },
+    {
+      "catalog_id": "cat-13939",
+      "imageData": "img/catalog/VL/DEVU46_TN_AD_R.gif",
+      "name": "AD",
+      "seriesName": "DEV U46 — Mixte premire classe fourgon."
+    },
+    {
+      "catalog_id": "cat-13940",
+      "imageData": "img/catalog/VL/DEVU46_AD_R.gif",
+      "name": "AD",
+      "seriesName": "DEV U46 — Marquages UIC."
+    },
+    {
+      "catalog_id": "cat-13941",
+      "imageData": "img/catalog/VL/DEVU46_TN_BD_R.gif",
+      "name": "BD",
+      "seriesName": "DEV U46 — Mixte deuxime classe fourgon."
+    },
+    {
+      "catalog_id": "cat-13942",
+      "imageData": "img/catalog/VL/DEVU46_V1_BD_R.gif",
+      "name": "BD",
+      "seriesName": "DEV U46 — Marquages UIC (premire variante)."
+    },
+    {
+      "catalog_id": "cat-13943",
+      "imageData": "img/catalog/VL/DEVU46_BD_R.gif",
+      "name": "BD",
+      "seriesName": "DEV U46 — Marquages UIC (deuxime variante)."
+    },
+    {
+      "catalog_id": "cat-14026",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_VTN_A212B6_R.gif",
+      "name": "AB verte",
+      "seriesName": "Mixte premire / deuxime classe"
+    },
+    {
+      "catalog_id": "cat-14027",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_VTNSR_A212B6_R.gif",
+      "name": "AB verte",
+      "seriesName": "Mixte premire / deuxime classe — Sigle SNCF rond (sans lendemain)."
+    },
+    {
+      "catalog_id": "cat-14028",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_V_A212B6_R.gif",
+      "name": "AB verte",
+      "seriesName": "Mixte premire / deuxime classe — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14029",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_V2_A212B6_R.gif",
+      "name": "AB verte",
+      "seriesName": "Mixte premire / deuxime classe — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14030",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_160B2_A212B6_R.gif",
+      "name": "AB C160",
+      "seriesName": "Mixte premire / deuxime classe — Livre C160 en version dfinitive, gris mat et portes grises. Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14031",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_VTN_A812_R.gif",
+      "name": "A verte",
+      "seriesName": "Premire classe"
+    },
+    {
+      "catalog_id": "cat-14032",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_VTN_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe"
+    },
+    {
+      "catalog_id": "cat-14033",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_V_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14034",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_V2_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14035",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_160B2_B10_R.gif",
+      "name": "B10 C160",
+      "seriesName": "Deuxime classe — Livre C160 en version dfinitive, gris mat et portes grises. Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14036",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_VTN_B9c_R.gif",
+      "name": "B9c verte",
+      "seriesName": "Deuxime classe couchettes"
+    },
+    {
+      "catalog_id": "cat-14037",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_V_B9c_R.gif",
+      "name": "B9c verte",
+      "seriesName": "Deuxime classe couchettes — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14038",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_V2_B9c_R.gif",
+      "name": "B9c verte",
+      "seriesName": "Deuxime classe couchettes — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14040",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_Was_B9c_R.gif",
+      "name": "B8cx Wasteels",
+      "seriesName": "Deuxime classe couchettes — Livre nuit bleu / gris suite  passage en rvision. Rare (seul ?) cas o les portes sont bicolores dans cette livre."
+    },
+    {
+      "catalog_id": "cat-14041",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_N_B9c_R.gif",
+      "name": "B8cx bleu/gris",
+      "seriesName": "Deuxime classe couchettes — Ex-Wasteels."
+    },
+    {
+      "catalog_id": "cat-14042",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC48_V_A3B5_R.gif",
+      "name": "A3B5",
+      "seriesName": "Mixte premire / deuxime classe — Livre verte, toit vert. Marquage UIC."
+    },
+    {
+      "catalog_id": "cat-14044",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC46_VTN_B10_R.gif",
+      "name": "B10",
+      "seriesName": "Deuxime classe — Livre verte d'origine."
+    },
+    {
+      "catalog_id": "cat-14045",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC48_V_B10_R.gif",
+      "name": "B10",
+      "seriesName": "Deuxime classe — Livre verte, toit vert. Marquage UIC."
+    },
+    {
+      "catalog_id": "cat-14047",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC48_160B2_B10_R.gif",
+      "name": "B10",
+      "seriesName": "Deuxime classe — Livre C160 en version dfinitive, gris mat et portes grises. Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14048",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC50_VTN_A8_R.gif",
+      "name": "A8 verte",
+      "seriesName": "Premire classe"
+    },
+    {
+      "catalog_id": "cat-14049",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC50_V_A8_R.gif",
+      "name": "A8 verte",
+      "seriesName": "Premire classe — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14050",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC50_VTN_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe"
+    },
+    {
+      "catalog_id": "cat-14051",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC50_V_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14052",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC50_V2_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14053",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC50_160B2_B10_R.gif",
+      "name": "B10 C160",
+      "seriesName": "Deuxime classe — Livre C160 en version dfinitive, gris mat et portes grises. Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14054",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_VTN_A8_R.gif",
+      "name": "A8 verte",
+      "seriesName": "Premire classe"
+    },
+    {
+      "catalog_id": "cat-14055",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_VTNSR_A8_R.gif",
+      "name": "A8 verte",
+      "seriesName": "Premire classe — Sigle SNCF rond (sans lendemain)."
+    },
+    {
+      "catalog_id": "cat-14056",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V_A8_R.gif",
+      "name": "A8 verte",
+      "seriesName": "Premire classe — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14057",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V2_A8_R.gif",
+      "name": "A8 verte",
+      "seriesName": "Premire classe — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14058",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_160B2_A8_R.gif",
+      "name": "A8 C160",
+      "seriesName": "Premire classe — Livre C160 en version dfinitive, gris mat et portes grises. Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14059",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V_B8_R.gif",
+      "name": "B8 verte",
+      "seriesName": "Deuxime classe : B8 — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14060",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V2_B8_R.gif",
+      "name": "B8 verte",
+      "seriesName": "Deuxime classe : B8 — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14061",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V2PG_B8_R.gif",
+      "name": "B8 verte",
+      "seriesName": "Deuxime classe : B8 — Nouvelle signaltique, portes grises (rare)."
+    },
+    {
+      "catalog_id": "cat-14062",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_160B2_B8_R.gif",
+      "name": "B8 C160",
+      "seriesName": "Deuxime classe : B8 — Livre C160 en version dfinitive, gris mat et portes grises. Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14063",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_160N_B8_R.gif",
+      "name": "B8 C160",
+      "seriesName": "Deuxime classe : B8 — Sigle \"nouille\" SNCF."
+    },
+    {
+      "catalog_id": "cat-14064",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_VTN_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe : B10"
+    },
+    {
+      "catalog_id": "cat-14065",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe : B10 — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14066",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V2_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe : B10 — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14067",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V2PG_B10_R.gif",
+      "name": "B10 verte",
+      "seriesName": "Deuxime classe : B10 — Nouvelle signaltique, portes grises (rare)."
+    },
+    {
+      "catalog_id": "cat-14068",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_160B2_B10_R.gif",
+      "name": "B10 C160",
+      "seriesName": "Deuxime classe : B10 — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14069",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_VTN_B9c_R.gif",
+      "name": "B9c verte",
+      "seriesName": "Deuxime classe couchettes"
+    },
+    {
+      "catalog_id": "cat-14070",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V_B9c_R.gif",
+      "name": "B9c verte",
+      "seriesName": "Deuxime classe couchettes — Marquage UIC, toit vert."
+    },
+    {
+      "catalog_id": "cat-14071",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_V2_B9c_R.gif",
+      "name": "B9c verte",
+      "seriesName": "Deuxime classe couchettes — Nouvelle signaltique."
+    },
+    {
+      "catalog_id": "cat-14073",
+      "imageData": "img/catalog/SNCF/VLDEVUIC/DEVAOC52_N2_B9c_R.gif",
+      "name": "B10 bleu/gris",
+      "seriesName": "Deuxime classe couchettes — Livre nuit bleu / gris."
+    },
+    {
+      "catalog_id": "cat-14457",
+      "imageData": "img/catalog/VL/GRILLEXPRESS_R.gif",
+      "name": "Gril Express",
+      "seriesName": "Gril Express — Livre initiale."
+    },
+    {
+      "catalog_id": "cat-14458",
+      "imageData": "img/catalog/VL/GrillExpress_P_R.gif",
+      "name": "Gril Express",
+      "seriesName": "Gril Express — Prototype non retenu de nouvelle dcoration, harmonis avec les Corail, mais avec un bandeau rouge et non gris au niveau des fentres."
+    },
+    {
+      "catalog_id": "cat-14459",
+      "imageData": "img/catalog/VL/GrillExpress_C_R.gif",
+      "name": "Gril Express",
+      "seriesName": "Gril Express — La livre dfinitive est trs proche des Corail."
+    },
+    {
+      "catalog_id": "cat-14460",
+      "imageData": "img/catalog/VL/GrillExpress_CN_R.gif",
+      "name": "Gril Express",
+      "seriesName": "Gril Express — Sigle \"nouille\" SNCF."
+    },
+    {
+      "catalog_id": "cat-14461",
+      "imageData": "img/catalog/VL/TEEPBA_O_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Etat initial."
+    },
+    {
+      "catalog_id": "cat-14462",
+      "imageData": "img/catalog/VL/TEEPBA_U_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14463",
+      "imageData": "img/catalog/VL/TEEPBA_Btu_R.gif",
+      "name": "Btu",
+      "seriesName": "Couloir central — Transformation de toutes ces voitures en deuxime classe entre 1983 et 1985. 7 voitures SNCF. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14464",
+      "imageData": "img/catalog/VL/TEEPBA_O_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Etat initial."
+    },
+    {
+      "catalog_id": "cat-14465",
+      "imageData": "img/catalog/VL/TEEPBA_U_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14466",
+      "imageData": "img/catalog/VL/TEEPBA_Bu_R.gif",
+      "name": "Bu",
+      "seriesName": "Compartiments — Transformation de toutes ces voitures en deuxime classe entre 1983 et 1985. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14467",
+      "imageData": "img/catalog/VL/TEEPBA_O_A5R_R.gif",
+      "name": "A5rtu",
+      "seriesName": "Voitures mixtes avec cuisine et bar — Voitures avec 5 traves de 1re classe (couloir central) et une cuisine pour service de repas  la place. 7 voitures. Etat initial."
+    },
+    {
+      "catalog_id": "cat-14468",
+      "imageData": "img/catalog/VL/TEEPBA_U_A5R_R.gif",
+      "name": "A5rtu",
+      "seriesName": "Voitures mixtes avec cuisine et bar — Marquages UIC. Disparition avant 1985."
+    },
+    {
+      "catalog_id": "cat-14469",
+      "imageData": "img/catalog/VL/TEEPBA_O_ABar_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Voitures mixtes avec cuisine et bar — Voitures avec 3 traves de 1re classe (couloir central) et un bar. 4 voitures. Etat initial."
+    },
+    {
+      "catalog_id": "cat-14470",
+      "imageData": "img/catalog/VL/TEEPBA_U_ABar_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Voitures mixtes avec cuisine et bar — Marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14471",
+      "imageData": "img/catalog/VL/TEEPBA_ABar_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Voitures mixtes avec cuisine et bar — Nouvelle signaltique. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14472",
+      "imageData": "img/catalog/VL/TEEPBA_O_AD_R.gif",
+      "name": "AD",
+      "seriesName": "Fourgons gnrateurs — Etat initial."
+    },
+    {
+      "catalog_id": "cat-14473",
+      "imageData": "img/catalog/VL/TEEPBA_AD_R.gif",
+      "name": "AD",
+      "seriesName": "Fourgons gnrateurs — Marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14474",
+      "imageData": "img/catalog/VL/TEEM69_U_Atu.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Etat initial."
+    },
+    {
+      "catalog_id": "cat-14475",
+      "imageData": "img/catalog/VL/TEEM69_Atu.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Nouvelle signaltique. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14476",
+      "imageData": "img/catalog/VL/TEEM69_Btu.gif",
+      "name": "Btu",
+      "seriesName": "Couloir central — Transformation de 6 voitures en deuxime classe en 1985. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14477",
+      "imageData": "img/catalog/VL/TEEM69_U_Au_R.gif",
+      "name": "Atu",
+      "seriesName": "Compartiments — Etat initial."
+    },
+    {
+      "catalog_id": "cat-14478",
+      "imageData": "img/catalog/VL/TEEM69_Au_R.gif",
+      "name": "Atu",
+      "seriesName": "Compartiments — Nouvelle signaltique. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14479",
+      "imageData": "img/catalog/VL/TEEM69_Bu.gif",
+      "name": "Btu",
+      "seriesName": "Compartiments — Transformation de 2 voitures en deuxime classe en 1985. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14480",
+      "imageData": "img/catalog/VL/TEEM69_U_ABar_R.gif",
+      "name": "A Bar",
+      "seriesName": "Bars et restaurants — Voitures avec 3 traves de 1re classe (couloir central) et un bar. 5 voitures. Etat initial."
+    },
+    {
+      "catalog_id": "cat-14481",
+      "imageData": "img/catalog/VL/TEEM69_ABar_R.gif",
+      "name": "A Bar",
+      "seriesName": "Bars et restaurants — Nouvelle signaltique. Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14482",
+      "imageData": "img/catalog/VL/TEEM69_U_Bar_R.gif",
+      "name": "Bar",
+      "seriesName": "Bars et restaurants — \"Bar spcial\", construit pour le Mistral, sans partie 1re classe. 4 voitures. Etat initial."
+    },
+    {
+      "catalog_id": "cat-14483",
+      "imageData": "img/catalog/VL/TEEM69_Bar_R.gif",
+      "name": "Bar",
+      "seriesName": "Bars et restaurants — Baies sur joint caoutchouc apparent."
+    },
+    {
+      "catalog_id": "cat-14484",
+      "imageData": "img/catalog/VL/TEEM69_U_R.gif",
+      "name": "Restaurant",
+      "seriesName": "Bars et restaurants — 13 voitures. Etat initial."
+    },
+    {
+      "catalog_id": "cat-14485",
+      "imageData": "img/catalog/VL/TEEM69_U_AD_R.gif",
+      "name": "A4D",
+      "seriesName": "Fourgons gnrateurs — Etat initial."
+    },
+    {
+      "catalog_id": "cat-14486",
+      "imageData": "img/catalog/VL/TEEM69_AD_R.gif",
+      "name": "A4D",
+      "seriesName": "Fourgons gnrateurs — Marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14487",
+      "imageData": "img/catalog/VL/GC_TI_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Livre initiale avec gris mtal."
+    },
+    {
+      "catalog_id": "cat-14488",
+      "imageData": "img/catalog/VL/GC_TEE_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Gris mat en remplacement du gris bton  partir du milieu des annes '70."
+    },
+    {
+      "catalog_id": "cat-14489",
+      "imageData": "img/catalog/VL/GC_TEE2_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Nouvelle signaltique, bande de classe jaune, sigle SNCF, bandeau TEE conserv."
+    },
+    {
+      "catalog_id": "cat-14490",
+      "imageData": "img/catalog/VL/GC_GC_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Nouvelle signaltique, bande de classe jaune, sigle SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14491",
+      "imageData": "img/catalog/VL/GC_TEE2N_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Nouvelle signaltique, bande de classe jaune, sigle \"nouille\" SNCF, bandeau TEE conserv."
+    },
+    {
+      "catalog_id": "cat-14492",
+      "imageData": "img/catalog/VL/GC_GCN_Au_R.gif",
+      "name": "Au",
+      "seriesName": "Compartiments — Nouvelle signaltique, bande de classe jaune, sigle \"nouille\" SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14493",
+      "imageData": "img/catalog/VL/GC_GC_Bu_R.gif",
+      "name": "Bu",
+      "seriesName": "Compartiments — 17 voitures transformes en 2me classe."
+    },
+    {
+      "catalog_id": "cat-14494",
+      "imageData": "img/catalog/VL/GC_GCN_Bu_R.gif",
+      "name": "Bu",
+      "seriesName": "Compartiments — Sigle \"nouille\" SNCF."
+    },
+    {
+      "catalog_id": "cat-14495",
+      "imageData": "img/catalog/VL/GC_TI_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Livre initiale avec gris mtal."
+    },
+    {
+      "catalog_id": "cat-14496",
+      "imageData": "img/catalog/VL/GC_TEE_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Gris mat en remplacement du gris bton  partir du milieu des annes '70."
+    },
+    {
+      "catalog_id": "cat-14497",
+      "imageData": "img/catalog/VL/GC_TEE2_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Nouvelle signaltique, bande de classe jaune, sigle SNCF, bandeau TEE conserv."
+    },
+    {
+      "catalog_id": "cat-14498",
+      "imageData": "img/catalog/VL/GC_GC_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Nouvelle signaltique, bande de classe jaune, sigle SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14499",
+      "imageData": "img/catalog/VL/GC_TEE2N_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Nouvelle signaltique, bande de classe jaune, sigle \"nouille\" SNCF, bandeau TEE conserv."
+    },
+    {
+      "catalog_id": "cat-14500",
+      "imageData": "img/catalog/VL/GC_GCN_Atu_R.gif",
+      "name": "Atu",
+      "seriesName": "Couloir central — Nouvelle signaltique, bande de classe jaune, sigle \"nouille\" SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14501",
+      "imageData": "img/catalog/VL/GC_GC_Btu_R.gif",
+      "name": "Btu",
+      "seriesName": "Couloir central — 12 voitures transformes en 2me classe."
+    },
+    {
+      "catalog_id": "cat-14502",
+      "imageData": "img/catalog/VL/GC_GCN_Btu_R.gif",
+      "name": "Btu",
+      "seriesName": "Couloir central — Sigle \"nouille\" SNCF."
+    },
+    {
+      "catalog_id": "cat-14503",
+      "imageData": "img/catalog/VL/GC_TI_AR_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Mixte premire classe - bar — Livre initiale avec gris mtal."
+    },
+    {
+      "catalog_id": "cat-14504",
+      "imageData": "img/catalog/VL/GC_TEE_AR_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Mixte premire classe - bar — Gris mat en remplacement du gris bton  partir du milieu des annes '70."
+    },
+    {
+      "catalog_id": "cat-14505",
+      "imageData": "img/catalog/VL/GC_TEE2_AR_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Mixte premire classe - bar — Nouvelle signaltique, bande de classe jaune, sigle SNCF, bandeau TEE conserv."
+    },
+    {
+      "catalog_id": "cat-14506",
+      "imageData": "img/catalog/VL/GC_GC_AR_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Mixte premire classe - bar — Nouvelle signaltique, bande de classe jaune, sigle SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14507",
+      "imageData": "img/catalog/VL/GC_GCN_AR_R.gif",
+      "name": "A3rtu",
+      "seriesName": "Mixte premire classe - bar — Nouvelle signaltique, bande de classe jaune, sigle \"nouille\" SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14508",
+      "imageData": "img/catalog/VL/GC_TI_AD_R.gif",
+      "name": "A4Dtux",
+      "seriesName": "Mixte fourgon — Livre initiale avec gris mtal."
+    },
+    {
+      "catalog_id": "cat-14509",
+      "imageData": "img/catalog/VL/GC_TEE_AD_R.gif",
+      "name": "A4Dtux",
+      "seriesName": "Mixte fourgon — Gris mat en remplacement du gris bton  partir du milieu des annes '70."
+    },
+    {
+      "catalog_id": "cat-14510",
+      "imageData": "img/catalog/VL/GC_TEE2_AD_R.gif",
+      "name": "A4Dtux",
+      "seriesName": "Mixte fourgon — Nouvelle signaltique, bande de classe jaune, sigle SNCF, bandeau TEE conserv."
+    },
+    {
+      "catalog_id": "cat-14511",
+      "imageData": "img/catalog/VL/GC_GC_AD_R.gif",
+      "name": "A4Dtux",
+      "seriesName": "Mixte fourgon — Nouvelle signaltique, sigle SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14512",
+      "imageData": "img/catalog/VL/GC_TEEN_AD_R.gif",
+      "name": "A4Dtux",
+      "seriesName": "Mixte fourgon — Nouvelle signaltique, sigle \"nouille\" SNCF, bandeau TEE conserv."
+    },
+    {
+      "catalog_id": "cat-14513",
+      "imageData": "img/catalog/VL/GC_GCN_AD_R.gif",
+      "name": "A4Dtux",
+      "seriesName": "Mixte fourgon — Nouvelle signaltique, sigle \"nouille\" SNCF, bandeau TEE supprim."
+    },
+    {
+      "catalog_id": "cat-14514",
+      "imageData": "img/catalog/VL/GC_EA_Au_R.gif",
+      "name": "A2t6u",
+      "seriesName": "Euraffaires — Transformation de 18 Au. Mixte compartiments / couloir central."
+    },
+    {
+      "catalog_id": "cat-14515",
+      "imageData": "img/catalog/VL/GC_EA_Atu_R.gif",
+      "name": "A9 1/2 tu",
+      "seriesName": "Euraffaires — Transformation de 18 Atu. Couloir central avec restauration  la place."
+    },
+    {
+      "catalog_id": "cat-14516",
+      "imageData": "img/catalog/VL/GC_EA_AR_R.gif",
+      "name": "A3rtux",
+      "seriesName": "Euraffaires — Transformation totale de 3 restaurants Vru en mixtes 1re classe / bar. Bizarrement, ce ne sont pas les A3rtu qui ont t utilises."
+    },
+    {
+      "catalog_id": "cat-14843",
+      "imageData": "img/catalog/VL/VU_SN_AC_R.gif",
+      "name": "VU Corail Lunea A9c",
+      "seriesName": "Couchettes premire classe : A9c — Rnovation \"Corail Lunea\" depuis 2004. Sigle \"casquette\" SNCF."
+    },
+    {
+      "catalog_id": "cat-14844",
+      "imageData": "img/catalog/VL/VU_SNI_Ac_R.gif",
+      "name": "VU Corail Lunea A9c",
+      "seriesName": "Couchettes premire classe : A9c — Rnovation \"Corail Lunea\". Sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-14849",
+      "imageData": "img/catalog/VL/VU_SN_BC_R.gif",
+      "name": "VU Corail Lunea B10cx",
+      "seriesName": "Couchettes deuxime classe : B10cx — Rnovation \"Corail Lunea\" depuis 2004. Sigle \"casquette\" SNCF."
+    },
+    {
+      "catalog_id": "cat-14850",
+      "imageData": "img/catalog/VL/VU_SNI_Bc_R.gif",
+      "name": "VU Corail Lunea B10cx",
+      "seriesName": "Couchettes deuxime classe : B10cx — Rnovation \"Corail Lunea\". Sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-14853",
+      "imageData": "img/catalog/VL/VU_SN_BCS_R.gif",
+      "name": "VU Corail Lunea Services",
+      "seriesName": "Voitures Services Corail Lunea — Sigle \"casquette\" SNCF."
+    },
+    {
+      "catalog_id": "cat-14854",
+      "imageData": "img/catalog/VL/VU_SNI_BCS_R.gif",
+      "name": "VU Corail Lunea Services",
+      "seriesName": "Voitures Services Corail Lunea — Sigle carmillon SNCF."
+    },
+    {
+      "catalog_id": "cat-14862",
+      "imageData": "img/catalog/W/E_Nord.gif",
+      "name": "Nord",
+      "seriesName": "Types spcifiques des anciens rseaux — Reconstruction de 1929."
+    },
+    {
+      "catalog_id": "cat-14864",
+      "imageData": "img/catalog/W/E_OCEM19_E3.gif",
+      "name": "OCEM 19",
+      "seriesName": "OCEM — Empattement court de 3,75m."
+    },
+    {
+      "catalog_id": "cat-14865",
+      "imageData": "img/catalog/W/E_OCEM29A_E3.gif",
+      "name": "OCEM 29 type A",
+      "seriesName": "OCEM — Empattement long de 4,50m. Caisse basse similaire  celle des OCEM 19."
+    },
+    {
+      "catalog_id": "cat-14866",
+      "imageData": "img/catalog/W/E_OCEM29A_F_E3_R.gif",
+      "name": "OCEM 29 type A",
+      "seriesName": "OCEM — Avec passerelle serre-frein."
+    },
+    {
+      "catalog_id": "cat-14867",
+      "imageData": "img/catalog/W/E_OCEM29A_Bois_E3.gif",
+      "name": "OCEM 29 type A",
+      "seriesName": "OCEM — Les units destines au Midi avaient une caisse en bois."
+    },
+    {
+      "catalog_id": "cat-14868",
+      "imageData": "img/catalog/W/E_OCEM29B_E3.gif",
+      "name": "OCEM 29 type B",
+      "seriesName": "OCEM — Empattement long de 4,50m. Caisse haute avec cornire en haut de caisse sur toute la longueur, portes comprises."
+    },
+    {
+      "catalog_id": "cat-14869",
+      "imageData": "img/catalog/W/E_OCEM29B_E4.gif",
+      "name": "OCEM 29 type B",
+      "seriesName": "OCEM — Marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14875",
+      "imageData": "img/catalog/W/E_Std_C.gif",
+      "name": "Standard A et C",
+      "seriesName": "Types SNCF  essieux — Construits entre 1947 et 1950. Les deux types sont identiques, les standard A ont t construits aux USA. Les UIC Type I sont bass sur ce schma."
+    },
+    {
+      "catalog_id": "cat-14876",
+      "imageData": "img/catalog/W/E_UICI_E3.gif",
+      "name": "UIC Type I",
+      "seriesName": "Types SNCF  essieux — Construits entre 1953 et la fin des annes '50. Drivs des standards franais."
+    },
+    {
+      "catalog_id": "cat-14877",
+      "imageData": "img/catalog/W/E_UICI_E4.gif",
+      "name": "UIC Type I",
+      "seriesName": "Types SNCF  essieux — Marquages UIC. Classification E3."
+    },
+    {
+      "catalog_id": "cat-14878",
+      "imageData": "img/catalog/W/E_UICII_S.gif",
+      "name": "UIC Type II",
+      "seriesName": "Types SNCF  essieux — Construits  partir de 1958. Plans allemands."
+    },
+    {
+      "catalog_id": "cat-14879",
+      "imageData": "img/catalog/W/E_UICII_R.gif",
+      "name": "UIC Type II",
+      "seriesName": "Types SNCF  essieux — Marquages UIC. Classification E4."
+    },
+    {
+      "catalog_id": "cat-14880",
+      "imageData": "img/catalog/W/Eos 40 1.gif",
+      "name": "Eos 40 1",
+      "seriesName": "Types SNCF  essieux — Caisse rehausse."
+    },
+    {
+      "catalog_id": "cat-14881",
+      "imageData": "img/catalog/W/Eaos 80 2.gif",
+      "name": "Eaos 80 2",
+      "seriesName": "Types SNCF  bogies"
+    },
+    {
+      "catalog_id": "cat-14882",
+      "imageData": "img/catalog/W/Eaos 89 2.gif",
+      "name": "Eaos 89 2",
+      "seriesName": "Types SNCF  bogies"
+    },
+    {
+      "catalog_id": "cat-14889",
+      "imageData": "img/catalog/W/E81_Sable.gif",
+      "name": "E81",
+      "seriesName": "Types SNCF  bogies — transport de sable."
+    },
+    {
+      "catalog_id": "cat-14891",
+      "imageData": "img/catalog/SNCF/W/Fas 80 6.gif",
+      "name": "Fas 80 6",
+      "seriesName": "Tombereaux — Pour transport de ferrailles."
+    },
+    {
+      "catalog_id": "cat-14892",
+      "imageData": "img/catalog/SNCF/W/Fas 80 6 f.gif",
+      "name": "Fas 80 6",
+      "seriesName": "Tombereaux — Avec passerelle serre-frein."
+    },
+    {
+      "catalog_id": "cat-14894",
+      "imageData": "img/catalog/SNCF/W/F70.gif",
+      "name": "F 70",
+      "seriesName": "Trmies"
+    },
+    {
+      "catalog_id": "cat-14895",
+      "imageData": "img/catalog/W/Tms_S.gif",
+      "name": "Tms",
+      "seriesName": "Tombereaux 2 essieux — Toit coulissant. Livre brun fonc d'origine."
+    },
+    {
+      "catalog_id": "cat-14896",
+      "imageData": "img/catalog/W/Tms_R.gif",
+      "name": "Tms",
+      "seriesName": "Tombereaux 2 essieux — Livre rouge wagon, marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14897",
+      "imageData": "img/catalog/W/T_0_01.gif",
+      "name": "T00",
+      "seriesName": "Tombereaux 2 essieux — Toit bch."
+    },
+    {
+      "catalog_id": "cat-14898",
+      "imageData": "img/catalog/W/T11.gif",
+      "name": "T11",
+      "seriesName": "Tombereaux  bogies — Toit bch. Transport de produits de carrire (kaolin, argile, feldspath,...). Marquages Fret SNCF."
+    },
+    {
+      "catalog_id": "cat-14899",
+      "imageData": "img/catalog/W/T12_R.gif",
+      "name": "T12",
+      "seriesName": "Tombereaux  bogies — Toit bch. Transport de produits de carrire (kaolin, argile, feldspath,...)."
+    },
+    {
+      "catalog_id": "cat-14906",
+      "imageData": "img/catalog/W/T17_R.gif",
+      "name": "T17",
+      "seriesName": "Tombereaux  bogies — Toit bch."
+    },
+    {
+      "catalog_id": "cat-14907",
+      "imageData": "img/catalog/W/T21_R.gif",
+      "name": "T21",
+      "seriesName": "Tombereaux  bogies — Toit repliable. Transport de farine."
+    },
+    {
+      "catalog_id": "cat-14911",
+      "imageData": "img/catalog/W/T82.gif",
+      "name": "T82",
+      "seriesName": "Trmies — Tads 82 6."
+    },
+    {
+      "catalog_id": "cat-14925",
+      "imageData": "img/catalog/W/G_Est20t_R.gif",
+      "name": "Est 20 tonnes",
+      "seriesName": "Types spcifiques Est"
+    },
+    {
+      "catalog_id": "cat-14926",
+      "imageData": "img/catalog/W/G_Est20tR_R.gif",
+      "name": "Est 20 tonnes",
+      "seriesName": "Types spcifiques Est — Caisse renforce."
+    },
+    {
+      "catalog_id": "cat-14927",
+      "imageData": "img/catalog/W/G_Est20tF_R.gif",
+      "name": "Est 20 tonnes",
+      "seriesName": "Types spcifiques Est — Version  gurite serre-freins remplace par une plate-forme."
+    },
+    {
+      "catalog_id": "cat-14930",
+      "imageData": "img/catalog/W/G_Etat1904.gif",
+      "name": "Etat 1904",
+      "seriesName": "Types spcifiques Etat"
+    },
+    {
+      "catalog_id": "cat-14931",
+      "imageData": "img/catalog/W/Primeurs_PLM34F_TN.gif",
+      "name": "Primeurs PLM34 Ferry",
+      "seriesName": "Types spcifiques PLM — Wagons pour transport de fruits et lgumes en Rgime Acclr vers l'Angleterre, via une traverse par ferry. Gabarit anglais (rduit). Livre brun fonc d'origine."
+    },
+    {
+      "catalog_id": "cat-14932",
+      "imageData": "img/catalog/W/Primeurs_PLM34F.gif",
+      "name": "Primeurs PLM34 Ferry",
+      "seriesName": "Types spcifiques PLM — Livre rouge wagon, marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14960",
+      "imageData": "img/catalog/W/Primeurs_StdD.gif",
+      "name": "Primeurs Standard D",
+      "seriesName": "Standard — Wagons pour transport de fruits et lgumes en Rgime Acclr. Frises bois. Livre brun fonc d'origine."
+    },
+    {
+      "catalog_id": "cat-14961",
+      "imageData": "img/catalog/W/Ghks_60_5_Bois.gif",
+      "name": "Ghks 60.5",
+      "seriesName": "Standard — Frises bois. Livre rouge wagon, marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14966",
+      "imageData": "img/catalog/W/G4.gif",
+      "name": "G4 (UIC)",
+      "seriesName": "UIC — Parois en Permaplex."
+    },
+    {
+      "catalog_id": "cat-14968",
+      "imageData": "img/catalog/W/G4_PE.gif",
+      "name": "G4 (UIC)",
+      "seriesName": "UIC — Destin au service \"Provence Express\". Parois en Permaplex. Livre rouge wagon, marquages UIC."
+    },
+    {
+      "catalog_id": "cat-14970",
+      "imageData": "img/catalog/W/G61.gif",
+      "name": "Primeurs G6.16 / G61",
+      "seriesName": "UIC — Le dernier type de wagons primeurs mis en service  la SNCF (dbut des annes '80)."
+    },
+    {
+      "catalog_id": "cat-14972",
+      "imageData": "img/catalog/W/Gos 70 6.gif",
+      "name": "G70",
+      "seriesName": "Couverts pour messageries — Gos 70.6. Service de messageries."
+    },
+    {
+      "catalog_id": "cat-14973",
+      "imageData": "img/catalog/W/Gos_71_9.gif",
+      "name": "G71",
+      "seriesName": "Couverts pour messageries — Gos 71.9. Service de messageries."
+    },
+    {
+      "catalog_id": "cat-14987",
+      "imageData": "img/catalog/SNCF/W/Hes_09_6.gif",
+      "name": "Hes 09.6",
+      "seriesName": "2 essieux — Wagon  bestiaux pour petits animaux (2 tages)."
+    },
+    {
+      "catalog_id": "cat-14988",
+      "imageData": "img/catalog/SNCF/W/Hbis 36 6.gif",
+      "name": "Hbis 36.6",
+      "seriesName": "2 essieux — Prototype  parois baches."
+    },
+    {
+      "catalog_id": "cat-14989",
+      "imageData": "img/catalog/SNCF/W/H37.gif",
+      "name": "H 37",
+      "seriesName": "2 essieux — Portes coulissantes."
+    },
+    {
+      "catalog_id": "cat-14990",
+      "imageData": "img/catalog/SNCF/W/Hbillns 38 6.gif",
+      "name": "Hbillns 38.6",
+      "seriesName": "2 essieux — Dits H38 allgs, reconnaissables  l'absence de renforts de chassis."
+    },
+    {
+      "catalog_id": "cat-14995",
+      "imageData": "img/catalog/SNCF/W/I85_R.gif",
+      "name": "I 85",
+      "seriesName": "Wagons  temprature contrle (I)"
+    },
+    {
+      "catalog_id": "cat-15520",
+      "imageData": "img/catalog/I_P/Thello_36000.gif",
+      "name": "Akiem 36000",
+      "seriesName": "Astride — En France, les trains Thellos étaient assurés par des locomotives BB 36000 (1ère sous-série) louées à Akiem."
+    },
+    {
+      "catalog_id": "cat-15714",
+      "imageData": "img/catalog/Urbains/Toulouse_VAL206_L1_R.gif",
+      "name": "VAL 206",
+      "seriesName": "VAL — VAL de premire gnration. 28 rames. Livre initiale."
+    },
+    {
+      "catalog_id": "cat-15715",
+      "imageData": "img/catalog/Urbains/Toulouse_VAL206_L2_R.gif",
+      "name": "VAL 206",
+      "seriesName": "VAL — Livre actuelle, aprs modernisation au dbut des annes 2010."
+    },
+    {
+      "catalog_id": "cat-15725",
+      "imageData": "img/catalog/Urbains/B/Bruxelles_7700_L3_R.gif",
+      "name": "7700",
+      "seriesName": "Tramways PCC — Livre jaune et bleu."
+    },
+    {
+      "catalog_id": "cat-15726",
+      "imageData": "img/catalog/Urbains/B/Bruxelles_7900_L1_R.gif",
+      "name": "7900",
+      "seriesName": "Tramways PCC — PCC articuls bidirectionnels  3 caisses. 61 exemplaires construits en 1977/8. Livre beige d'origine."
+    },
+    {
+      "catalog_id": "cat-15814",
+      "imageData": "img/catalog/F_P/VFLI_62400_R.gif",
+      "name": "BB 62400",
+      "seriesName": "BB 62400 et BB 00 ex HBL — BB 62400 Fertis. Pas de logo d'appartenance."
+    },
+    {
+      "catalog_id": "cat-15815",
+      "imageData": "img/catalog/F_P/VFLI_BB006_R.gif",
+      "name": "BB 006",
+      "seriesName": "BB 63000, 63500 et BB400 — Ex BB 63072 SNCF."
+    },
+    {
+      "catalog_id": "cat-15818",
+      "imageData": "img/catalog/F_P/VFLI_66000_R.gif",
+      "name": "BB 66000",
+      "seriesName": "BB 66000 — Ex-BB 66600 SNCF."
+    },
+    {
+      "catalog_id": "cat-15819",
+      "imageData": "img/catalog/F_P/VFLI_BB66000_F_R.gif",
+      "name": "BB 66000",
+      "seriesName": "BB 66000 — Ex-BB 66104 SNCF. Livre Fret SNCF modifie."
+    },
+    {
+      "catalog_id": "cat-15833",
+      "imageData": "img/catalog/F_P/VFLI_MoyseBN44_R.gif",
+      "name": "BN 44 Moyse",
+      "seriesName": "Locotracteurs — Connu : B 033, B 0066."
+    },
+    {
+      "catalog_id": "cat-16011",
+      "imageData": "img/catalog/ZSSK/V/ZSR_YB70R_Apeer_WRO_R.gif",
+      "name": "Apeer (ZSR)",
+      "seriesName": "1ère classe — Livrée rouge et blanc à portes orange et chassis rouge. Logo ZSR."
+    },
+    {
+      "catalog_id": "cat-16014",
+      "imageData": "img/catalog/ZSSK/V/ZSR_YB70R_ARpeer_WRO_R.gif",
+      "name": "ARpeer (ZSR)",
+      "seriesName": "1ère classe restaurant — Livrée rouge et blanc à portes orange et chassis rouge. Logo ZSR."
+    }
+  ]
+}

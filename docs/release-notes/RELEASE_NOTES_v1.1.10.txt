@@ -1,0 +1,37 @@
+Rail Empire v1.1.10 — RailNet World Stations Local Preview
+==========================================================
+
+NOUVEAU
+- Referentiel mondial de gares ferroviaires charge depuis des fichiers locaux.
+- Preparateur Windows one-shot : 1_PREPARER_GARES_MONDE.cmd.
+- Creation de shards JS locaux compatibles avec un lancement direct file://.
+- Creation d'une archive maitre world_stations_master.tar.gz.
+- Gares/haltes de reference indexees spatialement avec LOD pour la Livemap.
+- Double-clic sur une gare monde -> activation comme vraie gare gameplay.
+- ID OSM conserve lors de l'activation.
+- Metadata disponibles quand presentes : UIC, ref, operateur, reseau, Wikidata,
+  accessibilite fauteuil roulant.
+- Exclusion des objets metro/tram/light rail/monorail seuls quand identifiables.
+- Les gares multimodales avec train=yes sont conservees.
+
+SAUVEGARDE
+- Les gares de reference mondiales ne sont jamais recopiees dans la sauvegarde.
+- Seules les gares monde activees/modifiees sont enregistrees.
+- La couche reference reste une donnee statique du jeu.
+
+COMPATIBILITE FILE://
+- manifest.js et shards sont charges par scripts classiques, pas par fetch().
+- Bundle classic file:// conserve.
+
+QA
+- 97 152 tests PASS / 0 FAIL (bulk-weather exclu de cette batterie longue).
+- 11/11 tests cibles World Stations v1.1.9/v1.1.10 PASS.
+- Verification syntaxique de tous les JS + bundle : OK.
+- Stress synthetique : 150 000 references, 1 seule gare activee => save 144 octets
+  dans le scenario QA.
+
+LIMITATION DE CETTE PREVIEW
+- Le ZIP contient le moteur + le preparateur, pas le snapshot mondial deja
+  telecharge. Le snapshot reel est construit une fois sur le PC utilisateur,
+  car l'environnement de build n'a pas d'acces sortant bulk permettant de
+  rapatrier ce dataset.

@@ -1,0 +1,72 @@
+Rail Empire v1.1.38 — J+1 + Roulement Readiness Fix
+====================================================
+
+Base
+----
+v1.1.37 HEADER CLEANUP HOTFIX.
+
+Objectif
+--------
+Corriger la chaîne horaire -> roulement -> runtime autour des départs retardés,
+des horaires J+1 et du cas trompeur « horaire VALIDE mais aucun train créé ».
+
+Corrections principales
+-----------------------
+1. Premier départ / J+1
+   - Un premier départ saisi sans suffixe (+N) n'infère plus J+1 à partir de
+     l'ANCIENNE valeur du champ.
+   - Exemple : remplacer 16:19 par 01:05 donne 01:05 J, et non 01:05 (+1).
+   - J+1/J+2 restent disponibles explicitement avec 01:05 (+1), etc.
+   - Les arrêts suivants conservent l'inférence monotone normale au passage de minuit.
+
+2. Overrides manuels lors d'un retiming
+   - Déplacer le premier départ décale du même delta les arrivées/départs manuels
+     des arrêts suivants.
+   - Evite le faux NON_MONOTONIC_TIMING / NEGATIVE_DWELL lorsqu'un ancien override
+     restait sur l'ancien jour après modification du départ.
+
+3. Une seule autorité pour le jour de service
+   - dateOffsetDays est désormais un champ legacy normalisé.
+   - Si l'horaire porte déjà (+N), un ancien dateOffsetDays redondant est supprimé
+     au lieu de compter une deuxième journée.
+   - Si l'horaire est sur J, l'ancien décalage est fusionné une fois dans offsetSec.
+   - Runtime, timeline et conflits utilisent ensuite uniquement l'heure absolue de
+     l'horaire + offsetSec canonique.
+
+4. VALIDE != prêt à circuler
+   - L'état de l'horaire reste distinct de son état opérationnel.
+   - Nouveaux états visibles dans la liste des horaires :
+       NON AFFECTÉ
+       ROULEMENT À METTRE À JOUR
+       ROULEMENT DÉSACTIVÉ
+       SANS MATÉRIEL
+       SANS TRACTION
+       ROULEMENT BLOQUÉ
+       PRÊT À CIRCULER
+   - La validation explique explicitement qu'un horaire ne crée aucun train seul.
+   - Aucun roulement implicite n'est créé : la philosophie roulement/matériel réel
+     reste inchangée.
+
+5. Diagnostic Carte / Livemap
+   - Un horaire VALIDE non utilisé par aucun roulement est désormais signalé dans
+     le diagnostic V2 : « NON AFFECTÉ — aucun roulement, aucun train ne sera créé ».
+   - Fin du silence ambigu « VALIDE mais 0 train ».
+
+Règles conservées
+-----------------
+- Aucun fallback ferroviaire automatique en ligne droite.
+- Schedule V2 reste dissocié du matériel physique.
+- Seule une occurrence de roulement avec matériel réel peut créer un ActiveService.
+- Rame de référence = profil de calcul uniquement, jamais affectation physique.
+- Les horaires >24 h restent représentés par des secondes absolues J+n.
+
+QA
+--
+- 11 nouveaux tests v1.1.38 J+1/readiness : PASS.
+- 89 / 89 tests ciblés post-bundle : PASS.
+- 305 / 305 tests fonctionnels hors bulk : PASS.
+- 97 034 / 97 034 assertions bulk hors météo : PASS.
+- Total hors météo : 97 339 / 97 339 PASS, 0 FAIL.
+- Bulk météo : 5 507 lignes ok, 0 not ok ; runner garde son handle historique ouvert.
+- 179 / 179 fichiers JavaScript (bundle inclus) passent node --check.
+- Bundle file:// reconstruit en v1.1.38 / cache-busting v1138.

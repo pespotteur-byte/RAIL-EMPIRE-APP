@@ -1,0 +1,8 @@
+Rail Empire v1.1.99 HOTFIX26 — COMPOSITOR GPS FOLLOW
+
+La vue 3D GPS ne recentre plus et ne repeint plus la grande dalle satellite à chaque déplacement du train.
+Le raster reste ancré et glisse via transform CSS GPU sous la flèche suivie, fixée au centre écran.
+Un redraw complet n’est déclenché qu’en cas de besoin réel de ré-ancrage, de chargement différé de tuiles ou de heartbeat.
+
+Caméra: zoom 8.5–20, pitch 50–68°, perspective renforcée, overscan adaptatif sans carré noir.
+Caches: style 1199re3d11, bundle 1199dep18.

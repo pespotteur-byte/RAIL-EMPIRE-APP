@@ -1,0 +1,129 @@
+{
+  "files": [
+    {
+      "file": "rolling-stock.test.js",
+      "pass": 3,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-orm.test.js",
+      "pass": 20275,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "batch186-freight.test.js",
+      "pass": 5,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "signaling.test.js",
+      "pass": 14,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "orm-routing.test.js",
+      "pass": 12,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "batch186-freight-pass2.test.js",
+      "pass": 1,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-physics.test.js",
+      "pass": 5376,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "train-physics.test.js",
+      "pass": 15,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-schedule.test.js",
+      "pass": 8502,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-signaling.test.js",
+      "pass": 11902,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-world.test.js",
+      "pass": 3995,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-economy.test.js",
+      "pass": 11501,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "schedule-logic.test.js",
+      "pass": 16,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "schedule-creator.test.js",
+      "pass": 7,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-rng.test.js",
+      "pass": 5001,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk10k.test.js",
+      "pass": 13340,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "regulation.test.js",
+      "pass": 10,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-misc.test.js",
+      "pass": 11641,
+      "fail": 0,
+      "complete": true
+    },
+    {
+      "file": "bulk-weather.test.js",
+      "pass": null,
+      "fail": null,
+      "complete": false
+    },
+    {
+      "file": "bulk-bank.test.js",
+      "pass": 5501,
+      "fail": 0,
+      "complete": true
+    }
+  ],
+  "completed_files": 19,
+  "total_files": 20,
+  "pass_completed": 97117,
+  "fail_completed": 0,
+  "note": "bulk-weather reporter exceeded execution window; unrelated to catalog changes"
+}

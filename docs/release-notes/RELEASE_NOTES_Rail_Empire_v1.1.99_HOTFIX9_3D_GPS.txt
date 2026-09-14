@@ -1,0 +1,37 @@
+Rail Empire v1.1.99 — HOTFIX9 3D GPS FOLLOW
+
+Nouvelle fonctionnalité : vue 3D GPS optionnelle depuis la LiveMap.
+
+UTILISATION
+- Cliquer un train sur la LiveMap.
+- Dans le panneau du train, cliquer « Vue 3D GPS ».
+- La carte passe en suivi local incliné et le satellite est activé automatiquement.
+- Les trains restent des flèches GPS 2D lisibles ; cliquer une flèche voisine change le train suivi.
+- Contrôles dédiés : zoom, recentrer, suivi, labels, retour Vue 2D.
+
+ARCHITECTURE / PERFORMANCE
+- Aucun Three.js, Babylon.js ou moteur WebGL ajouté.
+- La LiveMap 2D existante reste le renderer de vérité.
+- Le canvas satellite/ORM est uniquement présenté en perspective CSS.
+- Les trains utilisent un calque DOM séparé avec un maximum de 96 marqueurs réutilisés.
+- Aucun recalcul de trajet, aucune seconde simulation et aucun nouveau graphe ferroviaire.
+- Vue volontairement lecture/suivi : outils de construction masqués en 3D et restaurés en 2D.
+- Les gros filtres CSS sur le canvas ont été évités pour limiter les surfaces de composition GPU sur Opera 32 bits.
+
+METEO / JOUR-NUIT
+- L'ambiance réutilise l'objet météo existant de RE : aucune requête météo supplémentaire.
+- Adaptation : pluie, neige, orage, brouillard, canicule et jour/nuit selon l'heure du jeu.
+- Une seule couche atmosphérique CSS gère l'assombrissement et les précipitations.
+- Le calque météo/radar normal de RE reste sous contrôle du joueur et n'est pas forcé.
+
+SECURITE D'ETAT
+- Le mode sauvegarde l'état 2D précédent : zoom, satellite, Basique, ORM et Météo.
+- Retour 2D restaure cet état.
+- Si le train suivi termine/disparaît, la vue 3D se ferme proprement.
+- Changer de page ferme la vue 3D sans redimensionner la carte cachée à 0x0.
+- Retour sur Carte force un resize propre.
+
+CACHE FILE://
+- Core bundle : 1199re3d1
+- CSS : 1199re3d1
+- Build : FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX9-3D-GPS-FOLLOW

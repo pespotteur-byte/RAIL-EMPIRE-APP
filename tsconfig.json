@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "rootDir": "src/ts",
+    "outDir": "js",
+    "strict": true,
+    "useUnknownInCatchVariables": true,
+    "declaration": true,
+    "declarationDir": "types",
+    "sourceMap": false,
+    "removeComments": false,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "noEmitOnError": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "src/ts/**/*.ts"
+  ]
+}

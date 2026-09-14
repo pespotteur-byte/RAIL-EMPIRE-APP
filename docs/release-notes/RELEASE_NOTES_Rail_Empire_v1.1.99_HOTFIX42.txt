@@ -1,0 +1,51 @@
+Rail Empire v1.1.99 — HOTFIX42 — WORKS STATION/TRACK FLOW
+===========================================================
+
+Objet
+-----
+Réparer le créateur Travaux V2 qui pouvait échouer même sur une section de quelques mètres,
+et aligner son ergonomie sur le workflow réel du Schedule Creator actuel.
+
+Cause racine
+------------
+HOTFIX40 demandait de cliquer directement une voie OSM pour les extrémités des travaux.
+Contrairement au Schedule Creator principal, cette séquence sautait la sélection préalable
+de la gare et donc le préchargement local RailGraph associé. Une zone non préparée pouvait
+alors produire un échec de routage quelle que soit la distance demandée.
+
+Nouveau workflow
+----------------
+1. + Section
+2. Cliquer la gare A
+3. Choisir précisément la voie A dans cette gare
+4. Cliquer la gare B
+5. Choisir précisément la voie B
+6. Rail Empire calcule la section et l'identifie automatiquement :
+   « Travaux entre <gare A> et <gare B> »
+
+La barre de recherche Gare suit le même workflow : lorsqu'une extrémité attend une gare,
+la gare recherchée devient cette extrémité puis le créateur demande la voie exacte.
+
+Corrections techniques
+----------------------
+- préchargement RailGraph local via prefetchRailNetworkNearStation avant la sélection/résolution ;
+- conservation du picker exact du Schedule Creator actuel (tolérance graphique 5 px) ;
+- plusieurs sections indépendantes toujours supportées ;
+- LTV, interruption, coupure caténaire et sens bidirectionnel par défaut conservés ;
+- endpoint stations A/B sauvegardées avec chaque section et restaurées après rechargement ;
+- stationA/stationB legacy conservées pour compatibilité ;
+- micro-section sur un même OSM way : extraction locale exacte du morceau de voie jusqu'à 350 m,
+  sans lancer inutilement le routeur régional. Le cas ~10 m est couvert par test dédié ;
+- les sections plus longues ou multi-ways utilisent toujours le routeur SC complet.
+
+QA
+--
+- Travaux V2 / HOTFIX40 / HOTFIX42 ciblé : 21/21 PASS
+- Régressions systèmes récents : 52/52 PASS
+- Batterie Schedule Creator complète sélectionnée : 130/130 PASS
+- Syntaxe works-v2-editor.js / works.js : OK
+- Bundle FILE:// reconstruit en cache 1199dep36
+
+Le test Chromium headless générique n'a pas été retenu comme verdict QA : le chargement complet
+file:// a dépassé son budget de 35 s dans l'environnement de test sans erreur JS fatale observée.
+Les batteries Node/bundle ci-dessus constituent le verdict de cette HOTFIX.

@@ -1,0 +1,20 @@
+Rail Empire v1.1.8 — STORAGE + LONG-DISTANCE RESILIENCE HOTFIX
+Date: 2026-08-14
+
+STORAGE
+- Main game save moved from localStorage to IndexedDB.
+- Legacy localStorage save is migrated automatically and removed only after a verified IndexedDB commit.
+- Old orm-area-* localStorage cache entries are cleaned automatically.
+- ORM cache is now written to IndexedDB only; no more multi-MB duplication into localStorage.
+- Small localStorage entries are retained only for save presence/metadata and lightweight settings.
+- Large saves no longer depend on the tiny synchronous localStorage quota.
+- JSON/JSON.GZ export/import remains available as recovery/transfer path.
+
+TRACER LIGNE (includes pending v1.1.7 fixes)
+- Station retrieval does not continue after a genuinely failed/unbuildable track import.
+- If OSM ways are downloaded but the narrow long-distance corridor cannot build a usable network, Tracer ligne automatically expands the search rectangle instead of reporting a false 'no railway'.
+- Status distinguishes 'no OSM railway' from 'OSM ways downloaded but no buildable infrastructure'.
+- Stations remain asynchronous and cannot roll back committed tracks.
+
+IMPORTANT MIGRATION NOTE
+If an older build is currently showing 'Sauvegarde échouée : espace de stockage plein', export the current game to JSON/JSON.GZ BEFORE closing that page if there are changes since the last successful save. Those unsaved changes never reached browser storage and cannot be reconstructed automatically.

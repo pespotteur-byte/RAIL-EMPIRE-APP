@@ -1,0 +1,41 @@
+Rail Empire v1.1.99 — HOTFIX22 3D REAL OVERSCAN / CRISP
+=========================================================
+
+Signalement joueur
+------------------
+- Vue 3D : grand rectangle noir visible au-dessus de la carte.
+- La quantité de noir dépendait du cap et restait visible à plusieurs zooms.
+- La carte était fortement floue, surtout après les changements HOTFIX20/21.
+- Le train suivi doit rester exactement au centre de l'écran.
+
+Cause
+-----
+HOTFIX21 tentait de couvrir le viewport avec un canvas de taille écran agrandi en CSS
+(scale dynamique 2.1 à 3.4) puis incliné. Une transformation perspective d'un rectangle
+de taille viewport ne peut pas garantir la couverture des quatre coins à tous les caps.
+L'agrandissement CSS massif étirait aussi le raster et produisait le flou observé.
+
+Correctif HOTFIX22
+------------------
+- Nouvelle dalle cartographique carrée, réellement rendue hors écran.
+- Taille = diagonale viewport / cos(pitch) + marge de sécurité 12 %.
+- La dalle reste centrée géométriquement sur le viewport : la flèche suivie reste au centre.
+- Plus de scale CSS massif : scale de sécurité limité à 1.04.
+- Pitch dynamique selon le zoom : vue plus verticale au loin, plus inclinée en zoom proche.
+- Tuiles source demandées à +1 niveau de détail.
+- DPR 3D borné entre 1.25 et 1.75 ; buffer tuiles réduit à 1.08 pour maîtriser la mémoire.
+- Le zoom 3D redimensionne la dalle une seule fois par cran de zoom.
+- Les filtres HOTFIX20, le cap HOTFIX18 et la flèche HOTFIX19 sont conservés.
+- Les correctifs de départ HOTFIX16/HOTFIX17 sont inchangés.
+
+QA ciblée
+---------
+- Géométrie : 4 coins du viewport vérifiés sur 982x540, 1366x768, 1920x1080,
+  1280x1024 ; zooms 8.5, 10.5, 11.5, 13.5, 15.5 ; caps 0..175° par pas de 5°.
+- 46/46 PASS sur le bloc 3D HOTFIX9→22.
+- 52/52 PASS sur bundle + départ + MovementAuthority + HOTFIX11→22 ciblés.
+
+Caches
+------
+- CSS : 1199re3d7
+- FILE bundle : 1199dep14

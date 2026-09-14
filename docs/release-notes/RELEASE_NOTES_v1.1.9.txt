@@ -1,0 +1,39 @@
+RAIL EMPIRE v1.1.9 — WORLD STATIONS REFERENCE
+Date: 2026-08-14
+
+WORLD RAILWAY STATIONS
+- Adds a worldwide railway-station reference layer sourced from OpenStreetMap via the public QLever OSM Planet service.
+- Loads railway=station and railway=halt records, including node/way/relation centroids.
+- Excludes urban-only subway/tram/light-rail/monorail entries and train=no entries.
+- Keeps genuine multimodal stations when train=yes.
+- De-duplicates by exact OSM id, UIC reference, and same normalized name within 250 m.
+- Worldwide stations are reference data, separate from player-created World.stations.
+- Reference stations are NEVER serialized into player saves.
+
+STARTUP + CACHE
+- First successful load downloads the worldwide reference and stores a compact copy in IndexedDB.
+- Later game loads use the IndexedDB cache immediately.
+- Cache refresh interval: 14 days; stale cache remains usable while refresh runs in background.
+- GET is attempted before POST for better compatibility with direct file:// launches; two QLever endpoints are available.
+- If the external reference service is unavailable, the game continues normally and shows an explicit non-blocking status.
+
+LIVEMAP / FPS
+- The existing "Gares" display filter also displays worldwide reference stations.
+- Geographic spatial index prevents global scans at local zoom.
+- LOD grids: one representative per 5-degree cell at world/continent scale, one per 1-degree cell at country scale, exact viewport query at local scale.
+- Additional screen-space thinning means marker cost is bounded by screen pixels, not by total worldwide station count.
+- Player-created stations render on top of reference stations.
+
+STORAGE
+- Inherits v1.1.8 IndexedDB main-save fix and IndexedDB-only ORM cache writes.
+- The worldwide station catalog has its own IndexedDB database and does not increase the JSON player-save size.
+
+QA
+- Main Node suite excluding bulk-weather: 97,147 PASS / 0 FAIL.
+- JS syntax checks: 118 files PASS / 0 FAIL (classic file:// bundle included).
+- New world-station tests: station/halt parse, metro/tram/light-rail exclusion, multimodal train=yes retention, UIC/name dedup, spatial queries, save exclusion and save-load persistence.
+- Synthetic 150,000-station stress: indexing ~255 ms, max observed event-loop gap ~13 ms, local viewport query ~0.34 ms, world LOD ~2,304 candidates, references absent from player save.
+
+NETWORK VALIDATION NOTE
+- The build environment used for this release has no outbound DNS, so the live QLever request itself could not be executed there.
+- All loader/parsing/cache behavior is tested with deterministic mock data. User-side file:// network compatibility must be confirmed on first launch.

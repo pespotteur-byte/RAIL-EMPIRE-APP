@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ES2020","module":"ES2020","moduleResolution":"Bundler","strict":true,"noEmit":true,"skipLibCheck":false,"lib":["ES2022","DOM"],"noImplicitReturns":true,"noFallthroughCasesInSwitch":true},"files":["src/ts/material-mileage.ts","src/ts/launch-actions.ts","src/ts/bank.ts","src/ts/gameplay-clock.ts","src/ts/legacy-operating-day.ts","src/ts/shunting.ts"]}

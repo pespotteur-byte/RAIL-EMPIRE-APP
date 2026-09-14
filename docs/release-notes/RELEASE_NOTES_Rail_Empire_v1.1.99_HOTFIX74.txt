@@ -1,0 +1,41 @@
+Rail Empire v1.1.99 — HOTFIX74 — FORCED LIVEMAP AUDIO
+=======================================================
+Base: HOTFIX73_GPS_FREEZE_STABILITY
+Scope: AUDIO ONLY. No simulation/circulation logic changed.
+
+FIXES
+-----
+1. Piper delayed-playback autoplay lock
+   - The train click now explicitly unlocks a persistent WebAudio AudioContext.
+   - A one-sample silent buffer is started synchronously in the user gesture.
+   - Piper WAV output generated seconds later is decoded and played through that
+     already-authorized AudioContext instead of asking Chromium for a new autoplay
+     permission.
+
+2. Persistent HTMLAudio recovery path
+   - All recorded SIV phrases and fallback Piper object URLs reuse one persistent
+     HTMLAudio element.
+   - The element is first authorized by the recorded "Attention" launched in the
+     train-click call stack, so delayed chunks do not create fresh blocked players.
+   - Pending audio promises are explicitly resolved/cancelled on a new train click.
+
+3. Piper startup hardening
+   - Explicit model download is attempted before the warm prediction when the
+     piper-tts-web API exposes download(). predict() remains the fallback downloader.
+   - Primary jsDelivr ESM import now has a secondary esm.sh import endpoint.
+   - Existing explicit-language policy remains intact: no English browser voice is
+     substituted for French or foreign station names.
+
+4. Isolation
+   - Audio failures remain presentation-only and do not affect train runtime,
+     cantonnement, reservations, despawn, incidents, or GPS simulation state.
+
+CACHE
+-----
+rail-empire.file.bundle.js?v=1199dep69&fullaudit=1
+
+QA
+--
+Targeted HOTFIX68→74 post-build: 51/51 PASS.
+Full npm suite: 102833/102834 PASS.
+Single failing legacy test: REG-01/02/04 (pre-existing before HOTFIX74).

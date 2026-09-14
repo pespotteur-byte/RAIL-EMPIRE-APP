@@ -1,0 +1,8 @@
+osm_id,feature,state,rank,service,usage,highspeed,layer,ref,track_ref,name,construction,tunnel,bridge,maxspeed,preferred_direction,speed_label,frequency,voltage,electrification_state,future_frequency,future_voltage,gauges,loading_gauge,track_class,reporting_marks,train_protection,train_protection_rank,train_protection_construction,train_protection_construction_rank,operator,traffic_mode,radio
+100,rail,present,110,,main,false,0,4000,1,ORM Main,,false,false,120,forward,120,16.7,15000,present,,,{1435},DE-GB,D4,{},pzb,5,,,"{""DB InfraGO""}",mixed,gsm-r
+101,rail,present,110,,main,false,0,4000,1,ORM Main,,false,false,160,forward,160,16.7,15000,present,,,{1435},,D4,{},pzb,5,,,"{""DB InfraGO""}",mixed,gsm-r
+101,rail,present,110,,main,false,0,4000,1,ORM Main,,false,false,160,forward,160,16.7,15000,present,,,{1435},,D4,{},pzb,5,,,"{""DB InfraGO""}",mixed,gsm-r
+102,rail,present,110,,main,false,0,4000,1,ORM Main,,false,false,160,forward,160,16.7,15000,present,,,{1435},,D4,{},pzb,5,,,"{""DB InfraGO""}",mixed,gsm-r
+200,rail,present,37,siding,,false,0,,,Siding,,false,false,40,,40,,,no,,,{1435},,,,,,,,,
+300,rail,preserved,6,,tourism,false,0,,9,Museum line,,false,false,,,,,,no,,,{1435},,,,,,,,,
+900,tram,present,40,,,false,0,,,Tram,,false,false,50,,50,50,750,present,,,{1435},,,,,,,,,

@@ -1,0 +1,14 @@
+Rail Empire v1.1.99 — HOTFIX13
+Canton reservation recovery / [BLOQUE] departure fix
+
+This hotfix targets a confirmed departure deadlock where a train could have valid departure prerequisites but stay at 0 km/h with [BLOQUE] on Livemap.
+
+The defect was inside the canton interlocking reservation path. reserveNextAhead() calls CantonManager.reserve(); unlike occupy() and isAvailable(), reserve() did not evict a dead owner before returning false. A failed blocked_route service could also remain visible and therefore was not considered dead by the canton manager.
+
+HOTFIX13 makes the interlocking ownership rules consistent:
+- stale direct canton reservations are removed;
+- stale canton occupations are removed;
+- blocked_route is terminal for interlocking ownership;
+- live train reservations are never stolen.
+
+FILE cache is bumped to 1199dep5 so browsers do not reuse HOTFIX12.

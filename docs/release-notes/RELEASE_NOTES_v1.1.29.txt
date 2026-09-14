@@ -1,0 +1,31 @@
+Rail Empire v1.1.29 — Schedule V2 ORM Route Fix
+=================================================
+
+Objectif
+--------
+Corriger le blocage terrain où le Schedule Creator V2 ne trouvait aucun tracé ORM même sur des itinéraires ferroviaires simples.
+
+Corrections principales
+-----------------------
+- Retrait des endpoints Overpass régionaux/obsolètes du fallback de routage V2.
+- Routage V2 limité à des instances Overpass à couverture globale.
+- Cache rail ORM bumpé de v4 à v5 afin d'ignorer les anciennes tuiles vides potentiellement mises en cache.
+- Graphe ferroviaire basé sur les vrais IDs de nœuds OSM lorsque disponibles, avec fallback coordonnées uniquement pour données synthétiques/locales.
+- Stratégie de routage à trois étages, sans aucune ligne droite synthétique :
+  1. corridor local rapide ;
+  2. graphe ORM réel déjà chargé ;
+  3. bbox continue régionale si les tuiles locales sont incomplètes.
+- Requêtes de corridor bornées (6,5 s par endpoint, sans subdivision récursive pour le Schedule Creator).
+- Nouveau cache de route cursor-v4 afin de ne pas réutiliser d'anciens choix de snap.
+
+Règle conservée
+---------------
+Si aucun chemin ferroviaire réel n'est trouvé, le Creator retourne une erreur. Aucun fallback géométrique en ligne droite n'est autorisé.
+
+QA
+--
+- 97 220 / 97 220 tests hors météo PASS, 0 échec.
+- Bulk météo : 0 `not ok` observé avant le timeout connu du runner qui conserve un handle ouvert.
+- 25 tests ORM/routage ciblés PASS avant bundle.
+- 35 tests post-bundle startup/gares/routage PASS.
+- 165 fichiers JS source passent node --check ; bundle file:// passe node --check.

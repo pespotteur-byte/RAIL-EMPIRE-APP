@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": false,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "files": [
+    "src/ts/dashboard-chart.ts",
+    "src/ts/financial-panel.ts",
+    "src/ts/replay-pump.ts",
+    "src/ts/route-drawing-cache.ts",
+    "src/ts/block-signal-view.ts"
+  ]
+}

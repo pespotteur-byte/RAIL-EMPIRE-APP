@@ -1,0 +1,131 @@
+Rail Empire v1.1.74 — Schedule Creator Integrity / Exact ORM Routing Rebuild
+Date: 2026-08-19
+Base: v1.1.73 Core Circulation / Routing / Braking Rebuild
+
+OBJECTIF
+-------
+Refondre l’intégrité du Schedule Creator V2 afin qu’un horaire validé représente
+exactement le tracé ORM, la voie, les VIA, le matériel et le temps physique affichés.
+La version ferme aussi les courses asynchrones, les caches stale et plusieurs
+incohérences legacy capables de fabriquer des détours, des horaires impossibles ou
+des validations trompeuses.
+
+CORRECTIONS PRINCIPALES
+-----------------------
+1. Voie exacte / ancres ORM
+- Un clic de voie Schedule V2 produit désormais un TrackBinding avec le vrai wayId.
+- Recherche stricte à 20 m dans l’éditeur : aucun saut silencieux vers une voie à
+  plusieurs centaines de mètres.
+- Les ancres déjà liées à un wayId sont routées uniquement sur ce wayId.
+- Validation des extrémités : position ET identité wayId doivent correspondre.
+- Chaque VIA doit réellement être traversé par sa géométrie/son wayId résolu.
+
+2. VIA et édition de topologie
+- Un VIA ajouté après A→B pour préparer B→C est affecté au bon futur segment.
+- Suppression du premier/dernier arrêt : les VIA de la liaison supprimée disparaissent.
+- Suppression d’un arrêt intermédiaire : les VIA entrants restent avant les VIA sortants.
+- Undo/redo restaure aussi les points techniques globaux.
+- Les modes transitoires de l’éditeur sont entièrement remis à zéro entre horaires.
+
+3. Courses asynchrones ORM
+- Chaque calcul possède une génération d’édition.
+- Un ancien calcul terminé après un nouveau ne peut plus écraser le nouveau tracé.
+- Un job devenu obsolète s’arrête après chaque liaison au lieu de continuer à brûler
+  du CPU pour un horaire déjà modifié.
+- Garde supplémentaire après les previews async avant timing/validation.
+
+4. Routes stale / panne réseau
+- topologyRevision et resolvedRevision distinguent la topologie demandée du dernier
+  tracé réellement résolu.
+- Après modification de gare/voie/VIA + panne réseau, l’ancien tracé peut rester visible
+  comme référence mais il est explicitement stale et impossible à valider.
+- Une simple modification de profil sans changement topologique peut conserver le
+  dernier tracé valide en cas de panne réseau.
+- La revalidation automatique est déclenchée en production après chargement.
+
+5. Cache ORM fiable
+- Clés de mémoire/caches profilées par Vmax, traction, systèmes électriques,
+  écartement, gabarit, charge par essieu et charge au mètre quand connus.
+- Révision de topologie (_topologyEpoch) invalide les anciennes mémoires.
+- Seules les versions VALID, sans erreur et résolues sur leur topologie actuelle
+  hydratent la mémoire après chargement.
+- L’infrastructure OSM résidente a priorité sur une mémoire last-known-good.
+- L’ordre de chargement a été corrigé : invalidation topologique d’abord, hydratation
+  des vrais tracés validés ensuite.
+
+6. Routage physique du matériel
+- Le routeur tient compte avant sélection du chemin de l’électrification et de
+  l’écartement connus.
+- Support des contraintes connues de gabarit (GA/GB/GC + exact pour profils non classés),
+  charge par essieu et charge au mètre.
+- Donnée inconnue = inconnue : aucune restriction technique n’est inventée.
+- Le runtime applique les mêmes contrôles physiques que l’éditeur/revalidator.
+- Les métadonnées rame/formation propagent frein, systèmes électriques, écartements
+  et contraintes d’enveloppe lorsqu’elles existent.
+
+7. Voies parallèles / sens préféré
+- La pénalité de mauvais sens reste proportionnelle à la distance physique et ne
+  dépend plus du nombre de segments OSM.
+- Le routeur multi-VIA utilise désormais une préférence de sens aussi forte et
+  cohérente que le routeur local : une voie parallèle à contresens ne gagne plus
+  pour quelques mètres de snap si la voie normale est disponible.
+
+8. Timing et validation physique
+- Une arrivée manuelle antérieure au minimum physique est refusée.
+- Un départ manuel qui ne respecte pas le temps d’arrêt physique est refusé.
+- Les champs horaires vidés suppriment réellement l’override manuel.
+- Aucun chargement invisible de 70 % n’est ajouté au calcul Schedule V2/runtime.
+- Les signatures de timing incluent masse, puissance, frein, capacités et contraintes
+  physiques pertinentes afin de ne pas réutiliser un ancien timing après changement
+  de formation.
+- FALLBACK_30 reste un marqueur de Vmax inconnue, jamais un V30 fictif.
+
+9. Aller/retour, fréquences et numérotation
+- Numéros de train non vides et uniques à la validation.
+- Duplication/fréquence génère des numéros uniques sans collision.
+- Les versions historiques NEEDS_REPAIR restent NEEDS_REPAIR lors d’une duplication AR.
+- Délai terminus par défaut harmonisé à 5 min ; un 0 explicite reste possible.
+- Arrêts ordinaires par défaut : 5 min.
+- Syntaxes J+1 acceptées : "J+1 00:15" et "00:15 (+1)".
+- Legacy harmonisé : retour = aller +1 ; prochain aller +2 ; arrêts facultatifs 50/50.
+
+10. Sauvegarde / compatibilité
+- Migration explicite schema V2 1 → 2.
+- Schéma futur inconnu : refus fail-closed au lieu de perte silencieuse.
+- Tableau legacy brut non compatible : refus explicite, pas de faux succès vide.
+- Les champs historiques returnPath et quelques stubs UI inactifs restent conservés
+  uniquement pour compatibilité de sauvegarde ; ils ne pilotent pas le workflow V2 actif.
+
+CONTRATS PRÉSERVÉS
+------------------
+- OSM/OpenRailwayMap vectoriel = topologie ferroviaire autoritaire.
+- Aucun fallback ferroviaire synthétique en ligne droite.
+- v1.1.73 : sécurité circulation, occupation rame entière, freinage physique,
+  anti-avance voyageurs, LOD cohérent, save/load physique conservés.
+- Marge horaire automatique = 0 s.
+- Pas de ralentissement de croisière artificiel imposé par l’horaire.
+
+QA FINALE
+---------
+- Banque dédiée v1.1.74 : 27/27 PASS.
+- Pack Schedule/ORM/rame/roulement ciblé : 162/162 PASS.
+- Régressions non-bulk post-bundle : 479/479 PASS.
+- Bulk ORM : 20 275/20 275 PASS.
+- Bulk Schedule : 8 502/8 502 PASS.
+- Bulk misc : 11 641/11 641 PASS.
+- Bulk10k : 13 340/13 340 PASS.
+- Bulk physique : 5 376/5 376 PASS.
+- Post-bundle critique : 73/73 PASS.
+- Syntaxe JS/MJS/CJS sources : 228/228 PASS.
+- Bundle FILE:// : 63 modules cœur / 66 modules catalogue, v1.1.74 cache 1174.
+
+TEST TERRAIN RECOMMANDÉ
+-----------------------
+1. Créer un trajet dans une gare à plusieurs voies parallèles et cliquer volontairement
+   très près de deux voies : vérifier que seule la voie réellement cliquée est liée.
+2. A→B, puis préparer B→C avec plusieurs VIA ; supprimer B et vérifier l’ordre des VIA.
+3. Modifier rapidement VIA/Vmax/rame pendant un calcul long : seul le dernier état doit gagner.
+4. Couper le réseau après modification de voie : ancien tracé visible mais validation interdite.
+5. Tester une rame électrique et, si données disponibles, une contrainte gabarit/essieu
+   avec deux itinéraires possibles : le chemin physiquement compatible doit être choisi.
+6. Tenter une heure d’arrivée plus courte que le temps physique : validation refusée.

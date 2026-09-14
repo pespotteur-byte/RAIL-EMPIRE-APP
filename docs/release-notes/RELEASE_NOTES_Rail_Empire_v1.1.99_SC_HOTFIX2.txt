@@ -1,0 +1,46 @@
+Rail Empire v1.1.99 — Schedule Creator HOTFIX2
+Date: 2026-08-30
+Base: Rail_Empire_v1.1.99_SC_HOTFIX1
+
+OBJECTIF
+Durcir le Schedule Creator contre les pannes/régressions réseau OSM/Overpass qui pouvaient encore bloquer la sélection d'une voie ou un calcul d'itinéraire alors qu'un serveur de secours restait disponible.
+
+CORRECTIONS
+1. Timeout du corps JSON du 3e serveur Overpass
+   - Le failover série vers le serveur de secours bornait l'attente des headers mais pas response.json().
+   - Un serveur pouvait donc répondre HTTP 200 puis laisser le SC bloqué pendant le téléchargement/décodage du corps.
+   - HOTFIX2 applique désormais un timeout en deux phases (headers + body), plafonné par le budget global du calcul.
+   - Les erreurs sont distinguées en OVERPASS_HEADER_TIMEOUT et OVERPASS_BODY_TIMEOUT.
+
+2. Sélection exacte de voie : vrai failover 3 serveurs
+   - getTrackCandidates() autorise maintenant 3 endpoints Overpass au lieu de 2.
+   - Les 2 premiers restent lancés en hedge/race pour la vitesse ; le 3e sert de secours si les deux échouent.
+
+3. Rescue régional / broad-area : vrai failover 3 serveurs
+   - _findCursorLegBroadArea() autorise lui aussi les 3 endpoints.
+   - Cela évite de conclure à tort à une indisponibilité réseau quand seul le couple initial est en panne.
+
+4. Gestion du budget temps dans l'éditeur SC
+   - TIME_BUDGET / ORM_TIME_BUDGET sont maintenant classés comme échecs récupérables de routage/données.
+   - Un itinéraire valide déjà présent peut être conservé au lieu d'être traité comme une erreur générique destructive.
+
+5. Packaging
+   - Bundle FILE:// reconstruit.
+   - Build flavor: FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX2
+   - Cache bundle: 1199sc2
+   - VERSION.txt réaligné sur 1.1.99 (package.json, index et bundle étaient déjà en 1.1.99).
+
+TESTS AJOUTÉS
+- Failover du couple hedgé vers le 3e endpoint.
+- Sélection de voie utilisant maxEndpoints=3 / raceEndpoints=2.
+- Rescue broad-area utilisant maxEndpoints=3 / raceEndpoints=2.
+- HTTP 200 puis body JSON bloqué sur le 3e endpoint : timeout contrôlé et non gel du SC.
+- ORM_TIME_BUDGET reconnu comme erreur récupérable dans l'éditeur.
+
+RÉSULTATS QA
+- Suite fonctionnelle ciblée SC / ORM / routing : 197 / 197 PASS.
+- Tests spécifiques HOTFIX2 : 5 / 5 PASS.
+- Contrats bundle / packaging / cache : 20 / 20 PASS.
+
+LIMITATION DE VALIDATION
+Le smoke-test graphique Chromium n'a pas pu être exécuté dans l'environnement d'audit : Chromium y bloque les pages file:// et localhost par une politique d'organisation. Aucun crash applicatif n'a été observé ; cette limitation concerne l'environnement de test. La validation finale de l'interaction visuelle doit donc être faite en lançant index.html sur la machine de jeu.

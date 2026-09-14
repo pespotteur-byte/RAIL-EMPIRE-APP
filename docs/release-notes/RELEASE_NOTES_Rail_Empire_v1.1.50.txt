@@ -1,0 +1,48 @@
+Rail Empire v1.1.50 — Schedule Creator Panel Stability Hotfix
+2026-08-17
+
+FIELD FEEDBACK
+- Routing/OSM from v1.1.49 is confirmed working in the user's real browser.
+- In Schedule Creator V2, small collapsible panels could close unexpectedly while editing text such as the train name.
+
+ROOT CAUSE
+- Train number/name were bound to the same generic change handler as physical routing fields.
+- Leaving a metadata input therefore launched _recomputeActivePath().
+- _recomputeActivePath() always finishes with renderPanel(), replacing panelContent.innerHTML.
+- Replacing the DOM reset native <details> open/closed state and could also lose panel scroll/focus/caret.
+
+FIXES
+1) Lightweight train metadata editing
+- Train number and train name now update live on input.
+- They no longer launch ORM/OSM route recomputation.
+- Renaming/renumbering no longer invalidates a previously valid physical route.
+- Header and autosave still update normally.
+
+2) Persistent Schedule Creator panel UI state
+- Before any legitimate renderPanel() rebuild, Rail Empire captures:
+  * open/closed state of each sv2-fold panel;
+  * panel scroll position;
+  * active input/select/textarea;
+  * caret/selection position where supported.
+- State is restored after the DOM is rebuilt and events are rebound.
+- Stable fold keys are assigned to Train parameters, Version/calendars and saved technical points.
+
+3) Physical edits still behave normally
+- Category, performance mode, Vmax, reference composition and technical compatibility fields still trigger the required route/timing recomputation.
+- No routing, OSM acquisition, Overpass failover, anti-reversal, manual trace or timetable-regulation logic from v1.1.49 was changed.
+
+PACKAGE
+- Version: 1.1.50
+- FILE:// core/cache buster: 1150
+- Split bundle retained: 61 core modules + 66 deferred catalogue modules.
+
+QA ACTUALLY RUN
+- New v1.1.50 panel-stability tests: 4/4 PASS.
+- Functional non-bulk/non-weather suite: 358/358 PASS.
+- Bulk ORM bank: 20,275/20,275 PASS.
+- JavaScript/MJS syntax: 194/194 PASS.
+- Core and deferred FILE:// bundles rebuilt as v1.1.50.
+
+REAL-BROWSER NOTE
+- The build environment still cannot claim the final interactive file:// smoke.
+- User field validation remains authoritative for the exact browser interaction.
