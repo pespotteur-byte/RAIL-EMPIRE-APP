@@ -1,0 +1,53 @@
+Rail Empire v1.1.64 — TRAVAUX V2 ORM
+===================================
+
+Base : v1.1.63 Incidents Expansion I.
+
+NOUVEL EDITEUR TRAVAUX V2
+- Le bouton + Travaux ouvre désormais un éditeur plein écran dédié, dérivé de la logique du Schedule Creator V2.
+- Fond OpenRailwayMap/TileMap et sélection précise de la voie ORM au curseur.
+- Choix de la voie exacte parmi les candidats OSM proches (wayId / trackRef).
+- Début et fin de chaque zone verrouillés sur le réseau ferroviaire réel.
+- Routage par ScheduleV2Router.routeBetweenBindings : aucun segment ferroviaire synthétique.
+- VIA ORM disponibles.
+- Mode Tracé manuel ORM : clics successifs sur voies/aiguilles imposées, puis recalcul réel du graphe.
+- Retour automatique possible en supprimant les VIA.
+- Recherche de gare intégrée pour centrer rapidement la carte sans remplacer la sélection de voie précise.
+
+CHANTIERS MULTI-ZONES
+- Un seul chantier peut contenir plusieurs zones indépendantes.
+- Chaque zone mémorise : startBinding, endBinding, VIA, routePoints ORM, segments/wayId, distance et impact.
+- Impacts par zone :
+  * Interruption totale
+  * Ralentissement avec vitesse personnalisée
+  * Caténaire coupée
+- Exemple désormais possible dans un seul chantier : voie 1 fermée / voie 2 limitée à 40 km/h.
+
+PRECISION RUNTIME
+- Le runtime exploite les géométries ORM exactes des zones au lieu de rabattre le chantier sur un seul world.track.
+- Lorsque les wayId OSM sont disponibles, ils sont prioritaires pour déterminer si le train utilise réellement la voie touchée.
+- Une voie parallèle possédant un autre wayId n'est donc pas bloquée simplement parce qu'elle passe quelques mètres à côté.
+- Fallback géométrique très serré uniquement lorsque les wayId ne permettent pas la comparaison.
+- Les limitations et interruptions continuent d'utiliser le moteur existant de mouvement/détournement.
+- Coupure caténaire : bloque les rames 100 % électriques ; diesel/vapeur/traction autonome restent franchissables selon les règles de traction existantes.
+- Les trains de travaux conservent l'exception travaux existante.
+
+PLANIFICATION
+- Dates début/fin.
+- Heure début/fin quotidienne, y compris fenêtres passant minuit.
+- Récurrence : journée unique, quotidienne ou hebdomadaire avec choix des jours.
+
+COMPATIBILITE
+- Ancien format PlannedWorks conservé en lecture/écriture.
+- Les sauvegardes sans tableau zones sont projetées en zone legacy à l'exécution.
+- Les nouveaux travaux utilisent zones[] et ne nécessitent plus obligatoirement un couple gare A / gare B.
+- Suppression d'un chantier sauvegardée immédiatement.
+
+QA
+- Travaux V2 dédiés/post-bundle : 12/12 PASS.
+- Passe ciblée non-bulk : 352/352 PASS.
+- Bulk ORM : 20 275/20 275 PASS.
+- Syntaxe modules contrôlés : 145/145 PASS.
+- Bundle FILE:// : Rail Empire v1.1.64, 62 modules core + 66 modules catalogue différé.
+- Core bundle : ~3.05 MB ; catalogue différé : ~45.80 MB.
+- Contrôle Chromium de démarrage tenté ; l'environnement bloque l'ouverture des URLs file:// et localhost par politique d'organisation, donc aucune validation visuelle Chromium n'est revendiquée pour cette release.

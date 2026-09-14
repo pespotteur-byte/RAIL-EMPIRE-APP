@@ -1,0 +1,32 @@
+Rail Empire v1.1.25 — SCHEDULE V2 CURSOR ANCHORS
+=================================================
+
+Base: v1.1.24 CLOCK LOAD FIX.
+
+FIELD FIX
+---------
+The Schedule Creator V2 no longer requires an exact OSM/ORM way to be discovered around the gameplay station icon.
+
+New station workflow:
+  1. Click the station icon.
+  2. Rail Empire enters track-position selection mode.
+  3. Click the exact desired position on the visible railway track.
+  4. Enter the mandatory Livemap track name.
+
+The cursor position is now the authoritative station-track anchor. This avoids failures caused by gameplay station icons being offset from the physical railway or by OSM ways being split/renumbered.
+
+VIA and technical-point anchors also use direct cursor positions. The real route is then calculated on the ORM/OSM railway graph.
+
+ABSOLUTE RULE RETAINED
+----------------------
+No synthetic straight-line route is accepted in Schedule Creator V2.
+If the real ORM graph cannot connect the selected cursor anchors, the route is rejected with an error and no diagonal/fake line is drawn.
+
+QA
+--
+97,203 / 97,203 non-weather tests PASS, 0 fail.
+5,501 weather assertions observed with 0 `not ok`; existing weather runner keeps a lingering handle and is stopped by timeout.
+102,704 assertions without observed failure in total.
+37 / 37 targeted Schedule V2 cursor/ORM tests PASS.
+34 / 34 post-bundle startup/station/cursor contracts PASS.
+163 source JS files + file:// bundle pass node --check.

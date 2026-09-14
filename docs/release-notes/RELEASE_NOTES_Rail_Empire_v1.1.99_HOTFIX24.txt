@@ -1,0 +1,14 @@
+Rail Empire v1.1.99 — HOTFIX24 3D TILT + PERFORMANCE
+
+- La pseudo-3D inclinée redevient le mode GPS 3D par défaut.
+- Le Relief DEM reste disponible mais n'est plus activé automatiquement.
+- Pitch 3D renforcé et progressif selon le zoom (environ 32° à 44°).
+- Le train suivi reste verrouillé au centre visuel de l'écran via la couche screen-space HOTFIX23.
+- L'overscan HOTFIX22 reste actif pour éviter les zones noires aux bords lors des rotations.
+- Redessinage cartographique lourd limité à 10 Hz pendant le suivi 3D ; la flèche reste mise à jour indépendamment.
+- Suppression du supersampling agressif des tuiles 3D ; DPR plafonné pour réduire la charge GPU/mémoire.
+- Budget du Relief DEM réduit (DPR et nombre de tuiles bornés).
+- Nombre de marqueurs 3D simultanés réduit à 64 pour améliorer la fluidité.
+- Suppression d'un fragment de logique de centrage HOTFIX23 injecté par erreur dans le renderer 2D.
+- Cache FILE reconstruit : 1199dep16 ; CSS : 1199re3d9.
+- Correctifs départ/mouvement HOTFIX16-17 conservés.

@@ -1,0 +1,44 @@
+Rail Empire v1.1.99 — HOTFIX20 3D RANGE + MAP FILTERS
+======================================================
+Date: 2026-08-31
+Base: HOTFIX19 3D Arrow Axis
+
+CORRECTIFS
+----------
+1. Portée d'affichage de la vue 3D GPS
+   - Le mode pseudo-3D n'hérite plus d'un zoom 2D pouvant monter jusqu'à z15.5.
+   - Zoom d'entrée pseudo-3D borné à z11.5–12.75 (DEM: z11.4).
+   - Plage manuelle +/- élargie à z9.5–16.5.
+   - La caméra n'est plus centrée exactement sur le train : elle vise un point
+     situé en avant dans le sens du tracé, façon GPS automobile.
+   - Look-ahead dynamique = ~22 % de la hauteur géographique visible, borné
+     entre 0.6 km et 12 km.
+   - Résultat: beaucoup plus de voie visible devant le train, surtout en zone
+     urbaine où HOTFIX19 pouvait n'afficher que quelques kilomètres.
+
+2. Suivi 3D + relief DEM
+   - Le centre de patch DEM suit lui aussi le centre GPS anticipé.
+   - La dead-zone DEM est évaluée sur ce centre anticipé, donc pas de rebuild GPU
+     à chaque frame.
+   - Le bearing HOTFIX18 et l'axe de flèche HOTFIX19 restent inchangés.
+
+3. Filtres d'affichage de carte conservés en 3D
+   - Le panneau standard reste visible en vue 3D:
+     Gares / Noms / Trains / Points voie / ORM / Basique / Satellite / Météo /
+     Industries / Zones.
+   - Il est présenté sous les commandes 3D à droite sur desktop.
+   - Sur écran étroit, il se place à côté des commandes 3D.
+   - Le filtre Trains est désormais respecté en 3D: décocher Trains supprime
+     réellement les flèches DOM 3D.
+
+CACHE / BUNDLE
+--------------
+- Core FILE cache: 1199dep12
+- CSS cache: 1199re3d5
+- Bundle flavor inclut HOTFIX20-3D-RANGE-MAP-FILTERS.
+
+QA
+--
+- Syntaxe ui.js / renderer.js / terrain3d.js / bundle: OK.
+- Suite ciblée HOTFIX16→20 + 3D: 33/33 PASS.
+- Suite étendue LiveMap / DEM / départ / sauvegarde / MovementAuthority: 71/71 PASS.

@@ -1,0 +1,47 @@
+Rail Empire v1.1.99 — Schedule Creator HOTFIX 1
+================================================
+
+Objet
+-----
+Correctif ciblé du Schedule Creator (SC) et de son acquisition/routage OSM ferroviaire.
+La version de jeu reste 1.1.99 ; le bundle FILE:// utilise désormais la génération de cache 1199sc1.
+
+Constats de l'audit
+-------------------
+1. Le pack de voies local est vide dans cette archive (manifest tracks: prepared=false, aucun shard).
+   Le SC doit donc acquérir le graphe ferroviaire OSM à la volée pour les zones non présentes en cache local.
+2. Le fetch Overpass "hedgé" lançait les deux premiers endpoints en parallèle, mais si les deux
+   échouaient il retournait immédiatement un échec, sans essayer le troisième endpoint pourtant configuré.
+   Cela pouvait produire une fausse panne réseau / absence de graphe alors qu'un serveur de secours restait disponible.
+3. Une régression héritée transformait TIME_BUDGET en erreur générique ORM_LOCAL_ROUTE_UNRESOLVED au lieu
+   d'exposer la cause ORM_TIME_BUDGET.
+4. Les notes de la 1.1.99 indiquent que l'éditeur Schedule/Horaire lui-même n'avait pas été inclus dans
+   l'audit gameplay/UI de cette release, même si ses hooks runtime avaient été contrôlés.
+
+Correctifs
+----------
+- Réordonnancement des endpoints Overpass :
+    1) overpass.private.coffee
+    2) overpass-api.de
+    3) maps.mail.ru
+- Le hedge des deux premiers endpoints tombe maintenant correctement sur les endpoints restants en série.
+- Le routage dynamique principal du SC autorise les 3 endpoints ; le préchargement global reste volontairement
+  borné à 2 endpoints afin de préserver son contrat de performance et d'éviter une inflation des requêtes.
+- Restauration de l'erreur distincte ORM_TIME_BUDGET dans ScheduleV2Router.
+- Nouveau cache-id du bundle FILE:// : 1199sc1.
+- Nouveau test de régression : les deux endpoints hedgés échouent, le troisième réussit.
+
+Validation
+----------
+- Test de régression failover : ECHEC sur le comportement stock, PASS après correctif.
+- Batterie ciblée SC / routing / RailGraph / world OSM : 143 tests exécutés.
+  * 141 PASS fonctionnels.
+  * 2 FAIL hérités et non fonctionnels : assertions de version codées en dur sur 1.1.97 alors que le jeu est en 1.1.99.
+- Le test historique du budget de routage 3 minutes, auparavant rouge, passe après restauration de ORM_TIME_BUDGET.
+- Syntaxe vérifiée sur les sources modifiées et sur les deux bundles reconstruits.
+
+Limitation de validation
+------------------------
+Le smoke test graphique FILE:// n'a pas pu être exécuté de bout en bout dans le Chromium managé de l'environnement
+d'audit. La validation finale dans le navigateur réel doit donc inclure le trajet/gestuelle qui déclenchait la panne.
+Le défaut de failover corrigé est néanmoins reproductible de façon déterministe par test automatisé.

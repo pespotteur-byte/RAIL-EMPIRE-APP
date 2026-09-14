@@ -1,0 +1,40 @@
+Rail Empire v1.1.94 — WORLD OSM EMPTY CACHE SAFETY
+===================================================
+
+Objectif
+--------
+Corriger le défaut découvert lors du check de la 1.1.93 : une réponse Overpass HTTP valide mais contenant 0 voie pouvait être persistée comme une tuile mondiale complète et rester réutilisable indéfiniment.
+
+Correctifs principaux
+---------------------
+- Une réponse OSM/Overpass à 0 voie ne peut plus être persistée par WorldRailCache.put().
+- Une tuile vide doit être confirmée par au moins un second endpoint mondial indépendant avant de devenir un cache négatif.
+- Un cache négatif confirmé est temporaire (6 h par défaut), contrairement aux tuiles positives contenant de vraies voies qui restent persistantes.
+- Si le premier endpoint renvoie 0 voie et qu'un second renvoie des voies, les voies du second endpoint gagnent immédiatement et sont persistées.
+- Si la réponse vide ne peut pas être confirmée, la tuile reste manquante et sera retentée lors d'une prochaine demande.
+- Les anciennes tuiles v1.1.93 complete:true / ways:[] sont automatiquement rejetées et supprimées au prochain accès.
+- Le cache mondial passe au schéma rail-empire-world-rail-v2 / IndexedDB version 2.
+- Les requêtes de vérification vide contournent les anciens areaCache/IndexedDB ORM afin d'obtenir une vraie confirmation réseau indépendante.
+- Le panneau « 🌍 OSM monde » expose maintenant les réponses vides refusées, les vides confirmés temporairement et les anciens caches 1.1.93 invalidés.
+- Le tutoriel OSM mondial documente cette sécurité.
+- Le manifest RailGraph ne prétend plus que le runtime ne contacte jamais OSM/Overpass : sans pack planète statique, la première visite d'une cellule non mise en cache peut nécessiter Internet.
+
+Invalidation des anciennes routes
+---------------------------------
+- schedule-route-v7
+- exact-leg-v4
+
+Cela empêche un ancien détour calculé sur une topologie v1.1.93 incomplète (par exemple Dijon -> Beaune) d'être repris après mise à jour.
+
+QA
+--
+- 8/8 nouveaux tests v1.1.94 : PASS.
+- 99/99 tests croisés monde OSM / Dijon-Beaune / aide / Direct / Rames / Roulements : PASS.
+- Batterie Schedule Creator étendue : 269 PASS / 1 FAIL hérité.
+- Le seul FAIL est le test historique « v1.1.83 router exposes the 3-minute budget failure distinctly », déjà connu avant 1.1.94.
+- 241/241 fichiers JS/MJS : syntaxe valide.
+- Bundle FILE:// reconstruit avec flavor SC-WORLD-OSM-EMPTY-CACHE-SAFETY.
+
+Limite de QA
+------------
+L'environnement de build ne fournit pas un accès Internet/Overpass fiable permettant de certifier un vrai téléchargement Dijon en direct. Les scénarios réseau vide/non vide sont donc vérifiés par tests déterministes avec endpoints simulés. Le test terrain final reste à effectuer dans le navigateur du joueur.

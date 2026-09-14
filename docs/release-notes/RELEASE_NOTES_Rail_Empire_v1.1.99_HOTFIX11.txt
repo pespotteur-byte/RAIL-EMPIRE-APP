@@ -1,0 +1,22 @@
+Rail Empire v1.1.99 — HOTFIX11 DEPARTURE + 3D RECOVERY
+
+Purpose
+- Repair trains that remain at origin because a stale/ghost platform or voie-point occupation survived an old/deleted circulation.
+- Make the optional 3D GPS view open reliably on old Opera/FILE mode and on trains that are stationary or have not started moving yet.
+- Make DEM failures fail-soft into the existing pseudo-3D view instead of breaking the 3D activation path.
+
+Departure fixes
+- Before reserving an origin/arrival station resource, RE now removes ONLY stale owners whose service no longer exists or is completed/cancelled.
+- A resource owned by a real active circulation is never purged.
+- Works for both native VoiePointManager occupation and PlatformManager platform maps.
+- Previously silent departure blockers now expose useful delay reasons for a rame already engaged or passenger departure priority.
+
+3D fixes
+- Removed inline onclick dependency from the selected-train 3D button; it now uses RE's delegated event handler.
+- 3D can derive a visual position from: live service position, stoppedAt station, current/previous/first schedule stop, world station coordinates, or the first route point.
+- A stopped/waiting train can therefore enter 3D GPS follow mode before it starts moving.
+- DEM startup/rebuild errors are contained; pseudo-3D remains available.
+
+Identity
+- Build: FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX11-DEPARTURE-3D-RECOVERY
+- FILE cache: 1199re3d3

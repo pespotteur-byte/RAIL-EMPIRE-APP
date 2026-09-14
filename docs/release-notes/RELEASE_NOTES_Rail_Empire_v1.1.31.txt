@@ -1,0 +1,54 @@
+Rail Empire v1.1.31 — Schedule V2 Field Regression Repair
+=========================================================
+
+Base
+----
+v1.1.30 Schedule V2 Continuity + Runtime Departure Fix.
+
+Objectif
+--------
+Corriger les trois regressions confirmees en smoke terrain v1.1.30 :
+- WAYPOINT/VIA -> gare encore instable ;
+- circulation V2 absente de la Livemap et ne partant pas ;
+- alertes de direction preferentielle ORM alors que le trajet choisi est correct.
+
+Correctifs terrain
+------------------
+1. WAYPOINT / VIA -> gare
+   - Un clic sur une gare a maintenant priorite sur un VIA voisin dans le Schedule Creator V2.
+   - Chaque routage reussi expose les snaps reels resolus de toutes les ancres curseur.
+   - L'editeur persiste ensuite ces snapLat/snapLon/wayId reels dans la gare et les VIA.
+   - Le meme VIA n'est donc plus re-projete sur une voie parallele differente lors du leg suivant ou d'un recalcul.
+   - L'extremite reelle d'un leg reste l'ancre exacte du leg suivant et la garde de continuite 2 m reste active.
+   - Cache curseur passe a cursor-v6 pour ne pas reutiliser les choix de voie de la logique precedente.
+
+2. Train V2 absent / non-depart
+   - Cause racine persistence corrigee : `available` est un verrou runtime ephemere et n'est plus sauvegarde comme false.
+   - Les anciennes sauvegardes v1.1.30 contenant un materiel `available=false` sans ActiveService proprietaire sont reparees au chargement.
+   - Les ActiveService V2 derives sont nettoyes puis recompiles depuis les roulements ; un service du est recompilable immediatement apres chargement.
+   - La fenetre de compilation evite de recreer d'anciens services termines qui pourraient reprendre le materiel du train suivant.
+   - La Livemap utilise la coordonnee exacte de voie V2 meme si la gare OSM native n'est pas encore presente dans `world.stations` au moment du rendu pre-depart.
+   - Correction critique des serializers Rotation V2 : PhysicalVehicle, Coupon, FormationMember, ScheduleOccurrence et RotationAction n'appellent plus recursivement JSON.stringify sur leur propre toJSON.
+
+3. Fausses alertes de direction preferentielle ORM
+   - Le routeur compare maintenant plusieurs couples de voies proches au lieu de s'arreter sur la premiere voie geometriquement la plus proche lorsqu'elle est a contre-sens preferentiel.
+   - Une voie parallele connectee parcourue dans sa direction preferentielle est fortement favorisee ; le contre-sens reel reste possible s'il est le seul chemin ferroviaire connecte.
+   - `railway:bidirectional=regular` ne genere plus d'alerte de contre-sens preferentiel.
+   - Les voies de service ne generent plus ce faux positif de direction preferentielle.
+   - Seules les valeurs ORM reconnues `forward` / `backward` activent ce controle.
+   - La deduplication joueur des avertissements introduite en v1.1.30 est conservee.
+
+Regles conservees
+-----------------
+- Aucun fallback ferroviaire synthetique / ligne droite.
+- Un horaire V2 seul ne fait pas naitre de train : la circulation provient toujours d'une occurrence de roulement avec materiel reel affecte.
+- Les incompatibilites physiques connues et l'absence de traction titulaire restent de vrais blocages.
+
+QA
+--
+- Batterie complete hors bulk-weather : 97 230 / 97 230 PASS, 0 FAIL, 128 suites.
+- 6 tests terrain v1.1.31 PASS : snaps multi-ancres, choix de voie directionnelle, suppression faux positifs bidirectionnel/service, save/load de roulement sans verrou fantome ni recursion, spawn + position Livemap + depart 16:19, priorite clic gare sur VIA.
+- Bulk weather : 0 `not ok` observe avant le timeout historique du runner qui conserve un handle ouvert.
+- 167 fichiers JavaScript, bundle inclus : node --check PASS / 0 FAIL.
+- Bundle file:// : 126 modules, 48 507 191 octets, cache-busting v1131.
+- Smoke navigateur reel non execute dans l'environnement de build ; validation terrain utilisateur toujours requise.

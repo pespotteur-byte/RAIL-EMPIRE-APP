@@ -1,0 +1,58 @@
+Rail Empire v1.1.75 — Incident Probability / Location Dedup Hotfix
+Date: 2026-08-20
+Base: v1.1.74 Schedule Creator Integrity Rebuild
+
+OBJECTIF
+-------
+Rendre les incidents ciblant directement un train nettement plus rares sans modifier leur durée, leur gravité ni leurs effets, et empêcher les doublons absurdes du même incident au même endroit.
+
+PROBABILITES DES INCIDENTS CIBLANT DIRECTEMENT UN TRAIN
+-------------------------------------------------------
+Les poids d'apparition des types scope=train sont divisés exactement par 5 :
+- Problème de porte : 7 -> 1.4
+- Forte affluence à bord : 7 -> 1.4
+- Train en panne : 4.5 -> 0.9 en hiver ; 7.5 -> 1.5 en été
+- Malaise voyageur : 15 -> 3
+
+Les probabilités des incidents infrastructure/gare ne sont pas modifiées.
+Le scheduler conserve sa cadence Europe cible existante (~50 incidents réussis par heure de jeu) : la modification porte donc sur la répartition des types, pas sur la cadence globale.
+
+ANTI-DOUBLON SPATIAL
+--------------------
+Nouvel invariant : un incident actif de même type ne peut pas apparaître deux fois au même endroit.
+- même type + même gare : interdit ;
+- même type + même segment intergare : interdit ;
+- même type + autre gare/segment : autorisé ;
+- type différent + même endroit : autorisé.
+
+Exemple :
+- Malaise voyageur actif à Meaux + nouveau malaise à Meaux : refusé.
+- Malaise voyageur actif à Meaux + malaise à Chelles : autorisé.
+- Malaise voyageur + problème de porte à Meaux : autorisé.
+
+IMPLEMENTATION
+--------------
+- Chaque incident reçoit une locationKey canonique (station:<id> ou segment:<A><B>).
+- Les générateurs train, gare, voie et gare-ou-voie filtrent les localisations déjà verrouillées pour le même type.
+- Les incidents visant un train mémorisent aussi la gare / le segment où l'événement a commencé.
+- locationKey est sauvegardée/restaurée.
+- Une ancienne sauvegarde contenant déjà plusieurs doublons actifs est nettoyée au chargement : le premier incident est conservé, les doublons même type + même endroit sont ignorés.
+- L'UI récupère directement les nouvelles probabilités puisqu'elles sont portées par le catalogue d'incidents lui-même.
+
+INCHANGE
+--------
+- Durées, effets et limites de vitesse des incidents.
+- Cadence cible globale de 50 incidents/h de jeu.
+- Incidents travaux/infrastructure et leurs probabilités.
+- Système de motifs de retard et pictogrammes.
+- Cœur circulation v1.1.73.
+- Schedule Creator v1.1.74.
+
+QA
+--
+- Tests dédiés v1.1.75 : 6/6 PASS.
+- Pack post-bundle incidents / travaux / icônes / circulation / Schedule Creator : 71/71 PASS.
+- Syntaxe sources JS/MJS/CJS : 219/219 PASS.
+- Syntaxe bundles FILE:// : 2/2 PASS.
+- Bundle : 63 modules cœur + 66 modules catalogue.
+- Version/cache : v1.1.75 / 1175.

@@ -1,155 +1,161 @@
+import { htmlText } from './html-text.js';
+const isRecord = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
 /**
  * Shunting — Realistic shunting/triage operations for freight trains.
  * Simulates: arrival → uncoupling → pushing to loading track → loading → coupling → departure.
  */
-
 let nextOpId = 1;
-
 const SHUNTING_PHASES = {
-  arriving: { name: 'Arrivée en ITE', duration: 5, description: 'Le train arrive sur les voies de l\'ITE' },
-  uncoupling: { name: 'Découplage', duration: 8, description: 'Découplage des wagons du locotracteur' },
-  pushing: { name: 'Poussage', duration: 10, description: 'Les wagons sont poussés sur la voie de chargement' },
-  loading: { name: 'Chargement', duration: 15, description: 'Chargement/déchargement des marchandises' },
-  pulling: { name: 'Tirage', duration: 8, description: 'Les wagons sont tirés hors de la voie de chargement' },
-  coupling: { name: 'Recouplage', duration: 6, description: 'Recouplage des wagons au train' },
-  inspection: { name: 'Inspection', duration: 5, description: 'Vérification freins et attelages' },
-  departing: { name: 'Départ', duration: 3, description: 'Le train repart vers sa destination' },
+    arriving: { name: 'Arrivée en ITE', duration: 5, description: 'Le train arrive sur les voies de l\'ITE' },
+    uncoupling: { name: 'Découplage', duration: 8, description: 'Découplage des wagons du locotracteur' },
+    pushing: { name: 'Poussage', duration: 10, description: 'Les wagons sont poussés sur la voie de chargement' },
+    loading: { name: 'Chargement', duration: 15, description: 'Chargement/déchargement des marchandises' },
+    pulling: { name: 'Tirage', duration: 8, description: 'Les wagons sont tirés hors de la voie de chargement' },
+    coupling: { name: 'Recouplage', duration: 6, description: 'Recouplage des wagons au train' },
+    inspection: { name: 'Inspection', duration: 5, description: 'Vérification freins et attelages' },
+    departing: { name: 'Départ', duration: 3, description: 'Le train repart vers sa destination' },
 };
-
 const PHASE_ORDER = ['arriving', 'uncoupling', 'pushing', 'loading', 'pulling', 'coupling', 'inspection', 'departing'];
-
 export class ShuntingManager {
-  constructor() {
-    this.operations = []; // active shunting operations
-    this.history = []; // completed operations (last 50)
-    this.stats = {
-      totalOperations: 0,
-      totalWagonsHandled: 0,
-      totalTonnageHandled: 0,
-      averageDuration: 0,
-      totalDuration: 0,
-    };
-  }
-
-  startOperation(serviceId, stationId, depotId, cargoType, tonnage, wagons, options) {
-    const op = {
-      id: `shunt-${nextOpId++}`,
-      serviceId,
-      stationId,
-      depotId,
-      cargoType: cargoType || 'general',
-      tonnage: tonnage || 0,
-      wagons: wagons || 1,
-      phase: 'arriving',
-      phaseIndex: 0,
-      phaseElapsed: 0,
-      totalElapsed: 0,
-      startTime: Date.now(),
-      completed: false,
-      phaseDurations: this._calculatePhaseDurations(depotId, tonnage, wagons, options),
-    };
-
-    this.operations.push(op);
-    return op;
-  }
-
-  _calculatePhaseDurations(depotId, tonnage, wagons, options) {
-    const loadingMult = options?.loadingSpeedMultiplier || 1;
-    const shuntingMult = options?.shuntingSpeedMultiplier || 1;
-
-    const durations = {};
-    for (const [phase, info] of Object.entries(SHUNTING_PHASES)) {
-      let dur = info.duration;
-
-      // Scale with number of wagons
-      if (['uncoupling', 'coupling', 'inspection'].includes(phase)) {
-        dur = Math.ceil(dur * (1 + (wagons - 1) * 0.3));
-      }
-      if (['pushing', 'pulling'].includes(phase)) {
-        dur = Math.ceil(dur * shuntingMult * (1 + (wagons - 1) * 0.2));
-      }
-      if (phase === 'loading') {
-        // Loading time scales with tonnage
-        const baseMins = Math.max(10, Math.ceil(tonnage / 50));
-        dur = Math.ceil(baseMins * loadingMult);
-      }
-
-      durations[phase] = dur;
+    constructor() {
+        this.operations = []; // active shunting operations
+        this.history = []; // completed operations (last 50)
+        this.stats = {
+            totalOperations: 0,
+            totalWagonsHandled: 0,
+            totalTonnageHandled: 0,
+            averageDuration: 0,
+            totalDuration: 0,
+        };
     }
-    return durations;
-  }
-
-  update(deltaMinutes) {
-    for (const op of this.operations) {
-      if (op.completed) continue;
-
-      op.phaseElapsed += deltaMinutes;
-      op.totalElapsed += deltaMinutes;
-
-      const currentPhaseDuration = op.phaseDurations[op.phase] || 5;
-
-      if (op.phaseElapsed >= currentPhaseDuration) {
-        op.phaseElapsed = 0;
-        op.phaseIndex++;
-
-        if (op.phaseIndex >= PHASE_ORDER.length) {
-          op.completed = true;
-          op.phase = 'completed';
-          this._completeOperation(op);
-        } else {
-          op.phase = PHASE_ORDER[op.phaseIndex];
+    startOperation(serviceId, stationId, depotId, cargoType, tonnage, wagons, options) {
+        const normalizedServiceId = String(serviceId ?? '');
+        const normalizedStationId = String(stationId ?? '');
+        const normalizedDepotId = String(depotId ?? '');
+        if (!normalizedServiceId || !normalizedStationId)
+            return null;
+        const existing = this.getOperationForService(normalizedServiceId);
+        if (existing)
+            return existing;
+        const t = Number(tonnage), w = Number(wagons);
+        const normalizedTonnage = Number.isFinite(t) ? Math.max(0, t) : 0;
+        const normalizedWagons = Number.isFinite(w) ? Math.max(1, Math.min(1000, Math.floor(w))) : 1;
+        const op = {
+            id: `shunt-${nextOpId++}`,
+            serviceId: normalizedServiceId,
+            stationId: normalizedStationId,
+            depotId: normalizedDepotId,
+            cargoType: String(cargoType || 'general').slice(0, 120),
+            tonnage: normalizedTonnage,
+            wagons: normalizedWagons,
+            phase: 'arriving',
+            phaseIndex: 0,
+            phaseElapsed: 0,
+            totalElapsed: 0,
+            startTime: Date.now(),
+            completed: false,
+            phaseDurations: this._calculatePhaseDurations(normalizedDepotId, normalizedTonnage, normalizedWagons, options),
+        };
+        this.operations.push(op);
+        return op;
+    }
+    _calculatePhaseDurations(depotId, tonnage, wagons, options) {
+        const opts = isRecord(options) ? options : {};
+        const lm = Number(opts.loadingSpeedMultiplier), sm = Number(opts.shuntingSpeedMultiplier);
+        const loadingMult = Number.isFinite(lm) && lm > 0 ? Math.max(0.05, Math.min(20, lm)) : 1;
+        const shuntingMult = Number.isFinite(sm) && sm > 0 ? Math.max(0.05, Math.min(20, sm)) : 1;
+        tonnage = Number.isFinite(Number(tonnage)) ? Math.max(0, Number(tonnage)) : 0;
+        wagons = Number.isFinite(Number(wagons)) ? Math.max(1, Math.min(1000, Math.floor(Number(wagons)))) : 1;
+        const durations = {};
+        for (const [phase, info] of Object.entries(SHUNTING_PHASES)) {
+            let dur = info.duration;
+            // Scale with number of wagons
+            if (['uncoupling', 'coupling', 'inspection'].includes(phase)) {
+                dur = Math.ceil(dur * (1 + (wagons - 1) * 0.3));
+            }
+            if (['pushing', 'pulling'].includes(phase)) {
+                dur = Math.ceil(dur * shuntingMult * (1 + (wagons - 1) * 0.2));
+            }
+            if (phase === 'loading') {
+                // Loading time scales with tonnage
+                const baseMins = Math.max(10, Math.ceil(tonnage / 50));
+                dur = Math.ceil(baseMins * loadingMult);
+            }
+            durations[phase] = dur;
         }
-      }
+        return durations;
     }
-
-    // Clean completed operations
-    const completed = this.operations.filter(o => o.completed);
-    this.operations = this.operations.filter(o => !o.completed);
-
-    return completed;
-  }
-
-  _completeOperation(op) {
-    this.stats.totalOperations++;
-    this.stats.totalWagonsHandled += op.wagons;
-    this.stats.totalTonnageHandled += op.tonnage;
-    this.stats.totalDuration += op.totalElapsed;
-    this.stats.averageDuration = Math.floor(this.stats.totalDuration / this.stats.totalOperations);
-
-    this.history.unshift({
-      id: op.id,
-      serviceId: op.serviceId,
-      cargoType: op.cargoType,
-      tonnage: op.tonnage,
-      wagons: op.wagons,
-      duration: Math.floor(op.totalElapsed),
-      completedAt: Date.now(),
-    });
-    if (this.history.length > 50) this.history.length = 50;
-  }
-
-  getActiveOperations() {
-    return this.operations.filter(o => !o.completed);
-  }
-
-  getOperationForService(serviceId) {
-    return this.operations.find(o => o.serviceId === serviceId && !o.completed);
-  }
-
-  isServiceInShunting(serviceId) {
-    return this.operations.some(o => o.serviceId === serviceId && !o.completed);
-  }
-
-  getPhaseInfo(phase) {
-    return SHUNTING_PHASES[phase] || { name: phase, duration: 0, description: '' };
-  }
-
-  render(container, game) {
-    if (!container) return;
-
-    const activeOps = this.getActiveOperations();
-
-    container.innerHTML = `
+    update(deltaMinutes) {
+        const delta = Number(deltaMinutes);
+        if (!Number.isFinite(delta) || delta <= 0)
+            return [];
+        for (const op of this.operations) {
+            if (op.completed)
+                continue;
+            let available = Math.max(0, Number(op.phaseElapsed) || 0) + delta;
+            let elapsed = Math.max(0, Number(op.totalElapsed) || 0) - Math.max(0, Number(op.phaseElapsed) || 0);
+            let guard = 0;
+            while (!op.completed && guard++ < PHASE_ORDER.length + 1) {
+                const duration = Math.max(0.01, Number(op.phaseDurations?.[op.phase]) || 5);
+                if (available < duration) {
+                    op.phaseElapsed = available;
+                    op.totalElapsed = Math.max(0, elapsed) + available;
+                    break;
+                }
+                available -= duration;
+                elapsed += duration;
+                op.phaseElapsed = 0;
+                op.totalElapsed = Math.max(0, elapsed);
+                op.phaseIndex++;
+                if (op.phaseIndex >= PHASE_ORDER.length) {
+                    op.completed = true;
+                    op.phase = 'completed';
+                    this._completeOperation(op);
+                }
+                else
+                    op.phase = PHASE_ORDER[op.phaseIndex];
+            }
+        }
+        // Clean completed operations
+        const completed = this.operations.filter((o) => o.completed);
+        this.operations = this.operations.filter((o) => !o.completed);
+        return completed;
+    }
+    _completeOperation(op) {
+        this.stats.totalOperations++;
+        this.stats.totalWagonsHandled += op.wagons;
+        this.stats.totalTonnageHandled += op.tonnage;
+        this.stats.totalDuration += op.totalElapsed;
+        this.stats.averageDuration = Math.floor(this.stats.totalDuration / this.stats.totalOperations);
+        this.history.unshift({
+            id: op.id,
+            serviceId: op.serviceId,
+            cargoType: op.cargoType,
+            tonnage: op.tonnage,
+            wagons: op.wagons,
+            duration: Math.floor(op.totalElapsed),
+            completedAt: Date.now(),
+        });
+        if (this.history.length > 50)
+            this.history.length = 50;
+    }
+    getActiveOperations() {
+        return this.operations.filter((o) => !o.completed);
+    }
+    getOperationForService(serviceId) {
+        return this.operations.find((o) => o.serviceId === serviceId && !o.completed);
+    }
+    isServiceInShunting(serviceId) {
+        return this.operations.some((o) => o.serviceId === serviceId && !o.completed);
+    }
+    getPhaseInfo(phase) {
+        return SHUNTING_PHASES[phase] || { name: phase, duration: 0, description: '' };
+    }
+    render(container, game) {
+        if (!container)
+            return;
+        const activeOps = this.getActiveOperations();
+        container.innerHTML = `
       <div class="dash-section">
         <h3>Manœuvres de Triage</h3>
         <div class="dash-kpi-grid">
@@ -179,13 +185,12 @@ export class ShuntingManager {
       ${activeOps.length > 0 ? `
       <div class="dash-section">
         <h3>Opérations en cours</h3>
-        ${activeOps.map(op => {
-          const phaseInfo = this.getPhaseInfo(op.phase);
-          const totalDuration = Object.values(op.phaseDurations).reduce((s, d) => s + d, 0);
-          const progressPercent = Math.min(100, Math.floor((op.totalElapsed / totalDuration) * 100));
-          const phaseProgress = Math.min(100, Math.floor((op.phaseElapsed / (op.phaseDurations[op.phase] || 1)) * 100));
-
-          return `
+        ${activeOps.map((op) => {
+            const phaseInfo = this.getPhaseInfo(op.phase);
+            const totalDuration = Number(Object.values(op.phaseDurations).reduce((sum, duration) => sum + Number(duration || 0), 0));
+            const progressPercent = Math.min(100, Math.floor((op.totalElapsed / totalDuration) * 100));
+            const phaseProgress = Math.min(100, Math.floor((op.phaseElapsed / (op.phaseDurations[op.phase] || 1)) * 100));
+            return `
             <div style="background:var(--bg2);padding:12px;border-radius:6px;margin-bottom:8px">
               <div style="display:flex;justify-content:space-between;margin-bottom:6px">
                 <b style="font-size:12px">${op.cargoType} — ${op.tonnage}t (${op.wagons} wagons)</b>
@@ -194,26 +199,26 @@ export class ShuntingManager {
 
               <!-- Overall progress -->
               <div style="background:var(--bg3);border-radius:4px;height:8px;margin-bottom:8px">
-                <div style="background:#3b82f6;height:100%;border-radius:4px;width:${progressPercent}%;transition:width 0.3s"></div>
+                <div style="background:#3b82f6;height:100%;border-radius:4px;width:${htmlText(progressPercent)}%;transition:width 0.3s"></div>
               </div>
 
               <!-- Phase timeline -->
               <div style="display:flex;gap:2px;margin-bottom:6px">
                 ${PHASE_ORDER.map((p, i) => {
-                  const isActive = i === op.phaseIndex;
-                  const isDone = i < op.phaseIndex;
-                  const bg = isDone ? '#22c55e' : isActive ? '#3b82f6' : 'var(--bg3)';
-                  const pInfo = SHUNTING_PHASES[p];
-                  const w = Math.max(8, Math.floor((op.phaseDurations[p] / totalDuration) * 100));
-                  return `<div title="${pInfo.name}" style="flex:${w};height:20px;background:${bg};border-radius:2px;display:flex;align-items:center;justify-content:center">
-                    <span style="font-size:7px;color:${isDone || isActive ? 'white' : 'var(--text3)'};white-space:nowrap;overflow:hidden">${isActive ? pInfo.name : isDone ? '✓' : ''}</span>
+                const isActive = i === op.phaseIndex;
+                const isDone = i < op.phaseIndex;
+                const bg = isDone ? '#22c55e' : isActive ? '#3b82f6' : 'var(--bg3)';
+                const pInfo = SHUNTING_PHASES[p];
+                const w = Math.max(8, Math.floor((op.phaseDurations[p] / totalDuration) * 100));
+                return `<div title="${htmlText(pInfo.name)}" style="flex:${htmlText(w)};height:20px;background:${htmlText(bg)};border-radius:2px;display:flex;align-items:center;justify-content:center">
+                    <span style="font-size:7px;color:${htmlText(isDone || isActive ? 'white' : 'var(--text3)')};white-space:nowrap;overflow:hidden">${htmlText(isActive ? pInfo.name : isDone ? '✓' : '')}</span>
                   </div>`;
-                }).join('')}
+            }).join('')}
               </div>
 
               <!-- Current phase detail -->
               <div style="font-size:11px;color:var(--text3)">
-                <b style="color:var(--text)">${phaseInfo.name}</b> — ${phaseInfo.description}
+                <b style="color:var(--text)">${htmlText(phaseInfo.name)}</b> — ${htmlText(phaseInfo.description)}
                 <span style="float:right">${Math.floor(op.phaseElapsed)}/${op.phaseDurations[op.phase]} min (${phaseProgress}%)</span>
               </div>
             </div>
@@ -236,12 +241,12 @@ export class ShuntingManager {
             return `
               <div class="dash-train-row" style="grid-template-columns:0.3fr 1fr 0.5fr 1.5fr">
                 <span>${i + 1}</span>
-                <span>${info.name}</span>
+                <span>${htmlText(info.name)}</span>
                 <span>${info.duration} min</span>
-                <span style="font-size:10px;color:var(--text3)">${info.description}</span>
+                <span style="font-size:10px;color:var(--text3)">${htmlText(info.description)}</span>
               </div>
             `;
-          }).join('')}
+        }).join('')}
         </div>
         <p style="font-size:10px;color:var(--text3);margin-top:6px">
           Les durées sont ajustées selon : nombre de wagons, tonnage, équipements ITE (grue ×0.8, faisceau de triage ×0.7).
@@ -255,7 +260,7 @@ export class ShuntingManager {
           <div class="dash-train-header" style="grid-template-columns:1fr 0.5fr 0.5fr 0.5fr">
             <span>Cargo</span><span>Tonnage</span><span>Wagons</span><span>Durée</span>
           </div>
-          ${this.history.slice(0, 20).map(h => `
+          ${this.history.slice(0, 20).map((h) => `
             <div class="dash-train-row" style="grid-template-columns:1fr 0.5fr 0.5fr 0.5fr">
               <span>${h.cargoType}</span>
               <span>${h.tonnage} t</span>
@@ -266,22 +271,61 @@ export class ShuntingManager {
         </div>
       </div>` : ''}
     `;
-  }
-
-  toSave() {
-    return {
-      operations: this.operations,
-      history: this.history,
-      stats: this.stats,
-      _nextOpId: nextOpId,
-    };
-  }
-
-  loadFromSave(s) {
-    if (!s) return;
-    this.operations = s.operations || [];
-    this.history = s.history || [];
-    this.stats = s.stats || { totalOperations: 0, totalWagonsHandled: 0, totalTonnageHandled: 0, averageDuration: 0, totalDuration: 0 };
-    if (s._nextOpId) nextOpId = s._nextOpId;
-  }
+    }
+    toSave() {
+        return {
+            operations: this.operations,
+            history: this.history,
+            stats: this.stats,
+            _nextOpId: nextOpId,
+        };
+    }
+    loadFromSave(s) {
+        this.operations = [];
+        this.history = [];
+        this.stats = { totalOperations: 0, totalWagonsHandled: 0, totalTonnageHandled: 0, averageDuration: 0, totalDuration: 0 };
+        if (!isRecord(s))
+            return;
+        const finite = (v, fb = 0) => Number.isFinite(Number(v)) ? Number(v) : fb;
+        const seen = new Set();
+        for (const raw of Array.isArray(s.operations) ? s.operations : []) {
+            if (!isRecord(raw))
+                continue;
+            const id = String(raw.id ?? ''), serviceId = String(raw.serviceId ?? ''), stationId = String(raw.stationId ?? '');
+            if (!id || seen.has(id) || !serviceId || !stationId || raw.completed === true)
+                continue;
+            seen.add(id);
+            const savedPhase = String(raw.phase || '');
+            let phaseIndex = Math.floor(finite(raw.phaseIndex, PHASE_ORDER.indexOf(savedPhase)));
+            if (phaseIndex < 0 || phaseIndex >= PHASE_ORDER.length)
+                phaseIndex = 0;
+            const phase = PHASE_ORDER[phaseIndex] ?? 'arriving';
+            const tonnage = Math.max(0, finite(raw.tonnage, 0));
+            const wagons = Math.max(1, Math.min(1000, Math.floor(finite(raw.wagons, 1))));
+            const base = this._calculatePhaseDurations(String(raw.depotId ?? ''), tonnage, wagons, {}), dur = {};
+            for (const p of PHASE_ORDER) {
+                const savedDurations = isRecord(raw.phaseDurations) ? raw.phaseDurations : {};
+                const v = finite(savedDurations[p], base[p]);
+                dur[p] = Math.max(0.01, Math.min(100000, v));
+            }
+            this.operations.push({ id, serviceId, stationId, depotId: String(raw.depotId ?? ''), cargoType: String(raw.cargoType || 'general').slice(0, 120), tonnage, wagons, phase, phaseIndex, phaseElapsed: Math.max(0, finite(raw.phaseElapsed, 0)), totalElapsed: Math.max(0, finite(raw.totalElapsed, 0)), startTime: Math.max(0, finite(raw.startTime, 0)), completed: false, phaseDurations: dur });
+        }
+        this.history = (Array.isArray(s.history) ? s.history : [])
+            .filter((h) => isRecord(h))
+            .slice(0, 50)
+            .map((h) => ({ id: String(h.id ?? ''), serviceId: String(h.serviceId ?? ''), cargoType: String(h.cargoType || 'general').slice(0, 120), tonnage: Math.max(0, finite(h.tonnage, 0)), wagons: Math.max(0, Math.floor(finite(h.wagons, 0))), duration: Math.max(0, finite(h.duration, 0)), completedAt: Math.max(0, finite(h.completedAt, 0)) }));
+        const st = isRecord(s.stats) ? s.stats : {};
+        this.stats.totalOperations = Math.max(0, Math.floor(finite(st.totalOperations, 0)));
+        this.stats.totalWagonsHandled = Math.max(0, Math.floor(finite(st.totalWagonsHandled, 0)));
+        this.stats.totalTonnageHandled = Math.max(0, finite(st.totalTonnageHandled, 0));
+        this.stats.totalDuration = Math.max(0, finite(st.totalDuration, 0));
+        this.stats.averageDuration = this.stats.totalOperations ? Math.floor(this.stats.totalDuration / this.stats.totalOperations) : 0;
+        const nx = Math.floor(finite(s._nextOpId, 1));
+        nextOpId = Math.max(1, nx);
+        for (const id of [...this.operations, ...this.history].map((x) => x.id)) {
+            const m = String(id).match(/^shunt-(\d+)$/);
+            if (m)
+                nextOpId = Math.max(nextOpId, Number(m[1]) + 1);
+        }
+    }
 }

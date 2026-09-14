@@ -1,0 +1,36 @@
+RAIL EMPIRE v1.1.4 — TRACER LIGNE RELIABILITY + FAST STATION CREATION
+=====================================================================
+
+Corrections principales
+-----------------------
+1) Tracer ligne / aspirateur de voies
+- Régression v1.1.3 corrigée : les voies et les gares OSM ne partagent plus la même requête Overpass.
+- La requête voies est prioritaire et indépendante ; un échec/ralentissement de la requête gares ne peut plus produire "aucune voie trouvée".
+- Voies prises en charge : railway=rail, narrow_gauge, preserved. Tram, métro, light_rail exclus.
+- Les gares/haltes OSM sont récupérées séparément et ajoutées de façon asynchrone après l'infrastructure.
+- Cache ORM versionné v3 pour ne pas réutiliser une réponse v1.1.3 vide ou incompatible.
+
+2) Performance de l'import
+- Suppression des scans O(imported voie points × existing voie points).
+- Index spatial temporaire des points de voie existants.
+- Remapping des doublons de points effectué en une seule passe sur les tronçons.
+- Association gare/point de voie indexée spatialement.
+- Recherche des gares proches des segments importés via grille spatiale.
+
+3) Création manuelle d'une gare
+- Le bouton bleu "Créer la gare" ne déclenche plus de requête Overpass bloquante.
+- Accrochage uniquement sur l'infrastructure déjà chargée en mémoire.
+- Si aucune voie n'est chargée localement, la gare est créée immédiatement aux coordonnées cliquées.
+- La sauvegarde reste différée/non bloquante.
+
+4) Compatibilité
+- Full Catalog Batch186 conservé.
+- FreightPass1/2 conservés.
+- Tarifs et catalogue non modifiés par ce hotfix.
+- Lancement direct file:// conservé via bundle classique.
+
+Validation
+----------
+- 20 365 tests ciblés : PASS
+- 0 FAIL
+- Nouveaux tests v1.1.4 : import voie indépendant des gares lentes, types de voies autorisés, validation gare sans snap réseau.

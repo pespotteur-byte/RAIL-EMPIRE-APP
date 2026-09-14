@@ -1,0 +1,54 @@
+Rail Empire v1.1.54 — LIVEMAP PROGRESS + RELOAD RUNTIME FIX
+Date: 2026-08-17
+
+OBJECTIF
+- Faire suivre à la flèche du panneau Livemap la progression physique réelle du train.
+- Empêcher un rechargement de page de ressusciter un train hors de sa fenêtre de circulation avec un retard artificiel (+60 min notamment).
+
+1) LIVEMAP — FLÈCHE DE PROGRESSION FLUIDE
+- Le petit marqueur blanc entre deux arrêts n'est plus figé sur une position discrète.
+- Sa position cible est recalculée à chaque frame depuis l'état physique réel du train.
+- Le calcul utilise les distances réelles de la route ORM/OSM (segDists/cumDist), y compris les VIA/passages intermédiaires non affichés dans le panneau.
+- Les longueurs de route sont mises en cache pour éviter un recalcul coûteux à chaque frame.
+- Une transition CSS linéaire courte (90 ms) lisse visuellement le déplacement sans déconnecter le marqueur de la progression réelle.
+
+2) RELOAD — SUPPRESSION DES TRAINS « ZOMBIES »
+Ancien comportement :
+- le runtime V2 pouvait compiler un service jusqu'à 1 heure après sa fin planifiée ;
+- la simple présence d'un snapshot sauvegardé pouvait forcer sa reconstruction hors horaire ;
+- un trajet Dormans 17:21 -> Château-Thierry 17:31 pouvait donc réapparaître après reload à 18:14 et partir avec environ +60 min.
+
+Nouveau comportement :
+- aucun nouveau service n'est compilé après sa fin planifiée lorsqu'aucun train réel n'est à restaurer ;
+- la grâce artificielle plan.endSec + 3600 est supprimée ;
+- les snapshots anciens (<= v1.1.53, non horodatés) ne peuvent restaurer un train que dans sa fenêtre publiée ;
+- les snapshots v1.1.54 sont horodatés ;
+- un snapshot récent (<= 5 min) d'un train réellement en mouvement/arrêt peut restaurer un vrai train retardé après sa fin théorique, dans la limite expliquée par son retard enregistré ;
+- les snapshots périmés sont ignorés avec le diagnostic V2_STALE_RUNTIME_SNAPSHOT_IGNORED.
+
+3) SAUVEGARDE RUNTIME
+- Schéma runtime V2 porté à 3.
+- Ajout de capturedAtUnixSec au snapshot.
+- Compatibilité de chargement conservée avec les sauvegardes précédentes, mais sans possibilité de ressusciter un service terminé hors fenêtre.
+
+CAS TERRAIN REPRODUIT
+- Dormans départ 17:21
+- Château-Thierry arrivée 17:31
+- Reload à 18:14
+- Résultat attendu et obtenu : 0 train créé.
+
+QA FINALE
+- Suite fonctionnelle : 378/378 PASS.
+- Bulk ORM : 20 275/20 275 PASS.
+- Post-bundle critique : 49/49 PASS.
+- Syntaxe JS/MJS/CJS : 199/199 PASS.
+- Tests v1.1.54 dédiés : 5/5 PASS.
+- Bundle FILE:// reconstruit : 61 modules core, 66 modules catalogue différé.
+- Core bundle : 2 943 302 octets.
+- Catalogue différé : 45 802 563 octets.
+
+AUCUNE MODIFICATION
+- des règles de routage OSM/ORM de la v1.1.49 ;
+- du correctif Schedule Creator de la v1.1.50 ;
+- du workflow rame/roulement des v1.1.51-v1.1.52 ;
+- de l'intégrité aller-retour de la v1.1.53.

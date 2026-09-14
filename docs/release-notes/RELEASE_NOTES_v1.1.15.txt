@@ -1,0 +1,44 @@
+Rail Empire v1.1.15 — GAMEPLAY NATIVE STARTUP REPAIR
+=====================================================
+Date: 2026-08-14
+
+OBJET
+-----
+Correctif de régression critique de la v1.1.14.
+La couche RailNet Europe GAMEPLAY NATIVE est conservée, mais le moteur d'initialisation
+catalogue supprimé accidentellement pendant le patch v1.1.14 est restauré.
+
+CAUSE RACINE v1.1.14
+-------------------
+Le patch main.js avait accidentellement supprimé trois méthodes centrales :
+- seedCatalog()
+- _seedBatch186CatalogChunk()
+- _setCatalogLoadStatus()
+
+startGame() appelait toujours seedCatalog(). Le démarrage pouvait donc s'interrompre après
+le montage partiel de l'interface avec une erreur TypeError, donnant un jeu globalement cassé.
+
+CORRECTION v1.1.15
+------------------
+- Restauration exacte des trois blocs depuis la dernière base saine v1.1.13.
+- Conservation de RailNet Europe comme vraies gares gameplay natives.
+- 17 817 gares RailNet directement dans world.stations.
+- 0 étape d'activation, 0 .cmd, 0 téléchargement obligatoire.
+- Conservation du modèle de sauvegarde delta des gares natives.
+- Bundle file:// reconstruit après restauration.
+
+ANTI-REGRESSION
+---------------
+Un nouveau test startup-contract-v1115 vérifie que les méthodes centrales existent à la fois
+dans js/main.js et dans js/rail-empire.file.bundle.js. Une disparition future bloque la QA.
+
+QA
+--
+- Batterie non-weather : 97 164 PASS / 0 FAIL.
+- Tests startup-contract v1.1.15 : 3/3 PASS.
+- Syntaxe JS + bundle : PASS.
+- Archive ZIP : test CRC obligatoire avant publication.
+
+IMPORTANT
+---------
+La v1.1.14 est RETIREE / A NE PAS UTILISER.

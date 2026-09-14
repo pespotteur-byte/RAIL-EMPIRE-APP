@@ -1,0 +1,19 @@
+Rail Empire — LiveMap neural French announcement voice (HOTFIX68)
+
+Voice model requested at runtime: fr_FR-siwis-low (Siwis, French/fr_FR)
+Model family/source: Rhasspy Piper voices / piper-voices
+Model card: https://huggingface.co/rhasspy/piper-voices/blob/main/fr/fr_FR/siwis/low/MODEL_CARD
+Dataset: SIWIS French Speech Synthesis Database, University of Edinburgh DataShare
+Dataset URL: https://datashare.is.ed.ac.uk/handle/10283/2353
+Dataset license stated by the Piper model card: CC-BY 4.0
+
+Browser runtime: @mintplex-labs/piper-tts-web 1.0.5 (MIT)
+https://www.npmjs.com/package/@mintplex-labs/piper-tts-web
+
+Rail Empire does NOT redistribute the ONNX voice model in this ZIP.
+At the first use / première utilisation of LiveMap announcements, the browser
+loads the lightweight Siwis model (about 28 MB) and the Piper WebAssembly
+runtime from public HTTPS sources. The web wrapper caches models in browser
+origin storage when that storage is available. If the neural runtime cannot
+load, Rail Empire falls back only to an explicit French system TTS voice; it
+never falls back to an English/default voice.

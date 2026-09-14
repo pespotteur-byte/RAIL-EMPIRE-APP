@@ -1,0 +1,40 @@
+RAIL EMPIRE v1.1.59 — INFOGARE STATION SEARCH
+================================================
+
+Baseline
+--------
+Built directly from v1.1.58 Photo-Real Infogare Remaster.
+No routing, OSM/ORM, runtime, Livemap, Rame or roulement logic changed.
+
+Infogare station picker
+-----------------------
+The old Infogare station <select> (up to ~17,817 gameplay stations) is replaced by a searchable text picker.
+
+- Type a station name directly (e.g. Château-Thierry, Hettange-Grande).
+- Accent, case and punctuation insensitive matching.
+- Exact matches rank first, then prefixes, then looser substring matches.
+- Suggestions are capped at 12 DOM rows: the UI never renders 17k <option> elements.
+- Closed stations are excluded.
+- Clicking a suggestion immediately opens the Infogare for the real gameplay station ID.
+- Pressing Enter selects the best match and opens the board.
+- The selected station is kept when switching Infogare display type / returning to the page.
+- Search suggestions include station type / track count when available.
+
+Photo-real boards
+-----------------
+All v1.1.58 photographic Infogare models remain unchanged: RER RATP, RER SNCF, AFL DP/AR, CATI 3-3/Complet/Arrivées, Palette, Écran Quai, Flash Circulation and DB Abfahrt.
+
+Packaging
+---------
+Version: 1.1.59
+FILE:// core cache: 1159
+
+QA
+--
+- 6/6 dedicated Infogare station-search checks PASS
+- 11/11 Infogare photo-pack + station-search post-bundle checks PASS
+- 404/404 curated functional assertions PASS
+- 20,275/20,275 bulk ORM assertions PASS
+- 204/204 JavaScript/MJS/CJS syntax checks PASS
+- FILE:// core bundle rebuilt as Rail Empire v1.1.59
+- ZIP integrity checked before release

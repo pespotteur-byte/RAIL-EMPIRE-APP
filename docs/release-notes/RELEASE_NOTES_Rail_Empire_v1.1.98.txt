@@ -1,0 +1,40 @@
+Rail Empire v1.1.98 — LIVEMAP SIV AUDIO UNMUTE / WAV COMPATIBILITY
+==================================================================
+Base: v1.1.97 STOP CURSOR + SIV FRENCH FIX.
+
+Terrain feedback fixed
+----------------------
+The v1.1.97 French-only guard was placed too early: if Chromium/Opera exposed no
+French SpeechSynthesis voice at the exact click instant, announce() returned
+before even playing the authentic RER-B fixed recording. The result was total
+silence.
+
+Changes
+-------
+1. Authentic RER-B audio no longer depends on SpeechSynthesis readiness.
+   - The recorded "Attention" starts immediately on an explicit train click.
+   - Chromium/SAPI French voices are resolved in parallel.
+   - Missing or delayed voice enumeration can no longer mute recorded audio.
+
+2. Delayed Chromium voice discovery handled.
+   - The announcer waits/polls briefly for a real fr/fr-FR voice because old
+     Chromium/Windows builds may expose an empty getVoices() list initially.
+   - English/default voices remain forbidden for station names.
+
+3. Old-PC codec compatibility.
+   - The three original RER-B fixed snippets are now also bundled as PCM WAV.
+   - WAV is attempted first, original M4A/AAC remains as fallback.
+   - This avoids depending on AAC decoder availability on old Windows installs.
+
+4. Failure behaviour is no longer all-or-nothing.
+   - If no French variable-name voice genuinely exists, the real recorded
+     "Attention" is still audible and a diagnostic is kept instead of silently
+     cancelling the whole announcement.
+   - RE never selects an English voice for French station names.
+
+Preserved
+---------
+- v1.1.97 stop-cursor/save self-heal.
+- v1.1.96 early-arrival station detection and clean Livemap route rendering.
+- Original RER-B snippets remain the fixed announcement wording.
+- No catalogue changes.

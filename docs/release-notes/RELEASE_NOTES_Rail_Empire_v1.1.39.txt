@@ -1,0 +1,53 @@
+Rail Empire v1.1.39 — Direct Material Assignment
+=================================================
+
+Base
+----
+v1.1.38 J+1 + Roulement Readiness Fix.
+
+Objectif
+--------
+Permettre à un joueur de faire circuler un horaire V2 sans devoir créer un roulement complet, en affectant directement du matériel physique à l'horaire.
+
+Nouveau — Affectation directe
+-----------------------------
+- Un horaire VALIDE peut recevoir une rame / formation physique directement depuis la liste des horaires.
+- L'affectation directe ne crée aucun roulement visible ou caché dans l'interface.
+- Le runtime utilise une occurrence virtuelle interne uniquement pour alimenter ActiveService.
+- Un vrai roulement reste toujours prioritaire : s'il référence le même horaire, l'affectation directe est mise en veille et aucun doublon de train n'est créé.
+- L'affectation directe est persistée dans la sauvegarde rotationsV2 et restaurée au chargement.
+- Anciennes sauvegardes sans directAssignments restent compatibles.
+- Suppression d'un horaire direct-only supprime également son affectation directe.
+
+UI / Readiness
+--------------
+- Nouveau bouton « Affecter rame » dans la liste des horaires.
+- Sélection de matériel physique et de coupons existants, avec choix du rôle de chaque véhicule.
+- Une traction active (Tête / UM active / Pousse) est obligatoire.
+- Détection des conflits de double réservation du matériel.
+- Etats readiness enrichis :
+  * NON AFFECTÉ
+  * DIRECT SANS MATÉRIEL
+  * DIRECT SANS TRACTION
+  * PRÊT · DIRECT
+  * PRÊT À CIRCULER (roulement)
+- La validation explique désormais qu'un joueur peut choisir soit l'affectation directe, soit un vrai roulement.
+
+Runtime
+-------
+- Une affectation directe valide compile un ActiveService V2 dans la même fenêtre runtime qu'un roulement normal.
+- Le train est visible en attente sur sa voie de départ puis part à l'heure programmée.
+- Les diagnostics Carte couvrent aussi les affectations directes.
+- Les alertes runtime savent retrouver l'horaire d'une occurrence virtuelle directe.
+
+Priorité absolue
+----------------
+Un vrai roulement est autoritaire. L'affectation directe est uniquement un workflow simplifié de secours et ne doit jamais créer une deuxième circulation lorsque le même horaire est déjà présent dans un roulement.
+
+QA
+--
+- 8 / 8 nouveaux tests affectation directe PASS.
+- 123 / 123 tests critiques pré-bundle PASS : direct, J+1, runtime, validation, roulements, routage, OSM direct, gares all-zoom.
+- 26 / 26 contrats sensibles post-bundle PASS.
+- 179 / 179 fichiers JavaScript passent node --check.
+- Bundle file:// reconstruit : 126 modules / 48 611 347 octets.

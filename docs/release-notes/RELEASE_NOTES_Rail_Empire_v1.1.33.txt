@@ -1,0 +1,36 @@
+Rail Empire v1.1.33 — Schedule V2 Native Station Visibility Hotfix
+==================================================================
+
+Base
+----
+v1.1.32 OSM Native + Schedule V2 Full Repair.
+
+Bug terrain corrigé
+-------------------
+Après restauration du contrat OSM/ORM natif en v1.1.32, le Schedule Creator V2 utilisait une TileMap indépendante de la Livemap mais ne déclenchait aucun streaming de gares depuis son propre viewport. Sur un nouvel horaire, world.stations pouvait donc ne contenir aucune gare visible/cliquable dans l'éditeur : la carte ferroviaire était présente mais il était impossible de commencer un trajet.
+
+Correction
+----------
+- Un nouvel horaire reprend désormais la position courante de la Livemap principale.
+- Le Schedule Creator entre automatiquement à un zoom local raisonnable pour éviter une requête Overpass continentale.
+- Le viewport propre au Schedule Creator charge directement les gares OSM natives visibles.
+- Les gares obtenues sont injectées dans world.stations comme vraies gares gameplay natives, jamais comme couche de référence.
+- Le streaming est relancé après pan et zoom, avec debounce, déduplication de viewport et absence de requêtes concurrentes.
+- Si le joueur déplace la carte pendant une requête, le viewport le plus récent est chargé ensuite.
+- Message explicite pendant chargement / zone vide / erreur réseau.
+- Cache-busting du bundle file:// passé à v1133.
+
+Garanties conservées
+--------------------
+- OSM/OpenRailwayMap reste le monde ferroviaire natif.
+- RailNet fixe reste un actif historique, pas la source runtime obligatoire.
+- Aucun fallback ferroviaire automatique en ligne droite.
+- Schedule V2, routage VIA avec backtracking, validation fail-closed et runtime v1.1.32 conservés.
+
+QA
+--
+- Nouveau test v1.1.33 : streaming des gares depuis le viewport Schedule V2 : PASS.
+- Nouveau test v1.1.33 : nouvel horaire reprend le viewport Livemap et force un zoom local : PASS.
+- Batterie ciblée architecture/ORM/routage/VIA/validation/runtime/roulements/editor : 133/133 PASS, 0 fail.
+- Bundle file:// reconstruit ; hotfix présent dans le bundle exécuté.
+- Tous les fichiers JS passent node --check.

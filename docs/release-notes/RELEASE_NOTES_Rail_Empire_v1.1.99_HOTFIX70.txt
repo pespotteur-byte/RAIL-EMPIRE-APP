@@ -1,0 +1,43 @@
+Rail Empire v1.1.99 — HOTFIX70
+TERMINUS DESPAWN + GPS WEATHER FILTER + NIGHT CARTOGRAPHY
+Date: 2026-09-04
+
+1) LIVEMAP — DESPAWN AU TERMINUS
+- Un service terminé disparaît physiquement de la LiveMap dès son arrivée finale.
+- Le runtime V2 n'attend plus une heure synthétique de départ/libération au terminus pour masquer le train.
+- Les ressources physiques (cantons/voies/quai) sont libérées comme auparavant.
+- La rame n'est PAS supprimée : sa localisation de matériel reste enregistrée à la gare terminus pour les services/roulements suivants.
+- Les caches/panneaux GPS ne peuvent plus reconstruire une position pour un service completed/cancelled.
+- Si le train suivi termine son service, le suivi GPS et son panneau sont fermés proprement.
+
+2) VUE 3D GPS — FILTRE METEO VISUEL
+Nouveau sélecteur « Météo visuelle » :
+- Auto · météo réelle
+- Dégagé
+- Pluie
+- Neige
+- Orage
+- Brouillard
+- Canicule
+
+Le filtre est volontairement VISUEL : il modifie l'ambiance GPS sans modifier la météo réelle du jeu, la physique, l'adhérence ou les incidents.
+
+3) VUE 3D GPS — VRAIE CARTOGRAPHIE DE NUIT
+- Le mode nuit ne consiste plus à assombrir l'imagerie satellite avec un simple voile.
+- À la nuit, la base GPS bascule automatiquement vers la cartographie OSM avec une palette nuit dédiée bleu/noir fortement contrastée.
+- Les voies OpenRailwayMap restent superposées.
+- Au retour du jour, la base satellite GPS revient automatiquement.
+- Le voile d'atmosphère nocturne a été fortement réduit : il sert seulement à l'ambiance météo, la nuit vient désormais de la carte elle-même.
+
+4) CACHE / BUILD
+- FILE bundle: 1199dep65
+- CSS: 1199re3d20
+- Build flavor: HOTFIX70-TERMINUS-DESPAWN-GPS-WEATHER-NIGHT-MAP
+
+5) QA
+- Tests HOTFIX70 ciblés : 7/7 OK.
+- Tests post-build HOTFIX29 + HOTFIX69 + HOTFIX70 : 14/14 OK.
+- Passe ciblée moderne (annonceur, SC, GPS HOTFIX29, basemap HOTFIX47, SC HOTFIX65, LiveMap HOTFIX69, HOTFIX70) : 42/42 OK.
+- Suite standard : 102833 / 102834 OK.
+- Unique rouge : REG-01/02/04 dans regulation.test.js, déjà présent sur le HOTFIX68/HOTFIX69 de référence et sans lien avec HOTFIX70.
+- Les anciens tests de contrats HOTFIX25/26/27 contiennent des assertions de caméra/cache obsolètes déjà rouges sur HOTFIX69 ; HOTFIX70 ne rajoute aucun échec à leur baseline.

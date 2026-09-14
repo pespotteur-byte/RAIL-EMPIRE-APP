@@ -1,0 +1,30 @@
+{
+  "project": "Rail Empire Pass12 RealIdentity100 Batch186 STRICT100",
+  "base_batch": 185,
+  "batch186": {
+    "strictly_upgraded_roots": 62,
+    "strictly_upgraded_drawings": 195,
+    "scope_corrected_nonrolling_roots": 4,
+    "scope_corrected_nonrolling_drawings": 12
+  },
+  "after": {
+    "total_mlg_rows": 36824,
+    "out_of_scope_rows": 2201,
+    "rolling_stock_matchable_drawings": 34623,
+    "strict_external_or_formal_family_drawings": 34623,
+    "strict_external_or_formal_family_pct": 100.0,
+    "limited_family_classification_drawings": 0,
+    "remaining_unresolved_drawings": 0,
+    "remaining_unresolved_roots": 0
+  },
+  "safety": {
+    "changed_matching_rows": 207,
+    "changed_registry_roots": 66,
+    "catalog_ids_reassigned": 0,
+    "scope_catalog_links_removed": 12,
+    "technical_numeric_values_added": 0,
+    "technical_blocks_changed": 0,
+    "non_pass12_matching_columns_changed": 0
+  },
+  "integrity": "PASS"
+}

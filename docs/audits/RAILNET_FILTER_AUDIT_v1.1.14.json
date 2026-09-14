@@ -1,0 +1,89 @@
+{
+  "release": "1.1.14",
+  "integration": "RailNet Europe RAIL-ONLY dataset materialised as native gameplay stations",
+  "gameplay_native_count": 17817,
+  "reference_layer_count_expected": 0,
+  "input_rows": 71788,
+  "retained_before_dedupe": 17821,
+  "retained_final": 17817,
+  "shards": 10,
+  "by_country": {
+    "AT": 162,
+    "BA": 7,
+    "BE": 554,
+    "BG": 6,
+    "CH": 398,
+    "CZ": 371,
+    "DE": 5519,
+    "DK": 172,
+    "ES": 1282,
+    "FI": 206,
+    "FR": 2911,
+    "GB": 2541,
+    "HR": 9,
+    "HU": 27,
+    "IT": 2946,
+    "LT": 1,
+    "LU": 59,
+    "LV": 1,
+    "ME": 6,
+    "MK": 4,
+    "NL": 390,
+    "NO": 12,
+    "PL": 123,
+    "PT": 31,
+    "RO": 7,
+    "RS": 17,
+    "SE": 32,
+    "SI": 14,
+    "SK": 6,
+    "UA": 3
+  },
+  "rejections": {
+    "missing_identity_or_coords": 49129,
+    "bus_or_urban_name": 235,
+    "insufficient_rail_proof": 3330,
+    "city_container": 397,
+    "coarse_coordinates": 823,
+    "unexpected_uic_prefix": 12,
+    "country_without_conventional_rail": 26,
+    "bus_only_provider": 1,
+    "not_europe": 14
+  },
+  "near_name_duplicates_removed": 4,
+  "forbidden_name_matches_remaining": [],
+  "coarse_coordinates_remaining": [],
+  "known_station_checks": {
+    "Trilport": {
+      "uic": "8711649",
+      "name": "Trilport",
+      "lat": "48.960136",
+      "lon": "2.949537"
+    },
+    "Paris Gare de Lyon": {
+      "uic": "8768600",
+      "name": "Paris Gare de Lyon",
+      "lat": "48.844888",
+      "lon": "2.373520"
+    },
+    "Mannheim Hbf": {
+      "uic": "8014008",
+      "name": "Mannheim Hbf",
+      "lat": "49.479296",
+      "lon": "8.469531"
+    },
+    "Hannover Hbf": {
+      "uic": "8013552",
+      "name": "Hannover Hbf",
+      "lat": "52.376763",
+      "lon": "9.741016"
+    }
+  },
+  "known_contaminants_present": {
+    "St-Ouen Garibaldi": false,
+    "Ørestad St. (Metro)": false,
+    "Aéroport Marseille-Provence Bus": false,
+    "Hœnheim-Tram": false,
+    "Aire-sur-l’Adour Office de Tourisme": false
+  }
+}

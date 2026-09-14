@@ -1,0 +1,33 @@
+Rail Empire v1.1.62 — DB QUAI LIVE BOARD
+
+Baseline: v1.1.61.
+Scope intentionally limited to the new DB platform board and its service selector.
+
+DB QUAI
+- New Infogare display type: “DB Quai — 1 service”.
+- Keeps the gameplay station picker because platform information is station-specific.
+- Adds a service-name autocomplete sourced from schedules created in Horaire (V2), with legacy fallback.
+- Selecting a service automatically moves the station picker to the first served station if the current station is not on that service.
+- One service only, matching the validated DB platform-screen reference.
+
+LIVE CONTENT
+- Service name (example: EC 170).
+- Booked time (example: 18:55).
+- White revised-time box only when delayed (example: 23:46).
+- Final destination in large type.
+- Intermediate served stations in a horizontal scrolling line.
+- Relevant traffic incident(s) in a separate horizontal scrolling line.
+- Real consist from V2 physical formation / rotation / direct Rame assignment: locomotive + coaches in actual order.
+- Lead locomotive is placed on the arrow side for the platform diagram.
+- Fixed platform sectors E D C B A.
+
+VISUAL
+- Blue DB platform-screen layout follows the mock explicitly validated by the player.
+- Font preference is: DB Screen / DB Neo Screen / DB Neo, then a monospace fallback. No proprietary font binary is embedded because none was supplied.
+- Original DB platform GIF and approved mock are preserved under img/infogare/reference-sources/.
+- Chromium visual QA was performed before packaging and the screenshot is included as QA_DB_QUAI_CHROMIUM_v1.1.62.png.
+
+NON-REGRESSION
+- No routing/ORM logic changed.
+- RER RATP v1.1.61 unchanged.
+- Existing photographic Infogare family unchanged.

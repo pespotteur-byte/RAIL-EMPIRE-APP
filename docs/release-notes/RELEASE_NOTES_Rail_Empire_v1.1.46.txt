@@ -1,0 +1,44 @@
+Rail Empire v1.1.46 — OSM ENGINE TOPOLOGY OVERLAY
+2026-08-17
+
+FIELD CASE
+- Château-Thierry exposed a useful distinction: a real switch is mapped in OSM but is not visible on the OpenRailwayMap raster rendering.
+- The routing engine uses OSM railway geometry, so the player needs to see the same topology the engine sees when manually guiding a schedule.
+
+CHANGES
+1) "OSM moteur" overlay in Schedule Creator V2
+- New "◉ OSM moteur" toggle, enabled by default.
+- At detailed zoom (>= 11), cyan lines are drawn above the OpenRailwayMap raster from the exact resident OSM railway ways used by Rail Empire routing.
+- Main railway ways are stronger cyan; service/siding/yard/spur geometry is slightly lighter.
+- Existing schedule route, VIA constraints, stops and validation colours remain drawn above this diagnostic layer.
+
+2) Local/resilient viewport streaming
+- Detailed Schedule Creator views may fetch the local railway OSM geometry needed for the overlay.
+- Viewports are quantized to stable local cells to avoid refetching for every tiny pan.
+- Streaming is disabled below zoom 11 and uses partial-safe Overpass requests.
+- Manual Trace explicitly refreshes the visible engine-OSM geometry.
+
+3) Performance contract
+- The overlay never builds the continent-wide routing graph merely to draw the map.
+- Visible ways are obtained only from already resident OSM fetch bboxes that intersect the viewport.
+- A hard render limit prevents accidental huge draw batches.
+- Livemap rendering is unchanged.
+
+PRESERVED CONTRACTS
+- v1.1.45 ORM availability fix remains.
+- v1.1.44 timetable regulation, directed anti-reversal routing and continuous manual trace remain.
+- Real OSM/ORM routing only; no automatic synthetic straight-line railway.
+- 17,817 gameplay stations remain visible at minimum zoom.
+- FILE:// split core/deferred catalogue architecture remains.
+
+QA ACTUALLY RUN
+- Functional non-bulk suite: 335/335 PASS.
+- Focused v1.1.44 + v1.1.45 + v1.1.46 regression cluster included in that suite.
+- Bulk ORM: 20,275/20,275 PASS.
+- Post-bundle critical cluster: 51/51 PASS.
+- JavaScript/MJS syntax: 190/190 PASS.
+- Core FILE:// bundle rebuilt: 61 modules, 2,872,728 bytes.
+- Deferred catalogue bundle rebuilt: 66 modules, 45,802,563 bytes.
+
+REAL-BROWSER SMOKE
+- Final visual confirmation remains the user's file:// browser: open Château-Thierry at station-throat zoom and verify that the OSM-only switch appears in cyan even when absent from the OpenRailwayMap raster.

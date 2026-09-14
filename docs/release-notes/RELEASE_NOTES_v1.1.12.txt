@@ -1,0 +1,20 @@
+Rail Empire v1.1.12 — RailNet Europe Direct
+============================================
+
+CHANGEMENT PRINCIPAL
+--------------------
+- Les gares européennes sont désormais une donnée native du jeu.
+- Aucun fichier .cmd n'est livré : index.html démarre directement le jeu en file://.
+- Aucun téléchargement QLever/GeoNames n'est effectué pour charger les gares.
+- Le manifest local est préparé dès le ZIP et pointe vers 12 shards embarqués.
+
+FIABILITE
+---------
+- Si le pack européen manque, une erreur explicite remplace le précédent fallback réseau.
+- Le comportement est déterministe et compatible file://.
+- Les gares de référence restent hors des sauvegardes tant qu'elles ne sont pas activées.
+
+PERIMETRE
+---------
+- Europe uniquement pour cette couche de référence.
+- 22 230 lignes UIC embarquées; environ 22 204 références après déduplication runtime.

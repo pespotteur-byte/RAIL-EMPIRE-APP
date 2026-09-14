@@ -1,0 +1,55 @@
+Rail Empire v1.1.69 — Schedule Creator Stability + Physical Timing Hotfix
+2026-08-19
+
+FIELD REGRESSION
+- v1.1.68 reduced CPU cost on synthetic long-route tests but proved less stable in real Schedule Creator use.
+- ~10 km routes could still lag, sometimes fail to complete drawing/routing, and calculated travel times could be absurd despite the immutable 0 s automatic timetable margin.
+
+ROOT CAUSES
+1. v1.1.68 reduced cursor snap candidates from 10/14 to 6/8. This bounded A* fan-out but could remove the only connected parallel track/siding candidate in dense real topology.
+2. Schedule Creator engine-OSM overlay invalidated its render cache whenever ORM resident-way count changed, repeatedly rescanning/redrawing thousands of ways while routing was still loading them.
+3. Long route polylines mapped every stored OSM vertex twice on every draw.
+4. Schedule V2 timing treated OSM maxspeed metadata fallback `FALLBACK_30` as a real 30 km/h line restriction. This was not timetable margin, but produced huge hidden time inflation.
+
+CHANGES
+1. Robust routing restored without 100/196 pairwise A* searches
+- Restored 10 near + 14 wide cursor snap candidates.
+- Added multi-target directed routing: one graph traversal per previous candidate resolves every candidate at the next anchor.
+- Directed anti-reversal/turn policy remains enabled.
+- No synthetic straight-line railway fallback.
+
+2. Stability rescue
+- Fast bounded v1.1.68 corridor/cache attempts remain first.
+- Only if they fail, one wider v1.1.67-style resident/persistent cache rescue is attempted.
+- This restores real detours / parallel-track connectivity without paying the wide cost on successful ordinary routes.
+
+3. Schedule Creator rendering load reduced
+- Engine OSM overlay cache is no longer invalidated repeatedly while ORM is loading route data.
+- Heavy overlay refresh happens once after routing settles.
+- Inferred junction rendering is reserved for detailed zoom.
+- Route drawing skips sub-pixel intermediate vertices for display only; exact stored OSM geometry is unchanged.
+- Validation segment overlay is skipped while a route calculation is busy.
+
+4. Physical timing / zero-margin rule
+- `automaticMarginSec` remains hard-coded to 0.
+- No minute rounding or recovery margin added.
+- A documented OSM speed limit (including a real 30 km/h) is still honoured exactly.
+- `FALLBACK_30` now means “speed data unknown”, not “real 30 km/h restriction” for timetable calculation.
+- Unknown speed inherits the nearest documented speed conservatively; if the whole leg is unknown, the selected train/profile Vmax is used.
+- Validation metadata still records FALLBACK_30 so unknown infrastructure data remains visible as a data-quality issue.
+
+QA
+- Dedicated v1.1.69 stability/timing tests: 6/6 PASS.
+- Non-bulk regression bank: 459/459 PASS.
+- Bulk ORM: 20,275/20,275 PASS.
+- Bulk schedule/misc: 20,143/20,143 PASS.
+- Syntax: 228/228 JS/MJS/CJS PASS.
+- Post-bundle contract checks: 8/8 PASS.
+- Dense synthetic local-routing benchmark: ~213 ms / 1,000 ways and ~507 ms / 3,000 ways in build environment.
+- ~10 km timing sanity: FALLBACK_30 => ~309 s; documented OSM 30 => ~1,244 s; documented OSM 160 => ~309 s for the test profile.
+
+FIELD TEST PRIORITY
+1. Re-run the exact ~10 km route that lagged in v1.1.68.
+2. Confirm the full magenta/blue ORM trace completes.
+3. Compare computed travel time to line/Vmax expectations.
+4. Then try 50 km+.

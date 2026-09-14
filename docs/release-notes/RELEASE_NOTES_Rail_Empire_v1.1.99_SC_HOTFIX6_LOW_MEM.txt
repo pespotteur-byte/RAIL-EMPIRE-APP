@@ -1,0 +1,39 @@
+Rail Empire v1.1.99 — SC HOTFIX6 LOW-MEM
+
+Why
+---
+A real Calais -> Duisburg long-range route completed successfully under HOTFIX5, but Opera OOMed immediately after completion. This confirmed that long-range routing worked and exposed a post-route memory-retention/pipeline peak.
+
+What changed
+------------
+1. Coarse graph lifetime shortened
+   The 400+ km macro graph is destroyed before exact routing windows are calculated. Ways, adjacency and node-owner structures no longer overlap with the detailed final route build.
+
+2. World OSM decoded-cache pressure reduced
+   Persistent rail cache data is retained, but decoded JS objects are evicted much more aggressively. Production resident caps are now 32 tiles / 16000 ways, with stronger temporary release after long-range work.
+
+3. Route-memory budgets
+   Cursor route history and exact-leg caches now have both entry and point budgets. Very long routes are not duplicated into cursor history.
+
+4. Compact retained route data
+   Large raw OSM tag dictionaries are not retained in schedule snapshots. Required railway metadata is kept, including incline where needed.
+
+5. Fewer route copies
+   The leg adopts the fresh compact router snapshot. The global path keeps an independent compact geometry/integrity representation instead of another full physical-data copy. Full physical/electrical data remains in canonical leg segments.
+
+6. End-of-route cleanup
+   Long-range success now explicitly clears transient route caches, packed graph state, prefetch state, transient world-rail decoded data and graph state before control returns to the editor.
+
+No routing behavior intentionally removed
+-----------------------------------------
+- HOTFIX4 long-range windowed routing remains.
+- HOTFIX5 distanceKm progress fix remains.
+- ALL ORM track support remains.
+- Insert VIA between existing stops remains.
+- Three-endpoint Overpass failover remains.
+
+Build/cache
+-----------
+Build flavor: FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX6-LONG-RANGE-LOW-MEM
+Cache: 1199sc6
+Version: 1.1.99

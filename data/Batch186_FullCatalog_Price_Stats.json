@@ -1,0 +1,26 @@
+{
+  "locomotive": {
+    "count": 8303,
+    "min": 300000,
+    "median": 1210000,
+    "max": 5000000
+  },
+  "automotrice": {
+    "count": 10539,
+    "min": 420000,
+    "median": 1220000,
+    "max": 2490000
+  },
+  "voiture": {
+    "count": 11455,
+    "min": 140000,
+    "median": 270000,
+    "max": 700000
+  },
+  "wagon": {
+    "count": 6010,
+    "min": 50000,
+    "median": 80000,
+    "max": 700000
+  }
+}

@@ -1,0 +1,77 @@
+Rail Empire v1.1.84 — Schedule Route Latency + Distance/Partial Prefix Fix
+2026-08-20
+Base: v1.1.83 KARLSRUHE_KASSEL_3MIN_QUALITY
+
+FIELD FEEDBACK
+- A local Schedule Creator edit of only ~3 km could still take more than 30 seconds.
+- Karlsruhe Hbf -> Mannheim-Friedrichsfeld displayed 54.5 km; extending the real ORM preview toward Weinheim could remain visually correct while the summary stayed frozen at 54.5 km.
+- Adding a later destination such as Frankfurt(Main) Süd could make an unresolved suffix reset the previously valid prefix to 0.0 km.
+- The v1.1.83 long-distance optimization was too leg-centric: intermediate stops could prevent the complete Karlsruhe -> Kassel journey from benefiting from one shared long-distance topology acquisition.
+
+ROOT CAUSES
+1. Schedule Overpass fallback could try up to three endpoints serially. With ~6.5 s per endpoint, one failed pass could consume ~19.5 s; a second rescue pass could push network waiting toward ~39 s before useful routing completed.
+2. Track picking used a similar serial network fallback before the actual route calculation.
+3. Exact two-anchor short edits could still enter the incremental exact-leg path and duplicate network work.
+4. The Schedule panel used path.distanceKm whenever two or more stops existed and therefore ignored a valid preview suffix after the last resolved stop.
+5. On a genuine suffix failure, the recompute catch path could discard resolved geometry instead of retaining a valid partial prefix.
+6. The 180 s route budget was not consistently shared by the entire Schedule Creator recomputation with all stops/VIA legs.
+
+CHANGES
+1. HEDGED / BOUNDED SCHEDULE NETWORK ACCESS
+- Schedule-specific bbox fetches can race two Overpass endpoints; the first valid result wins and slower requests are aborted.
+- Ordinary bulk/import behavior is unchanged unless this fast Schedule profile is requested.
+- Long/medium tiled acquisition uses one endpoint per tile with endpoint rotation and concurrent tiles instead of trying every endpoint serially for every tile.
+- Short track picking now uses a shorter direct OSM-main attempt followed by bounded hedged Overpass fallback.
+
+2. SHORT ROUTE FAST PATH
+- Exact two-anchor routes <= 12 km use one whole-chain routing strategy instead of entering the incremental exact-leg ladder.
+- Exact clicked way snapshots remain seeded before network access.
+- No route-quality relaxation: exact wayId remains authoritative, segmentIndex remains a hint.
+
+3. WHOLE-JOURNEY PREFETCH
+- Schedule Creator now builds one shared topology prefetch for the complete stop/VIA chain when the whole journey is long enough, rather than deciding only from each individual leg length.
+- Corridor tiles are deduplicated across the journey and loaded concurrently with bounded per-tile network work.
+- Individual leg solving reuses this warmed real-OSM topology before requesting new long-distance data.
+
+4. TRUE WHOLE-ACTION 3-MINUTE BUDGET
+- The 180,000 ms deadline is created once for the complete Schedule Creator recomputation.
+- Whole-journey prefetch, individual legs and rescue work share that same deadline.
+- A multi-stop schedule can no longer receive a fresh 180 s budget independently for every leg.
+
+5. DISTANCE / TIME PREVIEW FIX
+- A valid preview after the last resolved stop is now added to the already resolved path distance even when the schedule has 2+ stops.
+- Physical running time is likewise computed for resolved prefix + preview suffix.
+- FALLBACK_30 (yellow / unknown OSM maxspeed) segments remain real route segments and are explicitly included in distance; yellow never means “ignore this geometry”.
+
+6. PARTIAL PREFIX PRESERVATION
+- If a newly added suffix cannot be resolved, every already resolved real-OSM leg remains visible and counted.
+- Example contract: a valid 54.5 km prefix stays 54.5 km partial instead of collapsing to 0.0 km.
+- The incomplete route remains non-validatable until the suffix is resolved.
+
+QUALITY CONTRACTS RETAINED
+- Real OSM/ORM vector topology is authoritative.
+- No automatic synthetic straight-line railway fallback.
+- Exact OSM wayId identity retained.
+- v1.1.79 strict-first routing retained.
+- <=1.2 m compatible endpoint micro-stitch retained.
+- Endpoint -> segment turnout rescue remains lazy, <=1.8 m, safety-filtered and capped at 96 repairs.
+- v1.1.80 exact click snapshot preservation retained.
+- v1.1.81 local whole-chain multi-VIA rollback retained.
+- v1.1.82 local chain-wide topology loading retained.
+
+QA
+- v1.1.84 dedicated tests: 5/5 PASS.
+- Final focused routing / Schedule / legacy-contract pack: 68/68 PASS.
+- Full non-weather regression bank: 97,554/97,554 PASS, 0 FAIL (88 files / 128 suites).
+- Weather bank: 5,501 nested assertions PASS, 0 not ok; historical lingering runner handle remains after assertions.
+- JavaScript/MJS/CJS syntax: 234/234 PASS.
+- FILE:// bundle rebuilt: 63 core modules + 66 deferred catalogue modules.
+- Core bundle: 3,809,788 bytes. Deferred catalogue bundle: 45,802,563 bytes.
+
+FIELD VALIDATION REQUIRED
+The build environment cannot reproduce the player's real browser + public OSM/Overpass latency. Therefore no fabricated real-world timing is claimed.
+Priority field tests:
+1. Re-run the same ~3 km edit that previously took >30 s and measure cold-cache elapsed time.
+2. Karlsruhe Hbf -> Mannheim-Friedrichsfeld -> preview/VIA toward Weinheim: confirm distance grows beyond 54.5 km and yellow sections still count.
+3. Add Frankfurt(Main) Süd: if the suffix fails, confirm the valid prefix remains visible/countable instead of 0.0 km.
+4. Build Karlsruhe -> Frankfurt -> Kassel (or the intended intermediate-stop chain) and measure the whole action against the <=180 s global deadline.

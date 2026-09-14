@@ -1,0 +1,23 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {bookedIncidentStop} from '../scheduled-incident-stop.js';
+import {IncidentManager,PREDEFINED_INCIDENT_TYPES} from '../incidents.js';
+const world={stations:[{id:'bonn',name:'Bonn Hbf',lat:50.7,lon:7.1},{id:'roisdorf',name:'Roisdorf',lat:50.76,lon:7},{id:'koln',name:'Köln Hbf',lat:50.94,lon:6.95}],getStationById(id){return this.stations.find(s=>s.id===id);},tracks:[]};
+const stops=[{stationId:'bonn',type:'arret'},{stationId:'koln',type:'arret'}];
+function service(extra={}){return {id:'svc',state:'stopped_at_station',speed:0,currentStopIndex:2,stops,position:{lat:50.94,lon:6.95},rame:{totalCapacity:50},train:{id:'t',stoppedAt:{id:'koln'}},...extra};}
+const illness=PREDEFINED_INCIDENT_TYPES.find(x=>x.id==='passenger-illness');
+test('RC20 direct Bonn–Köln: red stop at Roisdorf never generates a passenger incident',()=>{const s=service({train:{id:'t',stoppedAt:{id:'roisdorf'}},position:{lat:50.76,lon:7}});assert.equal(bookedIncidentStop(s),null);assert.equal(new IncidentManager()._spawnTrainIncident(illness,[s],720,world),null);});
+test('RC20 booked arrival at Köln allows incident and uses the booked station label',()=>{const s=service();const i=new IncidentManager()._spawnTrainIncident(illness,[s],720,world);assert.ok(i);assert.equal(i.stationA,'koln');assert.equal(i.stationB,'koln');assert.equal(i.locationText,'à Köln Hbf');});
+test('RC20 booked origin waiting at Bonn is allowed',()=>assert.equal(bookedIncidentStop(service({state:'waiting',currentStopIndex:0,train:{stoppedAt:'bonn'}})),stops[0]));
+for(const state of ['moving','departing','completed','cancelled',''])test(`RC20 state ${state} cannot reuse a stale stoppedAt`,()=>assert.equal(bookedIncidentStop(service({state})),null));
+for(const type of ['passage','waypoint','technical'])test(`RC20 scheduled ${type} is not a stopping call`,()=>assert.equal(bookedIncidentStop(service({stops:[stops[0],{stationId:'koln',type}]})),null));
+test('RC20 a station elsewhere in the timetable is insufficient: current occurrence must match',()=>assert.equal(bookedIncidentStop(service({currentStopIndex:1})),null));
+test('RC20 return leg reads getCurrentStops, not the outbound array',()=>{const s=service({train:{stoppedAt:'bonn'},getCurrentStops:()=>[stops[1],stops[0]]});assert.equal(bookedIncidentStop(s),stops[0]);});
+test('RC20 terminal cursor equal to stops.length is supported',()=>assert.equal(bookedIncidentStop(service()),stops[1]));
+test('RC20 technical point inside a station is not a passenger stop',()=>assert.equal(bookedIncidentStop(service({stops:[stops[0],{...stops[1],technicalLocationId:'ITE'}]})),null));
+test('RC20 moving train cannot acquire station illness even with stopped state',()=>assert.equal(bookedIncidentStop(service({speed:12})),null));
+test('RC20 without a stoppedAt marker, use only exact booked stop coordinates',()=>{const s=service({train:{},stops:[stops[0],{...stops[1],lat:50.94,lon:6.95}]});assert.ok(bookedIncidentStop(s));s.position={lat:50.76,lon:7};assert.equal(bookedIncidentStop(s),null);});
+test('RC20 legacy missing stop identity fails closed, not nearest-station fallback',()=>assert.equal(bookedIncidentStop(service({train:{},stops:[]})),null));
+for(const flag of ['completed','cancelled'])test(`RC20 ${flag} material no longer generates incidents`,()=>assert.equal(bookedIncidentStop(service({[flag]:true})),null));
+test('RC20 freight has no passenger illness but can have technical train incidents',()=>{const s=service({rame:{totalCapacity:0}});const m=new IncidentManager();assert.equal(m._spawnTrainIncident(illness,[s],720,world),null);assert.ok(m._spawnTrainIncident({...illness,id:'technical',requirePassenger:false},[s],720,world));});
+test('RC20 infrastructure incidents at stations are not disabled by train stop rule',()=>{const m=new IncidentManager();const type=PREDEFINED_INCIDENT_TYPES.find(x=>x.id==='law-enforcement');assert.ok(m._spawnPureStationIncident(type,world,world.stations[1],720));});
+test('RC20 current occurrence selection survives plain JSON reload',()=>assert.deepEqual(bookedIncidentStop(JSON.parse(JSON.stringify(service()))),stops[1]));

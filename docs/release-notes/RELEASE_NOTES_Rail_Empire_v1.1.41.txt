@@ -1,0 +1,41 @@
+Rail Empire v1.1.41 — Livemap Rolling Fix
+Date: 2026-08-17
+
+OBJECTIF
+Corriger les anomalies observées pendant le premier roulage réel d'un train V2 affecté directement depuis la page Rames : ralentissements Livemap, contexte « Se situe entre A et B » incohérent, images de composition absentes.
+
+CORRECTIONS
+1. Affectation directe : vraie rame gameplay conservée
+- Le runtime V2 continue d'utiliser le proxy Rotation V2 uniquement pour la réservation et les contrôles physiques.
+- L'ActiveService reçoit désormais la vraie rame créée dans la page Rames.
+- La composition complète, les imageData, la masse, la longueur, la capacité, la traction, l'usure et les informations de rame restent disponibles à l'interface.
+- Les images loco/voitures de la rame sont donc de nouveau disponibles dans le bandeau train Livemap.
+
+2. « Se situe entre ... » basé sur le trajet du train
+- Suppression de la recherche géographique globale parmi toutes les gares européennes.
+- Le contexte utilise désormais les arrêts précédent et suivant du propre horaire du service.
+- Une gare d'une ligne parallèle ou voisine ne peut plus remplacer arbitrairement A/B.
+- Les locationName V2 servent de fallback si une gare n'est pas encore résolue dans world.stations.
+
+3. Performance Livemap
+- Suppression de deux balayages complets de world.stations (~17 817 objets) par train lors de chaque rafraîchissement du bandeau/panneau.
+- Diagnostic Runtime V2 limité à 1 Hz au lieu de 4 Hz et DOM mis à jour uniquement si le contenu change.
+- Onglet fret de la sidebar limité à 1 Hz et DOM mis à jour uniquement si le contenu change.
+- Aucun changement au rendu all-zoom des 17 817 gares gameplay : elles restent visibles au zoom minimum.
+
+NON-RÉGRESSION
+- Affectation directe depuis la page Rames conservée.
+- Priorité des vrais roulements conservée.
+- Départ à la seconde V2 conservé.
+- J+1 conservé.
+- Routage ORM réel / WAYPOINT / validation fail-closed conservés.
+- 17 817 gares gameplay visibles au zoom minimum conservées.
+
+QA
+- 4/4 nouveaux tests v1.1.41 PASS.
+- 92/92 tests critiques post-bundle PASS.
+- 290/290 tests fonctionnels hors bulk PASS.
+- 183/183 fichiers JS/MJS : node --check PASS.
+- Bundle file:// reconstruit : 126 modules.
+
+Limite QA : les très grosses banques bulk n'ont pas été relancées pour cette micro-passe Livemap ; la validation repose sur la suite fonctionnelle hors bulk et les contrats critiques ci-dessus.

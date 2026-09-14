@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import { CATALOG, CATALOG_CARGO_TYPES } from '../catalog-data.js';
+import { CargoTypeManager } from '../cargo-types.js';
+import { IndustrialClients } from '../industrial-clients.js';
+import { BATCH186_FREIGHT_CARGO_TYPES, BATCH186_WAGON_FREIGHT_PATCH, applyBatch186FreightToCatalog, applyBatch186IndustryFreightPatch } from '../catalog-freight-batch186.js';
+import { BATCH186_FREIGHT_PASS2_CARGO_TYPES, BATCH186_FREIGHT_PASS2_WAGON_PATCH, applyBatch186FreightPass2ToCatalog, applyBatch186FreightPass2IndustryPatch } from '../catalog-freight-batch186-pass2.js';
+
+let passed=0;
+const t=(name,fn)=>{ fn(); console.log('ok - '+name); passed++; };
+
+const manager=new CargoTypeManager();
+for(const ct of CATALOG_CARGO_TYPES) manager.ensureType(ct.category,ct);
+for(const ct of BATCH186_FREIGHT_CARGO_TYPES) manager.ensureType(ct.category,ct);
+for(const ct of BATCH186_FREIGHT_PASS2_CARGO_TYPES) manager.ensureType(ct.category,ct);
+const known=new Set(manager.getAllTypes().map(x=>x.type));
+let patched=applyBatch186FreightToCatalog(CATALOG);
+patched=applyBatch186FreightPass2ToCatalog(patched);
+const byId=new Map(patched.map(x=>[x.id,x]));
+
+t('Pass2 patches 586 wagons',()=>assert.equal(Object.keys(BATCH186_FREIGHT_PASS2_WAGON_PATCH).length,586));
+t('Pass1 and Pass2 do not overlap',()=>{for(const id of Object.keys(BATCH186_FREIGHT_PASS2_WAGON_PATCH)) assert.ok(!BATCH186_WAGON_FREIGHT_PATCH[id],id);});
+t('all Pass2 cargo IDs resolve in game',()=>{for(const [id,p] of Object.entries(BATCH186_FREIGHT_PASS2_WAGON_PATCH)) for(const c of [...(p.cargoTypes||[]),...(p.technicallyCompatibleCargoTypes||[])]) assert.ok(known.has(c),`${id}:${c}`);});
+t('catalog IDs remain unchanged',()=>assert.deepEqual(patched.map(x=>x.id),CATALOG.map(x=>x.id)));
+t('catalog length unchanged',()=>assert.equal(patched.length,CATALOG.length));
+t('grain wagon tightened',()=>assert.deepEqual(byId.get('cat-8093').cargoTypes,['grain']));
+t('ore and coal dual-use kept',()=>assert.deepEqual(byId.get('cat-8627').cargoTypes,['coal','ore']));
+t('coil wagon is coils only',()=>assert.deepEqual(byId.get('cat-1279').cargoTypes,['steel-coils']));
+t('logs/pipes dual-use kept',()=>assert.deepEqual(byId.get('cat-4841').cargoTypes,['steel-pipe','timber']));
+t('sugar hopper uses bulk sugar',()=>assert.ok(byId.get('cat-8457').cargoTypes.includes('sugar-bulk')));
+t('glass sand wagon uses French-specific cargo ID',()=>assert.ok(byId.get('cat-8473').cargoTypes.includes('glass-sand')));
+t('banana refrigerated wagon mapped',()=>assert.deepEqual(byId.get('cat-8876').cargoTypes,['bananas-refrigerated']));
+t('automotive parts wagon mapped',()=>assert.deepEqual(byId.get('cat-9066').cargoTypes,['automotive-parts']));
+t('ACTS wagon mapped',()=>assert.deepEqual(byId.get('cat-1423').cargoTypes,['acts-containers']));
+t('new cargo labels are French/non-empty',()=>{for(const c of BATCH186_FREIGHT_PASS2_CARGO_TYPES){assert.ok(c.name && c.name!==c.type); assert.ok(!/^[a-z0-9-]+$/.test(c.name),c.name);}});
+t('technical values untouched by freight pass',()=>{for(let i=0;i<CATALOG.length;i++){const a=CATALOG[i],b=patched[i]; for(const k of ['maxSpeed','mass','power','passengerCapacity','freightCapacity','length','purchasePrice','tonnage']) assert.deepEqual(b[k],a[k],`${a.id}:${k}`);}});
+const inds=new IndustrialClients(); applyBatch186IndustryFreightPatch(inds); const ir=applyBatch186FreightPass2IndustryPatch(inds);
+t('industry patch applies',()=>assert.ok(ir.updated>=10));
+t('auto plant knows automotive parts',()=>assert.ok(inds.getIndustryTypes().find(x=>x.type==='auto_plant').cargoTypes.includes('automotive-parts')));
+t('glass factory knows glass sand',()=>assert.ok(inds.getIndustryTypes().find(x=>x.type==='glass_factory').cargoTypes.includes('glass-sand')));
+console.log(`PASS ${passed}/${passed}`);

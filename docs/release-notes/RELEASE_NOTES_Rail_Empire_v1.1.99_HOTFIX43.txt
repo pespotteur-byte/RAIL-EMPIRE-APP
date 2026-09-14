@@ -1,0 +1,21 @@
+Rail Empire v1.1.99 — HOTFIX43 WORKS UI SPLIT + DEDICATED BANNER
+
+Interface Incidents & Travaux
+- Page découpée en deux colonnes : Travaux à gauche, Incidents à droite.
+- Grandes icônes opérationnelles au-dessus des deux colonnes.
+- Les types d’incidents restent sous la colonne Incidents.
+- Suppression de l’ancien bloc « Travaux programmés » en bas de page.
+- Les cartes Travaux affichent le nom du chantier et sa localisation :
+  « entre A et B » ou « à A » lorsqu’une seule gare est concernée.
+- Les travaux actifs sont soulignés visuellement avec la couleur chantier.
+
+Bandeaux perturbations
+- Ajout d’une troisième ligne dédiée aux Travaux.
+- Couleur du bandeau Travaux : #c44916.
+- Les travaux ne sont plus injectés dans les lignes Interruption/Ralentissement.
+- Le bandeau Travaux affiche le nom du chantier + « entre A et B » / « à A ».
+- Les précisions LTV / coupure caténaire restent affichées lorsque pertinentes.
+
+Compatibilité
+- Conservation du format Works V2 multi-sections et du fallback legacy.
+- Aucun changement du moteur de circulation, du SC Travaux ou des règles d’impact.

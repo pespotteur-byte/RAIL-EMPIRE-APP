@@ -1,0 +1,37 @@
+Rail Empire v1.1.66 — Incident icon / station overlay hotfix
+============================================================
+Baseline: v1.1.65
+
+WHAT WAS WRONG IN v1.1.65
+- The document title was v1.1.65, but the visible login/header version was still hard-coded as V1.1.61.
+- Alert-banner pictograms still depended on relative img/... files. The hotfix removes that FILE:// dependency.
+- Station incident pictograms were offset above/right of the station marker; the requested behaviour is a compact icon directly superimposed on the station marker.
+
+FIXES
+- Login screen and in-game header now both display V1.1.66.
+- VERSION.txt is now 1.1.66 and FILE:// cache-busters use 1166.
+- Red-X / yellow-warning / orange-works pictograms are embedded as PNG data URIs in the core FILE:// bundle.
+- Alert banners use the embedded pictograms:
+  * red circle + WHITE X = incident causing total interruption;
+  * yellow warning triangle = incident without total interruption;
+  * orange works triangle = planned works, including total closures.
+- Pure station incidents are rendered DIRECTLY ON TOP of the normal station marker, centered (dx=0 / dy=0).
+- Station overlay is intentionally compact so a rim of the underlying station marker remains visible:
+  * zoom >=10: 8 px
+  * zoom >=8: 7 px
+  * zoom >=7: 5 px
+  * lower zoom: 4 px
+- Station-id comparison tolerates legacy number/string serialization differences.
+- Interstation icons remain placed at the incident route/zone midpoint.
+- Train-specific incident icons still follow the affected train.
+- 50 successful incidents/hour scheduler and +5 min clicked-train delay-cause history are unchanged.
+- Travaux V2 / Schedule V2 / ORM routing contracts are unchanged.
+
+QA
+- Dedicated v1.1.66 hotfix: 3/3 PASS.
+- Non-bulk regression: 13,783/13,783 PASS across 69 test files / 56 suites.
+- Bulk ORM: 20,275/20,275 PASS.
+- Syntax: 225/225 JS/MJS/CJS PASS.
+- FILE:// bundle rebuilt: 63 core modules, 66 deferred catalogue modules.
+- Core bundle: 3,578,673 bytes; catalogue bundle: 45,802,563 bytes.
+- No Chromium visual-pass claim: user in-game test remains the authoritative visual check for this hotfix.

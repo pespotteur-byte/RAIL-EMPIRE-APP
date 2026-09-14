@@ -1,0 +1,55 @@
+Rail Empire v1.1.91 — SC DIJON-BEAUNE ROUTING RESILIENCE
+=========================================================
+
+Objet
+-----
+Correctif ciblé du Schedule Creator pour les symptômes remontés sur Dijon ↔ Beaune :
+- Dijon → Beaune pouvait produire un temps anormalement long (~44 min),
+- Beaune → Dijon pouvait donner un temps nettement plus court (~20 min),
+- une nouvelle tentative pouvait échouer avec un message assimilé à « aucun way / aucun chemin ».
+
+Cause identifiée dans le build v1.1.90
+--------------------------------------
+Le pack RailGraph européen vectoriel n'est pas encore embarqué (manifest tracks: prepared=false).
+Le SC V3 prépare donc dynamiquement un corridor OSM/Overpass lorsque la zone n'est pas déjà résidente.
+Cette passerelle dynamique pouvait accepter un jeu de tuiles partiellement récupéré :
+- si le trou laissait un chemin secondaire connecté, le routeur pouvait certifier un détour très long ;
+- si le trou coupait complètement la continuité, le SC pouvait conclure à tort à une absence de chemin.
+Le graphe ferroviaire lui-même reste bidirectionnel ; le correctif ne repose pas sur un contournement de sens OSM.
+
+Correctifs v1.1.91
+------------------
+1. Réparation ciblée des tuiles ferroviaires manquantes avant certification du corridor dynamique.
+2. Un corridor connu incomplet n'est plus accepté/caché comme itinéraire valide.
+3. Pour les trajets courts/régionaux (<120 km), contrôle d'autorité par bbox continue si :
+   - l'acquisition tuilée a été incomplète,
+   - le trajet obtenu est anormalement détourné,
+   - ou aucun trajet n'a été trouvé.
+4. Aucun raccordement synthétique ni ligne droite artificielle n'est introduit : le rescue utilise uniquement de vraies géométries ferroviaires OSM.
+5. Invalidation de la mémoire pré-correctif :
+   - schedule-route-v5
+   - exact-leg-v2
+6. Le bouton « ↺ Auto segment » force désormais une acquisition neuve et ignore un ancien tracé mémorisé/sauvegardé pour ce recalcul.
+7. Diagnostic utilisateur séparé :
+   - NETWORK_UNAVAILABLE -> données OSM/ORM incomplètes/serveur indisponible, réessayer ;
+   - NO_CONNECTED_PATH -> données complètes mais aucun tracé ferroviaire réel connecté.
+8. Nouveau message de progression « Réparation d’une zone OSM manquante… » pendant le healing.
+
+Récupération d'un ancien Dijon → Beaune à 44 min
+-------------------------------------------------
+Dans la v1.1.91 : ouvrir le segment concerné et cliquer « ↺ Auto segment ».
+Ce bouton contourne volontairement l'ancien tracé mémorisé et relance l'acquisition réelle du corridor.
+Si les serveurs OSM/Overpass sont temporairement incomplets, RE ne remplacera pas l'ancien trajet par un faux verdict « aucun chemin ».
+
+QA
+--
+- 9/9 nouveaux tests v1.1.91 PASS (healing, détour, réseau incomplet, rescue continu, mémoire, diagnostic, force fresh, Auto segment, bundle).
+- Batterie Schedule Creator ciblée : 123 PASS / 1 FAIL.
+  Le seul FAIL est l'ancien test v1.1.83 « router exposes the 3-minute budget failure distinctly », reproduit à l'identique sur la v1.1.90 intacte (10 PASS / 1 FAIL dans ce fichier) : non introduit par v1.1.91.
+- Batterie croisée Roulements/Direct/Runtime/Performance : 67/67 PASS.
+- Bundle final après dernier correctif : 38/38 tests identité/startup/performance/Roulements/v1.1.91 PASS.
+- Syntaxe : 237 fichiers .js/.mjs vérifiés, 237/237 valides.
+
+Limite de QA environnement
+--------------------------
+L'environnement de build ne permet pas de valider en conditions réseau réelles l'appel OSM/Overpass Dijon ↔ Beaune. Le correctif est couvert par des graphes OSM synthétiques contrôlés et les régressions historiques, mais le temps final réel Dijon ↔ Beaune doit être confirmé dans le navigateur du joueur/utilisateur avec accès réseau normal.

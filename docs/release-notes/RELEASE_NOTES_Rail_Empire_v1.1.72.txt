@@ -1,0 +1,93 @@
+Rail Empire v1.1.72 — Livemap Text + Incident Ticker Polish
+Date: 2026-08-19
+
+BASE / RECOVERY
+---------------
+The persisted v1.1.69/v1.1.70/v1.1.71 release notes and QA records were available,
+but their ZIP payloads were no longer present in the Library. v1.1.72 was therefore
+rebuilt from the last persisted full source ZIP (v1.1.68) and the documented
+v1.1.69 -> v1.1.71 contracts were restored before applying the v1.1.72 UI changes.
+The original v1.1.69, v1.1.70 and v1.1.71 release notes + QA JSON are included in
+this package for traceability.
+
+USER FIXES — v1.1.72
+-------------------
+1. Livemap train panel: clipped orange text
+- The information ticker/band inside the left train panel can no longer be crushed
+  vertically by the panel flex layout.
+- Fixed panel sections use flex-shrink:0.
+- .lvp-bandeau now keeps a 22 px minimum height.
+- The scrolling stop timeline remains the flexible/scrollable section.
+
+2. Top incident banners: faster continuous ticker
+- Replaced the restart-prone CSS marquee with a requestAnimationFrame ticker.
+- Constant speed: 52 px/s.
+- The current horizontal offset is preserved when incidents are added/removed.
+- Updating the incident list no longer rebuilds the whole banner and restarts the
+  animation from the beginning.
+- The ticker only resets when the banner becomes empty or scrolling is no longer
+  necessary.
+
+3. Incidents page: active incident count
+- The "Incidents en cours" heading now includes a live numeric badge.
+- The value comes from IncidentManager.getActiveIncidents() and refreshes with the
+  existing incident-page render cycle.
+
+RESTORED v1.1.69 CONTRACTS
+--------------------------
+- Schedule Creator snap robustness restored to 10 near / 14 wide candidates.
+- Candidate fan-out uses one directed multi-target traversal per previous candidate
+  instead of pairwise A* searches.
+- Fast bounded v1.1.68 routing remains first; a wider resident/persistent-cache
+  rescue is attempted only after failure.
+- Engine OSM overlay cache no longer invalidates on every resident-way-count change.
+- Inferred junction rendering is restricted to detailed zoom.
+- Long route drawing skips sub-pixel vertices for display only; stored OSM geometry
+  remains exact.
+- Validation segment overlay is suppressed while routing is busy.
+- FALLBACK_30 remains a data warning and is not treated as a real 30 km/h timing
+  restriction. Real documented 30 km/h restrictions remain authoritative.
+
+RESTORED v1.1.70 CONTRACTS
+--------------------------
+- V2 timetable-derived instantaneous cruise-speed cap is disabled.
+- Automatic timetable margin remains 0 s.
+- Passenger no-advance protection is applied only at the booked arrival boundary.
+
+RESTORED v1.1.71 CONTRACTS
+--------------------------
+- Canton route cache key samples 0/25/50/75/100% of geometry plus wayId/maxSpeed.
+- Leader detection projects trains onto local route segments using a physical-distance
+  window rather than sparse point sampling.
+- Nearby route groups are merged with the spatial service grid, with a complete
+  all-services safety fallback when necessary.
+- wayId is the primary discriminator for parallel-track safety checks.
+- Queue spacing is measured to the physical rear of the leader using train length.
+- Safety margin = 50 m + 3 s reaction distance.
+- Safe following speed comes from a continuous braking curve.
+- Anti-overlap is a final 30 m hard guard and corrects travelled distance after a
+  coarse simulation-step rewind.
+- Closed signals use continuous braking toward the signal, followed by VISA
+  30/20/10 in the last 300 m.
+- Caution signals anticipate the stopping point at the next signal without a
+  permanent 60 km/h cap.
+- Macro/LOD mode uses the same progressive signal logic instead of stopping at the
+  beginning of an occupied-ahead canton.
+
+QA v1.1.72
+----------
+- Dedicated v1.1.72/reconstructed-contract tests: 6/6 PASS.
+- Targeted regression suite: 99/99 PASS (11 suites, 0 fail).
+- JS/MJS/CJS syntax: 216/216 PASS.
+- FILE:// bundle rebuilt: 63 core modules + 66 deferred catalogue modules.
+- Bundle/cache identity: v1.1.72 / 1172.
+
+FIELD TEST
+----------
+1. Reopen the same Livemap train panel from the screenshot and verify the orange
+   information line is fully readable rather than vertically clipped.
+2. Let several incidents exist, watch the top banner, then allow a new incident to
+   appear: the text must continue from its current position, not restart at x=0.
+3. Open Incidents and verify the badge equals the number of currently active incidents.
+4. Keep the v1.1.71 queue test: immobilise a train with followers behind it and verify
+   progressive braking / physical spacing in both high precision and macro/LOD.

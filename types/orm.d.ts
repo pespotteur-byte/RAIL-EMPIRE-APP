@@ -1,0 +1,1570 @@
+type __KPStruct623 = {
+    "_deadlineTs"?: unknown;
+};
+import type { Rame } from './rame.js';
+import type { RoutePoint } from './train-physics.js';
+type GeoPoint = {
+    lat: number;
+    lon: number;
+};
+type RailTile = {
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+    [key: string]: unknown;
+};
+type ProgressCallback = ((progress: Record<string, unknown>) => void) | null;
+type OrmParsedWay = ReturnType<ORMClient['parseWays']>[number];
+type OrmParsedStation = ReturnType<ORMClient['_parseStations']>[number];
+type OrmEdgeMetadata = ReturnType<ORMClient['_edgeMetadata']>;
+type OrmGraphEdge = OrmEdgeMetadata & {
+    from: string;
+    to: string;
+    dist: number;
+    topologyStitch?: unknown;
+};
+type OrmGraphNode = {
+    key: string;
+    lat: number;
+    lon: number;
+    edges: OrmGraphEdge[];
+};
+type OrmSpatialIndex = {
+    cells: Map<string, OrmGraphNode[]>;
+    cs: number;
+};
+type OrmGraph = {
+    nodes: Map<string, OrmGraphNode>;
+    _index?: OrmSpatialIndex;
+    _compactEdges?: boolean;
+};
+type OrmAreaStatus = {
+    ways: OrmParsedWay[];
+    ok: boolean;
+    source: string;
+    error: unknown;
+};
+type OrmStationStatus = {
+    stations: OrmParsedStation[];
+    ok: boolean;
+    source: string;
+    error: unknown;
+};
+type OrmOptionProgress = (progress: Record<string, unknown>) => void;
+type OrmAvoidStationPair = {
+    latA?: unknown;
+    lat?: unknown;
+    lonA?: unknown;
+    lon?: unknown;
+    latB?: unknown;
+    lat2?: unknown;
+    lonB?: unknown;
+    lon2?: unknown;
+};
+type OrmOptions = Record<string, unknown> & {
+    signal?: AbortSignal | null;
+    onProgress?: OrmOptionProgress | null;
+    onPreparationProgress?: OrmOptionProgress | null;
+    onRailGraphProgress?: OrmOptionProgress | null;
+    electricSystems?: Array<{
+        voltage?: unknown;
+        frequency?: unknown;
+    }>;
+    gauges?: number[];
+    avoidEdges?: Set<string>;
+    avoidStationPairs?: OrmAvoidStationPair[];
+    weather?: string | null;
+    traction?: string;
+    loadingGauge?: string;
+    routeObjective?: string;
+    absorbResident?: boolean;
+    allowPartial?: boolean;
+    allowSyntheticStitches?: boolean;
+    forceNetwork?: boolean;
+    forceRefresh?: boolean;
+    localOnly?: boolean;
+    rebuildIndex?: boolean;
+    transient?: boolean;
+    withStatus?: boolean;
+    _scheduleExact?: boolean;
+    allowFallback?: boolean;
+    allowSignalRestrictedDirection?: boolean;
+    compactGraphEdges?: boolean;
+    compactStateKeys?: boolean;
+    cooperative?: boolean;
+    directed?: boolean;
+    forbidPureBackup?: boolean;
+    forceFreshRoute?: boolean;
+    longRangeWindowed?: boolean;
+    preserveInfrastructureMaxSpeed?: boolean;
+    attemptsPerEndpoint?: number;
+    bufferKm?: number;
+    concurrency?: number;
+    deadlineTs?: number;
+    endpointOffset?: number;
+    fallbackScanLimit?: number;
+    hedgeDelayMs?: number;
+    limit?: number;
+    maxAreaDeg2?: number;
+    maxDistanceKm?: number;
+    maxEndpoints?: number;
+    maxScanned?: number;
+    maxSpanDeg?: number;
+    maxSplitDepth?: number;
+    maxTiles?: number;
+    maxWays?: number;
+    raceEndpoints?: number;
+    radiusM?: number;
+    targetKm?: number;
+    timeoutMs?: number;
+    _deadlineTs?: number;
+    _longRangeFragmentDepth?: number;
+    axleLoad?: number;
+    brakeServiceMs2?: number;
+    endMs?: number;
+    loadFactor?: number;
+    longRangeMaxCoarseNodes?: number;
+    longRangeMaxCoarseSegments?: number;
+    longRangeMaxCoarseWays?: number;
+    longRangeMaxWindowSegments?: number;
+    longRangeMaxWindowWays?: number;
+    maxSpeed?: number;
+    metreLoad?: number;
+    prefetchBudgetMs?: number;
+    routeBudgetMs?: number;
+    startMs?: number;
+    _sharedGraph?: unknown;
+};
+type OrmFetchOptions = OrmOptions & {
+    withStatus?: boolean;
+};
+type OrmWayLike = Omit<Partial<OrmParsedWay>, 'id' | 'geometry'> & Pick<OrmParsedWay, 'id' | 'geometry'> & {
+    layer?: unknown;
+    bridge?: unknown;
+    tunnel?: unknown;
+};
+type OrmAnchorSnapshot = Partial<OrmWayLike> & {
+    wayId?: string | number;
+    segmentIndex?: number | null;
+};
+type OrmAnchor = {
+    lat: number;
+    lon: number;
+    snapLat?: number | null;
+    snapLon?: number | null;
+    wayId?: string | number | null;
+    segmentIndex?: number | null;
+    osmSnapshot?: OrmAnchorSnapshot | null;
+    [key: string]: unknown;
+};
+type OrmResolvedAnchor = {
+    lat: number;
+    lon: number;
+    wayId: string;
+    segmentIndex: number | null;
+    [key: string]: unknown;
+};
+type OrmLongRangeTransition = {
+    lat: number;
+    lon: number;
+    nodeId?: unknown;
+    fromWayId: string | number;
+    toWayId: string | number;
+};
+type OrmLongRangePath = {
+    wayIds: Array<string | number>;
+    transitions: OrmLongRangeTransition[];
+    cost?: number;
+    expanded?: number;
+};
+type OrmCursorCandidate = {
+    way: OrmWayLike;
+    segmentIndex: number;
+    t: number;
+    lat: number;
+    lon: number;
+    distanceKm: number;
+    key?: string;
+};
+type OrmRoute = RoutePoint[] & {
+    _resolvedAnchors?: OrmResolvedAnchor[];
+    _fromScheduleRouteMemory?: boolean;
+    _longRangeWindowed?: boolean;
+    _dynamicRailGraphPrepared?: boolean;
+    _railGraphLocal?: boolean;
+    _routeObjective?: string;
+    _railGraphNeighborRing?: number;
+};
+type ScheduleMemoryConstraint = OrmAnchor & {
+    legIndex?: unknown;
+    order?: unknown;
+};
+type ScheduleMemoryLocation = {
+    id?: unknown;
+    track?: OrmAnchor;
+};
+type ScheduleMemoryLeg = {
+    fromLocationId?: unknown;
+    toLocationId?: unknown;
+    routePoints?: OrmRoute;
+};
+type ScheduleMemoryPath = {
+    legs?: ScheduleMemoryLeg[];
+    constraints?: ScheduleMemoryConstraint[];
+    error?: unknown;
+    resolvedRevision?: unknown;
+    topologyRevision?: unknown;
+};
+type ScheduleMemoryVersion = {
+    locations?: ScheduleMemoryLocation[];
+    outboundPath?: ScheduleMemoryPath;
+    state?: string;
+    performanceProfile?: OrmOptions;
+};
+type ScheduleMemoryManager = {
+    schedules?: Array<{
+        versions?: ScheduleMemoryVersion[];
+    }>;
+};
+export declare class ORMClient {
+    constructor();
+    startScheduleDebugSession(meta?: unknown): any;
+    debugScheduleEvent(event: unknown, data?: unknown): void;
+    getScheduleDebugSnapshot(): {
+        schema: string;
+        session: any;
+        environment: {
+            online: boolean | null;
+            userAgent: string;
+            language: string;
+            protocol: string;
+            href: string;
+        };
+        ormState: {
+            residentWays: number;
+            areaMemoryEntries: number;
+            routeCacheEntries: number;
+            exactLegCacheEntries: number;
+            cursorRouteMemoryPoints: any;
+            exactLegCachePoints: any;
+            loadedBboxes: number;
+            topologyEpoch: number;
+            lastCursorRouteFailure: string;
+            lastCursorRouteDiagnostics: any;
+            lastRoutingFailure: {
+                kind: any;
+                error: {
+                    name: string;
+                    message: string;
+                    code: string;
+                    stack: string;
+                };
+            } | null;
+            lastRailTileFetchStats: any;
+            worldRailCache: any;
+        };
+        events: any;
+    };
+    _touchTopology(): void;
+    setRailGraphPack(pack: unknown): void;
+    setWorldRailCache(cache: unknown): void;
+    getWorldRailCacheStats(): any;
+    getRailGraphPackStats(): any;
+    _absorbLocalRailWays(ways?: OrmWayLike[]): number;
+    fetchArea(south: number, west: number, north: number, east: number, options: OrmFetchOptions & {
+        withStatus: true;
+    }): Promise<OrmAreaStatus>;
+    fetchArea(south: number, west: number, north: number, east: number, options?: OrmFetchOptions & {
+        withStatus?: false;
+    }): Promise<OrmParsedWay[]>;
+    _tileBbox(south: number, west: number, north: number, east: number, targetKm?: number): RailTile[];
+    _corridorTiles(fromLat: number, fromLon: number, toLat: number, toLon: number, targetKm?: number, bufferKm?: number): RailTile[];
+    _splitTile(tile: RailTile): {
+        north: number;
+        south: number;
+        west: number;
+        east: number;
+    }[];
+    _fetchRailTileResilient(tile: RailTile, depth?: number, options?: OrmOptions): Promise<OrmParsedWay[]>;
+    fetchRailwayTiles(tiles: RailTile[], onProgress?: ProgressCallback, options?: OrmOptions): Promise<any[]>;
+    _fetchWorldRailTileVerified(tile: RailTile, options?: OrmOptions, ordinal?: number): Promise<{
+        ways: {
+            id: string | number;
+            railway: string;
+            railwayLifecycle: string;
+            railwayBaseType: string;
+            maxSpeed: number;
+            maxSpeedSource: string;
+            maxSpeedForward: number | null;
+            maxSpeedBackward: number | null;
+            electrified: boolean | null;
+            electrifiedMode: string;
+            voltage: number[];
+            frequency: number[];
+            gauge: number[];
+            loadingGauge: string;
+            axleLoad: number | null;
+            metreLoad: number | null;
+            tracks: number;
+            usage: string;
+            service: string;
+            trafficMode: string;
+            preferredDirection: string;
+            bidirectional: string;
+            oneway: string;
+            trainProtection: {
+                etcs: string;
+                pzb: string;
+                lzb: string;
+                tvm: string;
+                scmt: string;
+            };
+            name: string;
+            ref: string;
+            trackRef: string;
+            geometry: {
+                lat: number;
+                lon: number;
+            }[];
+            nodeIds: (string | number)[];
+            tags: {
+                [x: string]: string;
+            };
+        }[];
+        emptyVerified: boolean;
+        emptyConfirmations: number;
+        recoveredFromEmpty: boolean;
+    }>;
+    fetchWorldRailwayTiles(envelopes: RailTile[], onProgress?: ProgressCallback, options?: OrmOptions): Promise<any[]>;
+    getCachedWorldRailwaysForEnvelopes(envelopes?: unknown): Promise<any>;
+    refreshWorldRailwaysForEnvelopes(envelopes?: RailTile[], options?: OrmOptions): Promise<any[]>;
+    _healFailedRailwayTiles(failures?: Array<RailTile | {
+        tile?: RailTile;
+    }>, options?: OrmOptions): Promise<any[]>;
+    fetchRailwayTiled(south: number, west: number, north: number, east: number, onProgress?: ProgressCallback): Promise<any[]>;
+    fetchStationsArea(south: number, west: number, north: number, east: number, options: OrmFetchOptions & {
+        withStatus: true;
+    }): Promise<OrmStationStatus>;
+    fetchStationsArea(south: number, west: number, north: number, east: number, options?: OrmFetchOptions & {
+        withStatus?: false;
+    }): Promise<OrmParsedStation[]>;
+    _fetchStationTileResilient(tile: RailTile, depth?: number): Promise<unknown[]>;
+    fetchStationTiles(tiles: RailTile[], onProgress?: ProgressCallback): Promise<any[]>;
+    fetchStationsTiled(south: number, west: number, north: number, east: number, onProgress?: ProgressCallback): Promise<any[]>;
+    _cursorRouteMemoryKey(anchors?: OrmAnchor[], opts?: OrmOptions): string;
+    _cloneRememberedRoute(route: unknown): {
+        lat: number;
+        lon: number;
+        wayId: string;
+        segmentIndex: number | null;
+        maxSpeed: any;
+        maxSpeedSource: any;
+        maxSpeedForward: any;
+        maxSpeedBackward: any;
+        electrified: any;
+        electrifiedMode: any;
+        voltage: any;
+        frequency: any;
+        gauge: any;
+        loadingGauge: any;
+        axleLoad: any;
+        metreLoad: any;
+        tracks: any;
+        trafficMode: any;
+        usage: any;
+        service: any;
+        railway: any;
+        railwayLifecycle: any;
+        railwayBaseType: any;
+        preferredDirection: any;
+        bidirectional: any;
+        oneway: any;
+        signalRestrictedDirection: boolean;
+        travelDirection: any;
+        _againstPreferredDirection: boolean;
+        trackRef: any;
+        name: any;
+        ref: any;
+        trainProtection: any;
+        fallback: boolean;
+        tags: {
+            incline: any;
+        } | {
+            incline?: undefined;
+        };
+    }[] | null;
+    _trimScheduleRouteMemories(): void;
+    releaseScheduleRoutingMemory({ aggressive }?: {
+        aggressive?: boolean;
+    }): {
+        routeCacheEntries: any;
+        cursorRoutes: any;
+        exactLegs: any;
+        worldRailCache: any;
+    };
+    rememberCursorRoute(anchors: OrmAnchor[], route: OrmRoute, opts?: OrmOptions): boolean;
+    recallCursorRoute(anchors: OrmAnchor[], opts?: OrmOptions): {
+        lat: number;
+        lon: number;
+        wayId: string;
+        segmentIndex: number | null;
+        maxSpeed: any;
+        maxSpeedSource: any;
+        maxSpeedForward: any;
+        maxSpeedBackward: any;
+        electrified: any;
+        electrifiedMode: any;
+        voltage: any;
+        frequency: any;
+        gauge: any;
+        loadingGauge: any;
+        axleLoad: any;
+        metreLoad: any;
+        tracks: any;
+        trafficMode: any;
+        usage: any;
+        service: any;
+        railway: any;
+        railwayLifecycle: any;
+        railwayBaseType: any;
+        preferredDirection: any;
+        bidirectional: any;
+        oneway: any;
+        signalRestrictedDirection: boolean;
+        travelDirection: any;
+        _againstPreferredDirection: boolean;
+        trackRef: any;
+        name: any;
+        ref: any;
+        trainProtection: any;
+        fallback: boolean;
+        tags: {
+            incline: any;
+        } | {
+            incline?: undefined;
+        };
+    }[] | null;
+    hydrateCursorRouteMemoryFromSchedules(scheduleManager: ScheduleMemoryManager | null | undefined): number;
+    _loadPersistentRailwaysInBounds(south: unknown, west: unknown, north: unknown, east: unknown, options?: OrmOptions): Promise<any[]>;
+    _loadCachedArea(key: unknown): Promise<{
+        ways: any;
+        stations: any;
+    } | null>;
+    _saveCachedArea(key: unknown, payload: unknown): Promise<void>;
+    _parseOsmMainMap(data: {
+        elements: unknown;
+    }): {
+        ways: {
+            id: string | number;
+            railway: string;
+            railwayLifecycle: string;
+            railwayBaseType: string;
+            maxSpeed: number;
+            maxSpeedSource: string;
+            maxSpeedForward: number | null;
+            maxSpeedBackward: number | null;
+            electrified: boolean | null;
+            electrifiedMode: string;
+            voltage: number[];
+            frequency: number[];
+            gauge: number[];
+            loadingGauge: string;
+            axleLoad: number | null;
+            metreLoad: number | null;
+            tracks: number;
+            usage: string;
+            service: string;
+            trafficMode: string;
+            preferredDirection: string;
+            bidirectional: string;
+            oneway: string;
+            trainProtection: {
+                etcs: string;
+                pzb: string;
+                lzb: string;
+                tvm: string;
+                scmt: string;
+            };
+            name: string;
+            ref: string;
+            trackRef: string;
+            geometry: {
+                lat: number;
+                lon: number;
+            }[];
+            nodeIds: (string | number)[];
+            tags: {
+                [x: string]: string;
+            };
+        }[];
+        switches: unknown[];
+    };
+    fetchSmallOsmMapArea(south: number, west: number, north: number, east: number, options?: OrmOptions): Promise<{
+        ok: boolean;
+        ways: any;
+        switches: any;
+        source: string;
+        error?: undefined;
+    } | {
+        ok: boolean;
+        ways: never[];
+        switches: never[];
+        source: string;
+        error: unknown;
+    }>;
+    fetchSmallOsmMapCorridor(fromLat: number, fromLon: number, toLat: number, toLon: number, options?: OrmOptions): Promise<{
+        ok: boolean;
+        ways: never[];
+        failed: number;
+        requested: number;
+        source: string;
+        complete?: undefined;
+    } | {
+        ok: boolean;
+        complete: boolean;
+        ways: any[];
+        failed: number;
+        requested: number;
+        source: string;
+    }>;
+    parseWays(data: {
+        elements?: OverpassElement[];
+    }): {
+        id: string | number;
+        railway: string;
+        railwayLifecycle: string;
+        railwayBaseType: string;
+        maxSpeed: number;
+        maxSpeedSource: string;
+        maxSpeedForward: number | null;
+        maxSpeedBackward: number | null;
+        electrified: boolean | null;
+        electrifiedMode: string;
+        voltage: number[];
+        frequency: number[];
+        gauge: number[];
+        loadingGauge: string;
+        axleLoad: number | null;
+        metreLoad: number | null;
+        tracks: number;
+        usage: string;
+        service: string;
+        trafficMode: string;
+        preferredDirection: string;
+        bidirectional: string;
+        oneway: string;
+        trainProtection: {
+            etcs: string;
+            pzb: string;
+            lzb: string;
+            tvm: string;
+            scmt: string;
+        };
+        name: string;
+        ref: string;
+        trackRef: string;
+        geometry: {
+            lat: number;
+            lon: number;
+        }[];
+        nodeIds: (string | number)[];
+        tags: {
+            [x: string]: string;
+        };
+    }[];
+    _edgeMetadata(way: OrmWayLike, forward?: boolean): {
+        maxSpeed: number;
+        maxSpeedSource: string;
+        maxSpeedForward: number | null;
+        maxSpeedBackward: number | null;
+        electrified: boolean | null;
+        electrifiedMode: string;
+        voltage: number[];
+        frequency: number[];
+        gauge: number[];
+        loadingGauge: string;
+        axleLoad: number | null;
+        metreLoad: number | null;
+        tracks: number;
+        usage: string;
+        service: string;
+        railway: string;
+        railwayLifecycle: string;
+        railwayBaseType: string;
+        trafficMode: string;
+        preferredDirection: string;
+        bidirectional: string;
+        oneway: string;
+        directionForbidden: boolean;
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        wayId: string | number;
+        name: string;
+        ref: string;
+        trackRef: string;
+        travelDirection: string;
+        againstPreferredDirection: boolean;
+        tags: {
+            [x: string]: string;
+        };
+    };
+    getWayById(wayId: unknown): any;
+    getTrackCandidates(lat: number, lon: number, options?: OrmOptions): Promise<{
+        wayId: string;
+        distanceM: number;
+        snapLat: number;
+        snapLon: number;
+        segmentIndex: number;
+        trackRef: any;
+        name: any;
+        ref: any;
+        maxSpeed: any;
+        maxSpeedSource: any;
+        maxSpeedForward: any;
+        maxSpeedBackward: any;
+        electrified: any;
+        electrifiedMode: any;
+        voltage: any;
+        frequency: any;
+        gauge: any;
+        loadingGauge: any;
+        axleLoad: any;
+        metreLoad: any;
+        usage: any;
+        service: any;
+        railway: any;
+        railwayLifecycle: any;
+        railwayBaseType: any;
+        preferredDirection: any;
+        bidirectional: any;
+        oneway: any;
+        tags: any;
+        geometry: any;
+        nodeIds: any;
+    }[]>;
+    _nearestNodeKeyOnWay(graph: __S3Struct785, wayId: string | number, lat: number, lon: number): string | null;
+    findRouteViaTrackBindings(fromBinding: OrmAnchor, toBinding: OrmAnchor, constraints?: OrmAnchor[], opts?: OrmOptions | null): Promise<{
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null>;
+    _scheduleJourneyPrefetchKey(anchors?: OrmAnchor[]): string;
+    prefetchScheduleJourney(anchors?: OrmAnchor[], opts?: OrmOptions): Promise<{
+        skipped: boolean;
+        reason: string;
+        distanceKm?: undefined;
+        reused?: undefined;
+        complete?: undefined;
+        ways?: undefined;
+        tiles?: undefined;
+        failed?: undefined;
+    } | {
+        skipped: boolean;
+        reason: string;
+        distanceKm: number;
+        reused?: undefined;
+        complete?: undefined;
+        ways?: undefined;
+        tiles?: undefined;
+        failed?: undefined;
+    } | {
+        reused: boolean;
+        complete: boolean;
+        distanceKm: number;
+        ways: any;
+        tiles: any;
+        failed: number;
+        skipped?: undefined;
+        reason?: undefined;
+    } | {
+        distanceKm: number;
+        ways: number;
+        tiles: number;
+        failed: number;
+        complete: boolean;
+        skipped?: undefined;
+        reason?: undefined;
+        reused?: undefined;
+    }>;
+    _routeFromJourneyPrefetch(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): Promise<{
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null>;
+    _scheduleLongRangeBudgetCheck(ways?: OrmWayLike[], opts?: OrmOptions): {
+        ways: number;
+        segments: number;
+        maxWays: number;
+        maxSegments: number;
+    };
+    _scheduleLongRangeId(v: unknown): string | number;
+    _scheduleLongRangeWayCost(way: unknown, lengthKm?: unknown): number;
+    _createScheduleLongRangeCoarseState(opts?: OrmOptions): {
+        ways: Map<any, any>;
+        adj: Map<any, any>;
+        nodeOwners: Map<any, any>;
+        wayCount: number;
+        nodeCount: number;
+        segmentCount: number;
+        maxWays: number;
+        maxNodes: number;
+        maxSegments: number;
+        fetchedTiles: number;
+        failedTiles: number;
+    };
+    _ingestScheduleLongRangeWays(state: __S3Struct791, ways?: OrmWayLike[], opts?: OrmOptions): void;
+    _findScheduleLongRangeWayPath(state: __S3Struct791, startWayId: string | number, endWayId: string | number, opts?: OrmOptions): Promise<{
+        wayIds: (string | number)[];
+        transitions: never[];
+        cost: number;
+        expanded?: undefined;
+    } | {
+        wayIds: (string | number)[];
+        transitions: any[];
+        cost: number | undefined;
+        expanded: number;
+    } | null>;
+    _scheduleLongRangePortals(coarse: OrmLongRangePath, a: OrmAnchor, b: OrmAnchor, targetKm?: number): {
+        lat: number;
+        lon: number;
+        wayId: string;
+        segmentIndex: null;
+        transitionIndex: number;
+        _hiddenLongRangePortal: boolean;
+    }[];
+    _scheduleLongRangePolyline(a: __S3Struct797, b: __S3Struct798, transitions?: OrmLongRangeTransition[], fromTransition?: unknown, toTransition?: unknown): {
+        lat: number;
+        lon: number;
+    }[];
+    _scheduleLongRangeEnvelopeKey(t: RailTile): string;
+    _fetchScheduleLongRangeExactWays(polyline: GeoPoint[], opts?: OrmOptions, bufferKm?: number): Promise<any[]>;
+    _routeScheduleLongRangeExactChunk(a: OrmAnchor, b: OrmAnchor, coarse: OrmLongRangePath, fromTransition: number, toTransition: number | null, opts?: OrmOptions, depth?: number): Promise<any>;
+    _scheduleLongRangeProjectionOnWay(way: {
+        geometry: unknown;
+    }, lat: number, lon: number): {
+        lat: number;
+        lon: number;
+        distKm: number;
+        segmentIndex: number;
+    } | null;
+    _scheduleLongRangeFragmentFrame(a: {
+        lat: unknown;
+        lon: unknown;
+    }, b: {
+        lat: unknown;
+        lon: unknown;
+    }, radiusKm: number): {
+        mid: {
+            lat: number;
+            lon: number;
+        };
+        p1: {
+            lat: number;
+            lon: number;
+        };
+        p2: {
+            lat: number;
+            lon: number;
+        };
+    };
+    _findScheduleLongRangeFragmentCandidates(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions, depth?: unknown): Promise<any[]>;
+    _routeScheduleLongRangeFragmented(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions, depth?: number, cause?: unknown): Promise<any>;
+    _routeScheduleLongRangeAdaptive(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions, depth?: number): Promise<any>;
+    _routeScheduleLongRangeWindowed(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): Promise<any[] | null>;
+    prepareAndRouteScheduleAnchors(anchors?: OrmAnchor[], opts?: OrmOptions): Promise<OrmRoute | {
+        lat: number;
+        lon: number;
+        wayId: string;
+        segmentIndex: number | null;
+        maxSpeed: any;
+        maxSpeedSource: any;
+        maxSpeedForward: any;
+        maxSpeedBackward: any;
+        electrified: any;
+        electrifiedMode: any;
+        voltage: any;
+        frequency: any;
+        gauge: any;
+        loadingGauge: any;
+        axleLoad: any;
+        metreLoad: any;
+        tracks: any;
+        trafficMode: any;
+        usage: any;
+        service: any;
+        railway: any;
+        railwayLifecycle: any;
+        railwayBaseType: any;
+        preferredDirection: any;
+        bidirectional: any;
+        oneway: any;
+        signalRestrictedDirection: boolean;
+        travelDirection: any;
+        _againstPreferredDirection: boolean;
+        trackRef: any;
+        name: any;
+        ref: any;
+        trainProtection: any;
+        fallback: boolean;
+        tags: {
+            incline: any;
+        } | {
+            incline?: undefined;
+        };
+    }[] | null>;
+    findRouteViaLocalRailGraphAnchors(anchors?: OrmAnchor[], opts?: OrmOptions): Promise<any[] | null>;
+    findRouteViaCursorAnchors(anchors?: OrmAnchor[], opts?: OrmOptions | null): Promise<any>;
+    _routeCursorAnchorChainOnWays(ways: OrmWayLike[], anchors: OrmAnchor[], opts?: OrmOptions): Promise<any>;
+    _cloneWaysForLocalRouting(ways?: OrmWayLike[]): {
+        geometry: {
+            lat: number;
+            lon: number;
+        }[];
+        name?: string | undefined;
+        maxSpeed?: number | undefined;
+        electrified?: boolean | null | undefined;
+        tracks?: number | undefined;
+        ref?: string | undefined;
+        service?: string | undefined;
+        usage?: string | undefined;
+        oneway?: string | undefined;
+        maxSpeedSource?: string | undefined;
+        bidirectional?: string | undefined;
+        trackRef?: string | undefined;
+        gauge?: number[] | undefined;
+        voltage?: number[] | undefined;
+        frequency?: number[] | undefined;
+        maxSpeedForward?: number | null | undefined;
+        maxSpeedBackward?: number | null | undefined;
+        electrifiedMode?: string | undefined;
+        loadingGauge?: string | undefined;
+        axleLoad?: number | null | undefined;
+        metreLoad?: number | null | undefined;
+        trafficMode?: string | undefined;
+        railway?: string | undefined;
+        railwayLifecycle?: string | undefined;
+        railwayBaseType?: string | undefined;
+        preferredDirection?: string | undefined;
+        trainProtection?: {
+            etcs: string;
+            pzb: string;
+            lzb: string;
+            tvm: string;
+            scmt: string;
+        } | undefined;
+        tags?: {
+            [x: string]: string;
+        } | undefined;
+        nodeIds?: (string | number)[] | undefined;
+        id: string | number;
+        layer?: unknown;
+        bridge?: unknown;
+        tunnel?: unknown;
+    }[];
+    _wayTopologySignature(way: OrmWayLike): {
+        layer: string;
+        bridge: boolean;
+        tunnel: boolean;
+    };
+    _topologyStitchCompatible(a: OrmWayLike, b: OrmWayLike): boolean;
+    _topologyStitchMeta(way: unknown, kind?: unknown): {
+        maxSpeed: number;
+        maxSpeedSource: string;
+        directionForbidden: boolean;
+        againstPreferredDirection: boolean;
+        topologyStitch: unknown;
+        maxSpeedForward: number | null;
+        maxSpeedBackward: number | null;
+        electrified: boolean | null;
+        electrifiedMode: string;
+        voltage: number[];
+        frequency: number[];
+        gauge: number[];
+        loadingGauge: string;
+        axleLoad: number | null;
+        metreLoad: number | null;
+        tracks: number;
+        usage: string;
+        service: string;
+        railway: string;
+        railwayLifecycle: string;
+        railwayBaseType: string;
+        trafficMode: string;
+        preferredDirection: string;
+        bidirectional: string;
+        oneway: string;
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        wayId: string | number;
+        name: string;
+        ref: string;
+        trackRef: string;
+        travelDirection: string;
+        tags: {
+            [x: string]: string;
+        };
+    };
+    _addEndpointNodeMicroStitches(graph: OrmGraph, ways: OrmWayLike[], maxDistanceKm?: number): number;
+    _applySafeEndpointGapStitch(graph: OrmGraph, ways: OrmWayLike[], maxRepairs?: number, maxDistanceKm?: number): number;
+    _applyLazyEndpointSegmentStitch(graph: OrmGraph, ways: OrmWayLike[], maxRepairs?: number, maxDistanceKm?: number): number;
+    _buildGraphFromWaysAsync(ways?: OrmWayLike[], options?: OrmOptions): Promise<OrmGraph>;
+    _cursorLegCacheKey(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): string;
+    _cursorSegmentCandidates(ways: OrmWayLike[], lat: number, lon: number, maxDistKm?: number, limit?: number, preferredWayId?: string, exactWayOnly?: boolean, segmentIndexHint?: unknown): OrmCursorCandidate[];
+    _attachCursorCandidatesToGraph(graph: OrmGraph, startCandidates: OrmCursorCandidate[], endCandidates: OrmCursorCandidate[], options?: OrmOptions): () => void;
+    _routeCursorCandidatesOnWays(ways: OrmWayLike[], a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): Promise<{
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null>;
+    _scheduleExactLegKey(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): string;
+    _rememberExactLeg(a: OrmAnchor, b: OrmAnchor, route: OrmRoute, opts?: OrmOptions): void;
+    _recallExactLeg(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): {
+        lat: number;
+        lon: number;
+        wayId: string;
+        segmentIndex: number | null;
+        maxSpeed: any;
+        maxSpeedSource: any;
+        maxSpeedForward: any;
+        maxSpeedBackward: any;
+        electrified: any;
+        electrifiedMode: any;
+        voltage: any;
+        frequency: any;
+        gauge: any;
+        loadingGauge: any;
+        axleLoad: any;
+        metreLoad: any;
+        tracks: any;
+        trafficMode: any;
+        usage: any;
+        service: any;
+        railway: any;
+        railwayLifecycle: any;
+        railwayBaseType: any;
+        preferredDirection: any;
+        bidirectional: any;
+        oneway: any;
+        signalRestrictedDirection: boolean;
+        travelDirection: any;
+        _againstPreferredDirection: boolean;
+        trackRef: any;
+        name: any;
+        ref: any;
+        trainProtection: any;
+        fallback: boolean;
+        tags: {
+            incline: any;
+        } | {
+            incline?: undefined;
+        };
+    }[] | null;
+    _findExactCursorChainIncremental(anchors: OrmAnchor[], opts?: OrmOptions): Promise<{
+        [key: string]: unknown;
+        lat: number;
+        lon: number;
+    }[] | null>;
+    _findCursorLegBroadArea(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): Promise<{
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null>;
+    _findCursorLegLoadedGraph(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): Promise<{
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null>;
+    _routeBudgetLeftMs(opts?: __KPStruct623): number;
+    _snapshotWayFromAnchor(anchor: OrmAnchor): {
+        id: string;
+        geometry: {
+            lat: number;
+            lon: number;
+        }[];
+        nodeIds: (string | number)[];
+        maxSpeed: number;
+        maxSpeedSource: string;
+        maxSpeedForward: number | null;
+        maxSpeedBackward: number | null;
+        electrified: boolean | null;
+        electrifiedMode: string;
+        voltage: number[];
+        frequency: number[];
+        gauge: number[];
+        loadingGauge: string;
+        axleLoad: number | null;
+        metreLoad: number | null;
+        tracks: number;
+        usage: string;
+        service: string;
+        railway: string;
+        trafficMode: string;
+        preferredDirection: string;
+        bidirectional: string;
+        oneway: string;
+        trainProtection: {};
+        name: string;
+        ref: string;
+        trackRef: string;
+        tags: {
+            [x: string]: string;
+        };
+    } | null;
+    _seedAnchorSnapshotWays(map: Map<string, OrmWayLike>, anchors?: OrmAnchor[]): Map<string, OrmWayLike>;
+    _findCursorLegLongDistance(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): Promise<{
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null>;
+    _findCursorLegLocal(a: OrmAnchor, b: OrmAnchor, opts?: OrmOptions): Promise<any>;
+    _parseStations(data: __S3Struct888): {
+        id: string;
+        osmType: string;
+        osmId: string | number;
+        lat: number;
+        lon: number;
+        name: string;
+        type: string;
+        stationKind: string;
+        urbanTransit: boolean;
+        train: string;
+        uicRef: string;
+        ref: string;
+        network: string;
+        operator: string;
+        wikidata: string;
+        wheelchair: string;
+    }[];
+    getOSMStations(): any;
+    loadViewport(south: number, west: number, north: number, east: number, margin?: number): Promise<void>;
+    _isCovered(south: number, west: number, north: number, east: number): boolean;
+    setUserTronconProvider(providerFn: unknown): void;
+    markGraphDirty(): void;
+    getLoadedRailwaysInBounds(south: number, west: number, north: number, east: number, options?: OrmOptions): OrmWayLike[];
+    fetchRailwayViewport(south: unknown, west: unknown, north: unknown, east: unknown): Promise<any[]>;
+    fetchRailwaySwitchesViewport(south: number, west: number, north: number, east: number, options?: OrmOptions): Promise<any>;
+    getLoadedRailwaySwitchesInBounds(south: number, west: number, north: number, east: number, options?: OrmOptions): any[];
+    _ensureGraph(): any;
+    _ensureGraphAsync(onProgress?: ProgressCallback): Promise<any>;
+    _buildUnifiedGraph(): OrmGraph;
+    buildGraph(ways: OrmWayLike[]): OrmGraph;
+    _buildSpatialIndex(nodes: Map<string, OrmGraphNode>): {
+        cells: Map<any, any>;
+        cs: any;
+    };
+    _nearestViaIndex(graph: OrmGraph, lat: number, lon: number, maxDistKm: number): {
+        node: never;
+        dist: number;
+    } | null;
+    _effectiveSpeed(edge: OrmEdgeMetadata, routingMaxSpeed?: unknown): number;
+    _edgeCompatibleWithProfile(edge: OrmEdgeMetadata, opts?: OrmOptions | null): boolean;
+    _edgeCost(edge: OrmGraphEdge, routingMaxSpeed?: number | null, opts?: OrmOptions | null): number;
+    _edgeStateKey(edge: OrmGraphEdge): string;
+    _edgeBearing(graph: OrmGraph, edge: OrmGraphEdge): number;
+    _turnPenalty(graph: OrmGraph, fromEdge: OrmGraphEdge | null | undefined, intoEdge: OrmGraphEdge, directed: boolean, opts?: OrmOptions | null): any;
+    _routeToTargets(graph: OrmGraph, startKey: string, targetKeys: string[], opts?: OrmOptions | null): Map<any, any>;
+    dijkstra(graph: OrmGraph, startKey: string, endKey: string, opts?: OrmOptions | null): {
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null;
+    _route(graph: OrmGraph, startKey: string, endKey: string, opts?: OrmOptions | null): {
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null;
+    _routeAsync(graph: OrmGraph, startKey: string, endKey: string, opts?: OrmOptions | null): Promise<{
+        lat: unknown;
+        lon: unknown;
+        maxSpeed: number;
+        maxSpeedSource: {};
+        maxSpeedForward: {} | null;
+        maxSpeedBackward: {} | null;
+        electrified: {} | null;
+        electrifiedMode: {};
+        voltage: {};
+        frequency: {};
+        gauge: {};
+        loadingGauge: {};
+        axleLoad: {} | null;
+        metreLoad: {} | null;
+        tracks: {};
+        wayId: unknown;
+        usage: {};
+        service: {};
+        railway: {};
+        railwayLifecycle: {};
+        railwayBaseType: {};
+        trafficMode: {};
+        preferredDirection: {};
+        bidirectional: {};
+        oneway: {};
+        signalRestrictedDirection: boolean;
+        trainProtection: {};
+        name: {};
+        ref: {};
+        trackRef: {};
+        tags: {};
+        travelDirection: {};
+        _againstPreferredDirection: boolean;
+    }[] | {
+        lat: number;
+        lon: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[] | null>;
+    dijkstraConstrained(graph: OrmGraph, startKey: string, endKey: string, waypointKeys: string[], opts?: OrmOptions | null): unknown[] | null;
+    findNearestNode(graph: OrmGraph, lat: number, lon: number, maxDistKm?: number): {
+        node: OrmGraphNode;
+        dist: number;
+    } | null;
+    snapToNearest(lat: number, lon: number, maxDistKm?: number): {
+        node: OrmGraphNode;
+        dist: number;
+    } | null;
+    snapToRailway(lat: number, lon: number, maxDistKm?: number): Promise<{
+        lat: number;
+        lon: number;
+        dist: number;
+    } | null>;
+    snapToWay(lat: number, lon: number, maxDistKm?: number): {
+        lat: number;
+        lon: number | null;
+        dist: number;
+        wayId: any;
+    } | null;
+    _projectOnSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number): {
+        lat: number;
+        lon: number;
+    };
+    _snapAndSplitLocalWay(ways: OrmWayLike[], lat: number, lon: number, maxDistKm?: number): {
+        lat: number;
+        lon: number;
+        key: string;
+        split: boolean;
+    } | null;
+    _snapAndSplitLocalWayAsync(ways: OrmWayLike[], lat: number, lon: number, maxDistKm?: number, onProgress?: ProgressCallback, label?: string): Promise<{
+        lat: number;
+        lon: number;
+        key: string;
+        split: boolean;
+    } | null>;
+    _probeRailConnectivity(ways: OrmWayLike[], fromLat: number, fromLon: number, toLat: number, toLon: number, maxSnapKm?: number, onProgress?: ProgressCallback): Promise<{
+        connected: boolean;
+        startDist: number;
+        endDist: number;
+        nodeCount: number;
+    }>;
+    importInfrastructure(fromLat: number, fromLon: number, toLat: number, toLon: number, options?: OrmOptions): Promise<{
+        voiePoints: never[];
+        troncons: never[];
+        stations: never[];
+        stationsPromise: null;
+        searchMode: string;
+        waysFetched?: undefined;
+        snappedA?: undefined;
+        snappedB?: undefined;
+    } | {
+        voiePoints: {
+            id: string;
+            lat: number;
+            lon: number;
+            voie: string;
+            stationId: null;
+            linePoint: boolean;
+        }[];
+        troncons: {
+            pointA: any;
+            pointB: any;
+            route: {
+                lat: number;
+                lon: number;
+                maxSpeed: any;
+                tracks: number;
+            }[];
+            distance: number;
+            name: string;
+            ref: string;
+            trackRef: string;
+        }[];
+        stations: never[];
+        stationsPromise: Promise<any[]>;
+        searchMode: string;
+        waysFetched: number;
+        snappedA: boolean;
+        snappedB: boolean;
+    }>;
+    _avoidEdgesForPairs(graph: OrmGraph, pairs: OrmAvoidStationPair[]): Set<string>;
+    findRoute(fromLat: number, fromLon: number, toLat: number, toLon: number, opts?: OrmOptions | null): Promise<any>;
+    findConstrainedRoute(fromLat: number, fromLon: number, toLat: number, toLon: number, waypointLatLons: GeoPoint[], opts?: OrmOptions | null): Promise<unknown[] | null>;
+    makeFallbackRoute(fromLat: unknown, fromLon: unknown, toLat: unknown, toLon: unknown): null;
+    isFallbackRoute(route: unknown): boolean;
+    getRouteDistance(route: unknown): number;
+    getRouteSegments(route: unknown): {
+        from: unknown;
+        to: unknown;
+        distance: number;
+        maxSpeed: number;
+        electrified: boolean;
+        tracks: number;
+    }[];
+    calculateTravelTime(route: unknown, rame: Rame, opts?: OrmOptions | null): unknown;
+    _physicalTravelTime(route: RoutePoint[], rame: Rame, opts?: OrmOptions | null): unknown;
+    generateSignalBlocks(route: unknown): unknown[];
+    getPointAtRatio(route: unknown, ratio: number): any;
+    getCountryAtPoint(lat: number, lon: number): "FR" | "BE" | "DE" | "ES" | "IT" | "LU" | "NL" | "GB" | "CH" | "OTHER";
+    isDriveLeft(country: string): boolean;
+    toSave(): {
+        loadedBboxes: unknown[];
+    };
+    loadFromSave(saved: {
+        loadedBboxes: unknown;
+    }): void;
+    reloadAreas(): Promise<void>;
+}
+type __S3Struct785 = {
+    "nodes": {
+        "has": (...args: unknown[]) => unknown;
+    };
+};
+type __S3Struct791 = {
+    ways: Map<string | number, {
+        id: string | number;
+        lengthKm: number;
+        cost: number;
+        lat: number;
+        lon: number;
+    }>;
+    adj: Map<string | number, Map<string | number, {
+        lat: number;
+        lon: number;
+        nodeId: unknown;
+        fromWayId: string | number;
+        toWayId: string | number;
+    }>>;
+    wayCount: number;
+    segmentCount: number;
+    nodeOwners: Map<string | number, string | number | Array<string | number>>;
+    nodeCount: number;
+    maxWays: number;
+    maxNodes: number;
+    maxSegments: number;
+};
+type __S3Struct797 = {
+    "lat": number;
+    "lon": number;
+};
+type __S3Struct798 = {
+    "lat": number;
+    "lon": number;
+};
+type OverpassElement = {
+    type: string;
+    id: string | number;
+    lat: number;
+    lon: number;
+    center?: {
+        lat: number;
+        lon: number;
+    };
+    tags?: Record<string, string>;
+    geometry?: Array<{
+        lat: number;
+        lon: number;
+    }>;
+    nodes?: Array<string | number>;
+};
+type __S3Struct888 = {
+    elements: OverpassElement[];
+};
+export {};

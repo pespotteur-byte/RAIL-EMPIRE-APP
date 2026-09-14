@@ -1,0 +1,40 @@
+Rail Empire v1.1.14 — RailNet Europe GAMEPLAY NATIVE
+=====================================================
+
+CORRECTION DEMANDEE
+-------------------
+Les gares européennes RailNet ne sont plus une couche de références à activer.
+Les 17 817 gares ferroviaires du pack RAIL-ONLY sont créées directement comme de vraies gares gameplay au lancement.
+
+GAMEPLAY DIRECT
+---------------
+- 17 817 / 17 817 gares présentes dans world.stations avant l'entrée en partie.
+- 0 activation manuelle / 0 double-clic préalable.
+- Toutes utilisables immédiatement comme origine/destination et par les lignes/voies du jeu.
+- Toutes éditables comme une gare Rail Empire normale.
+- Aucun .cmd, préparateur, téléchargement ou dépendance réseau.
+- La couche referenceStations reste vide pour le pack Europe : aucun doublon visuel.
+
+SAUVEGARDE DELTA
+----------------
+Les 17 817 gares natives ne sont pas recopiées à chaque autosave.
+- Gare native inchangée : 0 entrée dans la sauvegarde.
+- Gare native modifiée : seule cette gare est enregistrée comme delta.
+- Gare native supprimée : seul son ID est enregistré comme tombstone.
+- Gare créée par le joueur : sauvegarde normale.
+- Les voies/lignes peuvent pointer vers une gare native non sérialisée : elle est reconstruite avant le chargement du save.
+
+PERFORMANCES
+------------
+- Rendu des gares gameplay branché sur l'index spatial du World.
+- Hit-test souris branché sur l'index spatial : pas de scan des 17 817 gares à chaque mouvement de souris.
+- Thinning visuel uniquement aux faibles zooms ; les objets restent tous gameplay.
+
+DONNEES
+-------
+Même pack ferroviaire RAIL-ONLY nettoyé que v1.1.13 :
+- bus/autocar/gare routière exclus ;
+- métro/U-Bahn/subway/tram/light rail/monorail exclus ;
+- villes-conteneurs exclues ;
+- coordonnées trop grossières exclues ;
+- 17 817 références européennes conservées.

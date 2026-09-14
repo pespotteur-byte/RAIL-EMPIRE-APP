@@ -1,0 +1,25 @@
+RAIL EMPIRE v1.1.99 — HOTFIX16 MOVEMENT AUTHORITY
+
+HOTFIX16 remplace l'empilement de blocages independants par une autorite de mouvement centrale.
+
+PRINCIPALES CORRECTIONS
+- GO / CAUTION / STOP centralises dans MovementAuthority.
+- blockedBy ecrit uniquement par MovementAuthority.
+- Les freinages d'approche encore roulants ne sont plus marques [BLOQUE].
+- Les conflits voie/canton/troncon/plateforme continuent a imposer STOP lorsqu'ils exigent reellement 0 km/h.
+- Nettoyage des VoiePoints fantomes, y compris les services invisibles sans position.
+- Les proprietaires physiques reels restent proteges.
+- Conditions de depart silencieuses converties en STOP diagnostique (panne, maintenance, greve, incident, EVO, preparation, garage, ITE, ressources origine).
+- Diagnostic V2 ne superpose plus une occurrence J-1 expiree lorsqu'une occurrence actuelle equivalente est deja vivante.
+
+RETARD LIVEMAP
+- Affichage a la minute complete: 00:59=0, 01:00=+1, 01:59=+1, 02:00=+2.
+- Meme calcul pour panneau LiveMap, labels 2D et suivi GPS 3D.
+- Plus de vieux +1 restaure avant le premier depart.
+
+VALIDATION
+- 102476/102476 tests JS PASS.
+- 522/522 tests MJS PASS.
+- MICI 117171 Paris-Est Voie 20 reproduit avec ressource fantome volontaire: depart a 23:53, mouvement effectif, blockedBy=false.
+
+Build FILE://: 1199dep8

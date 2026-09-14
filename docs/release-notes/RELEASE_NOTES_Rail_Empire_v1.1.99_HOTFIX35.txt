@@ -1,0 +1,38 @@
+Rail Empire v1.1.99 — HOTFIX35 ROLLING DUTY OPERATIONS HARDENING
+
+Base
+- HOTFIX34 rolling-duty stress hardening.
+- Player-exact architecture retained: schedules are theoretical; a train only runs through a rolling-duty line; physical locomotives/EM/coupons are independent; CV/UM/split/merge/loco-change supported.
+
+HOTFIX35 fixes
+- Schedule-version calendars now participate in physical material conflict checks (weekday/weekend false double-booking removed).
+- Same published schedule cannot spawn from two simultaneously valid rolling lines.
+- Physical coupon ownership is exclusive; one vehicle cannot belong to several coupons.
+- Powered locomotives/EMU/railcars cannot be newly placed inside coupons; legacy saves are diagnosed.
+- Deleting a vehicle/coupon used by a line-level assigned formation is blocked.
+- AUTO/PARALLEL operation dependency calculation expands coupons to their physical vehicle IDs.
+- Forced parallel mode can no longer make two operations act simultaneously on the same physical vehicle.
+- CV remains CV: a powered vehicle explicitly assigned VEHICLE/CV is never silently promoted to traction.
+- Validation rejects a formation that loses all active traction before a following leg.
+- Validation rejects attaching material that is already present.
+- Terminal operations are allowed to extend terminal release time; intermediate stops still require sufficient dwell.
+- Rolling-stock operations now execute over real time instead of applying instantly on arrival.
+- Incoming material is reserved at operation start and incorporated only at operation completion.
+- Detach/split material remains in the consist until the end of its physical operation window.
+- Sequential/shared-material operations use a canonical action timeline.
+- Departures are held while rolling-stock operations are running/waiting/failed.
+- Runtime save schema 4 persists in-progress operation state and incoming-material reservations.
+- Reload during an attach/split/UM/loco-change resumes the physical operation instead of replaying or skipping it.
+- Runtime snapshot formation is authoritative on reload after a mid-route consist/loco change.
+
+Preserved
+- HOTFIX17 exact origin-track departure / MovementAuthority.
+- HOTFIX29 70-degree GPS camera and zoom 30.
+- HOTFIX31 French SIV audio recovery.
+- HOTFIX32 player-exact rolling-duty architecture.
+- HOTFIX33 per-vehicle mileage hardening.
+- HOTFIX34 cross-line fleet/calendar/stress protections.
+
+FILE:// build
+- Core/cache: 1199dep28
+- Deferred catalogue/cache: 1199dep28

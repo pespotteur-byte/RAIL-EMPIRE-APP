@@ -1,0 +1,42 @@
+Rail Empire v1.1.70 — Zero-Margin Vmax / Timetable Pacing Fix
+2026-08-19
+
+FIELD REPORT
+- V2 schedules still looked too relaxed in real operation.
+- Trains often failed to reach their permitted Vmax even on clear line, despite automatic timetable margin being fixed at 0 s.
+- Screenshot/field observation showed an on-line passenger train cruising around 89 km/h with no infrastructure/signal reason to do so.
+
+ROOT CAUSE
+- A timetable regulator introduced in v1.1.44 converted remaining distance / remaining booked time into a required AVERAGE speed.
+- That average was then incorrectly applied as an INSTANTANEOUS speed cap.
+- Example consequence: a 160 km/h train whose optimal run averages ~90 km/h because of acceleration/braking could be capped near 90 km/h for most of the trip, so it never reached Vmax.
+- This contradicted the V2 zero-margin contract. The timetable calculator itself already adds no automatic margin.
+
+FIX
+- V2 zero-margin schedules no longer apply any timetable-derived cruise speed cap.
+- En-route speed is now determined only by train Vmax, infrastructure speed, train-length speed transitions, signalling/cantons, traffic conflicts, works/incidents, electrification, weather and physical acceleration/braking.
+- Existing physical timing calculation remains second-precise with automaticMarginSec = 0.
+- Passenger no-advance protection remains at the booked arrival boundary: if numerical/runtime differences make a train reach the exact route endpoint early, it waits there until booked arrival instead of being slowed over the whole leg.
+- Late trains are likewise never slowed by timetable pacing.
+
+UNCHANGED / REGRESSION PROTECTION
+- v1.1.69 long-route stability and multi-target routing retained.
+- 10/14 robust cursor candidates retained.
+- Unknown FALLBACK_30 remains a data warning rather than a hidden 30 km/h timetable restriction.
+- Real documented OSM speed limits remain authoritative.
+- No synthetic straight-line routing fallback.
+- Incident scheduler/icons/delay reasons, Works V2, rame duplication, frequency duplication and schedule search retained.
+
+QA
+- Dedicated zero-margin/Vmax tests: 3/3 PASS.
+- Non-bulk regression bank: 13,802/13,802 PASS.
+- Bulk ORM: 20,275/20,275 PASS.
+- Bulk schedule/misc: 20,143/20,143 PASS.
+- Syntax: 229/229 JS/MJS/CJS PASS.
+- FILE:// core and deferred catalogue bundles rebuilt as v1.1.70 / cache 1170.
+
+FIELD TEST PRIORITY
+1. Re-run the same Esbly / Lagny-Thorigny style service from the screenshot.
+2. On a clear 160 km/h section, confirm the train accelerates toward 160 km/h unless another physical/operational limit applies.
+3. Confirm it still does not register an early passenger arrival.
+4. Re-test the ~10 km and 50 km Schedule Creator routes from v1.1.69.

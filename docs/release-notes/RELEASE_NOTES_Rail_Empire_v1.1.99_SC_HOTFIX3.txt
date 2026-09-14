@@ -1,0 +1,28 @@
+Rail Empire v1.1.99 — Schedule Creator HOTFIX3 ALL ORM TRACKS
+Date: 2026-08-30
+
+OBJECTIF
+- Permettre au Schedule Creator d'utiliser les voies ferroviaires visibles dans OpenRailwayMap au-delà de l'ancien filtre rail/narrow_gauge/preserved.
+- Eviter de devoir poser une succession de VIA artificiels pour suivre une ligne sur une quinzaine de kilomètres.
+
+CORRECTIONS
+1. Graphe ORM élargi aux classes de voies suivantes :
+   rail, narrow_gauge, preserved, light_rail, subway, tram, miniature, funicular,
+   construction, proposed, disused, abandoned, razed.
+2. Les états lifecycle sont conservés dans le graphe, le picker, les segments de route et les snapshots Schedule V2.
+3. Les voies lifecycle/urbaines restent routables mais reçoivent un coût supplémentaire lorsqu'elles constitueraient un raccourci accidentel.
+4. Les voies principales normales restent donc préférées automatiquement lorsqu'une alternative cohérente existe.
+5. Le cache de tuiles monde passe au schéma v3-all-orm-tracks et rejette les anciennes tuiles positives issues de la requête à trois classes.
+6. Le cache de requêtes ORM passe de v6 à v7-all-orm-tracks.
+7. Le futur builder de RailGraph préparé est aligné sur le même périmètre de voies.
+8. Bundle FILE:// reconstruit avec cache-buster 1199sc3.
+
+COMPORTEMENT ATTENDU
+- Une voie visible mais auparavant ignorée par le SC peut désormais être sélectionnée et intégrée au calcul.
+- Sur un corridor connecté d'environ 15 km, le SC peut calculer le trajet avec seulement l'ancrage de départ et l'ancrage d'arrivée ; les VIA restent utiles uniquement pour imposer un choix de branche ou un passage précis.
+- Une voie proposed/disused/abandoned/razed n'est pas choisie comme raccourci si une ligne active raisonnable existe, mais reste techniquement utilisable si l'utilisateur veut explicitement passer par elle.
+
+IDENTITE
+- Jeu: 1.1.99
+- Bundle: FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX3-ALL-ORM-TRACKS
+- Cache bundle: 1199sc3

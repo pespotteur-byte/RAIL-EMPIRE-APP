@@ -1,0 +1,15 @@
+Rail Empire v1.1.99 — HOTFIX14 ZERO RED
+
+This release finishes the full red-test cleanup pass started from HOTFIX13.
+
+Highlights:
+- 553/553 modern tests green.
+- 102484/102484 legacy tests green.
+- Fixed real bank credit-limit regression.
+- Overpass third-endpoint failover is deterministic under event-loop/scheduler pressure.
+- Dense parallel-track routing is substantially faster because synthetic micro-stitches are no longer injected before the strict OSM solve.
+- The historical 2.5 s dense-routing threshold was NOT raised; the engine was optimized instead.
+- Existing endpoint micro-gap repair remains available lazily when strict OSM topology cannot connect a route.
+- FILE:// bundle rebuilt as cache 1199dep6.
+
+No game version bump: remains v1.1.99.

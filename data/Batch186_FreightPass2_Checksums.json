@@ -1,0 +1,146 @@
+{
+  "project": "Rail Empire Batch186 STRICT100 FreightPass2 combined game patch",
+  "files": [
+    {
+      "file": "README_BATCH186_FREIGHT_PASS.txt",
+      "size_bytes": 396,
+      "sha256": "4cd49075f5a00f880de532b3ae90da5409a41bfa7507b8bd349006c07539bf4d"
+    },
+    {
+      "file": "README_BATCH186_FREIGHT_PASS2.txt",
+      "size_bytes": 2556,
+      "sha256": "5afd7160a928f93ba5124ecb06438df05eff2e906774d8f6fb00dcb03b7a7d72"
+    },
+    {
+      "file": "README_BATCH186_INTEGRATION.txt",
+      "size_bytes": 2201,
+      "sha256": "caff59d3e2369ff5e4dbbb082f91e27e93b438e83a70d1ac34543591ad0dcadc"
+    },
+    {
+      "file": "data/Batch186_FreightPass1_Checksums.json",
+      "size_bytes": 3045,
+      "sha256": "87e6400f93c5e2c5d5baf35c65f1cadcc4b801624b5231e2b69ecbddeb021163"
+    },
+    {
+      "file": "data/Batch186_FreightPass1_Report.json",
+      "size_bytes": 697,
+      "sha256": "f28ff6d5e6725e1134df5ab75ef188fb55af46ece007a351369b0ac36fe6a90e"
+    },
+    {
+      "file": "data/Batch186_FreightPass2_Evidence.csv",
+      "size_bytes": 177992,
+      "sha256": "47127c342deb72641ed974aab2fae905f9901814b192249040507155de9c9abb"
+    },
+    {
+      "file": "data/Batch186_FreightPass2_Evidence.json",
+      "size_bytes": 359443,
+      "sha256": "bd7a80b8050e600ff61a18f91bc16c20fe711a0c65a10a95e2824de4eb67b26c"
+    },
+    {
+      "file": "data/Batch186_FreightPass2_NewCargoTypes.json",
+      "size_bytes": 4104,
+      "sha256": "d3dbf08daf800ecf3543579d9f0b4377c5a8f7e46f32e1c2e92c8798d28c10a9"
+    },
+    {
+      "file": "data/Batch186_FreightPass2_QA.json",
+      "size_bytes": 1145,
+      "sha256": "f140e702e8382a1657c41db3f809c6fdf4323b04023ce17535ea7d0787258d9b"
+    },
+    {
+      "file": "data/Batch186_FreightPass2_Report.json",
+      "size_bytes": 2040,
+      "sha256": "8186d1ca2fa8658dfb0d91ea66fec69f839cb62fb27511aca18dc9f1a4af37f2"
+    },
+    {
+      "file": "data/Batch186_FreightPass2_TargetedTests.log",
+      "size_bytes": 2756,
+      "sha256": "5fbf41a776ab9ea135bd069536828065d4b66266f9a4bf46aa9421076a70ce4b"
+    },
+    {
+      "file": "data/Batch186_Game_Integration_Report.json",
+      "size_bytes": 71499,
+      "sha256": "b278b21bdfacd38675dcd9ef1a35c275fef6a5ce8740573f22177cb1890e8d63"
+    },
+    {
+      "file": "data/FreightPass1_TargetedTests.log",
+      "size_bytes": 9473,
+      "sha256": "799402aee95263322ecb1dfbacdde1e9b24a2679b1266c58f39c0fd59d0381a1"
+    },
+    {
+      "file": "data/Pass12_RealIdentity100_Batch186_Checksums.json",
+      "size_bytes": 1195,
+      "sha256": "f64284aabf7f81c85ce584d798b76372d77c095b71516f69806ee74aae653af5"
+    },
+    {
+      "file": "data/Pass12_RealIdentity100_Batch186_Manifest.txt",
+      "size_bytes": 2428,
+      "sha256": "71765fc675ee6d919ce5a3b4b93605abe4abda58412f5294a15b96b335699fff"
+    },
+    {
+      "file": "data/Pass12_RealIdentity100_Batch186_Synthese.json",
+      "size_bytes": 938,
+      "sha256": "13c7a0a49e488197c61de0e1a90332bc755fbe1a5e82ab22ab0ef54913221bd0"
+    },
+    {
+      "file": "data/PatchOverlay_TargetedTests.log",
+      "size_bytes": 2757,
+      "sha256": "9130e67a272dc083980225039c3e2c9ec3284c8b140fbbac254990816bf0b47d"
+    },
+    {
+      "file": "data/Rail_Empire_Grand_Inventaire_Europeen_V5.0_Pass12_RealIdentity100_Batch186.json",
+      "size_bytes": 8225437,
+      "sha256": "6b24a297233d4950cdb5fd164c61ead0f423c2b4b1c6c3766c770ddae5ca288c"
+    },
+    {
+      "file": "index.html",
+      "size_bytes": 84791,
+      "sha256": "0dce15b20d2badbc7b025295ca8ab800b547d963912b230870b269584fce96e6"
+    },
+    {
+      "file": "js/__tests__/batch186-freight-pass2.test.js",
+      "size_bytes": 3818,
+      "sha256": "11e595a1d801ce200e78bb674730d8095286393f62f0bf2b9f1c46d1bb1d65e5"
+    },
+    {
+      "file": "js/__tests__/batch186-freight.test.js",
+      "size_bytes": 3702,
+      "sha256": "b501b5af0d5f93d284fec99514c27db1b9d641a4b13ca76dea00849e5752cd34"
+    },
+    {
+      "file": "js/cargo-types.js",
+      "size_bytes": 25138,
+      "sha256": "f63de7e045a7ae51ddfdcd8ee869e5ff861b0803cbb588ebcfd93c8aa90eabc0"
+    },
+    {
+      "file": "js/catalog-freight-batch186-pass2.js",
+      "size_bytes": 197267,
+      "sha256": "f3810f2b3ccdb2492feabc9888a5b135965390cb518498d2d8d491a5f34bcb5f"
+    },
+    {
+      "file": "js/catalog-freight-batch186.js",
+      "size_bytes": 51260,
+      "sha256": "f0fa2c603c0cf24f6759a403d0158914d0aa5d66599c02d11b1b485efbcbbb0c"
+    },
+    {
+      "file": "js/catalog-identity-batch186.js",
+      "size_bytes": 7264753,
+      "sha256": "ef22e1a3d7233f53d44f649ff1956bc4f4e447a4be508950d20a1492fe0ca07d"
+    },
+    {
+      "file": "js/main.js",
+      "size_bytes": 46144,
+      "sha256": "90179f1750d288670b9e94846ac8cb66bc2b3b431a86066a3006ddfbd4706d0b"
+    },
+    {
+      "file": "js/rolling-stock.js",
+      "size_bytes": 7837,
+      "sha256": "5519621a8d886e803c8a03d5993f16ce4ee34fde4cf415acecf429512e0057b8"
+    },
+    {
+      "file": "js/ui.js",
+      "size_bytes": 485622,
+      "sha256": "ac4309366b16621f9279141422b22f17a1a138d7b7670e5c5f4b845e266163de"
+    }
+  ],
+  "integrity": "PASS"
+}

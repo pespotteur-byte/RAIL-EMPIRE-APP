@@ -1,0 +1,47 @@
+Rail Empire v1.1.67 — Rame Duplication + Timetable Frequency + Schedule Search
+Date: 2026-08-18
+
+NOUVEAUTÉS
+
+1) RAMES — DUPLICATION
+- Nouveau bouton « Dupliquer » sur chaque rame.
+- Ouvre le composeur comme une NOUVELLE rame préremplie.
+- Nom proposé automatiquement: « <nom> (copie) », puis copie 2, copie 3, etc. si besoin.
+- Même composition, même ordre, même orientation et même dépôt proposé.
+- Le numéro de série de la rame est volontairement laissé vide.
+- Chaque véhicule reçoit un nouvel elementId: aucune liaison physique, affectation directe ou roulement de la rame source n'est réutilisé.
+- À l'enregistrement, les séries reçoivent de nouveaux numéros d'instance.
+- La création est facturée comme une nouvelle rame via le moteur économique existant.
+
+2) HORAIRES V2 — DUPLIQUER / FRÉQUENCE
+- Le bouton de duplication ouvre désormais un vrai générateur de fréquence.
+- Intervalle libre en minutes (ex: 5 min).
+- Deux modes:
+  * Nombre de trains dans la série.
+  * Générer jusqu'à une heure donnée.
+- Option « Inclure l'horaire d'origine dans ce nombre ».
+- Limite de génération: fenêtre de 24 h, garde-fou 500 copies.
+- Le trajet ORM, les VIA, les arrêts, les calendriers et l'état de validation sont conservés.
+- Tous les IDs internes (horaire, version, arrêts, VIA, legs) sont recréés.
+- Numérotation automatique même sens: +2 (17801 -> 17803 -> 17805...).
+- Si l'horaire appartient à un aller-retour, option cochée par défaut pour dupliquer le couple lié entier; le retour conserve la logique +1.
+- Aucune rame directe ni affectation de roulement n'est copiée afin d'éviter les doubles engagements de matériel.
+
+3) HORAIRES V2 — RECHERCHE
+- Nouvelle barre de recherche au-dessus de la liste des horaires.
+- Recherche instantanée dans numéro, nom, catégorie, gares/points et voies.
+- Recherche insensible aux accents et aux tirets: « Chateau Thierry » retrouve « Château-Thierry ».
+- Compteur de résultats affiché.
+
+COMPATIBILITÉ
+- Toutes les sauvegardes v1.1.66 restent lisibles.
+- Aucun changement du schéma Schedule V2.
+- Travaux V2, incidents 50/h, pictogrammes et motifs de retard de v1.1.66 sont conservés.
+
+QA
+- v1.1.67 dédié/post-bundle: 5/5 PASS
+- Non-bulk complet: 448/448 PASS
+- Bulk ORM: 20 275/20 275 PASS
+- Bulk horaires + misc: 20 143/20 143 PASS
+- Syntaxe JS/MJS/CJS: 214/214 PASS
+- Bundle FILE:// reconstruit en v1.1.67, cache 1167.

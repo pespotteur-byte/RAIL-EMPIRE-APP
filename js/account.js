@@ -1,5 +1,5 @@
 export class AccountManager {
-  constructor() {
-    this.companyName = '';
-  }
+    constructor() {
+        this.companyName = '';
+    }
 }

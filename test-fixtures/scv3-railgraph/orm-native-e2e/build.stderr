@@ -1,0 +1,5 @@
+[RailGraph] ORM railway_line: 1 segment(s) dupliqué(s) regroupé(s) par osm_id.
+[RailGraph] lecture /mnt/data/scv3_orm_native/work/re187_scv3_SAVE_2026-08-21_1330/test-fixtures/scv3-railgraph/orm-native-e2e/filtered.osm.pbf
+[RailGraph] joint ORM: 5 retenu(s), 1 hors scope gameplay, 0 sans railway_line.
+[RailGraph] 5 way(s) routable(s) retenu(s)
+[RailGraph] total fusionné: 5 way(s)

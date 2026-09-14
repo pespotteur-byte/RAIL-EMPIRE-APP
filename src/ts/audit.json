@@ -1,0 +1,23 @@
+{
+  "alpha": 28,
+  "typescriptFiles": 72,
+  "declarationContractFiles": 5,
+  "typescriptLines": 66652,
+  "unexpectedApplicationJsWithoutTs": [],
+  "tsNoCheckFiles": [],
+  "explicitTsIgnoreCount": 0,
+  "explicitTsExpectErrorCount": 28,
+  "roughExplicitAnyCount": 199,
+  "generatedJsExceptions": [
+    "catalog-batch186-category-overrides.js",
+    "catalog-batch186-full-loader.js",
+    "catalog-cargo-types-base.js",
+    "catalog-data-pack-re.js",
+    "catalog-data.js",
+    "catalog-freight-batch186-pass2.js",
+    "catalog-freight-batch186.js",
+    "catalog-identity-batch186.js",
+    "rail-empire.catalog.bundle.js",
+    "rail-empire.file.bundle.js"
+  ]
+}

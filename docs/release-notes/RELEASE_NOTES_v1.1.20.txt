@@ -1,0 +1,21 @@
+Rail Empire v1.1.20 — ALL NATIVE STATIONS AT ALL ZOOMS
+
+BASE
+- Repart de la v1.1.15 stable GAMEPLAY NATIVE STARTUP REPAIR.
+- Aucun changement du reseau, du routage, du catalogue roulant, des saves ou de la simulation.
+- OpenRailwayMap reste le calque ferroviaire visuel existant.
+
+CHANGEMENT
+- Les 17 817 gares RailNet Europe gameplay natives restent visibles a tous les niveaux de zoom, y compris zoom minimum 5.
+- Suppression du screen-grid deduplication qui masquait plusieurs gares proches au dezoom.
+- Au zoom < 7, toutes les gares sont dessinees comme micro-points legers; aucun nom n'est dessine.
+- Au zoom >= 7, le moteur conserve la requete par index spatial pour le rendu local.
+- Les noms restent affiches seulement a partir du zoom 8 comme auparavant.
+
+PERFORMANCE
+- Au zoom continent, le renderer parcourt directement le tableau des ~18k gares au lieu de balayer les centaines de milliers de cellules vides de l'index 0.05 deg.
+- Test cible: 17 817 gares rendues au zoom 5 sans deduplication.
+
+SCOPE
+- Cette release ne tente plus de convertir/tracer les voies ORM en objets Rail Empire.
+- Prochaine zone de travail prevue: Schedule Creator.

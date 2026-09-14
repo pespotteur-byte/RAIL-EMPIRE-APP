@@ -1,0 +1,13 @@
+{
+  "description": "RC18 ratchet: explicit any debt reduced from 48 to 36; additions fail. Does not certify safe global legacy shims.",
+  "anyByFile": {
+    "src/ts/depot.ts": 0,
+    "src/ts/legacy-ui-compat.ts": 2,
+    "src/ts/orm.ts": 10,
+    "src/ts/s3-final-legacy-compat.d.ts": 5,
+    "src/ts/schedule-v2-model.ts": 1,
+    "src/ts/ui.ts": 17,
+    "src/ts/weather.ts": 1
+  },
+  "expectError": 28
+}

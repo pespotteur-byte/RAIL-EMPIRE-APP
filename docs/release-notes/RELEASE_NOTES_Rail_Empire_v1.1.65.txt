@@ -1,0 +1,47 @@
+Rail Empire v1.1.65 — Incident Density + Operational Icons + Delay Causes
+=======================================================================
+Base: v1.1.64 Travaux V2 ORM
+
+INCIDENT SCHEDULER
+- Replaces the old one-draw-per-type/hour rhythm with an elapsed-game-time global scheduler.
+- Target: 50 SUCCESSFUL incident spawns for every 60 minutes of elapsed game time when valid targets exist.
+- Failed conditional targets do not consume spawn credit: another eligible type is retried and backlog is retained if no target exists.
+- First observation after load only establishes the scheduler clock; loading at e.g. 15:25 does not cause an artificial catch-up burst.
+- Existing per-type probability values are retained as relative weighting between enabled incident types.
+
+LIVEMAP / ALERT ICONS
+- Interruption incident: transparent red circle with the user's original WHITE X preserved.
+- Non-interruption incident: transparent yellow warning triangle with original black exclamation mark preserved.
+- Planned works: transparent orange roadworks triangle extracted from the supplied INFO TRAVAUX reference.
+- Station incident: normal station marker stays visible; compact event icon is offset above/right.
+- Interstation incident: icon is placed at the real incident route/zone midpoint.
+- Train-specific incident: icon follows the affected train.
+- Works restrictions use the orange works pictogram, including when the work is a total closure.
+- Alert banners now carry the correct icon per individual item instead of one generic image per banner.
+
+DELAY CAUSES — CLICKED TRAIN LEFT PANEL
+- Displayed only from +5 minutes delay.
+- Positioned in the existing LEFT Livemap train detail panel, immediately below the current situation line and before composition.
+- Several contributing causes can be displayed simultaneously.
+- Natural frozen wording is used:
+  * Obstacle sur les voies entre Dormans et Château-Thierry
+  * Personnes sur les voies à Meaux
+  * Problème de porte à Meaux
+  * Train en panne entre Dormans et Château-Thierry
+- A station/zone incident is retained after the train has passed only if the train actually accumulated delay while affected by it.
+- An incident that appears behind a train after it has already passed is never attached as a cause.
+- Train-specific incident location is frozen at the place where it happened.
+- Incident delay history is persisted/restored for legacy and Schedule V2 runtime saves while the train remains delayed.
+
+COMPATIBILITY / NON-REGRESSION
+- Travaux V2 precise ORM zones, parallel-way matching and power-off rules preserved.
+- Schedule Creator V2, Livemap runtime/reload, RER RATP and DB Quai contracts preserved by regression tests.
+- No changes to authoritative OSM routing topology or OpenRailwayMap visual contract.
+
+QA
+- Post-bundle v1.1.63/v1.1.64/v1.1.65: 18/18 PASS.
+- Non-bulk targeted regression: 440/440 PASS across 68 test files / 38 suites.
+- Bulk ORM: 20,275/20,275 PASS.
+- Syntax: 211/211 JS/MJS/CJS files PASS node --check.
+- Core FILE:// bundle: ~3.07 MB; deferred catalogue remains ~45.80 MB.
+- User pictograms were technically background-removed without redrawing their central symbols; alpha and visual checks performed.

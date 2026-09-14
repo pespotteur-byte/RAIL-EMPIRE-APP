@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {MovementAuthority} from '../movement-authority.js';
+import {MovementAuthority as Reference} from '../../QA/RE_REPAIR_RC6/reference/movement-authority.rc5.js';
+function pair(){const a={blockedBy:false},b={blockedBy:false};return{a,b,ma:new MovementAuthority(a),mb:new Reference(b)};}
+function compare(p){assert.deepEqual(p.ma.decision(),p.mb.decision());assert.deepEqual(p.a,p.b);assert.deepEqual(p.ma.constraints,p.mb.constraints);}
+function apply(p,name,...args){p.ma[name](...args);p.mb[name](...args);compare(p);}
+test('RC6-AUTH-01: STOP dominates speed limits and publication is unchanged',()=>{const p=pair();apply(p,'begin',300);apply(p,'caution',80,'C1','restriction 1');apply(p,'stop','S','red signal','signal',{foo:1});apply(p,'limit',30,'C2');assert.equal(p.a.movementAuthority.status,'STOP');apply(p,'go');assert.equal(p.a.blockedBy,false);});
+test('RC6-AUTH-02: equal limits and STOPs retain the first submitted cause',()=>{const p=pair();apply(p,'caution',40,'first');apply(p,'caution',40,'second');assert.equal(p.a.movementAuthority.code,'first');apply(p,'stop','first-stop');apply(p,'stop','second-stop');assert.equal(p.a.movementAuthority.code,'first-stop');});
+test('RC6-AUTH-03: 25000 seeded mixed operations match RC5 decisions and publications',()=>{const p=pair();let seed=81234;const r=()=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)/4294967296;};const values=[-10,0,0.1,12,30,80,160,300,Infinity,NaN,undefined,null,'40','invalid'];for(let i=0;i<25000;i++){const n=Math.floor(r()*5),v=values[Math.floor(r()*values.length)];if(n===0||p.ma.constraints.length>20)apply(p,'begin',v);else if(n===1)apply(p,'go');else if(n===2)apply(p,'stop','stop'+i,'cause','test');else apply(p,n===3?'caution':'limit',v,'limit'+i,'restriction','test',{index:i});}});
+test('RC6-AUTH-04: null train retains correct decisions without publication',()=>{const ma=new MovementAuthority(null),mb=new Reference(null);ma.caution(80).stop('red');mb.caution(80).stop('red');assert.deepEqual(ma.decision(),mb.decision());});
+test('RC6-AUTH-05: malformed injected STOPs preserve historical fail-closed priority',()=>{for(const lim of [NaN,Infinity,-Infinity,0,-1,42]){const p=pair(),cs=[{status:'STOP',limitKmh:lim,code:'manual',reason:'manual',source:'test',meta:null},{status:'CAUTION',limitKmh:40,code:'speed',reason:'40',source:'test',meta:null}];p.ma.constraints.push(...cs);p.mb.constraints.push(...cs);compare(p);}});

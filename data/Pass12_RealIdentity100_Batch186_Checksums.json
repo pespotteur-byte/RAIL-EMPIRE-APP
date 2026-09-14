@@ -1,0 +1,30 @@
+{
+  "project": "Rail Empire Pass12 RealIdentity100 Batch186 STRICT100",
+  "algorithm": "SHA-256",
+  "files": {
+    "MLG_vs_RE_V5.0_Pass12_RealIdentity100_Batch186.csv": {
+      "sha256": "ee5517af9547385150c69d3984932e66e72f002102b205100332b463a29094e9",
+      "size_bytes": 28325485
+    },
+    "Pass12_Identity_Disposition_Registry_Batch186.csv": {
+      "sha256": "b6d5484ccba88965d358b39feea07658f8603b683279632b944da99c2bcdc4ea",
+      "size_bytes": 1943295
+    },
+    "Pass12_Newly_Validated_Identities_Batch186.csv": {
+      "sha256": "8a2d842b9da4fa945d20e7c20258663c0eb2a357dcdf0032e6a024ffdcbe8b60",
+      "size_bytes": 32003
+    },
+    "Rail_Empire_Grand_Inventaire_Europeen_V5.0_Pass12_RealIdentity100_Batch186.json": {
+      "sha256": "6b24a297233d4950cdb5fd164c61ead0f423c2b4b1c6c3766c770ddae5ca288c",
+      "size_bytes": 8225437
+    },
+    "Pass12_RealIdentity100_Batch186_Synthese.json": {
+      "sha256": "13c7a0a49e488197c61de0e1a90332bc755fbe1a5e82ab22ab0ef54913221bd0",
+      "size_bytes": 938
+    },
+    "Pass12_RealIdentity100_Batch186_Manifest.txt": {
+      "sha256": "71765fc675ee6d919ce5a3b4b93605abe4abda58412f5294a15b96b335699fff",
+      "size_bytes": 2428
+    }
+  }
+}

@@ -1,0 +1,9 @@
+Rail Empire v1.1.99 — HOTFIX12 DEPARTURE LOCK RECOVERY
+
+This hotfix fixes a real departure deadlock in the physical interlocking layer.
+
+A service could leave a custom-track reservation (`reservedBy`) after becoming invalid/blocked. Unlike physical occupation (`occupiedBy`), that reservation was not checked against the life state of its owner. A following train could therefore reach its booked departure, transition toward movement, then be held at 0 km/h forever by a reservation belonging to a dead service.
+
+HOTFIX12 makes blocked-route services terminal for physical resource ownership, purges dead reservations, releases resources during blocked-route finalization, clears reservations on reload, and preserves all reservations belonging to genuinely active trains.
+
+A visible diagnostic `attente tronçon / réservation` is also emitted for legitimate interlocking waits.

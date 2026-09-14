@@ -1,0 +1,8 @@
+import {pathToFileURL} from 'node:url';import path from 'node:path';import {performance} from 'node:perf_hooks';
+const [root,countText,copiesText]=process.argv.slice(2),count=Number(countText),copies=Number(copiesText),backgrounds=Number(process.argv[5]||0);
+const {ScheduleV2Manager,ScheduleRecord,ScheduleState}=await import(pathToFileURL(path.join(root,'js/schedule-v2-model.js')));
+function manager(){const m=new ScheduleV2Manager(),route=Array.from({length:count},(_,i)=>({lat:48+i*.00001,lon:2+i*.00001,wayId:'way'+Math.floor(i/30),maxSpeed:120,voltage:[25000],frequency:[50]}));
+ const r=new ScheduleRecord({number:'1001',name:'Fret 1001',versions:[{state:ScheduleState.VALID,locations:[{stationId:'A',departureSec:3600},{stationId:'B',arrivalSec:7200}],outboundPath:{legs:[{fromLocationId:'',toLocationId:'',routePoints:route}]}}]});m.schedules.push(r);for(let j=0;j<backgrounds;j++)m.schedules.push(new ScheduleRecord({number:String(90000+j),name:`Background ${j}`,versions:[{state:ScheduleState.VALID,locations:[{stationId:"A",departureSec:3600},{stationId:"B",arrivalSec:7200}],outboundPath:{legs:[{routePoints:route}]}}]}));return {m,r};}
+const samples=[];let summary;
+for(let k=0;k<5;k++){const {m,r}=manager();const start=performance.now();const made=m.duplicateScheduleFrequency(r.id,{intervalSec:120,totalCount:copies+1});const elapsed=performance.now()-start;if(k>=2)samples.push(elapsed);summary=made.map(s=>({number:s.number,name:s.name,points:s.currentVersion.outboundPath.routePoints.length,departure:s.currentVersion.firstDepartureSec,first:s.currentVersion.outboundPath.routePoints[0].lat,last:s.currentVersion.outboundPath.routePoints.at(-1).lat}));}
+console.log(JSON.stringify({samples,summary}));

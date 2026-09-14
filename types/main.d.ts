@@ -1,0 +1,80 @@
+import { LiveryLibrary, type LiveryTarget } from './livery-model.js';
+import { SimulationEngine } from './engine.js';
+import { GameplayClock } from './gameplay-clock.js';
+import { OperationalDiagnostics } from './operational-diagnostics.js';
+import { SeededRng } from './rng.js';
+import { Economy } from './economy.js';
+import { IncidentManager } from './incidents.js';
+import { GameStorage } from './storage.js';
+import { type ExternalCatalogApplyResult } from './catalog-external.js';
+type StatusState = 'loading' | 'done' | 'error' | string;
+type SaveOptions = {
+    force?: boolean;
+    lowMemory?: boolean;
+    routePointCount?: number;
+};
+export declare class RailEmpire {
+    liveries: LiveryLibrary;
+    private _liveryWriting;
+    storage: GameStorage;
+    incidentManager: IncidentManager;
+    economy: Economy;
+    engine: SimulationEngine;
+    rng: SeededRng;
+    private _started;
+    private _launching;
+    private _importing;
+    gameplayClock: GameplayClock;
+    diagnostics: OperationalDiagnostics;
+    private _externalCatalogApplied;
+    private _externalCatalogLastResult;
+    constructor();
+    init(): Promise<void>;
+    startGame(savedState: unknown): void;
+    _setWorldStationsStatus(message: unknown, state?: StatusState): void;
+    _indexAllZoomGameplayStations(stations: unknown, source?: unknown): Promise<any>;
+    _ensureAllZoomGameplayStations(): any;
+    _startRailReferenceSync(): void;
+    _streamNativeOSMViewport(force?: unknown): any;
+    _seedCatalogCargoTypes(): void;
+    _ensureBaseCatalogModulesLoaded(): Promise<any>;
+    _ensureBaseCatalogSeeded(): Promise<number>;
+    seedCatalog(): number;
+    _applyAdminCatalogOverridesIncremental(): number;
+    _seedBatch186CatalogChunk(chunk: unknown): number;
+    _setCatalogLoadStatus(message: unknown, state?: StatusState): void;
+    _applyStoredExternalCatalog(): Promise<ExternalCatalogApplyResult | null>;
+    importExternalCatalogFile(file: File): Promise<{
+        modifications: number;
+        deletions: number;
+        imports: number;
+        createdAt: string;
+    }>;
+    clearExternalCatalog(): Promise<void>;
+    _loadBatch186FullCatalogInBackground(): any;
+    _setupSettings(): void;
+    exportSaveFile(): Promise<void>;
+    _collectPinnedNativeStationIds(): Set<unknown>;
+    private _captureImportCheckpoint;
+    loadState(input: unknown): void;
+    /** One import at a time. Simulation/autosave stay suspended until the commit
+     * has succeeded; a failed write restores the exact previous in-memory graph. */
+    importState(input: unknown): Promise<void>;
+    private _loadStateUnchecked;
+    /** Collect the editable sprites without traversing geometry, physics or DOM. */
+    liveryTargets(includeRuntime?: boolean): LiveryTarget[];
+    refreshLiveryImages(strict?: boolean, includeRuntime?: boolean): void;
+    commitLiveryChange(change: () => void): Promise<void>;
+    _saveStateNow(options?: SaveOptions | null): any;
+    saveState(options?: SaveOptions | true | null): any;
+    moveTick(dt: number, timeOfDay: unknown): void;
+    _forceV2RuntimeSyncNow(): any;
+    _updateV2RuntimeStatus(): void;
+    secondTick(timeOfDay: unknown, dateStr: unknown, pt: unknown): void;
+    tick(timeOfDay: number, dateStr: string, pt: unknown): void;
+    private _replayPump;
+    private _lastReplayStatusPaint;
+    private _replayStatusWasCatchingUp;
+    gameLoop(): void;
+}
+export {};

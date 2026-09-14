@@ -1,0 +1,85 @@
+RAIL EMPIRE v1.1.92 — SC FORCE TIME + GLOBAL PAGE HELP
+======================================================
+
+Build flavor: SC-FORCE-TIME-PAGE-HELP
+Base: Rail Empire v1.1.91 SC Dijon/Beaune Routing Resilience
+
+1. SCHEDULE CREATOR — FORCER UN TEMPS PLUS COURT QUE LE CALCUL RE
+----------------------------------------------------------------
+- Un horaire manuel plus court que le temps physique de référence RE reste signalé.
+- Il n'est plus impossible à enregistrer : un dialogue explicite propose
+  « Forcer et valider quand même ».
+- Le forçage ne concerne QUE l'écart de temps de marche.
+- Les erreurs structurelles restent bloquantes : tracé/voie absent, incompatibilité
+  électrique, gabarit/écartement, TAQ, chronologie négative, etc.
+- Une fois forcée, l'anomalie MANUAL_ARRIVAL_PHYSICALLY_IMPOSSIBLE devient un WARNING.
+- Le choix est persisté dans ScheduleVersion.allowShorterThanPhysicalTiming.
+- Si les horaires sont ensuite corrigés et ne sont plus sous le minimum RE,
+  l'override devenu inutile est retiré automatiquement.
+
+2. AIDE / TUTORIEL — BOUTON VISIBLE SUR TOUTES LES PAGES
+--------------------------------------------------------
+- Le petit bouton historique a été remplacé par un bouton classique et visible :
+  « ❓ Tutoriel » dans le bandeau global.
+- Chaque page de navigation reçoit en plus son bouton propre
+  « ❓ Aide / Tutoriel », visible dans l'en-tête ou en position flottante si
+  la page ne possède pas d'en-tête standard.
+- Le Schedule Creator et la page Roulements, qui reconstruisent dynamiquement
+  leur interface, intègrent également leur propre bouton visible.
+
+Pages couvertes :
+- Carte
+- Matériel roulant
+- Rames
+- Horaires / Schedule Creator
+- Roulements
+- Lignes / Réseau
+- Dépôts & ITE
+- Incidents & Travaux
+- Infogare
+- Dashboard
+- Graphique de marche
+- Personnel
+- Météo
+- Marchandises
+- Industriels
+
+3. GUIDES CONTEXTUELS
+---------------------
+Chaque page dispose d'un guide détaillé de son fonctionnement global :
+- rôle de la page ;
+- principales actions ;
+- workflow conseillé ;
+- points de vigilance et erreurs fréquentes ;
+- liens logiques avec les autres pages de Rail Empire.
+
+Le guide Horaires explique notamment :
+- création d'un horaire et Schedule Creator ;
+- temps de marche manuels ;
+- nouveau bouton « Forcer et valider quand même » ;
+- diagnostic OSM/ORM et « ↺ Auto segment » ;
+- calendriers et affectation directe/Roulements.
+
+Le guide Roulements utilise une capture d'exemple intégrée.
+Le guide Infogare peut réutiliser les illustrations de panneaux déjà embarquées.
+Le moteur du tutoriel supporte maintenant image + légende par étape.
+
+4. QA
+-----
+- Nouveaux tests v1.1.92 : 7/7 PASS.
+- Batterie croisée Schedule model/runtime + Direct + Rames + Roulements +
+  correctif v1.1.91 + v1.1.92 : 70/70 PASS.
+- Batterie Schedule Creator étendue : 122/123 PASS.
+  L'unique échec est l'ancien test v1.1.83
+  « router exposes the 3-minute budget failure distinctly », déjà hérité avant
+  la v1.1.92. Aucun nouvel échec v1.1.92 identifié.
+- Syntaxe : 238/238 fichiers JS/MJS valides via node --check.
+- Smoke Chromium contrôlé sur le bundle final : 15/15 pages possèdent leur aide,
+  ouverture du guide Horaires OK, texte de forçage visible, 0 défaut QA du
+  système d'aide observé.
+- Le smoke Chromium utilise un harness about:blank avec injection du bundle final,
+  car la politique administrateur Chromium de l'environnement bloque le
+  lancement normal file:// / localhost avant Rail Empire.
+
+Capture QA :
+QA/QA_Rail_Empire_v1.1.92_HELP_CHROMIUM.png

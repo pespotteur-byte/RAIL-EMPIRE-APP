@@ -1,0 +1,32 @@
+Rail Empire v1.1.5 — LONG DISTANCE TRACER LIGNE
+
+Objectif
+- Rendre Tracer ligne résilient sur des imports très longs (jusqu'à ~500 km et davantage selon la densité OSM).
+
+Voies
+- La zone A/B est découpée automatiquement en tuiles Overpass d'environ 35 km.
+- 3 tuiles voies maximum en parallèle pour ne pas saturer les endpoints.
+- Chaque tuile utilise les 4 endpoints Overpass configurés, avec retries.
+- Une tuile réellement en échec est automatiquement redécoupée en deux, jusqu'à 3 niveaux.
+- Les tuiles réussies sont conservées et mises en cache ; elles ne sont pas perdues si une autre tuile échoue.
+- Les OSM ways sont dédupliqués par identifiant avant construction du réseau.
+- Un échec réseau réel ne peut plus être confondu avec une tuile valide ne contenant aucune voie.
+
+Gares
+- Import tuilé séparé (~45 km), 2 requêtes maximum en parallèle.
+- Retries et redécoupage indépendants des voies.
+- Tram, métro, light rail et autres transports urbains restent exclus.
+- Les gares sont dédupliquées par identifiant OSM.
+
+Performance/UI
+- Progression visible : tuiles voies, construction réseau, indexation, tuiles gares.
+- Yields réguliers pendant la construction du graphe pour éviter de bloquer l'interface sur les très gros imports.
+- Cache persistant des tuiles ORM.
+
+Garantie
+- Le jeu vise un import complet des données disponibles auprès d'OSM/Overpass.
+- Il est impossible de garantir la présence d'une gare absente d'OSM ou un succès réseau lorsque tous les serveurs externes sont indisponibles.
+- En revanche, Rail Empire ne valide plus silencieusement un import voies lorsqu'une tuile réseau a réellement échoué.
+
+Tests
+- 20 336 PASS / 0 FAIL sur la batterie ciblée.

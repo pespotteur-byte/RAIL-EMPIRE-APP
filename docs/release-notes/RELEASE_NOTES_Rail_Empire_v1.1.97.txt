@@ -1,0 +1,30 @@
+Rail Empire v1.1.97 — LIVEMAP STOP CURSOR + SIV FRENCH VOICE FIX
+=================================================================
+
+Field bugs repaired
+-------------------
+1. V2 train stopped at its destination while the Livemap still displayed that
+   exact station as the "next stop", preventing terminal release / next rotation.
+   - Root cause: v1.1.96 runtime snapshot restore clamped currentStopIndex to
+     stops.length - 1 although stops.length is the valid after-last sentinel.
+   - Restores now preserve the terminal sentinel.
+   - Saves already poisoned by v1.1.96 are repaired automatically when the
+     physical reserved station equals the wrongly pointed "next" station.
+   - A live stopped-state invariant also self-heals the same corruption without
+     requiring a fresh save.
+
+2. Livemap SIV could speak dynamic station names with an English Chromium voice.
+   - Non-French voices are now completely rejected.
+   - Only voices whose language is fr / fr-* may synthesize variable station names.
+   - If no French voice exists on the machine, the announcement is cancelled
+     instead of silently falling back to English.
+   - The three fixed phrases remain the original extracted RER-B recording.
+   - If a fixed RER-B audio asset fails, it is no longer replaced by generic TTS.
+
+Preserved from v1.1.96
+----------------------
+- Physical early arrival is recognized as stopped_at_station.
+- Passenger departure remains pinned to the booked departure time.
+- Livemap selected-route trace uses Schedule-Creator style rendering.
+- Gameplay stations on the selected route are rendered in red.
+- Catalogue/data from v1.1.95 remain untouched by these Livemap/runtime fixes.

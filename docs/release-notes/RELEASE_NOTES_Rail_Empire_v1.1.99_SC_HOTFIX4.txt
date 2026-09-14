@@ -1,0 +1,48 @@
+Rail Empire v1.1.99 — Schedule Creator HOTFIX4 LONG-RANGE + VIA
+================================================================
+
+OBJECTIF
+- Créer un trajet ferroviaire très long (400 km et davantage) en une seule opération avec seulement le départ et l'arrivée lorsque le réseau OSM/ORM est continu.
+- Éviter la construction d'un graphe exact géant en mémoire.
+- Permettre d'insérer un VIA entre deux arrêts déjà créés sans supprimer/recréer les arrêts ni recalculer tout le trajet.
+
+NOUVEAU MOTEUR LONGUE DISTANCE
+- Routage hiérarchique à fenêtres : topologie macro compacte puis reconstruction exacte par fenêtres bornées sur les vraies voies OSM.
+- Portails intermédiaires entièrement internes : ils ne deviennent jamais des VIA utilisateur ni des arrêts sauvegardés.
+- Beam/corridor planning avec alternatives latérales afin d'éviter les branches droites qui finissent en cul-de-sac.
+- Élargissement progressif uniquement en cas d'échec, y compris les grands détours ferroviaires réels.
+- Gouverneur mémoire avant construction du graphe exact : plafond par fenêtre sur le nombre de ways/segments.
+- Le moteur conserve les politiques HOTFIX2/HOTFIX3 : toutes voies ORM routables, 3 endpoints Overpass en failover, timeout du corps JSON, cache OSM mondial.
+
+ÉDITION D'ITINÉRAIRE
+- Une ligne d'édition apparaît entre chaque paire d'arrêts du SC.
+- Bouton « ＋ VIA » sur chaque tronçon A → B.
+- Cliquer ce bouton puis une voie ORM ajoute le point de passage à CE tronçon.
+- Les deux arrêts restent en place.
+- Les VIA existants du tronçon sont visibles sous forme de boutons/chips sélectionnables.
+- Déplacer/insérer avant/après/supprimer un VIA reste disponible.
+- Recalcul local : les legs non modifiés sont réutilisés ; ajouter un VIA sur A→B ne relance pas le routeur pour B→C, C→D, etc.
+
+MÉMOIRE
+- Les RoutePoints sauvegardés sont compactés : les gros tags Overpass bruts ne sont plus dupliqués dans chaque point.
+- Les métadonnées nécessaires à la physique, l'électrification, la vitesse, le gabarit, le sens, la pente/incline et la validation sont conservées.
+
+PACKAGING
+- VERSION : 1.1.99
+- Build : FULL-AUDIT-TAXONOMY-CROSSSYSTEM-SC-HOTFIX4-LONG-RANGE-VIA
+- Cache FILE:// : 1199sc4
+
+VALIDATION
+- Batterie SC/ORM/routage ciblée : 137/137 PASS.
+- Batterie moderne .mjs finale : 501/501 PASS.
+- Stress tests HOTFIX4 : ~400 km et ~900 km sans VIA utilisateur : PASS.
+- Test d'édition locale : insertion VIA sur A→B => un seul appel routeur, B→C réutilisé : PASS.
+- Test du bundle FILE:// : moteur LONG-RANGE + insertion VIA + cache 1199sc4 présents : PASS.
+
+HORS PÉRIMÈTRE
+- Le vieux stress-test banque « borrow respects credit limit » a 375 sous-tests rouges. Comparaison directe HOTFIX3/HOTFIX4 : résultat strictement identique (5126 PASS / 375 FAIL), donc cette anomalie est préexistante et n'est pas une régression du SC HOTFIX4.
+
+LIMITES RÉELLES
+- Le moteur ne peut pas inventer une connexion ferroviaire absente des données OSM/ORM.
+- Une indisponibilité totale des données réseau pour une zone non mise en cache peut empêcher le calcul.
+- La distance seule ne doit plus provoquer l'abandon : si un chemin ferroviaire continu est disponible, le solveur longue distance le cherche par fenêtres bornées au lieu de charger 400+ km dans un graphe monolithique.

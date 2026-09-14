@@ -1,0 +1,11 @@
+Rail Empire v1.1.99 — HOTFIX76 GRAPH ZOOM / PAN / TRAIN LABELS
+
+Graphique de marche uniquement :
+- caméra virtuelle zoomable 100% -> 800% sans agrandir le backing canvas ;
+- boutons - / 100% / + / x8 ;
+- Ctrl + molette pour zoomer autour du pointeur ;
+- déplacement avec les quatre flèches (Shift = déplacement plus grand) ;
+- touches + / - et 0 (reset) ;
+- nom du train/service dessiné parallèlement à la ligne noire théorique ;
+- libellé retourné automatiquement pour ne jamais être à l'envers ;
+- aucune modification du runtime circulation, LiveMap, roulements, audio ou catalogue.

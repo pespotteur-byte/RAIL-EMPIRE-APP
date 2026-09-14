@@ -1,0 +1,58 @@
+Rail Empire v1.1.76 — Schedule Creator Long Route / Junction Routing Hotfix
+Date: 2026-08-20
+Base: v1.1.75 Incident Probability / Location Dedup Hotfix
+
+OBJECTIF
+-------
+Corriger les temps de calcul de plusieurs minutes observés dans Schedule Creator V2 sur des trajets régionaux (~50 km et plus), et restaurer le routage fiable des petits mouvements d'aiguillage/bifurcation placés à la fin d'un long trajet (cas terrain Mannheim-Friedrichsfeld).
+
+CORRECTIONS PRINCIPALES
+-----------------------
+1. Routage incrémental par liaison VIA exacte
+- Une chaîne Schedule V2 liée à des voies OSM exactes est maintenant résolue et mémorisée liaison par liaison.
+- Ajouter un nouveau VIA ne reconstruit plus le graphe de tout le trajet déjà résolu.
+- Les liaisons précédentes sont réutilisées depuis un cache exact borné.
+- Un échec sur le nouveau petit tronçon reste local : le moteur ne relance plus automatiquement un énorme solveur sur toute la chaîne de 50+ km.
+
+2. Haute fidélité locale des bifurcations
+- Chaque liaison courte (<3 km) bénéficie indépendamment de la source OSM Map API haute fidélité, même si le trajet total fait 50/100 km.
+- Les vrais nodeIds OSM des aiguilles restent donc disponibles pour les mouvements locaux dans les grils de gare et bifurcations.
+- La longueur totale du trajet ne désactive plus ce traitement local.
+
+3. Identité exacte du segment OSM
+- TrackBinding et RouteConstraint conservent maintenant segmentIndex en plus de wayId.
+- Le dernier VIA utilisé comme pseudo-destination de preview conserve lui aussi son segmentIndex.
+- Les ancres résolues réinjectent segmentIndex dans l'éditeur.
+- Les clés de cache de liaison distinguent deux segments différents d'un même wayId.
+- Le candidat exact filtre d'abord le wayId demandé au lieu de rescanner tous les segments de toutes les voies.
+
+4. Cache / offline / F5
+- Un tracé Schedule sauvegardé et VALID peut être réutilisé avant tout appel HTTP lorsque sa clé topologie+profil est toujours valable.
+- Le cache IndexedDB spatial est consulté avant le réseau pour les liaisons exactes.
+- La recherche IndexedDB est bornée aux enregistrements récents (180 maximum par défaut, 120 dans le chemin de liaison rapide) au lieu de pouvoir parcourir tout l'historique ORM.
+- Les anciennes géométries validées gardent leur segmentIndex quand l'information existe.
+
+5. Performance
+- Le coût d'ajout d'un VIA dépend désormais principalement du nouveau tronçon, pas de la longueur du préfixe déjà tracé.
+- Benchmark synthétique dans l'environnement de QA : 33 003 segments ferroviaires, trajet ~50–55 km : ~0,44 s au premier calcul en mémoire ; ajout d'un VIA supplémentaire : ~0,041 s.
+- Ce benchmark mesure le CPU/routage local. Le premier chargement d'une zone jamais mise en cache dépend toujours de la disponibilité des API OSM/Overpass.
+
+INCHANGE
+--------
+- Aucun fallback ferroviaire synthétique en ligne droite.
+- Règles voie exacte de v1.1.74 conservées.
+- Physique/cantonnement v1.1.73 inchangés.
+- Incidents v1.1.75 inchangés.
+- Timings horaires et règles de roulement inchangés.
+
+QA
+--
+- Tests dédiés v1.1.76 : 6/6 PASS.
+- Régressions routage longue distance / petits grils / mémoire ORM : 70/70 PASS.
+- Post-bundle critique v1.1.73 -> v1.1.76 : 73/73 PASS.
+- Bulk ORM : 20 275/20 275 PASS.
+- Bulk Schedule : 8 502/8 502 PASS.
+- Syntaxe sources JS/MJS/CJS : 218/218 PASS.
+- Syntaxe bundles FILE:// : 2/2 PASS.
+- Bundle : 63 modules cœur + 66 modules catalogue.
+- Version/cache : v1.1.76 / 1176.

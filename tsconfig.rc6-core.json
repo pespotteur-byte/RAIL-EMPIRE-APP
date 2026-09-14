@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {"noEmit": true, "declaration": false, "declarationDir": null},
+  "include": ["src/ts/physics-rear-clearance.ts", "src/ts/legacy-operating-day.ts", "src/ts/movement-authority.ts"]
+}

@@ -1,0 +1,36 @@
+Rail Empire v1.1.99 — HOTFIX25 TRUE GPS CAMERA + PERFORMANCE
+31/08/2026
+
+Objectif
+- Corriger la vue 3D GPS HOTFIX24 qui restait visuellement trop proche d'une vue 2D.
+- Supprimer le goulet d'étranglement pouvant faire tomber la LiveMap à ~2 FPS.
+
+Caméra GPS
+- Perspective 5000 px quasi-orthographique remplacée par un champ de vue proportionnel au viewport (~1300 px sur 982x540).
+- Pitch dynamique 48° -> 58° selon le zoom.
+- Compensation verticale après inclinaison pour conserver une vraie perspective sans nécessiter une dalle gigantesque.
+- Zoom 3D maximum porté de 15.5 à 17.5.
+- Flèche suivie toujours épinglée au centre écran (HOTFIX23).
+- Rotation suivant le tracé conservée (HOTFIX18/19).
+
+Performance
+- Dalle 3D calculée depuis la diagonale + overscan réel, sans division 1/cos(pitch).
+- DPR de la dalle pseudo-3D fixé à 1.0.
+- Sur 982x540 à z15.5: ~1435x1435 pixels contre ~1683x1683 x DPR1.35 auparavant (~2.06 MP vs ~5.16 MP de backing pixels).
+- Recentrage raster limité selon zoom (180/250/350 ms).
+- Le cap caméra continue d'être mis à jour à la cadence du game loop via CSS, sans forcer un redraw satellite.
+- Le renderer ignore désormais le spam needsRender/dirty des tuiles entre deux frames GPS programmées.
+- Cadence raster adaptative selon le coût réel de la frame: 220 / 320 / 450 / 650 ms.
+- Le délai est compté après la fin d'une frame lourde pour garantir un vrai temps de repos CPU.
+
+Couverture
+- Overscan recalculé avec pénalité d'aspect pour les fenêtres proches du carré.
+- QA géométrique: 4 résolutions, 5 zooms, caps 0..175° par pas de 5°, aucun coin hors dalle.
+
+Régressions
+- HOTFIX16 MovementAuthority conservé.
+- HOTFIX17 exact origin track conservé.
+- HOTFIX18/19 rotation et axe conservés.
+- HOTFIX20 filtres 3D conservés.
+- HOTFIX23 flèche centre-écran conservée.
+- DEM reste optionnel et désactivé par défaut.

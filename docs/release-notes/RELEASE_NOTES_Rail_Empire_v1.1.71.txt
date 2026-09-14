@@ -1,0 +1,56 @@
+Rail Empire v1.1.71 — Cantonnement / Queue Safety Hotfix
+Date: 2026-08-19
+
+OBJECTIF
+Corriger les espacements incoherents et les pertes de detection lorsqu'un train est bloque ou arrete devant d'autres trains, sans casser les voies paralleles, le routage ORM, ni le comportement V2 zero-margin de v1.1.70.
+
+CORRECTIONS PRINCIPALES
+1. Identification des cantons / cache route
+- La cle de cache CantonManager n'est plus basee uniquement sur extremites + nombre de points.
+- Elle echantillonne maintenant la geometrie (0/25/50/75/100 %) ainsi que wayId/maxSpeed.
+- Deux geometries differentes ne reutilisent plus accidentellement la meme table de cantons.
+
+2. Detection physique du train devant
+- Le filet de securite ne depend plus d'une quinzaine de points echantillonnes sur toute la route.
+- Projection geometrique locale sur les segments de la route, avec fenetre exprimee en distance et non en nombre de points.
+- Un leader arrete est detectable meme sur un trace dense de 50 km.
+- La liste _nearbyServices par routeKey n'est plus une autorite de securite: elle est fusionnee avec la grille spatiale du jeu et un fallback complet existe si necessaire.
+- wayId OSM est utilise comme discriminant principal pour ne pas confondre deux voies paralleles.
+
+3. Espacement et freinage continu
+- Calcul du gap jusqu'a l'arriere du train de tete, en tenant compte de sa longueur physique.
+- Marge fixe de 50 m + distance de reaction equivalente a 3 s.
+- Vitesse de securite derivee d'une courbe de freinage physique, au lieu d'un plafond arbitraire.
+- Le garde-fou anti-depassement devient un dernier filet anti-chevauchement et ne remplace plus la regulation normale.
+
+4. Signalisation / cantonnement en pleine simulation
+- Signal ferme: freinage continu vers la limite de canton, puis VISA 30/20/10 sur les 300 derniers metres.
+- Signal d'avertissement: anticipation vers le signal de fin du canton clair suivant, sans plafonnement permanent a 60 km/h.
+
+5. Mode macro / LOD
+- Suppression du comportement qui mettait macroSpeed=0 immediatement lorsqu'un canton suivant etait occupe.
+- Un train ne s'arrete donc plus au debut de son canton, parfois 1 a 2 km trop tot.
+- Le mode macro applique maintenant lui aussi une courbe de freinage vers le signal et la VISA finale.
+
+6. Anti-chevauchement
+- Protection de l'arriere du leader + 30 m de garde dure en dernier recours.
+- Si un pas de simulation grossier depasse la limite, le train est replace sur sa progression de route correcte et la distance de roulement comptabilisee est corrigee.
+
+CONTRATS CONSERVES
+- OSM vectoriel = topologie ferroviaire autoritaire.
+- Aucun fallback ferroviaire en segment droit synthetique.
+- Voies paralleles independantes via wayId lorsque disponible.
+- v1.1.69: stabilite Schedule Creator / FALLBACK_30 corrigee.
+- v1.1.70: aucune limitation de vitesse en ligne imposee par l'horaire; marge automatique = 0 s; pas d'avance voyageurs gere a l'arrivee.
+
+QA
+- Tests dedies v1.1.71: 6/6 PASS.
+- Post-bundle v1.1.69 -> v1.1.71: 15/15 PASS.
+- Non-bulk: 13 808 / 13 808 PASS.
+- Bulk ORM: 20 275 / 20 275 PASS.
+- Bulk schedule/misc: 20 143 / 20 143 PASS.
+- Syntaxe JS/MJS/CJS: 230 / 230 PASS.
+- Bundle FILE://: version/cache v1.1.71 / 1171 verifies.
+
+TEST TERRAIN RECOMMANDE
+Placer plusieurs trains sur le meme axe, immobiliser le train de tete, puis observer la file en mode haute precision et en mode macro/LOD. Les suiveurs doivent detecter le leader, freiner progressivement, proteger son arriere et ne plus laisser un trou artificiel de plusieurs kilometres.

@@ -1,0 +1,139 @@
+{
+  "build": "RC18 FULL",
+  "initialAuditIssuesClosed": 7,
+  "additionalFunctionalIssuesClosed": 2,
+  "totalAuditFindingsClosed": 9,
+  "knownAuditIssuesStillOpen": 0,
+  "notAZeroBugGuarantee": true,
+  "historicalOverlap": "AUD17-05 couvre la lacune TIME05 déjà présente dans le registre historique. Ne pas additionner les 87 dossiers et les 9 constats comme s’ils étaient tous distincts.",
+  "issues": [
+    {
+      "id": "AUD17-01",
+      "title": "Un import rejeté modifie quand même la partie active",
+      "priority": "P1",
+      "status": "CLOS — critères reproduits et vérifiés dans RC18",
+      "correction": "Validation avant mutation, journal de restauration des gestionnaires, import exclusif et verrou modal. Retour à la partie précédente lors des erreurs testées ; les cantons d’un secours actif sont restaurés.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/browser-deep/results.json",
+        "QA/RE_REPAIR_RC18/browser-safety/results.json",
+        "QA/RE_REPAIR_RC18/repair-final.log"
+      ],
+      "baseline": "QA/RE_REPAIR_RC18/initial-audit/REGISTRE_AUDIT_RC17.json"
+    },
+    {
+      "id": "AUD17-02",
+      "title": "Des schémas horaires et roulements incompatibles sont annoncés chargés",
+      "priority": "P1",
+      "status": "CLOS — critères reproduits et vérifiés dans RC18",
+      "correction": "Les refus des schémas horaires, roulements ET runtime V2 sont propagés. Aucun succès annoncé avant la confirmation de stockage ; l’écriture refusée provoque le retour à l’état précédent.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/browser-deep/results.json"
+      ],
+      "baseline": "QA/RE_REPAIR_RC18/initial-audit/REGISTRE_AUDIT_RC17.json"
+    },
+    {
+      "id": "AUD17-03",
+      "title": "Un export peut mélanger deux instants comptables",
+      "priority": "P1",
+      "status": "CLOS — critères reproduits et vérifiés dans RC18",
+      "correction": "Capture JSON synchrone avant toute attente ; compression du même instantané dans le worker typé ou dans le repli. Vérification du véritable fichier gzip.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/browser-deep/results.json",
+        "QA/RE_REPAIR_RC18/repair-final.log"
+      ],
+      "baseline": "QA/RE_REPAIR_RC18/initial-audit/REGISTRE_AUDIT_RC17.json"
+    },
+    {
+      "id": "AUD17-04",
+      "title": "Un double lancement installe deux fois les actions de l’interface",
+      "priority": "P2",
+      "status": "CLOS — critères reproduits et vérifiés dans RC18",
+      "correction": "Garde de lancement asynchrone et initialisation idempotente ; deux clics rapprochés donnent un lancement et une action par clic d’export.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/browser-double-launch/results.json"
+      ],
+      "baseline": "QA/RE_REPAIR_RC18/initial-audit/REGISTRE_AUDIT_RC17.json"
+    },
+    {
+      "id": "AUD17-05",
+      "title": "La génération locale des incidents diverge après rechargement",
+      "priority": "P2",
+      "status": "CLOS — critères reproduits et vérifiés dans RC18",
+      "correction": "Persistance des crédits d’incidents, minutes observées, curseurs météo et identifiant suivant. Essais sur 48 heures avec incidents actifs et quatre gestionnaires recréés, et contrôle des hooks réels de sauvegarde.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/repair-final.log",
+        "QA/RE_REPAIR_RC18/browser-safety/results.json"
+      ],
+      "baseline": "QA/RE_REPAIR_RC18/initial-audit/REGISTRE_AUDIT_RC17.json"
+    },
+    {
+      "id": "AUD17-06",
+      "title": "Une sauvegarde supprimée peut réapparaître après un recul d’horloge",
+      "priority": "P2",
+      "status": "CLOS — critères reproduits et vérifiés dans RC18",
+      "correction": "Marqueur de suppression logique indépendant de l’heure ; l’ancienne sauvegarde reste masquée si la suppression IndexedDB échoue. Retour d’échec si aucun mécanisme ne protège les données. Une sauvegarde confirmée retire le marqueur.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/repair-final.log"
+      ],
+      "baseline": "QA/RE_REPAIR_RC18/initial-audit/REGISTRE_AUDIT_RC17.json"
+    },
+    {
+      "id": "AUD17-07",
+      "title": "Le diagnostic de mouvement RC17 s’identifie encore comme RC12",
+      "priority": "P3",
+      "status": "CLOS — critères reproduits et vérifiés dans RC18",
+      "correction": "Identité RC18 générée depuis le build du package, utilisée dans le nom du diagnostic et son JSON.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/repair-final.log",
+        "QA/RE_REPAIR_RC18/browser-historique/rc18-memory-smoke.json"
+      ],
+      "baseline": "QA/RE_REPAIR_RC18/initial-audit/REGISTRE_AUDIT_RC17.json"
+    },
+    {
+      "id": "AUD18-01",
+      "title": "Un libellé de catégorie comptable est interprété comme du HTML",
+      "priority": "P2",
+      "status": "CLOS — reproduit sur RC17, corrigé sur RC18",
+      "correction": "Échappement du texte au point d’affichage dans le dashboard. Le libellé reste identique dans les données. Le test vérifie le DOM réel.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/baseline/browser-safety/results.json",
+        "QA/RE_REPAIR_RC18/browser-safety/results.json"
+      ]
+    },
+    {
+      "id": "AUD18-02",
+      "title": "Une opération de dépôt refusée consomme quand même ressources, pièces ou argent",
+      "priority": "P1",
+      "status": "CLOS — reproduit sur RC17, corrigé sur RC18",
+      "correction": "Réservation effective du personnel avant consommation ; libération du personnel si la consommation atomique de pièces échoue. Deux opérations et un échec tardif de pièces sont couverts.",
+      "proofs": [
+        "QA/RE_REPAIR_RC18/baseline-depot.log",
+        "QA/RE_REPAIR_RC18/current-depot.log",
+        "QA/RE_REPAIR_RC18/repair-final.log"
+      ]
+    }
+  ],
+  "technicalWorkAndUncertifiedAreas": [
+    {
+      "id": "TECH18-01",
+      "status": "OUVERT",
+      "title": "Typage strict de bout en bout",
+      "observed": "115 modules applicatifs écrits en TypeScript ; 36 any explicites et 28 @ts-expect-error subsistent. Le retrait expérimental des cinq signatures globales permissives produit 4 688 diagnostics.",
+      "acceptance": "Remplacer les déclarations permissives par des contrats explicites, contrôler les erreurs réelles et retirer les suppressions justifiées devenues inutiles ; conserver compilation, tests et performances sans masquer les diagnostics."
+    },
+    {
+      "id": "PERF18-01",
+      "status": "NON CERTIFIÉ",
+      "title": "Performance globale et stabilité mémoire sur le PC cible",
+      "observed": "Gain mesuré du chargeur de véhicules/coupons ; pas de mesure de FPS, de profil complet d’import ou de session longue sur Opera/Win7.",
+      "acceptance": "Mesurer les temps de frame, l’utilisation CPU, la mémoire et les pauses de sauvegarde/import sur une partie représentative et la machine cible."
+    },
+    {
+      "id": "ENV18-01",
+      "status": "NON CERTIFIÉ",
+      "title": "Navigateur natif, quota physique, sons et fournisseurs externes",
+      "observed": "Navigation locale native bloquée dans cet environnement. Les vrais bundles ont été testés dans Chromium injecté, avec réseau et stockage isolés.",
+      "acceptance": "Vérifier Opera/Win7, la vraie sauvegarde utilisateur, le stockage natif et les réponses réseau/audio autorisées sur l’installation cible."
+    }
+  ]
+}

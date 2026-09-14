@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {LineManager} from '../line.js';
+
+test('numeric old line id is normalized so DOM string id can retrieve it',()=>{const m=new LineManager();m.loadFromSave([{id:12,name:'x',stops:['A','B'],trackIds:['T']}],{getStationById:id=>({id}),tracks:[{id:'T',stationA:'A',stationB:'B'}],getTrackBetween:()=>null});assert.equal(m.getLine('12')?.id,'12');});
+test('short ORM line legs keep sub-km precision',async()=>{const m=new LineManager();let added=null;const world={getStationById:id=>({id,name:id,lat:0,lon:id==='A'?0:0.003}),getTrackBetween:()=>null,addTrack:x=>(added={id:'T',...x}),removeTrack(){},tracks:[]};const orm={findRoute:async()=>[{lat:0,lon:0,maxSpeed:80},{lat:0,lon:0.003,maxSpeed:80}],getRouteDistance:()=>0.333};const line=await m.buildLine({name:'x',stops:['A','B']},world,orm);assert.ok(line);assert.equal(added.distance,0.333);});

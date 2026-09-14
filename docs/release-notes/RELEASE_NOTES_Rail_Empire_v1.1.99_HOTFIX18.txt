@@ -1,0 +1,31 @@
+Rail Empire v1.1.99 — HOTFIX18 3D ROUTE BEARING
+Date: 2026-08-31
+
+CORRECTION PRINCIPALE
+- Vue 3D GPS : la flèche du train suit maintenant le sens réel du segment OSM/ORM parcouru.
+- Correction d'une erreur d'unité : l'angle interne était en radians mais envoyé au CSS comme des degrés.
+  Exemple : un virage de 90° (~1,57 rad) n'était affiché que comme 1,57° et paraissait donc figé.
+- La caméra 3D suit désormais le cap géographique du train et tourne avec le tracé.
+- Interpolation angulaire par chemin le plus court pour éviter les rotations brutales aux sommets OSM et aiguillages.
+
+FALLBACK 3D CSS
+- Rotation de la carte dans le sens opposé au cap du train pour conserver une vue GPS orientée dans le sens de marche.
+- Rotation autour du centre du train pour éviter que la rame dérive latéralement pendant les virages.
+- Contre-rotation des billboards : labels et marqueurs restent lisibles pendant la rotation de la carte.
+
+RELIEF DEM WEBGL
+- Ajout d'un bearing dynamique à TerrainRelief3D.
+- La matrice caméra tourne selon le cap du train sans reconstruire le maillage DEM à chaque changement de direction.
+- Les marqueurs utilisent la tangente projetée du tracé en relief pour rester cohérents avec la perspective.
+
+NON-REGRESSION
+- HOTFIX16 MovementAuthority conservé.
+- HOTFIX17 Exact Origin Track conservé : voie 20 / gare générique à 2 quais continue de partir correctement.
+- Tests ciblés HOTFIX16+17+18+3D : 23 PASS / 0 FAIL.
+- Suite LiveMap/3D/runtime filtrée : 212 PASS / 0 FAIL avant reconstruction finale ; aucun changement fonctionnel hors cache/import lors de la reconstruction finale.
+
+CACHE / BUNDLE
+- Core FILE bundle : 1199dep10
+- CSS : 1199re3d4
+- Imports caméra/terrain : 1199cam18
+- Bundle flavor inclut HOTFIX18-3D-ROUTE-BEARING.

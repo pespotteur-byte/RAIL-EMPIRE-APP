@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="RailEmpire-test">
+  <node id="1" lat="49.0000" lon="8.4000" />
+  <node id="2" lat="49.0000" lon="8.4100" />
+  <node id="3" lat="49.0000" lon="8.4200" />
+  <node id="4" lat="49.0000" lon="8.4300" />
+  <node id="5" lat="49.0010" lon="8.4200" />
+  <node id="6" lat="49.0500" lon="8.5000" />
+  <node id="7" lat="49.0500" lon="8.5100" />
+  <way id="100"><nd ref="1"/><nd ref="2"/><tag k="railway" v="rail"/><tag k="usage" v="main"/><tag k="railway:track_ref" v="1"/><tag k="maxspeed" v="160"/><tag k="railway:preferred_direction" v="forward"/></way>
+  <way id="101"><nd ref="2"/><nd ref="3"/><tag k="railway" v="rail"/><tag k="usage" v="main"/><tag k="railway:track_ref" v="1"/><tag k="maxspeed" v="160"/><tag k="railway:preferred_direction" v="forward"/></way>
+  <way id="102"><nd ref="3"/><nd ref="4"/><tag k="railway" v="rail"/><tag k="usage" v="main"/><tag k="railway:track_ref" v="1"/><tag k="maxspeed" v="160"/><tag k="railway:preferred_direction" v="forward"/></way>
+  <way id="200"><nd ref="2"/><nd ref="5"/><nd ref="4"/><tag k="railway" v="rail"/><tag k="service" v="siding"/><tag k="maxspeed" v="40"/></way>
+  <way id="300"><nd ref="6"/><nd ref="7"/><tag k="railway" v="rail"/><tag k="usage" v="main"/><tag k="railway:track_ref" v="9"/></way>
+  <way id="900"><nd ref="1"/><nd ref="2"/><tag k="railway" v="tram"/></way>
+</osm>

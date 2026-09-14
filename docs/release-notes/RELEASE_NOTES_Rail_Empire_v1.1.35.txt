@@ -1,0 +1,52 @@
+Rail Empire v1.1.35 — LIVEMAP STATIONS + V2 RUNTIME VISIBILITY FIX
+==================================================================
+
+Base
+----
+v1.1.34 ALL STATIONS / ALL ZOOMS HOTFIX.
+
+Correctifs terrain
+------------------
+1. Gares sur la Livemap au zoom minimum
+   - La couche ferroviaire/VoiePoint est maintenant dessinee AVANT les gares gameplay.
+   - Les gares gameplay sont rendues au-dessus de l'infrastructure, puis les trains au-dessus des gares.
+   - A faible zoom, les marqueurs ultra-legers ne sont donc plus recouverts par le reseau ferroviaire.
+   - La baseline Europe complete de v1.1.34 reste chargee dans world.stations : le correctif ne remet aucune couche de reference separee.
+
+2. Train V2 visible avant le depart
+   - Des qu'une occurrence V2 est compilee par le runtime (fenetre normale T-5), l'ActiveService recoit immediatement la position exacte de sa voie de depart.
+   - Le train reste a vitesse 0 / waiting jusqu'a son heure exacte, mais il est deja visible sur la Livemap.
+   - Le depart a la seconde du Schedule V2 est conserve.
+
+3. Diagnostic runtime V2 visible sur la Livemap
+   - Nouveau statut V2 dans l'en-tete Livemap.
+   - Si un service V2 vivant existe : statut vert avec nombre de trains/en marche/en attente.
+   - Si aucun train ne peut etre compile : statut rouge avec le code et le message runtime (route invalide, materiel/traction, incompatibilite, calendrier, fenetre horaire ratee, etc.).
+   - Un service vivant a priorite sur une ancienne alerte historique afin d'eviter les faux diagnostics persistants.
+
+4. Synchronisation immediate apres edition du roulement
+   - Ajout d'un horaire au roulement ou affectation de materiel declenche immediatement ScheduleV2Runtime.sync().
+   - Le joueur n'a plus a attendre le prochain tick pour voir le train apparaitre lorsque toutes les conditions sont remplies.
+
+5. Cache navigateur
+   - Bundle file:// et manifest gares passent a v=1135.
+
+Regles conservees
+-----------------
+- OSM/OpenRailwayMap reste le graphe ferroviaire autoritaire.
+- Aucun fallback ferroviaire automatique en ligne droite.
+- Baseline Europe gameplay + enrichissement OSM local conserves.
+- Toutes les gares gameplay restent visibles au zoom minimum.
+- Schedule V2 / roulements / Batch186 conserves.
+
+QA cible apres bundle
+---------------------
+- 62 / 62 tests critiques PASS, 0 FAIL.
+- Dont 4/4 nouveaux tests v1.1.35 : apparition immediate T-5, depart seconde exacte, ordre de rendu Livemap, diagnostic runtime.
+- Contrat OSM direct historique v1.1.19 : 13/13 PASS.
+- Test all-stations/min-zoom reel : PASS (baseline 17 817 -> world.stations -> rendu zoom 5).
+- 178 / 178 fichiers JavaScript passent node --check (bundle inclus).
+
+Validation terrain restante
+---------------------------
+Le navigateur utilisateur file:// reste le juge final. Pour tester un depart, utiliser une heure quelques minutes dans le futur. Une occurrence ancienne hors fenetre sans snapshot est volontairement refusee et doit maintenant afficher V2_RUNTIME_WINDOW_MISSED sur la Livemap.

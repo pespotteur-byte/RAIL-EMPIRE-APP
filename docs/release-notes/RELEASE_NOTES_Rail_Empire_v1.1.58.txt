@@ -1,0 +1,79 @@
+RAIL EMPIRE v1.1.58 — PHOTO-REAL INFOGARE REMASTER
+====================================================
+
+Baseline
+--------
+Built directly from the stable v1.1.57 OSM Route Memory / Spatial Cache release.
+No routing, runtime, Rame, roulement or Livemap routing contract was changed by this release.
+
+Infogare remaster
+-----------------
+The old placeholder / handmade Infogare visual family has been replaced by the user's real-world reference set.
+
+Available display types:
+- RER RATP
+- RER SNCF / Transilien
+- AFL DP — SNCF departures
+- AFL AR — SNCF arrivals
+- CATI 3-3
+- CATI Complet
+- CATI Arrivées
+- Palette SNCF
+- Écran quai SNCF
+- Flash Circulation
+- DB Abfahrt / Departure (new)
+
+The obsolete generic "Annonce départ" and "Annonce arrivée" entries are no longer exposed in the selector.
+Their legacy render code is retained only for old-save compatibility.
+
+Reference fidelity
+------------------
+The following eight flat reference images are shipped byte-for-byte from the files supplied by the user:
+AFL DP, AFL AR, CATI 3-3, CATI AR, CATI COMPLET, Écran Quai, Flash Circulation and Palette.
+
+RER RATP and RER SNCF use clean crops made from the supplied photographs.
+DB Abfahrt uses a perspective-rectified version of the supplied real DB departure-board photograph.
+The three original source photographs are also preserved under img/infogare/reference-sources/ for later recropping/rework.
+
+Dynamic gameplay remains dynamic
+---------------------------------
+The photographs are visual references/backgrounds, not frozen screenshots.
+Rail Empire overlays live game data over the real designs, including as applicable:
+- current clock
+- train type / number / mission code
+- destination or provenance
+- served stations / via
+- track / platform
+- delay
+- cancellation
+- incident / traffic information
+
+Rows remain clickable so the existing train/platform interaction is preserved.
+Mouse-wheel paging remains available for 24-hour train lists.
+
+DB board
+--------
+A dedicated DB Abfahrt / Departure renderer has been added with:
+- Zeit / Time
+- Zug / Train
+- Über / Via
+- Ziel / Destination
+- Gleis / Track
+- delayed predicted time
+- cancelled-row treatment (Fahrt fällt aus)
+- incident ticker
+
+Packaging
+---------
+Version: 1.1.58
+FILE:// core cache: 1158
+Core bundle: deferred rolling-stock catalogue remains split from startup core.
+
+QA
+--
+- 5/5 dedicated Infogare photo-pack / post-bundle checks PASS
+- 398/398 curated functional assertions PASS
+- 20,275/20,275 bulk ORM assertions PASS
+- 213/213 JavaScript syntax checks PASS
+- FILE:// core bundle rebuilt as Rail Empire v1.1.58
+- ZIP integrity checked before release

@@ -1,0 +1,44 @@
+Rail Empire v1.1.99 — HOTFIX75 — LIVEMAP AUDIO ROOT-CAUSE FIX
+================================================================
+Base: HOTFIX74_FORCED_LIVEMAP_AUDIO
+Scope: AUDIO ONLY. No simulation/circulation/GPS logic changed.
+
+ROOT CAUSES FIXED
+-----------------
+1. The announcement could stop after the local recorded "Attention".
+   HOTFIX67 made dynamic text dependent on either a matching explicit system
+   voice or Piper. If both were unavailable/not ready, _runHybrid() returned
+   before even playing the recorded destination prefix.
+
+2. Piper/OPFS was treated too strictly.
+   OPFS is only a model cache. The Piper runtime can still fetch and infer when
+   OPFS is unavailable. HOTFIX75 no longer disables neural speech because OPFS
+   cannot be opened; it only skips an explicit pre-download to avoid fetching
+   the same model twice.
+
+3. Multilingual Piper session reuse was unsafe.
+   @realtimex/@mintplex TtsSession is a package singleton. Reusing predict()
+   across FR/DE/IT/... can mutate voiceId while keeping an already-loaded ONNX
+   session. Rail Empire now owns one isolated initialized session per voiceId.
+
+BEHAVIOUR
+---------
+- Recorded chain always progresses: Attention -> destination prefix -> dynamic
+  destination -> stops prefix -> dynamic served stations.
+- Piper is preferred but never gates the sentence.
+- Explicit same-language system voice is second choice.
+- Last resort is a BCP-47 language-hinted SpeechSynthesisUtterance with no
+  wrong-language voice explicitly assigned.
+- A missing station-language backend skips/falls back only that dynamic chunk;
+  it cannot suppress the remaining recorded phrases.
+- HOTFIX74 WebAudio unlock/persistent media channel is retained.
+- Audio diagnostics remain available at globalThis.__RAIL_EMPIRE_AUDIO_DIAG__.
+
+CACHE
+-----
+rail-empire.file.bundle.js?v=1199dep70&fullaudit=1
+rail-empire.catalog.bundle.js?v=1199dep70
+
+QA
+--
+Targeted audio/root-cause/bundle tests: 36/36 PASS.

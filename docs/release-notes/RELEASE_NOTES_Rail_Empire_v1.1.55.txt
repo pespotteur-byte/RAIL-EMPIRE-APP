@@ -1,0 +1,62 @@
+Rail Empire v1.1.55 — LIVEMAP ORM-FOLLOWING TRAIN MARKERS
+===========================================================
+
+Livemap train marker redesign
+-----------------------------
+- Replaces category PNG/pictogram train icons with a vector-only marker:
+  solid coloured dot + small directional arrowhead.
+- No centre pictogram.
+- No permanent moving-train glow. The selected train keeps a light selection ring.
+- Marker size adapts to Livemap zoom.
+
+Seven explicit train categories / colours
+-----------------------------------------
+- Voyageur: blue  #3b82f6
+- Fret:      green #22c55e
+- W:         grey  #94a3b8
+- HLP:       dark grey #334155
+- TM:        red   #ef4444
+- Infra:     yellow #facc15
+- TTX:       orange #f97316
+
+TTX is now a real Schedule Creator V2 category, distinct from Infra.
+Legacy 'work' services are normalized to TTX for old-save display compatibility.
+New TTX means generic train de travaux. Historical legacy 'work' keeps its old
+catenary-work compatibility rule; new TTX follows the actual traction/electrical
+compatibility of the assigned material.
+
+ORM/OSM route following
+-----------------------
+- The marker heading is derived from the CURRENT routed OSM/ORM polyline segment.
+- It no longer points merely toward the next station.
+- Curves, S-curves and turnout branches therefore rotate the arrow according to
+  the actual route used by the running train.
+- Rotation uses shortest-angle smoothing (~80 ms visual time constant) to avoid
+  visible snapping at route vertices without changing physical train movement.
+
+Performance
+-----------
+- Normal detailed marker rendering remains active through 1,000 simultaneous trains.
+- Above 1,000 services, circles + arrowheads are batched by the seven colours,
+  preserving direction/category while avoiding thousands of independent image draws.
+- Removed train-marker PNG loading from the Livemap renderer.
+- FILE:// split bundle architecture remains unchanged: 61 core modules; 66 deferred
+  catalogue modules.
+
+Compatibility
+-------------
+- v1.1.54 smooth timetable-panel progress cursor retained.
+- v1.1.54 anti-zombie runtime reload fix retained.
+- v1.1.53 round-trip integrity retained.
+- v1.1.52 Rame editing/reordering retained.
+- v1.1.51 Rame -> physical material -> rotation workflow retained.
+- No synthetic railway route fallback introduced.
+
+QA
+--
+- v1.1.55 dedicated marker/category tests: 6/6 PASS.
+- Functional non-bulk suite: 384/384 PASS (38 suites).
+- Critical post-bundle cluster: 80/80 PASS.
+- Bulk ORM: 20,275/20,275 PASS (12 suites).
+- JS/MJS/CJS syntax: 200/200 PASS.
+- FILE:// build: core 2,948,281 bytes; deferred catalogue 45,802,563 bytes.

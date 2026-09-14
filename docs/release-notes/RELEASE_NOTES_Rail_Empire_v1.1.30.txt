@@ -1,0 +1,48 @@
+Rail Empire v1.1.30 — Schedule V2 Continuity + Runtime Departure Fix
+====================================================================
+
+Base
+----
+v1.1.29 Schedule V2 ORM Route Fix.
+
+Correctifs terrain
+------------------
+1. VIA / WAYPOINT -> gare
+   - Le fallback sur les donnees ORM deja chargees ne rabat plus le clic joueur sur le noeud OSM geometrique le plus proche.
+   - Les ancres curseur restent projetees exactement sur les segments ferroviaires reels.
+   - Deux points differents situes sur un meme long segment OSM restent routables, meme s'ils auraient auparavant partage le meme noeud OSM le plus proche.
+
+2. VIA -> VIA / trajets partiellement dessines
+   - L'extremite resolue d'un leg devient l'ancre exacte du leg suivant.
+   - Le wayId resolu est conserve comme preference de snap pour eviter qu'un meme VIA saute sur une voie parallele/quai voisin entre deux calculs.
+   - Le cache de routes curseur passe de cursor-v4 a cursor-v5 et inclut les hints de wayId.
+   - Une discontinuite de plus de 2 m entre deux legs est maintenant rejetee au lieu d'etre masquee par l'assemblage graphique.
+   - Le recalcul de l'editeur et la revalidation ORM appliquent la meme continuite entre arrets successifs.
+
+3. Alertes ORM dupliquees
+   - Les avertissements "contre-sens de la direction preferentielle ORM" sont groupes en une seule alerte joueur.
+   - Les wayIds/sections concernes restent conserves dans les donnees de validation.
+
+4. Depart des trains V2
+   - Un materiel reel plus lent ne bloque plus indefiniment la compilation du train en attendant une approbation manuelle.
+   - Le train est autorise a partir a son heure resolue ; son temps de marche reel est recalcule automatiquement.
+   - Les occurrences suivantes du roulement restent repoussees automatiquement si la marche reelle est plus longue.
+   - Les vrais blocages physiques restent inchanges : absence d'engin de traction actif, materiel indisponible au depart, incompatibilite electrique connue ou ecartement connu incompatible.
+   - Regle conservee : un horaire seul ne cree pas de train ; il faut toujours une occurrence de roulement avec du materiel affecte.
+
+Regle absolue conservee
+-----------------------
+Aucun fallback ferroviaire synthetique en ligne droite n'est cree. Si aucun chemin ORM/OSM reel et continu n'est disponible, le trajet est refuse.
+
+QA
+--
+- Batterie complete hors bulk-weather : 97 224 / 97 224 PASS, 0 FAIL.
+- Nouveaux tests terrain v1.1.30 :
+  * loaded-way rescue conserve les ancres milieu de segment ;
+  * deux VIA sur le meme long segment restent routables ;
+  * chaine A -> VIA -> B physiquement continue ;
+  * deduplication des alertes direction preferentielle ;
+  * materiel plus lent : depart non bloque + heure de depart conservee.
+- Post-bundle cible (ORM/Schedule V2/runtime/startup) : PASS.
+- 166 fichiers JavaScript, bundle inclus : node --check PASS / 0 FAIL.
+- Bundle file:// reconstruit avec cache-busting v1130.

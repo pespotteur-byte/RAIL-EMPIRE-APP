@@ -1,0 +1,43 @@
+Rail Empire v1.1.56 — Schedule Creator ORM Route Preservation Hotfix
+====================================================================
+
+Base: v1.1.55
+
+Fix principal
+-------------
+Le Schedule Creator n'efface plus un tracé ORM déjà résolu à cause d'une panne
+transitoire de l'API OSM/Overpass lors d'un recalcul sans modification de la
+topologie.
+
+Avant v1.1.56 :
+- un tracé fonctionnait ;
+- un recalcul ORM échouait temporairement ;
+- le code appelait clearResolvedRoute() ;
+- l'horaire tombait ensuite sur « Le tracé aller ORM est incomplet. ».
+
+v1.1.56 :
+- édition de catégorie / Vmax / rame de référence / paramètres physiques :
+  si le réseau OSM est temporairement indisponible, le dernier tracé ORM valide
+  est conservé et reste utilisable ;
+- modification réelle de topologie (gare, voie, VIA, ajout/suppression d'arrêt) :
+  en cas de panne réseau, l'ancien tracé reste visible comme référence mais est
+  marqué à recalculer ; il ne peut pas être validé comme s'il correspondait à la
+  nouvelle topologie ;
+- vrai échec topologique « aucun chemin connecté » : l'ancien tracé est toujours
+  invalidé/effacé comme avant ;
+- une réponse ORM vide produit désormais une erreur explicite ORM_EMPTY_ROUTE au
+  lieu de finir indirectement en simple « tracé incomplet ».
+
+Aucun changement
+----------------
+- Routage OSM/ORM réel et interdiction du fallback synthétique inchangés.
+- Marqueurs Livemap v1.1.55 inchangés.
+- Rames, roulements, retours/aller-retours, runtime reload v1.1.54 inchangés.
+
+QA finale
+---------
+- Tests dédiés v1.1.56 : 6/6 PASS
+- Suite fonctionnelle hors banques bulk : 390/390 PASS
+- Bulk ORM : 20 275/20 275 PASS
+- Syntaxe JS/MJS/CJS : 213/213 PASS
+- Bundle FILE:// reconstruit en v1.1.56 / cache 1156

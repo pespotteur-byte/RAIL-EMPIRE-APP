@@ -1,0 +1,83 @@
+Rail Empire v1.1.90 — ROULEMENTS V3.2 PLAYER 100
+================================================
+
+Base
+----
+v1.1.89 Roulements V3.1 Exploitation UX.
+
+Objectif
+--------
+Fermer les derniers écarts entre la page Roulements et la demande joueur d'origine,
+sans rendre les roulements obligatoires pour les joueurs débutants.
+
+FIDELITE JOUEUR — COMPLETE
+--------------------------
+1. Journée réelle et calendriers
+   - La vue Matériel/Coupon/Rame possède un sélecteur de date réel.
+   - Les roulements et versions d'horaires sont filtrés selon les calendriers réellement applicables ce jour-là.
+   - Une machine ne mélange donc plus artificiellement semaine/samedi/dimanche dans une même journée.
+
+2. Kilométrage journalier exact
+   - Le kilométrage de la journée est calculé à partir des vraies jambes routées de l'horaire.
+   - Une coupe en cours de train ne facture à un coupon que la distance réellement parcourue avant/après sa séparation.
+   - Les vues distinguent kilométrage de roulement/jour et odomètre physique total.
+
+3. Codes opérationnels de gare
+   - Les codes affichés dans la feuille de roulement sont persistants et modifiables.
+   - Les codes connus peuvent être repris directement ; LYD = Lyon Part-Dieu et DN = Dijon dans les cas couverts.
+   - Un clic sur le code de la gare dans la feuille permet de corriger/personnaliser le code sans toucher à la gare gameplay.
+
+4. Feuille réelle de roulement
+   - Nouveau mode « Feuille réelle » blanc/gris inspiré des documents d'exploitation.
+   - Numéro de train, heures et codes gare sont directement portés par les traits de circulation.
+   - Trait supérieur épais : locomotive/engin moteur menant.
+   - Trait supérieur fin : voiture-pilote menante.
+   - Le sens réel de la composition et les rames réversibles sont pris en compte.
+
+5. Journée d'une rame complète
+   - La bibliothèque Matériel comporte maintenant Locos/engins, Coupons et Rames.
+   - Une rame complète peut être sélectionnée comme objet de suivi quotidien.
+   - Elle reste une seule journée de rame tant que ses composants restent physiquement ensemble ; une séparation réelle rompt naturellement cette continuité.
+   - Les affectations directes de rame restent visibles dans ce suivi lorsqu'elles sont actives.
+
+6. UM explicites
+   - Commande dédiée « Former une UM ».
+   - Commande dédiée « Séparer l'UM ».
+   - Les actions utilisent toujours le moteur physique ATTACH/SPLIT, mais l'interface parle désormais le langage du joueur.
+   - Seuls des engins motorisés peuvent être sélectionnés pour ces opérations.
+
+7. Architecture V3/V3.1 conservée
+   - Horaires et matériel restent dissociés.
+   - Roulements toujours facultatifs : l'affectation directe Horaire -> Rame reste disponible.
+   - Locomotives physiques, coupons, CV, pousse, UM, changement de locomotive, split/merge et branches parallèles restent pris en charge.
+   - Un train n'existe qu'une fois ; les lignes de matériel peuvent se séparer et se rejoindre.
+   - Le cas Paris -> Valence puis Nice / Briançon reste couvert par les fenêtres matérielles dynamiques.
+   - Les images en jeu proviennent de la composition physique réellement active.
+
+Persistence / migration
+-----------------------
+- Schéma Roulements V2/V3 passé à 4.
+- Migration transparente des sauvegardes schéma 2 et 3.
+- Nouveaux codes opérationnels de gare persistés dans rotationsV2.stationCodes.
+
+QA finale
+---------
+- 145 / 145 tests ciblés PASS.
+- Dont 6 / 6 nouveaux tests v1.1.90 « player fidelity » PASS.
+- 184 / 184 fichiers JavaScript : node --check PASS.
+- Chromium headless via harness about:blank, sur le bundle FILE:// final : PASS.
+  Vérifié : Feuille réelle, LYD/DN, trait loco et voiture-pilote, journée Rame,
+  date 2026-08-23, 390 km/jour, onglet Rames, Former/Séparer UM, 0 pageerror pertinent.
+- Bulk-weather observé : 5 501 sous-tests OK, 0 not ok ; le runner conserve son handle historique.
+- Passe large hors météo : non comptabilisée comme PASS complet car des tests réseau/ORM longs empêchent
+  une terminaison fiable dans l'environnement. Les 8 échecs observés sur les anciens diagnostics ORM/gares
+  ont été reproduits sur la v1.1.89 de référence ; aucun n'est introduit par Roulements v1.1.90.
+- Le navigateur géré de l'environnement bloque le lancement normal file:///localhost avant le chargement de RE ;
+  le smoke navigateur final utilise donc l'injection contrôlée du bundle réel dans about:blank.
+
+Build
+-----
+Version : 1.1.90
+Flavor : ROULEMENTS-V3.2-PLAYER-100
+Cache cœur : 1190
+Catalogue différé : cache 1188 (données catalogue inchangées)

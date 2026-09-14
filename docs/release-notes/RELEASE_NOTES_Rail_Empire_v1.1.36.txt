@@ -1,0 +1,49 @@
+Rail Empire v1.1.36 — LIVEMAP V2 RUNTIME DIAGNOSTICS + RESYNC
+================================================================
+
+Base
+----
+v1.1.35 Livemap Stations + V2 Runtime Fix.
+
+But terrain traité
+------------------
+Sur la page Carte, un horaire V2 retardé pouvait toujours ne produire aucun train visible, tandis que le bandeau droit restait muet. La v1.1.35 affichait son statut V2 dans l'en-tête et non dans le panneau Trains, et un resync demandé dans la même seconde qu'un tick automatique pouvait être ignoré par la déduplication runtime.
+
+Corrections
+-----------
+1. Diagnostic V2 permanent dans le bandeau droit de la page Carte
+   - Le panneau Trains contient désormais un bloc Runtime V2 toujours visible.
+   - Il explique les occurrences : train runtime actif, prochain spawn T-5, aucun matériel, aucune traction, route invalide, calendrier/version non exploitable, fenêtre dépassée, ou occurrence due mais non compilée.
+   - Le statut V2 d'en-tête ne disparaît plus silencieusement quand aucun train n'est présent.
+
+2. Resync forcé réellement forcé
+   - Nouvelle API ScheduleV2Runtime.forceSync().
+   - Le cache de déduplication de sync est invalidé avant un resync manuel.
+   - Validation d'un horaire et modifications de roulement/matériel relancent immédiatement le runtime et rafraîchissent la Carte.
+   - Cas reproduit et testé : horaire ancien raté -> même horaire retardé dans la fenêtre T-5 -> roulement recalculé -> train créé immédiatement en WAITING.
+
+3. Visibilité Carte des trains en attente
+   - Un service WAITING avec une position est désormais affiché même si l'objet stoppedAt n'a pas encore été résolu.
+   - Même règle dans le renderer principal et dans le bandeau Trains.
+   - Si les coordonnées de l'arrêt de départ sont absentes, le runtime utilise le premier point de la route ORM réelle comme position de secours.
+   - Si aucune position réelle n'est disponible, V2_ORIGIN_POSITION_MISSING est émis au lieu de rester silencieux.
+
+4. Alertes fantômes
+   - Une compilation réussie retire les anciennes alertes V2_RUNTIME_WINDOW_MISSED / OCCURRENCE_NOT_COMPILED de cette occurrence afin que le diagnostic reflète l'état courant.
+
+Règles conservées
+-----------------
+- Un horaire seul ne crée pas de train : une occurrence de roulement avec matériel physique reste obligatoire.
+- Aucun fallback ferroviaire automatique en ligne droite.
+- Contrat all-stations/all-zooms conservé.
+- Contrat OSM/ORM direct conservé.
+
+QA
+--
+- 13 616 / 13 616 tests fonctionnels non-bulk PASS, 0 FAIL.
+- 78 / 78 tests critiques post-bundle PASS.
+- 3 nouveaux tests v1.1.36 PASS :
+  * horaire raté puis retardé -> forceSync -> train visible ;
+  * diagnostic explicite si aucun matériel ;
+  * bandeau Carte V2 permanent + WAITING affiché via position.
+- 179 / 179 fichiers JavaScript passent node --check.

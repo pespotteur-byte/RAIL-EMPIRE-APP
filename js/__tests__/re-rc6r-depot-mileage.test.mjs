@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+const root=process.env.RE_BASE||path.resolve(import.meta.dirname,'../..');
+const mod=n=>import(pathToFileURL(path.join(root,'js',n+'.js')));
+
+const {Depot,DepotManager}=await mod('depot');const{ActiveService,cantonManager}=await mod('schedule-creator');const{Economy}=await mod('economy');
+function depotFixture(){const m=new DepotManager();const a=new Depot({id:'A',type:'depot',built:true,tracks:1}),b=new Depot({id:'B',type:'depot',built:true,tracks:1});m.depots=[a,b];const rame={id:'R',currentLocation:{depotId:'A'},inMaintenance:false,depotOperationId:''};a.trackOccupancy[0].rameId='R';return{m,a,b,rame};}
+test('RC6R-DEPOT-01: full destination refuses transfer without releasing origin occupancy',()=>{const{m,a,b,rame}=depotFixture();b.trackOccupancy[0].rameId='OTHER';const before=JSON.stringify([m.toSave(),rame]);assert.equal(m.enterRame('B',rame,[]).ok,false);assert.equal(JSON.stringify([m.toSave(),rame]),before);});
+test('RC6R-DEPOT-02: successful admission moves exactly one occupancy',()=>{const{m,a,b,rame}=depotFixture();assert.equal(m.enterRame('B',rame,[]).ok,true);assert.equal(a.findRameTrack('R'),null);assert.ok(b.findRameTrack('R'));assert.equal(rame.currentLocation.depotId,'B');});
+test('RC6R-DEPOT-03: repeated admission is idempotent even when no free track remains',()=>{const{m,a,rame}=depotFixture();assert.equal(m.enterRame('A',rame,[]).ok,true);assert.equal(a.trackOccupancy.filter(x=>x.rameId==='R').length,1);});
+test('RC6R-DEPOT-04: leaving the wrong depot must not clear the physical depot flag',()=>{const{m,a,b,rame}=depotFixture();const svc={rame,train:{inDepot:true,inMaintenance:false}};const before=JSON.stringify([m.toSave(),rame,svc.train]);assert.equal(m.leaveRame('B',rame,[svc]).ok,false);assert.equal(JSON.stringify([m.toSave(),rame,svc.train]),before);});
+test('RC6R-DEPOT-05: actual departure releases the occupied track and the service depot flag',()=>{const{m,a,rame}=depotFixture();const svc={rame,train:{inDepot:true}};assert.equal(m.leaveRame('A',rame,[svc]).ok,true);assert.equal(a.findRameTrack('R'),null);assert.equal(svc.train.inDepot,false);});
+function service(rame){return new ActiveService({id:'mileage',name:'M',stops:[{stationId:'A',type:'arret',departureTime:600},{stationId:'B',type:'arret',arrivalTime:630,departureTime:630}],routes:[[{lat:48,lon:2,maxSpeed:120},{lat:48.01,lon:2,maxSpeed:120}]]},rame,{getStationById:id=>({id,name:id,lat:48,lon:2})},null);}
+function material(){return{id:'R',maxSpeed:120,totalMass:100,totalPower:3000,totalLength:20,totalCapacity:0,elementDetails:[],totalKmRun:10000,kmSinceLastMaint:10000,wearLevel:40};}
+function withGame(fn){const old=globalThis.window;globalThis.window={game:{realismSettings:{breakdown:0}}};try{return fn();}finally{globalThis.window=old;}}
+test('RC6R-WEAR-01: driving a precompiled service preserves maintenance performed after compilation',()=>withGame(()=>{const r=material(),s=service(r);r.kmSinceLastMaint=0;r.wearLevel=0;s._trackWear(1,600);assert.equal(r.kmSinceLastMaint,1);assert.equal(r.wearLevel,1/250);assert.equal(s.train.kmSinceLastMaint,r.kmSinceLastMaint);assert.equal(s.train.totalKmRun,r.totalKmRun);}));
+test('RC6R-WEAR-02: completion of an old prepared service cannot restore pre-maintenance wear',()=>withGame(()=>{const r=material(),s=service(r);r.kmSinceLastMaint=0;r.wearLevel=0;s.completeService(new Economy());assert.equal(r.kmSinceLastMaint,0);assert.equal(r.wearLevel,0);assert.equal(r.totalKmRun,10000);}));
+test('RC6R-WEAR-03: two services sharing a rame accumulate distance once and read canonical wear',()=>withGame(()=>{const r=material(),a=service(r),b=service(r);a._trackWear(10,600);b._trackWear(5,610);assert.equal(r.totalKmRun,10015);assert.equal(r.kmSinceLastMaint,10015);assert.ok(Math.abs(r.wearLevel-40.06)<1e-10);assert.equal(b.train.totalKmRun,r.totalKmRun);}));
+test('RC6R-WEAR-04: workshop improvement is not overwritten by the next kilometre',()=>withGame(()=>{const r=material(),s=service(r);r.wearLevel=28;s._trackWear(1,600);assert.equal(r.wearLevel,28.004);}));
+test('RC6R-WEAR-05: routine service residual wear cannot vanish just because its mileage resets',()=>withGame(()=>{const r=material(),s=service(r);r.kmSinceLastMaint=0;r.wearLevel=15;s._trackWear(1,600);assert.equal(r.wearLevel,15.004);}));
+test('RC6R-WEAR-06: invalid and negative distances cannot mutate counters',()=>withGame(()=>{const r=material(),s=service(r),before=JSON.stringify(r);for(const v of [NaN,Infinity,-1,0])s._trackWear(v,600);assert.equal(JSON.stringify(r),before);}));
