@@ -1397,21 +1397,39 @@ export class UI {
         const hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
         return `${hh}:${mm}${showDay && day > 0 ? ` (+${day})` : ''}`;
     }
+    /** Live incidents touching a station: in the station itself, on a train currently
+     * held there, and on the adjacent sections leaving it. */
     _livemapStationIncidents(station) {
         const sid = station?.id == null ? '' : String(station.id);
         if (!sid)
             return [];
-        return (this.game.incidentManager?.getActiveIncidents?.() || []).filter((inc) => inc && inc.active !== false && !inc.serviceId && inc.stationA != null && inc.stationB != null &&
-            String(inc.stationA) === sid && String(inc.stationB) === sid);
+        const all = (this.game.incidentManager?.getActiveIncidents?.() || []);
+        const inStation = [], onTrain = [], onSection = [];
+        for (const inc of all) {
+            if (!inc || inc.active === false)
+                continue;
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            if (a !== sid && b !== sid)
+                continue;
+            if (inc.serviceId)
+                onTrain.push(inc);
+            else if (a === b)
+                inStation.push(inc);
+            else
+                onSection.push(inc);
+        }
+        return [...inStation, ...onTrain, ...onSection];
     }
     _livemapStationIncidentHtml(station) {
         const incidents = this._livemapStationIncidents(station);
         if (!incidents.length)
             return '';
+        const sid = String(station.id);
         const nowMinute = Number.isFinite(Number(this.game.timeOfDay))
             ? Number(this.game.timeOfDay)
             : (() => { const pt = this.game.engine?.getParisTime?.(); return pt ? pt.hours * 60 + pt.minutes + (pt.seconds || 0) / 60 : 0; })();
-        return incidents.slice(0, 3).map((inc) => {
+        const MAX = 5;
+        const rows = incidents.slice(0, MAX).map((inc) => {
             const elapsed = Math.max(0, Number(inc.duration || 0) - Number(inc.remaining || 0));
             let start = Number(inc.startTime);
             if ((!Number.isFinite(start) || (start === 0 && elapsed > 0 && nowMinute > elapsed + 1)))
@@ -1420,8 +1438,20 @@ export class UI {
                 start = nowMinute - elapsed;
             const end = start + Math.max(0, Number(inc.duration || 0));
             const effect = inc.effect === 'stop' ? 'Interruption' : `Ralenti ${this._livemapEsc(inc.speedLimit || 30)} km/h`;
-            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div><div>${effect}</div><div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${htmlText(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
-        }).join('');
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            let where = '';
+            if (inc.serviceId)
+                where = `Train ${this._livemapEsc(inc.trainName || '')}${inc.locationText ? ` · ${this._livemapEsc(inc.locationText)}` : ''}`;
+            else if (a !== b) {
+                const other = a === sid ? inc.stationBName : inc.stationAName;
+                where = `Section vers ${this._livemapEsc(other || '?')}`;
+            }
+            const weather = inc.source === 'weather' ? `<div>🌦 ${this._livemapEsc(inc.triggerText || 'Déclencheur météo')}</div>` : '';
+            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div>${where ? `<div>${where}</div>` : ''}<div>${effect}</div>${weather}<div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${htmlText(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
+        });
+        if (incidents.length > MAX)
+            rows.push(`<div class="tt-operational tt-incident-active">+${incidents.length - MAX} autre(s) incident(s) — voir la page Incidents</div>`);
+        return `<div class="tt-incident-count">${incidents.length} incident${incidents.length > 1 ? 's' : ''} en cours</div>` + rows.join('');
     }
     _livemapWorkLocation(item) {
         const stationName = (value) => value ? (this.game.world.getStationById?.(value)?.name || String(value)) : '';
@@ -9708,8 +9738,10 @@ export class UI {
             typesTable.addEventListener('change', (e) => {
                 const cb = e.target?.closest('.incident-type-cb');
                 if (cb) {
-                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked);
+                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked, this.game.world);
+                    this.game.renderer?.invalidateStatic?.();
                     this.game.saveState();
+                    this.renderIncidentsPage();
                 }
             });
         }
@@ -9898,7 +9930,11 @@ export class UI {
                 }).join('');
         }
         const typesTable = document.getElementById('incident-types-table');
-        if (typesTable) {
+        // The page refreshes every tick: rebuilding the checkbox table each time would
+        // swap the DOM node under the pointer and swallow the player's click.
+        const typesSig = this.game.incidentManager.getEnabledTypes().map(String).sort().join('|');
+        if (typesTable && typesTable.dataset.enabledSig !== typesSig) {
+            typesTable.dataset.enabledSig = typesSig;
             const types = this.game.incidentManager.getAllTypes();
             const escType = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (HTML_ESCAPE_MAP[c]));
             const tableFor = (items, title, weather = false) => `<section class="incident-type-section ${htmlText(weather ? 'incident-weather-types' : '')}">

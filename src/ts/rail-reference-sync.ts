@@ -15,6 +15,25 @@ const DB_NAME = 'rail-empire-reference-sites';
 const DB_VERSION = 1;
 const STORE = 'countries';
 const CACHE_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
+const EMBEDDED_REFERENCE_PACK_GLOBAL = '__RAILNET_REFERENCE_PACK__';
+const EMBEDDED_REFERENCE_SHARD_GLOBAL = '__RAILNET_REFERENCE_SHARD__';
+
+// Compact row schema `reference-compact-v1` written by scripts/build-rail-reference-pack.mjs.
+function referencePointFromCompactRow(row: unknown, source: string): RailReferencePoint | null {
+  if (!Array.isArray(row) || row.length < 7) return null;
+  const lat = Number(row[2]) / 1e5, lon = Number(row[3]) / 1e5;
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const typeCode = Number(row[4]);
+  const type: RailReferencePoint['type'] = typeCode === 2 ? 'ite' : typeCode === 1 ? 'marchandise' : 'voyageur';
+  const s = (i: number) => (row[i] == null ? '' : String(row[i]));
+  const official = Number(row[16]) === 1;
+  return {
+    id: s(0), name: s(1), lat, lon, country: s(5), type, platforms: type === 'voyageur' ? 2 : 1,
+    facilities: type === 'voyageur' ? ['voyageurs'] : type === 'ite' ? ['fret', 'ite', ...(official ? ['reference-officielle'] : [])] : ['fret'],
+    source: s(17) || source, siteKind: s(6), cargoTags: s(15) ? s(15).split(';').filter(Boolean) : [], official,
+    uicRef: s(7), osmType: s(8), osmId: s(9), ref: s(10), operator: s(11), network: s(12), wikidata: s(13), wheelchair: s(14),
+  };
+}
 
 type OverpassElement = {
   type?: string; id?: number | string; lat?: number; lon?: number;
@@ -36,7 +55,7 @@ type CountryCache = {
 };
 
 export type RailReferenceSyncProgress = {
-  phase: string; iso?: string; index?: number; totalCountries?: number;
+  phase: string; iso?: string; index?: number; totalCountries?: number; totalShards?: number;
   stations?: number; freightSites?: number; added?: number; enriched?: number; message?: string;
 };
 
@@ -117,10 +136,60 @@ function freightSiteFromElement(el: OverpassElement, iso: string): RailReference
   };
 }
 
-function mergeSiteRecords(points: RailReferencePoint[]) {
+type GeoPoint = { lat: number; lon: number; type?: string };
+class GeoGrid<T extends GeoPoint> {
+  private map = new Map<string, T[]>();
+  constructor(private cell = 0.01) {}
+  add(p: T) { const k = `${Math.floor(p.lat / this.cell)}:${Math.floor(p.lon / this.cell)}`; const b = this.map.get(k); if (b) b.push(p); else this.map.set(k, [p]); }
+  near(p: GeoPoint) {
+    const ci = Math.floor(p.lat / this.cell), cj = Math.floor(p.lon / this.cell); const out: T[] = [];
+    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) for (const q of this.map.get(`${ci + di}:${cj + dj}`) || []) out.push(q);
+    return out;
+  }
+}
+
+// Individual `service=yard` ways are sidings, not sites. Group them into yards (single-link
+// clustering, 400 m), drop the ones that belong to a known station/yard/terminal, and keep only
+// groups of 3+ tracks so a lone siding does not become a freight station.
+function consolidateYardTracks(freight: RailReferencePoint[], anchors: readonly GeoPoint[]) {
+  const isTrack = (p: RailReferencePoint) => p.type === 'marchandise' && p.siteKind === 'yard_track';
+  const tracks = freight.filter(isTrack);
+  const rest = freight.filter((p) => !isTrack(p));
+  if (!tracks.length) return rest;
+  const known = new GeoGrid<GeoPoint>();
+  for (const p of rest) if (p.type === 'marchandise') known.add(p);
+  for (const a of anchors) known.add(a);
+  const idx = new Map<RailReferencePoint, number>(); tracks.forEach((t, i) => idx.set(t, i));
+  const parent = tracks.map((_, i) => i);
+  const find = (i: number) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  const g = new GeoGrid<RailReferencePoint>();
+  for (const t of tracks) g.add(t);
+  for (const t of tracks) for (const q of g.near(t)) if (q !== t && distanceKm(t, q) <= 0.4) parent[find(idx.get(t)!)] = find(idx.get(q)!);
+  const groups = new Map<number, RailReferencePoint[]>();
+  for (const t of tracks) { const r = find(idx.get(t)!); const b = groups.get(r); if (b) b.push(t); else groups.set(r, [t]); }
+  const out = [...rest];
+  for (const members of groups.values()) {
+    const lat = members.reduce((s, m) => s + m.lat, 0) / members.length, lon = members.reduce((s, m) => s + m.lon, 0) / members.length;
+    const center = { lat, lon };
+    if (known.near(center).some((q) => distanceKm(center, q) <= (q.type === 'voyageur' ? 0.9 : 0.6))) continue;
+    const named = members.find((m) => !/^Gare marchandises OSM/i.test(m.name));
+    if (!named && members.length < 3) continue;
+    const first = members.slice().sort((a, b) => String(a.osmId).localeCompare(String(b.osmId)))[0];
+    const head = named || first;
+    out.push({
+      ...first, lat, lon, name: named ? named.name : `Faisceau marchandises ${first.country} ${first.osmId}`, siteKind: 'yard',
+      id: `osm-freight-yardgroup-${first.country}-${first.osmId}`, osmType: head.osmType, osmId: head.osmId,
+      operator: named?.operator || members.find((m) => m.operator)?.operator || '',
+      cargoTags: [...new Set(members.flatMap((m) => m.cargoTags || []))].slice(0, 12),
+    });
+  }
+  return out;
+}
+
+function mergeSiteRecords(points: RailReferencePoint[], anchors: readonly GeoPoint[] = []) {
   const fixed: RailReferencePoint[] = [];
   const industrial: RailReferencePoint[] = [];
-  for (const p of points) (p.type === 'ite' ? industrial : fixed).push(p);
+  for (const p of consolidateYardTracks(points, anchors)) (p.type === 'ite' ? industrial : fixed).push(p);
 
   // Group the several spur ways of a single ITE into one usable gameplay point.
   const groups: RailReferencePoint[] = [];
@@ -250,6 +319,33 @@ export class RailReferenceSync {
   private running: Promise<{countries:number;stations:number;freightSites:number;errors:number}> | null = null;
   private franceOfficial: RailReferencePoint[] | null = null;
 
+  // Embedded pack generated by scripts/build-rail-reference-pack.mjs: every served country's
+  // passenger stations, freight yards and ITE are available offline from the first launch.
+  async loadEmbeddedIntoWorld(world: World, onProgress: ((p:RailReferenceSyncProgress)=>void)|null = null) {
+    const bag=globalThis as typeof globalThis & Record<string,unknown>;
+    const pack=bag[EMBEDDED_REFERENCE_PACK_GLOBAL] as {prepared?:boolean;shards?:unknown[];source?:string;count?:number}|undefined;
+    if(!pack?.prepared || !Array.isArray(pack.shards) || !pack.shards.length || typeof document==='undefined')return {stations:0,freightSites:0,shards:0};
+    let stations=0,freightSites=0;
+    for(let i=0;i<pack.shards.length;i++){
+      const file=String(pack.shards[i]||'').replace(/^\/+/,'');
+      if(!file || file.includes('..'))throw new Error('Nom de shard référentiel invalide');
+      bag[EMBEDDED_REFERENCE_SHARD_GLOBAL]=null;
+      await new Promise<void>((resolve,reject)=>{
+        const script=document.createElement('script');script.src=`data/railnet/reference/${file}`;script.async=true;
+        script.onload=()=>{script.remove();resolve();};script.onerror=()=>{script.remove();reject(new Error(`Impossible de charger ${file}`));};
+        document.head.appendChild(script);
+      });
+      const rows=bag[EMBEDDED_REFERENCE_SHARD_GLOBAL]; bag[EMBEDDED_REFERENCE_SHARD_GLOBAL]=null;
+      if(!Array.isArray(rows))throw new Error(`Shard référentiel invalide: ${file}`);
+      const points=rows.map((r)=>referencePointFromCompactRow(r,String(pack.source||''))).filter((x):x is RailReferencePoint=>!!x);
+      await world.mergeNativeOSMGameplayStationsAsync(points,null,900);
+      for(const p of points){ if(p.type==='voyageur')stations++; else freightSites++; }
+      onProgress?.({phase:'embedded-shard',index:i+1,totalShards:pack.shards.length,stations,freightSites});
+      await new Promise((r)=>setTimeout(r,0));
+    }
+    return {stations,freightSites,shards:pack.shards.length};
+  }
+
   async loadCachedIntoWorld(world: World, onProgress: ((p:RailReferenceSyncProgress)=>void)|null = null) {
     const rows=await this.db.all(); let stations=0,freightSites=0;
     for(const rec of rows){
@@ -289,7 +385,7 @@ export class RailReferenceSync {
         try{
           const [stationEls,freightEls]=await Promise.all([fetchOverpass(stationQuery(iso),70000),fetchOverpass(freightQuery(iso),100000)]);
           const stations=stationEls.map((e)=>stationFromElement(e,iso)).filter((x):x is RailReferencePoint=>!!x);
-          let freight=mergeSiteRecords(freightEls.map((e)=>freightSiteFromElement(e,iso)).filter((x):x is RailReferencePoint=>!!x));
+          let freight=mergeSiteRecords(freightEls.map((e)=>freightSiteFromElement(e,iso)).filter((x):x is RailReferencePoint=>!!x),[...stations,...world.stations.filter((s)=>s && Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lon))).map((s)=>({lat:Number(s.lat),lon:Number(s.lon),type:String(s.type||'voyageur')}))]);
           if(iso==='FR'){
             const official=await this.fetchFranceOfficialITE();
             freight=[...official,...dedupeAgainst(freight,official,0.20)];
@@ -316,4 +412,4 @@ export class RailReferenceSync {
   }
 }
 
-export const __railReferenceTest = { stationFromElement, freightSiteFromElement, mergeSiteRecords, parseFranceIte3000, stationQuery, freightQuery };
+export const __railReferenceTest = { stationFromElement, freightSiteFromElement, mergeSiteRecords, parseFranceIte3000, stationQuery, freightQuery, referencePointFromCompactRow };

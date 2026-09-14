@@ -521,6 +521,17 @@ export class RailEmpire {
         this._europeGameplayReady = this.globalStations.load(onProgress).then(async (stations) => {
             await this._indexAllZoomGameplayStations(stations, this.globalStations.source);
             try {
+                const embedded = await this.railReferenceSync.loadEmbeddedIntoWorld(this.world, (p) => {
+                    if (p.phase === 'embedded-shard')
+                        this._setWorldStationsStatus(`Référentiel rail embarqué : ${p.index}/${p.totalShards} · ${Number(p.stations || 0).toLocaleString('fr-FR')} gares · ${Number(p.freightSites || 0).toLocaleString('fr-FR')} fret/ITE`);
+                });
+                if (embedded.stations || embedded.freightSites)
+                    this._setWorldStationsStatus(`Référentiel rail embarqué : ${Number(this.world._builtInStationCount || this.world.stations.length || 0).toLocaleString('fr-FR')} points natifs`, 'done');
+            }
+            catch (err) {
+                console.warn('Embedded rail reference pack unavailable:', err);
+            }
+            try {
                 const cached = await this.railReferenceSync.loadCachedIntoWorld(this.world, (p) => {
                     if (p.phase === 'cache-country')
                         this._setWorldStationsStatus(`Référentiel rail : cache ${p.iso || ''} · ${Number(p.stations || 0).toLocaleString('fr-FR')} gares · ${Number(p.freightSites || 0).toLocaleString('fr-FR')} fret/ITE`);
@@ -1375,7 +1386,7 @@ export class RailEmpire {
         if (s.activeIncidents)
             this.incidentManager.loadFromSave(s.activeIncidents, this.world);
         if (s.incidentEnabledTypes)
-            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0);
+            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0, this.world);
         this.incidentManager.loadCadenceSave(s.incidentCadence);
         if (s.works)
             this.worksManager.loadFromSave(s.works);

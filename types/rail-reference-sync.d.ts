@@ -1,5 +1,6 @@
 import type { World } from './world.js';
 export declare const SERVED_RAIL_COUNTRIES: readonly ("FR" | "DE" | "IT" | "ES" | "BE" | "NL" | "CH" | "AT" | "GB" | "PL" | "CZ" | "HU" | "RO" | "SE" | "NO" | "DK" | "PT" | "FI" | "IE" | "LU" | "SI" | "SK" | "HR" | "GR" | "BG" | "LT" | "LV" | "EE" | "RS" | "BA" | "MK" | "AL" | "BY" | "ME" | "NZ" | "RU" | "UA" | "CY" | "MT")[];
+declare function referencePointFromCompactRow(row: unknown, source: string): RailReferencePoint | null;
 type OverpassElement = {
     type?: string;
     id?: number | string;
@@ -38,6 +39,7 @@ export type RailReferenceSyncProgress = {
     iso?: string;
     index?: number;
     totalCountries?: number;
+    totalShards?: number;
     stations?: number;
     freightSites?: number;
     added?: number;
@@ -46,7 +48,12 @@ export type RailReferenceSyncProgress = {
 };
 declare function stationFromElement(el: OverpassElement, iso: string): RailReferencePoint | null;
 declare function freightSiteFromElement(el: OverpassElement, iso: string): RailReferencePoint | null;
-declare function mergeSiteRecords(points: RailReferencePoint[]): RailReferencePoint[];
+type GeoPoint = {
+    lat: number;
+    lon: number;
+    type?: string;
+};
+declare function mergeSiteRecords(points: RailReferencePoint[], anchors?: readonly GeoPoint[]): RailReferencePoint[];
 declare function stationQuery(iso: string): string;
 declare function freightQuery(iso: string): string;
 declare function parseFranceIte3000(data: unknown): RailReferencePoint[];
@@ -54,6 +61,11 @@ export declare class RailReferenceSync {
     private db;
     private running;
     private franceOfficial;
+    loadEmbeddedIntoWorld(world: World, onProgress?: ((p: RailReferenceSyncProgress) => void) | null): Promise<{
+        stations: number;
+        freightSites: number;
+        shards: number;
+    }>;
     loadCachedIntoWorld(world: World, onProgress?: ((p: RailReferenceSyncProgress) => void) | null): Promise<{
         stations: number;
         freightSites: number;
@@ -74,5 +86,6 @@ export declare const __railReferenceTest: {
     parseFranceIte3000: typeof parseFranceIte3000;
     stationQuery: typeof stationQuery;
     freightQuery: typeof freightQuery;
+    referencePointFromCompactRow: typeof referencePointFromCompactRow;
 };
 export {};

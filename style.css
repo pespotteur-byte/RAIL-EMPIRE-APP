@@ -1545,6 +1545,7 @@ select option { background: var(--input-bg); color: var(--text); }
 .tt-operational-title { font-weight:800; margin-bottom:2px; }
 .tt-incident-active { color:#fecaca; }
 .tt-incident-active .tt-operational-title { color:#ff6b6b; }
+.tt-incident-count { margin-top:4px; font-size:10px; font-weight:700; color:#ff6b6b; text-transform:uppercase; letter-spacing:.04em; }
 .tt-works-active { color:#fed7aa; }
 .tt-works-active .tt-operational-title { color:#fb923c; }
 
