@@ -24,19 +24,29 @@ const OVERPASS_URLS = [
 ];
 const UA = 'RailEmpire-ReferencePackBuilder/1.0 (+https://github.com/pespotteur-byte/RAIL-EMPIRE-APP)';
 const SHARD_ROWS = 4000;
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const args = new Set(argv);
 const refetch = args.has('--refetch');
 const buildOnly = args.has('--build');
+const fetchOnly = args.has('--fetch-only');
+const optValue = (name) => { const a = argv.find((x) => x.startsWith(`${name}=`)); return a ? a.slice(name.length + 1) : ''; };
+const onlyCountries = optValue('--countries').split(',').map((x) => x.trim().toUpperCase()).filter(Boolean);
+// `--endpoint=N` rotates the mirror list so several fetchers can run side by side without
+// hammering the same server.
+const endpointOffset = Math.max(0, Number(optValue('--endpoint') || 0)) % OVERPASS_URLS.length;
+const ROTATED = [...OVERPASS_URLS.slice(endpointOffset), ...OVERPASS_URLS.slice(0, endpointOffset)];
+// `--single` sticks to one mirror (useful when the others are down: avoids minutes of fallbacks).
+const ENDPOINTS = args.has('--single') ? ROTATED.slice(0, 1) : ROTATED;
 
 fs.mkdirSync(RAW_DIR, { recursive: true });
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function overpass(query, label) {
+async function overpass(query, label, attempts = 3) {
   let lastError = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    for (const url of OVERPASS_URLS) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    for (const url of ENDPOINTS) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 420000);
       try {
@@ -64,7 +74,63 @@ async function overpass(query, label) {
 }
 
 function bigQuery(base) {
-  return base.replace('[timeout:90]', '[timeout:400]').replace('[timeout:120]', '[timeout:400]').replace('[out:json]', '[out:json][maxsize:1073741824]');
+  return base.replace('[timeout:90]', '[timeout:400]').replace('[timeout:120]', '[timeout:400]').replace('[out:json]', '[out:json][maxsize:536870912]');
+}
+
+// Named freight sites only (yards, terminals, freight-only stations): cheap for any country.
+function freightSiteQuery(iso) {
+  return `[out:json][timeout:300][maxsize:536870912];area["ISO3166-1"="${iso}"][admin_level=2]->.re_country;(nwr["railway"~"^(yard|container_terminal|freight_terminal)$"](area.re_country);nwr["railway"="station"]["freight"](area.re_country);nwr["railway"="station"]["goods"](area.re_country);nwr["railway"="station"]["railway:freight"](area.re_country);nwr["railway"="station"]["passenger"="no"](area.re_country););out tags center;`;
+}
+// Sidings / yard tracks / industrial lines: the heavy part, fetched per bounding-box tile so a
+// large country (DE, FR, RU…) never needs a single multi-minute request.
+function trackTileQuery(iso, s, w, n, e) {
+  const bbox = `${s},${w},${n},${e}`;
+  return `[out:json][timeout:240][maxsize:536870912][bbox:${bbox}];area["ISO3166-1"="${iso}"][admin_level=2]->.re_country;(way["railway"~"^(rail|narrow_gauge)$"]["service"~"^(spur|yard)$"](area.re_country);way["railway"~"^(rail|narrow_gauge)$"]["usage"="industrial"](area.re_country););out tags center;`;
+}
+async function countryBounds(iso) {
+  const els = await overpass(`[out:json][timeout:60];rel["ISO3166-1"="${iso}"][admin_level=2][boundary=administrative];out bb;`, `${iso} bbox`);
+  const bb = els.find((el) => el.bounds)?.bounds;
+  if (!bb) throw new Error(`${iso}: pas de relation frontière`);
+  // Overseas territories inflate the bounding box (FR, ES, PT, NL, GB…): keep the served
+  // European/NZ mainland window only.
+  const CLIPS = {
+    NZ: { s: -48, w: 165, n: -33, e: 179.5 }, RU: { s: 41, w: 19, n: 70, e: 61 }, NO: { s: 57, w: 4, n: 72, e: 32 },
+    FR: { s: 41, w: -5.5, n: 51.5, e: 10 }, ES: { s: 35.9, w: -9.5, n: 44, e: 4.5 }, NL: { s: 50.7, w: 3.3, n: 53.7, e: 7.3 },
+    PT: { s: 36.9, w: -9.6, n: 42.2, e: -6.1 }, GB: { s: 49.8, w: -8.7, n: 61, e: 2 }, DK: { s: 54.5, w: 8, n: 58, e: 15.3 },
+  };
+  const clip = CLIPS[iso] || { s: 34, w: -12, n: 72, e: 45 };
+  // A relation crossing the antimeridian (RU) reports maxlon < minlon: fall back to the clip edge.
+  const maxlon = bb.maxlon < bb.minlon ? clip.e : bb.maxlon;
+  return { s: Math.max(bb.minlat, clip.s), w: Math.max(bb.minlon, clip.w), n: Math.min(bb.maxlat, clip.n), e: Math.min(maxlon, clip.e) };
+}
+async function fetchTracksTiled(iso, s, w, n, e, depth = 0) {
+  const tileDir = path.join(RAW_DIR, 'tiles');
+  fs.mkdirSync(tileDir, { recursive: true });
+  const key = `${iso}_${s.toFixed(2)}_${w.toFixed(2)}_${n.toFixed(2)}_${e.toFixed(2)}`;
+  const file = path.join(tileDir, `${key}.json`);
+  if (n - s < 0.01 || e - w < 0.01) return [];
+  if (!refetch && fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+  const span = Math.max(n - s, e - w);
+  if (span > 3.01 && depth === 0) return splitTile(iso, s, w, n, e, depth);
+  try {
+    const els = await overpass(trackTileQuery(iso, s, w, n, e), `${iso} voies ${key}`, span <= 0.8 ? 6 : 1);
+    fs.writeFileSync(file, JSON.stringify(els));
+    console.log(`  ${iso} voies ${key}: ${els.length} éléments`);
+    await sleep(1500);
+    return els;
+  } catch (e2) {
+    if (span <= 0.8) throw e2;
+    console.warn(`  ${iso} voies ${key}: découpage (${e2 instanceof Error ? e2.message : e2})`);
+    return splitTile(iso, s, w, n, e, depth);
+  }
+}
+async function splitTile(iso, s, w, n, e, depth) {
+  const step = Math.max(n - s, e - w) > 3.01 ? 3 : (Math.max(n - s, e - w)) / 2;
+  const out = [];
+  for (let lat = s; lat < n; lat += step) for (let lon = w; lon < e; lon += step) {
+    out.push(...await fetchTracksTiled(iso, lat, lon, Math.min(n, lat + step), Math.min(e, lon + step), depth + 1));
+  }
+  return out;
 }
 
 async function fetchCountry(iso) {
@@ -73,8 +139,14 @@ async function fetchCountry(iso) {
   console.log(`Overpass ${iso} : gares…`);
   const stations = await overpass(bigQuery(ref.stationQuery(iso)), `${iso} gares`);
   await sleep(2500);
-  console.log(`Overpass ${iso} : fret/ITE…`);
-  const freight = await overpass(bigQuery(ref.freightQuery(iso)), `${iso} fret`);
+  console.log(`Overpass ${iso} : sites fret…`);
+  const sites = await overpass(freightSiteQuery(iso), `${iso} fret`);
+  await sleep(2500);
+  console.log(`Overpass ${iso} : voies de service / ITE (tuiles)…`);
+  const bb = await countryBounds(iso);
+  const tracks = await fetchTracksTiled(iso, bb.s, bb.w, bb.n, bb.e);
+  const seen = new Set();
+  const freight = [...sites, ...tracks].filter((el) => { const k = `${el.type}/${el.id}`; if (seen.has(k)) return false; seen.add(k); return true; });
   const rec = { iso, fetchedAt: new Date().toISOString(), stations, freight };
   fs.writeFileSync(file, JSON.stringify(rec));
   console.log(`  ${iso}: ${stations.length} éléments gares, ${freight.length} éléments fret`);
@@ -158,6 +230,18 @@ async function main() {
 
   const perCountry = {}; const out = []; let stationsAdded = 0, freightAdded = 0, iteAdded = 0;
   const failed = [];
+  const countries = onlyCountries.length ? SERVED_RAIL_COUNTRIES.filter((c) => onlyCountries.includes(c)) : SERVED_RAIL_COUNTRIES;
+  if (fetchOnly) {
+    let todo = countries;
+    for (let pass = 0; pass < 3 && todo.length; pass++) {
+      failed.length = 0;
+      for (const iso of todo) { try { await fetchCountry(iso); } catch (e) { console.warn(`!! ${iso} : ${e instanceof Error ? e.message : e}`); failed.push(iso); } }
+      todo = [...failed];
+      if (todo.length) { console.log(`Nouvelle passe (${pass + 2}) pour : ${todo.join(', ')}`); await sleep(60000); }
+    }
+    if (failed.length) { console.warn(`Pays non récupérés : ${failed.join(', ')}`); process.exitCode = 2; }
+    return;
+  }
   for (const iso of SERVED_RAIL_COUNTRIES) {
     let rec;
     try { rec = buildOnly ? JSON.parse(fs.readFileSync(path.join(RAW_DIR, `${iso}.json`), 'utf8')) : await fetchCountry(iso); }
