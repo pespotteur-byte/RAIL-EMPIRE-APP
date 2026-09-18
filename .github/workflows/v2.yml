@@ -1,0 +1,34 @@
+name: v2
+
+on:
+  push:
+    paths: ['v2/**', 'data/railnet/**', 'js/catalog*.js', '.github/workflows/v2.yml']
+  pull_request:
+    paths: ['v2/**', 'data/railnet/**', 'js/catalog*.js', '.github/workflows/v2.yml']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+      - run: npm ci
+      - name: Catalogue RC28 → JSON
+        run: node ../scripts/export-native-catalog.mjs
+      - name: Données V2 (index + shards + tuiles)
+        run: npm run data:build
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Budgets mémoire / latence
+        run: npm run perf
+      - run: npm run build
+      - name: Taille du build
+        run: du -sh apps/game/dist apps/game/dist/game.js

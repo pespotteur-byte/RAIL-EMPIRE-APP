@@ -1,0 +1,6 @@
+node_modules/
+dist/
+apps/game/public/data/
+*.tsbuildinfo
+.vite/
+!package-lock.json

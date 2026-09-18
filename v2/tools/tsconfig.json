@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": { "rootDir": ".", "outDir": "dist", "lib": ["ES2022"], "types": ["node"], "allowJs": true, "checkJs": true, "noEmit": false },
+  "include": ["*.ts", "*.mjs"],
+  "references": [{ "path": "../packages/data" }]
+}
