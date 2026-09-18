@@ -100,6 +100,16 @@ describe('CatalogStore', () => {
     expect(store.filter({ withImage: true })).toEqual([1]);
     expect(store.filter({ operator: 'DB' })).toEqual([3]);
     expect(store.filter({}, 2)).toEqual([0, 1]);
+    expect(store.filter({ country: 'Atlantide' })).toEqual([]);
+    expect(store.filter({ operator: 'Inconnu' })).toEqual([]);
+  });
+
+  it('chargements concurrents d\'un shard : une seule entrée LRU', async () => {
+    const store = mk(1);
+    await Promise.all([store.get('cat-1'), store.get('cat-1'), store.get('cat-1')]);
+    expect(store.loadedShardCount).toBe(1);
+    await store.get('cat-2');
+    expect(store.loadedShardCount).toBe(1);
   });
 
   it('fiches à la demande + LRU des shards', async () => {
@@ -193,6 +203,13 @@ describe('WorldRefStore', () => {
     store.unpin('24_1');
     await store.tile('25_3');
     expect(store.loadedTiles).toHaveLength(1);
+  });
+
+  it('chargements concurrents d\'une tuile : une seule entrée LRU', async () => {
+    const store = mk(2);
+    await Promise.all([store.tile('25_3'), store.tile('25_3'), store.tile('25_3')]);
+    await store.tile('24_1');
+    expect([...store.loadedTiles].sort()).toEqual(['24_1', '25_3']);
   });
 
   it('recherche par nom (accents, type)', async () => {

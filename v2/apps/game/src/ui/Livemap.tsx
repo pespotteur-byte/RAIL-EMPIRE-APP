@@ -21,6 +21,7 @@ export function Livemap() {
     let disposed = false;
     let refreshTimer: ReturnType<typeof setTimeout> | null = null;
     const disposers: (() => void)[] = [];
+    let rebindTo: (el: HTMLCanvasElement) => void = () => undefined;
 
     const host = canvas.parentElement ?? document.body;
     const resize = () => {
@@ -46,6 +47,7 @@ export function Livemap() {
         return;
       }
       renderer = r;
+      rebindTo(r.canvas);
       rendererKind.value = r.kind;
       resize();
       disposers.push(
@@ -77,12 +79,14 @@ export function Livemap() {
     ro.observe(host);
 
     // --- interactions : molette = zoom autour du curseur, glisser = pan, survol = gare ---
+    // Liées au canvas actif du renderer (le fallback Canvas 2D peut remplacer l'élément).
+    let target: HTMLCanvasElement = canvas;
     let drag: { x: number; y: number; cx: number; cy: number } | null = null;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const c = camera.value;
       const { width, height } = viewport.value;
-      const rect = canvas.getBoundingClientRect();
+      const rect = target.getBoundingClientRect();
       const px = e.clientX - rect.left;
       const py = e.clientY - rect.top;
       const [wx, wy] = screenToWorld(c, width, height, px, py);
@@ -95,7 +99,7 @@ export function Livemap() {
     };
     const onDown = (e: PointerEvent) => {
       drag = { x: e.clientX, y: e.clientY, cx: camera.value.cx, cy: camera.value.cy };
-      canvas.setPointerCapture(e.pointerId);
+      target.setPointerCapture(e.pointerId);
     };
     const onMove = (e: PointerEvent) => {
       if (drag) {
@@ -103,21 +107,44 @@ export function Livemap() {
         camera.value = { ...c, cx: drag.cx - (e.clientX - drag.x) / c.scale, cy: drag.cy + (e.clientY - drag.y) / c.scale };
         return;
       }
-      const rect = canvas.getBoundingClientRect();
+      const rect = target.getBoundingClientRect();
       hoverStation.value = pickStation(e.clientX - rect.left, e.clientY - rect.top);
     };
     const onUp = (e: PointerEvent) => {
       drag = null;
-      canvas.releasePointerCapture(e.pointerId);
+      if (target.hasPointerCapture(e.pointerId)) target.releasePointerCapture(e.pointerId);
+    };
+    const onCancel = () => {
+      drag = null;
     };
     const onLeave = () => {
       hoverStation.value = null;
     };
-    canvas.addEventListener('wheel', onWheel, { passive: false });
-    canvas.addEventListener('pointerdown', onDown);
-    canvas.addEventListener('pointermove', onMove);
-    canvas.addEventListener('pointerup', onUp);
-    canvas.addEventListener('pointerleave', onLeave);
+    const bind = (el: HTMLCanvasElement) => {
+      el.addEventListener('wheel', onWheel, { passive: false });
+      el.addEventListener('pointerdown', onDown);
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onCancel);
+      el.addEventListener('lostpointercapture', onCancel);
+      el.addEventListener('pointerleave', onLeave);
+    };
+    const unbind = (el: HTMLCanvasElement) => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onCancel);
+      el.removeEventListener('lostpointercapture', onCancel);
+      el.removeEventListener('pointerleave', onLeave);
+    };
+    bind(target);
+    rebindTo = (el) => {
+      if (el === target) return;
+      unbind(target);
+      target = el;
+      bind(target);
+    };
 
     return () => {
       disposed = true;
@@ -125,11 +152,7 @@ export function Livemap() {
       if (refreshTimer) clearTimeout(refreshTimer);
       ro.disconnect();
       for (const d of disposers) d();
-      canvas.removeEventListener('wheel', onWheel);
-      canvas.removeEventListener('pointerdown', onDown);
-      canvas.removeEventListener('pointermove', onMove);
-      canvas.removeEventListener('pointerup', onUp);
-      canvas.removeEventListener('pointerleave', onLeave);
+      unbind(target);
       renderer?.destroy();
     };
   }, []);

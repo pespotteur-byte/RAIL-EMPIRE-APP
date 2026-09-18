@@ -73,6 +73,7 @@ describe('text', () => {
     expect(normalizeText('Köln Hauptbahnhof')).toBe('koln hbf');
     expect(normalizeText('Gießen')).toBe('giessen');
     expect(normalizeText('Gare')).toBe('gare');
+    expect(normalizeText('Москва-Пассажирская')).toBe('москва пассажирская');
   });
 });
 

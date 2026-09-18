@@ -62,6 +62,11 @@ export class WorldRefStore {
     }
     if (!(tile in idx.tiles)) return [];
     const t = parseWorldTile(await this.loader.load(worldTileKey(tile)));
+    const already = this.tiles.get(tile);
+    if (already) {
+      this.touch(tile);
+      return already;
+    }
     const pts: RefPoint[] = [];
     for (const row of t.rows) {
       const p = refPointFromRow(row);

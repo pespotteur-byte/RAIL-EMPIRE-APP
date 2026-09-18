@@ -111,6 +111,7 @@ export class CatalogStore {
     const trac = f.traction ? TRACTIONS.indexOf(f.traction) : -1;
     const country = f.country ? x.dict.country.indexOf(f.country) : -1;
     const operator = f.operator ? x.dict.operator.indexOf(f.operator) : -1;
+    if ((f.category && cat < 0) || (f.traction && trac < 0) || (f.country && country < 0) || (f.operator && operator < 0)) return [];
     const terms = f.text ? normalizeText(f.text).split(' ').filter(Boolean) : [];
     const keys = terms.length ? this.buildSearchKeys(x) : null;
     const out: number[] = [];
@@ -152,8 +153,14 @@ export class CatalogStore {
     let map = this.shards.get(shard);
     if (!map) {
       const s = parseCatalogShard(await this.loader.load(catalogShardKey(shard)));
-      map = new Map(s.entries.map((e) => [e.id, e]));
-      this.remember(shard, map);
+      const already = this.shards.get(shard);
+      if (already) {
+        map = already;
+        this.touch(shard);
+      } else {
+        map = new Map(s.entries.map((e) => [e.id, e]));
+        this.remember(shard, map);
+      }
     } else {
       this.touch(shard);
     }
