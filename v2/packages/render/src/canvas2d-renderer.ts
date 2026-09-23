@@ -54,7 +54,7 @@ export class Canvas2DMapRenderer implements MapRenderer {
   resize(width: number, height: number): void {
     this.width = Math.max(1, width);
     this.height = Math.max(1, height);
-    this.dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+    this.dpr = 1; // cible basse (Win7 32 bits) : pas de suréchantillonnage
     this.canvas.width = Math.round(this.width * this.dpr);
     this.canvas.height = Math.round(this.height * this.dpr);
   }

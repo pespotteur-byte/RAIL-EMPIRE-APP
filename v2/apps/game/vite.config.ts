@@ -29,7 +29,8 @@ export default defineConfig({
   base: './',
   worker: { format: 'iife' },
   build: {
-    target: 'es2020',
+    // Navigateurs les plus anciens supportés : Chrome 109 et Firefox 115 ESR (derniers sur Windows 7).
+    target: ['chrome109', 'firefox115'],
     outDir: 'dist',
     emptyOutDir: true,
     copyPublicDir: true,

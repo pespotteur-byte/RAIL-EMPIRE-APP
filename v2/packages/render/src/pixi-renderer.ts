@@ -68,9 +68,12 @@ export class PixiMapRenderer implements MapRenderer {
       preference: 'webgl',
       autoStart: false,
       autoDensity: true,
-      resolution: Math.min(2, globalThis.devicePixelRatio || 1),
+      // Cible basse : Win7 32 bits / 3 Go (Chrome 109). Framebuffer 1:1 et sans MSAA :
+      // la mémoire GPU/CPU d'un canvas plein écran est divisée par 4 à 8.
+      resolution: 1,
       background: 0x0b1220,
-      antialias: true,
+      antialias: false,
+      powerPreference: 'low-power',
       failIfMajorPerformanceCaveat: false,
     });
     return new PixiMapRenderer(app, canvas);
