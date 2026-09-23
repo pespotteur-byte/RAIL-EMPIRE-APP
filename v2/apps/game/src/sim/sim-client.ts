@@ -1,4 +1,4 @@
-import type { MainToWorker, StationInput, TrainSpec, WorkerToMain } from '@re/core';
+import type { MainToWorker, StationInput, TrainDetail, TrainSpec, WeatherCondition, WorkerToMain } from '@re/core';
 import SimWorker from '@re/core/sim.worker?worker&inline';
 import { signal } from '@preact/signals';
 
@@ -20,6 +20,7 @@ export class SimClient {
   readonly timeScale = signal(1);
   readonly error = signal<string | null>(null);
   readonly snapshotSeq = signal(0);
+  readonly detail = signal<TrainDetail | null>(null);
   private readonly worker: Worker;
   private snapshot: SnapshotView = { data: new Float32Array(0), count: 0, simTime: 0 };
   private snapshotBuffer: ArrayBuffer = new ArrayBuffer(0);
@@ -60,6 +61,12 @@ export class SimClient {
     this.timeScale.value = scale;
     this.send({ type: 'timeScale', scale });
   }
+  setWeather(weather: WeatherCondition): void {
+    this.send({ type: 'weather', weather });
+  }
+  inspect(id: string): void {
+    this.send({ type: 'inspect', id });
+  }
 
   destroy(): void {
     if (this.statsTimer) clearInterval(this.statsTimer);
@@ -89,6 +96,9 @@ export class SimClient {
       }
       case 'stats':
         this.stats.value = m;
+        break;
+      case 'trainDetail':
+        this.detail.value = m.detail;
         break;
       case 'error':
         this.error.value = m.message;

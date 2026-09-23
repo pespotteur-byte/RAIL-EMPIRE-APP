@@ -2,8 +2,7 @@ import { SNAPSHOT_STRIDE, SnapshotField } from '@re/core';
 import { Application, Container, Graphics, RendererType, Sprite, Text, type Texture } from 'pixi.js';
 import {
   STATION_COLORS,
-  TRAIN_COLOR,
-  TRAIN_DWELL_COLOR,
+  trainColor,
   worldToScreen,
   type Camera,
   type MapRenderer,
@@ -188,11 +187,12 @@ export class PixiMapRenderer implements MapRenderer {
       const y = this.snapshot[o + SnapshotField.Y] ?? 0;
       const heading = this.snapshot[o + SnapshotField.Heading] ?? 0;
       const dwelling = (this.snapshot[o + SnapshotField.Dwelling] ?? 0) > 0.5;
+      const authority = this.snapshot[o + SnapshotField.Authority] ?? 0;
       sp.visible = true;
       sp.position.set(x - this.origin.x, -(y - this.origin.y));
       sp.rotation = -heading;
       sp.scale.set(trainScale);
-      sp.tint = dwelling ? TRAIN_DWELL_COLOR : TRAIN_COLOR;
+      sp.tint = trainColor(dwelling, authority);
       if (lb) {
         lb.visible = showTrainLabels;
         if (showTrainLabels) {

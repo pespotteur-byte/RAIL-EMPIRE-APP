@@ -1,5 +1,6 @@
 import { computed, signal } from '@preact/signals';
 import { ChunkLoader, CatalogStore, WorldRefStore, normalizeText, project, unproject, type RefPoint } from '@re/data';
+import type { TrainPhysicsParams } from '@re/core';
 import type { Camera, RenderStation } from '@re/render';
 import { ScriptChunkSource } from '../platform/script-chunk-source.ts';
 import { SimClient } from '../sim/sim-client.ts';
@@ -60,11 +61,31 @@ export async function refreshVisibleStations(): Promise<void> {
   status.value = tooWide ? 'Zoomez pour afficher les gares' : `${out.length} points · ${world.loadedTiles.length} tuiles`;
 }
 
-const DEMO_ROUTES: { label: string; names: string[]; kmh: number }[] = [
-  { label: 'RER A', names: ['Saint-Germain-en-Laye', 'Châtelet–Les Halles', 'Marne-la-Vallée–Chessy'], kmh: 110 },
-  { label: 'TER 847', names: ['Paris-Saint-Lazare', 'Mantes-la-Jolie', 'Rouen-Rive-Droite'], kmh: 160 },
-  { label: 'TGV 6601', names: ['Paris-Gare-de-Lyon', 'Dijon-Ville', 'Lyon-Part-Dieu'], kmh: 300 },
-  { label: 'IC 2050', names: ['Koblenz Hbf', 'Bonn Hbf', 'Köln Hbf'], kmh: 160 },
+const DEMO_ROUTES: { label: string; names: string[]; kmh: number; physics: TrainPhysicsParams }[] = [
+  {
+    label: 'RER A',
+    names: ['Saint-Germain-en-Laye', 'Châtelet–Les Halles', 'Marne-la-Vallée–Chessy'],
+    kmh: 110,
+    physics: { massKg: 260_000, powerW: 3_500_000, lengthM: 112, brakeServiceMs2: 1.0 },
+  },
+  {
+    label: 'TER 847',
+    names: ['Paris-Saint-Lazare', 'Mantes-la-Jolie', 'Rouen-Rive-Droite'],
+    kmh: 160,
+    physics: { massKg: 180_000, powerW: 2_400_000, lengthM: 72, brakeServiceMs2: 0.9 },
+  },
+  {
+    label: 'TGV 6601',
+    names: ['Paris-Gare-de-Lyon', 'Dijon-Ville', 'Lyon-Part-Dieu'],
+    kmh: 300,
+    physics: { massKg: 385_000, powerW: 12_000_000, lengthM: 200, brakeServiceMs2: 0.7 },
+  },
+  {
+    label: 'IC 2050',
+    names: ['Koblenz Hbf', 'Bonn Hbf', 'Köln Hbf'],
+    kmh: 160,
+    physics: { massKg: 420_000, powerW: 5_600_000, lengthM: 205, brakeServiceMs2: 0.8 },
+  },
 ];
 
 /** Trains de démonstration résolus par recherche de nom dans le référentiel. */
@@ -88,8 +109,7 @@ export async function spawnDemoTrains(): Promise<number> {
       label: r.label,
       route: stops.map((p) => p.id),
       maxSpeedKmh: r.kmh,
-      acceleration: r.kmh > 200 ? 0.5 : 0.8,
-      braking: 0.7,
+      physics: r.physics,
       dwellS: 60,
       loop: true,
     });

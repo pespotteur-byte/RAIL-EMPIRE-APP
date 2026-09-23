@@ -1,8 +1,7 @@
 import { SNAPSHOT_STRIDE, SnapshotField } from '@re/core';
 import {
   STATION_COLORS,
-  TRAIN_COLOR,
-  TRAIN_DWELL_COLOR,
+  trainColor,
   worldToScreen,
   type Camera,
   type MapRenderer,
@@ -91,12 +90,13 @@ export class Canvas2DMapRenderer implements MapRenderer {
       const y = this.snapshot[o + SnapshotField.Y] ?? 0;
       const heading = this.snapshot[o + SnapshotField.Heading] ?? 0;
       const dwelling = (this.snapshot[o + SnapshotField.Dwelling] ?? 0) > 0.5;
+      const authority = this.snapshot[o + SnapshotField.Authority] ?? 0;
       const [px, py] = worldToScreen(cam, w, h, x, y);
       if (px < -20 || py < -20 || px > w + 20 || py > h + 20) continue;
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(-heading);
-      ctx.fillStyle = css(dwelling ? TRAIN_DWELL_COLOR : TRAIN_COLOR);
+      ctx.fillStyle = css(trainColor(dwelling, authority));
       ctx.fillRect(-7, -3, 14, 6);
       ctx.restore();
       if (cam.scale > 0.005) {

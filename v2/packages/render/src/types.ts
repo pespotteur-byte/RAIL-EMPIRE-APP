@@ -52,3 +52,15 @@ export const STATION_COLORS: Record<RefPointKind, number> = {
 
 export const TRAIN_COLOR = 0xef4444;
 export const TRAIN_DWELL_COLOR = 0xfca5a5;
+/** Train ralenti par un avertissement (CAUTION) */
+export const TRAIN_CAUTION_COLOR = 0xf59e0b;
+/** Train arrêté par un carré fermé (STOP hors gare) */
+export const TRAIN_STOP_COLOR = 0xa855f7;
+
+/** Couleur d'un train selon dwelling + code d'autorité (0 GO, 1 CAUTION, 2 STOP). */
+export function trainColor(dwelling: boolean, authority: number): number {
+  if (dwelling) return TRAIN_DWELL_COLOR;
+  if (authority >= 2) return TRAIN_STOP_COLOR;
+  if (authority >= 1) return TRAIN_CAUTION_COLOR;
+  return TRAIN_COLOR;
+}

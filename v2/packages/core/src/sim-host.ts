@@ -61,6 +61,12 @@ export class SimHost {
       case 'recycle':
         if (this.freeBuffers.length < 2) this.freeBuffers.push(m.buffer);
         break;
+      case 'weather':
+        this.sim.setWeather(m.weather);
+        break;
+      case 'inspect':
+        this.post({ type: 'trainDetail', detail: this.sim.trainDetail(m.id) });
+        break;
       case 'stats':
         this.postStats();
         break;

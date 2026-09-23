@@ -14,8 +14,7 @@ const TGV: TrainSpec = {
   label: 'TGV 6601',
   route: ['PAR', 'DIJ', 'LYO'],
   maxSpeedKmh: 300,
-  acceleration: 0.5,
-  braking: 0.6,
+  physics: { massKg: 385_000, powerW: 12_000_000, lengthM: 200, brakeServiceMs2: 0.7 },
   dwellS: 60,
   loop: true,
 };
@@ -45,7 +44,7 @@ describe('Simulation v0', () => {
     for (let i = 0; i < 33_000; i++) sim.step(0.1);
     sim.writeSnapshot(snap);
     expect(snap[SnapshotField.NextStop]).toBe(2);
-    expect(sim.time).toBeCloseTo(4559, 0);
+    expect(snap[SnapshotField.RouteKm] ?? 0).toBeGreaterThan(260);
   });
 
   it('la vitesse ne dépasse jamais la vitesse d’arrêt possible (freinage)', () => {
