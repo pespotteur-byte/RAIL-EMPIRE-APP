@@ -21,6 +21,7 @@ const PARIS = project(48.8566, 2.3522);
 export const camera = signal<Camera>({ cx: PARIS.x, cy: PARIS.y, scale: 0.004 });
 export const viewport = signal({ width: 1, height: 1 });
 export const hoverStation = signal<RenderStation | null>(null);
+export const hoverTrain = signal<string | null>(null);
 export const rendererKind = signal<string>('…');
 export const status = signal<string>('Chargement de l’index monde…');
 export const visibleStations = signal<readonly RenderStation[]>([]);

@@ -318,7 +318,7 @@ export class Simulation {
         const outgoing = spec.legs[i]?.[0];
         out.push({ ...(incoming ?? outgoing ?? {}), lat: s.lat, lon: s.lon, stopId: id });
       } else {
-        out.push({ lat: s.lat, lon: s.lon, stopId: id, maxSpeed: spec.maxSpeedKmh, maxSpeedSource: 'LINE', wayId: `line:${spec.id}` });
+        out.push({ lat: s.lat, lon: s.lon, stopId: id, maxSpeed: spec.maxSpeedKmh, maxSpeedSource: 'LINE', wayId: 'line' });
       }
     }
     return out.length >= 2 ? out : null;

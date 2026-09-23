@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { signal } from '@preact/signals';
-import { catalog, hoverStation, loadedTiles, rendererKind, sim, spawnDemoTrains, status, world, zoomLabel } from '../state/game.ts';
+import { catalog, hoverStation, hoverTrain, loadedTiles, rendererKind, sim, spawnDemoTrains, status, world, zoomLabel } from '../state/game.ts';
 import { Livemap } from './Livemap.tsx';
 
 const catalogInfo = signal<string>('catalogue : non chargé');
@@ -33,8 +33,13 @@ export function App() {
       const mem = (performance as MemoryPerformance).memory;
       heapInfo.value = mem ? `heap ${(mem.usedJSHeapSize / 1048576).toFixed(0)} Mo` : '';
     }, 1000);
+    const d = setInterval(() => {
+      const id = hoverTrain.value;
+      if (id) sim.inspect(id);
+    }, 250);
     return () => {
       clearInterval(t);
+      clearInterval(d);
     };
   }, []);
 
@@ -54,6 +59,7 @@ export function App() {
 
   const stats = sim.stats.value;
   const hover = hoverStation.value;
+  const detail = sim.detail.value?.id === hoverTrain.value ? sim.detail.value : null;
   return (
     <div class="app">
       <header class="topbar">
@@ -67,7 +73,22 @@ export function App() {
       </header>
       <main class="map-host">
         <Livemap />
-        {hover && (
+        {detail && (
+          <div class="tooltip">
+            <b>{detail.label}</b>
+            <div>
+              {detail.speedKmh.toFixed(0)} km/h · limite {detail.limitKmh.toFixed(0)} (ligne {detail.lineLimitKmh.toFixed(0)})
+            </div>
+            <div class={detail.status === 'GO' ? 'muted' : 'error'}>
+              {detail.status} · {detail.code} · {detail.reason}
+            </div>
+            <div class="muted">
+              signal {detail.aspect} · km {detail.routeKm.toFixed(1)}/{detail.routeTotalKm.toFixed(1)} · {detail.blocksHeld} canton(s)
+              {detail.nextStop ? ` · → ${detail.nextStop}` : ''}
+            </div>
+          </div>
+        )}
+        {hover && !detail && (
           <div class="tooltip">
             <b>{hover.name}</b>
             <div class="muted">
@@ -96,7 +117,7 @@ export function App() {
           </button>
         ))}
         <span>sim {stats ? formatSimTime(stats.simTime) : '--:--:--'}</span>
-        <span>{stats ? `${stats.trains} trains · ${stats.ticksPerSecond.toFixed(0)} ticks/s · ${stats.lastStepMs.toFixed(2)} ms/tick` : ''}</span>
+        <span>{stats ? `${stats.trains} trains · ${stats.cantons} cantons · ${stats.ticksPerSecond.toFixed(0)} ticks/s · ${stats.lastStepMs.toFixed(2)} ms/tick` : ''}</span>
         <span class="spacer" />
         <button onClick={loadCatalog}>Charger l’index catalogue</button>
         <span>{catalogInfo.value}</span>

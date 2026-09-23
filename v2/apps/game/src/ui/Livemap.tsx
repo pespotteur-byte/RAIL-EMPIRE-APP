@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { effect } from '@preact/signals';
+import { SNAPSHOT_STRIDE, SnapshotField } from '@re/core';
 import { createMapRenderer, screenToWorld, type MapRenderer, type RenderStation } from '@re/render';
-import { camera, hoverStation, refreshVisibleStations, rendererKind, sim, viewport, visibleStations } from '../state/game.ts';
+import { camera, hoverStation, hoverTrain, refreshVisibleStations, rendererKind, sim, viewport, visibleStations } from '../state/game.ts';
 
 const MIN_SCALE = 0.00002;
 const MAX_SCALE = 2;
@@ -108,7 +109,15 @@ export function Livemap() {
         return;
       }
       const rect = target.getBoundingClientRect();
-      hoverStation.value = pickStation(e.clientX - rect.left, e.clientY - rect.top);
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const train = pickTrain(px, py);
+      if (train !== hoverTrain.value) {
+        hoverTrain.value = train;
+        if (train) sim.inspect(train);
+        else sim.detail.value = null;
+      }
+      hoverStation.value = train ? null : pickStation(px, py);
     };
     const onUp = (e: PointerEvent) => {
       drag = null;
@@ -119,6 +128,8 @@ export function Livemap() {
     };
     const onLeave = () => {
       hoverStation.value = null;
+      hoverTrain.value = null;
+      sim.detail.value = null;
     };
     const bind = (el: HTMLCanvasElement) => {
       el.addEventListener('wheel', onWheel, { passive: false });
@@ -158,6 +169,28 @@ export function Livemap() {
   }, []);
 
   return <canvas ref={canvasRef} class="livemap" />;
+}
+
+function pickTrain(px: number, py: number): string | null {
+  const c = camera.value;
+  const { width, height } = viewport.value;
+  const [wx, wy] = screenToWorld(c, width, height, px, py);
+  const radius = 8 / c.scale;
+  const { data, count } = sim.latest;
+  const ids = sim.trains.value.ids;
+  let best: string | null = null;
+  let bestD = radius * radius;
+  for (let i = 0; i < count; i++) {
+    const o = i * SNAPSHOT_STRIDE;
+    const dx = (data[o + SnapshotField.X] ?? 0) - wx;
+    const dy = (data[o + SnapshotField.Y] ?? 0) - wy;
+    const d = dx * dx + dy * dy;
+    if (d < bestD) {
+      bestD = d;
+      best = ids[i] ?? null;
+    }
+  }
+  return best;
 }
 
 function pickStation(px: number, py: number): RenderStation | null {
