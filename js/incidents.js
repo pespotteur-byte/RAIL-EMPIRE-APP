@@ -349,7 +349,7 @@ export class IncidentManager {
     }
     isTypeEnabled(id) { return this.enabledTypes.has(id); }
     getEnabledTypes() { return Array.from(this.enabledTypes); }
-    setEnabledTypes(ids, savedVersion = 0) {
+    setEnabledTypes(ids, savedVersion = 0, world = null) {
         const known = new Set(PREDEFINED_INCIDENT_TYPES.map((t) => t.id));
         this.enabledTypes = new Set(Array.isArray(ids) ? ids.filter((id) => known.has(id)) : [...known]);
         // Saves antérieures à HOTFIX56 ne pouvaient pas contenir les nouveaux types météo.
@@ -360,15 +360,25 @@ export class IncidentManager {
                 if (t.weatherTriggered)
                     this.enabledTypes.add(t.id);
         }
+        this._purgeDisabledTypes(world);
     }
-    toggleType(id, enabled) {
+    toggleType(id, enabled, world = null) {
         if (!PREDEFINED_INCIDENT_TYPES.some((t) => t.id === id))
             return false;
         if (enabled)
             this.enabledTypes.add(id);
-        else
+        else {
             this.enabledTypes.delete(id);
+            this._purgeDisabledTypes(world);
+        }
         return true;
+    }
+    /** A disabled type must neither spawn nor keep running: end its live incidents. */
+    _purgeDisabledTypes(world) {
+        const doomed = this.activeIncidents.filter((inc) => !this.enabledTypes.has(inc.typeId));
+        for (const inc of doomed)
+            this.removeIncident(inc.id, world);
+        return doomed.length;
     }
     _normalizeIncidentLocationText(text) {
         return String(text || '').trim().toLowerCase().replace(/\s+/g, ' ');

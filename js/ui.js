@@ -766,6 +766,10 @@ export class UI {
         });
     }
     switchPage(page) {
+        if (page !== 'map' && this.stationCreationMode)
+            this.toggleStationCreation();
+        if (page !== 'map')
+            this._hidePickHint();
         // XV-XX : pages supprimées ou fusionnées — redirections.
         const DELETED_PAGES = {
             seasonal: 'weather',
@@ -1397,21 +1401,39 @@ export class UI {
         const hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
         return `${hh}:${mm}${showDay && day > 0 ? ` (+${day})` : ''}`;
     }
+    /** Live incidents touching a station: in the station itself, on a train currently
+     * held there, and on the adjacent sections leaving it. */
     _livemapStationIncidents(station) {
         const sid = station?.id == null ? '' : String(station.id);
         if (!sid)
             return [];
-        return (this.game.incidentManager?.getActiveIncidents?.() || []).filter((inc) => inc && inc.active !== false && !inc.serviceId && inc.stationA != null && inc.stationB != null &&
-            String(inc.stationA) === sid && String(inc.stationB) === sid);
+        const all = (this.game.incidentManager?.getActiveIncidents?.() || []);
+        const inStation = [], onTrain = [], onSection = [];
+        for (const inc of all) {
+            if (!inc || inc.active === false)
+                continue;
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            if (a !== sid && b !== sid)
+                continue;
+            if (inc.serviceId)
+                onTrain.push(inc);
+            else if (a === b)
+                inStation.push(inc);
+            else
+                onSection.push(inc);
+        }
+        return [...inStation, ...onTrain, ...onSection];
     }
     _livemapStationIncidentHtml(station) {
         const incidents = this._livemapStationIncidents(station);
         if (!incidents.length)
             return '';
+        const sid = String(station.id);
         const nowMinute = Number.isFinite(Number(this.game.timeOfDay))
             ? Number(this.game.timeOfDay)
             : (() => { const pt = this.game.engine?.getParisTime?.(); return pt ? pt.hours * 60 + pt.minutes + (pt.seconds || 0) / 60 : 0; })();
-        return incidents.slice(0, 3).map((inc) => {
+        const MAX = 5;
+        const rows = incidents.slice(0, MAX).map((inc) => {
             const elapsed = Math.max(0, Number(inc.duration || 0) - Number(inc.remaining || 0));
             let start = Number(inc.startTime);
             if ((!Number.isFinite(start) || (start === 0 && elapsed > 0 && nowMinute > elapsed + 1)))
@@ -1420,8 +1442,20 @@ export class UI {
                 start = nowMinute - elapsed;
             const end = start + Math.max(0, Number(inc.duration || 0));
             const effect = inc.effect === 'stop' ? 'Interruption' : `Ralenti ${this._livemapEsc(inc.speedLimit || 30)} km/h`;
-            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div><div>${effect}</div><div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${htmlText(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
-        }).join('');
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            let where = '';
+            if (inc.serviceId)
+                where = `Train ${this._livemapEsc(inc.trainName || '')}${inc.locationText ? ` · ${this._livemapEsc(inc.locationText)}` : ''}`;
+            else if (a !== b) {
+                const other = a === sid ? inc.stationBName : inc.stationAName;
+                where = `Section vers ${this._livemapEsc(other || '?')}`;
+            }
+            const weather = inc.source === 'weather' ? `<div>🌦 ${this._livemapEsc(inc.triggerText || 'Déclencheur météo')}</div>` : '';
+            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div>${where ? `<div>${where}</div>` : ''}<div>${effect}</div>${weather}<div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${htmlText(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
+        });
+        if (incidents.length > MAX)
+            rows.push(`<div class="tt-operational tt-incident-active">+${incidents.length - MAX} autre(s) incident(s) — voir la page Incidents</div>`);
+        return `<div class="tt-incident-count">${incidents.length} incident${incidents.length > 1 ? 's' : ''} en cours</div>` + rows.join('');
     }
     _livemapWorkLocation(item) {
         const stationName = (value) => value ? (this.game.world.getStationById?.(value)?.name || String(value)) : '';
@@ -2800,8 +2834,21 @@ export class UI {
         // Modals do NOT close on outside click (player feedback)
     }
     // --- STATION CREATION ---
+    /** Deux gares ne peuvent pas partager les mêmes coordonnées GPS (< 5 m). */
+    _findStationAtSameCoords(lat, lon, excludeId = null) {
+        for (const s of this.game.world.stations) {
+            if (s.id === excludeId)
+                continue;
+            const d = haversineDistance(Number(s.lat), Number(s.lon), lat, lon);
+            if (Number.isFinite(d) && d < 0.005)
+                return s;
+        }
+        return null;
+    }
     toggleStationCreation() {
         this.stationCreationMode = !this.stationCreationMode;
+        if (!this.stationCreationMode)
+            this._hidePickHint();
         if (!this.stationCreationMode && this._multiCreateMode === 'station') {
             // Single click to deactivate clears multi-mode too
             this._multiCreateMode = null;
@@ -3109,6 +3156,11 @@ export class UI {
         }
         catch (e) {
             console.warn('Local railway snapping failed:', e);
+        }
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+            return;
         }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames, closed });
         station.country = orm.getCountryAtPoint(lat, lon);
@@ -7518,6 +7570,12 @@ export class UI {
             console.warn('Snap failed:', e);
         }
         const closed = document.getElementById('lsc-closed')?.checked || false;
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            if (loadingEl)
+                loadingEl.classList.add('hidden');
+            return alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+        }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [], closed });
         station.country = orm.getCountryAtPoint(lat, lon);
         station.facilities = [type];
@@ -7554,7 +7612,7 @@ export class UI {
                 loadingEl.textContent = 'Calcul du trace ORM en cours...';
             }
             try {
-                const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+                const route = await this._boundedOrm(orm.findRoute(connectTo.lat, connectTo.lon, lat, lon));
                 const distance = orm.getRouteDistance(route);
                 const speeds = route.filter((r) => r.maxSpeed).map((r) => r.maxSpeed);
                 const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
@@ -8042,6 +8100,7 @@ export class UI {
             stationName: station.name,
         });
         this.renderLineStops();
+        this._updateLineManualUI();
         if (this._drawLineMap)
             this._drawLineMap();
     }
@@ -8169,7 +8228,26 @@ export class UI {
       `;
         }).join('');
     }
+    /** Borne un calcul ORM : l'UI ne doit jamais rester sur « Calcul en cours… » indéfiniment (hors ligne, Overpass muet). */
+    _boundedOrm(promise, timeoutMs = 90000) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error(`ORM_TIMEOUT ${timeoutMs}ms`)), timeoutMs);
+            promise.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+        });
+    }
     async saveLine() {
+        try {
+            await this._saveLineInner();
+        }
+        catch (e) {
+            console.warn('saveLine failed:', e);
+            document.getElementById('line-loading')?.classList.add('hidden');
+            alert(String(e).includes('ORM_TIMEOUT')
+                ? 'Calcul du tracé ORM trop long (90 s) : vérifiez la connexion ou tracez le segment manuellement. La ligne n’a pas été modifiée.'
+                : 'Erreur pendant le calcul du tracé : la ligne n’a pas été modifiée.');
+        }
+    }
+    async _saveLineInner() {
         const name = document.getElementById('line-name').value.trim();
         if (!name)
             return alert('Nom requis');
@@ -8190,7 +8268,7 @@ export class UI {
             // line and all station references remain untouched if a single ORM leg fails.
             const line = this.game.lineManager.getLine(this._editingLineId);
             if (line) {
-                const candidate = await this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+                const candidate = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
                 if (!candidate) {
                     if (loadingEl)
                         loadingEl.classList.add('hidden');
@@ -8226,7 +8304,7 @@ export class UI {
         }
         else {
             // Create new line
-            const line = await this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+            const line = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
             if (!line) {
                 if (loadingEl)
                     loadingEl.classList.add('hidden');
@@ -9708,8 +9786,10 @@ export class UI {
             typesTable.addEventListener('change', (e) => {
                 const cb = e.target?.closest('.incident-type-cb');
                 if (cb) {
-                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked);
+                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked, this.game.world);
+                    this.game.renderer?.invalidateStatic?.();
                     this.game.saveState();
+                    this.renderIncidentsPage();
                 }
             });
         }
@@ -9898,7 +9978,11 @@ export class UI {
                 }).join('');
         }
         const typesTable = document.getElementById('incident-types-table');
-        if (typesTable) {
+        // The page refreshes every tick: rebuilding the checkbox table each time would
+        // swap the DOM node under the pointer and swallow the player's click.
+        const typesSig = this.game.incidentManager.getEnabledTypes().map(String).sort().join('|');
+        if (typesTable && typesTable.dataset.enabledSig !== typesSig) {
+            typesTable.dataset.enabledSig = typesSig;
             const types = this.game.incidentManager.getAllTypes();
             const escType = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (HTML_ESCAPE_MAP[c]));
             const tableFor = (items, title, weather = false) => `<section class="incident-type-section ${htmlText(weather ? 'incident-weather-types' : '')}">

@@ -1041,7 +1041,10 @@ export class ScheduleV2Runtime {
         if (plan.occ?.currentTimingMismatchSignature) {
             this._pushAlert('WARNING', 'TIMING_MISMATCH_AUTO_RECALCULATED', `Train ${this.game.scheduleV2.getSchedule(plan.occ.scheduleId)?.number || ''} : le matériel réel allonge la marche. Départ autorisé et temps de marche recalculé automatiquement.`, { rotationId: plan.rotation.id, occurrenceId: plan.occ.id, baseDate: plan.baseDate, suggestion: 'Le train part à son heure résolue ; les circulations suivantes du roulement sont repoussées si nécessaire.' });
         }
-        const formationIssues = this.game.rotationV2?._validateFormationThroughActions?.(plan.rotation, plan.occ, plan.sourceVersion || plan.ver) || [];
+        const formationIssues = [
+            ...(this.game.rotationV2?._validateCategoryComposition?.(plan.occ, plan.sourceVersion || plan.ver) || []),
+            ...(this.game.rotationV2?._validateFormationThroughActions?.(plan.rotation, plan.occ, plan.sourceVersion || plan.ver) || []),
+        ];
         const fatalFormation = formationIssues.find((i) => i.level === 'ERROR');
         if (fatalFormation) {
             this._pushAlert('ERROR', fatalFormation.code || 'ROTATION_FORMATION_INVALID', `Train ${this.game.scheduleV2.getSchedule(plan.occ.scheduleId)?.number || ''} non compilé : ${fatalFormation.message}`, { rotationId: plan.rotation.id, occurrenceId: plan.occ.id, baseDate: plan.baseDate, suggestion: 'Corriger les opérations de composition du roulement avant circulation.' });

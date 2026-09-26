@@ -83,6 +83,7 @@ export class RailEmpire {
         this._started = false;
         this._launching = false;
         this._importing = false;
+        this._gameLoopScheduled = false;
         this.gameplayClock = new GameplayClock();
         this.diagnostics = new OperationalDiagnostics();
         this._externalCatalogApplied = false;
@@ -419,6 +420,7 @@ export class RailEmpire {
         });
         this.engine.paused = false;
         this.running = true;
+        this._gameLoopScheduled = true;
         this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
         this.engine.onSecondTick = (timeOfDay, dateStr, pt) => this.secondTick(timeOfDay, dateStr, pt);
         this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
@@ -520,6 +522,17 @@ export class RailEmpire {
         };
         this._europeGameplayReady = this.globalStations.load(onProgress).then(async (stations) => {
             await this._indexAllZoomGameplayStations(stations, this.globalStations.source);
+            try {
+                const embedded = await this.railReferenceSync.loadEmbeddedIntoWorld(this.world, (p) => {
+                    if (p.phase === 'embedded-shard')
+                        this._setWorldStationsStatus(`Référentiel rail embarqué : ${p.index}/${p.totalShards} · ${Number(p.stations || 0).toLocaleString('fr-FR')} gares · ${Number(p.freightSites || 0).toLocaleString('fr-FR')} fret/ITE`);
+                });
+                if (embedded.stations || embedded.freightSites)
+                    this._setWorldStationsStatus(`Référentiel rail embarqué : ${Number(this.world._builtInStationCount || this.world.stations.length || 0).toLocaleString('fr-FR')} points natifs`, 'done');
+            }
+            catch (err) {
+                console.warn('Embedded rail reference pack unavailable:', err);
+            }
             try {
                 const cached = await this.railReferenceSync.loadCachedIntoWorld(this.world, (p) => {
                     if (p.phase === 'cache-country')
@@ -1303,6 +1316,7 @@ export class RailEmpire {
             this.running = wasRunning;
             this.engine.paused = wasPaused;
             this._importing = false;
+            this._ensureGameLoop();
         }
     }
     _loadStateUnchecked(s) {
@@ -1375,7 +1389,7 @@ export class RailEmpire {
         if (s.activeIncidents)
             this.incidentManager.loadFromSave(s.activeIncidents, this.world);
         if (s.incidentEnabledTypes)
-            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0);
+            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0, this.world);
         this.incidentManager.loadCadenceSave(s.incidentCadence);
         if (s.works)
             this.worksManager.loadFromSave(s.works);
@@ -2261,9 +2275,18 @@ export class RailEmpire {
         // Refresh moving services cache after state transitions
         this.scheduleCreator.refreshMovingCache();
     }
-    gameLoop() {
-        if (!this.running)
+    /** Relance la boucle rAF si elle s'est arrêtée pendant une suspension (`running = false`). */
+    _ensureGameLoop() {
+        if (!this.running || this._gameLoopScheduled)
             return;
+        this._gameLoopScheduled = true;
+        requestAnimationFrame(() => this.gameLoop());
+    }
+    gameLoop() {
+        if (!this.running) {
+            this._gameLoopScheduled = false;
+            return;
+        }
         try {
             const now = performance.now();
             if (!this._lastFrameTime)

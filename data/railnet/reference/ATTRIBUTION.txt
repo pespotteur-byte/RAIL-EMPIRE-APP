@@ -1,0 +1,7 @@
+Rail Empire — pack référentiel ferroviaire embarqué
+
+© OpenStreetMap contributors, ODbL 1.0 — https://www.openstreetmap.org/copyright
+Extraction via Overpass API (conventions OpenRailwayMap) : railway=station/halt, public_transport=station+train=yes,
+railway=yard/container_terminal/freight_terminal, gares taguées fret, voies service=spur/yard et usage=industrial.
+France : Cerema, base ITE 3000 (Licence Ouverte 2.0), mise à jour 2026-07-08.
+Généré le 2026-09-15T12:17:51.620Z — 82068 points (38104 gares, 5159 fret, 38805 ITE).

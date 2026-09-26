@@ -215,8 +215,10 @@ export declare class IncidentManager {
     constructor();
     isTypeEnabled(id: unknown): boolean;
     getEnabledTypes(): unknown[];
-    setEnabledTypes(ids: unknown, savedVersion?: unknown): void;
-    toggleType(id: unknown, enabled: unknown): boolean;
+    setEnabledTypes(ids: unknown, savedVersion?: unknown, world?: IncidentWorld | null): void;
+    toggleType(id: unknown, enabled: unknown, world?: IncidentWorld | null): boolean;
+    /** A disabled type must neither spawn nor keep running: end its live incidents. */
+    _purgeDisabledTypes(world: IncidentWorld | null): number;
     _normalizeIncidentLocationText(text: unknown): string;
     _locationKeyFromParts(stationA: unknown, stationB: unknown, locationText?: unknown): string;
     _locationKeyForIncident(inc: Incident): string;

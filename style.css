@@ -139,8 +139,10 @@ header {
 #game-canvas:active { cursor: grabbing; }
 
 /* MAP CONTROLS */
-.map-controls { position: absolute; top: 8px; left: 8px; z-index: 10; display: flex; gap: 6px; align-items: center; }
-.map-toggles { position: absolute; top: 40px; left: 8px; z-index: 10; display: flex; gap: 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
+.map-hud { position: absolute; top: 0; left: 0; right: 0; z-index: 10; padding: 8px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; pointer-events: none; }
+.map-hud > * { pointer-events: auto; max-width: 100%; box-sizing: border-box; }
+.map-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.map-toggles { display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
 .map-toggles label { font-size: 10px; color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 3px; }
 .map-toggles input { width: 12px; height: 12px; cursor: pointer; }
 .btn-map-action { background: var(--bg2); color: var(--text); border: 1px solid var(--border); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
@@ -603,7 +605,7 @@ select option { background: var(--input-bg); color: var(--text); }
   #page-map { flex-direction: column; }
   #sidebar { width: 100%; height: 35vh; border-left: none; border-top: 1px solid var(--border); flex-shrink: 0; overflow-y: auto; }
   #main-area { flex: none; height: 60vh; }
-  .map-controls { flex-wrap: wrap; gap: 3px; max-width: 60%; }
+  .map-controls { flex-wrap: wrap; gap: 3px; }
   .btn-map-action { font-size: 9px; padding: 6px 8px; min-height: 36px; }
   .map-toggles { flex-wrap: wrap; gap: 3px; padding: 2px 4px; font-size: 9px; }
   .map-search { width: 140px; }
@@ -1478,8 +1480,9 @@ select option { background: var(--input-bg); color: var(--text); }
 #main-area.re3d-active .map-controls,
 #main-area.re3d-active .map-search,
 #main-area.re3d-active .livemap-legend { display:none !important; }
+#main-area.re3d-active .map-hud { display:contents; }
 #main-area.re3d-active .map-toggles {
-  display:flex !important; flex-direction:column; align-items:stretch; gap:3px;
+  position:absolute; display:flex !important; flex-direction:column; align-items:stretch; gap:3px;
   left:auto; right:12px; top:338px; width:112px; max-height:calc(100% - 350px); overflow:auto;
   padding:7px; border-radius:8px; z-index:10;
   background:rgba(2,6,23,.88); border:1px solid rgba(148,163,184,.30);
@@ -1545,6 +1548,7 @@ select option { background: var(--input-bg); color: var(--text); }
 .tt-operational-title { font-weight:800; margin-bottom:2px; }
 .tt-incident-active { color:#fecaca; }
 .tt-incident-active .tt-operational-title { color:#ff6b6b; }
+.tt-incident-count { margin-top:4px; font-size:10px; font-weight:700; color:#ff6b6b; text-transform:uppercase; letter-spacing:.04em; }
 .tt-works-active { color:#fed7aa; }
 .tt-works-active .tt-operational-title { color:#fb923c; }
 

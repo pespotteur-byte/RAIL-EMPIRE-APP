@@ -16915,7 +16915,7 @@ class IncidentManager {
     }
     isTypeEnabled(id) { return this.enabledTypes.has(id); }
     getEnabledTypes() { return Array.from(this.enabledTypes); }
-    setEnabledTypes(ids, savedVersion = 0) {
+    setEnabledTypes(ids, savedVersion = 0, world = null) {
         const known = new Set(exports.PREDEFINED_INCIDENT_TYPES.map((t) => t.id));
         this.enabledTypes = new Set(Array.isArray(ids) ? ids.filter((id) => known.has(id)) : [...known]);
         if (Array.isArray(ids) && Number(savedVersion || 0) < 56) {
@@ -16923,15 +16923,24 @@ class IncidentManager {
                 if (t.weatherTriggered)
                     this.enabledTypes.add(t.id);
         }
+        this._purgeDisabledTypes(world);
     }
-    toggleType(id, enabled) {
+    toggleType(id, enabled, world = null) {
         if (!exports.PREDEFINED_INCIDENT_TYPES.some((t) => t.id === id))
             return false;
         if (enabled)
             this.enabledTypes.add(id);
-        else
+        else {
             this.enabledTypes.delete(id);
+            this._purgeDisabledTypes(world);
+        }
         return true;
+    }
+    _purgeDisabledTypes(world) {
+        const doomed = this.activeIncidents.filter((inc) => !this.enabledTypes.has(inc.typeId));
+        for (const inc of doomed)
+            this.removeIncident(inc.id, world);
+        return doomed.length;
     }
     _normalizeIncidentLocationText(text) {
         return String(text || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -27416,6 +27425,7 @@ class RailEmpire {
         this._started = false;
         this._launching = false;
         this._importing = false;
+        this._gameLoopScheduled = false;
         this.gameplayClock = new gameplay_clock_js_1.GameplayClock();
         this.diagnostics = new operational_diagnostics_js_1.OperationalDiagnostics();
         this._externalCatalogApplied = false;
@@ -27705,6 +27715,7 @@ class RailEmpire {
         });
         this.engine.paused = false;
         this.running = true;
+        this._gameLoopScheduled = true;
         this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
         this.engine.onSecondTick = (timeOfDay, dateStr, pt) => this.secondTick(timeOfDay, dateStr, pt);
         this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
@@ -27794,6 +27805,17 @@ class RailEmpire {
         };
         this._europeGameplayReady = this.globalStations.load(onProgress).then(async (stations) => {
             await this._indexAllZoomGameplayStations(stations, this.globalStations.source);
+            try {
+                const embedded = await this.railReferenceSync.loadEmbeddedIntoWorld(this.world, (p) => {
+                    if (p.phase === 'embedded-shard')
+                        this._setWorldStationsStatus(`Référentiel rail embarqué : ${p.index}/${p.totalShards} · ${Number(p.stations || 0).toLocaleString('fr-FR')} gares · ${Number(p.freightSites || 0).toLocaleString('fr-FR')} fret/ITE`);
+                });
+                if (embedded.stations || embedded.freightSites)
+                    this._setWorldStationsStatus(`Référentiel rail embarqué : ${Number(this.world._builtInStationCount || this.world.stations.length || 0).toLocaleString('fr-FR')} points natifs`, 'done');
+            }
+            catch (err) {
+                console.warn('Embedded rail reference pack unavailable:', err);
+            }
             try {
                 const cached = await this.railReferenceSync.loadCachedIntoWorld(this.world, (p) => {
                     if (p.phase === 'cache-country')
@@ -28519,6 +28541,7 @@ class RailEmpire {
             this.running = wasRunning;
             this.engine.paused = wasPaused;
             this._importing = false;
+            this._ensureGameLoop();
         }
     }
     _loadStateUnchecked(s) {
@@ -28577,7 +28600,7 @@ class RailEmpire {
         if (s.activeIncidents)
             this.incidentManager.loadFromSave(s.activeIncidents, this.world);
         if (s.incidentEnabledTypes)
-            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0);
+            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0, this.world);
         this.incidentManager.loadCadenceSave(s.incidentCadence);
         if (s.works)
             this.worksManager.loadFromSave(s.works);
@@ -29348,9 +29371,17 @@ class RailEmpire {
         }
         this.scheduleCreator.refreshMovingCache();
     }
-    gameLoop() {
-        if (!this.running)
+    _ensureGameLoop() {
+        if (!this.running || this._gameLoopScheduled)
             return;
+        this._gameLoopScheduled = true;
+        requestAnimationFrame(() => this.gameLoop());
+    }
+    gameLoop() {
+        if (!this.running) {
+            this._gameLoopScheduled = false;
+            return;
+        }
         try {
             const now = performance.now();
             if (!this._lastFrameTime)
@@ -37930,6 +37961,25 @@ const DB_NAME = 'rail-empire-reference-sites';
 const DB_VERSION = 1;
 const STORE = 'countries';
 const CACHE_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
+const EMBEDDED_REFERENCE_PACK_GLOBAL = '__RAILNET_REFERENCE_PACK__';
+const EMBEDDED_REFERENCE_SHARD_GLOBAL = '__RAILNET_REFERENCE_SHARD__';
+function referencePointFromCompactRow(row, source) {
+    if (!Array.isArray(row) || row.length < 7)
+        return null;
+    const lat = Number(row[2]) / 1e5, lon = Number(row[3]) / 1e5;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon))
+        return null;
+    const typeCode = Number(row[4]);
+    const type = typeCode === 2 ? 'ite' : typeCode === 1 ? 'marchandise' : 'voyageur';
+    const s = (i) => (row[i] == null ? '' : String(row[i]));
+    const official = Number(row[16]) === 1;
+    return {
+        id: s(0), name: s(1), lat, lon, country: s(5), type, platforms: type === 'voyageur' ? 2 : 1,
+        facilities: type === 'voyageur' ? ['voyageurs'] : type === 'ite' ? ['fret', 'ite', ...(official ? ['reference-officielle'] : [])] : ['fret'],
+        source: s(17) || source, siteKind: s(6), cargoTags: s(15) ? s(15).split(';').filter(Boolean) : [], official,
+        uicRef: s(7), osmType: s(8), osmId: s(9), ref: s(10), operator: s(11), network: s(12), wikidata: s(13), wheelchair: s(14),
+    };
+}
 function normText(value) {
     return String(value || '').normalize?.('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() || '';
 }
@@ -38006,10 +38056,91 @@ function freightSiteFromElement(el, iso) {
         osmType: String(el.type || ''), osmId: String(el.id || ''), ref: String(tags.ref || tags['railway:ref'] || ''), operator: String(tags.operator || ''), network: String(tags.network || ''), wikidata: String(tags.wikidata || ''), wheelchair: '',
     };
 }
-function mergeSiteRecords(points) {
+class GeoGrid {
+    constructor(cell = 0.01) {
+        this.cell = cell;
+        this.map = new Map();
+    }
+    add(p) {
+        const k = `${Math.floor(p.lat / this.cell)}:${Math.floor(p.lon / this.cell)}`;
+        const b = this.map.get(k);
+        if (b)
+            b.push(p);
+        else
+            this.map.set(k, [p]);
+    }
+    near(p) {
+        const ci = Math.floor(p.lat / this.cell), cj = Math.floor(p.lon / this.cell);
+        const out = [];
+        for (let di = -1; di <= 1; di++)
+            for (let dj = -1; dj <= 1; dj++)
+                for (const q of this.map.get(`${ci + di}:${cj + dj}`) || [])
+                    out.push(q);
+        return out;
+    }
+}
+function consolidateYardTracks(freight, anchors) {
+    const isTrack = (p) => p.type === 'marchandise' && p.siteKind === 'yard_track';
+    const tracks = freight.filter(isTrack);
+    const rest = freight.filter((p) => !isTrack(p));
+    if (!tracks.length)
+        return rest;
+    const known = new GeoGrid();
+    for (const p of rest)
+        if (p.type === 'marchandise')
+            known.add(p);
+    for (const a of anchors)
+        known.add(a);
+    const idx = new Map();
+    tracks.forEach((t, i) => idx.set(t, i));
+    const parent = tracks.map((_, i) => i);
+    const find = (i) => {
+        while (parent[i] !== i) {
+            parent[i] = parent[parent[i]];
+            i = parent[i];
+        }
+        return i;
+    };
+    const g = new GeoGrid();
+    for (const t of tracks)
+        g.add(t);
+    for (const t of tracks)
+        for (const q of g.near(t))
+            if (q !== t && distanceKm(t, q) <= 0.4)
+                parent[find(idx.get(t))] = find(idx.get(q));
+    const groups = new Map();
+    for (const t of tracks) {
+        const r = find(idx.get(t));
+        const b = groups.get(r);
+        if (b)
+            b.push(t);
+        else
+            groups.set(r, [t]);
+    }
+    const out = [...rest];
+    for (const members of groups.values()) {
+        const lat = members.reduce((s, m) => s + m.lat, 0) / members.length, lon = members.reduce((s, m) => s + m.lon, 0) / members.length;
+        const center = { lat, lon };
+        if (known.near(center).some((q) => distanceKm(center, q) <= (q.type === 'voyageur' ? 0.9 : 0.6)))
+            continue;
+        const named = members.find((m) => !/^Gare marchandises OSM/i.test(m.name));
+        if (!named && members.length < 3)
+            continue;
+        const first = members.slice().sort((a, b) => String(a.osmId).localeCompare(String(b.osmId)))[0];
+        const head = named || first;
+        out.push({
+            ...first, lat, lon, name: named ? named.name : `Faisceau marchandises ${first.country} ${first.osmId}`, siteKind: 'yard',
+            id: `osm-freight-yardgroup-${first.country}-${first.osmId}`, osmType: head.osmType, osmId: head.osmId,
+            operator: named?.operator || members.find((m) => m.operator)?.operator || '',
+            cargoTags: [...new Set(members.flatMap((m) => m.cargoTags || []))].slice(0, 12),
+        });
+    }
+    return out;
+}
+function mergeSiteRecords(points, anchors = []) {
     const fixed = [];
     const industrial = [];
-    for (const p of points)
+    for (const p of consolidateYardTracks(points, anchors))
         (p.type === 'ite' ? industrial : fixed).push(p);
     const groups = [];
     const grid = new Map();
@@ -38231,6 +38362,42 @@ class RailReferenceSync {
         this.running = null;
         this.franceOfficial = null;
     }
+    async loadEmbeddedIntoWorld(world, onProgress = null) {
+        const bag = globalThis;
+        const pack = bag[EMBEDDED_REFERENCE_PACK_GLOBAL];
+        if (!pack?.prepared || !Array.isArray(pack.shards) || !pack.shards.length || typeof document === 'undefined')
+            return { stations: 0, freightSites: 0, shards: 0 };
+        let stations = 0, freightSites = 0;
+        for (let i = 0; i < pack.shards.length; i++) {
+            const file = String(pack.shards[i] || '').replace(/^\/+/, '');
+            if (!file || file.includes('..'))
+                throw new Error('Nom de shard référentiel invalide');
+            bag[EMBEDDED_REFERENCE_SHARD_GLOBAL] = null;
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `data/railnet/reference/${file}`;
+                script.async = true;
+                script.onload = () => { script.remove(); resolve(); };
+                script.onerror = () => { script.remove(); reject(new Error(`Impossible de charger ${file}`)); };
+                document.head.appendChild(script);
+            });
+            const rows = bag[EMBEDDED_REFERENCE_SHARD_GLOBAL];
+            bag[EMBEDDED_REFERENCE_SHARD_GLOBAL] = null;
+            if (!Array.isArray(rows))
+                throw new Error(`Shard référentiel invalide: ${file}`);
+            const points = rows.map((r) => referencePointFromCompactRow(r, String(pack.source || ''))).filter((x) => !!x);
+            await world.mergeNativeOSMGameplayStationsAsync(points, null, 900);
+            for (const p of points) {
+                if (p.type === 'voyageur')
+                    stations++;
+                else
+                    freightSites++;
+            }
+            onProgress?.({ phase: 'embedded-shard', index: i + 1, totalShards: pack.shards.length, stations, freightSites });
+            await new Promise((r) => setTimeout(r, 0));
+        }
+        return { stations, freightSites, shards: pack.shards.length };
+    }
     async loadCachedIntoWorld(world, onProgress = null) {
         const rows = await this.db.all();
         let stations = 0, freightSites = 0;
@@ -38289,7 +38456,7 @@ class RailReferenceSync {
                 try {
                     const [stationEls, freightEls] = await Promise.all([fetchOverpass(stationQuery(iso), 70000), fetchOverpass(freightQuery(iso), 100000)]);
                     const stations = stationEls.map((e) => stationFromElement(e, iso)).filter((x) => !!x);
-                    let freight = mergeSiteRecords(freightEls.map((e) => freightSiteFromElement(e, iso)).filter((x) => !!x));
+                    let freight = mergeSiteRecords(freightEls.map((e) => freightSiteFromElement(e, iso)).filter((x) => !!x), [...stations, ...world.stations.filter((s) => s && Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lon))).map((s) => ({ lat: Number(s.lat), lon: Number(s.lon), type: String(s.type || 'voyageur') }))]);
                     if (iso === 'FR') {
                         const official = await this.fetchFranceOfficialITE();
                         freight = [...official, ...dedupeAgainst(freight, official, 0.20)];
@@ -38321,7 +38488,7 @@ class RailReferenceSync {
     }
 }
 exports.RailReferenceSync = RailReferenceSync;
-exports.__railReferenceTest = { stationFromElement, freightSiteFromElement, mergeSiteRecords, parseFranceIte3000, stationQuery, freightQuery };
+exports.__railReferenceTest = { stationFromElement, freightSiteFromElement, mergeSiteRecords, parseFranceIte3000, stationQuery, freightQuery, referencePointFromCompactRow };
 
 };
 
@@ -42271,6 +42438,23 @@ class RollingStockItem {
             this.power = 0;
             this.traction = 'none';
         }
+        if (this.category === 'automotrice' && this.traction === 'electrique' && /^X\s?\d{3,5}\b/.test(this.name)) {
+            const origin = `${text(data._source)} ${text(data.identityOperator)} ${text(data.imageData)}`.toLowerCase();
+            if (/sncf|trains-europe\.fr\/sncf/.test(origin))
+                this.traction = 'diesel';
+        }
+        if ((this.category === 'locomotive' || this.category === 'automotrice') && this.power > 0 && this.power < 10) {
+            if (/remorque|voiture d/i.test(this.name))
+                this.power = 0;
+            else if (/^X\s?73900\b/.test(this.name))
+                this.power = 630;
+            else if (/^X\s?73500\b/.test(this.name))
+                this.power = 514;
+            else if (/^Z\s?6400\b/.test(this.name))
+                this.power = 1180;
+            else
+                this.power = defaultPower;
+        }
         this.passengerCapacity = nonNegative(data.passengerCapacity, 0);
         this.freightCapacity = nonNegative(data.freightCapacity, 0);
         this.tonnage = Number.isFinite(rawTonnage) && rawTonnage > 0
@@ -45509,6 +45693,59 @@ class RotationV2Manager {
         const cat = String(v.category || '').toLowerCase();
         return Number(v.powerW || 0) > 0 || cat.includes('locomotive') || cat.includes('automotrice') || cat.includes('autorail') || cat.includes('locotracteur');
     }
+    _wagonVehicle(v) {
+        if (!v || this._poweredVehicle(v))
+            return false;
+        const cat = String(v.category || '').toLowerCase();
+        return cat.includes('wagon') || (Number(v.freightCapacity || 0) > 0 && Number(v.passengerCapacity || 0) <= 0);
+    }
+    _validateCategoryComposition(occ, ver) {
+        const issues = [];
+        const vehicles = (occ.formation?.members || []).map((m) => this.getVehicle(m.vehicleId)).filter((v) => !!v);
+        if (!vehicles.length)
+            return issues;
+        const cat = String(ver?.category || schedule_v2_model_js_1.TrainCategory.PASSENGER);
+        const isProxy = (v) => String(v.category || '').toLowerCase() === 'rame';
+        const proxyHauled = (v) => isProxy(v) && (Number(v.passengerCapacity || 0) > 0 || Number(v.freightCapacity || 0) > 0);
+        const powered = vehicles.filter((v) => this._poweredVehicle(v) && !proxyHauled(v));
+        const wagons = vehicles.filter((v) => this._wagonVehicle(v) || (isProxy(v) && Number(v.freightCapacity || 0) > 0 && Number(v.passengerCapacity || 0) <= 0));
+        const hauled = vehicles.filter((v) => !this._poweredVehicle(v) || proxyHauled(v));
+        const paxCapacity = vehicles.reduce((s, v) => s + Number(v.passengerCapacity || 0), 0);
+        const push = (code, message, level = 'ERROR') => issues.push({ level, code, occurrenceId: occ.id, message });
+        const label = (v) => v.number || v.name || v.id;
+        if (cat === schedule_v2_model_js_1.TrainCategory.HLP) {
+            if (hauled.length)
+                push('CATEGORY_HLP_NOT_ALONE', `HLP : un haut-le-pied ne comporte que des engins moteurs (${hauled.map(label).join(', ')} à retirer).`);
+            if (powered.length > 2)
+                push('CATEGORY_HLP_TOO_MANY', `HLP : maximum 2 engins moteurs (${powered.length} affectés). Utilisez la catégorie TM.`);
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.TM) {
+            if (hauled.length)
+                push('CATEGORY_TM_NOT_ALONE', `TM : un train de machines ne comporte que des engins moteurs (${hauled.map(label).join(', ')} à retirer).`);
+            if (powered.length < 3)
+                push('CATEGORY_TM_TOO_FEW', `TM : un train de machines compte 3 à 12 engins moteurs (${powered.length} affecté(s)). Utilisez la catégorie HLP.`);
+            else if (powered.length > 12)
+                push('CATEGORY_TM_TOO_MANY', `TM : maximum 12 engins moteurs (${powered.length} affectés).`);
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.PASSENGER || cat === schedule_v2_model_js_1.TrainCategory.W) {
+            if (wagons.length)
+                push('CATEGORY_PASSENGER_HAS_WAGON', `${cat === schedule_v2_model_js_1.TrainCategory.W ? 'W' : 'Voyageurs'} : le matériel fret ${wagons.map(label).join(', ')} n’est pas admis dans un train voyageurs.`);
+            if (paxCapacity <= 0)
+                push('CATEGORY_PASSENGER_NO_CAPACITY', `${cat === schedule_v2_model_js_1.TrainCategory.W ? 'W' : 'Voyageurs'} : aucune place voyageurs dans la formation. Choisissez HLP/TM pour des engins seuls.`, 'WARNING');
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.FREIGHT) {
+            if (!wagons.length)
+                push('CATEGORY_FREIGHT_NO_WAGON', hauled.length ? 'Fret : la formation ne contient aucun wagon.' : 'Fret : la formation ne contient que des engins moteurs. Choisissez HLP ou TM.', 'WARNING');
+            const coaches = hauled.filter((v) => !wagons.includes(v));
+            if (coaches.length)
+                push('CATEGORY_FREIGHT_HAS_COACH', `Fret : le matériel voyageurs ${coaches.map(label).join(', ')} n’est pas admis dans un train de fret.`);
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.INFRA || cat === schedule_v2_model_js_1.TrainCategory.TTX) {
+            if (!hauled.length)
+                push('CATEGORY_WORK_NO_WAGON', `${cat} : la formation ne contient que des engins moteurs. Choisissez HLP ou TM pour une machine seule.`, 'WARNING');
+        }
+        return issues;
+    }
     _roleForAttachedVehicle(v, type, activeCount = 0) {
         if (type === exports.RotationActionType.ADD_PUSHER)
             return exports.FormationRole.PUSHER;
@@ -45933,6 +46170,7 @@ class RotationV2Manager {
             if (!activeMembers.some((m) => this._poweredVehicle(this.getVehicle(m.vehicleId)))) {
                 issues.push({ level: 'ERROR', code: 'NO_ACTIVE_TRACTION_ASSIGNED', occurrenceId: occ.id, message: 'Aucun engin de traction actif n’est affecté à ce train.' });
             }
+            issues.push(...this._validateCategoryComposition(occ, ver));
             const locationIds = new Set(r.actions.filter((a) => a.occurrenceId === occ.id).map((a) => a.locationOccurrenceId));
             for (const locationId of locationIds) {
                 const loc = ver.locations.find((l) => l.id === locationId);
@@ -58165,7 +58403,10 @@ class ScheduleV2Runtime {
         if (plan.occ?.currentTimingMismatchSignature) {
             this._pushAlert('WARNING', 'TIMING_MISMATCH_AUTO_RECALCULATED', `Train ${this.game.scheduleV2.getSchedule(plan.occ.scheduleId)?.number || ''} : le matériel réel allonge la marche. Départ autorisé et temps de marche recalculé automatiquement.`, { rotationId: plan.rotation.id, occurrenceId: plan.occ.id, baseDate: plan.baseDate, suggestion: 'Le train part à son heure résolue ; les circulations suivantes du roulement sont repoussées si nécessaire.' });
         }
-        const formationIssues = this.game.rotationV2?._validateFormationThroughActions?.(plan.rotation, plan.occ, plan.sourceVersion || plan.ver) || [];
+        const formationIssues = [
+            ...(this.game.rotationV2?._validateCategoryComposition?.(plan.occ, plan.sourceVersion || plan.ver) || []),
+            ...(this.game.rotationV2?._validateFormationThroughActions?.(plan.rotation, plan.occ, plan.sourceVersion || plan.ver) || []),
+        ];
         const fatalFormation = formationIssues.find((i) => i.level === 'ERROR');
         if (fatalFormation) {
             this._pushAlert('ERROR', fatalFormation.code || 'ROTATION_FORMATION_INVALID', `Train ${this.game.scheduleV2.getSchedule(plan.occ.scheduleId)?.number || ''} non compilé : ${fatalFormation.message}`, { rotationId: plan.rotation.id, occurrenceId: plan.occ.id, baseDate: plan.baseDate, suggestion: 'Corriger les opérations de composition du roulement avant circulation.' });
@@ -67985,6 +68226,10 @@ class UI {
         });
     }
     switchPage(page) {
+        if (page !== 'map' && this.stationCreationMode)
+            this.toggleStationCreation();
+        if (page !== 'map')
+            this._hidePickHint();
         const DELETED_PAGES = {
             seasonal: 'weather',
             connections: 'map',
@@ -68587,17 +68832,33 @@ class UI {
         const sid = station?.id == null ? '' : String(station.id);
         if (!sid)
             return [];
-        return (this.game.incidentManager?.getActiveIncidents?.() || []).filter((inc) => inc && inc.active !== false && !inc.serviceId && inc.stationA != null && inc.stationB != null &&
-            String(inc.stationA) === sid && String(inc.stationB) === sid);
+        const all = (this.game.incidentManager?.getActiveIncidents?.() || []);
+        const inStation = [], onTrain = [], onSection = [];
+        for (const inc of all) {
+            if (!inc || inc.active === false)
+                continue;
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            if (a !== sid && b !== sid)
+                continue;
+            if (inc.serviceId)
+                onTrain.push(inc);
+            else if (a === b)
+                inStation.push(inc);
+            else
+                onSection.push(inc);
+        }
+        return [...inStation, ...onTrain, ...onSection];
     }
     _livemapStationIncidentHtml(station) {
         const incidents = this._livemapStationIncidents(station);
         if (!incidents.length)
             return '';
+        const sid = String(station.id);
         const nowMinute = Number.isFinite(Number(this.game.timeOfDay))
             ? Number(this.game.timeOfDay)
             : (() => { const pt = this.game.engine?.getParisTime?.(); return pt ? pt.hours * 60 + pt.minutes + (pt.seconds || 0) / 60 : 0; })();
-        return incidents.slice(0, 3).map((inc) => {
+        const MAX = 5;
+        const rows = incidents.slice(0, MAX).map((inc) => {
             const elapsed = Math.max(0, Number(inc.duration || 0) - Number(inc.remaining || 0));
             let start = Number(inc.startTime);
             if ((!Number.isFinite(start) || (start === 0 && elapsed > 0 && nowMinute > elapsed + 1)))
@@ -68606,8 +68867,20 @@ class UI {
                 start = nowMinute - elapsed;
             const end = start + Math.max(0, Number(inc.duration || 0));
             const effect = inc.effect === 'stop' ? 'Interruption' : `Ralenti ${this._livemapEsc(inc.speedLimit || 30)} km/h`;
-            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div><div>${effect}</div><div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${(0, html_text_js_1.htmlText)(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
-        }).join('');
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            let where = '';
+            if (inc.serviceId)
+                where = `Train ${this._livemapEsc(inc.trainName || '')}${inc.locationText ? ` · ${this._livemapEsc(inc.locationText)}` : ''}`;
+            else if (a !== b) {
+                const other = a === sid ? inc.stationBName : inc.stationAName;
+                where = `Section vers ${this._livemapEsc(other || '?')}`;
+            }
+            const weather = inc.source === 'weather' ? `<div>🌦 ${this._livemapEsc(inc.triggerText || 'Déclencheur météo')}</div>` : '';
+            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div>${where ? `<div>${where}</div>` : ''}<div>${effect}</div>${weather}<div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${(0, html_text_js_1.htmlText)(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
+        });
+        if (incidents.length > MAX)
+            rows.push(`<div class="tt-operational tt-incident-active">+${incidents.length - MAX} autre(s) incident(s) — voir la page Incidents</div>`);
+        return `<div class="tt-incident-count">${incidents.length} incident${incidents.length > 1 ? 's' : ''} en cours</div>` + rows.join('');
     }
     _livemapWorkLocation(item) {
         const stationName = (value) => value ? (this.game.world.getStationById?.(value)?.name || String(value)) : '';
@@ -69880,8 +70153,20 @@ class UI {
             }
         });
     }
+    _findStationAtSameCoords(lat, lon, excludeId = null) {
+        for (const s of this.game.world.stations) {
+            if (s.id === excludeId)
+                continue;
+            const d = (0, simulation_js_1.haversineDistance)(Number(s.lat), Number(s.lon), lat, lon);
+            if (Number.isFinite(d) && d < 0.005)
+                return s;
+        }
+        return null;
+    }
     toggleStationCreation() {
         this.stationCreationMode = !this.stationCreationMode;
+        if (!this.stationCreationMode)
+            this._hidePickHint();
         if (!this.stationCreationMode && this._multiCreateMode === 'station') {
             this._multiCreateMode = null;
             document.getElementById('btn-create-station')?.classList.remove('multi-mode');
@@ -70171,6 +70456,11 @@ class UI {
         }
         catch (e) {
             console.warn('Local railway snapping failed:', e);
+        }
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+            return;
         }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames, closed });
         station.country = orm.getCountryAtPoint(lat, lon);
@@ -74362,6 +74652,12 @@ class UI {
             console.warn('Snap failed:', e);
         }
         const closed = document.getElementById('lsc-closed')?.checked || false;
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            if (loadingEl)
+                loadingEl.classList.add('hidden');
+            return alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+        }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [], closed });
         station.country = orm.getCountryAtPoint(lat, lon);
         station.facilities = [type];
@@ -74394,7 +74690,7 @@ class UI {
                 loadingEl.textContent = 'Calcul du trace ORM en cours...';
             }
             try {
-                const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+                const route = await this._boundedOrm(orm.findRoute(connectTo.lat, connectTo.lon, lat, lon));
                 const distance = orm.getRouteDistance(route);
                 const speeds = route.filter((r) => r.maxSpeed).map((r) => r.maxSpeed);
                 const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
@@ -74874,6 +75170,7 @@ class UI {
             stationName: station.name,
         });
         this.renderLineStops();
+        this._updateLineManualUI();
         if (this._drawLineMap)
             this._drawLineMap();
     }
@@ -75001,7 +75298,25 @@ class UI {
       `;
         }).join('');
     }
+    _boundedOrm(promise, timeoutMs = 90000) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error(`ORM_TIMEOUT ${timeoutMs}ms`)), timeoutMs);
+            promise.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+        });
+    }
     async saveLine() {
+        try {
+            await this._saveLineInner();
+        }
+        catch (e) {
+            console.warn('saveLine failed:', e);
+            document.getElementById('line-loading')?.classList.add('hidden');
+            alert(String(e).includes('ORM_TIMEOUT')
+                ? 'Calcul du tracé ORM trop long (90 s) : vérifiez la connexion ou tracez le segment manuellement. La ligne n’a pas été modifiée.'
+                : 'Erreur pendant le calcul du tracé : la ligne n’a pas été modifiée.');
+        }
+    }
+    async _saveLineInner() {
         const name = document.getElementById('line-name').value.trim();
         if (!name)
             return alert('Nom requis');
@@ -75020,7 +75335,7 @@ class UI {
         if (this._editingLineId) {
             const line = this.game.lineManager.getLine(this._editingLineId);
             if (line) {
-                const candidate = await this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+                const candidate = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
                 if (!candidate) {
                     if (loadingEl)
                         loadingEl.classList.add('hidden');
@@ -75053,7 +75368,7 @@ class UI {
             }
         }
         else {
-            const line = await this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+            const line = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
             if (!line) {
                 if (loadingEl)
                     loadingEl.classList.add('hidden');
@@ -76634,8 +76949,10 @@ class UI {
             typesTable.addEventListener('change', (e) => {
                 const cb = e.target?.closest('.incident-type-cb');
                 if (cb) {
-                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked);
+                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked, this.game.world);
+                    this.game.renderer?.invalidateStatic?.();
                     this.game.saveState();
+                    this.renderIncidentsPage();
                 }
             });
         }
@@ -76818,7 +77135,9 @@ class UI {
                 }).join('');
         }
         const typesTable = document.getElementById('incident-types-table');
-        if (typesTable) {
+        const typesSig = this.game.incidentManager.getEnabledTypes().map(String).sort().join('|');
+        if (typesTable && typesTable.dataset.enabledSig !== typesSig) {
+            typesTable.dataset.enabledSig = typesSig;
             const types = this.game.incidentManager.getAllTypes();
             const escType = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (HTML_ESCAPE_MAP[c]));
             const tableFor = (items, title, weather = false) => `<section class="incident-type-section ${(0, html_text_js_1.htmlText)(weather ? 'incident-weather-types' : '')}">

@@ -44,6 +44,28 @@ export class RollingStockItem {
             this.power = 0;
             this.traction = 'none';
         }
+        // SNCF numbering convention: « X nnnn » = autorail thermique (Z = électrique, B = bimode).
+        // Le catalogue Batch186 marque encore des X 73500 en traction électrique.
+        // Limitée aux fiches SNCF (SJ X2000, etc. sont bien électriques).
+        if (this.category === 'automotrice' && this.traction === 'electrique' && /^X\s?\d{3,5}\b/.test(this.name)) {
+            const origin = `${text(data._source)} ${text(data.identityOperator)} ${text(data.imageData)}`.toLowerCase();
+            if (/sncf|trains-europe\.fr\/sncf/.test(origin))
+                this.traction = 'diesel';
+        }
+        // Une puissance < 10 kW sur un engin moteur est un marqueur « non renseigné » du
+        // catalogue (ex. « power: 2 »), jamais une valeur réelle.
+        if ((this.category === 'locomotive' || this.category === 'automotrice') && this.power > 0 && this.power < 10) {
+            if (/remorque|voiture d/i.test(this.name))
+                this.power = 0;
+            else if (/^X\s?73900\b/.test(this.name))
+                this.power = 630;
+            else if (/^X\s?73500\b/.test(this.name))
+                this.power = 514;
+            else if (/^Z\s?6400\b/.test(this.name))
+                this.power = 1180;
+            else
+                this.power = defaultPower;
+        }
         this.passengerCapacity = nonNegative(data.passengerCapacity, 0);
         this.freightCapacity = nonNegative(data.freightCapacity, 0);
         // Historical saves use "tonnage" inconsistently. Preserve a valid explicit value;

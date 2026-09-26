@@ -82,6 +82,24 @@ type DbQuaiData = {
 type LivemapStationRef = {
     id?: unknown;
 };
+type LivemapIncident = {
+    active?: boolean;
+    serviceId?: unknown;
+    trainName?: unknown;
+    stationA?: unknown;
+    stationB?: unknown;
+    stationAName?: unknown;
+    stationBName?: unknown;
+    locationText?: unknown;
+    duration?: number;
+    remaining?: number;
+    startTime?: number;
+    effect?: string;
+    speedLimit?: number;
+    name?: string;
+    source?: string;
+    triggerText?: unknown;
+};
 type LivemapWorkItem = {
     startStation?: {
         name?: unknown;
@@ -192,8 +210,10 @@ export declare class UI {
     setupMapEvents(): void;
     _livemapEsc(value: unknown): string;
     _livemapClock(value: number, showDay?: unknown): string;
-    _livemapStationIncidents(station: LivemapStationRef): any;
-    _livemapStationIncidentHtml(station: LivemapStationRef): any;
+    /** Live incidents touching a station: in the station itself, on a train currently
+     * held there, and on the adjacent sections leaving it. */
+    _livemapStationIncidents(station: LivemapStationRef): LivemapIncident[];
+    _livemapStationIncidentHtml(station: LivemapStationRef): string;
     _livemapWorkLocation(item: LivemapWorkItem): string;
     _livemapWorkTooltipHtml(item: LivemapWorkItem): string;
     handleMapHover(x: number, y: number): void;
@@ -270,6 +290,8 @@ export declare class UI {
     _renderLivemapPanel(): void;
     setupTabs(): void;
     setupModals(): void;
+    /** Deux gares ne peuvent pas partager les mêmes coordonnées GPS (< 5 m). */
+    _findStationAtSameCoords(lat: number, lon: number, excludeId?: unknown): any;
     toggleStationCreation(): void;
     toggleIndustryCreation(): void;
     openStationCreationModal(lat: number, lon: number): void;
@@ -558,7 +580,10 @@ export declare class UI {
     _finishLineManual(): void;
     _updateLineManualUI(): void;
     renderLineStops(): void;
+    /** Borne un calcul ORM : l'UI ne doit jamais rester sur « Calcul en cours… » indéfiniment (hors ligne, Overpass muet). */
+    _boundedOrm<T>(promise: Promise<T>, timeoutMs?: number): Promise<T>;
     saveLine(): Promise<void>;
+    _saveLineInner(): Promise<void>;
     renderLinesList(): void;
     editStationFromLines(stationId: unknown): void;
     editLine(id: unknown): void;
