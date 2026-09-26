@@ -22,6 +22,7 @@ type __KPM593 = number;
 import type { ActiveService, ActiveServiceLike } from './schedule-creator.js';
 import type { Rame } from './rame.js';
 import type { Line } from './line.js';
+type OrmRoutePoint = { lat: number; lon: number; maxSpeed: number; electrified: unknown; [k: string]: unknown };
 import type { VoiePoint } from './voie-points.js';
 import type { RollingStockItem } from './rolling-stock.js';
 import type { Station } from './world.js';
@@ -702,6 +703,8 @@ export class UI {
   }
 
   switchPage(page: string) {
+    if (page !== 'map' && this.stationCreationMode) this.toggleStationCreation();
+    if (page !== 'map') this._hidePickHint();
     // XV-XX : pages supprimées ou fusionnées — redirections.
     const DELETED_PAGES: Record<string, string> = {
       seasonal: 'weather',
@@ -2535,8 +2538,19 @@ export class UI {
   }
 
   // --- STATION CREATION ---
+  /** Deux gares ne peuvent pas partager les mêmes coordonnées GPS (< 5 m). */
+  _findStationAtSameCoords(lat: number, lon: number, excludeId: unknown = null) {
+    for (const s of this.game.world.stations) {
+      if (s.id === excludeId) continue;
+      const d = haversineDistance(Number(s.lat), Number(s.lon), lat, lon);
+      if (Number.isFinite(d) && d < 0.005) return s;
+    }
+    return null;
+  }
+
   toggleStationCreation() {
     this.stationCreationMode = !this.stationCreationMode;
+    if (!this.stationCreationMode) this._hidePickHint();
     if (!this.stationCreationMode && this._multiCreateMode === 'station') {
       // Single click to deactivate clears multi-mode too
       this._multiCreateMode = null;
@@ -2816,6 +2830,11 @@ export class UI {
       console.warn('Local railway snapping failed:', e);
     }
 
+    const twin = this._findStationAtSameCoords(lat, lon);
+    if (twin) {
+      alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+      return;
+    }
     const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames, closed });
     station.country = orm.getCountryAtPoint(lat, lon);
     station.facilities = [type];
@@ -6916,6 +6935,11 @@ export class UI {
     } catch (e) { console.warn('Snap failed:', e); }
 
     const closed = document.getElementById('lsc-closed')?.checked || false;
+    const twin = this._findStationAtSameCoords(lat, lon);
+    if (twin) {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      return alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+    }
     const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [], closed });
     station.country = orm.getCountryAtPoint(lat, lon);
     station.facilities = [type];
@@ -6946,9 +6970,9 @@ export class UI {
     if (connectTo) {
       if (loadingEl) { loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Calcul du trace ORM en cours...'; }
       try {
-        const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+        const route: OrmRoutePoint[] = await this._boundedOrm<OrmRoutePoint[]>(orm.findRoute(connectTo.lat, connectTo.lon, lat, lon));
         const distance = orm.getRouteDistance(route);
-        const speeds = route.filter((r: { maxSpeed: unknown }) => r.maxSpeed).map((r: { maxSpeed: unknown }) => r.maxSpeed);
+        const speeds = route.filter((r) => r.maxSpeed).map((r) => r.maxSpeed);
         const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s: number, v: number) => s + v, 0) / speeds.length) : 160;
         const electrified = route.some((r: { electrified: unknown }) => r.electrified === false) ? false : true;
         if (!Array.isArray(route) || route.length < 2 || this.game.orm?.isFallbackRoute?.(route) || !Number.isFinite(Number(distance)) || distance <= 0) {
@@ -7397,6 +7421,7 @@ export class UI {
       stationName: station.name,
     });
     this.renderLineStops();
+    this._updateLineManualUI();
     if (this._drawLineMap) this._drawLineMap();
   }
 
@@ -7516,7 +7541,27 @@ export class UI {
     }).join('');
   }
 
+  /** Borne un calcul ORM : l'UI ne doit jamais rester sur « Calcul en cours… » indéfiniment (hors ligne, Overpass muet). */
+  _boundedOrm<T>(promise: Promise<T>, timeoutMs = 90000): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`ORM_TIMEOUT ${timeoutMs}ms`)), timeoutMs);
+      promise.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+    });
+  }
+
   async saveLine() {
+    try {
+      await this._saveLineInner();
+    } catch (e) {
+      console.warn('saveLine failed:', e);
+      document.getElementById('line-loading')?.classList.add('hidden');
+      alert(String(e).includes('ORM_TIMEOUT')
+        ? 'Calcul du tracé ORM trop long (90 s) : vérifiez la connexion ou tracez le segment manuellement. La ligne n’a pas été modifiée.'
+        : 'Erreur pendant le calcul du tracé : la ligne n’a pas été modifiée.');
+    }
+  }
+
+  async _saveLineInner() {
     const name = document.getElementById('line-name').value.trim();
     if (!name) return alert('Nom requis');
     if (this.lineStops.length < 2) return alert('Il faut au moins 2 gares');
@@ -7535,11 +7580,11 @@ export class UI {
       // line and all station references remain untouched if a single ORM leg fails.
       const line = this.game.lineManager.getLine(this._editingLineId);
       if (line) {
-        const candidate = await this.game.lineManager.buildLine(
+        const candidate = await this._boundedOrm<Line | null>(this.game.lineManager.buildLine(
           { name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes },
           this.game.world,
           this.game.orm
-        );
+        ));
         if (!candidate) {
           if (loadingEl) loadingEl.classList.add('hidden');
           alert('Ligne non modifiée : au moins un trajet ne possède pas d’itinéraire ferroviaire OSM/ORM réel chargé.');
@@ -7570,11 +7615,11 @@ export class UI {
       }
     } else {
       // Create new line
-      const line = await this.game.lineManager.buildLine(
+      const line = await this._boundedOrm<Line | null>(this.game.lineManager.buildLine(
         { name, color, code, stops, manualRoutes: this._lineManualRoutes },
         this.game.world,
         this.game.orm
-      );
+      ));
       if (!line) {
         if (loadingEl) loadingEl.classList.add('hidden');
         alert('Ligne non créée : au moins un trajet ne possède pas d’itinéraire ferroviaire OSM/ORM réel chargé.');
