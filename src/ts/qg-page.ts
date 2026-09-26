@@ -1,5 +1,6 @@
 import { WindowedList } from './windowed-list.js';
 import { clockText, trainStatus, safeSprite, setText, type FleetRow } from './operations-view-model.js';
+import { QG_REPORT_PERIODS } from './qg-report.js';
 export interface HeadquartersData { company: string; passengers: number; freightTonnes: number; clock: string; rows: FleetRow[]; }
 export class HeadquartersPage {
     private list: WindowedList<FleetRow>;
@@ -7,7 +8,7 @@ export class HeadquartersPage {
     private search: HTMLInputElement;
     private root: HTMLElement;
     private compositions = new WeakMap<HTMLElement, string>();
-    constructor(root: HTMLElement, private data: () => HeadquartersData) {
+    constructor(root: HTMLElement, private data: () => HeadquartersData, private onExport?: (days: number) => void) {
         this.root = root;
         root.innerHTML = `<div class="page-content qg-content">
           <div class="page-header"><div><span class="re-eyebrow">RAIL EMPIRE · EXPLOITATION</span><h2>Quartier général</h2></div><span class="qg-clock"></span></div>
@@ -17,7 +18,7 @@ export class HeadquartersPage {
             <section><span>Trains en exploitation</span><strong id="qg-active">0</strong><small class="qg-company"></small></section>
           </div>
           <p class="qg-total-note">Cumuls depuis la création de cette partie, conservés dans sa sauvegarde. Un voyageur est compté à la descente, le fret au déchargement — pas à partir des capacités.</p>
-          <div class="qg-toolbar"><label>Rechercher un train, une rame ou une gare<input id="qg-search" type="search" placeholder="Numéro, nom, origine, destination…"></label><span id="qg-count" role="status"></span></div>
+          <div class="qg-toolbar"><label>Rechercher un train, une rame ou une gare<input id="qg-search" type="search" placeholder="Numéro, nom, origine, destination…"></label><span id="qg-count" role="status"></span><span class="qg-export"><select id="qg-report-period" aria-label="Période du rapport">${QG_REPORT_PERIODS.map((p) => `<option value="${p.days}"${p.days === 30 ? ' selected' : ''}>${p.label}</option>`).join('')}</select><button id="qg-report-btn" class="btn-sm" type="button" title="Rapport complet (finances, rames, trains, personnel) à enregistrer en PDF">Export PDF</button></span></div>
           <div id="qg-empty" class="re-empty" hidden>Aucun train en exploitation. Les trains apparaissent à leur préparation au départ.</div>
           <div id="qg-fleet" aria-label="Compositions des trains en exploitation"></div>
           <p class="qg-footnote">Toutes les compositions restent accessibles. Défilement vertical pour les trains, horizontal pour les longues rames. Aucune carte n’est chargée ici.</p>
@@ -25,6 +26,10 @@ export class HeadquartersPage {
         this.search = (root.querySelector('#qg-search') as HTMLInputElement);
         this.list = new WindowedList((root.querySelector('#qg-fleet') as HTMLElement), 140, r => r.id, (r, old) => this.row(r, old));
         this.search.addEventListener('input', () => this.refresh(true));
+        root.querySelector('#qg-report-btn')?.addEventListener('click', () => {
+            const days = Number((root.querySelector('#qg-report-period') as HTMLSelectElement | null)?.value) || 30;
+            this.onExport?.(days);
+        });
         this.setActive(true);
     }
     private row(row: FleetRow, old?: HTMLElement): HTMLElement {

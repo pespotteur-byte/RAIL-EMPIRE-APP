@@ -1300,7 +1300,12 @@
             <input type="color" id="settings-company-color" value="#3b82f6" style="width:50px;height:32px;border:none;background:none;cursor:pointer;margin-top:4px">
           </div>
           <hr style="border-color:#334155;margin:16px 0">
-          <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Systèmes avancés — facultatifs</div>
+          <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Mode de jeu</div>
+          <div style="padding:10px;border:1px solid #334155;border-radius:8px;background:#0f172a;margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:.82em">
+            <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1 1 200px"><input type="radio" name="settings-game-mode" value="facile" checked style="margin-top:2px"><span><b>Facile</b><br><small style="color:#94a3b8">Tous les systèmes avancés restent utilisables, mais aucun n'est imposé ni pénalisant.</small></span></label>
+            <label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer;flex:1 1 200px"><input type="radio" name="settings-game-mode" value="expert" style="margin-top:2px"><span><b>Expert</b><br><small style="color:#94a3b8">Roulements, personnel et entretien en dépôt obligatoires avec impact réel ; IA concurrentes actives.</small></span></label>
+          </div>
+          <div style="font-size:.85em;font-weight:600;margin-bottom:8px">Systèmes avancés — facultatifs en mode facile</div>
           <div style="padding:10px;border:1px solid #334155;border-radius:8px;background:#0f172a;margin-bottom:12px">
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:.82em;margin-bottom:10px;cursor:pointer">
               <input type="checkbox" id="settings-rotations-required" style="width:18px;height:18px;margin-top:1px">
@@ -1309,6 +1314,10 @@
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:.82em;cursor:pointer">
               <input type="checkbox" id="settings-personnel-required" style="width:18px;height:18px;margin-top:1px">
               <span><b>Personnel opérationnel contraignant</b><br><small style="color:#94a3b8">Désactivé : aucun départ ni travail dépôt n'est bloqué faute d'agents. Activé : conducteurs, 3×8, habilitations et équipes sont requis.</small></span>
+            </label>
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:.82em;cursor:pointer;margin-top:10px">
+              <input type="checkbox" id="settings-depots-required" style="width:18px;height:18px;margin-top:1px">
+              <span><b>Entretien en dépôt obligatoire</b><br><small style="color:#94a3b8">Activé : une rame à 90 % d'usure ou plus (ou en maintenance) ne peut pas prendre un départ tant qu'elle n'est pas entretenue au dépôt.</small></span>
             </label>
           </div>
 

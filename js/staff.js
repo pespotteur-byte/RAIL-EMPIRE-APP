@@ -176,6 +176,7 @@ export function materialFamilyFromItem(item = {}) {
 }
 export class StaffManager {
     constructor() {
+        this._renderGame = null;
         this.staff = []; // all personnel
         this.signalBoxes = []; // { id, name, lat, lon, radiusKm, stationId? }
         this.zones = []; // { id, name } for regulateurs/controleurs
@@ -1312,9 +1313,10 @@ export class StaffManager {
     }
     getSignalBoxById(id) { return this.signalBoxes.find((sb) => sb.id === id); }
     // ── Zones ──
-    addZone(name, lat, lon, radiusKm, lineId) {
+    addZone(name, lat, lon, radiusKm, lineId, stationId) {
         const nLat = lat == null ? null : Number(lat), nLon = lon == null ? null : Number(lon);
         const z = {
+            stationId: stationId ? String(stationId) : null,
             id: `zone-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             name: String(name || `Zone ${this.zones.length + 1}`).trim() || `Zone ${this.zones.length + 1}`,
             lat: typeof nLat === 'number' && Number.isFinite(nLat) && nLat >= -90 && nLat <= 90 ? nLat : null,
@@ -1333,6 +1335,46 @@ export class StaffManager {
             }
         }
         this.zones = this.zones.filter((z) => z.id !== id);
+    }
+    /** Renomme le lieu côté personnel uniquement ; le nom de la gare sur la livemap n'est jamais modifié. */
+    renamePlace(id, name) {
+        const n = String(name ?? '').trim();
+        if (!n)
+            return false;
+        const z = this.zones.find((x) => x.id === id);
+        if (z) {
+            z.name = n;
+            return true;
+        }
+        const sb = this.signalBoxes.find((x) => x.id === id);
+        if (sb) {
+            sb.name = n;
+            return true;
+        }
+        return false;
+    }
+    /** Crée une zone de régulation (régulateurs/contrôleurs) rattachée à une gare existante. */
+    addZoneAtStation(station, name, radiusKm) {
+        if (!station)
+            return null;
+        return this.addZone(String(name ?? '').trim() || station.name, station.lat, station.lon, radiusKm, null, station.id);
+    }
+    /** Crée un poste d'aiguillage (agents de circulation) rattaché à une gare existante. */
+    addSignalBoxAtStation(station, name, radiusKm) {
+        if (!station)
+            return null;
+        return this.addSignalBox({ name: String(name ?? '').trim() || station.name, lat: station.lat, lon: station.lon, radiusKm: radiusKm ?? 10, stationId: station.id });
+    }
+    /** Gares du joueur disposant de personnel circulation (zones ou postes rattachés). */
+    getStaffedStationIds() {
+        const out = new Set();
+        for (const z of this.zones)
+            if (z.stationId)
+                out.add(String(z.stationId));
+        for (const sb of this.signalBoxes)
+            if (sb.stationId)
+                out.add(String(sb.stationId));
+        return out;
     }
     // ── Contrôleur logic ──
     tickControleurs(economy, activeServices, gameTimeMin) {
@@ -1579,6 +1621,7 @@ export class StaffManager {
     render(container, game) {
         if (!container)
             return;
+        this._renderGame = game;
         const eco = game.economy;
         const activeServices = (game.scheduleCreator?.getActiveServices?.() || []);
         const stations = game.world?.stations || [];
@@ -1671,6 +1714,7 @@ export class StaffManager {
         const assignmentsPanel = `
       <section class="staff-panel staff-auto-panel"><div class="staff-section-title"><div><h3>Affectation automatique</h3><p>Le jeu répartit automatiquement le personnel disponible vers les dépôts, gares utilisées, zones, postes et trains. Il ne déplace jamais le matériel roulant.</p></div><span>Actualisation automatique toutes les 5 min de jeu</span></div><div class="staff-auto-actions"><button id="staff-auto-all" class="btn-primary">Réaffecter maintenant</button><button id="staff-auto-depots" class="btn-sm">Auto-affecter aux dépôts</button></div></section>
       ${depots.length ? `<section class="staff-panel"><div class="staff-section-title"><div><h3>Équipes des dépôts</h3><p>Les opérations réservent seulement les spécialistes de l'équipe 3×8 actuellement disponible.</p></div></div><div class="staff-depot-summary-grid">${depotSummary}</div></section>` : ''}
+      <datalist id="staff-station-list">${this._stationOptions()}</datalist>
       <div class="staff-assignment-grid">${this._renderZonesSection()}${this._renderSignalBoxSection()}</div>`;
         const shiftsPanel = `
       <section class="staff-panel"><div class="staff-section-title"><div><h3>3×8</h3><p>Équipe A 00–08, B 08–16, C 16–00. Les conducteurs sont relevés au prochain point sûr si leur tranche se termine en ligne.</p></div><span>${esc(currentShift.label)} active</span></div><div class="staff-shift-grid">${shiftCards}</div></section>
@@ -1821,13 +1865,27 @@ export class StaffManager {
         const busyCount = members.filter((m) => m.busyTaskId).length, assignedCount = members.filter((m) => m.assignedTo).length, onShiftCount = members.filter((m) => m.onDuty && !m.onLeave && !m.absenceRemainingDays).length;
         return `<section class="staff-role-section" data-role-section="${esc(role)}"><header><div><h4>${esc(def.label)}</h4><small>${esc(def.department || '')} · ${esc(def.category || '')}</small></div><span>${members.length} total · ${assignedCount} affecté(s) · ${onShiftCount} en service${busyCount ? ` · ${busyCount} occupé(s)` : ''}</span></header><div class="staff-roster-head"><span>Agent</span><span>Statut</span><span>3×8 / congés</span><span>Affectation</span><span>Activité</span><span>Actions</span></div>${rows}</section>`;
     }
+    _playerStations() { return (this._renderGame?.world?.stations || []); }
+    _stationNameOf(stationId, fallback) {
+        return String(this._playerStations().find((st) => String(st.id) === String(stationId))?.name ?? fallback ?? '');
+    }
+    _stationOptions() {
+        return this._playerStations().slice(0, 4000).map((st) => `<option value="${htmlText(st.name)}">`).join('');
+    }
+    _findStationByInput(v) {
+        const q = String(v ?? '').trim().toLowerCase();
+        if (!q)
+            return null;
+        const list = this._playerStations();
+        return list.find((st) => String(st.name).toLowerCase() === q) || list.find((st) => String(st.name).toLowerCase().startsWith(q)) || null;
+    }
     _renderZonesSection() {
         const regCoverage = this.zones.map((z) => {
             const cov = this.getZoneRegulatorCoverage(z.id);
             const ctrls = this.staff.filter((s) => s.role === 'controleur' && s.assignedTo === z.id);
             const ctrlCount = ctrls.length, ctrlOnDuty = ctrls.filter((s) => s.onDuty !== false && !s.onLeave && !s.absenceRemainingDays).length;
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-        <span style="font-weight:600">${htmlText(z.name)}</span>
+        <span style="font-weight:600">${htmlText(z.name)}${z.stationId ? ` <small style="color:var(--text3);font-weight:400">· gare ${htmlText(this._stationNameOf(z.stationId, z.name))}</small>` : ''} <button class="place-rename-btn" data-place-id="${htmlText(z.id)}" title="Renommer (page Personnel uniquement)" style="font-size:9px;padding:0 4px">✎</button></span>
         <span style="font-size:10px">
           Régulateurs: <b style="color:${htmlText(cov.covered ? 'var(--green)' : '#ef4444')}">${cov.count}/3</b>
           ${cov.teamsCovered >= 3 ? '(A/B/C)' : `(${cov.teamsCovered || 0}/3 équipes)`} · en poste: <b>${cov.onDuty || 0}</b>
@@ -1840,9 +1898,10 @@ export class StaffManager {
       <div class="dash-section">
         <h3>Zones de régulation</h3>
         <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Chaque zone nécessite 3 régulateurs (3 × 8h = 24/7). Les contrôleurs montent aléatoirement dans les trains de leur zone.</p>
-        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
-          <input type="text" id="zone-name-input" placeholder="Nom de la zone" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:160px">
-          <button id="zone-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Zone</button>
+        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="zone-station-input" list="staff-station-list" placeholder="Gare d'affectation…" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:170px">
+          <input type="text" id="zone-name-input" placeholder="Nom du lieu (facultatif)" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:150px">
+          <button id="zone-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Zone en gare</button>
         </div>
         ${regCoverage || '<div style="font-size:10px;color:var(--text3)">Aucune zone créée</div>'}
       </div>`;
@@ -1852,7 +1911,7 @@ export class StaffManager {
             const agents = this.staff.filter((s) => s.role === 'agent_circulation' && s.assignedTo === sb.id);
             const agentsOnDuty = agents.filter((s) => s.onDuty !== false && !s.onLeave && !s.absenceRemainingDays).length;
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-        <span style="font-weight:600">${htmlText(sb.name)}</span>
+        <span style="font-weight:600">${htmlText(sb.name)}${sb.stationId ? ` <small style="color:var(--text3);font-weight:400">· gare ${htmlText(this._stationNameOf(sb.stationId, sb.name))}</small>` : ''} <button class="place-rename-btn" data-place-id="${htmlText(sb.id)}" title="Renommer (page Personnel uniquement)" style="font-size:9px;padding:0 4px">✎</button></span>
         <span style="font-size:10px">Rayon: ${sb.radiusKm} km | Agents: <b>${agents.length}</b> · en poste: <b>${agentsOnDuty}</b></span>
         <button class="sb-del-btn btn-sm" data-sb-id="${htmlText(sb.id)}" style="font-size:9px;background:#ef4444">Suppr.</button>
       </div>`;
@@ -1862,6 +1921,8 @@ export class StaffManager {
         <h3>Postes d'aiguillage</h3>
         <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Placez des postes sur la carte pour gérer les tronçons d'une zone. Chaque poste nécessite au moins 1 agent de circulation.</p>
         <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="sb-station-input" list="staff-station-list" placeholder="Gare d'affectation…" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:170px">
+          <button id="sb-add-station-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Poste en gare</button>
           <input type="text" id="sb-name-input" placeholder="Nom du poste" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:130px">
           <input type="number" id="sb-radius-input" value="10" min="1" max="100" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:80px" title="Rayon (km)">
           <span style="font-size:9px;color:var(--text3)">km</span>
@@ -2018,10 +2079,36 @@ export class StaffManager {
         }));
         container.querySelector('#zone-add-btn')?.addEventListener('click', () => {
             const name = container.querySelector('#zone-name-input')?.value.trim();
-            this.addZone(name);
+            const st = this._findStationByInput(container.querySelector('#zone-station-input')?.value);
+            if (!st) {
+                alert('Choisissez une gare d’affectation dans la liste.');
+                return;
+            }
+            this.addZoneAtStation(st, name);
             this.render(container, game);
             game.saveState();
         });
+        container.querySelector('#sb-add-station-btn')?.addEventListener('click', () => {
+            const name = container.querySelector('#sb-name-input')?.value.trim() || '';
+            const radius = parseFloat(container.querySelector('#sb-radius-input')?.value) || 10;
+            const st = this._findStationByInput(container.querySelector('#sb-station-input')?.value);
+            if (!st) {
+                alert('Choisissez une gare d’affectation dans la liste.');
+                return;
+            }
+            this.addSignalBoxAtStation(st, name, radius);
+            this.render(container, game);
+            game.saveState();
+        });
+        container.querySelectorAll('.place-rename-btn').forEach((btn) => btn.addEventListener('click', () => {
+            const id = btn.dataset.placeId;
+            const cur = this.zones.find((z) => z.id === id)?.name ?? this.signalBoxes.find((b) => b.id === id)?.name ?? '';
+            const n = prompt('Nom du lieu (page Personnel uniquement, la gare garde son nom sur la carte) :', String(cur));
+            if (n != null && this.renamePlace(id, n)) {
+                this.render(container, game);
+                game.saveState();
+            }
+        }));
         container.querySelectorAll('.zone-del-btn').forEach((btn) => btn.addEventListener('click', () => { this.removeZone(btn.dataset.zoneId); this.render(container, game); game.saveState(); }));
         container.querySelector('#sb-add-btn')?.addEventListener('click', () => {
             const name = container.querySelector('#sb-name-input')?.value.trim() || '';

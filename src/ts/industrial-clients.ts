@@ -1,5 +1,6 @@
 import { htmlText } from './html-text.js';
 import { FreightNetwork, type FreightRailLeg } from './freight-network.js';
+import { haversineDistance } from './simulation.js';
 import type { Economy } from './economy.js';
 import type { World } from './world.js';
 import type { RailEmpire } from './main.js';
@@ -4444,7 +4445,29 @@ type IndustrialClient = {
   totalTonnage: number;
   totalRevenue: number;
   createdAt: number;
+  /** Clé du site industriel réel rattaché automatiquement (rayon ITE), vide pour un client attiré manuellement. */
+  siteKey?: string;
+  distanceKm?: number;
+  siteName?: string;
 };
+
+/** Rayon dans lequel un ITE/dépôt dessert les industriels implantés autour de lui. */
+export const ITE_INDUSTRY_RADIUS_KM = 15;
+
+type IteLike = { id: unknown; built?: unknown; type?: unknown; stationId?: unknown; location?: { lat: unknown; lon: unknown } | null };
+type SiteLike = { _key: string; name: string; lat: number; lon: number; industryType: string };
+
+/** Sites industriels situés à moins de `radiusKm` d'un point, triés par distance. */
+export function sitesWithinRadius<T extends { lat: number; lon: number }>(sites: T[], lat: number, lon: number, radiusKm: number = ITE_INDUSTRY_RADIUS_KM): Array<T & { distanceKm: number }> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return [];
+  const out: Array<T & { distanceKm: number }> = [];
+  for (const s of sites) {
+    if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon)) continue;
+    const d = haversineDistance(lat, lon, s.lat, s.lon);
+    if (d <= radiusKm) out.push({ ...s, distanceKm: Math.round(d * 10) / 10 });
+  }
+  return out.sort((a, b) => a.distanceKm - b.distanceKm);
+}
 
 type IndustrialStats = {
   totalClients: number;
@@ -4701,6 +4724,48 @@ export class IndustrialClients {
 
   getActiveClients() {
     return this.clients.filter((c: { active: unknown }) => c.active);
+  }
+
+  /** Industriels réels desservis par un ITE/dépôt (rayon 15 km autour de son emplacement). */
+  getSitesNearDepot(depot: IteLike | null | undefined, radiusKm: number = ITE_INDUSTRY_RADIUS_KM) {
+    const loc = depot?.location;
+    if (!loc) return [];
+    return sitesWithinRadius(this.getAllRealLocations() as SiteLike[], Number(loc.lat), Number(loc.lon), radiusKm);
+  }
+
+  /**
+   * Rattache automatiquement à chaque ITE/dépôt construit les industriels implantés
+   * dans son rayon : un client par site, sans coût d'attraction ; les clients
+   * automatiques dont le site ou l'ITE a disparu sont retirés. Retourne le nombre ajouté.
+   */
+  syncClientsFromNearbySites(depots: IteLike[], radiusKm: number = ITE_INDUSTRY_RADIUS_KM) {
+    const sites = this.getAllRealLocations() as SiteLike[];
+    const valid = new Set<string>();
+    let added = 0;
+    for (const depot of depots) {
+      if (!depot?.built || !depot.location || !depot.stationId) continue;
+      for (const site of sitesWithinRadius(sites, Number(depot.location.lat), Number(depot.location.lon), radiusKm)) {
+        const industry = this.getIndustryInfo(site.industryType);
+        if (!industry) continue;
+        const linkKey = `${depot.id}|${site._key}`;
+        valid.add(linkKey);
+        const existing = this.clients.find((c) => c.siteKey === site._key && c.depotId === String(depot.id));
+        if (existing) { existing.distanceKm = site.distanceKm; existing.siteName = site.name; continue; }
+        const rng = getGlobalRng();
+        this.clients.push({
+          id: `client-${nextClientId++}`,
+          type: String(site.industryType), name: industry.name, icon: industry.icon,
+          stationId: String(depot.stationId), depotId: String(depot.id),
+          dailyTonnage: industry.dailyTonnageMin + Math.floor(rng.random() * (industry.dailyTonnageMax - industry.dailyTonnageMin)),
+          active: true, satisfaction: 80, marketShare: 5, contractsGenerated: 0, totalTonnage: 0, totalRevenue: 0, createdAt: Date.now(),
+          siteKey: site._key, siteName: site.name, distanceKm: site.distanceKm,
+        });
+        this.stats.totalClients++;
+        added++;
+      }
+    }
+    this.clients = this.clients.filter((c) => !c.siteKey || valid.has(`${c.depotId}|${c.siteKey}`));
+    return added;
   }
 
   generateDailyContracts(freightManager: FreightManagerLike, world: World, cargoTypes: CargoTypesLike | null = null) {

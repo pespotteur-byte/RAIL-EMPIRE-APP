@@ -84,6 +84,7 @@ import { ScheduleV2Manager } from './schedule-v2-model.js';
 import { RotationV2Manager } from './rotation-v2-model.js';
 import { ScheduleV2Runtime } from './schedule-v2-runtime.js';
 import { ScheduleV2Revalidator } from './schedule-v2-revalidation.js';
+import { applyGameMode, normalizeGameMode, type GameMode } from './game-mode.js';
 
 type StatusState = 'loading' | 'done' | 'error' | string;
 type SaveOptions = { force?: boolean; lowMemory?: boolean; routePointCount?: number };
@@ -122,6 +123,9 @@ export class RailEmpire {
       // HOTFIX64 — advanced operating layers are opt-in for beginners.
       rotationsRequired: false,
       personnelRequired: false,
+      gameMode: 'facile' as GameMode,
+      depotsRequired: false,
+      aiCompetitors: false,
     };
     this.engine = new SimulationEngine();
     this.world = createDefaultWorld();
@@ -914,6 +918,17 @@ export class RailEmpire {
     const delayToleranceVal = document.getElementById('settings-delay-tolerance-val');
     const rotationsRequiredInput = document.getElementById('settings-rotations-required');
     const personnelRequiredInput = document.getElementById('settings-personnel-required');
+    const depotsRequiredInput = document.getElementById('settings-depots-required') as HTMLInputElement | null;
+    const gameModeInputs = Array.from(document.querySelectorAll('input[name="settings-game-mode"]') as NodeListOf<HTMLInputElement>);
+    const syncModeInputs = () => {
+      const expert = gameModeInputs.find((i) => i.checked)?.value === 'expert';
+      for (const cb of [rotationsRequiredInput, personnelRequiredInput, depotsRequiredInput]) {
+        if (!cb) continue;
+        if (expert) cb.checked = true;
+        cb.disabled = expert;
+      }
+    };
+    for (const i of gameModeInputs) i.addEventListener('change', syncModeInputs);
     const priceSlowInput = document.getElementById('settings-price-slow');
     const priceRegionalInput = document.getElementById('settings-price-regional');
     const priceIntercityInput = document.getElementById('settings-price-intercity');
@@ -996,6 +1011,9 @@ export class RailEmpire {
       delayToleranceInput.value = this.realismSettings.delayTolerance ?? 30;
       if (rotationsRequiredInput) rotationsRequiredInput.checked = this.realismSettings.rotationsRequired === true;
       if (personnelRequiredInput) personnelRequiredInput.checked = this.realismSettings.personnelRequired === true;
+      if (depotsRequiredInput) depotsRequiredInput.checked = this.realismSettings.depotsRequired === true;
+      for (const i of gameModeInputs) i.checked = i.value === normalizeGameMode(this.realismSettings.gameMode);
+      syncModeInputs();
       const prices = this.economy.passengerPriceByClass || {};
       priceSlowInput.value = String(prices.slow ?? 0.08);
       priceRegionalInput.value = String(prices.regional ?? 0.12);
@@ -1025,6 +1043,8 @@ export class RailEmpire {
       { const tol = Number.parseInt(delayToleranceInput.value, 10); this.realismSettings.delayTolerance = Number.isFinite(tol) ? Math.max(0, Math.min(120, tol)) : 30; }
       this.realismSettings.rotationsRequired = !!rotationsRequiredInput?.checked;
       this.realismSettings.personnelRequired = !!personnelRequiredInput?.checked;
+      this.realismSettings.depotsRequired = !!depotsRequiredInput?.checked;
+      applyGameMode(this.realismSettings, gameModeInputs.find((i) => i.checked)?.value);
 
       // Section X — tarifs au km modifiables par le joueur, persistés dans la sauvegarde
       this.economy.passengerPriceByClass = {
@@ -1962,7 +1982,7 @@ export class RailEmpire {
         settle('payroll', () => { this.staffManager.processDailySalaries(this.economy, settlementDate); });
         settle('bank', () => { this.bank.processDailyRepayments(this.economy, settlementDate); });
         settle('unions', () => { this.unions.dailyUpdate(this, undefined, settlementDate); });
-        settle('industry', () => { this.industrialClients.generateDailyContracts(this.freightManager, this.world, this.cargoTypes); });
+        settle('industry', () => { this.industrialClients.syncClientsFromNearbySites(this.depotManager.getAll()); this.industrialClients.generateDailyContracts(this.freightManager, this.world, this.cargoTypes); });
         settle('marketing', () => { this.marketingManager?.dailyUpdate?.(this, settlementDate); });
         settle('ite', () => {
           const cost = this.iteModules.getTotalDailyMaintenance();
