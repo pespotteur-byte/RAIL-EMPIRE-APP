@@ -1,0 +1,14 @@
+{
+  "name": "@re/core",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./sim.worker": "./src/sim.worker.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@re/data": "*"
+  }
+}
