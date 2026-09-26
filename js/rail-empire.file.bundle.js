@@ -27425,6 +27425,7 @@ class RailEmpire {
         this._started = false;
         this._launching = false;
         this._importing = false;
+        this._gameLoopScheduled = false;
         this.gameplayClock = new gameplay_clock_js_1.GameplayClock();
         this.diagnostics = new operational_diagnostics_js_1.OperationalDiagnostics();
         this._externalCatalogApplied = false;
@@ -27714,6 +27715,7 @@ class RailEmpire {
         });
         this.engine.paused = false;
         this.running = true;
+        this._gameLoopScheduled = true;
         this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
         this.engine.onSecondTick = (timeOfDay, dateStr, pt) => this.secondTick(timeOfDay, dateStr, pt);
         this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
@@ -28539,6 +28541,7 @@ class RailEmpire {
             this.running = wasRunning;
             this.engine.paused = wasPaused;
             this._importing = false;
+            this._ensureGameLoop();
         }
     }
     _loadStateUnchecked(s) {
@@ -29368,9 +29371,17 @@ class RailEmpire {
         }
         this.scheduleCreator.refreshMovingCache();
     }
-    gameLoop() {
-        if (!this.running)
+    _ensureGameLoop() {
+        if (!this.running || this._gameLoopScheduled)
             return;
+        this._gameLoopScheduled = true;
+        requestAnimationFrame(() => this.gameLoop());
+    }
+    gameLoop() {
+        if (!this.running) {
+            this._gameLoopScheduled = false;
+            return;
+        }
         try {
             const now = performance.now();
             if (!this._lastFrameTime)
@@ -42431,6 +42442,18 @@ class RollingStockItem {
             const origin = `${text(data._source)} ${text(data.identityOperator)} ${text(data.imageData)}`.toLowerCase();
             if (/sncf|trains-europe\.fr\/sncf/.test(origin))
                 this.traction = 'diesel';
+        }
+        if ((this.category === 'locomotive' || this.category === 'automotrice') && this.power > 0 && this.power < 10) {
+            if (/remorque|voiture d/i.test(this.name))
+                this.power = 0;
+            else if (/^X\s?73900\b/.test(this.name))
+                this.power = 630;
+            else if (/^X\s?73500\b/.test(this.name))
+                this.power = 514;
+            else if (/^Z\s?6400\b/.test(this.name))
+                this.power = 1180;
+            else
+                this.power = defaultPower;
         }
         this.passengerCapacity = nonNegative(data.passengerCapacity, 0);
         this.freightCapacity = nonNegative(data.freightCapacity, 0);

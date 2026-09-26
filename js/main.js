@@ -83,6 +83,7 @@ export class RailEmpire {
         this._started = false;
         this._launching = false;
         this._importing = false;
+        this._gameLoopScheduled = false;
         this.gameplayClock = new GameplayClock();
         this.diagnostics = new OperationalDiagnostics();
         this._externalCatalogApplied = false;
@@ -419,6 +420,7 @@ export class RailEmpire {
         });
         this.engine.paused = false;
         this.running = true;
+        this._gameLoopScheduled = true;
         this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
         this.engine.onSecondTick = (timeOfDay, dateStr, pt) => this.secondTick(timeOfDay, dateStr, pt);
         this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
@@ -1314,6 +1316,7 @@ export class RailEmpire {
             this.running = wasRunning;
             this.engine.paused = wasPaused;
             this._importing = false;
+            this._ensureGameLoop();
         }
     }
     _loadStateUnchecked(s) {
@@ -2272,9 +2275,18 @@ export class RailEmpire {
         // Refresh moving services cache after state transitions
         this.scheduleCreator.refreshMovingCache();
     }
-    gameLoop() {
-        if (!this.running)
+    /** Relance la boucle rAF si elle s'est arrêtée pendant une suspension (`running = false`). */
+    _ensureGameLoop() {
+        if (!this.running || this._gameLoopScheduled)
             return;
+        this._gameLoopScheduled = true;
+        requestAnimationFrame(() => this.gameLoop());
+    }
+    gameLoop() {
+        if (!this.running) {
+            this._gameLoopScheduled = false;
+            return;
+        }
         try {
             const now = performance.now();
             if (!this._lastFrameTime)
