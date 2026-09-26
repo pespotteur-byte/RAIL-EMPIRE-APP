@@ -168,6 +168,12 @@ type IncidentWeatherCandidate = {
     risk?: IncidentWeatherRisk;
     hazard?: number;
 };
+/** Pannes matériel : jamais à 0 % d'usure, probabilité proportionnelle à l'usure. */
+export declare const BREAKDOWN_INCIDENT_TYPES: Set<string>;
+export declare function incidentWearLevel(svc: IncidentService): number;
+export declare function pickByWear<T extends {
+    svc: IncidentService;
+}>(eligible: T[], roll: number): T;
 export declare const PREDEFINED_INCIDENT_TYPES: IncidentType[];
 export declare class Incident {
     id: string;

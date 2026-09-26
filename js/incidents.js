@@ -4,6 +4,22 @@ import { haversineDistance } from './simulation.js?v=1784250033';
 // @ts-expect-error Browser cache-busted module specifier is resolved at runtime.
 import { getGlobalRng } from './rng.js?v=1784250033';
 let nextIncId = 1;
+/** Pannes matériel : jamais à 0 % d'usure, probabilité proportionnelle à l'usure. */
+export const BREAKDOWN_INCIDENT_TYPES = new Set(['train-breakdown', 'weather-rolling-stock-failure']);
+export function incidentWearLevel(svc) {
+    const w = Number(svc.train?.wearLevel ?? svc.rame?.wearLevel ?? 0);
+    return Number.isFinite(w) && w > 0 ? Math.min(100, w) : 0;
+}
+export function pickByWear(eligible, roll) {
+    const total = eligible.reduce((a, x) => a + incidentWearLevel(x.svc), 0);
+    let pick = Math.min(Math.max(roll, 0), 0.999999) * total;
+    for (const x of eligible) {
+        pick -= incidentWearLevel(x.svc);
+        if (pick < 0)
+            return x;
+    }
+    return eligible[eligible.length - 1];
+}
 export const PREDEFINED_INCIDENT_TYPES = [
     {
         id: 'signal-failure',
@@ -933,6 +949,8 @@ export class IncidentManager {
             const svc = candidate.svc;
             if (!svc?.train)
                 return null;
+            if (BREAKDOWN_INCIDENT_TYPES.has(type.id) && incidentWearLevel(svc) <= 0)
+                return null;
             if (this._hasActiveDuplicate(type.id, loc.key))
                 return null;
             const duration = this._randomDuration(type.durationMin, type.durationMax);
@@ -1257,6 +1275,9 @@ export class IncidentManager {
         if (type.requireStopped) {
             candidates = candidates.filter((s) => bookedIncidentStop(s) !== null);
         }
+        const wearBased = BREAKDOWN_INCIDENT_TYPES.has(type.id);
+        if (wearBased)
+            candidates = candidates.filter((s) => incidentWearLevel(s) > 0);
         const eligible = candidates.map((svc) => {
             const stop = type.requireStopped ? bookedIncidentStop(svc) : null;
             const station = stop ? world?.getStationById?.(stop.stationId) : null;
@@ -1269,7 +1290,7 @@ export class IncidentManager {
         if (eligible.length === 0)
             return null;
         const rng = getGlobalRng();
-        const chosen = eligible[Math.floor(rng.random() * eligible.length)];
+        const chosen = wearBased ? pickByWear(eligible, rng.random()) : eligible[Math.floor(rng.random() * eligible.length)];
         const svc = chosen.svc;
         const loc = chosen.loc;
         if (!svc.train)
