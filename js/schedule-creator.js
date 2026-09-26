@@ -98,6 +98,8 @@ export class ServiceStop {
             this.type = 'arret';
     }
 }
+/** Suffixe du motif conservé une fois la cause disparue mais le retard non résorbé. */
+export const RESIDUAL_DELAY_SUFFIX = ' (retard en résorption)';
 export class ActiveService {
     constructor(data, rame, world, weather) {
         this._tailSpeedIndex = null;
@@ -1416,6 +1418,7 @@ export class ActiveService {
             this.train.name = this.name;
             this.train.iteInfo = null;
             this.train.incidentDelayReasons = [];
+            this._lastDelayCause = '';
             this._iteHardBlock = false;
             this._iteCargoMismatch = false;
             this._iteDwellExtra = 0;
@@ -3101,6 +3104,22 @@ export class ActiveService {
         const t = this.train;
         if (!t)
             return;
+        this._updateCurrentDelayReason();
+        // Le motif du retard survit à la fin de sa cause tant que le train n'a pas
+        // résorbé son retard ; il disparaît une fois le train à l'heure.
+        const delay = Number(t.delay) || 0;
+        if (t.delayReason) {
+            if (delay > 0 && !t.delayReason.endsWith(RESIDUAL_DELAY_SUFFIX))
+                this._lastDelayCause = t.delayReason;
+        }
+        else if (delay > 0 && this._lastDelayCause) {
+            t.delayReason = this._lastDelayCause + RESIDUAL_DELAY_SUFFIX;
+        }
+        if (delay <= 0)
+            this._lastDelayCause = '';
+    }
+    _updateCurrentDelayReason() {
+        const t = this.train;
         if (this._iteHardBlock) {
             t.delayReason = 'ITE : train trop long';
             return;

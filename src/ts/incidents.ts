@@ -37,6 +37,10 @@ type IncidentWeatherState = Record<string, unknown> & { windGust?: number; preci
 type IncidentWeatherRisk = Record<string, unknown> & { hazards?: Record<string, number>; level?: { label?: string } };
 type IncidentWeatherCandidate = { loc: IncidentLocation; track: IncidentTrack | null; svc: IncidentService | null; point: { lat: number; lon: number }; state?: IncidentWeatherState; risk?: IncidentWeatherRisk; hazard?: number };
 
+export const INCIDENT_LEVEL_MAX = 10;
+export const INCIDENT_LEVEL_DEFAULT = 5;
+export const INCIDENT_PER_HOUR_PER_LEVEL = 10;
+
 /** Pannes matériel : jamais à 0 % d'usure, probabilité proportionnelle à l'usure. */
 export const BREAKDOWN_INCIDENT_TYPES = new Set(['train-breakdown', 'weather-rolling-stock-failure']);
 export function incidentWearLevel(svc: IncidentService): number {
@@ -389,6 +393,8 @@ export class IncidentManager {
   declare predefinedTypes: IncidentType[];
   declare enabledTypes: Set<unknown>;
   declare targetIncidentsPerHour: number;
+  /** Intensité par type, 0–10 (5 = cadence Annexe 11, 0 = jamais, 10 = ×2). */
+  declare typeLevels: Record<string, number>;
   declare _incidentSpawnCredit: number;
   declare _incidentSpawnLastAbsMinute: number | null;
   declare _weatherIncidentLastAbsMinute: number | null;
@@ -407,6 +413,7 @@ export class IncidentManager {
     // time so starting/reloading at 15:25 never creates a catch-up burst.
     // 50 / 60 = one successful incident every 1.2 game minutes on average.
     this.targetIncidentsPerHour = 50;
+    this.typeLevels = Object.create(null);
     this._incidentSpawnCredit = 0;
     this._incidentSpawnLastAbsMinute = null;
     this._weatherIncidentLastAbsMinute = null;
@@ -417,7 +424,31 @@ export class IncidentManager {
     this.accordionHorizonKm = 3.0; // INC-03 : effet accordéon avant la zone d'incident
   }
 
-  isTypeEnabled(id: unknown) { return this.enabledTypes.has(id); }
+  isTypeEnabled(id: unknown) { return this.enabledTypes.has(id) && this.getTypeLevel(id) > 0; }
+  getTypeLevel(id: unknown): number {
+    const v = this.typeLevels[String(id)];
+    return typeof v === 'number' && Number.isFinite(v) ? Math.min(INCIDENT_LEVEL_MAX, Math.max(0, Math.round(v))) : INCIDENT_LEVEL_DEFAULT;
+  }
+  /** Multiplicateur de fréquence dérivé du curseur 0–10 (5 → ×1). */
+  typeLevelFactor(id: unknown): number { return this.getTypeLevel(id) / INCIDENT_LEVEL_DEFAULT; }
+  setTypeLevel(id: unknown, level: unknown, world: IncidentWorld | null = null) {
+    if (!PREDEFINED_INCIDENT_TYPES.some((t) => t.id === id)) return false;
+    const n = Number(level);
+    if (!Number.isFinite(n)) return false;
+    const clamped = Math.min(INCIDENT_LEVEL_MAX, Math.max(0, Math.round(n)));
+    if (clamped === INCIDENT_LEVEL_DEFAULT) delete this.typeLevels[String(id)];
+    else this.typeLevels[String(id)] = clamped;
+    if (clamped === 0) this._purgeDisabledTypes(world);
+    return true;
+  }
+  /** Cadence globale 0–10 (5 = 50 incidents/h Europe entière). */
+  getGlobalLevel(): number { return Math.min(INCIDENT_LEVEL_MAX, Math.max(0, Math.round(this.targetIncidentsPerHour / INCIDENT_PER_HOUR_PER_LEVEL))); }
+  setGlobalLevel(level: unknown) {
+    const n = Number(level);
+    if (!Number.isFinite(n)) return false;
+    this.targetIncidentsPerHour = Math.min(INCIDENT_LEVEL_MAX, Math.max(0, Math.round(n))) * INCIDENT_PER_HOUR_PER_LEVEL;
+    return true;
+  }
   getEnabledTypes() { return Array.from(this.enabledTypes); }
   setEnabledTypes(ids: unknown, savedVersion: unknown = 0, world: IncidentWorld | null = null) {
     const known=new Set(PREDEFINED_INCIDENT_TYPES.map((t) =>t.id));
@@ -438,7 +469,7 @@ export class IncidentManager {
   }
   /** A disabled type must neither spawn nor keep running: end its live incidents. */
   _purgeDisabledTypes(world: IncidentWorld | null) {
-    const doomed = this.activeIncidents.filter((inc: Incident) => !this.enabledTypes.has(inc.typeId));
+    const doomed = this.activeIncidents.filter((inc: Incident) => !this.isTypeEnabled(inc.typeId));
     for (const inc of doomed) this.removeIncident(inc.id, world as IncidentWorld);
     return doomed.length;
   }
@@ -770,10 +801,10 @@ export class IncidentManager {
   }
 
   _probabilityForType(type: IncidentType, season: unknown) {
-    if (type.id === 'train-breakdown') {
-      return season === 'summer' ? (type.summerProbability || type.probability) : type.probability;
-    }
-    return type.probability;
+    const base = type.id === 'train-breakdown'
+      ? (season === 'summer' ? (type.summerProbability || type.probability) : type.probability)
+      : type.probability;
+    return Number(base) * this.typeLevelFactor(type.id);
   }
 
   _inTimeWindow(type: IncidentType, timeOfDay: number) {
@@ -800,7 +831,7 @@ export class IncidentManager {
 
   _weightedType(pool: IncidentType[], season: unknown) {
     if (!pool?.length) return null;
-    const weights = pool.map((t) => Math.max(0.01, Number(this._probabilityForType(t, season)) || 0.01));
+    const weights = pool.map((t) => this.getTypeLevel(t.id) <= 0 ? 0 : Math.max(0.01, Number(this._probabilityForType(t, season)) || 0.01));
     const total = weights.reduce((a: number,b: number) => a+b, 0);
     let pick = getGlobalRng().random() * total;
     for (let i=0;i<pool.length;i++) {
@@ -812,7 +843,7 @@ export class IncidentManager {
 
   _spawnGuaranteedIncident(timeOfDay: unknown, services: IncidentService[], world: IncidentWorld, season: unknown) {
     const pool = this.predefinedTypes.filter((type: IncidentType) =>
-      this.enabledTypes.has(type.id) && !type.weatherTriggered && (!type.timeWindows || this._inTimeWindow(type, timeOfDay as number))
+      this.isTypeEnabled(type.id) && !type.weatherTriggered && (!type.timeWindows || this._inTimeWindow(type, timeOfDay as number))
     );
     // Retry with another weighted type when a conditional type has no valid
     // target (e.g. no passenger train stopped in a station). This is what makes
@@ -969,7 +1000,7 @@ export class IncidentManager {
     this._weatherIncidentLastAbsMinute=abs;elapsed=Math.min(elapsed,10);
     const candidates=this._weatherCandidates(services,world);if(!candidates.length)return 0;
     const evaluated: IncidentWeatherCandidate[] = candidates.map((c) => { const state=(weather.getAt?.(c.point.lat,c.point.lon)||{}) as IncidentWeatherState; const risk=(weather.getRailRiskAt?.(c.point.lat,c.point.lon,160)||state.risk||{}) as unknown as IncidentWeatherRisk; return {...c,state,risk}; });
-    const types=this.predefinedTypes.filter((t) =>t.weatherTriggered&&this.enabledTypes.has(t.id));let spawned=0;
+    const types=this.predefinedTypes.filter((t) =>t.weatherTriggered&&this.isTypeEnabled(t.id));let spawned=0;
     for(const type of types) {
       const eligible: IncidentWeatherCandidate[] = evaluated.map((c) =>({...c,hazard:Number(c.risk?.hazards?.[type.weatherHazard || ''])||0})).filter((c) =>Number(c.hazard)>=Number(type.weatherMinHazard||0));
       if(type.requireElectrified)eligible.splice(0,eligible.length,...eligible.filter((c) =>c.track?.electrified!==false));
@@ -981,7 +1012,7 @@ export class IncidentManager {
         continue;
       }
       eligible.sort((a,b)=>Number(b.hazard)-Number(a.hazard));const best=eligible[0];
-      const exposureFactor=Math.min(2,0.55+Math.sqrt(eligible.length)/4);const rate=Math.max(0,Number(type.weatherRatePerHour)||0)*Number(best.hazard || 0)*exposureFactor;
+      const exposureFactor=Math.min(2,0.55+Math.sqrt(eligible.length)/4);const rate=Math.max(0,Number(type.weatherRatePerHour)||0)*Number(best.hazard || 0)*exposureFactor*this.typeLevelFactor(type.id);
       this._weatherIncidentCredit[type.id]=(Number(this._weatherIncidentCredit[type.id])||0)+elapsed*rate/60;
       if(this._weatherIncidentCredit[type.id]<1)continue;
       const inc=this._spawnWeatherAt(type,best,best.state || {},best.risk || {},timeOfDay,world);if(inc){this._weatherIncidentCredit[type.id]-=1;spawned++;if(spawned>=2)break;}
@@ -1414,6 +1445,7 @@ export class IncidentManager {
       ...t,
       origin: t.weatherTriggered ? 'weather' : 'general',
       enabled: this.enabledTypes.has(t.id),
+      level: this.getTypeLevel(t.id),
     }));
   }
 
@@ -1423,7 +1455,7 @@ export class IncidentManager {
       spawnCredit: this._incidentSpawnCredit, spawnLastAbsMinute: this._incidentSpawnLastAbsMinute,
       weatherLastAbsMinute: this._weatherIncidentLastAbsMinute,
       weatherCredit: { ...this._weatherIncidentCredit }, weatherSampleCursor: this._weatherSampleCursor,
-      targetIncidentsPerHour: this.targetIncidentsPerHour, nextId: nextIncId };
+      targetIncidentsPerHour: this.targetIncidentsPerHour, typeLevels: { ...this.typeLevels }, nextId: nextIncId };
   }
 
   loadCadenceSave(value: unknown): void {
@@ -1432,6 +1464,7 @@ export class IncidentManager {
     this._incidentSpawnCredit = 0; this._incidentSpawnLastAbsMinute = null;
     this._weatherIncidentLastAbsMinute = null; this._weatherIncidentCredit = Object.create(null);
     this._weatherSampleCursor = 0;
+    this.typeLevels = Object.create(null);
     if (!value || typeof value !== 'object' || Array.isArray(value)) return;
     const data = value as Record<string, unknown>;
     if (data.schemaVersion !== 1) throw new Error('Cadence incidents : schéma incompatible');
@@ -1442,6 +1475,10 @@ export class IncidentManager {
     this._weatherIncidentLastAbsMinute = minute(data.weatherLastAbsMinute);
     this._weatherSampleCursor = Math.floor(incFinite(data.weatherSampleCursor, 0, 0));
     this.targetIncidentsPerHour = incFinite(data.targetIncidentsPerHour, 50, 0, 100000);
+    if (data.typeLevels && typeof data.typeLevels === 'object' && !Array.isArray(data.typeLevels)) {
+      const levels = data.typeLevels as Record<string, unknown>;
+      for (const type of this.predefinedTypes) if (Object.prototype.hasOwnProperty.call(levels, type.id)) this.setTypeLevel(type.id, levels[type.id]);
+    }
     if (data.weatherCredit && typeof data.weatherCredit === 'object' && !Array.isArray(data.weatherCredit)) {
       const credit = data.weatherCredit as Record<string, unknown>;
       for (const type of this.predefinedTypes) if (Object.prototype.hasOwnProperty.call(credit,type.id)) this._weatherIncidentCredit[type.id] = incFinite(credit[type.id], 0, 0);

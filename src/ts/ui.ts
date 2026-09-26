@@ -74,7 +74,7 @@ type RuntimeDiagItem = { level?: string; label?: unknown; status?: unknown };
 type PlatformStopLabel = { name: unknown; isLast: boolean };
 type ManualRoutePoint = { lat: number; lon: number; maxSpeed?: unknown; control?: unknown; [key: string]: unknown };
 type ScheduleUiStop = { stationId?: unknown; voiePointId?: unknown; platform?: unknown; type?: unknown; [key: string]: unknown };
-type IncidentTypeRow = { id: unknown; enabled: unknown; name: unknown; impact: unknown; special: unknown; probabilityLabel: unknown; probability: unknown; summerProbability: unknown; durationMin: unknown; durationMax: unknown; weatherTriggered?: unknown };
+type IncidentTypeRow = { id: unknown; enabled: unknown; level?: number; name: unknown; impact: unknown; special: unknown; probabilityLabel: unknown; probability: unknown; summerProbability: unknown; durationMin: unknown; durationMax: unknown; weatherTriggered?: unknown };
 type OSMStationImport = { id: unknown; name: string; lat: number; lon: number };
 type InfogareStationIndexEntry = { station: Station; search: string; score?: number };
 type InfogareFieldSpec = { x: number; y?: number; w: number; h?: number; color?: string; fontSize?: number; weight?: number; align?: string; textTransform?: string; bg?: string; alpha?: number; bitmapFont?: string; letterSpacing?: number; style?: string; type?: string; text?: string; yOff?: number; [key: string]: unknown };
@@ -8926,7 +8926,22 @@ export class UI {
           this.game.renderer?.invalidateStatic?.();
           this.game.saveState();
           this.renderIncidentsPage();
+          return;
         }
+        const lvl = (e.target as Element | null)?.closest('.incident-type-level') as HTMLInputElement | null;
+        if (lvl) {
+          if (lvl.dataset.global != null) this.game.incidentManager.setGlobalLevel(lvl.value);
+          else this.game.incidentManager.setTypeLevel(lvl.dataset.typeId, lvl.value, this.game.world);
+          this.game.renderer?.invalidateStatic?.();
+          this.game.saveState();
+          typesTable.dataset.enabledSig = '';
+          this.renderIncidentsPage();
+        }
+      });
+      typesTable.addEventListener('input', (e) => {
+        const lvl = (e.target as Element | null)?.closest('.incident-type-level') as HTMLInputElement | null;
+        const out = lvl?.parentElement?.querySelector('output');
+        if (out) out.textContent = lvl!.value;
       });
     }
   }
@@ -9114,18 +9129,21 @@ export class UI {
     const typesTable = document.getElementById('incident-types-table');
     // The page refreshes every tick: rebuilding the checkbox table each time would
     // swap the DOM node under the pointer and swallow the player's click.
-    const typesSig = this.game.incidentManager.getEnabledTypes().map(String).sort().join('|');
+    const im = this.game.incidentManager;
+    const typesSig = im.getEnabledTypes().map(String).sort().join('|') + '#' + im.getGlobalLevel() + '#' + JSON.stringify(im.typeLevels);
     if (typesTable && typesTable.dataset.enabledSig !== typesSig) {
       typesTable.dataset.enabledSig = typesSig;
       const types = this.game.incidentManager.getAllTypes();
       const escType=(v: unknown) =>String(v??'').replace(/[&<>"']/g,(c) =>(HTML_ESCAPE_MAP[c]));
       const tableFor=(items: IncidentTypeRow[],title: unknown,weather: unknown=false)=>`<section class="incident-type-section ${htmlText(weather?'incident-weather-types':'')}">
         <div class="incident-type-section-head"><div><h4>${htmlText(title)}</h4>${weather?'<p>Ces incidents ne sont pas tirés au hasard : seuil météo local + durée d’exposition + nombre de zones exposées.</p>':''}</div><span>${items.length} types</span></div>
-        <div class="incident-table-scroll"><table class="incident-table"><thead><tr><th>Actif</th><th>Nom</th><th>Impact</th><th>Conditions / seuil</th><th>Déclenchement</th><th>Durée</th></tr></thead><tbody>
-        ${items.map((t: { id: unknown; enabled: unknown; name: unknown; impact: unknown; special: unknown; probabilityLabel: unknown; probability: unknown; summerProbability: unknown; durationMin: unknown; durationMax: unknown }) =>`<tr class="${htmlText(weather?'incident-weather-type-row':'')}"><td><input type="checkbox" class="incident-type-cb" data-type-id="${escType(t.id)}" ${t.enabled?'checked':''}></td><td><b>${escType(t.name)}</b>${weather?'<div class="incident-weather-tag">MÉTÉO</div>':''}</td><td>${escType(t.impact)}</td><td class="incident-condition-cell">${escType(t.special)}</td><td>${escType(t.probabilityLabel || (t.id==='train-breakdown'?`${t.probability}% hiver / ${t.summerProbability}% été`:t.probability+'%'))}</td><td>${t.durationMin}${t.durationMax!==t.durationMin?'-'+t.durationMax:''} min</td></tr>`).join('')}
+        <div class="incident-table-scroll"><table class="incident-table"><thead><tr><th>Actif</th><th>Nom</th><th>Impact</th><th>Conditions / seuil</th><th>Déclenchement</th><th>Fréquence 0–10</th><th>Durée</th></tr></thead><tbody>
+        ${items.map((t: IncidentTypeRow) =>`<tr class="${htmlText(weather?'incident-weather-type-row':'')}"><td><input type="checkbox" class="incident-type-cb" data-type-id="${escType(t.id)}" ${t.enabled?'checked':''}></td><td><b>${escType(t.name)}</b>${weather?'<div class="incident-weather-tag">MÉTÉO</div>':''}</td><td>${escType(t.impact)}</td><td class="incident-condition-cell">${escType(t.special)}</td><td>${escType(t.probabilityLabel || (t.id==='train-breakdown'?`${t.probability}% hiver / ${t.summerProbability}% été`:t.probability+'%'))}</td><td class="incident-level-cell"><input type="range" class="incident-type-level" min="0" max="10" step="1" value="${Number(t.level ?? 5)}" data-type-id="${escType(t.id)}" title="0 = jamais, 5 = normal, 10 = double"><output>${Number(t.level ?? 5)}</output></td><td>${t.durationMin}${t.durationMax!==t.durationMin?'-'+t.durationMax:''} min</td></tr>`).join('')}
         </tbody></table></div></section>`;
       const general=types.filter((t: { weatherTriggered: unknown }) =>!t.weatherTriggered), weatherTypes=types.filter((t: { weatherTriggered: unknown }) =>t.weatherTriggered);
-      typesTable.innerHTML = tableFor(general,'Incidents généraux') + tableFor(weatherTypes,'Incidents météorologiques',true);
+      const globalLevel = im.getGlobalLevel();
+      const globalBar = `<div class="incident-global-level"><label>Cadence générale des incidents (0 = aucun, 5 = normal, 10 = maximum)</label><input type="range" class="incident-type-level" data-global="1" min="0" max="10" step="1" value="${globalLevel}"><output>${globalLevel}</output></div>`;
+      typesTable.innerHTML = globalBar + tableFor(general,'Incidents généraux') + tableFor(weatherTypes,'Incidents météorologiques',true);
     }
 
     const works = this.game.worksManager.getAll();
