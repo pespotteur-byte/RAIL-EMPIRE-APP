@@ -290,6 +290,8 @@ export declare class UI {
     _renderLivemapPanel(): void;
     setupTabs(): void;
     setupModals(): void;
+    /** Deux gares ne peuvent pas partager les mêmes coordonnées GPS (< 5 m). */
+    _findStationAtSameCoords(lat: number, lon: number, excludeId?: unknown): any;
     toggleStationCreation(): void;
     toggleIndustryCreation(): void;
     openStationCreationModal(lat: number, lon: number): void;
@@ -578,7 +580,10 @@ export declare class UI {
     _finishLineManual(): void;
     _updateLineManualUI(): void;
     renderLineStops(): void;
+    /** Borne un calcul ORM : l'UI ne doit jamais rester sur « Calcul en cours… » indéfiniment (hors ligne, Overpass muet). */
+    _boundedOrm<T>(promise: Promise<T>, timeoutMs?: number): Promise<T>;
     saveLine(): Promise<void>;
+    _saveLineInner(): Promise<void>;
     renderLinesList(): void;
     editStationFromLines(stationId: unknown): void;
     editLine(id: unknown): void;
