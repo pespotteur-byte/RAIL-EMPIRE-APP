@@ -326,7 +326,7 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     assert.ok(maxSpeed > 0, 'le train avance malgré la panne');
   });
 
-  it('MNT-04 — panne moteur arrête le service et l annule après blocage prolongé', () => {
+  it('MNT-04 — panne moteur arrête le service puis réparation sur place sans secours (jamais de panne infinie)', () => {
     const sc = new ScheduleCreator();
     global.window.game.scheduleCreator = sc;
     const world = makeWorld();
@@ -347,11 +347,18 @@ describe('Validation PR? — gameplay / signalisation / régulation', () => {
     svc._initializeState(svc.getCurrentRoute(), '1-0');
     svc.train.breakdown = { type: 'moteur', time: 0 };
 
-    for (let m = 1; m <= 200; m++) {
+    for (let m = 1; m <= 30; m++) {
+      for (let s = 0; s < 6; s++) svc.moveUpdate(10, m, []);
+    }
+    assert.ok(svc.train.breakdown, 'la panne persiste tant que le délai de réparation sur place n est pas écoulé');
+    assert.notEqual(svc.state, 'completed');
+
+    for (let m = 31; m <= 200; m++) {
       for (let s = 0; s < 6; s++) svc.moveUpdate(10, m, []);
     }
 
-    assert.equal(svc.state, 'cancelled', 'le service est annulé après panne prolongée sans secours');
-    assert.equal(svc.cancelled, true);
+    assert.equal(svc.train.breakdown, null, 'la panne est réparée sur place à défaut de secours');
+    assert.notEqual(svc.state, 'cancelled');
+    assert.equal(svc.state, 'completed', 'le train reprend et termine son service');
   });
 });

@@ -328,6 +328,8 @@ export declare class ActiveService {
     _v2OnArrive?: (stop: ServiceStop, station: unknown, timeOfDay: number) => void;
     _v2OperationState?: V2OperationState | null;
     _rescueDispatched?: boolean;
+    _breakdownStuckMin?: number;
+    _breakdownLastTick?: number | null;
     _cachedDow: number;
     _cachedDowDate: string;
     _cachedFirstDep: number;
@@ -474,6 +476,12 @@ export declare class ActiveService {
     /**
      * Reset simulation state when starting a new movement leg.
      */
+    /**
+     * Une panne ne peut pas être infinie : sans secours dispatché sous 45 min
+     * (aucun dépôt/loco de secours) l'équipage répare sur place ; avec secours,
+     * plafond de 4 h. Retourne true si le service a été remis en route.
+     */
+    _tickBreakdownWatchdog(timeOfDay: number): boolean;
     resumeAfterRepair(): void;
     _resetState(): void;
     /**

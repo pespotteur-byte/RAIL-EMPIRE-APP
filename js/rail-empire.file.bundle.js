@@ -13530,7 +13530,7 @@ class Economy {
             const availPaxSlots = maxPax - service._onboardPax;
             const availFreightSlots = Math.max(0, maxFreight - service._onboardFreight - service._contractFreight);
             const paxBoardRate = 0.30 + rng.random() * 0.50;
-            const frtBoardRate = 0.20 + rng.random() * 0.50;
+            const frtBoardRate = isFirst && freightAccess ? 1 : 0.20 + rng.random() * 0.50;
             const upgradeBonus = Math.max(0, Number(g?.stationUpgrades?.getFrequentationBonus?.(stationId)) || 0);
             const marketingDemandMultiplier = Math.max(0.72, Math.min(1.55, Number(g?.marketingManager?.getPassengerDemandMultiplier?.()) || 1));
             const paxBoard = Math.min(availPaxSlots, Math.round(availPaxSlots * paxBoardRate * (1 + upgradeBonus) * (1 - (0, consumable_effects_js_1.passengerCleanlinessPenalty)(service.rame) / 100) * marketingDemandMultiplier));
@@ -16575,11 +16575,28 @@ function acquireImportUiLock() {
 __modules["js/incidents.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IncidentManager = exports.Incident = exports.PREDEFINED_INCIDENT_TYPES = void 0;
+exports.IncidentManager = exports.Incident = exports.PREDEFINED_INCIDENT_TYPES = exports.BREAKDOWN_INCIDENT_TYPES = void 0;
+exports.incidentWearLevel = incidentWearLevel;
+exports.pickByWear = pickByWear;
 const scheduled_incident_stop_js_1 = require("./scheduled-incident-stop.js");
 const simulation_js_v_1784250033_1 = require("./simulation.js?v=1784250033");
 const rng_js_v_1784250033_1 = require("./rng.js?v=1784250033");
 let nextIncId = 1;
+exports.BREAKDOWN_INCIDENT_TYPES = new Set(['train-breakdown', 'weather-rolling-stock-failure']);
+function incidentWearLevel(svc) {
+    const w = Number(svc.train?.wearLevel ?? svc.rame?.wearLevel ?? 0);
+    return Number.isFinite(w) && w > 0 ? Math.min(100, w) : 0;
+}
+function pickByWear(eligible, roll) {
+    const total = eligible.reduce((a, x) => a + incidentWearLevel(x.svc), 0);
+    let pick = Math.min(Math.max(roll, 0), 0.999999) * total;
+    for (const x of eligible) {
+        pick -= incidentWearLevel(x.svc);
+        if (pick < 0)
+            return x;
+    }
+    return eligible[eligible.length - 1];
+}
 exports.PREDEFINED_INCIDENT_TYPES = [
     {
         id: 'signal-failure',
@@ -17465,6 +17482,8 @@ class IncidentManager {
             const svc = candidate.svc;
             if (!svc?.train)
                 return null;
+            if (exports.BREAKDOWN_INCIDENT_TYPES.has(type.id) && incidentWearLevel(svc) <= 0)
+                return null;
             if (this._hasActiveDuplicate(type.id, loc.key))
                 return null;
             const duration = this._randomDuration(type.durationMin, type.durationMax);
@@ -17775,6 +17794,9 @@ class IncidentManager {
         if (type.requireStopped) {
             candidates = candidates.filter((s) => (0, scheduled_incident_stop_js_1.bookedIncidentStop)(s) !== null);
         }
+        const wearBased = exports.BREAKDOWN_INCIDENT_TYPES.has(type.id);
+        if (wearBased)
+            candidates = candidates.filter((s) => incidentWearLevel(s) > 0);
         const eligible = candidates.map((svc) => {
             const stop = type.requireStopped ? (0, scheduled_incident_stop_js_1.bookedIncidentStop)(svc) : null;
             const station = stop ? world?.getStationById?.(stop.stationId) : null;
@@ -17787,7 +17809,7 @@ class IncidentManager {
         if (eligible.length === 0)
             return null;
         const rng = (0, rng_js_v_1784250033_1.getGlobalRng)();
-        const chosen = eligible[Math.floor(rng.random() * eligible.length)];
+        const chosen = wearBased ? pickByWear(eligible, rng.random()) : eligible[Math.floor(rng.random() * eligible.length)];
         const svc = chosen.svc;
         const loc = chosen.loc;
         if (!svc.train)
@@ -31184,8 +31206,11 @@ exports.MarketingManager = MarketingManager;
 __modules["js/material-mileage.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.WEAR_KM_PER_PERCENT = exports.WEAR_FULL_KM = void 0;
 exports.syncMaterialMileage = syncMaterialMileage;
 exports.advanceMaterialMileage = advanceMaterialMileage;
+exports.WEAR_FULL_KM = 50000;
+exports.WEAR_KM_PER_PERCENT = exports.WEAR_FULL_KM / 100;
 const nonNegative = (value, fallback = 0) => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value :
     typeof fallback === 'number' && Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
 function syncMaterialMileage(material, train) {
@@ -31201,7 +31226,7 @@ function advanceMaterialMileage(material, train, distanceKm) {
     const source = material || train;
     source.totalKmRun = nonNegative(source.totalKmRun) + distanceKm;
     source.kmSinceLastMaint = nonNegative(source.kmSinceLastMaint) + distanceKm;
-    source.wearLevel = Math.min(100, nonNegative(source.wearLevel) + distanceKm / 250);
+    source.wearLevel = Math.min(100, nonNegative(source.wearLevel) + distanceKm / exports.WEAR_KM_PER_PERCENT);
     if (material)
         syncMaterialMileage(material, train);
 }
@@ -48266,6 +48291,7 @@ class ActiveService {
                 if (!this._rescueDispatched && this.position && window.game?.depotManager) {
                     this._rescueDispatched = !!window.game.depotManager.dispatchRescue(this.world, this);
                 }
+                this._tickBreakdownWatchdog(timeOfDay);
                 return;
             }
             this.train.state = 'anomalie legere';
@@ -48780,8 +48806,9 @@ class ActiveService {
                 trc.wear = Math.min(100, (trc.wear || 0) + distKm * (mass / 400) * 0.005);
             }
         }
-        if (!this.train.breakdown) {
-            const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
+        const wearLevel = Number(this.train.wearLevel) || 0;
+        if (!this.train.breakdown && wearLevel > 0) {
+            const wearMultiplier = 1 + wearLevel / 25;
             const breakdownMult = (typeof window !== 'undefined' ? (window.game?.realismSettings?.breakdown ?? 1) : 1);
             const failureProb = (distKm / 25000) * wearMultiplier * breakdownMult;
             const rng = (0, rng_js_v_1784250033_1.getGlobalRng)();
@@ -48799,9 +48826,31 @@ class ActiveService {
             }
         }
     }
+    _tickBreakdownWatchdog(timeOfDay) {
+        const prev = this._breakdownLastTick;
+        this._breakdownLastTick = timeOfDay;
+        if (prev != null && Number.isFinite(prev)) {
+            this._breakdownStuckMin = (this._breakdownStuckMin || 0) + Math.min(60, Math.max(0, (0, operational_time_js_1.forwardClockMinutes)(prev, timeOfDay)));
+        }
+        else {
+            this._breakdownStuckMin = this._breakdownStuckMin || 0;
+        }
+        const limit = this._rescueDispatched ? 240 : 45;
+        if (this._breakdownStuckMin < limit)
+            return false;
+        const type = this.train.breakdown?.type;
+        if (type && this.rame && Array.isArray(this.rame.pendingDefects)) {
+            this.rame.pendingDefects = this.rame.pendingDefects.filter((t) => t !== type);
+        }
+        this.train.delayReason = 'Panne réparée sur place';
+        this.resumeAfterRepair();
+        return true;
+    }
     resumeAfterRepair() {
         this.train.breakdown = null;
         this._rescueDispatched = false;
+        this._breakdownStuckMin = 0;
+        this._breakdownLastTick = null;
         this.train.inMaintenance = !!this.rame?.inMaintenance;
         if (this.completed || this.cancelled)
             return;
@@ -49059,6 +49108,8 @@ class ActiveService {
             if (!this._rescueDispatched && this.position && window.game?.depotManager) {
                 this._rescueDispatched = !!window.game.depotManager.dispatchRescue(this.world, this);
             }
+            if (this.speed <= 0.5 && this._tickBreakdownWatchdog(Number(timeOfDay)))
+                return;
         }
         cantonManager.setTime(timeOfDay);
         this._updateRegulationFactor();

@@ -1,3 +1,6 @@
+/** 100 % d'usure atteints après 50 000 km sans entretien. */
+export const WEAR_FULL_KM = 50000;
+export const WEAR_KM_PER_PERCENT = WEAR_FULL_KM / 100;
 const nonNegative = (value, fallback = 0) => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value :
     typeof fallback === 'number' && Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
 export function syncMaterialMileage(material, train) {
@@ -13,9 +16,9 @@ export function advanceMaterialMileage(material, train, distanceKm) {
     const source = material || train;
     source.totalKmRun = nonNegative(source.totalKmRun) + distanceKm;
     source.kmSinceLastMaint = nonNegative(source.kmSinceLastMaint) + distanceKm;
-    // Increment remaining wear, not mileage/250: lubricant, overhaul and routine
-    // servicing deliberately have different effects on these two counters.
-    source.wearLevel = Math.min(100, nonNegative(source.wearLevel) + distanceKm / 250);
+    // Increment remaining wear, not mileage/WEAR_KM_PER_PERCENT: lubricant, overhaul
+    // and routine servicing deliberately have different effects on these two counters.
+    source.wearLevel = Math.min(100, nonNegative(source.wearLevel) + distanceKm / WEAR_KM_PER_PERCENT);
     if (material)
         syncMaterialMileage(material, train);
 }

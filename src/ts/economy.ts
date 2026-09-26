@@ -363,7 +363,9 @@ export class Economy {
             const availFreightSlots = Math.max(0, maxFreight - service._onboardFreight - service._contractFreight);
             // Randomized boarding: 30-80% of available slots
             const paxBoardRate = 0.30 + rng.random() * 0.50;
-            const frtBoardRate = 0.20 + rng.random() * 0.50;
+            // Fret : un train de marchandises part toujours plein de son origine
+            // (le trafic est réservé en amont) et se complète en cours de route.
+            const frtBoardRate = isFirst && freightAccess ? 1 : 0.20 + rng.random() * 0.50;
             const upgradeBonus = Math.max(0, Number(g?.stationUpgrades?.getFrequentationBonus?.(stationId)) || 0);
             const marketingDemandMultiplier = Math.max(0.72, Math.min(1.55, Number(g?.marketingManager?.getPassengerDemandMultiplier?.()) || 1));
             const paxBoard = Math.min(availPaxSlots, Math.round(availPaxSlots * paxBoardRate * (1 + upgradeBonus) * (1 - passengerCleanlinessPenalty(service.rame) / 100) * marketingDemandMultiplier));
