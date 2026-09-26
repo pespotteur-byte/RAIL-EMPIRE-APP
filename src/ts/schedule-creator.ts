@@ -40,6 +40,7 @@ import { railSectionDirectionMatchesRoute } from './rail-section-geometry.js';
 import { getGlobalRng } from './rng.js?v=1784250033';
 // @ts-expect-error -- cache-busted browser import is intentionally resolved at runtime.
 import { accelerationMs2, brakingDecelMs2, segmentsFromRoute, simulateProfile, _units } from './train-physics.js?v=1784250033';
+import { depotDepartureBlock } from './game-mode.js';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
@@ -201,6 +202,9 @@ type WeatherEffects = { brakeFactor: number; speedCap: number; speedMult: number
 type WeatherEffectsProvider = { getSpeedEffectsAt: (...args: unknown[]) => WeatherEffects };
 type ActiveServiceRame = Rame & { currentLoadRatio?: number; loadRatio?: number; payloadRatio?: number; brakeServiceMs2?: number; seriesName?: string };
 
+/** Suffixe du motif conservé une fois la cause disparue mais le retard non résorbé. */
+export const RESIDUAL_DELAY_SUFFIX = ' (retard en résorption)';
+
 export class ActiveService {
   private _tailSpeedIndex: { route: ServiceRoute; distances: Float64Array; speeds: number[]; index: TailSpeedIndex } | null = null;
   _passageTailSpeedHolds: PassageTailSpeedHold[] = [];
@@ -290,6 +294,9 @@ export class ActiveService {
   declare _v2OnArrive?: (stop: ServiceStop, station: unknown, timeOfDay: number) => void;
   declare _v2OperationState?: V2OperationState | null;
   declare _rescueDispatched?: boolean;
+  declare _lastDelayCause?: string;
+  declare _breakdownStuckMin?: number;
+  declare _breakdownLastTick?: number | null;
   declare _cachedDow: number;
   declare _cachedDowDate: string;
   declare _cachedFirstDep: number;
@@ -1563,6 +1570,7 @@ export class ActiveService {
       this.train.name = this.name;
       this.train.iteInfo = null;
       this.train.incidentDelayReasons = [];
+      this._lastDelayCause = '';
       this._iteHardBlock = false; this._iteCargoMismatch = false; this._iteDwellExtra = 0;
       this._brakeEffort = 0; this._tractiveEffort = 0; this.targetSpeed = 0;
       this._lastArrivalTime = undefined;
@@ -1718,6 +1726,7 @@ export class ActiveService {
         if (!this._rescueDispatched && this.position && window.game?.depotManager) {
           this._rescueDispatched = !!window.game.depotManager.dispatchRescue(this.world, this);
         }
+        this._tickBreakdownWatchdog(timeOfDay);
         return;
       }
       this.train.state = 'anomalie legere';
@@ -1760,6 +1769,18 @@ export class ActiveService {
           }
           return;
         }
+      }
+    }
+
+    // Mode expert : l'entretien en dépôt est obligatoire et bloque le départ.
+    {
+      const depotBlock = typeof window !== 'undefined' ? depotDepartureBlock(window.game?.realismSettings, this.rame) : '';
+      if (depotBlock) {
+        this.train.delayReason = 'dépôt : ' + depotBlock;
+        this._movementStop('DEPOT_MAINTENANCE', this.train.delayReason, 'maintenance');
+        return;
+      } else if (String(this.train.delayReason || '').startsWith('dépôt : ')) {
+        this.train.delayReason = '';
       }
     }
 
@@ -2267,8 +2288,9 @@ export class ActiveService {
     // Contract progress is delivered quantity / initial quantity. Travelling,
     // loading and train wear must not overwrite this business invariant.
 
-    if (!this.train.breakdown) {
-      const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
+    const wearLevel = Number(this.train.wearLevel) || 0;
+    if (!this.train.breakdown && wearLevel > 0) {
+      const wearMultiplier = 1 + wearLevel / 25;
       const breakdownMult = (typeof window !== 'undefined' ? (window.game?.realismSettings?.breakdown ?? 1) : 1);
       const failureProb = (distKm / 25000) * wearMultiplier * breakdownMult;
       const rng = getGlobalRng();
@@ -2288,9 +2310,35 @@ export class ActiveService {
   /**
    * Reset simulation state when starting a new movement leg.
    */
+  /**
+   * Une panne ne peut pas être infinie : sans secours dispatché sous 45 min
+   * (aucun dépôt/loco de secours) l'équipage répare sur place ; avec secours,
+   * plafond de 4 h. Retourne true si le service a été remis en route.
+   */
+  _tickBreakdownWatchdog(timeOfDay: number): boolean {
+    const prev = this._breakdownLastTick;
+    this._breakdownLastTick = timeOfDay;
+    if (prev != null && Number.isFinite(prev)) {
+      this._breakdownStuckMin = (this._breakdownStuckMin || 0) + Math.min(60, Math.max(0, forwardClockMinutes(prev, timeOfDay)));
+    } else {
+      this._breakdownStuckMin = this._breakdownStuckMin || 0;
+    }
+    const limit = this._rescueDispatched ? 240 : 45;
+    if (this._breakdownStuckMin < limit) return false;
+    const type = this.train.breakdown?.type;
+    if (type && this.rame && Array.isArray(this.rame.pendingDefects)) {
+      this.rame.pendingDefects = this.rame.pendingDefects.filter((t: string) => t !== type);
+    }
+    this.train.delayReason = 'Panne réparée sur place';
+    this.resumeAfterRepair();
+    return true;
+  }
+
   resumeAfterRepair() {
     this.train.breakdown = null;
     this._rescueDispatched = false;
+    this._breakdownStuckMin = 0;
+    this._breakdownLastTick = null;
     this.train.inMaintenance = !!this.rame?.inMaintenance;
     if (this.completed || this.cancelled) return;
     this.speed = 0; this.train.speed = 0;
@@ -2578,6 +2626,7 @@ export class ActiveService {
       if (!this._rescueDispatched && this.position && window.game?.depotManager) {
         this._rescueDispatched = !!window.game.depotManager.dispatchRescue(this.world, this);
       }
+      if (this.speed <= 0.5 && this._tickBreakdownWatchdog(Number(timeOfDay))) return;
     }
 
     cantonManager.setTime(timeOfDay);
@@ -3145,6 +3194,20 @@ export class ActiveService {
   _updateDelayReason() {
     const t = this.train;
     if (!t) return;
+    this._updateCurrentDelayReason();
+    // Le motif du retard survit à la fin de sa cause tant que le train n'a pas
+    // résorbé son retard ; il disparaît une fois le train à l'heure.
+    const delay = Number(t.delay) || 0;
+    if (t.delayReason) {
+      if (delay > 0 && !t.delayReason.endsWith(RESIDUAL_DELAY_SUFFIX)) this._lastDelayCause = t.delayReason;
+    } else if (delay > 0 && this._lastDelayCause) {
+      t.delayReason = this._lastDelayCause + RESIDUAL_DELAY_SUFFIX;
+    }
+    if (delay <= 0) this._lastDelayCause = '';
+  }
+
+  _updateCurrentDelayReason() {
+    const t = this.train;
     if (this._iteHardBlock) { t.delayReason = 'ITE : train trop long'; return; }
     if (this._rescueDispatched || t.state === 'en panne') { t.delayReason = 'Panne — attente secours'; return; }
     if (t.breakdown) { t.delayReason = `Panne ${t.breakdown.type}`; return; }

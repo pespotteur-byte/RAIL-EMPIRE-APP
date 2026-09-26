@@ -168,6 +168,15 @@ type IncidentWeatherCandidate = {
     risk?: IncidentWeatherRisk;
     hazard?: number;
 };
+export declare const INCIDENT_LEVEL_MAX = 10;
+export declare const INCIDENT_LEVEL_DEFAULT = 5;
+export declare const INCIDENT_PER_HOUR_PER_LEVEL = 10;
+/** Pannes matériel : jamais à 0 % d'usure, probabilité proportionnelle à l'usure. */
+export declare const BREAKDOWN_INCIDENT_TYPES: Set<string>;
+export declare function incidentWearLevel(svc: IncidentService): number;
+export declare function pickByWear<T extends {
+    svc: IncidentService;
+}>(eligible: T[], roll: number): T;
 export declare const PREDEFINED_INCIDENT_TYPES: IncidentType[];
 export declare class Incident {
     id: string;
@@ -204,6 +213,8 @@ export declare class IncidentManager {
     predefinedTypes: IncidentType[];
     enabledTypes: Set<unknown>;
     targetIncidentsPerHour: number;
+    /** Intensité par type, 0–10 (5 = cadence Annexe 11, 0 = jamais, 10 = ×2). */
+    typeLevels: Record<string, number>;
     _incidentSpawnCredit: number;
     _incidentSpawnLastAbsMinute: number | null;
     _weatherIncidentLastAbsMinute: number | null;
@@ -214,9 +225,18 @@ export declare class IncidentManager {
     accordionHorizonKm: number;
     constructor();
     isTypeEnabled(id: unknown): boolean;
+    getTypeLevel(id: unknown): number;
+    /** Multiplicateur de fréquence dérivé du curseur 0–10 (5 → ×1). */
+    typeLevelFactor(id: unknown): number;
+    setTypeLevel(id: unknown, level: unknown, world?: IncidentWorld | null): boolean;
+    /** Cadence globale 0–10 (5 = 50 incidents/h Europe entière). */
+    getGlobalLevel(): number;
+    setGlobalLevel(level: unknown): boolean;
     getEnabledTypes(): unknown[];
-    setEnabledTypes(ids: unknown, savedVersion?: unknown): void;
-    toggleType(id: unknown, enabled: unknown): boolean;
+    setEnabledTypes(ids: unknown, savedVersion?: unknown, world?: IncidentWorld | null): void;
+    toggleType(id: unknown, enabled: unknown, world?: IncidentWorld | null): boolean;
+    /** A disabled type must neither spawn nor keep running: end its live incidents. */
+    _purgeDisabledTypes(world: IncidentWorld | null): number;
     _normalizeIncidentLocationText(text: unknown): string;
     _locationKeyFromParts(stationA: unknown, stationB: unknown, locationText?: unknown): string;
     _locationKeyForIncident(inc: Incident): string;
@@ -288,6 +308,7 @@ export declare class IncidentManager {
     getAllTypes(): {
         origin: string;
         enabled: boolean;
+        level: number;
         id: string;
         name: string;
         impact: string;
@@ -324,6 +345,9 @@ export declare class IncidentManager {
         };
         weatherSampleCursor: number;
         targetIncidentsPerHour: number;
+        typeLevels: {
+            [x: string]: number;
+        };
         nextId: number;
     };
     loadCadenceSave(value: unknown): void;

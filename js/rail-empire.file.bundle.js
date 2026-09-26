@@ -13530,7 +13530,7 @@ class Economy {
             const availPaxSlots = maxPax - service._onboardPax;
             const availFreightSlots = Math.max(0, maxFreight - service._onboardFreight - service._contractFreight);
             const paxBoardRate = 0.30 + rng.random() * 0.50;
-            const frtBoardRate = 0.20 + rng.random() * 0.50;
+            const frtBoardRate = isFirst && freightAccess ? 1 : 0.20 + rng.random() * 0.50;
             const upgradeBonus = Math.max(0, Number(g?.stationUpgrades?.getFrequentationBonus?.(stationId)) || 0);
             const marketingDemandMultiplier = Math.max(0.72, Math.min(1.55, Number(g?.marketingManager?.getPassengerDemandMultiplier?.()) || 1));
             const paxBoard = Math.min(availPaxSlots, Math.round(availPaxSlots * paxBoardRate * (1 + upgradeBonus) * (1 - (0, consumable_effects_js_1.passengerCleanlinessPenalty)(service.rame) / 100) * marketingDemandMultiplier));
@@ -14714,6 +14714,45 @@ class FreightManager {
     }
 }
 exports.FreightManager = FreightManager;
+
+};
+
+__modules["js/game-mode.js"]=function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEPOT_BLOCK_WEAR_PCT = void 0;
+exports.normalizeGameMode = normalizeGameMode;
+exports.applyGameMode = applyGameMode;
+exports.isExpert = isExpert;
+exports.depotDepartureBlock = depotDepartureBlock;
+exports.DEPOT_BLOCK_WEAR_PCT = 90;
+function normalizeGameMode(v) {
+    return v === 'expert' ? 'expert' : 'facile';
+}
+function applyGameMode(settings, mode) {
+    const m = normalizeGameMode(mode);
+    settings.gameMode = m;
+    if (m === 'expert') {
+        settings.rotationsRequired = true;
+        settings.personnelRequired = true;
+        settings.depotsRequired = true;
+        settings.aiCompetitors = true;
+    }
+    return settings;
+}
+function isExpert(settings) {
+    return normalizeGameMode(settings?.gameMode) === 'expert';
+}
+function depotDepartureBlock(settings, rame) {
+    if (!settings?.depotsRequired || !rame)
+        return '';
+    if (rame.inMaintenance)
+        return 'rame en maintenance au dépôt';
+    const wear = Number(rame.wearLevel) || 0;
+    if (wear >= exports.DEPOT_BLOCK_WEAR_PCT)
+        return `entretien dépôt obligatoire (usure ${Math.round(wear)} %)`;
+    return '';
+}
 
 };
 
@@ -16575,11 +16614,31 @@ function acquireImportUiLock() {
 __modules["js/incidents.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IncidentManager = exports.Incident = exports.PREDEFINED_INCIDENT_TYPES = void 0;
+exports.IncidentManager = exports.Incident = exports.PREDEFINED_INCIDENT_TYPES = exports.BREAKDOWN_INCIDENT_TYPES = exports.INCIDENT_PER_HOUR_PER_LEVEL = exports.INCIDENT_LEVEL_DEFAULT = exports.INCIDENT_LEVEL_MAX = void 0;
+exports.incidentWearLevel = incidentWearLevel;
+exports.pickByWear = pickByWear;
 const scheduled_incident_stop_js_1 = require("./scheduled-incident-stop.js");
 const simulation_js_v_1784250033_1 = require("./simulation.js?v=1784250033");
 const rng_js_v_1784250033_1 = require("./rng.js?v=1784250033");
 let nextIncId = 1;
+exports.INCIDENT_LEVEL_MAX = 10;
+exports.INCIDENT_LEVEL_DEFAULT = 5;
+exports.INCIDENT_PER_HOUR_PER_LEVEL = 10;
+exports.BREAKDOWN_INCIDENT_TYPES = new Set(['train-breakdown', 'weather-rolling-stock-failure']);
+function incidentWearLevel(svc) {
+    const w = Number(svc.train?.wearLevel ?? svc.rame?.wearLevel ?? 0);
+    return Number.isFinite(w) && w > 0 ? Math.min(100, w) : 0;
+}
+function pickByWear(eligible, roll) {
+    const total = eligible.reduce((a, x) => a + incidentWearLevel(x.svc), 0);
+    let pick = Math.min(Math.max(roll, 0), 0.999999) * total;
+    for (const x of eligible) {
+        pick -= incidentWearLevel(x.svc);
+        if (pick < 0)
+            return x;
+    }
+    return eligible[eligible.length - 1];
+}
 exports.PREDEFINED_INCIDENT_TYPES = [
     {
         id: 'signal-failure',
@@ -16904,6 +16963,7 @@ class IncidentManager {
         this.predefinedTypes = exports.PREDEFINED_INCIDENT_TYPES;
         this.enabledTypes = new Set(exports.PREDEFINED_INCIDENT_TYPES.map((t) => t.id));
         this.targetIncidentsPerHour = 50;
+        this.typeLevels = Object.create(null);
         this._incidentSpawnCredit = 0;
         this._incidentSpawnLastAbsMinute = null;
         this._weatherIncidentLastAbsMinute = null;
@@ -16913,9 +16973,37 @@ class IncidentManager {
         this.incidentTypesVersion = 56;
         this.accordionHorizonKm = 3.0;
     }
-    isTypeEnabled(id) { return this.enabledTypes.has(id); }
+    isTypeEnabled(id) { return this.enabledTypes.has(id) && this.getTypeLevel(id) > 0; }
+    getTypeLevel(id) {
+        const v = this.typeLevels[String(id)];
+        return typeof v === 'number' && Number.isFinite(v) ? Math.min(exports.INCIDENT_LEVEL_MAX, Math.max(0, Math.round(v))) : exports.INCIDENT_LEVEL_DEFAULT;
+    }
+    typeLevelFactor(id) { return this.getTypeLevel(id) / exports.INCIDENT_LEVEL_DEFAULT; }
+    setTypeLevel(id, level, world = null) {
+        if (!exports.PREDEFINED_INCIDENT_TYPES.some((t) => t.id === id))
+            return false;
+        const n = Number(level);
+        if (!Number.isFinite(n))
+            return false;
+        const clamped = Math.min(exports.INCIDENT_LEVEL_MAX, Math.max(0, Math.round(n)));
+        if (clamped === exports.INCIDENT_LEVEL_DEFAULT)
+            delete this.typeLevels[String(id)];
+        else
+            this.typeLevels[String(id)] = clamped;
+        if (clamped === 0)
+            this._purgeDisabledTypes(world);
+        return true;
+    }
+    getGlobalLevel() { return Math.min(exports.INCIDENT_LEVEL_MAX, Math.max(0, Math.round(this.targetIncidentsPerHour / exports.INCIDENT_PER_HOUR_PER_LEVEL))); }
+    setGlobalLevel(level) {
+        const n = Number(level);
+        if (!Number.isFinite(n))
+            return false;
+        this.targetIncidentsPerHour = Math.min(exports.INCIDENT_LEVEL_MAX, Math.max(0, Math.round(n))) * exports.INCIDENT_PER_HOUR_PER_LEVEL;
+        return true;
+    }
     getEnabledTypes() { return Array.from(this.enabledTypes); }
-    setEnabledTypes(ids, savedVersion = 0) {
+    setEnabledTypes(ids, savedVersion = 0, world = null) {
         const known = new Set(exports.PREDEFINED_INCIDENT_TYPES.map((t) => t.id));
         this.enabledTypes = new Set(Array.isArray(ids) ? ids.filter((id) => known.has(id)) : [...known]);
         if (Array.isArray(ids) && Number(savedVersion || 0) < 56) {
@@ -16923,15 +17011,24 @@ class IncidentManager {
                 if (t.weatherTriggered)
                     this.enabledTypes.add(t.id);
         }
+        this._purgeDisabledTypes(world);
     }
-    toggleType(id, enabled) {
+    toggleType(id, enabled, world = null) {
         if (!exports.PREDEFINED_INCIDENT_TYPES.some((t) => t.id === id))
             return false;
         if (enabled)
             this.enabledTypes.add(id);
-        else
+        else {
             this.enabledTypes.delete(id);
+            this._purgeDisabledTypes(world);
+        }
         return true;
+    }
+    _purgeDisabledTypes(world) {
+        const doomed = this.activeIncidents.filter((inc) => !this.isTypeEnabled(inc.typeId));
+        for (const inc of doomed)
+            this.removeIncident(inc.id, world);
+        return doomed.length;
     }
     _normalizeIncidentLocationText(text) {
         return String(text || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -17262,10 +17359,10 @@ class IncidentManager {
         return Math.floor(min + rng.random() * (max - min + 1));
     }
     _probabilityForType(type, season) {
-        if (type.id === 'train-breakdown') {
-            return season === 'summer' ? (type.summerProbability || type.probability) : type.probability;
-        }
-        return type.probability;
+        const base = type.id === 'train-breakdown'
+            ? (season === 'summer' ? (type.summerProbability || type.probability) : type.probability)
+            : type.probability;
+        return Number(base) * this.typeLevelFactor(type.id);
     }
     _inTimeWindow(type, timeOfDay) {
         if (!type.timeWindows)
@@ -17296,7 +17393,7 @@ class IncidentManager {
     _weightedType(pool, season) {
         if (!pool?.length)
             return null;
-        const weights = pool.map((t) => Math.max(0.01, Number(this._probabilityForType(t, season)) || 0.01));
+        const weights = pool.map((t) => this.getTypeLevel(t.id) <= 0 ? 0 : Math.max(0.01, Number(this._probabilityForType(t, season)) || 0.01));
         const total = weights.reduce((a, b) => a + b, 0);
         let pick = (0, rng_js_v_1784250033_1.getGlobalRng)().random() * total;
         for (let i = 0; i < pool.length; i++) {
@@ -17307,7 +17404,7 @@ class IncidentManager {
         return pool[pool.length - 1];
     }
     _spawnGuaranteedIncident(timeOfDay, services, world, season) {
-        const pool = this.predefinedTypes.filter((type) => this.enabledTypes.has(type.id) && !type.weatherTriggered && (!type.timeWindows || this._inTimeWindow(type, timeOfDay)));
+        const pool = this.predefinedTypes.filter((type) => this.isTypeEnabled(type.id) && !type.weatherTriggered && (!type.timeWindows || this._inTimeWindow(type, timeOfDay)));
         while (pool.length) {
             const type = this._weightedType(pool, season);
             if (!type)
@@ -17456,6 +17553,8 @@ class IncidentManager {
             const svc = candidate.svc;
             if (!svc?.train)
                 return null;
+            if (exports.BREAKDOWN_INCIDENT_TYPES.has(type.id) && incidentWearLevel(svc) <= 0)
+                return null;
             if (this._hasActiveDuplicate(type.id, loc.key))
                 return null;
             const duration = this._randomDuration(type.durationMin, type.durationMax);
@@ -17515,7 +17614,7 @@ class IncidentManager {
         if (!candidates.length)
             return 0;
         const evaluated = candidates.map((c) => { const state = (weather.getAt?.(c.point.lat, c.point.lon) || {}); const risk = (weather.getRailRiskAt?.(c.point.lat, c.point.lon, 160) || state.risk || {}); return { ...c, state, risk }; });
-        const types = this.predefinedTypes.filter((t) => t.weatherTriggered && this.enabledTypes.has(t.id));
+        const types = this.predefinedTypes.filter((t) => t.weatherTriggered && this.isTypeEnabled(t.id));
         let spawned = 0;
         for (const type of types) {
             const eligible = evaluated.map((c) => ({ ...c, hazard: Number(c.risk?.hazards?.[type.weatherHazard || '']) || 0 })).filter((c) => Number(c.hazard) >= Number(type.weatherMinHazard || 0));
@@ -17530,7 +17629,7 @@ class IncidentManager {
             eligible.sort((a, b) => Number(b.hazard) - Number(a.hazard));
             const best = eligible[0];
             const exposureFactor = Math.min(2, 0.55 + Math.sqrt(eligible.length) / 4);
-            const rate = Math.max(0, Number(type.weatherRatePerHour) || 0) * Number(best.hazard || 0) * exposureFactor;
+            const rate = Math.max(0, Number(type.weatherRatePerHour) || 0) * Number(best.hazard || 0) * exposureFactor * this.typeLevelFactor(type.id);
             this._weatherIncidentCredit[type.id] = (Number(this._weatherIncidentCredit[type.id]) || 0) + elapsed * rate / 60;
             if (this._weatherIncidentCredit[type.id] < 1)
                 continue;
@@ -17766,6 +17865,9 @@ class IncidentManager {
         if (type.requireStopped) {
             candidates = candidates.filter((s) => (0, scheduled_incident_stop_js_1.bookedIncidentStop)(s) !== null);
         }
+        const wearBased = exports.BREAKDOWN_INCIDENT_TYPES.has(type.id);
+        if (wearBased)
+            candidates = candidates.filter((s) => incidentWearLevel(s) > 0);
         const eligible = candidates.map((svc) => {
             const stop = type.requireStopped ? (0, scheduled_incident_stop_js_1.bookedIncidentStop)(svc) : null;
             const station = stop ? world?.getStationById?.(stop.stationId) : null;
@@ -17778,7 +17880,7 @@ class IncidentManager {
         if (eligible.length === 0)
             return null;
         const rng = (0, rng_js_v_1784250033_1.getGlobalRng)();
-        const chosen = eligible[Math.floor(rng.random() * eligible.length)];
+        const chosen = wearBased ? pickByWear(eligible, rng.random()) : eligible[Math.floor(rng.random() * eligible.length)];
         const svc = chosen.svc;
         const loc = chosen.loc;
         if (!svc.train)
@@ -17962,6 +18064,7 @@ class IncidentManager {
             ...t,
             origin: t.weatherTriggered ? 'weather' : 'general',
             enabled: this.enabledTypes.has(t.id),
+            level: this.getTypeLevel(t.id),
         }));
     }
     getCadenceSave() {
@@ -17969,7 +18072,7 @@ class IncidentManager {
             spawnCredit: this._incidentSpawnCredit, spawnLastAbsMinute: this._incidentSpawnLastAbsMinute,
             weatherLastAbsMinute: this._weatherIncidentLastAbsMinute,
             weatherCredit: { ...this._weatherIncidentCredit }, weatherSampleCursor: this._weatherSampleCursor,
-            targetIncidentsPerHour: this.targetIncidentsPerHour, nextId: nextIncId };
+            targetIncidentsPerHour: this.targetIncidentsPerHour, typeLevels: { ...this.typeLevels }, nextId: nextIncId };
     }
     loadCadenceSave(value) {
         this.lastCheck = -1;
@@ -17978,6 +18081,7 @@ class IncidentManager {
         this._weatherIncidentLastAbsMinute = null;
         this._weatherIncidentCredit = Object.create(null);
         this._weatherSampleCursor = 0;
+        this.typeLevels = Object.create(null);
         if (!value || typeof value !== 'object' || Array.isArray(value))
             return;
         const data = value;
@@ -17990,6 +18094,12 @@ class IncidentManager {
         this._weatherIncidentLastAbsMinute = minute(data.weatherLastAbsMinute);
         this._weatherSampleCursor = Math.floor(incFinite(data.weatherSampleCursor, 0, 0));
         this.targetIncidentsPerHour = incFinite(data.targetIncidentsPerHour, 50, 0, 100000);
+        if (data.typeLevels && typeof data.typeLevels === 'object' && !Array.isArray(data.typeLevels)) {
+            const levels = data.typeLevels;
+            for (const type of this.predefinedTypes)
+                if (Object.prototype.hasOwnProperty.call(levels, type.id))
+                    this.setTypeLevel(type.id, levels[type.id]);
+        }
         if (data.weatherCredit && typeof data.weatherCredit === 'object' && !Array.isArray(data.weatherCredit)) {
             const credit = data.weatherCredit;
             for (const type of this.predefinedTypes)
@@ -18069,9 +18179,11 @@ exports.IncidentManager = IncidentManager;
 __modules["js/industrial-clients.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IndustrialClients = void 0;
+exports.IndustrialClients = exports.ITE_INDUSTRY_RADIUS_KM = void 0;
+exports.sitesWithinRadius = sitesWithinRadius;
 const html_text_js_1 = require("./html-text.js");
 const freight_network_js_1 = require("./freight-network.js");
+const simulation_js_1 = require("./simulation.js");
 const icons_js_1 = require("./icons.js");
 const rng_js_v_1784250033_1 = require("./rng.js?v=1784250033");
 let nextClientId = 1;
@@ -22073,6 +22185,20 @@ const INDUSTRY_COLORS = {
     dairy: '#fef08a', sawmill: '#a3e635', oil_depot: '#991b1b', biogas_plant: '#86efac',
     ceramics: '#fdba74', furniture: '#fcd34d',
 };
+exports.ITE_INDUSTRY_RADIUS_KM = 15;
+function sitesWithinRadius(sites, lat, lon, radiusKm = exports.ITE_INDUSTRY_RADIUS_KM) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon))
+        return [];
+    const out = [];
+    for (const s of sites) {
+        if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon))
+            continue;
+        const d = (0, simulation_js_1.haversineDistance)(lat, lon, s.lat, s.lon);
+        if (d <= radiusKm)
+            out.push({ ...s, distanceKm: Math.round(d * 10) / 10 });
+    }
+    return out.sort((a, b) => a.distanceKm - b.distanceKm);
+}
 function isRecord(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -22298,6 +22424,47 @@ class IndustrialClients {
     }
     getActiveClients() {
         return this.clients.filter((c) => c.active);
+    }
+    getSitesNearDepot(depot, radiusKm = exports.ITE_INDUSTRY_RADIUS_KM) {
+        const loc = depot?.location;
+        if (!loc)
+            return [];
+        return sitesWithinRadius(this.getAllRealLocations(), Number(loc.lat), Number(loc.lon), radiusKm);
+    }
+    syncClientsFromNearbySites(depots, radiusKm = exports.ITE_INDUSTRY_RADIUS_KM) {
+        const sites = this.getAllRealLocations();
+        const valid = new Set();
+        let added = 0;
+        for (const depot of depots) {
+            if (!depot?.built || !depot.location || !depot.stationId)
+                continue;
+            for (const site of sitesWithinRadius(sites, Number(depot.location.lat), Number(depot.location.lon), radiusKm)) {
+                const industry = this.getIndustryInfo(site.industryType);
+                if (!industry)
+                    continue;
+                const linkKey = `${depot.id}|${site._key}`;
+                valid.add(linkKey);
+                const existing = this.clients.find((c) => c.siteKey === site._key && c.depotId === String(depot.id));
+                if (existing) {
+                    existing.distanceKm = site.distanceKm;
+                    existing.siteName = site.name;
+                    continue;
+                }
+                const rng = (0, rng_js_v_1784250033_1.getGlobalRng)();
+                this.clients.push({
+                    id: `client-${nextClientId++}`,
+                    type: String(site.industryType), name: industry.name, icon: industry.icon,
+                    stationId: String(depot.stationId), depotId: String(depot.id),
+                    dailyTonnage: industry.dailyTonnageMin + Math.floor(rng.random() * (industry.dailyTonnageMax - industry.dailyTonnageMin)),
+                    active: true, satisfaction: 80, marketShare: 5, contractsGenerated: 0, totalTonnage: 0, totalRevenue: 0, createdAt: Date.now(),
+                    siteKey: site._key, siteName: site.name, distanceKm: site.distanceKm,
+                });
+                this.stats.totalClients++;
+                added++;
+            }
+        }
+        this.clients = this.clients.filter((c) => !c.siteKey || valid.has(`${c.depotId}|${c.siteKey}`));
+        return added;
     }
     generateDailyContracts(freightManager, world, cargoTypes = null) {
         const network = new freight_network_js_1.FreightNetwork(world, this.railLegProvider?.() ?? []);
@@ -27409,6 +27576,7 @@ const schedule_v2_model_js_1 = require("./schedule-v2-model.js");
 const rotation_v2_model_js_1 = require("./rotation-v2-model.js");
 const schedule_v2_runtime_js_1 = require("./schedule-v2-runtime.js");
 const schedule_v2_revalidation_js_1 = require("./schedule-v2-revalidation.js");
+const game_mode_js_1 = require("./game-mode.js");
 class RailEmpire {
     constructor() {
         this.liveries = new livery_model_js_1.LiveryLibrary();
@@ -27416,6 +27584,7 @@ class RailEmpire {
         this._started = false;
         this._launching = false;
         this._importing = false;
+        this._gameLoopScheduled = false;
         this.gameplayClock = new gameplay_clock_js_1.GameplayClock();
         this.diagnostics = new operational_diagnostics_js_1.OperationalDiagnostics();
         this._externalCatalogApplied = false;
@@ -27432,6 +27601,9 @@ class RailEmpire {
             delayTolerance: 120,
             rotationsRequired: false,
             personnelRequired: false,
+            gameMode: 'facile',
+            depotsRequired: false,
+            aiCompetitors: false,
         };
         this.engine = new engine_js_1.SimulationEngine();
         this.world = (0, world_js_1.createDefaultWorld)();
@@ -27705,6 +27877,7 @@ class RailEmpire {
         });
         this.engine.paused = false;
         this.running = true;
+        this._gameLoopScheduled = true;
         this.engine.onTick = (timeOfDay, dateStr, pt) => this.tick(timeOfDay, dateStr, pt);
         this.engine.onSecondTick = (timeOfDay, dateStr, pt) => this.secondTick(timeOfDay, dateStr, pt);
         this.engine.onMoveTick = (dt, timeOfDay) => this.moveTick(dt, timeOfDay);
@@ -27794,6 +27967,17 @@ class RailEmpire {
         };
         this._europeGameplayReady = this.globalStations.load(onProgress).then(async (stations) => {
             await this._indexAllZoomGameplayStations(stations, this.globalStations.source);
+            try {
+                const embedded = await this.railReferenceSync.loadEmbeddedIntoWorld(this.world, (p) => {
+                    if (p.phase === 'embedded-shard')
+                        this._setWorldStationsStatus(`Référentiel rail embarqué : ${p.index}/${p.totalShards} · ${Number(p.stations || 0).toLocaleString('fr-FR')} gares · ${Number(p.freightSites || 0).toLocaleString('fr-FR')} fret/ITE`);
+                });
+                if (embedded.stations || embedded.freightSites)
+                    this._setWorldStationsStatus(`Référentiel rail embarqué : ${Number(this.world._builtInStationCount || this.world.stations.length || 0).toLocaleString('fr-FR')} points natifs`, 'done');
+            }
+            catch (err) {
+                console.warn('Embedded rail reference pack unavailable:', err);
+            }
             try {
                 const cached = await this.railReferenceSync.loadCachedIntoWorld(this.world, (p) => {
                     if (p.phase === 'cache-country')
@@ -28181,6 +28365,20 @@ class RailEmpire {
         const delayToleranceVal = document.getElementById('settings-delay-tolerance-val');
         const rotationsRequiredInput = document.getElementById('settings-rotations-required');
         const personnelRequiredInput = document.getElementById('settings-personnel-required');
+        const depotsRequiredInput = document.getElementById('settings-depots-required');
+        const gameModeInputs = Array.from(document.querySelectorAll('input[name="settings-game-mode"]'));
+        const syncModeInputs = () => {
+            const expert = gameModeInputs.find((i) => i.checked)?.value === 'expert';
+            for (const cb of [rotationsRequiredInput, personnelRequiredInput, depotsRequiredInput]) {
+                if (!cb)
+                    continue;
+                if (expert)
+                    cb.checked = true;
+                cb.disabled = expert;
+            }
+        };
+        for (const i of gameModeInputs)
+            i.addEventListener('change', syncModeInputs);
         const priceSlowInput = document.getElementById('settings-price-slow');
         const priceRegionalInput = document.getElementById('settings-price-regional');
         const priceIntercityInput = document.getElementById('settings-price-intercity');
@@ -28273,6 +28471,11 @@ class RailEmpire {
                 rotationsRequiredInput.checked = this.realismSettings.rotationsRequired === true;
             if (personnelRequiredInput)
                 personnelRequiredInput.checked = this.realismSettings.personnelRequired === true;
+            if (depotsRequiredInput)
+                depotsRequiredInput.checked = this.realismSettings.depotsRequired === true;
+            for (const i of gameModeInputs)
+                i.checked = i.value === (0, game_mode_js_1.normalizeGameMode)(this.realismSettings.gameMode);
+            syncModeInputs();
             const prices = this.economy.passengerPriceByClass || {};
             priceSlowInput.value = String(prices.slow ?? 0.08);
             priceRegionalInput.value = String(prices.regional ?? 0.12);
@@ -28303,6 +28506,8 @@ class RailEmpire {
             }
             this.realismSettings.rotationsRequired = !!rotationsRequiredInput?.checked;
             this.realismSettings.personnelRequired = !!personnelRequiredInput?.checked;
+            this.realismSettings.depotsRequired = !!depotsRequiredInput?.checked;
+            (0, game_mode_js_1.applyGameMode)(this.realismSettings, gameModeInputs.find((i) => i.checked)?.value);
             this.economy.passengerPriceByClass = {
                 slow: parseFloat(priceSlowInput.value) || 0,
                 regional: parseFloat(priceRegionalInput.value) || 0,
@@ -28519,6 +28724,7 @@ class RailEmpire {
             this.running = wasRunning;
             this.engine.paused = wasPaused;
             this._importing = false;
+            this._ensureGameLoop();
         }
     }
     _loadStateUnchecked(s) {
@@ -28577,7 +28783,7 @@ class RailEmpire {
         if (s.activeIncidents)
             this.incidentManager.loadFromSave(s.activeIncidents, this.world);
         if (s.incidentEnabledTypes)
-            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0);
+            this.incidentManager.setEnabledTypes(s.incidentEnabledTypes, s.incidentTypesVersion || 0, this.world);
         this.incidentManager.loadCadenceSave(s.incidentCadence);
         if (s.works)
             this.worksManager.loadFromSave(s.works);
@@ -29293,7 +29499,7 @@ class RailEmpire {
                 settle('payroll', () => { this.staffManager.processDailySalaries(this.economy, settlementDate); });
                 settle('bank', () => { this.bank.processDailyRepayments(this.economy, settlementDate); });
                 settle('unions', () => { this.unions.dailyUpdate(this, undefined, settlementDate); });
-                settle('industry', () => { this.industrialClients.generateDailyContracts(this.freightManager, this.world, this.cargoTypes); });
+                settle('industry', () => { this.industrialClients.syncClientsFromNearbySites(this.depotManager.getAll()); this.industrialClients.generateDailyContracts(this.freightManager, this.world, this.cargoTypes); });
                 settle('marketing', () => { this.marketingManager?.dailyUpdate?.(this, settlementDate); });
                 settle('ite', () => {
                     const cost = this.iteModules.getTotalDailyMaintenance();
@@ -29348,9 +29554,17 @@ class RailEmpire {
         }
         this.scheduleCreator.refreshMovingCache();
     }
-    gameLoop() {
-        if (!this.running)
+    _ensureGameLoop() {
+        if (!this.running || this._gameLoopScheduled)
             return;
+        this._gameLoopScheduled = true;
+        requestAnimationFrame(() => this.gameLoop());
+    }
+    gameLoop() {
+        if (!this.running) {
+            this._gameLoopScheduled = false;
+            return;
+        }
         try {
             const now = performance.now();
             if (!this._lastFrameTime)
@@ -31153,8 +31367,11 @@ exports.MarketingManager = MarketingManager;
 __modules["js/material-mileage.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.WEAR_KM_PER_PERCENT = exports.WEAR_FULL_KM = void 0;
 exports.syncMaterialMileage = syncMaterialMileage;
 exports.advanceMaterialMileage = advanceMaterialMileage;
+exports.WEAR_FULL_KM = 50000;
+exports.WEAR_KM_PER_PERCENT = exports.WEAR_FULL_KM / 100;
 const nonNegative = (value, fallback = 0) => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value :
     typeof fallback === 'number' && Number.isFinite(fallback) && fallback >= 0 ? fallback : 0;
 function syncMaterialMileage(material, train) {
@@ -31170,7 +31387,7 @@ function advanceMaterialMileage(material, train, distanceKm) {
     const source = material || train;
     source.totalKmRun = nonNegative(source.totalKmRun) + distanceKm;
     source.kmSinceLastMaint = nonNegative(source.kmSinceLastMaint) + distanceKm;
-    source.wearLevel = Math.min(100, nonNegative(source.wearLevel) + distanceKm / 250);
+    source.wearLevel = Math.min(100, nonNegative(source.wearLevel) + distanceKm / exports.WEAR_KM_PER_PERCENT);
     if (material)
         syncMaterialMileage(material, train);
 }
@@ -37813,9 +38030,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HeadquartersPage = void 0;
 const windowed_list_js_1 = require("./windowed-list.js");
 const operations_view_model_js_1 = require("./operations-view-model.js");
+const qg_report_js_1 = require("./qg-report.js");
 class HeadquartersPage {
-    constructor(root, data) {
+    constructor(root, data, onExport) {
         this.data = data;
+        this.onExport = onExport;
         this.timer = null;
         this.compositions = new WeakMap();
         this.root = root;
@@ -37827,7 +38046,7 @@ class HeadquartersPage {
             <section><span>Trains en exploitation</span><strong id="qg-active">0</strong><small class="qg-company"></small></section>
           </div>
           <p class="qg-total-note">Cumuls depuis la création de cette partie, conservés dans sa sauvegarde. Un voyageur est compté à la descente, le fret au déchargement — pas à partir des capacités.</p>
-          <div class="qg-toolbar"><label>Rechercher un train, une rame ou une gare<input id="qg-search" type="search" placeholder="Numéro, nom, origine, destination…"></label><span id="qg-count" role="status"></span></div>
+          <div class="qg-toolbar"><label>Rechercher un train, une rame ou une gare<input id="qg-search" type="search" placeholder="Numéro, nom, origine, destination…"></label><span id="qg-count" role="status"></span><span class="qg-export"><select id="qg-report-period" aria-label="Période du rapport">${qg_report_js_1.QG_REPORT_PERIODS.map((p) => `<option value="${p.days}"${p.days === 30 ? ' selected' : ''}>${p.label}</option>`).join('')}</select><button id="qg-report-btn" class="btn-sm" type="button" title="Rapport complet (finances, rames, trains, personnel) à enregistrer en PDF">Export PDF</button></span></div>
           <div id="qg-empty" class="re-empty" hidden>Aucun train en exploitation. Les trains apparaissent à leur préparation au départ.</div>
           <div id="qg-fleet" aria-label="Compositions des trains en exploitation"></div>
           <p class="qg-footnote">Toutes les compositions restent accessibles. Défilement vertical pour les trains, horizontal pour les longues rames. Aucune carte n’est chargée ici.</p>
@@ -37835,6 +38054,10 @@ class HeadquartersPage {
         this.search = root.querySelector('#qg-search');
         this.list = new windowed_list_js_1.WindowedList(root.querySelector('#qg-fleet'), 140, r => r.id, (r, old) => this.row(r, old));
         this.search.addEventListener('input', () => this.refresh(true));
+        root.querySelector('#qg-report-btn')?.addEventListener('click', () => {
+            const days = Number(root.querySelector('#qg-report-period')?.value) || 30;
+            this.onExport?.(days);
+        });
         this.setActive(true);
     }
     row(row, old) {
@@ -37912,6 +38135,127 @@ exports.HeadquartersPage = HeadquartersPage;
 
 };
 
+__modules["js/qg-report.js"]=function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.QG_REPORT_PERIODS = void 0;
+exports.summarizeFinance = summarizeFinance;
+exports.buildQgReportHtml = buildQgReportHtml;
+exports.openQgReport = openQgReport;
+exports.QG_REPORT_PERIODS = [
+    { days: 7, label: '7 jours' },
+    { days: 30, label: '30 jours' },
+    { days: 90, label: '3 mois' },
+    { days: 180, label: '6 mois' },
+    { days: 365, label: '1 an' },
+];
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = (n) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+const num = (n, d = 0) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: d }).format(n);
+function summarizeFinance(history, nowMs, days) {
+    const from = nowMs - days * 86400000;
+    const cats = new Map();
+    let revenue = 0, expenses = 0, penalties = 0, entries = 0;
+    for (const h of history) {
+        const t = Number(h.time);
+        if (!Number.isFinite(t) || t < from || t > nowMs)
+            continue;
+        const amount = Number(h.amount) || 0;
+        const cat = String(h.category || 'divers');
+        const c = cats.get(cat) || { revenue: 0, expenses: 0 };
+        entries++;
+        if (h.type === 'revenue') {
+            revenue += amount;
+            c.revenue += amount;
+        }
+        else if (h.type === 'expense') {
+            expenses += amount;
+            c.expenses += amount;
+            if (/p[eé]nal/i.test(cat) || /p[eé]nalit/i.test(String(h.description ?? '')))
+                penalties += amount;
+        }
+        cats.set(cat, c);
+    }
+    const byCategory = [...cats.entries()].map(([category, v]) => ({ category, ...v })).sort((a, b) => (b.revenue + b.expenses) - (a.revenue + a.expenses));
+    return { revenue, expenses, penalties, net: revenue - expenses, byCategory, entries };
+}
+function buildQgReportHtml(input) {
+    const fin = summarizeFinance(input.history, input.nowMs, input.days);
+    const period = exports.QG_REPORT_PERIODS.find((p) => p.days === input.days)?.label || `${input.days} jours`;
+    const late = input.trains.filter((t) => t.delay >= 5).length;
+    const avgWear = input.rames.length ? input.rames.reduce((a, r) => a + r.wearLevel, 0) / input.rames.length : 0;
+    const rows = (cells) => `<tr>${cells.join('')}</tr>`;
+    const td = (v, cls = '') => `<td${cls ? ` class="${cls}"` : ''}>${esc(v)}</td>`;
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${esc(input.company)} — Rapport ${esc(period)}</title>
+<style>
+  body{font:11pt/1.4 Arial,Helvetica,sans-serif;color:#111;margin:18mm 14mm}
+  h1{font-size:20pt;margin:0 0 2mm}h2{font-size:13pt;margin:8mm 0 2mm;border-bottom:1px solid #999;padding-bottom:1mm;page-break-after:avoid}
+  .meta{color:#555;font-size:9.5pt}
+  .kpis{display:flex;flex-wrap:wrap;gap:4mm;margin:4mm 0}.kpi{flex:1 1 40mm;border:1px solid #bbb;border-radius:2mm;padding:2mm 3mm}
+  .kpi span{display:block;font-size:8.5pt;color:#555}.kpi strong{font-size:14pt}
+  table{width:100%;border-collapse:collapse;font-size:9pt;page-break-inside:auto}tr{page-break-inside:avoid}
+  th,td{border:1px solid #ccc;padding:1mm 1.5mm;text-align:left;vertical-align:top}th{background:#eee}
+  td.n{text-align:right;white-space:nowrap}.neg{color:#b00020}.pos{color:#0a7a2f}
+  .note{font-size:8.5pt;color:#666;margin-top:6mm}
+  @media print{.noprint{display:none}}
+  .noprint{margin:0 0 6mm;padding:2mm;background:#fff6d6;border:1px solid #e0c060}
+</style></head><body>
+<div class="noprint">Utilisez <b>Imprimer → Enregistrer au format PDF</b> pour obtenir le fichier PDF. <button onclick="window.print()">Imprimer / PDF</button></div>
+<h1>${esc(input.company)}</h1>
+<div class="meta">Rapport d'exploitation sur ${esc(period)} · généré le ${esc(input.generatedAt)} · mode ${esc(input.mode)}</div>
+<div class="kpis">
+  <div class="kpi"><span>Trésorerie</span><strong class="${input.balance < 0 ? 'neg' : ''}">${esc(eur(input.balance))}</strong></div>
+  <div class="kpi"><span>Résultat sur la période</span><strong class="${fin.net < 0 ? 'neg' : 'pos'}">${esc(eur(fin.net))}</strong></div>
+  <div class="kpi"><span>Recettes</span><strong>${esc(eur(fin.revenue))}</strong></div>
+  <div class="kpi"><span>Dépenses</span><strong>${esc(eur(fin.expenses))}</strong></div>
+  <div class="kpi"><span>Pénalités</span><strong>${esc(eur(fin.penalties))}</strong></div>
+  <div class="kpi"><span>Voyageurs transportés (cumul)</span><strong>${esc(num(input.passengers))}</strong></div>
+  <div class="kpi"><span>Fret livré (cumul)</span><strong>${esc(num(input.freightTonnes, 1))} t</strong></div>
+  <div class="kpi"><span>Trains en exploitation</span><strong>${input.trains.length}</strong><span>${late} en retard ≥ 5 min</span></div>
+  <div class="kpi"><span>Rames</span><strong>${input.rames.length}</strong><span>usure moyenne ${esc(num(avgWear, 1))} %</span></div>
+</div>
+
+<h2>Finances par catégorie (${esc(period)}, ${fin.entries} écritures)</h2>
+<table><thead><tr><th>Catégorie</th><th>Recettes</th><th>Dépenses</th><th>Solde</th></tr></thead><tbody>
+${fin.byCategory.map((c) => rows([td(c.category), td(eur(c.revenue), 'n'), td(eur(c.expenses), 'n'), td(eur(c.revenue - c.expenses), 'n ' + (c.revenue - c.expenses < 0 ? 'neg' : 'pos'))])).join('') || '<tr><td colspan="4">Aucune écriture sur la période.</td></tr>'}
+</tbody></table>
+
+<h2>Parc de rames (${input.rames.length})</h2>
+<table><thead><tr><th>Rame</th><th>N° série</th><th>Composition</th><th>Km total</th><th>Usure</th><th>État</th><th>Position</th></tr></thead><tbody>
+${input.rames.map((r) => rows([td(r.name), td(r.serial), td(r.elements.join(' + ')), td(num(r.totalKm), 'n'), td(num(r.wearLevel, 1) + ' %', 'n'), td(r.inMaintenance ? 'En maintenance' : r.defects > 0 ? `${r.defects} défaut(s)` : 'Disponible'), td(r.location)])).join('') || '<tr><td colspan="7">Aucune rame.</td></tr>'}
+</tbody></table>
+
+<h2>Trains en exploitation (${input.trains.length})</h2>
+<table><thead><tr><th>Train</th><th>N°</th><th>Origine</th><th>Destination</th><th>État</th><th>Retard</th><th>Rame</th></tr></thead><tbody>
+${input.trains.map((t) => rows([td(t.name), td(t.number), td(t.origin), td(t.destination), td(t.state), td(t.delay > 0 ? `+${Math.round(t.delay)} min` : 'à l\u2019heure', 'n ' + (t.delay >= 5 ? 'neg' : '')), td(t.rameName)])).join('') || '<tr><td colspan="7">Aucun train en exploitation.</td></tr>'}
+</tbody></table>
+
+<h2>Personnel</h2>
+<table><thead><tr><th>Poste</th><th>Effectif</th><th>En service</th></tr></thead><tbody>
+${input.staff.map((s) => rows([td(s.role), td(s.count, 'n'), td(s.onDuty, 'n')])).join('') || '<tr><td colspan="3">Aucun personnel.</td></tr>'}
+</tbody></table>
+<p class="note">Cumuls voyageurs/fret depuis la création de la partie ; finances filtrées sur la période. Rail Empire — rapport généré localement, aucune donnée transmise.</p>
+</body></html>`;
+}
+function openQgReport(html) {
+    const w = window.open('', '_blank');
+    if (!w)
+        return false;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => {
+        try {
+            w.print();
+        }
+        catch { }
+    }, 400);
+    return true;
+}
+
+};
+
 __modules["js/rail-reference-sync.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -37930,6 +38274,25 @@ const DB_NAME = 'rail-empire-reference-sites';
 const DB_VERSION = 1;
 const STORE = 'countries';
 const CACHE_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000;
+const EMBEDDED_REFERENCE_PACK_GLOBAL = '__RAILNET_REFERENCE_PACK__';
+const EMBEDDED_REFERENCE_SHARD_GLOBAL = '__RAILNET_REFERENCE_SHARD__';
+function referencePointFromCompactRow(row, source) {
+    if (!Array.isArray(row) || row.length < 7)
+        return null;
+    const lat = Number(row[2]) / 1e5, lon = Number(row[3]) / 1e5;
+    if (!Number.isFinite(lat) || !Number.isFinite(lon))
+        return null;
+    const typeCode = Number(row[4]);
+    const type = typeCode === 2 ? 'ite' : typeCode === 1 ? 'marchandise' : 'voyageur';
+    const s = (i) => (row[i] == null ? '' : String(row[i]));
+    const official = Number(row[16]) === 1;
+    return {
+        id: s(0), name: s(1), lat, lon, country: s(5), type, platforms: type === 'voyageur' ? 2 : 1,
+        facilities: type === 'voyageur' ? ['voyageurs'] : type === 'ite' ? ['fret', 'ite', ...(official ? ['reference-officielle'] : [])] : ['fret'],
+        source: s(17) || source, siteKind: s(6), cargoTags: s(15) ? s(15).split(';').filter(Boolean) : [], official,
+        uicRef: s(7), osmType: s(8), osmId: s(9), ref: s(10), operator: s(11), network: s(12), wikidata: s(13), wheelchair: s(14),
+    };
+}
 function normText(value) {
     return String(value || '').normalize?.('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() || '';
 }
@@ -38006,10 +38369,91 @@ function freightSiteFromElement(el, iso) {
         osmType: String(el.type || ''), osmId: String(el.id || ''), ref: String(tags.ref || tags['railway:ref'] || ''), operator: String(tags.operator || ''), network: String(tags.network || ''), wikidata: String(tags.wikidata || ''), wheelchair: '',
     };
 }
-function mergeSiteRecords(points) {
+class GeoGrid {
+    constructor(cell = 0.01) {
+        this.cell = cell;
+        this.map = new Map();
+    }
+    add(p) {
+        const k = `${Math.floor(p.lat / this.cell)}:${Math.floor(p.lon / this.cell)}`;
+        const b = this.map.get(k);
+        if (b)
+            b.push(p);
+        else
+            this.map.set(k, [p]);
+    }
+    near(p) {
+        const ci = Math.floor(p.lat / this.cell), cj = Math.floor(p.lon / this.cell);
+        const out = [];
+        for (let di = -1; di <= 1; di++)
+            for (let dj = -1; dj <= 1; dj++)
+                for (const q of this.map.get(`${ci + di}:${cj + dj}`) || [])
+                    out.push(q);
+        return out;
+    }
+}
+function consolidateYardTracks(freight, anchors) {
+    const isTrack = (p) => p.type === 'marchandise' && p.siteKind === 'yard_track';
+    const tracks = freight.filter(isTrack);
+    const rest = freight.filter((p) => !isTrack(p));
+    if (!tracks.length)
+        return rest;
+    const known = new GeoGrid();
+    for (const p of rest)
+        if (p.type === 'marchandise')
+            known.add(p);
+    for (const a of anchors)
+        known.add(a);
+    const idx = new Map();
+    tracks.forEach((t, i) => idx.set(t, i));
+    const parent = tracks.map((_, i) => i);
+    const find = (i) => {
+        while (parent[i] !== i) {
+            parent[i] = parent[parent[i]];
+            i = parent[i];
+        }
+        return i;
+    };
+    const g = new GeoGrid();
+    for (const t of tracks)
+        g.add(t);
+    for (const t of tracks)
+        for (const q of g.near(t))
+            if (q !== t && distanceKm(t, q) <= 0.4)
+                parent[find(idx.get(t))] = find(idx.get(q));
+    const groups = new Map();
+    for (const t of tracks) {
+        const r = find(idx.get(t));
+        const b = groups.get(r);
+        if (b)
+            b.push(t);
+        else
+            groups.set(r, [t]);
+    }
+    const out = [...rest];
+    for (const members of groups.values()) {
+        const lat = members.reduce((s, m) => s + m.lat, 0) / members.length, lon = members.reduce((s, m) => s + m.lon, 0) / members.length;
+        const center = { lat, lon };
+        if (known.near(center).some((q) => distanceKm(center, q) <= (q.type === 'voyageur' ? 0.9 : 0.6)))
+            continue;
+        const named = members.find((m) => !/^Gare marchandises OSM/i.test(m.name));
+        if (!named && members.length < 3)
+            continue;
+        const first = members.slice().sort((a, b) => String(a.osmId).localeCompare(String(b.osmId)))[0];
+        const head = named || first;
+        out.push({
+            ...first, lat, lon, name: named ? named.name : `Faisceau marchandises ${first.country} ${first.osmId}`, siteKind: 'yard',
+            id: `osm-freight-yardgroup-${first.country}-${first.osmId}`, osmType: head.osmType, osmId: head.osmId,
+            operator: named?.operator || members.find((m) => m.operator)?.operator || '',
+            cargoTags: [...new Set(members.flatMap((m) => m.cargoTags || []))].slice(0, 12),
+        });
+    }
+    return out;
+}
+function mergeSiteRecords(points, anchors = []) {
     const fixed = [];
     const industrial = [];
-    for (const p of points)
+    for (const p of consolidateYardTracks(points, anchors))
         (p.type === 'ite' ? industrial : fixed).push(p);
     const groups = [];
     const grid = new Map();
@@ -38231,6 +38675,42 @@ class RailReferenceSync {
         this.running = null;
         this.franceOfficial = null;
     }
+    async loadEmbeddedIntoWorld(world, onProgress = null) {
+        const bag = globalThis;
+        const pack = bag[EMBEDDED_REFERENCE_PACK_GLOBAL];
+        if (!pack?.prepared || !Array.isArray(pack.shards) || !pack.shards.length || typeof document === 'undefined')
+            return { stations: 0, freightSites: 0, shards: 0 };
+        let stations = 0, freightSites = 0;
+        for (let i = 0; i < pack.shards.length; i++) {
+            const file = String(pack.shards[i] || '').replace(/^\/+/, '');
+            if (!file || file.includes('..'))
+                throw new Error('Nom de shard référentiel invalide');
+            bag[EMBEDDED_REFERENCE_SHARD_GLOBAL] = null;
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `data/railnet/reference/${file}`;
+                script.async = true;
+                script.onload = () => { script.remove(); resolve(); };
+                script.onerror = () => { script.remove(); reject(new Error(`Impossible de charger ${file}`)); };
+                document.head.appendChild(script);
+            });
+            const rows = bag[EMBEDDED_REFERENCE_SHARD_GLOBAL];
+            bag[EMBEDDED_REFERENCE_SHARD_GLOBAL] = null;
+            if (!Array.isArray(rows))
+                throw new Error(`Shard référentiel invalide: ${file}`);
+            const points = rows.map((r) => referencePointFromCompactRow(r, String(pack.source || ''))).filter((x) => !!x);
+            await world.mergeNativeOSMGameplayStationsAsync(points, null, 900);
+            for (const p of points) {
+                if (p.type === 'voyageur')
+                    stations++;
+                else
+                    freightSites++;
+            }
+            onProgress?.({ phase: 'embedded-shard', index: i + 1, totalShards: pack.shards.length, stations, freightSites });
+            await new Promise((r) => setTimeout(r, 0));
+        }
+        return { stations, freightSites, shards: pack.shards.length };
+    }
     async loadCachedIntoWorld(world, onProgress = null) {
         const rows = await this.db.all();
         let stations = 0, freightSites = 0;
@@ -38289,7 +38769,7 @@ class RailReferenceSync {
                 try {
                     const [stationEls, freightEls] = await Promise.all([fetchOverpass(stationQuery(iso), 70000), fetchOverpass(freightQuery(iso), 100000)]);
                     const stations = stationEls.map((e) => stationFromElement(e, iso)).filter((x) => !!x);
-                    let freight = mergeSiteRecords(freightEls.map((e) => freightSiteFromElement(e, iso)).filter((x) => !!x));
+                    let freight = mergeSiteRecords(freightEls.map((e) => freightSiteFromElement(e, iso)).filter((x) => !!x), [...stations, ...world.stations.filter((s) => s && Number.isFinite(Number(s.lat)) && Number.isFinite(Number(s.lon))).map((s) => ({ lat: Number(s.lat), lon: Number(s.lon), type: String(s.type || 'voyageur') }))]);
                     if (iso === 'FR') {
                         const official = await this.fetchFranceOfficialITE();
                         freight = [...official, ...dedupeAgainst(freight, official, 0.20)];
@@ -38321,7 +38801,7 @@ class RailReferenceSync {
     }
 }
 exports.RailReferenceSync = RailReferenceSync;
-exports.__railReferenceTest = { stationFromElement, freightSiteFromElement, mergeSiteRecords, parseFranceIte3000, stationQuery, freightQuery };
+exports.__railReferenceTest = { stationFromElement, freightSiteFromElement, mergeSiteRecords, parseFranceIte3000, stationQuery, freightQuery, referencePointFromCompactRow };
 
 };
 
@@ -42271,6 +42751,23 @@ class RollingStockItem {
             this.power = 0;
             this.traction = 'none';
         }
+        if (this.category === 'automotrice' && this.traction === 'electrique' && /^X\s?\d{3,5}\b/.test(this.name)) {
+            const origin = `${text(data._source)} ${text(data.identityOperator)} ${text(data.imageData)}`.toLowerCase();
+            if (/sncf|trains-europe\.fr\/sncf/.test(origin))
+                this.traction = 'diesel';
+        }
+        if ((this.category === 'locomotive' || this.category === 'automotrice') && this.power > 0 && this.power < 10) {
+            if (/remorque|voiture d/i.test(this.name))
+                this.power = 0;
+            else if (/^X\s?73900\b/.test(this.name))
+                this.power = 630;
+            else if (/^X\s?73500\b/.test(this.name))
+                this.power = 514;
+            else if (/^Z\s?6400\b/.test(this.name))
+                this.power = 1180;
+            else
+                this.power = defaultPower;
+        }
         this.passengerCapacity = nonNegative(data.passengerCapacity, 0);
         this.freightCapacity = nonNegative(data.freightCapacity, 0);
         this.tonnage = Number.isFinite(rawTonnage) && rawTonnage > 0
@@ -45509,6 +46006,59 @@ class RotationV2Manager {
         const cat = String(v.category || '').toLowerCase();
         return Number(v.powerW || 0) > 0 || cat.includes('locomotive') || cat.includes('automotrice') || cat.includes('autorail') || cat.includes('locotracteur');
     }
+    _wagonVehicle(v) {
+        if (!v || this._poweredVehicle(v))
+            return false;
+        const cat = String(v.category || '').toLowerCase();
+        return cat.includes('wagon') || (Number(v.freightCapacity || 0) > 0 && Number(v.passengerCapacity || 0) <= 0);
+    }
+    _validateCategoryComposition(occ, ver) {
+        const issues = [];
+        const vehicles = (occ.formation?.members || []).map((m) => this.getVehicle(m.vehicleId)).filter((v) => !!v);
+        if (!vehicles.length)
+            return issues;
+        const cat = String(ver?.category || schedule_v2_model_js_1.TrainCategory.PASSENGER);
+        const isProxy = (v) => String(v.category || '').toLowerCase() === 'rame';
+        const proxyHauled = (v) => isProxy(v) && (Number(v.passengerCapacity || 0) > 0 || Number(v.freightCapacity || 0) > 0);
+        const powered = vehicles.filter((v) => this._poweredVehicle(v) && !proxyHauled(v));
+        const wagons = vehicles.filter((v) => this._wagonVehicle(v) || (isProxy(v) && Number(v.freightCapacity || 0) > 0 && Number(v.passengerCapacity || 0) <= 0));
+        const hauled = vehicles.filter((v) => !this._poweredVehicle(v) || proxyHauled(v));
+        const paxCapacity = vehicles.reduce((s, v) => s + Number(v.passengerCapacity || 0), 0);
+        const push = (code, message, level = 'ERROR') => issues.push({ level, code, occurrenceId: occ.id, message });
+        const label = (v) => v.number || v.name || v.id;
+        if (cat === schedule_v2_model_js_1.TrainCategory.HLP) {
+            if (hauled.length)
+                push('CATEGORY_HLP_NOT_ALONE', `HLP : un haut-le-pied ne comporte que des engins moteurs (${hauled.map(label).join(', ')} à retirer).`);
+            if (powered.length > 2)
+                push('CATEGORY_HLP_TOO_MANY', `HLP : maximum 2 engins moteurs (${powered.length} affectés). Utilisez la catégorie TM.`);
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.TM) {
+            if (hauled.length)
+                push('CATEGORY_TM_NOT_ALONE', `TM : un train de machines ne comporte que des engins moteurs (${hauled.map(label).join(', ')} à retirer).`);
+            if (powered.length < 3)
+                push('CATEGORY_TM_TOO_FEW', `TM : un train de machines compte 3 à 12 engins moteurs (${powered.length} affecté(s)). Utilisez la catégorie HLP.`);
+            else if (powered.length > 12)
+                push('CATEGORY_TM_TOO_MANY', `TM : maximum 12 engins moteurs (${powered.length} affectés).`);
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.PASSENGER || cat === schedule_v2_model_js_1.TrainCategory.W) {
+            if (wagons.length)
+                push('CATEGORY_PASSENGER_HAS_WAGON', `${cat === schedule_v2_model_js_1.TrainCategory.W ? 'W' : 'Voyageurs'} : le matériel fret ${wagons.map(label).join(', ')} n’est pas admis dans un train voyageurs.`);
+            if (paxCapacity <= 0)
+                push('CATEGORY_PASSENGER_NO_CAPACITY', `${cat === schedule_v2_model_js_1.TrainCategory.W ? 'W' : 'Voyageurs'} : aucune place voyageurs dans la formation. Choisissez HLP/TM pour des engins seuls.`, 'WARNING');
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.FREIGHT) {
+            if (!wagons.length)
+                push('CATEGORY_FREIGHT_NO_WAGON', hauled.length ? 'Fret : la formation ne contient aucun wagon.' : 'Fret : la formation ne contient que des engins moteurs. Choisissez HLP ou TM.', 'WARNING');
+            const coaches = hauled.filter((v) => !wagons.includes(v));
+            if (coaches.length)
+                push('CATEGORY_FREIGHT_HAS_COACH', `Fret : le matériel voyageurs ${coaches.map(label).join(', ')} n’est pas admis dans un train de fret.`);
+        }
+        else if (cat === schedule_v2_model_js_1.TrainCategory.INFRA || cat === schedule_v2_model_js_1.TrainCategory.TTX) {
+            if (!hauled.length)
+                push('CATEGORY_WORK_NO_WAGON', `${cat} : la formation ne contient que des engins moteurs. Choisissez HLP ou TM pour une machine seule.`, 'WARNING');
+        }
+        return issues;
+    }
     _roleForAttachedVehicle(v, type, activeCount = 0) {
         if (type === exports.RotationActionType.ADD_PUSHER)
             return exports.FormationRole.PUSHER;
@@ -45933,6 +46483,7 @@ class RotationV2Manager {
             if (!activeMembers.some((m) => this._poweredVehicle(this.getVehicle(m.vehicleId)))) {
                 issues.push({ level: 'ERROR', code: 'NO_ACTIVE_TRACTION_ASSIGNED', occurrenceId: occ.id, message: 'Aucun engin de traction actif n’est affecté à ce train.' });
             }
+            issues.push(...this._validateCategoryComposition(occ, ver));
             const locationIds = new Set(r.actions.filter((a) => a.occurrenceId === occ.id).map((a) => a.locationOccurrenceId));
             for (const locationId of locationIds) {
                 const loc = ver.locations.find((l) => l.id === locationId);
@@ -46613,7 +47164,7 @@ function installSaveSerializerWorker(scope) {
 __modules["js/schedule-creator.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ScheduleCreator = exports.ActiveService = exports.ServiceStop = exports.cantonManager = void 0;
+exports.ScheduleCreator = exports.ActiveService = exports.RESIDUAL_DELAY_SUFFIX = exports.ServiceStop = exports.cantonManager = void 0;
 const rame_random_js_1 = require("./rame-random.js");
 const physical_service_identity_js_1 = require("./physical-service-identity.js");
 const formation_turnback_js_1 = require("./formation-turnback.js");
@@ -46632,6 +47183,7 @@ const movement_authority_js_1 = require("./movement-authority.js");
 const rail_section_geometry_js_1 = require("./rail-section-geometry.js");
 const rng_js_v_1784250033_1 = require("./rng.js?v=1784250033");
 const train_physics_js_v_1784250033_1 = require("./train-physics.js?v=1784250033");
+const game_mode_js_1 = require("./game-mode.js");
 const schedule_logic_js_1 = require("./schedule-logic.js");
 let nextServiceId = 1;
 let nextServiceNumber = 1;
@@ -46699,6 +47251,7 @@ class ServiceStop {
     }
 }
 exports.ServiceStop = ServiceStop;
+exports.RESIDUAL_DELAY_SUFFIX = ' (retard en résorption)';
 class ActiveService {
     constructor(data, rame, world, weather) {
         this._tailSpeedIndex = null;
@@ -47856,6 +48409,7 @@ class ActiveService {
             this.train.name = this.name;
             this.train.iteInfo = null;
             this.train.incidentDelayReasons = [];
+            this._lastDelayCause = '';
             this._iteHardBlock = false;
             this._iteCargoMismatch = false;
             this._iteDwellExtra = 0;
@@ -48028,6 +48582,7 @@ class ActiveService {
                 if (!this._rescueDispatched && this.position && window.game?.depotManager) {
                     this._rescueDispatched = !!window.game.depotManager.dispatchRescue(this.world, this);
                 }
+                this._tickBreakdownWatchdog(timeOfDay);
                 return;
             }
             this.train.state = 'anomalie legere';
@@ -48065,6 +48620,17 @@ class ActiveService {
                     }
                     return;
                 }
+            }
+        }
+        {
+            const depotBlock = typeof window !== 'undefined' ? (0, game_mode_js_1.depotDepartureBlock)(window.game?.realismSettings, this.rame) : '';
+            if (depotBlock) {
+                this.train.delayReason = 'dépôt : ' + depotBlock;
+                this._movementStop('DEPOT_MAINTENANCE', this.train.delayReason, 'maintenance');
+                return;
+            }
+            else if (String(this.train.delayReason || '').startsWith('dépôt : ')) {
+                this.train.delayReason = '';
             }
         }
         if (window.game?.realismSettings?.personnelRequired === true && window.game?.staffManager && !window.game.staffManager.hasAssignedConductor(this.id, true)) {
@@ -48542,8 +49108,9 @@ class ActiveService {
                 trc.wear = Math.min(100, (trc.wear || 0) + distKm * (mass / 400) * 0.005);
             }
         }
-        if (!this.train.breakdown) {
-            const wearMultiplier = 1 + (this.train.wearLevel || 0) / 25;
+        const wearLevel = Number(this.train.wearLevel) || 0;
+        if (!this.train.breakdown && wearLevel > 0) {
+            const wearMultiplier = 1 + wearLevel / 25;
             const breakdownMult = (typeof window !== 'undefined' ? (window.game?.realismSettings?.breakdown ?? 1) : 1);
             const failureProb = (distKm / 25000) * wearMultiplier * breakdownMult;
             const rng = (0, rng_js_v_1784250033_1.getGlobalRng)();
@@ -48561,9 +49128,31 @@ class ActiveService {
             }
         }
     }
+    _tickBreakdownWatchdog(timeOfDay) {
+        const prev = this._breakdownLastTick;
+        this._breakdownLastTick = timeOfDay;
+        if (prev != null && Number.isFinite(prev)) {
+            this._breakdownStuckMin = (this._breakdownStuckMin || 0) + Math.min(60, Math.max(0, (0, operational_time_js_1.forwardClockMinutes)(prev, timeOfDay)));
+        }
+        else {
+            this._breakdownStuckMin = this._breakdownStuckMin || 0;
+        }
+        const limit = this._rescueDispatched ? 240 : 45;
+        if (this._breakdownStuckMin < limit)
+            return false;
+        const type = this.train.breakdown?.type;
+        if (type && this.rame && Array.isArray(this.rame.pendingDefects)) {
+            this.rame.pendingDefects = this.rame.pendingDefects.filter((t) => t !== type);
+        }
+        this.train.delayReason = 'Panne réparée sur place';
+        this.resumeAfterRepair();
+        return true;
+    }
     resumeAfterRepair() {
         this.train.breakdown = null;
         this._rescueDispatched = false;
+        this._breakdownStuckMin = 0;
+        this._breakdownLastTick = null;
         this.train.inMaintenance = !!this.rame?.inMaintenance;
         if (this.completed || this.cancelled)
             return;
@@ -48821,6 +49410,8 @@ class ActiveService {
             if (!this._rescueDispatched && this.position && window.game?.depotManager) {
                 this._rescueDispatched = !!window.game.depotManager.dispatchRescue(this.world, this);
             }
+            if (this.speed <= 0.5 && this._tickBreakdownWatchdog(Number(timeOfDay)))
+                return;
         }
         cantonManager.setTime(timeOfDay);
         this._updateRegulationFactor();
@@ -49266,6 +49857,20 @@ class ActiveService {
         const t = this.train;
         if (!t)
             return;
+        this._updateCurrentDelayReason();
+        const delay = Number(t.delay) || 0;
+        if (t.delayReason) {
+            if (delay > 0 && !t.delayReason.endsWith(exports.RESIDUAL_DELAY_SUFFIX))
+                this._lastDelayCause = t.delayReason;
+        }
+        else if (delay > 0 && this._lastDelayCause) {
+            t.delayReason = this._lastDelayCause + exports.RESIDUAL_DELAY_SUFFIX;
+        }
+        if (delay <= 0)
+            this._lastDelayCause = '';
+    }
+    _updateCurrentDelayReason() {
+        const t = this.train;
         if (this._iteHardBlock) {
             t.delayReason = 'ITE : train trop long';
             return;
@@ -58165,7 +58770,10 @@ class ScheduleV2Runtime {
         if (plan.occ?.currentTimingMismatchSignature) {
             this._pushAlert('WARNING', 'TIMING_MISMATCH_AUTO_RECALCULATED', `Train ${this.game.scheduleV2.getSchedule(plan.occ.scheduleId)?.number || ''} : le matériel réel allonge la marche. Départ autorisé et temps de marche recalculé automatiquement.`, { rotationId: plan.rotation.id, occurrenceId: plan.occ.id, baseDate: plan.baseDate, suggestion: 'Le train part à son heure résolue ; les circulations suivantes du roulement sont repoussées si nécessaire.' });
         }
-        const formationIssues = this.game.rotationV2?._validateFormationThroughActions?.(plan.rotation, plan.occ, plan.sourceVersion || plan.ver) || [];
+        const formationIssues = [
+            ...(this.game.rotationV2?._validateCategoryComposition?.(plan.occ, plan.sourceVersion || plan.ver) || []),
+            ...(this.game.rotationV2?._validateFormationThroughActions?.(plan.rotation, plan.occ, plan.sourceVersion || plan.ver) || []),
+        ];
         const fatalFormation = formationIssues.find((i) => i.level === 'ERROR');
         if (fatalFormation) {
             this._pushAlert('ERROR', fatalFormation.code || 'ROTATION_FORMATION_INVALID', `Train ${this.game.scheduleV2.getSchedule(plan.occ.scheduleId)?.number || ''} non compilé : ${fatalFormation.message}`, { rotationId: plan.rotation.id, occurrenceId: plan.occ.id, baseDate: plan.baseDate, suggestion: 'Corriger les opérations de composition du roulement avant circulation.' });
@@ -61440,6 +62048,7 @@ function materialFamilyFromItem(item = {}) {
 }
 class StaffManager {
     constructor() {
+        this._renderGame = null;
         this.staff = [];
         this.signalBoxes = [];
         this.zones = [];
@@ -62544,9 +63153,10 @@ class StaffManager {
         this.signalBoxes = this.signalBoxes.filter((sb) => sb.id !== id);
     }
     getSignalBoxById(id) { return this.signalBoxes.find((sb) => sb.id === id); }
-    addZone(name, lat, lon, radiusKm, lineId) {
+    addZone(name, lat, lon, radiusKm, lineId, stationId) {
         const nLat = lat == null ? null : Number(lat), nLon = lon == null ? null : Number(lon);
         const z = {
+            stationId: stationId ? String(stationId) : null,
             id: `zone-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             name: String(name || `Zone ${this.zones.length + 1}`).trim() || `Zone ${this.zones.length + 1}`,
             lat: typeof nLat === 'number' && Number.isFinite(nLat) && nLat >= -90 && nLat <= 90 ? nLat : null,
@@ -62565,6 +63175,42 @@ class StaffManager {
             }
         }
         this.zones = this.zones.filter((z) => z.id !== id);
+    }
+    renamePlace(id, name) {
+        const n = String(name ?? '').trim();
+        if (!n)
+            return false;
+        const z = this.zones.find((x) => x.id === id);
+        if (z) {
+            z.name = n;
+            return true;
+        }
+        const sb = this.signalBoxes.find((x) => x.id === id);
+        if (sb) {
+            sb.name = n;
+            return true;
+        }
+        return false;
+    }
+    addZoneAtStation(station, name, radiusKm) {
+        if (!station)
+            return null;
+        return this.addZone(String(name ?? '').trim() || station.name, station.lat, station.lon, radiusKm, null, station.id);
+    }
+    addSignalBoxAtStation(station, name, radiusKm) {
+        if (!station)
+            return null;
+        return this.addSignalBox({ name: String(name ?? '').trim() || station.name, lat: station.lat, lon: station.lon, radiusKm: radiusKm ?? 10, stationId: station.id });
+    }
+    getStaffedStationIds() {
+        const out = new Set();
+        for (const z of this.zones)
+            if (z.stationId)
+                out.add(String(z.stationId));
+        for (const sb of this.signalBoxes)
+            if (sb.stationId)
+                out.add(String(sb.stationId));
+        return out;
     }
     tickControleurs(economy, activeServices, gameTimeMin) {
         const services = Array.isArray(activeServices) ? activeServices : [];
@@ -62791,6 +63437,7 @@ class StaffManager {
     render(container, game) {
         if (!container)
             return;
+        this._renderGame = game;
         const eco = game.economy;
         const activeServices = (game.scheduleCreator?.getActiveServices?.() || []);
         const stations = game.world?.stations || [];
@@ -62883,6 +63530,7 @@ class StaffManager {
         const assignmentsPanel = `
       <section class="staff-panel staff-auto-panel"><div class="staff-section-title"><div><h3>Affectation automatique</h3><p>Le jeu répartit automatiquement le personnel disponible vers les dépôts, gares utilisées, zones, postes et trains. Il ne déplace jamais le matériel roulant.</p></div><span>Actualisation automatique toutes les 5 min de jeu</span></div><div class="staff-auto-actions"><button id="staff-auto-all" class="btn-primary">Réaffecter maintenant</button><button id="staff-auto-depots" class="btn-sm">Auto-affecter aux dépôts</button></div></section>
       ${depots.length ? `<section class="staff-panel"><div class="staff-section-title"><div><h3>Équipes des dépôts</h3><p>Les opérations réservent seulement les spécialistes de l'équipe 3×8 actuellement disponible.</p></div></div><div class="staff-depot-summary-grid">${depotSummary}</div></section>` : ''}
+      <datalist id="staff-station-list">${this._stationOptions()}</datalist>
       <div class="staff-assignment-grid">${this._renderZonesSection()}${this._renderSignalBoxSection()}</div>`;
         const shiftsPanel = `
       <section class="staff-panel"><div class="staff-section-title"><div><h3>3×8</h3><p>Équipe A 00–08, B 08–16, C 16–00. Les conducteurs sont relevés au prochain point sûr si leur tranche se termine en ligne.</p></div><span>${esc(currentShift.label)} active</span></div><div class="staff-shift-grid">${shiftCards}</div></section>
@@ -63037,13 +63685,27 @@ class StaffManager {
         const busyCount = members.filter((m) => m.busyTaskId).length, assignedCount = members.filter((m) => m.assignedTo).length, onShiftCount = members.filter((m) => m.onDuty && !m.onLeave && !m.absenceRemainingDays).length;
         return `<section class="staff-role-section" data-role-section="${esc(role)}"><header><div><h4>${esc(def.label)}</h4><small>${esc(def.department || '')} · ${esc(def.category || '')}</small></div><span>${members.length} total · ${assignedCount} affecté(s) · ${onShiftCount} en service${busyCount ? ` · ${busyCount} occupé(s)` : ''}</span></header><div class="staff-roster-head"><span>Agent</span><span>Statut</span><span>3×8 / congés</span><span>Affectation</span><span>Activité</span><span>Actions</span></div>${rows}</section>`;
     }
+    _playerStations() { return (this._renderGame?.world?.stations || []); }
+    _stationNameOf(stationId, fallback) {
+        return String(this._playerStations().find((st) => String(st.id) === String(stationId))?.name ?? fallback ?? '');
+    }
+    _stationOptions() {
+        return this._playerStations().slice(0, 4000).map((st) => `<option value="${(0, html_text_js_1.htmlText)(st.name)}">`).join('');
+    }
+    _findStationByInput(v) {
+        const q = String(v ?? '').trim().toLowerCase();
+        if (!q)
+            return null;
+        const list = this._playerStations();
+        return list.find((st) => String(st.name).toLowerCase() === q) || list.find((st) => String(st.name).toLowerCase().startsWith(q)) || null;
+    }
     _renderZonesSection() {
         const regCoverage = this.zones.map((z) => {
             const cov = this.getZoneRegulatorCoverage(z.id);
             const ctrls = this.staff.filter((s) => s.role === 'controleur' && s.assignedTo === z.id);
             const ctrlCount = ctrls.length, ctrlOnDuty = ctrls.filter((s) => s.onDuty !== false && !s.onLeave && !s.absenceRemainingDays).length;
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(z.name)}</span>
+        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(z.name)}${z.stationId ? ` <small style="color:var(--text3);font-weight:400">· gare ${(0, html_text_js_1.htmlText)(this._stationNameOf(z.stationId, z.name))}</small>` : ''} <button class="place-rename-btn" data-place-id="${(0, html_text_js_1.htmlText)(z.id)}" title="Renommer (page Personnel uniquement)" style="font-size:9px;padding:0 4px">✎</button></span>
         <span style="font-size:10px">
           Régulateurs: <b style="color:${(0, html_text_js_1.htmlText)(cov.covered ? 'var(--green)' : '#ef4444')}">${cov.count}/3</b>
           ${cov.teamsCovered >= 3 ? '(A/B/C)' : `(${cov.teamsCovered || 0}/3 équipes)`} · en poste: <b>${cov.onDuty || 0}</b>
@@ -63056,9 +63718,10 @@ class StaffManager {
       <div class="dash-section">
         <h3>Zones de régulation</h3>
         <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Chaque zone nécessite 3 régulateurs (3 × 8h = 24/7). Les contrôleurs montent aléatoirement dans les trains de leur zone.</p>
-        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
-          <input type="text" id="zone-name-input" placeholder="Nom de la zone" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:160px">
-          <button id="zone-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Zone</button>
+        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="zone-station-input" list="staff-station-list" placeholder="Gare d'affectation…" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:170px">
+          <input type="text" id="zone-name-input" placeholder="Nom du lieu (facultatif)" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:150px">
+          <button id="zone-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Zone en gare</button>
         </div>
         ${regCoverage || '<div style="font-size:10px;color:var(--text3)">Aucune zone créée</div>'}
       </div>`;
@@ -63068,7 +63731,7 @@ class StaffManager {
             const agents = this.staff.filter((s) => s.role === 'agent_circulation' && s.assignedTo === sb.id);
             const agentsOnDuty = agents.filter((s) => s.onDuty !== false && !s.onLeave && !s.absenceRemainingDays).length;
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(sb.name)}</span>
+        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(sb.name)}${sb.stationId ? ` <small style="color:var(--text3);font-weight:400">· gare ${(0, html_text_js_1.htmlText)(this._stationNameOf(sb.stationId, sb.name))}</small>` : ''} <button class="place-rename-btn" data-place-id="${(0, html_text_js_1.htmlText)(sb.id)}" title="Renommer (page Personnel uniquement)" style="font-size:9px;padding:0 4px">✎</button></span>
         <span style="font-size:10px">Rayon: ${sb.radiusKm} km | Agents: <b>${agents.length}</b> · en poste: <b>${agentsOnDuty}</b></span>
         <button class="sb-del-btn btn-sm" data-sb-id="${(0, html_text_js_1.htmlText)(sb.id)}" style="font-size:9px;background:#ef4444">Suppr.</button>
       </div>`;
@@ -63078,6 +63741,8 @@ class StaffManager {
         <h3>Postes d'aiguillage</h3>
         <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Placez des postes sur la carte pour gérer les tronçons d'une zone. Chaque poste nécessite au moins 1 agent de circulation.</p>
         <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="sb-station-input" list="staff-station-list" placeholder="Gare d'affectation…" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:170px">
+          <button id="sb-add-station-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Poste en gare</button>
           <input type="text" id="sb-name-input" placeholder="Nom du poste" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:130px">
           <input type="number" id="sb-radius-input" value="10" min="1" max="100" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:80px" title="Rayon (km)">
           <span style="font-size:9px;color:var(--text3)">km</span>
@@ -63258,10 +63923,36 @@ class StaffManager {
         }));
         container.querySelector('#zone-add-btn')?.addEventListener('click', () => {
             const name = container.querySelector('#zone-name-input')?.value.trim();
-            this.addZone(name);
+            const st = this._findStationByInput(container.querySelector('#zone-station-input')?.value);
+            if (!st) {
+                alert('Choisissez une gare d’affectation dans la liste.');
+                return;
+            }
+            this.addZoneAtStation(st, name);
             this.render(container, game);
             game.saveState();
         });
+        container.querySelector('#sb-add-station-btn')?.addEventListener('click', () => {
+            const name = container.querySelector('#sb-name-input')?.value.trim() || '';
+            const radius = parseFloat(container.querySelector('#sb-radius-input')?.value) || 10;
+            const st = this._findStationByInput(container.querySelector('#sb-station-input')?.value);
+            if (!st) {
+                alert('Choisissez une gare d’affectation dans la liste.');
+                return;
+            }
+            this.addSignalBoxAtStation(st, name, radius);
+            this.render(container, game);
+            game.saveState();
+        });
+        container.querySelectorAll('.place-rename-btn').forEach((btn) => btn.addEventListener('click', () => {
+            const id = btn.dataset.placeId;
+            const cur = this.zones.find((z) => z.id === id)?.name ?? this.signalBoxes.find((b) => b.id === id)?.name ?? '';
+            const n = prompt('Nom du lieu (page Personnel uniquement, la gare garde son nom sur la carte) :', String(cur));
+            if (n != null && this.renamePlace(id, n)) {
+                this.render(container, game);
+                game.saveState();
+            }
+        }));
         container.querySelectorAll('.zone-del-btn').forEach((btn) => btn.addEventListener('click', () => { this.removeZone(btn.dataset.zoneId); this.render(container, game); game.saveState(); }));
         container.querySelector('#sb-add-btn')?.addEventListener('click', () => {
             const name = container.querySelector('#sb-name-input')?.value.trim() || '';
@@ -67260,8 +67951,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UI = void 0;
 const legacy_board_plan_js_1 = require("./legacy-board-plan.js");
 const qg_page_js_1 = require("./qg-page.js");
+const qg_report_js_1 = require("./qg-report.js");
+const game_mode_js_1 = require("./game-mode.js");
 const infogare_re_js_1 = require("./infogare-re.js");
 const operations_view_model_js_1 = require("./operations-view-model.js");
+const staff_js_1 = require("./staff.js");
 const rame_random_js_1 = require("./rame-random.js");
 const livery_editor_js_1 = require("./livery-editor.js");
 const duplicate_tools_js_1 = require("./duplicate-tools.js");
@@ -67277,6 +67971,7 @@ const works_v2_editor_js_1 = require("./works-v2-editor.js");
 const infrastructure_v2_editor_js_1 = require("./infrastructure-v2-editor.js");
 const depot_ite_point_editor_js_1 = require("./depot-ite-point-editor.js");
 const depot_js_1 = require("./depot.js");
+const industrial_clients_js_1 = require("./industrial-clients.js");
 const operational_icons_js_1 = require("./operational-icons.js");
 const livemap_train_announcer_js_1 = require("./livemap-train-announcer.js");
 const operational_time_js_1 = require("./operational-time.js");
@@ -67985,6 +68680,10 @@ class UI {
         });
     }
     switchPage(page) {
+        if (page !== 'map' && this.stationCreationMode)
+            this.toggleStationCreation();
+        if (page !== 'map')
+            this._hidePickHint();
         const DELETED_PAGES = {
             seasonal: 'weather',
             connections: 'map',
@@ -68587,17 +69286,33 @@ class UI {
         const sid = station?.id == null ? '' : String(station.id);
         if (!sid)
             return [];
-        return (this.game.incidentManager?.getActiveIncidents?.() || []).filter((inc) => inc && inc.active !== false && !inc.serviceId && inc.stationA != null && inc.stationB != null &&
-            String(inc.stationA) === sid && String(inc.stationB) === sid);
+        const all = (this.game.incidentManager?.getActiveIncidents?.() || []);
+        const inStation = [], onTrain = [], onSection = [];
+        for (const inc of all) {
+            if (!inc || inc.active === false)
+                continue;
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            if (a !== sid && b !== sid)
+                continue;
+            if (inc.serviceId)
+                onTrain.push(inc);
+            else if (a === b)
+                inStation.push(inc);
+            else
+                onSection.push(inc);
+        }
+        return [...inStation, ...onTrain, ...onSection];
     }
     _livemapStationIncidentHtml(station) {
         const incidents = this._livemapStationIncidents(station);
         if (!incidents.length)
             return '';
+        const sid = String(station.id);
         const nowMinute = Number.isFinite(Number(this.game.timeOfDay))
             ? Number(this.game.timeOfDay)
             : (() => { const pt = this.game.engine?.getParisTime?.(); return pt ? pt.hours * 60 + pt.minutes + (pt.seconds || 0) / 60 : 0; })();
-        return incidents.slice(0, 3).map((inc) => {
+        const MAX = 5;
+        const rows = incidents.slice(0, MAX).map((inc) => {
             const elapsed = Math.max(0, Number(inc.duration || 0) - Number(inc.remaining || 0));
             let start = Number(inc.startTime);
             if ((!Number.isFinite(start) || (start === 0 && elapsed > 0 && nowMinute > elapsed + 1)))
@@ -68606,8 +69321,20 @@ class UI {
                 start = nowMinute - elapsed;
             const end = start + Math.max(0, Number(inc.duration || 0));
             const effect = inc.effect === 'stop' ? 'Interruption' : `Ralenti ${this._livemapEsc(inc.speedLimit || 30)} km/h`;
-            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div><div>${effect}</div><div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${(0, html_text_js_1.htmlText)(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
-        }).join('');
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            let where = '';
+            if (inc.serviceId)
+                where = `Train ${this._livemapEsc(inc.trainName || '')}${inc.locationText ? ` · ${this._livemapEsc(inc.locationText)}` : ''}`;
+            else if (a !== b) {
+                const other = a === sid ? inc.stationBName : inc.stationAName;
+                where = `Section vers ${this._livemapEsc(other || '?')}`;
+            }
+            const weather = inc.source === 'weather' ? `<div>🌦 ${this._livemapEsc(inc.triggerText || 'Déclencheur météo')}</div>` : '';
+            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div>${where ? `<div>${where}</div>` : ''}<div>${effect}</div>${weather}<div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${(0, html_text_js_1.htmlText)(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
+        });
+        if (incidents.length > MAX)
+            rows.push(`<div class="tt-operational tt-incident-active">+${incidents.length - MAX} autre(s) incident(s) — voir la page Incidents</div>`);
+        return `<div class="tt-incident-count">${incidents.length} incident${incidents.length > 1 ? 's' : ''} en cours</div>` + rows.join('');
     }
     _livemapWorkLocation(item) {
         const stationName = (value) => value ? (this.game.world.getStationById?.(value)?.name || String(value)) : '';
@@ -69880,8 +70607,20 @@ class UI {
             }
         });
     }
+    _findStationAtSameCoords(lat, lon, excludeId = null) {
+        for (const s of this.game.world.stations) {
+            if (s.id === excludeId)
+                continue;
+            const d = (0, simulation_js_1.haversineDistance)(Number(s.lat), Number(s.lon), lat, lon);
+            if (Number.isFinite(d) && d < 0.005)
+                return s;
+        }
+        return null;
+    }
     toggleStationCreation() {
         this.stationCreationMode = !this.stationCreationMode;
+        if (!this.stationCreationMode)
+            this._hidePickHint();
         if (!this.stationCreationMode && this._multiCreateMode === 'station') {
             this._multiCreateMode = null;
             document.getElementById('btn-create-station')?.classList.remove('multi-mode');
@@ -70171,6 +70910,11 @@ class UI {
         }
         catch (e) {
             console.warn('Local railway snapping failed:', e);
+        }
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+            return;
         }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames, closed });
         station.country = orm.getCountryAtPoint(lat, lon);
@@ -74362,6 +75106,12 @@ class UI {
             console.warn('Snap failed:', e);
         }
         const closed = document.getElementById('lsc-closed')?.checked || false;
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            if (loadingEl)
+                loadingEl.classList.add('hidden');
+            return alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+        }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [], closed });
         station.country = orm.getCountryAtPoint(lat, lon);
         station.facilities = [type];
@@ -74394,7 +75144,7 @@ class UI {
                 loadingEl.textContent = 'Calcul du trace ORM en cours...';
             }
             try {
-                const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+                const route = await this._boundedOrm(orm.findRoute(connectTo.lat, connectTo.lon, lat, lon));
                 const distance = orm.getRouteDistance(route);
                 const speeds = route.filter((r) => r.maxSpeed).map((r) => r.maxSpeed);
                 const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
@@ -74874,6 +75624,7 @@ class UI {
             stationName: station.name,
         });
         this.renderLineStops();
+        this._updateLineManualUI();
         if (this._drawLineMap)
             this._drawLineMap();
     }
@@ -75001,7 +75752,25 @@ class UI {
       `;
         }).join('');
     }
+    _boundedOrm(promise, timeoutMs = 90000) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error(`ORM_TIMEOUT ${timeoutMs}ms`)), timeoutMs);
+            promise.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+        });
+    }
     async saveLine() {
+        try {
+            await this._saveLineInner();
+        }
+        catch (e) {
+            console.warn('saveLine failed:', e);
+            document.getElementById('line-loading')?.classList.add('hidden');
+            alert(String(e).includes('ORM_TIMEOUT')
+                ? 'Calcul du tracé ORM trop long (90 s) : vérifiez la connexion ou tracez le segment manuellement. La ligne n’a pas été modifiée.'
+                : 'Erreur pendant le calcul du tracé : la ligne n’a pas été modifiée.');
+        }
+    }
+    async _saveLineInner() {
         const name = document.getElementById('line-name').value.trim();
         if (!name)
             return alert('Nom requis');
@@ -75020,7 +75789,7 @@ class UI {
         if (this._editingLineId) {
             const line = this.game.lineManager.getLine(this._editingLineId);
             if (line) {
-                const candidate = await this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+                const candidate = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
                 if (!candidate) {
                     if (loadingEl)
                         loadingEl.classList.add('hidden');
@@ -75053,7 +75822,7 @@ class UI {
             }
         }
         else {
-            const line = await this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+            const line = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
             if (!line) {
                 if (loadingEl)
                     loadingEl.classList.add('hidden');
@@ -76173,7 +76942,9 @@ class UI {
             const maint = assigned.filter((r) => r.recommendedMaintenance || Number(r.wearLevel || 0) >= 25 || (r.pendingDefects || []).length);
             const equipmentCount = Object.values(d.equipmentInventory || {}).reduce((sum, n) => sum + Number(n || 0), 0);
             const usage = Object.entries(depot_js_1.DEPOT_RESOURCE_CATALOG).filter(([k]) => Number(d.resourceUsage?.[k] || 0) > 0).sort((a, b) => Number(d.resourceUsage?.[b[0]] || 0) - Number(d.resourceUsage?.[a[0]] || 0)).slice(0, 8);
-            return `<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
+            const nearSites = this.game.industrialClients?.getSitesNearDepot?.(d) || [];
+            const nearHtml = `<section class="depot-panel"><h4>Industriels desservis (rayon ${industrial_clients_js_1.ITE_INDUSTRY_RADIUS_KM} km)</h4>${nearSites.length ? `<div class="depot-stat-lines">${nearSites.slice(0, 40).map((s) => `<span>${esc(s.industryName || s.industryType)} — ${esc(s.name)} <b>${s.distanceKm} km</b></span>`).join('')}</div>` : '<div class="depot-muted">Aucun industriel réel dans le rayon : aucun contrat fret automatique pour ce site.</div>'}</section>`;
+            return `${nearHtml}<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
       <div class="depot-alert-row">${lowResources.length ? `<span class="depot-alert warn">Stock bas : ${(0, html_text_js_1.htmlText)(lowResources.slice(0, 5).map(([k]) => depot_js_1.DEPOT_RESOURCE_CATALOG[k].label).join(', '))}${lowResources.length > 5 ? '…' : ''}</span>` : ''}${maint.length ? `<span class="depot-alert danger">${maint.length} matériel(s) à surveiller / maintenir</span>` : ''}${dirty.length ? `<span class="depot-alert info">${dirty.length} matériel(s) à nettoyer</span>` : ''}${!lowResources.length && !maint.length && !dirty.length ? '<span class="depot-alert ok">Aucune alerte critique</span>' : ''}</div>
       <div class="depot-two-col"><section class="depot-panel"><h4>Consommations réelles du dépôt</h4><div class="depot-stat-lines">${usage.map(([k, def]) => `<span>${esc(def.label)} <b>${qty(d.resourceUsage?.[k], def.unit === 'kg' || def.unit === 'm³' ? 1 : 0)} ${esc(def.unit)}</b></span>`).join('') || '<span>Aucune consommation <b>—</b></span>'}<span>Dépenses cumulées suivies <b>${money(d.utilityTotals?.expenseEur)}</b></span></div></section><section class="depot-panel"><h4>Dernières dépenses</h4>${(d.expenseLedger || []).slice(-8).reverse().map((x) => `<div class="depot-ledger"><span>${esc(x.label)}</span><b>-${money(x.amount)}</b></div>`).join('') || '<div class="depot-muted">Aucune dépense enregistrée.</div>'}</section></div>`;
         };
@@ -76634,9 +77405,29 @@ class UI {
             typesTable.addEventListener('change', (e) => {
                 const cb = e.target?.closest('.incident-type-cb');
                 if (cb) {
-                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked);
+                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked, this.game.world);
+                    this.game.renderer?.invalidateStatic?.();
                     this.game.saveState();
+                    this.renderIncidentsPage();
+                    return;
                 }
+                const lvl = e.target?.closest('.incident-type-level');
+                if (lvl) {
+                    if (lvl.dataset.global != null)
+                        this.game.incidentManager.setGlobalLevel(lvl.value);
+                    else
+                        this.game.incidentManager.setTypeLevel(lvl.dataset.typeId, lvl.value, this.game.world);
+                    this.game.renderer?.invalidateStatic?.();
+                    this.game.saveState();
+                    typesTable.dataset.enabledSig = '';
+                    this.renderIncidentsPage();
+                }
+            });
+            typesTable.addEventListener('input', (e) => {
+                const lvl = e.target?.closest('.incident-type-level');
+                const out = lvl?.parentElement?.querySelector('output');
+                if (out)
+                    out.textContent = lvl.value;
             });
         }
     }
@@ -76818,16 +77609,21 @@ class UI {
                 }).join('');
         }
         const typesTable = document.getElementById('incident-types-table');
-        if (typesTable) {
+        const im = this.game.incidentManager;
+        const typesSig = im.getEnabledTypes().map(String).sort().join('|') + '#' + im.getGlobalLevel() + '#' + JSON.stringify(im.typeLevels);
+        if (typesTable && typesTable.dataset.enabledSig !== typesSig) {
+            typesTable.dataset.enabledSig = typesSig;
             const types = this.game.incidentManager.getAllTypes();
             const escType = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (HTML_ESCAPE_MAP[c]));
             const tableFor = (items, title, weather = false) => `<section class="incident-type-section ${(0, html_text_js_1.htmlText)(weather ? 'incident-weather-types' : '')}">
         <div class="incident-type-section-head"><div><h4>${(0, html_text_js_1.htmlText)(title)}</h4>${weather ? '<p>Ces incidents ne sont pas tirés au hasard : seuil météo local + durée d’exposition + nombre de zones exposées.</p>' : ''}</div><span>${items.length} types</span></div>
-        <div class="incident-table-scroll"><table class="incident-table"><thead><tr><th>Actif</th><th>Nom</th><th>Impact</th><th>Conditions / seuil</th><th>Déclenchement</th><th>Durée</th></tr></thead><tbody>
-        ${items.map((t) => `<tr class="${(0, html_text_js_1.htmlText)(weather ? 'incident-weather-type-row' : '')}"><td><input type="checkbox" class="incident-type-cb" data-type-id="${escType(t.id)}" ${t.enabled ? 'checked' : ''}></td><td><b>${escType(t.name)}</b>${weather ? '<div class="incident-weather-tag">MÉTÉO</div>' : ''}</td><td>${escType(t.impact)}</td><td class="incident-condition-cell">${escType(t.special)}</td><td>${escType(t.probabilityLabel || (t.id === 'train-breakdown' ? `${t.probability}% hiver / ${t.summerProbability}% été` : t.probability + '%'))}</td><td>${t.durationMin}${t.durationMax !== t.durationMin ? '-' + t.durationMax : ''} min</td></tr>`).join('')}
+        <div class="incident-table-scroll"><table class="incident-table"><thead><tr><th>Actif</th><th>Nom</th><th>Impact</th><th>Conditions / seuil</th><th>Déclenchement</th><th>Fréquence 0–10</th><th>Durée</th></tr></thead><tbody>
+        ${items.map((t) => `<tr class="${(0, html_text_js_1.htmlText)(weather ? 'incident-weather-type-row' : '')}"><td><input type="checkbox" class="incident-type-cb" data-type-id="${escType(t.id)}" ${t.enabled ? 'checked' : ''}></td><td><b>${escType(t.name)}</b>${weather ? '<div class="incident-weather-tag">MÉTÉO</div>' : ''}</td><td>${escType(t.impact)}</td><td class="incident-condition-cell">${escType(t.special)}</td><td>${escType(t.probabilityLabel || (t.id === 'train-breakdown' ? `${t.probability}% hiver / ${t.summerProbability}% été` : t.probability + '%'))}</td><td class="incident-level-cell"><input type="range" class="incident-type-level" min="0" max="10" step="1" value="${Number(t.level ?? 5)}" data-type-id="${escType(t.id)}" title="0 = jamais, 5 = normal, 10 = double"><output>${Number(t.level ?? 5)}</output></td><td>${t.durationMin}${t.durationMax !== t.durationMin ? '-' + t.durationMax : ''} min</td></tr>`).join('')}
         </tbody></table></div></section>`;
             const general = types.filter((t) => !t.weatherTriggered), weatherTypes = types.filter((t) => t.weatherTriggered);
-            typesTable.innerHTML = tableFor(general, 'Incidents généraux') + tableFor(weatherTypes, 'Incidents météorologiques', true);
+            const globalLevel = im.getGlobalLevel();
+            const globalBar = `<div class="incident-global-level"><label>Cadence générale des incidents (0 = aucun, 5 = normal, 10 = maximum)</label><input type="range" class="incident-type-level" data-global="1" min="0" max="10" step="1" value="${globalLevel}"><output>${globalLevel}</output></div>`;
+            typesTable.innerHTML = globalBar + tableFor(general, 'Incidents généraux') + tableFor(weatherTypes, 'Incidents météorologiques', true);
         }
         const works = this.game.worksManager.getAll();
         const worksCount = document.getElementById('active-works-count');
@@ -79308,9 +80104,49 @@ class UI {
         if (!host)
             return;
         if (!this._qgPage)
-            this._qgPage = new qg_page_js_1.HeadquartersPage(host, () => this._headquartersData());
+            this._qgPage = new qg_page_js_1.HeadquartersPage(host, () => this._headquartersData(), (days) => this.exportQgReport(days));
         else
             this._qgPage.setActive(true);
+    }
+    exportQgReport(days) {
+        const g = this.game;
+        const hq = this._headquartersData();
+        const world = g.world;
+        const locationOf = (r) => {
+            const loc = r.currentLocation || {};
+            if (loc.depotId)
+                return String(g.depotManager?.getDepotById?.(loc.depotId)?.name || 'Dépôt');
+            if (loc.stationId)
+                return String(world.getStationById(loc.stationId)?.name || 'Gare');
+            if (loc.serviceId)
+                return 'En circulation';
+            return '—';
+        };
+        const rames = (g.rameManager?.getAll?.() || []).map((r) => ({
+            name: String(r.name || r.id), serial: String(r.serialNumber || ''),
+            elements: (r.elementDetails || []).map((e) => String(e.instanceName || e.name || e.category || '')),
+            totalKm: Number(r.totalKmRun) || 0, wearLevel: Number(r.wearLevel) || 0, inMaintenance: !!r.inMaintenance,
+            defects: (r.pendingDefects || []).length, location: locationOf(r),
+        }));
+        const trains = hq.rows.map((r) => ({ name: r.name, number: r.number, origin: r.origin, destination: r.destination, state: (0, operations_view_model_js_1.trainStatus)(r.state, r.delay, r.speed), delay: r.delay, rameName: r.rameName }));
+        const byRole = new Map();
+        for (const m of (g.staffManager?.staff || [])) {
+            const role = String(staff_js_1.STAFF_ROLES[String(m.role)]?.label || m.role);
+            const row = byRole.get(role) || { role, count: 0, onDuty: 0 };
+            row.count++;
+            if (m.onDuty)
+                row.onDuty++;
+            byRole.set(role, row);
+        }
+        const nowMs = g.engine.getSimulationEpochMs?.() ?? Date.now();
+        const html = (0, qg_report_js_1.buildQgReportHtml)({
+            company: hq.company, generatedAt: `${g.engine.getParisDate()} ${hq.clock}`, days, nowMs,
+            balance: Number(g.economy.balance) || 0, history: g.economy.history || [],
+            passengers: hq.passengers, freightTonnes: hq.freightTonnes, rames, trains,
+            staff: [...byRole.values()].sort((a, b) => b.count - a.count), mode: (0, game_mode_js_1.normalizeGameMode)(g.realismSettings?.gameMode),
+        });
+        if (!(0, qg_report_js_1.openQgReport)(html))
+            alert('Le navigateur a bloqué l’ouverture du rapport : autorisez les fenêtres pop-up pour ce site.');
     }
     _headquartersData() {
         const totals = (0, operations_view_model_js_1.transportTotals)(this.game.economy, this.game.cargoTypes?.stats);

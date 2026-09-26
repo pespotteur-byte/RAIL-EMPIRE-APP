@@ -1,5 +1,6 @@
 import { htmlText } from './html-text.js';
 import { FreightNetwork } from './freight-network.js';
+import { haversineDistance } from './simulation.js';
 /**
  * IndustrialClients — Comprehensive real-world industrial database.
  * 52 industry types, 3500+ real sites across ALL Eurozone countries.
@@ -4070,6 +4071,22 @@ const INDUSTRY_COLORS = {
     dairy: '#fef08a', sawmill: '#a3e635', oil_depot: '#991b1b', biogas_plant: '#86efac',
     ceramics: '#fdba74', furniture: '#fcd34d',
 };
+/** Rayon dans lequel un ITE/dépôt dessert les industriels implantés autour de lui. */
+export const ITE_INDUSTRY_RADIUS_KM = 15;
+/** Sites industriels situés à moins de `radiusKm` d'un point, triés par distance. */
+export function sitesWithinRadius(sites, lat, lon, radiusKm = ITE_INDUSTRY_RADIUS_KM) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon))
+        return [];
+    const out = [];
+    for (const s of sites) {
+        if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon))
+            continue;
+        const d = haversineDistance(lat, lon, s.lat, s.lon);
+        if (d <= radiusKm)
+            out.push({ ...s, distanceKm: Math.round(d * 10) / 10 });
+    }
+    return out.sort((a, b) => a.distanceKm - b.distanceKm);
+}
 function isRecord(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -4302,6 +4319,53 @@ export class IndustrialClients {
     }
     getActiveClients() {
         return this.clients.filter((c) => c.active);
+    }
+    /** Industriels réels desservis par un ITE/dépôt (rayon 15 km autour de son emplacement). */
+    getSitesNearDepot(depot, radiusKm = ITE_INDUSTRY_RADIUS_KM) {
+        const loc = depot?.location;
+        if (!loc)
+            return [];
+        return sitesWithinRadius(this.getAllRealLocations(), Number(loc.lat), Number(loc.lon), radiusKm);
+    }
+    /**
+     * Rattache automatiquement à chaque ITE/dépôt construit les industriels implantés
+     * dans son rayon : un client par site, sans coût d'attraction ; les clients
+     * automatiques dont le site ou l'ITE a disparu sont retirés. Retourne le nombre ajouté.
+     */
+    syncClientsFromNearbySites(depots, radiusKm = ITE_INDUSTRY_RADIUS_KM) {
+        const sites = this.getAllRealLocations();
+        const valid = new Set();
+        let added = 0;
+        for (const depot of depots) {
+            if (!depot?.built || !depot.location || !depot.stationId)
+                continue;
+            for (const site of sitesWithinRadius(sites, Number(depot.location.lat), Number(depot.location.lon), radiusKm)) {
+                const industry = this.getIndustryInfo(site.industryType);
+                if (!industry)
+                    continue;
+                const linkKey = `${depot.id}|${site._key}`;
+                valid.add(linkKey);
+                const existing = this.clients.find((c) => c.siteKey === site._key && c.depotId === String(depot.id));
+                if (existing) {
+                    existing.distanceKm = site.distanceKm;
+                    existing.siteName = site.name;
+                    continue;
+                }
+                const rng = getGlobalRng();
+                this.clients.push({
+                    id: `client-${nextClientId++}`,
+                    type: String(site.industryType), name: industry.name, icon: industry.icon,
+                    stationId: String(depot.stationId), depotId: String(depot.id),
+                    dailyTonnage: industry.dailyTonnageMin + Math.floor(rng.random() * (industry.dailyTonnageMax - industry.dailyTonnageMin)),
+                    active: true, satisfaction: 80, marketShare: 5, contractsGenerated: 0, totalTonnage: 0, totalRevenue: 0, createdAt: Date.now(),
+                    siteKey: site._key, siteName: site.name, distanceKm: site.distanceKm,
+                });
+                this.stats.totalClients++;
+                added++;
+            }
+        }
+        this.clients = this.clients.filter((c) => !c.siteKey || valid.has(`${c.depotId}|${c.siteKey}`));
+        return added;
     }
     generateDailyContracts(freightManager, world, cargoTypes = null) {
         const network = new FreightNetwork(world, this.railLegProvider?.() ?? []);

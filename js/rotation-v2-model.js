@@ -1,6 +1,6 @@
 import { saveLiveryTarget } from './livery-model.js';
 import { materialTrackLocation } from './material-track-location.js';
-import { makeV2Id, ScheduleVersion, PerformanceProfile } from './schedule-v2-model.js';
+import { makeV2Id, ScheduleVersion, PerformanceProfile, TrainCategory } from './schedule-v2-model.js';
 import { recalculateScheduleTiming } from './schedule-v2-timing.js';
 // HOTFIX61 source-shape compatibility: code:'ROTATION_EMPTY'
 export const ROTATION_V2_SCHEMA = 6;
@@ -1056,6 +1056,64 @@ export class RotationV2Manager {
         const cat = String(v.category || '').toLowerCase();
         return Number(v.powerW || 0) > 0 || cat.includes('locomotive') || cat.includes('automotrice') || cat.includes('autorail') || cat.includes('locotracteur');
     }
+    _wagonVehicle(v) {
+        if (!v || this._poweredVehicle(v))
+            return false;
+        const cat = String(v.category || '').toLowerCase();
+        return cat.includes('wagon') || (Number(v.freightCapacity || 0) > 0 && Number(v.passengerCapacity || 0) <= 0);
+    }
+    // Composition rules per schedule category (Section VI). Blocking: HLP = 1-2 tractions
+    // alone, TM = 3-12 tractions alone, no wagon in a passenger/W train, no coach in a
+    // freight train. Advisory: missing wagons / passenger capacity.
+    _validateCategoryComposition(occ, ver) {
+        const issues = [];
+        const vehicles = (occ.formation?.members || []).map((m) => this.getVehicle(m.vehicleId)).filter((v) => !!v);
+        if (!vehicles.length)
+            return issues;
+        const cat = String(ver?.category || TrainCategory.PASSENGER);
+        // A legacy Rame is projected as a single 'rame' proxy vehicle: its aggregated
+        // capacities stand for the coaches/wagons it carries.
+        const isProxy = (v) => String(v.category || '').toLowerCase() === 'rame';
+        const proxyHauled = (v) => isProxy(v) && (Number(v.passengerCapacity || 0) > 0 || Number(v.freightCapacity || 0) > 0);
+        const powered = vehicles.filter((v) => this._poweredVehicle(v) && !proxyHauled(v));
+        const wagons = vehicles.filter((v) => this._wagonVehicle(v) || (isProxy(v) && Number(v.freightCapacity || 0) > 0 && Number(v.passengerCapacity || 0) <= 0));
+        const hauled = vehicles.filter((v) => !this._poweredVehicle(v) || proxyHauled(v));
+        const paxCapacity = vehicles.reduce((s, v) => s + Number(v.passengerCapacity || 0), 0);
+        const push = (code, message, level = 'ERROR') => issues.push({ level, code, occurrenceId: occ.id, message });
+        const label = (v) => v.number || v.name || v.id;
+        if (cat === TrainCategory.HLP) {
+            if (hauled.length)
+                push('CATEGORY_HLP_NOT_ALONE', `HLP : un haut-le-pied ne comporte que des engins moteurs (${hauled.map(label).join(', ')} à retirer).`);
+            if (powered.length > 2)
+                push('CATEGORY_HLP_TOO_MANY', `HLP : maximum 2 engins moteurs (${powered.length} affectés). Utilisez la catégorie TM.`);
+        }
+        else if (cat === TrainCategory.TM) {
+            if (hauled.length)
+                push('CATEGORY_TM_NOT_ALONE', `TM : un train de machines ne comporte que des engins moteurs (${hauled.map(label).join(', ')} à retirer).`);
+            if (powered.length < 3)
+                push('CATEGORY_TM_TOO_FEW', `TM : un train de machines compte 3 à 12 engins moteurs (${powered.length} affecté(s)). Utilisez la catégorie HLP.`);
+            else if (powered.length > 12)
+                push('CATEGORY_TM_TOO_MANY', `TM : maximum 12 engins moteurs (${powered.length} affectés).`);
+        }
+        else if (cat === TrainCategory.PASSENGER || cat === TrainCategory.W) {
+            if (wagons.length)
+                push('CATEGORY_PASSENGER_HAS_WAGON', `${cat === TrainCategory.W ? 'W' : 'Voyageurs'} : le matériel fret ${wagons.map(label).join(', ')} n’est pas admis dans un train voyageurs.`);
+            if (paxCapacity <= 0)
+                push('CATEGORY_PASSENGER_NO_CAPACITY', `${cat === TrainCategory.W ? 'W' : 'Voyageurs'} : aucune place voyageurs dans la formation. Choisissez HLP/TM pour des engins seuls.`, 'WARNING');
+        }
+        else if (cat === TrainCategory.FREIGHT) {
+            if (!wagons.length)
+                push('CATEGORY_FREIGHT_NO_WAGON', hauled.length ? 'Fret : la formation ne contient aucun wagon.' : 'Fret : la formation ne contient que des engins moteurs. Choisissez HLP ou TM.', 'WARNING');
+            const coaches = hauled.filter((v) => !wagons.includes(v));
+            if (coaches.length)
+                push('CATEGORY_FREIGHT_HAS_COACH', `Fret : le matériel voyageurs ${coaches.map(label).join(', ')} n’est pas admis dans un train de fret.`);
+        }
+        else if (cat === TrainCategory.INFRA || cat === TrainCategory.TTX) {
+            if (!hauled.length)
+                push('CATEGORY_WORK_NO_WAGON', `${cat} : la formation ne contient que des engins moteurs. Choisissez HLP ou TM pour une machine seule.`, 'WARNING');
+        }
+        return issues;
+    }
     _roleForAttachedVehicle(v, type, activeCount = 0) {
         if (type === RotationActionType.ADD_PUSHER)
             return FormationRole.PUSHER;
@@ -1508,6 +1566,7 @@ export class RotationV2Manager {
             if (!activeMembers.some((m) => this._poweredVehicle(this.getVehicle(m.vehicleId)))) {
                 issues.push({ level: 'ERROR', code: 'NO_ACTIVE_TRACTION_ASSIGNED', occurrenceId: occ.id, message: 'Aucun engin de traction actif n’est affecté à ce train.' });
             }
+            issues.push(...this._validateCategoryComposition(occ, ver));
             const locationIds = new Set(r.actions.filter((a) => a.occurrenceId === occ.id).map((a) => a.locationOccurrenceId));
             for (const locationId of locationIds) {
                 const loc = ver.locations.find((l) => l.id === locationId);

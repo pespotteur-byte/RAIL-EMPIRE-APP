@@ -744,6 +744,8 @@ export declare class RotationV2Manager {
     _locationOperationBounds(rotation: Rotation, occ: ScheduleOccurrence, timed: TimedRotationVersionLike, locationOccurrenceId: string, startSec: number): LocationOperationBounds | null;
     _actionOperationBounds(rotation: Rotation, occ: ScheduleOccurrence, timed: TimedRotationVersionLike, action: RotationAction, startSec: number): LocationOperationBounds | null;
     _poweredVehicle(v: PhysicalVehicle | null | undefined): boolean;
+    _wagonVehicle(v: PhysicalVehicle | null | undefined): boolean;
+    _validateCategoryComposition(occ: ScheduleOccurrence, ver: ScheduleVersion): ValidationIssueLike[];
     _roleForAttachedVehicle(v: PhysicalVehicle | null | undefined, type: RotationActionTypeValue, activeCount?: number): FormationRoleValue;
     originRequiredVehicleIds(rotationId: string, occurrenceId: string, timedVersion?: ScheduleVersion | null): string[];
     materialIntervals(rotationId: string, occurrenceId: string, timedVersion?: ScheduleVersion | null, resolvedStartSec?: number | string | null): MaterialInterval[];

@@ -52,6 +52,44 @@ type StaffServiceStop = {
     arrivalTime?: unknown;
     [key: string]: unknown;
 };
+type StaffRenderGame = {
+    _currentDate: unknown;
+    saveState: (...args: unknown[]) => unknown;
+    timeOfDay: unknown;
+    _gameTime: unknown;
+    depotManager: {
+        getDepots: (...args: unknown[]) => Array<{
+            id: unknown;
+            name: unknown;
+            built?: unknown;
+        }>;
+    };
+    ui: {
+        _selectedDepotPageId: unknown;
+        _depotPageTab: unknown;
+        switchPage: (...args: unknown[]) => unknown;
+        renderDepotsList: (...args: unknown[]) => unknown;
+    };
+    _pendingSignalBox: unknown;
+    economy: Economy;
+    scheduleCreator?: {
+        getActiveServices?: () => StaffService[];
+    };
+    world?: {
+        stations?: Array<{
+            id: unknown;
+            name: unknown;
+            lat?: unknown;
+            lon?: unknown;
+        }>;
+    };
+    unions?: {
+        render?: (container: Element, game: unknown) => unknown;
+    };
+    realismSettings?: {
+        personnelRequired?: boolean;
+    };
+};
 type StaffService = {
     id?: unknown;
     name?: unknown;
@@ -473,7 +511,8 @@ export declare class StaffManager {
     } | null;
     removeSignalBox(id: unknown): void;
     getSignalBoxById(id: unknown): StaffSignalBox | undefined;
-    addZone(name: unknown, lat?: unknown, lon?: unknown, radiusKm?: unknown, lineId?: unknown): {
+    addZone(name: unknown, lat?: unknown, lon?: unknown, radiusKm?: unknown, lineId?: unknown, stationId?: unknown): {
+        stationId: string | null;
         id: string;
         name: string;
         lat: number | null;
@@ -482,6 +521,40 @@ export declare class StaffManager {
         lineId: {} | null;
     };
     removeZone(id: unknown): void;
+    /** Renomme le lieu côté personnel uniquement ; le nom de la gare sur la livemap n'est jamais modifié. */
+    renamePlace(id: unknown, name: unknown): boolean;
+    /** Crée une zone de régulation (régulateurs/contrôleurs) rattachée à une gare existante. */
+    addZoneAtStation(station: {
+        id: unknown;
+        name: unknown;
+        lat?: unknown;
+        lon?: unknown;
+    } | null | undefined, name?: unknown, radiusKm?: unknown): {
+        stationId: string | null;
+        id: string;
+        name: string;
+        lat: number | null;
+        lon: number | null;
+        radiusKm: number;
+        lineId: {} | null;
+    } | null;
+    /** Crée un poste d'aiguillage (agents de circulation) rattaché à une gare existante. */
+    addSignalBoxAtStation(station: {
+        id: unknown;
+        name: unknown;
+        lat?: unknown;
+        lon?: unknown;
+    } | null | undefined, name?: unknown, radiusKm?: unknown): {
+        id: string;
+        name: string;
+        lat: number;
+        lon: number;
+        radiusKm: number;
+        stationId: {} | null;
+        lineId: {} | null;
+    } | null;
+    /** Gares du joueur disposant de personnel circulation (zones ou postes rattachés). */
+    getStaffedStationIds(): Set<string>;
     tickControleurs(economy: Economy, activeServices: unknown, gameTimeMin: unknown): void;
     _isCoverageMemberOperational(member: StaffMember): boolean;
     getZoneRegulatorCoverage(zoneId: unknown): {
@@ -523,6 +596,21 @@ export declare class StaffManager {
     _renderRoleSection(role: string, activeServices: StaffService[], stations: unknown, depots: unknown, game: {
         "_currentDate": unknown;
     }): string;
+    _renderGame: StaffRenderGame | null;
+    _playerStations(): Array<{
+        id: unknown;
+        name: unknown;
+        lat?: unknown;
+        lon?: unknown;
+    }>;
+    _stationNameOf(stationId: unknown, fallback: unknown): string;
+    _stationOptions(): string;
+    _findStationByInput(v: unknown): {
+        id: unknown;
+        name: unknown;
+        lat?: unknown;
+        lon?: unknown;
+    } | null;
     _renderZonesSection(): string;
     _renderSignalBoxSection(): string;
     _bindEvents(container: HTMLElement, game: {

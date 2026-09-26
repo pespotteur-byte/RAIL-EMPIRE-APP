@@ -1,0 +1,38 @@
+RAIL EMPIRE CATALOGUE — éditeur natif de matériel roulant
+==========================================================
+
+Application Windows native (WinForms), 32 bits, compatible Windows 7 SP1 et suivants.
+Livrée séparément du ZIP du jeu.
+
+PRÉREQUIS
+  .NET Framework 4.0 ou supérieur (déjà présent sur Windows 8/10/11 ;
+  sur Windows 7 : Windows Update ou https://www.microsoft.com/fr-fr/download/details.aspx?id=17718).
+
+CONTENU
+  RailEmpireCatalogue.exe          l'application (aucun serveur, aucune page Web)
+  RailEmpireCatalogue.exe.config
+  data\catalog.native.json         le catalogue complet du jeu (36 307 fiches), exporté avec les mêmes
+                                   règles que la page Matériel roulant (identités, prix équilibrés, fret…)
+  LIRE_MOI.txt
+
+IMAGES DES ENGINS
+  Les dessins sont ceux du jeu (dossier img\catalog, ~150 Mo). Pour ne pas doubler ce poids,
+  l'application les lit directement dans le dossier du jeu :
+  Fichier → « Choisir le dossier du jeu » → sélectionnez le dossier de Rail Empire (celui qui contient
+  index.html). Le choix est mémorisé. Si vous déposez ce dossier à côté du dossier du jeu ou dedans,
+  les images sont trouvées automatiquement.
+
+UTILISATION
+  1. Recherchez / filtrez (catégorie, traction, pays, opérateur, état) dans la liste de gauche.
+  2. La fiche de droite reprend le formulaire « Ajouter un engin » du jeu : nom, catégorie, série,
+     traction, vitesse, puissance, longueur, masse, tonnage calculé, places, capacité fret,
+     prix (règle du jeu ou libre), sous-catégorie wagon, types de fret, image.
+  3. « Enregistrer la fiche » valide la modification. « + Nouvel engin » / « Dupliquer » ajoutent
+     des fiches, « Supprimer » retire un engin du catalogue (cliquez à nouveau pour le restaurer),
+     « Rétablir l'origine » revient à la fiche du jeu.
+  4. Fichier → « Enregistrer le catalogue externe » produit un .json au format 'rail-empire-catalog'
+     (modifications / suppressions / ajouts, images ajoutées embarquées).
+  5. Dans Rail Empire : page Matériel roulant → « Importer un catalogue » → ce .json.
+     Le jeu applique vos changements par-dessus son catalogue et les mémorise.
+
+  Fichier → « Ouvrir un catalogue externe » recharge un .json déjà créé pour continuer à l'éditer.

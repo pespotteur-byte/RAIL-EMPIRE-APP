@@ -1,7 +1,10 @@
 import { legacyBoardRuns } from './legacy-board-plan.js';
 import { HeadquartersPage } from './qg-page.js';
+import { buildQgReportHtml, openQgReport } from './qg-report.js';
+import { normalizeGameMode } from './game-mode.js';
 import { RailEmpireBoard } from './infogare-re.js';
-import { transportTotals } from './operations-view-model.js';
+import { transportTotals, trainStatus } from './operations-view-model.js';
+import { STAFF_ROLES } from './staff.js';
 import { maximumVehicleCount, planRandomWagons } from './rame-random.js';
 import { LiveryEditor } from './livery-editor.js';
 import { LabelAllocator } from './duplicate-tools.js';
@@ -23,6 +26,7 @@ import { WorksV2Editor } from './works-v2-editor.js';
 import { InfrastructureV2Editor } from './infrastructure-v2-editor.js';
 import { DepotITEPointEditor } from './depot-ite-point-editor.js';
 import { DEPOT_RESOURCE_CATALOG, DEPOT_PART_CATALOG, DEPOT_OPERATION_CATALOG, DEPOT_EQUIPMENT_CATALOG, DEPOT_STAFF_CATALOG, DEPOT_TRACK_EXPANSION_COST } from './depot.js';
+import { ITE_INDUSTRY_RADIUS_KM } from './industrial-clients.js';
 import { installOperationalIconStyles } from './operational-icons.js';
 import { LivemapTrainAnnouncer } from './livemap-train-announcer.js';
 import { operationalDelayMinutes, forwardClockMinutes } from './operational-time.js';
@@ -766,6 +770,10 @@ export class UI {
         });
     }
     switchPage(page) {
+        if (page !== 'map' && this.stationCreationMode)
+            this.toggleStationCreation();
+        if (page !== 'map')
+            this._hidePickHint();
         // XV-XX : pages supprimées ou fusionnées — redirections.
         const DELETED_PAGES = {
             seasonal: 'weather',
@@ -1397,21 +1405,39 @@ export class UI {
         const hh = String(Math.floor(m / 60)).padStart(2, '0'), mm = String(m % 60).padStart(2, '0');
         return `${hh}:${mm}${showDay && day > 0 ? ` (+${day})` : ''}`;
     }
+    /** Live incidents touching a station: in the station itself, on a train currently
+     * held there, and on the adjacent sections leaving it. */
     _livemapStationIncidents(station) {
         const sid = station?.id == null ? '' : String(station.id);
         if (!sid)
             return [];
-        return (this.game.incidentManager?.getActiveIncidents?.() || []).filter((inc) => inc && inc.active !== false && !inc.serviceId && inc.stationA != null && inc.stationB != null &&
-            String(inc.stationA) === sid && String(inc.stationB) === sid);
+        const all = (this.game.incidentManager?.getActiveIncidents?.() || []);
+        const inStation = [], onTrain = [], onSection = [];
+        for (const inc of all) {
+            if (!inc || inc.active === false)
+                continue;
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            if (a !== sid && b !== sid)
+                continue;
+            if (inc.serviceId)
+                onTrain.push(inc);
+            else if (a === b)
+                inStation.push(inc);
+            else
+                onSection.push(inc);
+        }
+        return [...inStation, ...onTrain, ...onSection];
     }
     _livemapStationIncidentHtml(station) {
         const incidents = this._livemapStationIncidents(station);
         if (!incidents.length)
             return '';
+        const sid = String(station.id);
         const nowMinute = Number.isFinite(Number(this.game.timeOfDay))
             ? Number(this.game.timeOfDay)
             : (() => { const pt = this.game.engine?.getParisTime?.(); return pt ? pt.hours * 60 + pt.minutes + (pt.seconds || 0) / 60 : 0; })();
-        return incidents.slice(0, 3).map((inc) => {
+        const MAX = 5;
+        const rows = incidents.slice(0, MAX).map((inc) => {
             const elapsed = Math.max(0, Number(inc.duration || 0) - Number(inc.remaining || 0));
             let start = Number(inc.startTime);
             if ((!Number.isFinite(start) || (start === 0 && elapsed > 0 && nowMinute > elapsed + 1)))
@@ -1420,8 +1446,20 @@ export class UI {
                 start = nowMinute - elapsed;
             const end = start + Math.max(0, Number(inc.duration || 0));
             const effect = inc.effect === 'stop' ? 'Interruption' : `Ralenti ${this._livemapEsc(inc.speedLimit || 30)} km/h`;
-            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div><div>${effect}</div><div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${htmlText(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
-        }).join('');
+            const a = inc.stationA == null ? '' : String(inc.stationA), b = inc.stationB == null ? '' : String(inc.stationB);
+            let where = '';
+            if (inc.serviceId)
+                where = `Train ${this._livemapEsc(inc.trainName || '')}${inc.locationText ? ` · ${this._livemapEsc(inc.locationText)}` : ''}`;
+            else if (a !== b) {
+                const other = a === sid ? inc.stationBName : inc.stationAName;
+                where = `Section vers ${this._livemapEsc(other || '?')}`;
+            }
+            const weather = inc.source === 'weather' ? `<div>🌦 ${this._livemapEsc(inc.triggerText || 'Déclencheur météo')}</div>` : '';
+            return `<div class="tt-operational tt-incident-active"><div class="tt-operational-title">Incident en cours — ${this._livemapEsc(inc.name || 'Incident')}</div>${where ? `<div>${where}</div>` : ''}<div>${effect}</div>${weather}<div>Début ${this._livemapClock(start)} · Fin ${this._livemapClock(end, true)} · ${htmlText(Math.ceil(Number(inc.remaining || 0)))} min restantes</div></div>`;
+        });
+        if (incidents.length > MAX)
+            rows.push(`<div class="tt-operational tt-incident-active">+${incidents.length - MAX} autre(s) incident(s) — voir la page Incidents</div>`);
+        return `<div class="tt-incident-count">${incidents.length} incident${incidents.length > 1 ? 's' : ''} en cours</div>` + rows.join('');
     }
     _livemapWorkLocation(item) {
         const stationName = (value) => value ? (this.game.world.getStationById?.(value)?.name || String(value)) : '';
@@ -2800,8 +2838,21 @@ export class UI {
         // Modals do NOT close on outside click (player feedback)
     }
     // --- STATION CREATION ---
+    /** Deux gares ne peuvent pas partager les mêmes coordonnées GPS (< 5 m). */
+    _findStationAtSameCoords(lat, lon, excludeId = null) {
+        for (const s of this.game.world.stations) {
+            if (s.id === excludeId)
+                continue;
+            const d = haversineDistance(Number(s.lat), Number(s.lon), lat, lon);
+            if (Number.isFinite(d) && d < 0.005)
+                return s;
+        }
+        return null;
+    }
     toggleStationCreation() {
         this.stationCreationMode = !this.stationCreationMode;
+        if (!this.stationCreationMode)
+            this._hidePickHint();
         if (!this.stationCreationMode && this._multiCreateMode === 'station') {
             // Single click to deactivate clears multi-mode too
             this._multiCreateMode = null;
@@ -3109,6 +3160,11 @@ export class UI {
         }
         catch (e) {
             console.warn('Local railway snapping failed:', e);
+        }
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+            return;
         }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames, closed });
         station.country = orm.getCountryAtPoint(lat, lon);
@@ -7518,6 +7574,12 @@ export class UI {
             console.warn('Snap failed:', e);
         }
         const closed = document.getElementById('lsc-closed')?.checked || false;
+        const twin = this._findStationAtSameCoords(lat, lon);
+        if (twin) {
+            if (loadingEl)
+                loadingEl.classList.add('hidden');
+            return alert(`Gare non créée : « ${twin.name} » occupe déjà exactement ces coordonnées GPS.`);
+        }
         const station = this.game.world.addStation({ name, lat, lon, type, platforms, platformNames: [], closed });
         station.country = orm.getCountryAtPoint(lat, lon);
         station.facilities = [type];
@@ -7554,7 +7616,7 @@ export class UI {
                 loadingEl.textContent = 'Calcul du trace ORM en cours...';
             }
             try {
-                const route = await orm.findRoute(connectTo.lat, connectTo.lon, lat, lon);
+                const route = await this._boundedOrm(orm.findRoute(connectTo.lat, connectTo.lon, lat, lon));
                 const distance = orm.getRouteDistance(route);
                 const speeds = route.filter((r) => r.maxSpeed).map((r) => r.maxSpeed);
                 const avgSpeed = speeds.length > 0 ? Math.round(speeds.reduce((s, v) => s + v, 0) / speeds.length) : 160;
@@ -8042,6 +8104,7 @@ export class UI {
             stationName: station.name,
         });
         this.renderLineStops();
+        this._updateLineManualUI();
         if (this._drawLineMap)
             this._drawLineMap();
     }
@@ -8169,7 +8232,26 @@ export class UI {
       `;
         }).join('');
     }
+    /** Borne un calcul ORM : l'UI ne doit jamais rester sur « Calcul en cours… » indéfiniment (hors ligne, Overpass muet). */
+    _boundedOrm(promise, timeoutMs = 90000) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error(`ORM_TIMEOUT ${timeoutMs}ms`)), timeoutMs);
+            promise.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+        });
+    }
     async saveLine() {
+        try {
+            await this._saveLineInner();
+        }
+        catch (e) {
+            console.warn('saveLine failed:', e);
+            document.getElementById('line-loading')?.classList.add('hidden');
+            alert(String(e).includes('ORM_TIMEOUT')
+                ? 'Calcul du tracé ORM trop long (90 s) : vérifiez la connexion ou tracez le segment manuellement. La ligne n’a pas été modifiée.'
+                : 'Erreur pendant le calcul du tracé : la ligne n’a pas été modifiée.');
+        }
+    }
+    async _saveLineInner() {
         const name = document.getElementById('line-name').value.trim();
         if (!name)
             return alert('Nom requis');
@@ -8190,7 +8272,7 @@ export class UI {
             // line and all station references remain untouched if a single ORM leg fails.
             const line = this.game.lineManager.getLine(this._editingLineId);
             if (line) {
-                const candidate = await this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+                const candidate = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops: [...stops], manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
                 if (!candidate) {
                     if (loadingEl)
                         loadingEl.classList.add('hidden');
@@ -8226,7 +8308,7 @@ export class UI {
         }
         else {
             // Create new line
-            const line = await this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm);
+            const line = await this._boundedOrm(this.game.lineManager.buildLine({ name, color, code, stops, manualRoutes: this._lineManualRoutes }, this.game.world, this.game.orm));
             if (!line) {
                 if (loadingEl)
                     loadingEl.classList.add('hidden');
@@ -9364,7 +9446,9 @@ export class UI {
             const maint = assigned.filter((r) => r.recommendedMaintenance || Number(r.wearLevel || 0) >= 25 || (r.pendingDefects || []).length);
             const equipmentCount = Object.values(d.equipmentInventory || {}).reduce((sum, n) => sum + Number(n || 0), 0);
             const usage = Object.entries(DEPOT_RESOURCE_CATALOG).filter(([k]) => Number(d.resourceUsage?.[k] || 0) > 0).sort((a, b) => Number(d.resourceUsage?.[b[0]] || 0) - Number(d.resourceUsage?.[a[0]] || 0)).slice(0, 8);
-            return `<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
+            const nearSites = this.game.industrialClients?.getSitesNearDepot?.(d) || [];
+            const nearHtml = `<section class="depot-panel"><h4>Industriels desservis (rayon ${ITE_INDUSTRY_RADIUS_KM} km)</h4>${nearSites.length ? `<div class="depot-stat-lines">${nearSites.slice(0, 40).map((s) => `<span>${esc(s.industryName || s.industryType)} — ${esc(s.name)} <b>${s.distanceKm} km</b></span>`).join('')}</div>` : '<div class="depot-muted">Aucun industriel réel dans le rayon : aucun contrat fret automatique pour ce site.</div>'}</section>`;
+            return `${nearHtml}<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
       <div class="depot-alert-row">${lowResources.length ? `<span class="depot-alert warn">Stock bas : ${htmlText(lowResources.slice(0, 5).map(([k]) => DEPOT_RESOURCE_CATALOG[k].label).join(', '))}${lowResources.length > 5 ? '…' : ''}</span>` : ''}${maint.length ? `<span class="depot-alert danger">${maint.length} matériel(s) à surveiller / maintenir</span>` : ''}${dirty.length ? `<span class="depot-alert info">${dirty.length} matériel(s) à nettoyer</span>` : ''}${!lowResources.length && !maint.length && !dirty.length ? '<span class="depot-alert ok">Aucune alerte critique</span>' : ''}</div>
       <div class="depot-two-col"><section class="depot-panel"><h4>Consommations réelles du dépôt</h4><div class="depot-stat-lines">${usage.map(([k, def]) => `<span>${esc(def.label)} <b>${qty(d.resourceUsage?.[k], def.unit === 'kg' || def.unit === 'm³' ? 1 : 0)} ${esc(def.unit)}</b></span>`).join('') || '<span>Aucune consommation <b>—</b></span>'}<span>Dépenses cumulées suivies <b>${money(d.utilityTotals?.expenseEur)}</b></span></div></section><section class="depot-panel"><h4>Dernières dépenses</h4>${(d.expenseLedger || []).slice(-8).reverse().map((x) => `<div class="depot-ledger"><span>${esc(x.label)}</span><b>-${money(x.amount)}</b></div>`).join('') || '<div class="depot-muted">Aucune dépense enregistrée.</div>'}</section></div>`;
         };
@@ -9708,9 +9792,29 @@ export class UI {
             typesTable.addEventListener('change', (e) => {
                 const cb = e.target?.closest('.incident-type-cb');
                 if (cb) {
-                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked);
+                    this.game.incidentManager.toggleType(cb.dataset.typeId, cb.checked, this.game.world);
+                    this.game.renderer?.invalidateStatic?.();
                     this.game.saveState();
+                    this.renderIncidentsPage();
+                    return;
                 }
+                const lvl = e.target?.closest('.incident-type-level');
+                if (lvl) {
+                    if (lvl.dataset.global != null)
+                        this.game.incidentManager.setGlobalLevel(lvl.value);
+                    else
+                        this.game.incidentManager.setTypeLevel(lvl.dataset.typeId, lvl.value, this.game.world);
+                    this.game.renderer?.invalidateStatic?.();
+                    this.game.saveState();
+                    typesTable.dataset.enabledSig = '';
+                    this.renderIncidentsPage();
+                }
+            });
+            typesTable.addEventListener('input', (e) => {
+                const lvl = e.target?.closest('.incident-type-level');
+                const out = lvl?.parentElement?.querySelector('output');
+                if (out)
+                    out.textContent = lvl.value;
             });
         }
     }
@@ -9898,16 +10002,23 @@ export class UI {
                 }).join('');
         }
         const typesTable = document.getElementById('incident-types-table');
-        if (typesTable) {
+        // The page refreshes every tick: rebuilding the checkbox table each time would
+        // swap the DOM node under the pointer and swallow the player's click.
+        const im = this.game.incidentManager;
+        const typesSig = im.getEnabledTypes().map(String).sort().join('|') + '#' + im.getGlobalLevel() + '#' + JSON.stringify(im.typeLevels);
+        if (typesTable && typesTable.dataset.enabledSig !== typesSig) {
+            typesTable.dataset.enabledSig = typesSig;
             const types = this.game.incidentManager.getAllTypes();
             const escType = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (HTML_ESCAPE_MAP[c]));
             const tableFor = (items, title, weather = false) => `<section class="incident-type-section ${htmlText(weather ? 'incident-weather-types' : '')}">
         <div class="incident-type-section-head"><div><h4>${htmlText(title)}</h4>${weather ? '<p>Ces incidents ne sont pas tirés au hasard : seuil météo local + durée d’exposition + nombre de zones exposées.</p>' : ''}</div><span>${items.length} types</span></div>
-        <div class="incident-table-scroll"><table class="incident-table"><thead><tr><th>Actif</th><th>Nom</th><th>Impact</th><th>Conditions / seuil</th><th>Déclenchement</th><th>Durée</th></tr></thead><tbody>
-        ${items.map((t) => `<tr class="${htmlText(weather ? 'incident-weather-type-row' : '')}"><td><input type="checkbox" class="incident-type-cb" data-type-id="${escType(t.id)}" ${t.enabled ? 'checked' : ''}></td><td><b>${escType(t.name)}</b>${weather ? '<div class="incident-weather-tag">MÉTÉO</div>' : ''}</td><td>${escType(t.impact)}</td><td class="incident-condition-cell">${escType(t.special)}</td><td>${escType(t.probabilityLabel || (t.id === 'train-breakdown' ? `${t.probability}% hiver / ${t.summerProbability}% été` : t.probability + '%'))}</td><td>${t.durationMin}${t.durationMax !== t.durationMin ? '-' + t.durationMax : ''} min</td></tr>`).join('')}
+        <div class="incident-table-scroll"><table class="incident-table"><thead><tr><th>Actif</th><th>Nom</th><th>Impact</th><th>Conditions / seuil</th><th>Déclenchement</th><th>Fréquence 0–10</th><th>Durée</th></tr></thead><tbody>
+        ${items.map((t) => `<tr class="${htmlText(weather ? 'incident-weather-type-row' : '')}"><td><input type="checkbox" class="incident-type-cb" data-type-id="${escType(t.id)}" ${t.enabled ? 'checked' : ''}></td><td><b>${escType(t.name)}</b>${weather ? '<div class="incident-weather-tag">MÉTÉO</div>' : ''}</td><td>${escType(t.impact)}</td><td class="incident-condition-cell">${escType(t.special)}</td><td>${escType(t.probabilityLabel || (t.id === 'train-breakdown' ? `${t.probability}% hiver / ${t.summerProbability}% été` : t.probability + '%'))}</td><td class="incident-level-cell"><input type="range" class="incident-type-level" min="0" max="10" step="1" value="${Number(t.level ?? 5)}" data-type-id="${escType(t.id)}" title="0 = jamais, 5 = normal, 10 = double"><output>${Number(t.level ?? 5)}</output></td><td>${t.durationMin}${t.durationMax !== t.durationMin ? '-' + t.durationMax : ''} min</td></tr>`).join('')}
         </tbody></table></div></section>`;
             const general = types.filter((t) => !t.weatherTriggered), weatherTypes = types.filter((t) => t.weatherTriggered);
-            typesTable.innerHTML = tableFor(general, 'Incidents généraux') + tableFor(weatherTypes, 'Incidents météorologiques', true);
+            const globalLevel = im.getGlobalLevel();
+            const globalBar = `<div class="incident-global-level"><label>Cadence générale des incidents (0 = aucun, 5 = normal, 10 = maximum)</label><input type="range" class="incident-type-level" data-global="1" min="0" max="10" step="1" value="${globalLevel}"><output>${globalLevel}</output></div>`;
+            typesTable.innerHTML = globalBar + tableFor(general, 'Incidents généraux') + tableFor(weatherTypes, 'Incidents météorologiques', true);
         }
         const works = this.game.worksManager.getAll();
         const worksCount = document.getElementById('active-works-count');
@@ -12532,9 +12643,49 @@ export class UI {
         if (!host)
             return;
         if (!this._qgPage)
-            this._qgPage = new HeadquartersPage(host, () => this._headquartersData());
+            this._qgPage = new HeadquartersPage(host, () => this._headquartersData(), (days) => this.exportQgReport(days));
         else
             this._qgPage.setActive(true);
+    }
+    exportQgReport(days) {
+        const g = this.game;
+        const hq = this._headquartersData();
+        const world = g.world;
+        const locationOf = (r) => {
+            const loc = r.currentLocation || {};
+            if (loc.depotId)
+                return String(g.depotManager?.getDepotById?.(loc.depotId)?.name || 'Dépôt');
+            if (loc.stationId)
+                return String(world.getStationById(loc.stationId)?.name || 'Gare');
+            if (loc.serviceId)
+                return 'En circulation';
+            return '—';
+        };
+        const rames = (g.rameManager?.getAll?.() || []).map((r) => ({
+            name: String(r.name || r.id), serial: String(r.serialNumber || ''),
+            elements: (r.elementDetails || []).map((e) => String(e.instanceName || e.name || e.category || '')),
+            totalKm: Number(r.totalKmRun) || 0, wearLevel: Number(r.wearLevel) || 0, inMaintenance: !!r.inMaintenance,
+            defects: (r.pendingDefects || []).length, location: locationOf(r),
+        }));
+        const trains = hq.rows.map((r) => ({ name: r.name, number: r.number, origin: r.origin, destination: r.destination, state: trainStatus(r.state, r.delay, r.speed), delay: r.delay, rameName: r.rameName }));
+        const byRole = new Map();
+        for (const m of (g.staffManager?.staff || [])) {
+            const role = String(STAFF_ROLES[String(m.role)]?.label || m.role);
+            const row = byRole.get(role) || { role, count: 0, onDuty: 0 };
+            row.count++;
+            if (m.onDuty)
+                row.onDuty++;
+            byRole.set(role, row);
+        }
+        const nowMs = g.engine.getSimulationEpochMs?.() ?? Date.now();
+        const html = buildQgReportHtml({
+            company: hq.company, generatedAt: `${g.engine.getParisDate()} ${hq.clock}`, days, nowMs,
+            balance: Number(g.economy.balance) || 0, history: g.economy.history || [],
+            passengers: hq.passengers, freightTonnes: hq.freightTonnes, rames, trains,
+            staff: [...byRole.values()].sort((a, b) => b.count - a.count), mode: normalizeGameMode(g.realismSettings?.gameMode),
+        });
+        if (!openQgReport(html))
+            alert('Le navigateur a bloqué l’ouverture du rapport : autorisez les fenêtres pop-up pour ce site.');
     }
     _headquartersData() {
         const totals = transportTotals(this.game.economy, this.game.cargoTypes?.stats);
