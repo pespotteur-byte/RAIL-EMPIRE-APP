@@ -233,6 +233,8 @@ type ActiveServiceRame = Rame & {
     brakeServiceMs2?: number;
     seriesName?: string;
 };
+/** Suffixe du motif conservé une fois la cause disparue mais le retard non résorbé. */
+export declare const RESIDUAL_DELAY_SUFFIX = " (retard en r\u00E9sorption)";
 export declare class ActiveService {
     private _tailSpeedIndex;
     _passageTailSpeedHolds: PassageTailSpeedHold[];
@@ -328,6 +330,7 @@ export declare class ActiveService {
     _v2OnArrive?: (stop: ServiceStop, station: unknown, timeOfDay: number) => void;
     _v2OperationState?: V2OperationState | null;
     _rescueDispatched?: boolean;
+    _lastDelayCause?: string;
     _breakdownStuckMin?: number;
     _breakdownLastTick?: number | null;
     _cachedDow: number;
@@ -526,6 +529,7 @@ export declare class ActiveService {
      *  - waiting for canton (blocked, speed = 0)
      */
     _updateDelayReason(): void;
+    _updateCurrentDelayReason(): void;
     _updateContinuousDelay(timeOfDay: unknown): void;
     /**
      * Fallback movement toward target station when no ORM route is available.

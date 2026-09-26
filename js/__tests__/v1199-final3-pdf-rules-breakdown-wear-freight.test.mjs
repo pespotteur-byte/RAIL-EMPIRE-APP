@@ -42,3 +42,45 @@ test('PDF: panne jamais infinie — réparation sur place sans secours (45 min) 
 test('PDF: fret jamais vide — chargement 100 % à l\'origine', () => {
   assert.match(eco, /const frtBoardRate = isFirst && freightAccess \? 1 : 0\.20 \+ rng\.random\(\) \* 0\.50;/);
 });
+
+test('PDF: incidents configurables 0–10 par type et cadence globale', async () => {
+  const { IncidentManager, INCIDENT_LEVEL_DEFAULT } = await import('../incidents.js');
+  const im = new IncidentManager();
+  assert.equal(im.getTypeLevel('signal-failure'), INCIDENT_LEVEL_DEFAULT);
+  assert.equal(im.typeLevelFactor('signal-failure'), 1);
+  im.setTypeLevel('signal-failure', 10);
+  assert.equal(im.typeLevelFactor('signal-failure'), 2);
+  im.setTypeLevel('signal-failure', 0);
+  assert.equal(im.isTypeEnabled('signal-failure'), false, 'niveau 0 = jamais');
+  im.setTypeLevel('signal-failure', 99);
+  assert.equal(im.getTypeLevel('signal-failure'), 10, 'borné à 10');
+  assert.equal(im.getGlobalLevel(), 5);
+  im.setGlobalLevel(0);
+  assert.equal(im.targetIncidentsPerHour, 0);
+  im.setGlobalLevel(10);
+  assert.equal(im.targetIncidentsPerHour, 100);
+  const saved = im.getCadenceSave();
+  const im2 = new IncidentManager();
+  im2.loadCadenceSave(saved);
+  assert.equal(im2.getTypeLevel('signal-failure'), 10);
+  assert.equal(im2.getGlobalLevel(), 10);
+  im2.loadCadenceSave(null);
+  assert.equal(im2.getTypeLevel('signal-failure'), INCIDENT_LEVEL_DEFAULT, 'sauvegarde legacy = défauts');
+});
+
+test('PDF: motif de retard persistant tant que le retard n\'est pas résorbé', async () => {
+  const { ActiveService, RESIDUAL_DELAY_SUFFIX } = await import('../schedule-creator.js');
+  const svc = Object.create(ActiveService.prototype);
+  svc.train = { delay: 12, delayReason: '', incident: { name: 'Panne de signalisation' } };
+  svc._updateDelayReason();
+  assert.equal(svc.train.delayReason, 'Panne de signalisation');
+  svc.train.incident = null;
+  svc._updateDelayReason();
+  assert.equal(svc.train.delayReason, 'Panne de signalisation' + RESIDUAL_DELAY_SUFFIX, 'cause terminée, retard encore présent');
+  svc.train.delay = 0;
+  svc._updateDelayReason();
+  assert.equal(svc.train.delayReason, '', 'retour à l heure = plus de motif');
+  svc.train.delay = 3;
+  svc._updateDelayReason();
+  assert.equal(svc.train.delayReason, '', 'aucune cause connue après retour à l heure');
+});

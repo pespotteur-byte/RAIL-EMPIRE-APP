@@ -201,6 +201,9 @@ type WeatherEffects = { brakeFactor: number; speedCap: number; speedMult: number
 type WeatherEffectsProvider = { getSpeedEffectsAt: (...args: unknown[]) => WeatherEffects };
 type ActiveServiceRame = Rame & { currentLoadRatio?: number; loadRatio?: number; payloadRatio?: number; brakeServiceMs2?: number; seriesName?: string };
 
+/** Suffixe du motif conservé une fois la cause disparue mais le retard non résorbé. */
+export const RESIDUAL_DELAY_SUFFIX = ' (retard en résorption)';
+
 export class ActiveService {
   private _tailSpeedIndex: { route: ServiceRoute; distances: Float64Array; speeds: number[]; index: TailSpeedIndex } | null = null;
   _passageTailSpeedHolds: PassageTailSpeedHold[] = [];
@@ -290,6 +293,7 @@ export class ActiveService {
   declare _v2OnArrive?: (stop: ServiceStop, station: unknown, timeOfDay: number) => void;
   declare _v2OperationState?: V2OperationState | null;
   declare _rescueDispatched?: boolean;
+  declare _lastDelayCause?: string;
   declare _breakdownStuckMin?: number;
   declare _breakdownLastTick?: number | null;
   declare _cachedDow: number;
@@ -1565,6 +1569,7 @@ export class ActiveService {
       this.train.name = this.name;
       this.train.iteInfo = null;
       this.train.incidentDelayReasons = [];
+      this._lastDelayCause = '';
       this._iteHardBlock = false; this._iteCargoMismatch = false; this._iteDwellExtra = 0;
       this._brakeEffort = 0; this._tractiveEffort = 0; this.targetSpeed = 0;
       this._lastArrivalTime = undefined;
@@ -3176,6 +3181,20 @@ export class ActiveService {
   _updateDelayReason() {
     const t = this.train;
     if (!t) return;
+    this._updateCurrentDelayReason();
+    // Le motif du retard survit à la fin de sa cause tant que le train n'a pas
+    // résorbé son retard ; il disparaît une fois le train à l'heure.
+    const delay = Number(t.delay) || 0;
+    if (t.delayReason) {
+      if (delay > 0 && !t.delayReason.endsWith(RESIDUAL_DELAY_SUFFIX)) this._lastDelayCause = t.delayReason;
+    } else if (delay > 0 && this._lastDelayCause) {
+      t.delayReason = this._lastDelayCause + RESIDUAL_DELAY_SUFFIX;
+    }
+    if (delay <= 0) this._lastDelayCause = '';
+  }
+
+  _updateCurrentDelayReason() {
+    const t = this.train;
     if (this._iteHardBlock) { t.delayReason = 'ITE : train trop long'; return; }
     if (this._rescueDispatched || t.state === 'en panne') { t.delayReason = 'Panne — attente secours'; return; }
     if (t.breakdown) { t.delayReason = `Panne ${t.breakdown.type}`; return; }
