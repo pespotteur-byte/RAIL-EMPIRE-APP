@@ -36,7 +36,37 @@ type IndustrialClient = {
     totalTonnage: number;
     totalRevenue: number;
     createdAt: number;
+    /** Clé du site industriel réel rattaché automatiquement (rayon ITE), vide pour un client attiré manuellement. */
+    siteKey?: string;
+    distanceKm?: number;
+    siteName?: string;
 };
+/** Rayon dans lequel un ITE/dépôt dessert les industriels implantés autour de lui. */
+export declare const ITE_INDUSTRY_RADIUS_KM = 15;
+type IteLike = {
+    id: unknown;
+    built?: unknown;
+    type?: unknown;
+    stationId?: unknown;
+    location?: {
+        lat: unknown;
+        lon: unknown;
+    } | null;
+};
+type SiteLike = {
+    _key: string;
+    name: string;
+    lat: number;
+    lon: number;
+    industryType: string;
+};
+/** Sites industriels situés à moins de `radiusKm` d'un point, triés par distance. */
+export declare function sitesWithinRadius<T extends {
+    lat: number;
+    lon: number;
+}>(sites: T[], lat: number, lon: number, radiusKm?: number): Array<T & {
+    distanceKm: number;
+}>;
 type IndustrialStats = {
     totalClients: number;
     totalTonnage: number;
@@ -172,6 +202,16 @@ export declare class IndustrialClients {
     moveClient(clientId: unknown, stationId: unknown, depotId: unknown): IndustrialClient | null;
     getClientsByStation(stationId: unknown): IndustrialClient[];
     getActiveClients(): IndustrialClient[];
+    /** Industriels réels desservis par un ITE/dépôt (rayon 15 km autour de son emplacement). */
+    getSitesNearDepot(depot: IteLike | null | undefined, radiusKm?: number): (SiteLike & {
+        distanceKm: number;
+    })[];
+    /**
+     * Rattache automatiquement à chaque ITE/dépôt construit les industriels implantés
+     * dans son rayon : un client par site, sans coût d'attraction ; les clients
+     * automatiques dont le site ou l'ITE a disparu sont retirés. Retourne le nombre ajouté.
+     */
+    syncClientsFromNearbySites(depots: IteLike[], radiusKm?: number): number;
     generateDailyContracts(freightManager: FreightManagerLike, world: World, cargoTypes?: CargoTypesLike | null): void;
     boostSatisfaction(clientId: unknown, amount: unknown): boolean;
     pruneClients(validITEs?: unknown): number;

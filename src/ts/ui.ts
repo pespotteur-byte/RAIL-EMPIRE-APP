@@ -1,7 +1,10 @@
 import { legacyBoardRuns } from './legacy-board-plan.js';
 import { HeadquartersPage, type HeadquartersData } from './qg-page.js';
+import { buildQgReportHtml, openQgReport, type QgRameRow, type QgStaffRow, type QgTrainRow } from './qg-report.js';
+import { normalizeGameMode } from './game-mode.js';
 import { RailEmpireBoard } from './infogare-re.js';
-import { transportTotals, type FleetRow, type BoardRow } from './operations-view-model.js';
+import { transportTotals, trainStatus, type FleetRow, type BoardRow } from './operations-view-model.js';
+import { STAFF_ROLES } from './staff.js';
 import { maximumVehicleCount, planRandomWagons } from './rame-random.js';
 import { LiveryEditor } from './livery-editor.js';
 import { type LiveryTarget, type LiveryDefinition } from './livery-model.js';
@@ -42,6 +45,7 @@ import { InfrastructureV2Editor } from './infrastructure-v2-editor.js';
 import { DepotITEPointEditor } from './depot-ite-point-editor.js';
 import { DEPOT_RESOURCE_CATALOG, DEPOT_PART_CATALOG, DEPOT_OPERATION_CATALOG, DEPOT_EQUIPMENT_CATALOG, DEPOT_STAFF_CATALOG, DEPOT_TRACK_EXPANSION_COST } from './depot.js';
 import type { Depot } from './depot.js';
+import { ITE_INDUSTRY_RADIUS_KM } from './industrial-clients.js';
 import { OP_ICON_STOP, OP_ICON_WARN, OP_ICON_WORKS, installOperationalIconStyles } from './operational-icons.js';
 import { LivemapTrainAnnouncer } from './livemap-train-announcer.js';
 import { operationalDelayMinutes, forwardClockMinutes } from './operational-time.js';
@@ -8655,7 +8659,9 @@ export class UI {
     const renderOverview=(d: DepotView) =>{
       const occ=this.game.depotManager.getDepotOccupancy(d.id),assigned=allRames.filter((r: __S3Struct575) =>r.depotId===d.id),present=allRames.filter((r: __S3Struct576) =>r.currentLocation?.depotId===d.id),ops=this.game.depotManager.getOperationsForDepot(d.id),lowResources=Object.entries(DEPOT_RESOURCE_CATALOG).filter(([k,def])=>def.stock&&Number(d.resourceCapacities[k]||0)>0&&Number(d.resourceStocks[k]||0)/Number(d.resourceCapacities[k]||1)<.15);const dirty=assigned.filter((r: __S3Struct577) =>Number(r.cleanliness?.exterior??100)<45||Number(r.cleanliness?.interior??100)<45);const maint=assigned.filter((r: Rame) =>r.recommendedMaintenance||Number(r.wearLevel||0)>=25||(r.pendingDefects||[]).length);const equipmentCount=Object.values(d.equipmentInventory||{}).reduce((sum: number,n: unknown)=>sum+Number(n||0),0);
       const usage=Object.entries(DEPOT_RESOURCE_CATALOG).filter(([k])=>Number(d.resourceUsage?.[k]||0)>0).sort((a,b)=>Number(d.resourceUsage?.[b[0]]||0)-Number(d.resourceUsage?.[a[0]]||0)).slice(0,8);
-      return `<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
+      const nearSites=this.game.industrialClients?.getSitesNearDepot?.(d)||[];
+      const nearHtml=`<section class="depot-panel"><h4>Industriels desservis (rayon ${ITE_INDUSTRY_RADIUS_KM} km)</h4>${nearSites.length?`<div class="depot-stat-lines">${nearSites.slice(0,40).map((s: { industryName?: unknown; industryType: string; name: string; distanceKm: number })=>`<span>${esc(s.industryName||s.industryType)} — ${esc(s.name)} <b>${s.distanceKm} km</b></span>`).join('')}</div>`:'<div class="depot-muted">Aucun industriel réel dans le rayon : aucun contrat fret automatique pour ce site.</div>'}</section>`;
+      return `${nearHtml}<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
       <div class="depot-alert-row">${lowResources.length?`<span class="depot-alert warn">Stock bas : ${htmlText(lowResources.slice(0,5).map(([k])=>(DEPOT_RESOURCE_CATALOG as any)[k].label).join(', '))}${lowResources.length>5?'…':''}</span>`:''}${maint.length?`<span class="depot-alert danger">${maint.length} matériel(s) à surveiller / maintenir</span>`:''}${dirty.length?`<span class="depot-alert info">${dirty.length} matériel(s) à nettoyer</span>`:''}${!lowResources.length&&!maint.length&&!dirty.length?'<span class="depot-alert ok">Aucune alerte critique</span>':''}</div>
       <div class="depot-two-col"><section class="depot-panel"><h4>Consommations réelles du dépôt</h4><div class="depot-stat-lines">${usage.map(([k,def])=>`<span>${esc(def.label)} <b>${qty(d.resourceUsage?.[k],def.unit==='kg'||def.unit==='m³'?1:0)} ${esc(def.unit)}</b></span>`).join('')||'<span>Aucune consommation <b>—</b></span>'}<span>Dépenses cumulées suivies <b>${money(d.utilityTotals?.expenseEur)}</b></span></div></section><section class="depot-panel"><h4>Dernières dépenses</h4>${(d.expenseLedger||[]).slice(-8).reverse().map((x: __S3Struct579) =>`<div class="depot-ledger"><span>${esc(x.label)}</span><b>-${money(x.amount)}</b></div>`).join('')||'<div class="depot-muted">Aucune dépense enregistrée.</div>'}</section></div>`;
     };
@@ -11518,8 +11524,43 @@ export class UI {
   // ============================================================
   renderQGPage() {
     const host = document.getElementById('page-qg'); if (!host) return;
-    if (!this._qgPage) this._qgPage = new HeadquartersPage(host, () => this._headquartersData());
+    if (!this._qgPage) this._qgPage = new HeadquartersPage(host, () => this._headquartersData(), (days) => this.exportQgReport(days));
     else this._qgPage.setActive(true);
+  }
+
+  exportQgReport(days: number) {
+    const g = this.game;
+    const hq = this._headquartersData();
+    const world = g.world;
+    const locationOf = (r: Rame): string => {
+      const loc = r.currentLocation || {};
+      if (loc.depotId) return String(g.depotManager?.getDepotById?.(loc.depotId)?.name || 'Dépôt');
+      if (loc.stationId) return String(world.getStationById(loc.stationId)?.name || 'Gare');
+      if (loc.serviceId) return 'En circulation';
+      return '—';
+    };
+    const rames: QgRameRow[] = (g.rameManager?.getAll?.() || []).map((r: Rame) => ({
+      name: String(r.name || r.id), serial: String(r.serialNumber || ''),
+      elements: (r.elementDetails || []).map((e) => String(e.instanceName || e.name || e.category || '')),
+      totalKm: Number(r.totalKmRun) || 0, wearLevel: Number(r.wearLevel) || 0, inMaintenance: !!r.inMaintenance,
+      defects: (r.pendingDefects || []).length, location: locationOf(r),
+    }));
+    const trains: QgTrainRow[] = hq.rows.map((r) => ({ name: r.name, number: r.number, origin: r.origin, destination: r.destination, state: trainStatus(r.state, r.delay, r.speed), delay: r.delay, rameName: r.rameName }));
+    const byRole = new Map<string, QgStaffRow>();
+    for (const m of (g.staffManager?.staff || [])) {
+      const role = String(STAFF_ROLES[String(m.role)]?.label || m.role);
+      const row = byRole.get(role) || { role, count: 0, onDuty: 0 };
+      row.count++; if (m.onDuty) row.onDuty++;
+      byRole.set(role, row);
+    }
+    const nowMs = g.engine.getSimulationEpochMs?.() ?? Date.now();
+    const html = buildQgReportHtml({
+      company: hq.company, generatedAt: `${g.engine.getParisDate()} ${hq.clock}`, days, nowMs,
+      balance: Number(g.economy.balance) || 0, history: g.economy.history || [],
+      passengers: hq.passengers, freightTonnes: hq.freightTonnes, rames, trains,
+      staff: [...byRole.values()].sort((a, b) => b.count - a.count), mode: normalizeGameMode(g.realismSettings?.gameMode),
+    });
+    if (!openQgReport(html)) alert('Le navigateur a bloqué l’ouverture du rapport : autorisez les fenêtres pop-up pour ce site.');
   }
 
   _headquartersData(): HeadquartersData {

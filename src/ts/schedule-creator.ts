@@ -40,6 +40,7 @@ import { railSectionDirectionMatchesRoute } from './rail-section-geometry.js';
 import { getGlobalRng } from './rng.js?v=1784250033';
 // @ts-expect-error -- cache-busted browser import is intentionally resolved at runtime.
 import { accelerationMs2, brakingDecelMs2, segmentsFromRoute, simulateProfile, _units } from './train-physics.js?v=1784250033';
+import { depotDepartureBlock } from './game-mode.js';
 import {
   DEFAULT_TERMINUS_WAIT_MIN, toOdd, returnNumberFor, incrementTrailingNumber,
   interpolatePassageTimes, shouldSkipStop,
@@ -1768,6 +1769,18 @@ export class ActiveService {
           }
           return;
         }
+      }
+    }
+
+    // Mode expert : l'entretien en dépôt est obligatoire et bloque le départ.
+    {
+      const depotBlock = typeof window !== 'undefined' ? depotDepartureBlock(window.game?.realismSettings, this.rame) : '';
+      if (depotBlock) {
+        this.train.delayReason = 'dépôt : ' + depotBlock;
+        this._movementStop('DEPOT_MAINTENANCE', this.train.delayReason, 'maintenance');
+        return;
+      } else if (String(this.train.delayReason || '').startsWith('dépôt : ')) {
+        this.train.delayReason = '';
       }
     }
 

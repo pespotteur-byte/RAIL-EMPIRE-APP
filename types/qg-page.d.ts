@@ -8,12 +8,13 @@ export interface HeadquartersData {
 }
 export declare class HeadquartersPage {
     private data;
+    private onExport?;
     private list;
     private timer;
     private search;
     private root;
     private compositions;
-    constructor(root: HTMLElement, data: () => HeadquartersData);
+    constructor(root: HTMLElement, data: () => HeadquartersData, onExport?: ((days: number) => void) | undefined);
     private row;
     refresh(reset?: boolean): void;
     setActive(active: boolean): void;

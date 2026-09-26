@@ -14717,6 +14717,45 @@ exports.FreightManager = FreightManager;
 
 };
 
+__modules["js/game-mode.js"]=function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEPOT_BLOCK_WEAR_PCT = void 0;
+exports.normalizeGameMode = normalizeGameMode;
+exports.applyGameMode = applyGameMode;
+exports.isExpert = isExpert;
+exports.depotDepartureBlock = depotDepartureBlock;
+exports.DEPOT_BLOCK_WEAR_PCT = 90;
+function normalizeGameMode(v) {
+    return v === 'expert' ? 'expert' : 'facile';
+}
+function applyGameMode(settings, mode) {
+    const m = normalizeGameMode(mode);
+    settings.gameMode = m;
+    if (m === 'expert') {
+        settings.rotationsRequired = true;
+        settings.personnelRequired = true;
+        settings.depotsRequired = true;
+        settings.aiCompetitors = true;
+    }
+    return settings;
+}
+function isExpert(settings) {
+    return normalizeGameMode(settings?.gameMode) === 'expert';
+}
+function depotDepartureBlock(settings, rame) {
+    if (!settings?.depotsRequired || !rame)
+        return '';
+    if (rame.inMaintenance)
+        return 'rame en maintenance au dépôt';
+    const wear = Number(rame.wearLevel) || 0;
+    if (wear >= exports.DEPOT_BLOCK_WEAR_PCT)
+        return `entretien dépôt obligatoire (usure ${Math.round(wear)} %)`;
+    return '';
+}
+
+};
+
 __modules["js/gameplay-clock.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -18140,9 +18179,11 @@ exports.IncidentManager = IncidentManager;
 __modules["js/industrial-clients.js"]=function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IndustrialClients = void 0;
+exports.IndustrialClients = exports.ITE_INDUSTRY_RADIUS_KM = void 0;
+exports.sitesWithinRadius = sitesWithinRadius;
 const html_text_js_1 = require("./html-text.js");
 const freight_network_js_1 = require("./freight-network.js");
+const simulation_js_1 = require("./simulation.js");
 const icons_js_1 = require("./icons.js");
 const rng_js_v_1784250033_1 = require("./rng.js?v=1784250033");
 let nextClientId = 1;
@@ -22144,6 +22185,20 @@ const INDUSTRY_COLORS = {
     dairy: '#fef08a', sawmill: '#a3e635', oil_depot: '#991b1b', biogas_plant: '#86efac',
     ceramics: '#fdba74', furniture: '#fcd34d',
 };
+exports.ITE_INDUSTRY_RADIUS_KM = 15;
+function sitesWithinRadius(sites, lat, lon, radiusKm = exports.ITE_INDUSTRY_RADIUS_KM) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon))
+        return [];
+    const out = [];
+    for (const s of sites) {
+        if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon))
+            continue;
+        const d = (0, simulation_js_1.haversineDistance)(lat, lon, s.lat, s.lon);
+        if (d <= radiusKm)
+            out.push({ ...s, distanceKm: Math.round(d * 10) / 10 });
+    }
+    return out.sort((a, b) => a.distanceKm - b.distanceKm);
+}
 function isRecord(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -22369,6 +22424,47 @@ class IndustrialClients {
     }
     getActiveClients() {
         return this.clients.filter((c) => c.active);
+    }
+    getSitesNearDepot(depot, radiusKm = exports.ITE_INDUSTRY_RADIUS_KM) {
+        const loc = depot?.location;
+        if (!loc)
+            return [];
+        return sitesWithinRadius(this.getAllRealLocations(), Number(loc.lat), Number(loc.lon), radiusKm);
+    }
+    syncClientsFromNearbySites(depots, radiusKm = exports.ITE_INDUSTRY_RADIUS_KM) {
+        const sites = this.getAllRealLocations();
+        const valid = new Set();
+        let added = 0;
+        for (const depot of depots) {
+            if (!depot?.built || !depot.location || !depot.stationId)
+                continue;
+            for (const site of sitesWithinRadius(sites, Number(depot.location.lat), Number(depot.location.lon), radiusKm)) {
+                const industry = this.getIndustryInfo(site.industryType);
+                if (!industry)
+                    continue;
+                const linkKey = `${depot.id}|${site._key}`;
+                valid.add(linkKey);
+                const existing = this.clients.find((c) => c.siteKey === site._key && c.depotId === String(depot.id));
+                if (existing) {
+                    existing.distanceKm = site.distanceKm;
+                    existing.siteName = site.name;
+                    continue;
+                }
+                const rng = (0, rng_js_v_1784250033_1.getGlobalRng)();
+                this.clients.push({
+                    id: `client-${nextClientId++}`,
+                    type: String(site.industryType), name: industry.name, icon: industry.icon,
+                    stationId: String(depot.stationId), depotId: String(depot.id),
+                    dailyTonnage: industry.dailyTonnageMin + Math.floor(rng.random() * (industry.dailyTonnageMax - industry.dailyTonnageMin)),
+                    active: true, satisfaction: 80, marketShare: 5, contractsGenerated: 0, totalTonnage: 0, totalRevenue: 0, createdAt: Date.now(),
+                    siteKey: site._key, siteName: site.name, distanceKm: site.distanceKm,
+                });
+                this.stats.totalClients++;
+                added++;
+            }
+        }
+        this.clients = this.clients.filter((c) => !c.siteKey || valid.has(`${c.depotId}|${c.siteKey}`));
+        return added;
     }
     generateDailyContracts(freightManager, world, cargoTypes = null) {
         const network = new freight_network_js_1.FreightNetwork(world, this.railLegProvider?.() ?? []);
@@ -27480,6 +27576,7 @@ const schedule_v2_model_js_1 = require("./schedule-v2-model.js");
 const rotation_v2_model_js_1 = require("./rotation-v2-model.js");
 const schedule_v2_runtime_js_1 = require("./schedule-v2-runtime.js");
 const schedule_v2_revalidation_js_1 = require("./schedule-v2-revalidation.js");
+const game_mode_js_1 = require("./game-mode.js");
 class RailEmpire {
     constructor() {
         this.liveries = new livery_model_js_1.LiveryLibrary();
@@ -27504,6 +27601,9 @@ class RailEmpire {
             delayTolerance: 120,
             rotationsRequired: false,
             personnelRequired: false,
+            gameMode: 'facile',
+            depotsRequired: false,
+            aiCompetitors: false,
         };
         this.engine = new engine_js_1.SimulationEngine();
         this.world = (0, world_js_1.createDefaultWorld)();
@@ -28265,6 +28365,20 @@ class RailEmpire {
         const delayToleranceVal = document.getElementById('settings-delay-tolerance-val');
         const rotationsRequiredInput = document.getElementById('settings-rotations-required');
         const personnelRequiredInput = document.getElementById('settings-personnel-required');
+        const depotsRequiredInput = document.getElementById('settings-depots-required');
+        const gameModeInputs = Array.from(document.querySelectorAll('input[name="settings-game-mode"]'));
+        const syncModeInputs = () => {
+            const expert = gameModeInputs.find((i) => i.checked)?.value === 'expert';
+            for (const cb of [rotationsRequiredInput, personnelRequiredInput, depotsRequiredInput]) {
+                if (!cb)
+                    continue;
+                if (expert)
+                    cb.checked = true;
+                cb.disabled = expert;
+            }
+        };
+        for (const i of gameModeInputs)
+            i.addEventListener('change', syncModeInputs);
         const priceSlowInput = document.getElementById('settings-price-slow');
         const priceRegionalInput = document.getElementById('settings-price-regional');
         const priceIntercityInput = document.getElementById('settings-price-intercity');
@@ -28357,6 +28471,11 @@ class RailEmpire {
                 rotationsRequiredInput.checked = this.realismSettings.rotationsRequired === true;
             if (personnelRequiredInput)
                 personnelRequiredInput.checked = this.realismSettings.personnelRequired === true;
+            if (depotsRequiredInput)
+                depotsRequiredInput.checked = this.realismSettings.depotsRequired === true;
+            for (const i of gameModeInputs)
+                i.checked = i.value === (0, game_mode_js_1.normalizeGameMode)(this.realismSettings.gameMode);
+            syncModeInputs();
             const prices = this.economy.passengerPriceByClass || {};
             priceSlowInput.value = String(prices.slow ?? 0.08);
             priceRegionalInput.value = String(prices.regional ?? 0.12);
@@ -28387,6 +28506,8 @@ class RailEmpire {
             }
             this.realismSettings.rotationsRequired = !!rotationsRequiredInput?.checked;
             this.realismSettings.personnelRequired = !!personnelRequiredInput?.checked;
+            this.realismSettings.depotsRequired = !!depotsRequiredInput?.checked;
+            (0, game_mode_js_1.applyGameMode)(this.realismSettings, gameModeInputs.find((i) => i.checked)?.value);
             this.economy.passengerPriceByClass = {
                 slow: parseFloat(priceSlowInput.value) || 0,
                 regional: parseFloat(priceRegionalInput.value) || 0,
@@ -29378,7 +29499,7 @@ class RailEmpire {
                 settle('payroll', () => { this.staffManager.processDailySalaries(this.economy, settlementDate); });
                 settle('bank', () => { this.bank.processDailyRepayments(this.economy, settlementDate); });
                 settle('unions', () => { this.unions.dailyUpdate(this, undefined, settlementDate); });
-                settle('industry', () => { this.industrialClients.generateDailyContracts(this.freightManager, this.world, this.cargoTypes); });
+                settle('industry', () => { this.industrialClients.syncClientsFromNearbySites(this.depotManager.getAll()); this.industrialClients.generateDailyContracts(this.freightManager, this.world, this.cargoTypes); });
                 settle('marketing', () => { this.marketingManager?.dailyUpdate?.(this, settlementDate); });
                 settle('ite', () => {
                     const cost = this.iteModules.getTotalDailyMaintenance();
@@ -37909,9 +38030,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HeadquartersPage = void 0;
 const windowed_list_js_1 = require("./windowed-list.js");
 const operations_view_model_js_1 = require("./operations-view-model.js");
+const qg_report_js_1 = require("./qg-report.js");
 class HeadquartersPage {
-    constructor(root, data) {
+    constructor(root, data, onExport) {
         this.data = data;
+        this.onExport = onExport;
         this.timer = null;
         this.compositions = new WeakMap();
         this.root = root;
@@ -37923,7 +38046,7 @@ class HeadquartersPage {
             <section><span>Trains en exploitation</span><strong id="qg-active">0</strong><small class="qg-company"></small></section>
           </div>
           <p class="qg-total-note">Cumuls depuis la création de cette partie, conservés dans sa sauvegarde. Un voyageur est compté à la descente, le fret au déchargement — pas à partir des capacités.</p>
-          <div class="qg-toolbar"><label>Rechercher un train, une rame ou une gare<input id="qg-search" type="search" placeholder="Numéro, nom, origine, destination…"></label><span id="qg-count" role="status"></span></div>
+          <div class="qg-toolbar"><label>Rechercher un train, une rame ou une gare<input id="qg-search" type="search" placeholder="Numéro, nom, origine, destination…"></label><span id="qg-count" role="status"></span><span class="qg-export"><select id="qg-report-period" aria-label="Période du rapport">${qg_report_js_1.QG_REPORT_PERIODS.map((p) => `<option value="${p.days}"${p.days === 30 ? ' selected' : ''}>${p.label}</option>`).join('')}</select><button id="qg-report-btn" class="btn-sm" type="button" title="Rapport complet (finances, rames, trains, personnel) à enregistrer en PDF">Export PDF</button></span></div>
           <div id="qg-empty" class="re-empty" hidden>Aucun train en exploitation. Les trains apparaissent à leur préparation au départ.</div>
           <div id="qg-fleet" aria-label="Compositions des trains en exploitation"></div>
           <p class="qg-footnote">Toutes les compositions restent accessibles. Défilement vertical pour les trains, horizontal pour les longues rames. Aucune carte n’est chargée ici.</p>
@@ -37931,6 +38054,10 @@ class HeadquartersPage {
         this.search = root.querySelector('#qg-search');
         this.list = new windowed_list_js_1.WindowedList(root.querySelector('#qg-fleet'), 140, r => r.id, (r, old) => this.row(r, old));
         this.search.addEventListener('input', () => this.refresh(true));
+        root.querySelector('#qg-report-btn')?.addEventListener('click', () => {
+            const days = Number(root.querySelector('#qg-report-period')?.value) || 30;
+            this.onExport?.(days);
+        });
         this.setActive(true);
     }
     row(row, old) {
@@ -38005,6 +38132,127 @@ class HeadquartersPage {
     dispose() { this.setActive(false); this.list.dispose(); }
 }
 exports.HeadquartersPage = HeadquartersPage;
+
+};
+
+__modules["js/qg-report.js"]=function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.QG_REPORT_PERIODS = void 0;
+exports.summarizeFinance = summarizeFinance;
+exports.buildQgReportHtml = buildQgReportHtml;
+exports.openQgReport = openQgReport;
+exports.QG_REPORT_PERIODS = [
+    { days: 7, label: '7 jours' },
+    { days: 30, label: '30 jours' },
+    { days: 90, label: '3 mois' },
+    { days: 180, label: '6 mois' },
+    { days: 365, label: '1 an' },
+];
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = (n) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+const num = (n, d = 0) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: d }).format(n);
+function summarizeFinance(history, nowMs, days) {
+    const from = nowMs - days * 86400000;
+    const cats = new Map();
+    let revenue = 0, expenses = 0, penalties = 0, entries = 0;
+    for (const h of history) {
+        const t = Number(h.time);
+        if (!Number.isFinite(t) || t < from || t > nowMs)
+            continue;
+        const amount = Number(h.amount) || 0;
+        const cat = String(h.category || 'divers');
+        const c = cats.get(cat) || { revenue: 0, expenses: 0 };
+        entries++;
+        if (h.type === 'revenue') {
+            revenue += amount;
+            c.revenue += amount;
+        }
+        else if (h.type === 'expense') {
+            expenses += amount;
+            c.expenses += amount;
+            if (/p[eé]nal/i.test(cat) || /p[eé]nalit/i.test(String(h.description ?? '')))
+                penalties += amount;
+        }
+        cats.set(cat, c);
+    }
+    const byCategory = [...cats.entries()].map(([category, v]) => ({ category, ...v })).sort((a, b) => (b.revenue + b.expenses) - (a.revenue + a.expenses));
+    return { revenue, expenses, penalties, net: revenue - expenses, byCategory, entries };
+}
+function buildQgReportHtml(input) {
+    const fin = summarizeFinance(input.history, input.nowMs, input.days);
+    const period = exports.QG_REPORT_PERIODS.find((p) => p.days === input.days)?.label || `${input.days} jours`;
+    const late = input.trains.filter((t) => t.delay >= 5).length;
+    const avgWear = input.rames.length ? input.rames.reduce((a, r) => a + r.wearLevel, 0) / input.rames.length : 0;
+    const rows = (cells) => `<tr>${cells.join('')}</tr>`;
+    const td = (v, cls = '') => `<td${cls ? ` class="${cls}"` : ''}>${esc(v)}</td>`;
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${esc(input.company)} — Rapport ${esc(period)}</title>
+<style>
+  body{font:11pt/1.4 Arial,Helvetica,sans-serif;color:#111;margin:18mm 14mm}
+  h1{font-size:20pt;margin:0 0 2mm}h2{font-size:13pt;margin:8mm 0 2mm;border-bottom:1px solid #999;padding-bottom:1mm;page-break-after:avoid}
+  .meta{color:#555;font-size:9.5pt}
+  .kpis{display:flex;flex-wrap:wrap;gap:4mm;margin:4mm 0}.kpi{flex:1 1 40mm;border:1px solid #bbb;border-radius:2mm;padding:2mm 3mm}
+  .kpi span{display:block;font-size:8.5pt;color:#555}.kpi strong{font-size:14pt}
+  table{width:100%;border-collapse:collapse;font-size:9pt;page-break-inside:auto}tr{page-break-inside:avoid}
+  th,td{border:1px solid #ccc;padding:1mm 1.5mm;text-align:left;vertical-align:top}th{background:#eee}
+  td.n{text-align:right;white-space:nowrap}.neg{color:#b00020}.pos{color:#0a7a2f}
+  .note{font-size:8.5pt;color:#666;margin-top:6mm}
+  @media print{.noprint{display:none}}
+  .noprint{margin:0 0 6mm;padding:2mm;background:#fff6d6;border:1px solid #e0c060}
+</style></head><body>
+<div class="noprint">Utilisez <b>Imprimer → Enregistrer au format PDF</b> pour obtenir le fichier PDF. <button onclick="window.print()">Imprimer / PDF</button></div>
+<h1>${esc(input.company)}</h1>
+<div class="meta">Rapport d'exploitation sur ${esc(period)} · généré le ${esc(input.generatedAt)} · mode ${esc(input.mode)}</div>
+<div class="kpis">
+  <div class="kpi"><span>Trésorerie</span><strong class="${input.balance < 0 ? 'neg' : ''}">${esc(eur(input.balance))}</strong></div>
+  <div class="kpi"><span>Résultat sur la période</span><strong class="${fin.net < 0 ? 'neg' : 'pos'}">${esc(eur(fin.net))}</strong></div>
+  <div class="kpi"><span>Recettes</span><strong>${esc(eur(fin.revenue))}</strong></div>
+  <div class="kpi"><span>Dépenses</span><strong>${esc(eur(fin.expenses))}</strong></div>
+  <div class="kpi"><span>Pénalités</span><strong>${esc(eur(fin.penalties))}</strong></div>
+  <div class="kpi"><span>Voyageurs transportés (cumul)</span><strong>${esc(num(input.passengers))}</strong></div>
+  <div class="kpi"><span>Fret livré (cumul)</span><strong>${esc(num(input.freightTonnes, 1))} t</strong></div>
+  <div class="kpi"><span>Trains en exploitation</span><strong>${input.trains.length}</strong><span>${late} en retard ≥ 5 min</span></div>
+  <div class="kpi"><span>Rames</span><strong>${input.rames.length}</strong><span>usure moyenne ${esc(num(avgWear, 1))} %</span></div>
+</div>
+
+<h2>Finances par catégorie (${esc(period)}, ${fin.entries} écritures)</h2>
+<table><thead><tr><th>Catégorie</th><th>Recettes</th><th>Dépenses</th><th>Solde</th></tr></thead><tbody>
+${fin.byCategory.map((c) => rows([td(c.category), td(eur(c.revenue), 'n'), td(eur(c.expenses), 'n'), td(eur(c.revenue - c.expenses), 'n ' + (c.revenue - c.expenses < 0 ? 'neg' : 'pos'))])).join('') || '<tr><td colspan="4">Aucune écriture sur la période.</td></tr>'}
+</tbody></table>
+
+<h2>Parc de rames (${input.rames.length})</h2>
+<table><thead><tr><th>Rame</th><th>N° série</th><th>Composition</th><th>Km total</th><th>Usure</th><th>État</th><th>Position</th></tr></thead><tbody>
+${input.rames.map((r) => rows([td(r.name), td(r.serial), td(r.elements.join(' + ')), td(num(r.totalKm), 'n'), td(num(r.wearLevel, 1) + ' %', 'n'), td(r.inMaintenance ? 'En maintenance' : r.defects > 0 ? `${r.defects} défaut(s)` : 'Disponible'), td(r.location)])).join('') || '<tr><td colspan="7">Aucune rame.</td></tr>'}
+</tbody></table>
+
+<h2>Trains en exploitation (${input.trains.length})</h2>
+<table><thead><tr><th>Train</th><th>N°</th><th>Origine</th><th>Destination</th><th>État</th><th>Retard</th><th>Rame</th></tr></thead><tbody>
+${input.trains.map((t) => rows([td(t.name), td(t.number), td(t.origin), td(t.destination), td(t.state), td(t.delay > 0 ? `+${Math.round(t.delay)} min` : 'à l\u2019heure', 'n ' + (t.delay >= 5 ? 'neg' : '')), td(t.rameName)])).join('') || '<tr><td colspan="7">Aucun train en exploitation.</td></tr>'}
+</tbody></table>
+
+<h2>Personnel</h2>
+<table><thead><tr><th>Poste</th><th>Effectif</th><th>En service</th></tr></thead><tbody>
+${input.staff.map((s) => rows([td(s.role), td(s.count, 'n'), td(s.onDuty, 'n')])).join('') || '<tr><td colspan="3">Aucun personnel.</td></tr>'}
+</tbody></table>
+<p class="note">Cumuls voyageurs/fret depuis la création de la partie ; finances filtrées sur la période. Rail Empire — rapport généré localement, aucune donnée transmise.</p>
+</body></html>`;
+}
+function openQgReport(html) {
+    const w = window.open('', '_blank');
+    if (!w)
+        return false;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => {
+        try {
+            w.print();
+        }
+        catch { }
+    }, 400);
+    return true;
+}
 
 };
 
@@ -46935,6 +47183,7 @@ const movement_authority_js_1 = require("./movement-authority.js");
 const rail_section_geometry_js_1 = require("./rail-section-geometry.js");
 const rng_js_v_1784250033_1 = require("./rng.js?v=1784250033");
 const train_physics_js_v_1784250033_1 = require("./train-physics.js?v=1784250033");
+const game_mode_js_1 = require("./game-mode.js");
 const schedule_logic_js_1 = require("./schedule-logic.js");
 let nextServiceId = 1;
 let nextServiceNumber = 1;
@@ -48371,6 +48620,17 @@ class ActiveService {
                     }
                     return;
                 }
+            }
+        }
+        {
+            const depotBlock = typeof window !== 'undefined' ? (0, game_mode_js_1.depotDepartureBlock)(window.game?.realismSettings, this.rame) : '';
+            if (depotBlock) {
+                this.train.delayReason = 'dépôt : ' + depotBlock;
+                this._movementStop('DEPOT_MAINTENANCE', this.train.delayReason, 'maintenance');
+                return;
+            }
+            else if (String(this.train.delayReason || '').startsWith('dépôt : ')) {
+                this.train.delayReason = '';
             }
         }
         if (window.game?.realismSettings?.personnelRequired === true && window.game?.staffManager && !window.game.staffManager.hasAssignedConductor(this.id, true)) {
@@ -61788,6 +62048,7 @@ function materialFamilyFromItem(item = {}) {
 }
 class StaffManager {
     constructor() {
+        this._renderGame = null;
         this.staff = [];
         this.signalBoxes = [];
         this.zones = [];
@@ -62892,9 +63153,10 @@ class StaffManager {
         this.signalBoxes = this.signalBoxes.filter((sb) => sb.id !== id);
     }
     getSignalBoxById(id) { return this.signalBoxes.find((sb) => sb.id === id); }
-    addZone(name, lat, lon, radiusKm, lineId) {
+    addZone(name, lat, lon, radiusKm, lineId, stationId) {
         const nLat = lat == null ? null : Number(lat), nLon = lon == null ? null : Number(lon);
         const z = {
+            stationId: stationId ? String(stationId) : null,
             id: `zone-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
             name: String(name || `Zone ${this.zones.length + 1}`).trim() || `Zone ${this.zones.length + 1}`,
             lat: typeof nLat === 'number' && Number.isFinite(nLat) && nLat >= -90 && nLat <= 90 ? nLat : null,
@@ -62913,6 +63175,42 @@ class StaffManager {
             }
         }
         this.zones = this.zones.filter((z) => z.id !== id);
+    }
+    renamePlace(id, name) {
+        const n = String(name ?? '').trim();
+        if (!n)
+            return false;
+        const z = this.zones.find((x) => x.id === id);
+        if (z) {
+            z.name = n;
+            return true;
+        }
+        const sb = this.signalBoxes.find((x) => x.id === id);
+        if (sb) {
+            sb.name = n;
+            return true;
+        }
+        return false;
+    }
+    addZoneAtStation(station, name, radiusKm) {
+        if (!station)
+            return null;
+        return this.addZone(String(name ?? '').trim() || station.name, station.lat, station.lon, radiusKm, null, station.id);
+    }
+    addSignalBoxAtStation(station, name, radiusKm) {
+        if (!station)
+            return null;
+        return this.addSignalBox({ name: String(name ?? '').trim() || station.name, lat: station.lat, lon: station.lon, radiusKm: radiusKm ?? 10, stationId: station.id });
+    }
+    getStaffedStationIds() {
+        const out = new Set();
+        for (const z of this.zones)
+            if (z.stationId)
+                out.add(String(z.stationId));
+        for (const sb of this.signalBoxes)
+            if (sb.stationId)
+                out.add(String(sb.stationId));
+        return out;
     }
     tickControleurs(economy, activeServices, gameTimeMin) {
         const services = Array.isArray(activeServices) ? activeServices : [];
@@ -63139,6 +63437,7 @@ class StaffManager {
     render(container, game) {
         if (!container)
             return;
+        this._renderGame = game;
         const eco = game.economy;
         const activeServices = (game.scheduleCreator?.getActiveServices?.() || []);
         const stations = game.world?.stations || [];
@@ -63231,6 +63530,7 @@ class StaffManager {
         const assignmentsPanel = `
       <section class="staff-panel staff-auto-panel"><div class="staff-section-title"><div><h3>Affectation automatique</h3><p>Le jeu répartit automatiquement le personnel disponible vers les dépôts, gares utilisées, zones, postes et trains. Il ne déplace jamais le matériel roulant.</p></div><span>Actualisation automatique toutes les 5 min de jeu</span></div><div class="staff-auto-actions"><button id="staff-auto-all" class="btn-primary">Réaffecter maintenant</button><button id="staff-auto-depots" class="btn-sm">Auto-affecter aux dépôts</button></div></section>
       ${depots.length ? `<section class="staff-panel"><div class="staff-section-title"><div><h3>Équipes des dépôts</h3><p>Les opérations réservent seulement les spécialistes de l'équipe 3×8 actuellement disponible.</p></div></div><div class="staff-depot-summary-grid">${depotSummary}</div></section>` : ''}
+      <datalist id="staff-station-list">${this._stationOptions()}</datalist>
       <div class="staff-assignment-grid">${this._renderZonesSection()}${this._renderSignalBoxSection()}</div>`;
         const shiftsPanel = `
       <section class="staff-panel"><div class="staff-section-title"><div><h3>3×8</h3><p>Équipe A 00–08, B 08–16, C 16–00. Les conducteurs sont relevés au prochain point sûr si leur tranche se termine en ligne.</p></div><span>${esc(currentShift.label)} active</span></div><div class="staff-shift-grid">${shiftCards}</div></section>
@@ -63385,13 +63685,27 @@ class StaffManager {
         const busyCount = members.filter((m) => m.busyTaskId).length, assignedCount = members.filter((m) => m.assignedTo).length, onShiftCount = members.filter((m) => m.onDuty && !m.onLeave && !m.absenceRemainingDays).length;
         return `<section class="staff-role-section" data-role-section="${esc(role)}"><header><div><h4>${esc(def.label)}</h4><small>${esc(def.department || '')} · ${esc(def.category || '')}</small></div><span>${members.length} total · ${assignedCount} affecté(s) · ${onShiftCount} en service${busyCount ? ` · ${busyCount} occupé(s)` : ''}</span></header><div class="staff-roster-head"><span>Agent</span><span>Statut</span><span>3×8 / congés</span><span>Affectation</span><span>Activité</span><span>Actions</span></div>${rows}</section>`;
     }
+    _playerStations() { return (this._renderGame?.world?.stations || []); }
+    _stationNameOf(stationId, fallback) {
+        return String(this._playerStations().find((st) => String(st.id) === String(stationId))?.name ?? fallback ?? '');
+    }
+    _stationOptions() {
+        return this._playerStations().slice(0, 4000).map((st) => `<option value="${(0, html_text_js_1.htmlText)(st.name)}">`).join('');
+    }
+    _findStationByInput(v) {
+        const q = String(v ?? '').trim().toLowerCase();
+        if (!q)
+            return null;
+        const list = this._playerStations();
+        return list.find((st) => String(st.name).toLowerCase() === q) || list.find((st) => String(st.name).toLowerCase().startsWith(q)) || null;
+    }
     _renderZonesSection() {
         const regCoverage = this.zones.map((z) => {
             const cov = this.getZoneRegulatorCoverage(z.id);
             const ctrls = this.staff.filter((s) => s.role === 'controleur' && s.assignedTo === z.id);
             const ctrlCount = ctrls.length, ctrlOnDuty = ctrls.filter((s) => s.onDuty !== false && !s.onLeave && !s.absenceRemainingDays).length;
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(z.name)}</span>
+        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(z.name)}${z.stationId ? ` <small style="color:var(--text3);font-weight:400">· gare ${(0, html_text_js_1.htmlText)(this._stationNameOf(z.stationId, z.name))}</small>` : ''} <button class="place-rename-btn" data-place-id="${(0, html_text_js_1.htmlText)(z.id)}" title="Renommer (page Personnel uniquement)" style="font-size:9px;padding:0 4px">✎</button></span>
         <span style="font-size:10px">
           Régulateurs: <b style="color:${(0, html_text_js_1.htmlText)(cov.covered ? 'var(--green)' : '#ef4444')}">${cov.count}/3</b>
           ${cov.teamsCovered >= 3 ? '(A/B/C)' : `(${cov.teamsCovered || 0}/3 équipes)`} · en poste: <b>${cov.onDuty || 0}</b>
@@ -63404,9 +63718,10 @@ class StaffManager {
       <div class="dash-section">
         <h3>Zones de régulation</h3>
         <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Chaque zone nécessite 3 régulateurs (3 × 8h = 24/7). Les contrôleurs montent aléatoirement dans les trains de leur zone.</p>
-        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
-          <input type="text" id="zone-name-input" placeholder="Nom de la zone" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:160px">
-          <button id="zone-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Zone</button>
+        <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="zone-station-input" list="staff-station-list" placeholder="Gare d'affectation…" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:170px">
+          <input type="text" id="zone-name-input" placeholder="Nom du lieu (facultatif)" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:150px">
+          <button id="zone-add-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Zone en gare</button>
         </div>
         ${regCoverage || '<div style="font-size:10px;color:var(--text3)">Aucune zone créée</div>'}
       </div>`;
@@ -63416,7 +63731,7 @@ class StaffManager {
             const agents = this.staff.filter((s) => s.role === 'agent_circulation' && s.assignedTo === sb.id);
             const agentsOnDuty = agents.filter((s) => s.onDuty !== false && !s.onLeave && !s.absenceRemainingDays).length;
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">
-        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(sb.name)}</span>
+        <span style="font-weight:600">${(0, html_text_js_1.htmlText)(sb.name)}${sb.stationId ? ` <small style="color:var(--text3);font-weight:400">· gare ${(0, html_text_js_1.htmlText)(this._stationNameOf(sb.stationId, sb.name))}</small>` : ''} <button class="place-rename-btn" data-place-id="${(0, html_text_js_1.htmlText)(sb.id)}" title="Renommer (page Personnel uniquement)" style="font-size:9px;padding:0 4px">✎</button></span>
         <span style="font-size:10px">Rayon: ${sb.radiusKm} km | Agents: <b>${agents.length}</b> · en poste: <b>${agentsOnDuty}</b></span>
         <button class="sb-del-btn btn-sm" data-sb-id="${(0, html_text_js_1.htmlText)(sb.id)}" style="font-size:9px;background:#ef4444">Suppr.</button>
       </div>`;
@@ -63426,6 +63741,8 @@ class StaffManager {
         <h3>Postes d'aiguillage</h3>
         <p style="font-size:10px;color:var(--text3);margin:0 0 6px">Placez des postes sur la carte pour gérer les tronçons d'une zone. Chaque poste nécessite au moins 1 agent de circulation.</p>
         <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="sb-station-input" list="staff-station-list" placeholder="Gare d'affectation…" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:170px">
+          <button id="sb-add-station-btn" class="btn-primary" style="font-size:10px;padding:4px 10px">+ Poste en gare</button>
           <input type="text" id="sb-name-input" placeholder="Nom du poste" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:130px">
           <input type="number" id="sb-radius-input" value="10" min="1" max="100" style="font-size:11px;padding:4px 8px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:4px;width:80px" title="Rayon (km)">
           <span style="font-size:9px;color:var(--text3)">km</span>
@@ -63606,10 +63923,36 @@ class StaffManager {
         }));
         container.querySelector('#zone-add-btn')?.addEventListener('click', () => {
             const name = container.querySelector('#zone-name-input')?.value.trim();
-            this.addZone(name);
+            const st = this._findStationByInput(container.querySelector('#zone-station-input')?.value);
+            if (!st) {
+                alert('Choisissez une gare d’affectation dans la liste.');
+                return;
+            }
+            this.addZoneAtStation(st, name);
             this.render(container, game);
             game.saveState();
         });
+        container.querySelector('#sb-add-station-btn')?.addEventListener('click', () => {
+            const name = container.querySelector('#sb-name-input')?.value.trim() || '';
+            const radius = parseFloat(container.querySelector('#sb-radius-input')?.value) || 10;
+            const st = this._findStationByInput(container.querySelector('#sb-station-input')?.value);
+            if (!st) {
+                alert('Choisissez une gare d’affectation dans la liste.');
+                return;
+            }
+            this.addSignalBoxAtStation(st, name, radius);
+            this.render(container, game);
+            game.saveState();
+        });
+        container.querySelectorAll('.place-rename-btn').forEach((btn) => btn.addEventListener('click', () => {
+            const id = btn.dataset.placeId;
+            const cur = this.zones.find((z) => z.id === id)?.name ?? this.signalBoxes.find((b) => b.id === id)?.name ?? '';
+            const n = prompt('Nom du lieu (page Personnel uniquement, la gare garde son nom sur la carte) :', String(cur));
+            if (n != null && this.renamePlace(id, n)) {
+                this.render(container, game);
+                game.saveState();
+            }
+        }));
         container.querySelectorAll('.zone-del-btn').forEach((btn) => btn.addEventListener('click', () => { this.removeZone(btn.dataset.zoneId); this.render(container, game); game.saveState(); }));
         container.querySelector('#sb-add-btn')?.addEventListener('click', () => {
             const name = container.querySelector('#sb-name-input')?.value.trim() || '';
@@ -67608,8 +67951,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UI = void 0;
 const legacy_board_plan_js_1 = require("./legacy-board-plan.js");
 const qg_page_js_1 = require("./qg-page.js");
+const qg_report_js_1 = require("./qg-report.js");
+const game_mode_js_1 = require("./game-mode.js");
 const infogare_re_js_1 = require("./infogare-re.js");
 const operations_view_model_js_1 = require("./operations-view-model.js");
+const staff_js_1 = require("./staff.js");
 const rame_random_js_1 = require("./rame-random.js");
 const livery_editor_js_1 = require("./livery-editor.js");
 const duplicate_tools_js_1 = require("./duplicate-tools.js");
@@ -67625,6 +67971,7 @@ const works_v2_editor_js_1 = require("./works-v2-editor.js");
 const infrastructure_v2_editor_js_1 = require("./infrastructure-v2-editor.js");
 const depot_ite_point_editor_js_1 = require("./depot-ite-point-editor.js");
 const depot_js_1 = require("./depot.js");
+const industrial_clients_js_1 = require("./industrial-clients.js");
 const operational_icons_js_1 = require("./operational-icons.js");
 const livemap_train_announcer_js_1 = require("./livemap-train-announcer.js");
 const operational_time_js_1 = require("./operational-time.js");
@@ -76595,7 +76942,9 @@ class UI {
             const maint = assigned.filter((r) => r.recommendedMaintenance || Number(r.wearLevel || 0) >= 25 || (r.pendingDefects || []).length);
             const equipmentCount = Object.values(d.equipmentInventory || {}).reduce((sum, n) => sum + Number(n || 0), 0);
             const usage = Object.entries(depot_js_1.DEPOT_RESOURCE_CATALOG).filter(([k]) => Number(d.resourceUsage?.[k] || 0) > 0).sort((a, b) => Number(d.resourceUsage?.[b[0]] || 0) - Number(d.resourceUsage?.[a[0]] || 0)).slice(0, 8);
-            return `<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
+            const nearSites = this.game.industrialClients?.getSitesNearDepot?.(d) || [];
+            const nearHtml = `<section class="depot-panel"><h4>Industriels desservis (rayon ${industrial_clients_js_1.ITE_INDUSTRY_RADIUS_KM} km)</h4>${nearSites.length ? `<div class="depot-stat-lines">${nearSites.slice(0, 40).map((s) => `<span>${esc(s.industryName || s.industryType)} — ${esc(s.name)} <b>${s.distanceKm} km</b></span>`).join('')}</div>` : '<div class="depot-muted">Aucun industriel réel dans le rayon : aucun contrat fret automatique pour ce site.</div>'}</section>`;
+            return `${nearHtml}<div class="depot-kpis"><div><b>${occ.used}/${occ.capacity}</b><span>voies occupées</span></div><div><b>${assigned.length}</b><span>matériels affectés</span></div><div><b>${present.length}</b><span>présents au dépôt</span></div><div><b>${ops.length}</b><span>opérations en cours</span></div><div><b>${equipmentCount}</b><span>équipements installés</span></div><div><b>${money(d.utilityTotals?.expenseEur)}</b><span>dépenses suivies</span></div></div>
       <div class="depot-alert-row">${lowResources.length ? `<span class="depot-alert warn">Stock bas : ${(0, html_text_js_1.htmlText)(lowResources.slice(0, 5).map(([k]) => depot_js_1.DEPOT_RESOURCE_CATALOG[k].label).join(', '))}${lowResources.length > 5 ? '…' : ''}</span>` : ''}${maint.length ? `<span class="depot-alert danger">${maint.length} matériel(s) à surveiller / maintenir</span>` : ''}${dirty.length ? `<span class="depot-alert info">${dirty.length} matériel(s) à nettoyer</span>` : ''}${!lowResources.length && !maint.length && !dirty.length ? '<span class="depot-alert ok">Aucune alerte critique</span>' : ''}</div>
       <div class="depot-two-col"><section class="depot-panel"><h4>Consommations réelles du dépôt</h4><div class="depot-stat-lines">${usage.map(([k, def]) => `<span>${esc(def.label)} <b>${qty(d.resourceUsage?.[k], def.unit === 'kg' || def.unit === 'm³' ? 1 : 0)} ${esc(def.unit)}</b></span>`).join('') || '<span>Aucune consommation <b>—</b></span>'}<span>Dépenses cumulées suivies <b>${money(d.utilityTotals?.expenseEur)}</b></span></div></section><section class="depot-panel"><h4>Dernières dépenses</h4>${(d.expenseLedger || []).slice(-8).reverse().map((x) => `<div class="depot-ledger"><span>${esc(x.label)}</span><b>-${money(x.amount)}</b></div>`).join('') || '<div class="depot-muted">Aucune dépense enregistrée.</div>'}</section></div>`;
         };
@@ -79755,9 +80104,49 @@ class UI {
         if (!host)
             return;
         if (!this._qgPage)
-            this._qgPage = new qg_page_js_1.HeadquartersPage(host, () => this._headquartersData());
+            this._qgPage = new qg_page_js_1.HeadquartersPage(host, () => this._headquartersData(), (days) => this.exportQgReport(days));
         else
             this._qgPage.setActive(true);
+    }
+    exportQgReport(days) {
+        const g = this.game;
+        const hq = this._headquartersData();
+        const world = g.world;
+        const locationOf = (r) => {
+            const loc = r.currentLocation || {};
+            if (loc.depotId)
+                return String(g.depotManager?.getDepotById?.(loc.depotId)?.name || 'Dépôt');
+            if (loc.stationId)
+                return String(world.getStationById(loc.stationId)?.name || 'Gare');
+            if (loc.serviceId)
+                return 'En circulation';
+            return '—';
+        };
+        const rames = (g.rameManager?.getAll?.() || []).map((r) => ({
+            name: String(r.name || r.id), serial: String(r.serialNumber || ''),
+            elements: (r.elementDetails || []).map((e) => String(e.instanceName || e.name || e.category || '')),
+            totalKm: Number(r.totalKmRun) || 0, wearLevel: Number(r.wearLevel) || 0, inMaintenance: !!r.inMaintenance,
+            defects: (r.pendingDefects || []).length, location: locationOf(r),
+        }));
+        const trains = hq.rows.map((r) => ({ name: r.name, number: r.number, origin: r.origin, destination: r.destination, state: (0, operations_view_model_js_1.trainStatus)(r.state, r.delay, r.speed), delay: r.delay, rameName: r.rameName }));
+        const byRole = new Map();
+        for (const m of (g.staffManager?.staff || [])) {
+            const role = String(staff_js_1.STAFF_ROLES[String(m.role)]?.label || m.role);
+            const row = byRole.get(role) || { role, count: 0, onDuty: 0 };
+            row.count++;
+            if (m.onDuty)
+                row.onDuty++;
+            byRole.set(role, row);
+        }
+        const nowMs = g.engine.getSimulationEpochMs?.() ?? Date.now();
+        const html = (0, qg_report_js_1.buildQgReportHtml)({
+            company: hq.company, generatedAt: `${g.engine.getParisDate()} ${hq.clock}`, days, nowMs,
+            balance: Number(g.economy.balance) || 0, history: g.economy.history || [],
+            passengers: hq.passengers, freightTonnes: hq.freightTonnes, rames, trains,
+            staff: [...byRole.values()].sort((a, b) => b.count - a.count), mode: (0, game_mode_js_1.normalizeGameMode)(g.realismSettings?.gameMode),
+        });
+        if (!(0, qg_report_js_1.openQgReport)(html))
+            alert('Le navigateur a bloqué l’ouverture du rapport : autorisez les fenêtres pop-up pour ce site.');
     }
     _headquartersData() {
         const totals = (0, operations_view_model_js_1.transportTotals)(this.game.economy, this.game.cargoTypes?.stats);

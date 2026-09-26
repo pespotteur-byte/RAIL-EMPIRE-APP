@@ -708,6 +708,7 @@ export declare class UI {
     setupLivemapPanelDrag(): void;
     setupMobileNav(): void;
     renderQGPage(): void;
+    exportQgReport(days: number): void;
     _headquartersData(): HeadquartersData;
     _normalizeInfogareSearch(value?: unknown): string;
     _rebuildInfogareStationIndex(): void;
