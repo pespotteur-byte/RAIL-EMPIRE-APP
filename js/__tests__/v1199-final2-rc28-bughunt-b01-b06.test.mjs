@@ -42,3 +42,29 @@ test('B06 — ORM route computations in the line editor are time-bounded', () =>
   assert.ok(bounded.length >= 3, `expected ≥3 bounded ORM calls, got ${bounded.length}`);
   assert.match(ui, /ORM_TIMEOUT/);
 });
+
+test('B04b — placeholder power (< 10 kW) on motor units is replaced by a real value', () => {
+  const mk = (name, category = 'automotrice') => new RollingStock({ id: name, name, category, traction: 'diesel', power: 2 });
+  assert.equal(mk('X 73500 — A TER').power, 514);
+  assert.equal(mk('X 73900 Sarre — TER').power, 630);
+  assert.equal(mk('Z 6400 — Transilien').power, 1180);
+  assert.equal(mk("RRR Remorque d'extrémité — TER").power, 0);
+  assert.equal(mk('CC 65000 — Diesel', 'locomotive').power, 1000);
+  assert.equal(new RollingStock({ id: 'y', name: 'Y 2100', category: 'locomotive', power: 45 }).power, 45);
+});
+
+test('B07 — the rAF game loop is re-armed after an in-game save import suspended it', () => {
+  const main = fs.readFileSync(new URL('../../src/ts/main.ts', import.meta.url), 'utf8');
+  assert.match(main, /if \(!this\.running\) \{ this\._gameLoopScheduled = false; return; \}/);
+  assert.match(main, /this\.running = wasRunning; this\.engine\.paused = wasPaused; this\._importing = false;\n\s*this\._ensureGameLoop\(\);/);
+});
+
+test('B03 — map controls/toggles live in a wrapping HUD that never overflows the map', () => {
+  const html = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  const css = fs.readFileSync(new URL('../../style.css', import.meta.url), 'utf8');
+  assert.match(html, /<div class="map-hud">\s*<div class="map-controls">/);
+  assert.match(css, /\.map-hud \{[^}]*right: 0;[^}]*flex-direction: column/);
+  assert.match(css, /\.map-controls \{ display: flex; flex-wrap: wrap;/);
+  assert.match(css, /\.map-toggles \{ display: flex; flex-wrap: wrap;/);
+  assert.match(css, /#main-area\.re3d-active \.map-hud \{ display:contents; \}/);
+});

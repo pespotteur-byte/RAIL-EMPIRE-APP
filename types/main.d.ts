@@ -24,6 +24,7 @@ export declare class RailEmpire {
     private _started;
     private _launching;
     private _importing;
+    private _gameLoopScheduled;
     gameplayClock: GameplayClock;
     diagnostics: OperationalDiagnostics;
     private _externalCatalogApplied;
@@ -75,6 +76,8 @@ export declare class RailEmpire {
     private _replayPump;
     private _lastReplayStatusPaint;
     private _replayStatusWasCatchingUp;
+    /** Relance la boucle rAF si elle s'est arrêtée pendant une suspension (`running = false`). */
+    _ensureGameLoop(): void;
     gameLoop(): void;
 }
 export {};
